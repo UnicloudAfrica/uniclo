@@ -8,11 +8,11 @@ const Navbar = () => {
     function overlay(){
         //check classlist
         const overlayDiv = document.getElementById('overlay');
-        if(overlayDiv.classList.contains('-translate-y-[100vh]')){
-            overlayDiv.classList.remove('-translate-y-[100vh]')
+        if(overlayDiv.classList.contains('-translate-y-[150vh]')){
+            overlayDiv.classList.remove('-translate-y-[150vh]')
         }
-        else if(!overlayDiv.classList.contains('-translate-y-[100vh]')){
-            overlayDiv.classList.add('-translate-y-[100vh]')
+        else if(!overlayDiv.classList.contains('-translate-y-[150vh]')){
+            overlayDiv.classList.add('-translate-y-[150vh]')
         }
     };
 
@@ -55,7 +55,7 @@ const Navbar = () => {
 
     return ( 
         <>
-        <div id="overlay" className=" w-full bg-[#fff] backdrop-blur-xl p-6 flex justify-center items-center pb-[100px] -translate-y-[100vh] shadow transition-all duration-700 top-[78px] fixed z-[9999]">
+        <div id="overlay" className=" w-full bg-[#fff] backdrop-blur-xl p-6 flex justify-center items-center pb-[100px] -translate-y-[150vh] shadow transition-all duration-700 top-[78px] fixed z-[9999]">
             <div className="w-full flex flex-col justify-center items-center space-y-5">
                 <div className=' w-full flex flex-row justify-between'>
                     <button className=' border border-[#1e1e1e99] py-3 w-[48%] text-[#121212] text-center font-Outfit font-normal rounded-[30px]'>Login</button>

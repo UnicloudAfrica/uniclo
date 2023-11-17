@@ -23,34 +23,34 @@ const Events = () => {
         transition={{type:'spring', stiffness:80, duration:0.2}}
         >
         <div className=" mt-[8em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
-            <p className=" font-medium text-[40px] leading-[50px] text-center">Events</p>
+            <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">Events</p>
             <p className=" text-center font-normal mt-3 text-xl ">Discover Upcoming Events</p>
 
-            <div className=" mt-10 w-full h-[300px] flex">
-                <div className=" w-[65%] bg-[#f5f5f4] p-6 rounded-l-[30px]">
+            <div className=" mt-10 w-full h-[300px] flex flex-col md:flex-row ">
+                <div className=" w-full h-full md:w-[65%] md:h-auto bg-[#f5f5f4] p-6 rounded-t-[30px] md:rounded-t-0 md:rounded-tr-[0px] md:rounded-l-[30px]">
                     <button className=" bg-[#3DC8F91A] rounded-[30px] px-6 py-3 text-center font-normal text-lg">
                     <p className="gradient-text">Trending Event</p>
                     </button>
                 </div>
-                <div className=" w-[35%] relative bg-gradient-to-r border-l-2 border-dashed border-[#FFFFFF] rounded-r-[30px] from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] p-6">
-                    <p className=" text-white font-medium text-2xl">Transforming [Client Name] with Cloud Migration</p>
-                    <p className=" text-[#FFFFFFCC] text-sm mt-6">Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing.......</p>
-                    <p className=" absolute bottom-6 left-6 text-base text-white">September 24th, 2023.</p>
+                <div className=" w-full md:w-[35%] relative bg-gradient-to-r rounded-b-[30px] md:rounded-b-0 md:rounded-bl-[0px] md:border-l-2 border-dashed border-[#FFFFFF] md:rounded-r-[30px] from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] p-6">
+                    <p className=" text-white font-medium text-xl md:text-2xl">Transforming [Client Name] with Cloud Migration</p>
+                    <p className=" text-[#FFFFFFCC] text-sm mt-3 md:mt-6 mb-6">Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing.......</p>
+                    <p className=" absolute bottom-3 md:bottom-6 left-6 text-base text-white">September 24th, 2023.</p>
                     <img src={admob} className="z-10 absolute top-0 left-0 h-full w-full object-cover block" alt="" />
                 </div>
             </div>
 
-            <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-16 mb-[6em]">
+            <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-[6em] mb-[6em]">
                 {events.map((item, index) => (
                     <div key={index} className="w-full text-center">             
                         <div className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]"></div>
                         <button className=" bg-[#3DC8F91A] px-3 py-2 mr-auto rounded-[30px] block mt-6 text-base">
                             <p className=" gradient-text">{item.tag}</p>
                         </button>
-                        <p className="text-left mt-6 text-2xl font-medium">{item.title}</p>
+                        <p className="text-left mt-6 text-xl/ md:text-2xl font-medium">{item.title}</p>
                         <p className="text-left mt-3 text-[#1E1E1E99] text-sm">{item.desc}</p>
                         <p className="text-left mt-3 text-[#121212] font-medium text-base">{item.date}</p>
-                        <button className=" block mr-auto rounded-[30px] text-white font-semibold text-base mt-4 bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] py-3 px-16">Book event</button>
+                        <button className=" block w-full md:w-auto mr-auto rounded-[30px] text-white font-semibold text-base mt-4 bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] py-3 px-16">Book event</button>
                     </div>
                 ))}
             </div>

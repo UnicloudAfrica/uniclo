@@ -109,7 +109,7 @@ body{
   color: transparent;
 }
 .group{
-  background-image: url(../src/pages/assets/group.svg);
+  background-image: url(../src/pages/assets/server.svg);
   background-size: cover;
 }
 .corp{
@@ -139,4 +139,9 @@ select.custom-dropdown {
   border: 1px solid #EAEBF0;
 
   border-radius: 10px;
+}
+.kwesi{
+  background-image: url(../src/pages/assets/Kwesi.svg);
+  background-size: contain;
+  background-position: center;
 }

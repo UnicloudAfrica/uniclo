@@ -13,9 +13,9 @@ const Terms = () => {
         transition={{type:'spring', stiffness:80, duration:0.2}}
         >
         <div className="  mt-[8em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
-            <p className=" font-medium text-[40px] leading-[50px] text-center">Privacy policy and term of services</p>
-            <p className=" text-center font-normal mt-3 text-xl ">Learn about how we collect, use, and protect your data. Review our Privacy Policy and Terms of Service to understand your rights and responsibilities when using our platform.</p>
-            <div className=" my-16">
+            <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">Privacy policy and term of services</p>
+            <p className=" text-center font-normal mt-3 text-lg md:text-xl ">Learn about how we collect, use, and protect your data. Review our Privacy Policy and Terms of Service to understand your rights and responsibilities when using our platform.</p>
+            <div className=" my-10 md:my-16">
                 <div className=" font-Outfit font-normal text-sm space-y-3">
                     <p className=" font-Outfit text-lg md:text-2xl font-medium text-center">License</p>
                     <p>Unicloud Africa grants you a revocable, non-exclusive, non-transferable, limited license to use our service strictly in accordance with the terms of this Agreement. These Terms & Conditions are a contract between you and Unicloud Africa (referred to in these Terms & Conditions as "Unicloud Africa", "us", "we" or "our"), the provider of the Unicloud Africa website and the services accessible from the Unicloud Africa website.(which are collectively referred to in these Terms & Conditions as the "Unicloud Africa Service"). You are agreeing to be bound by these Terms & Conditions. If you do not agree to these Terms & Conditions, please do not use the Service. In these Terms & Conditions, "you" refers both to you as an individual and to the entity you represent. If you violate any of these Terms & Conditions, we reserve the right to cancel your account or block access to your account without notice.</p>

@@ -25,7 +25,7 @@ const Hero = () => {
           </button>
         </div>
         <div  className="w-full px-0 md:px-8 lg:px-6 flex flex-col items-center mt-12 relative">
-          <video className="h-[400px]  w-[100%] back-video" autoPlay muted loop playsInline>
+          <video className="h-[400px]  w-[100%] rounded-[20px] back-video" autoPlay muted loop playsInline>
             <source src={heroImg} type="video/webm" />
             Your browser does not support the video tag.
           </video>

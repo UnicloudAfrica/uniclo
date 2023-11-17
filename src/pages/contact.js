@@ -14,8 +14,8 @@ const Contact = () => {
         transition={{type:'spring', stiffness:80, duration:0.2}}
         >
         <div className=" mt-[8em] px-4 md:px-8 lg:px-16 font-Outfit w-full text-[#121212]">
-            <p className=" font-medium text-[40px] leading-[50px] text-center">Contact us</p>
-            <p className=" text-center font-normal mt-3 text-xl ">Got a question or need some help? Send us a note to Our Experts</p>
+            <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">Contact us</p>
+            <p className=" text-center font-normal mt-3 text-lg md:text-xl ">Got a question or need some help? Send us a note to Our Experts</p>
 
             <motion.div
         initial={{y:200, opacity:0}}
@@ -23,8 +23,8 @@ const Contact = () => {
         transition={{type:'tween', duration:0.5, delay:0.3}}
         className=" my-8 w-full">
             <div className=" w-full p-3 mt-16 md:p-8 md:border rounded-[8px] border-[#DAE0E6]">
-                <p className=" font-medium text-3xl">Have a question, need support. or want to chat?</p>
-                <p className=" font-normal mt-3 text-lg ">Our friendly team would love to hear from you.</p>
+                <p className=" font-medium text-2xl md:text-3xl">Have a question, need support. or want to chat?</p>
+                <p className=" font-normal mt-3 text-base md:text-lg ">Our friendly team would love to hear from you.</p>
                 <div className=" w-full flex mt-8 flex-col md:flex-row justify-between mb-6">
                     <span className=" w-full md:w-[48%]">
                         <label className=" font-Outfit text-base text-[#1E1E1EB2] font-medium" for="first-name">First name</label>

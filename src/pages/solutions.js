@@ -83,10 +83,9 @@ const Solutions = () => {
         >
         <div className=" mt-[8em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
 
-            <p className=" font-medium text-[40px] leading-[50px] text-center">Solutions</p>
-            <p className=" text-center font-normal mt-3 text-xl ">Tailored Cloud Solutions for Every Industry</p>
-            <p className=" text-center font-normal mt-1 text-xl ">Unlock the potential of cloud computing across various sectors</p>
-            <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-8 mb-[10em]">
+            <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">Solutions</p>
+            <p className=" text-center font-normal mt-3 text-lg md:text-xl ">Tailored Cloud Solutions for Every Industry</p>
+            <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-8 mb-[6em] md:mb-[10em]">
                 {solutionsArray.map((item, index) => (
                     <div key={item.id} id={item.id} className="w-full text-center">             
                         <div className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]"></div>
@@ -100,16 +99,16 @@ const Solutions = () => {
                 ))}
             </div>
             
-            <p className=" font-medium text-[40px] leading-[50px] text-center">Use Cases</p>
-            <p className=" text-center font-normal mt-3 text-xl ">Explore our case studies to see how our solutions have made a real impact.</p>
+            <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">Use Cases</p>
+            <p className=" text-center font-normal mt-3 text-lg md:text-xl ">Explore our case studies to see how our solutions have made a real impact.</p>
             <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-8 mb-[6em]">
                 {cases.map((item, index) => (
                     <div key={index} className="w-full text-center">             
                         <div className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]"></div>
-                        <button className=" bg-[#3DC8F91A] px-3 py-2 mr-auto block mt-6 text-base">
+                        <button className=" bg-[#3DC8F91A] px-3 py-2 mr-auto block mt-6 rounded-[30px] text-base">
                             <p className=" gradient-text">App development</p>
                         </button>
-                        <p className="text-left mt-6 text-3xl font-medium">{item.topic}</p>
+                        <p className="text-left mt-6 text-xl md:text-3xl font-medium">{item.topic}</p>
                         <p className="text-left mt-3 text-[#1E1E1ECC] text-sm">{item.content}</p>
                     </div>
                 ))}

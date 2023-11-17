@@ -15,7 +15,7 @@ const Carousel = () => {
                 <div className=" relative w-full h-[230px] md:h-[200px] flex items-start py-5 md:py-0 md:items-center px-4 md:px-16">
                     <img src={ map } className=' w-[92px] h-[100px] md:w-auto md:h-auto' alt="" />
                     <div className=' w-full flex flex-col items-center mt-[25px] md:mt-0 ml-5 md:ml-[40px]'>
-                        <p className=' text-base w-full md:text-xl font-Outfit font-medium'>Making Cloud Service Available For africa <span className=''>Enterprises like:</span></p>
+                        <p className=' text-base w-full md:text-xl font-Outfit font-medium'>Making Cloud Service Available For Africa <span className=''>Enterprises like:</span></p>
                         <div className=' absolute md:static left-4 top-[140px] flex flex-row mt-4 space-x-10 justify-between'>
                             <motion.div
                                 initial={{ y: 20, opacity: 0 }}

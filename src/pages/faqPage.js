@@ -11,10 +11,7 @@ const FaqPage = () => {
         <>
         <Navbar/>
         <motion.div
-        initial={{x:100, opacity:0}}
-        animate={{x:0, opacity:1}}
-        exit={{x:-100, opacity:0}}
-        transition={{type:'spring', stiffness:80, duration:0.2}}
+         
         >
         <motion.div 
         initial={{ y: 20, opacity: 0 }}

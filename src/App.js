@@ -14,6 +14,8 @@ import Solutions from "./pages/solutions";
 import DetailedSolution from "./pages/detailedSolu";
 import Events from "./pages/events";
 import Blog from "./pages/blog";
+import Cms from "./pages/cms";
+import Advisory from "./pages/advisory";
 
 function App() {
   const location = useLocation();
@@ -28,6 +30,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/about" element={<About />} />
+          <Route path="/advisory-board" element={<Advisory/>} />
           <Route path="/faq" element={<FaqPage />} />
           <Route path="/partnership" element={<Partnership />} />
           <Route path="/contact" element={<Contact />} />
@@ -38,6 +41,7 @@ function App() {
           <Route path="/events" element={<Events />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/solutions/:id" element={<DetailedSolution />} />
+          <Route path="/cms-admin" element={<Cms/>} />
         </Routes>
       </AnimatePresence>
     </>

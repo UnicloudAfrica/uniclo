@@ -16,15 +16,15 @@ const Carousel = () => {
                     <img src={ map } className=' w-[92px] h-[100px] md:w-auto md:h-auto' alt="" />
                     <div className=' w-full flex flex-col items-center mt-[25px] md:mt-0 ml-5 md:ml-[40px]'>
                         <p className=' text-base w-full md:text-xl font-Outfit font-medium'>Making Cloud Service Available For Africa <span className=''>Enterprises like:</span></p>
-                        <div className=' absolute md:static left-4 top-[140px] flex flex-row mt-4 space-x-10 justify-between'>
+                        <div className=' absolute md:static left-4 top-[140px] flex flex-row mt-4 space-x-10 md:space-x-0 justify-between'>
                             <motion.div
                                 initial={{ y: 20, opacity: 0 }}
                                 whileInView={{ y: 0, opacity: 1 }}
                                 transition={{ duration: 1, type:'tween' }}
                                 className=" w-full">
-                                <div className='w-full overflow-x-scroll md:overflow-visible scrollbar-hide'>
+                                <div className='w-full md:mt-5 overflow-x-scroll md:overflow-visible scrollbar-hide'>
                                     <div className='flex flex-row justify-between'>
-                                        <img src={ binance } className=' mx-4 ' alt="" />
+                                        <img src={ binance } className=' mr-4 ' alt="" />
                                         <img src={ bitcoin } className=' mx-4 ' alt="" />
                                         <img src={ coinbase } className=' mx-4 ' alt="" />
                                         <img src={ tether } className=' mx-4 ' alt="" />

@@ -68,10 +68,7 @@ const Services = () => {
         <>
         <Navbar/>
         <motion.div
-        initial={{x:100, opacity:0}}
-        animate={{x:0, opacity:1}}
-        exit={{x:-100, opacity:0}}
-        transition={{type:'spring', stiffness:80, duration:0.2}}
+         
         >
         <div className=" mt-[8em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
             <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">Our Services</p>
@@ -80,7 +77,7 @@ const Services = () => {
             <div className=" grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-[32px] lg:gap-[4%] w-full mt-8 mb-[6em] md:mb-[10em]">
                 {data.map((item, index) => (
                     <div key={index} className="w-full text-center">             
-                        <div className=" w-full bg-[#F5F5F4] md:h-[380px] rounded-[20px] p-6">
+                        <div className=" w-full bg-[#F5F5F4] md:h-[340px] rounded-[20px] p-6">
                             <img src={ item.img } className=" w-16 h-16" alt="" />
                             <p className="text-left mt-6 text-lg md:text-xl font-medium">{item.topic}</p>
                             <p className="text-left mt-1 text-[#1E1E1ECC] text-sm">{item.content}</p>

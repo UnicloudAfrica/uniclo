@@ -24,7 +24,7 @@ const Acheive = () => {
                 </div>
 
                 <div className=" w-full md:w-[15%] flex justify-between md:justify-end md:flex-col  relative md:tems-end">
-                    <span className=" flex flex-col ml-5 md:ml-0 mr-5 md:mb-5 justify-start md:justify-end">
+                    <span className=" flex flex-col ml-5 mr-5 md:mr-0 md:mb-5 justify-start md:justify-end">
                         <p className=" text-[32px] md:text-[40px]">250+</p>
                         <p className="text-base md:text-xl">Partners</p>
                     </span>

@@ -66,6 +66,7 @@ const Navbar = () => {
                     <p className=" font-medium cursor-pointer text-lg text-[#121212] font-Outfit mt-5 ">About</p>
                     <span className=' text-xs text-[#12121299] mt-3'>
                         <Link to='/about'><p className=' mt-3'>Learn About Us</p></Link>
+                        <Link to='/advisory-board'><p className=' mt-3'>Advisory Board</p></Link>
                         <Link to='/terms'><p className=' mt-3'>Legal</p></Link>
                     </span>
                     <p className=" font-medium cursor-pointer text-lg text-[#121212] font-Outfit mt-5 ">Services</p>
@@ -80,11 +81,11 @@ const Navbar = () => {
                             <Link to='/blog'><p className=' mt-3'>Our Blog</p></Link>
                         </span>
                     <p className=" font-medium cursor-pointer text-lg text-[#121212] font-Outfit mt-5 ">Community</p>
-                    <span className=' text-xs text-[#12121299] mt-3'>
+                        <span className=' text-xs text-[#12121299] mt-3'>
                             <Link to='/partnership'><p className=' mt-3'>Partners</p></Link>
                             <Link to='/events'><p className=' mt-3'>Events</p></Link>
                         </span>
-                    <p className=" font-medium cursor-pointer text-lg text-[#121212] font-Outfit mt-5 ">Contact</p>
+                    <Link to = '/contact'><p className=" font-medium cursor-pointer text-lg text-[#121212] font-Outfit mt-5 ">Contact</p></Link>
                </div>
             </div>
         </div>
@@ -116,6 +117,10 @@ const Navbar = () => {
                     {  aboutDropdown && (<div className=' text-white bg-[#494E51] absolute w-[198px] top-10 rounded-[15px] py-3 px-6'>
                         <Link to='/about'><span onClick={ closeAboutDropdown } className=' flex items-center space-x-4'>
                             <p>Learn about us</p>
+                            <img src={ outline } className=' w-3 h-3' alt="" />
+                        </span></Link>
+                        <Link to='/advisory-board' className=''><span onClick={ closeAboutDropdown } className=' flex items-center mt-3 space-x-4'>
+                            <p>Advisory Board</p>
                             <img src={ outline } className=' w-3 h-3' alt="" />
                         </span></Link>
                         <Link to='/terms' className=''><span onClick={ closeAboutDropdown } className=' flex items-center mt-3 space-x-4'>

@@ -3,6 +3,7 @@ import fb from './assets/fb.svg';
 import twi from './assets/twi.svg';
 import ig from './assets/ig.svg';
 import whatsapp from './assets/whatsapp.svg';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
     return ( 
@@ -38,44 +39,36 @@ const Footer = () => {
             </div>
 
             <div className=' text-base '>
-                <p className=' font-semibold mb-5 text-[#F9F9F9]'>Products</p>
-                <span className=' font-normal space-y-3'>
-                    <p>Features</p>
-                    <p>Solutions</p>
-                    <p>Integrations</p>
-                    <p>Enterprise</p>
-                    <p>Solutions</p>
+                <p className=' font-semibold mb-5 text-[#F9F9F9]'>Services</p>
+                <span className='  mt-3'>
+                    <Link to='/services'><p className=' mt-3'>Our Services</p></Link>
+                    <Link to='/solutions'><p className=' mt-3'>Solutions</p></Link>
                 </span>
             </div>
 
             <div className=' text-base '>
                 <p className=' font-semibold mb-5 text-[#F9F9F9]'>Resources</p>
-                <span className=' font-normal space-y-3'>
-                    <p>Partners</p>
-                    <p>Community</p>
-                    <p>Developers</p>
-                    <p>App</p>
-                    <p>Blog</p>
+                <span className=' mt-3'>
+                    <Link to='/resources'><p className=' mt-3'>Our resources</p></Link>
+                    <Link to='/faq'><p className=' mt-3'>FAQ</p></Link>
+                    <Link to='/blog'><p className=' mt-3'>Our Blog</p></Link>
                 </span>
             </div>
 
             <div className=' text-base '>
-                <p className=' font-semibold mb-5 text-[#F9F9F9]'>Why Choose Us?</p>
-                <span className=' font-normal space-y-3'>
-                    <p>Channels</p>
-                    <p>Scale</p>
-                    <p>Watch the Demo</p>
-                    <p>Our Competition</p>
+                <p className=' font-semibold mb-5 text-[#F9F9F9]'>Community</p>
+                <span className=' mt-3'>
+                    <Link to='/partnership'><p className=' mt-3'>Partners</p></Link>
+                    <Link to='/events'><p className=' mt-3'>Events</p></Link>
                 </span>
             </div>
 
             <div className=' text-base '>
-                <p className=' font-semibold mb-5 text-[#F9F9F9]'>Company</p>
-                <span className=' font-normal space-y-3'>
-                    <p>About Us</p>
-                    <p>News</p>
-                    <p>Leadership</p>
-                    <p>Media Kit</p>
+                <p className=' font-semibold mb-5 text-[#F9F9F9]'>About</p>
+                <span className=' mt-3'>
+                    <Link to='/about'><p className=' mt-3'>Learn About Us</p></Link>
+                    <Link to='/advisory-board'><p className=' mt-3'>Advisory Board</p></Link>
+                    <Link to='/terms'><p className=' mt-3'>Legal</p></Link>
                 </span>
             </div>
 

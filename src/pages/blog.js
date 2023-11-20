@@ -21,10 +21,7 @@ const Blog = () => {
         <>
         <Navbar/>
         <motion.div
-        initial={{x:100, opacity:0}}
-        animate={{x:0, opacity:1}}
-        exit={{x:-100, opacity:0}}
-        transition={{type:'spring', stiffness:80, duration:0.2}}
+         
         >
         <div className="mt-[8em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
             <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">Our Blog</p>

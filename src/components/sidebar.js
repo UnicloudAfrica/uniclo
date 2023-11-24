@@ -16,7 +16,7 @@ import { PageContext } from '../contexts/contextprovider';
 
 const Sidebar = () => {
 
-  const [activePage, setActivePage] = useState('Overview'); // Initially set to the default active page
+  const [activePage, setActivePage] = useState('General'); // Initially set to the default active page
   const [page, setPage] = useContext(PageContext);
 
   const Navigate = useNavigate();
@@ -37,11 +37,12 @@ const Sidebar = () => {
   const auth = getAuth();
 
   const pages = [
-      { name: 'Blog', icon: trades },
+    { name: 'General', icon: settingIcon },
+    { name: 'Blog', icon: trades },
     { name: 'Events', icon: overviewIcon },
     { name: 'Resources', icon: box },
     { name: 'Solutions', icon: settingIcon },
-    { name: 'Use Cases', icon: reciept },
+    { name: 'Use-Cases', icon: reciept },
   ];
 
   const logOut = () => {

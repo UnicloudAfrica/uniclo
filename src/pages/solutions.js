@@ -8,61 +8,13 @@ import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 import DetailedSolution from "./detailedSolu";
 import { motion } from "framer-motion";
+import {useContext} from 'react'
+import { SolutionsContext } from '../contexts/contextprovider';
 
 
 const Solutions = () => {
 
-    const firebaseConfig = {
-        apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-        authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-        projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-        storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-        messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-        appId: process.env.REACT_APP_FIREBASE_APP_ID,
-        measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
-    };
-
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
-    const db = getFirestore(app)
-
-    const[solutionsArray, setSolutionsArray] = useState([
-        {
-          topic: "",
-          desc: "",
-          date: "",
-          url: "",
-          content: "",
-        }
-    ]);
-
-    useEffect(() => {
-        const colRef = collection(db, 'solutions');
-        const q = query(colRef);
-        onSnapshot(q, (snapshot) => {
-          const solu = [];
-          snapshot.docs.forEach((doc) => {
-            solu.push({ id: doc.id, ...doc.data() });
-          });
-          setSolutionsArray(solu);
-        });
-    }, [db]);
-
-
-    const [scrollTarget, setScrollTarget] = useState(null);
-    const [selectedSolutionItem, setSelectedSolutionItem] = useState(false);
-    const containerRef = useRef(null);
-
-    const handleSolutionItemClick = (SolutionItem) => {
-        setScrollTarget('detailed-Solution-item'); // Set the scroll target
-        setSelectedSolutionItem(true);
-    };
-
-    const handleCloseDetailedView = () => {
-        setSelectedSolutionItem(false);
-    };
-
+    const [solutionsArray] = useContext(SolutionsContext);
 
     const cases = [
         { topic: "Transforming [Client Name] with Cloud Migration", content: "Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing......." },
@@ -71,8 +23,6 @@ const Solutions = () => {
 
     return ( 
         <>
-        { selectedSolutionItem ? (<DetailedSolution selectedSolutionItem={selectedSolutionItem} scrollTarget={scrollTarget} setScrollTarget={setScrollTarget} handleSolutionItemClick={handleSolutionItemClick}/>
-        ) : (
         <div>
         <Navbar/>
         <motion.div
@@ -85,10 +35,10 @@ const Solutions = () => {
             <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-8 mb-[6em] md:mb-[10em]">
                 {solutionsArray.map((item, index) => (
                     <div key={item.id} id={item.id} className="w-full text-center">             
-                        <div className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]"></div>
+                        <div className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
                         <p className="text-left mt-3 text-xl font-medium">{item.topic}</p>
-                        <p className="text-left mt-1 text-[#1e1e1e] text-sm">{item.content.substring(0,190) + '....'}</p>
-                        <Link onClick={() => handleSolutionItemClick(item)} to={`/solutions/${item.id}`}><button className=' flex space-x-8 mt-6 items-center'>
+                        <p className="text-left mt-1 text-[#1e1e1e] text-sm">{item.desc}</p>
+                        <Link to={`/solutions/${item.id}`}><button className=' flex space-x-8 mt-6 items-center'>
                             <p className=' gradient-text text-base'>View more</p>
                             <img src={ arrowdown } className=' w-4 h-4' alt="" />
                         </button></Link>
@@ -114,7 +64,6 @@ const Solutions = () => {
         <Footer/>
         </motion.div>
         </div>
-        )}
         </>
      );
 }

@@ -6,7 +6,8 @@ import { initializeApp } from "firebase/app";
 import {getFirestore, getDoc, doc } from 'firebase/firestore';
 import { motion } from "framer-motion";
 
-const DetailedSolution = ({ }) => {
+
+const DetailedResources = () => {
 
     const firebaseConfig = {
         apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
@@ -21,10 +22,10 @@ const DetailedSolution = ({ }) => {
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app)
     
-    const[selectedSolutionItem, setSelectedSolutionItem] = useState([
+    const[selectedResourceItem, setSelectedResourceItem] = useState([
         {
-            topic: "",
-            desc: "",
+            title: "",
+            tagline: "",
             date: "",
             url: "",
             content: "",
@@ -40,13 +41,13 @@ const DetailedSolution = ({ }) => {
 
     useEffect(() => {
         if (id) {
-          const docRef = doc(db, 'solutions', id); // 'id' is the name of the document
+          const docRef = doc(db, 'resources', id); // 'id' is the name of the document
           getDoc(docRef)
             .then((doc) => {
               if (doc.exists()) {
-                const solu = { id: doc.id, ...doc.data() };
-                console.log('Document data:', solu);
-                setSelectedSolutionItem(solu);
+                const reso = { id: doc.id, ...doc.data() };
+                console.log('Document data:', reso);
+                setSelectedResourceItem(reso);
               } else {
                 // Handle the case where the document does not exist
                 console.log("Document does not exist");
@@ -66,13 +67,12 @@ const DetailedSolution = ({ }) => {
          
         >
         <div className="mt-[8em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
-            <p className=" font-medium text-[40px] leading-[50px] text-center">Solutions</p>
-            <p className=" text-center font-normal mt-3 text-xl ">Tailored Cloud Solutions for Every Industry</p>
-            <div className=" w-full h-[350px] my-16 bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${selectedSolutionItem.url})`, backgroundSize: 'cover' }}>
+            <p className=" font-medium text-[40px] leading-[50px] text-center">Resources</p>
+            <div className=" w-full h-[350px] my-16 bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${selectedResourceItem.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
 
             </div>
-            <p className=" font-medium text-[30px] leading-[40px] text-center">{selectedSolutionItem.topic}</p>
-            <p className=" mt-3 text-sm font-normal">{selectedSolutionItem.content}</p>
+            <p className=" font-medium text-[30px] leading-[40px] text-center">{selectedResourceItem.title}</p>
+            <p className=" mt-3 text-sm font-normal">{selectedResourceItem.content}</p>
 
             <p className=" font-medium text-[40px] leading-[50px] text-center mt-16">Use Cases</p>
             <p className=" text-center font-normal mt-3 text-xl ">Explore our case studies to see how our solutions have made a real impact.</p>
@@ -97,4 +97,4 @@ const DetailedSolution = ({ }) => {
      );
 }
  
-export default DetailedSolution;
+export default DetailedResources;

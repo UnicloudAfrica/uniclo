@@ -4,17 +4,14 @@ import search from "./assets/search-normal.svg";
 import adbg from './assets/adBG.svg';
 import admob from './assets/adMob.svg';
 import { motion } from "framer-motion";
+import {useContext} from 'react'
+import { BlogContext } from '../contexts/contextprovider';
+import { Link } from 'react-router-dom';
 
 const Blog = () => {
 
-    const blog = [
-        { title: "Transforming [Client Name] with Cloud Migration", desc: "Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing.......", date:'September 24th, 2023.', tag:"App Development" },
-        { title: "Transforming [Client Name] with Cloud Migration", desc: "Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing.......", date:'September 24th, 2023.', tag:"App Development" },
-        { title: "Transforming [Client Name] with Cloud Migration", desc: "Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing.......", date:'September 24th, 2023.', tag:"Web Development" },
-        { title: "Transforming [Client Name] with Cloud Migration", desc: "Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing.......", date:'September 24th, 2023.', tag:"Web Development" },
-        { title: "Transforming [Client Name] with Cloud Migration", desc: "Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing.......", date:'September 24th, 2023.', tag:"Web Development" },
-        { title: "Transforming [Client Name] with Cloud Migration", desc: "Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing.......", date:'September 24th, 2023.', tag:"Web Development" },
-    ];
+
+    const [blogArray] = useContext(BlogContext);
 
 
     return ( 
@@ -36,16 +33,16 @@ const Blog = () => {
             </div>
 
             <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-16 mb-[12em]">
-                {blog.map((item, index) => (
-                    <div key={index} className="w-full text-center">             
-                        <div className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]"></div>
+                {blogArray.map((item, index) => (
+                    <Link to={`/blogs/${item.id}`}><div key={index} className="w-full text-center">             
+                        <div className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
                         <button className=" bg-[#3DC8F91A] px-3 py-2 mr-auto rounded-[30px] block mt-6 text-sm md:text-base">
                             <p className=" gradient-text">{item.tag}</p>
                         </button>
-                        <p className="text-left mt-6 text-xl md:text-2xl font-medium">{item.title}</p>
-                        <p className="text-left mt-3 text-[#1E1E1E99] text-sm">{item.desc}</p>
+                        <p className="text-left mt-6 text-xl md:text-2xl font-medium">{item.title.substring(0,40) + '...'}</p>
+                        <p className="text-left mt-3 text-[#1E1E1E99] text-sm">{item.content.substring(0,190) + '...'}</p>
                         <p className="text-left mt-3 text-[#121212] font-medium text-base">{item.date}</p>
-                    </div>
+                    </div></Link>
                 ))}
             </div>
 

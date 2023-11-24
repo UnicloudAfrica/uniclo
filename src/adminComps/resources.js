@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import load from './assets/load.gif';
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc} from "firebase/firestore";
+import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, deleteDoc} from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { PageContext, ResourcesContext } from '../contexts/contextprovider';
 
 const ResoucesAdmin = () => {
 
@@ -28,13 +29,16 @@ const ResoucesAdmin = () => {
     const storage = getStorage(app);
 
     //states
-    
+    const [page, setPage] = useContext(PageContext);
     const [resourceTitle, setResourceTitle] = useState(null);
     const [fileName, setFileName] = useState(null);
     const [resourceTag, setResourceTag] = useState(null);
     const [resourceContent, setResourceContent] = useState(null);
     const [file, setFile] = useState(null);
+    const [deleteUser, setDeleteUser] = useState(false);
+    const [docID, setDocID] =useState('');
     const [loadValue, setLoadValue] = useState('No');
+    const [resourceArray, setResourceArray] = useContext(ResourcesContext);
 
     //date and time
     // For todays date;
@@ -85,6 +89,26 @@ const ResoucesAdmin = () => {
         }
     };
 
+    const handleDeleteClick =(e)=>{
+        deleteDoc(doc(db, "resources", docID))
+        .then(()=>{
+            alert('Deleted');
+            setDeleteUser(false)
+        })
+        .catch((error)=>{
+            alert(error)
+        })
+    };
+
+
+    const handleDelete = (e) =>{
+        setDeleteUser(true);
+        const parent = e.target.parentElement;
+        const parentParent = parent.parentElement;
+        const parentParentParent = parentParent.parentElement;
+        setDocID(parentParent.id);
+    };
+
     return ( 
         <>
         <div className=" flex justify-center items-center mt-3">
@@ -112,7 +136,7 @@ const ResoucesAdmin = () => {
             </div>
         </div>
 
-        <div className=" my-8 w-full ">
+        { activeButton === 'create' && <div className=" my-8 w-full ">
             <div className=" w-full p-3 md:p-8 md:border rounded-[8px] border-[#DAE0E6]">
                 <div className=" w-full flex flex-col ">
                     <span className=" w-full mb-6">
@@ -135,7 +159,49 @@ const ResoucesAdmin = () => {
                     { loadValue === 'Yes' && <img src={ load } className=' w-6 h-6' alt="" />}
                 </button>
             </div>
-        </div>
+        </div>}
+
+        { activeButton === 'overview' && <div className=" my-8 w-full overflow-auto">
+            <div className="bg-[rgba(150,150,152,0.2)] backdrop-blur-[15px] p-3 rounded-md shadow w-full overflow-auto">
+            <table className=" text-center overflow-auto border-b w-full border-[#00000049] mt-3">
+                <thead>
+                    <tr className=" text-[#000] text-sm font-Outfit font-medium">
+                        <th className="p-2 border-b border-[#00000049]">Tag</th>
+                        <th className="p-2 border-b border-[#00000049]">Date</th>
+                        <th className="p-2 border-b border-[#00000049]">Title</th>
+                        <th className="p-2 border-b border-[#00000049]">Image</th>
+                        <th className="p-2 border-b border-[#00000049]">Control Center</th>
+                    </tr>
+                </thead>
+                <tbody id="table" className=" overflow-auto">
+                    {resourceArray.map((doc) => {
+                        return (
+                            <tr key={doc.id} id={doc.id} className="text-[#000] h-[4em] border-b border-[#00000049] overflow-hidden text-sm font-Outfit font-medium">
+                            <td className="p-2 border-b text-xs gradient-text border-[#00000049]"><button className=' px-2 py-1 bg-[#3DC8F91A] rounded-xl'>{doc.tagline.substring(0,30)+'...'}</button></td>
+                            <td className="p-2 border-b  border-[#00000049]">{doc.date}</td>
+                            <td className="p-2 border-b  capitalize border-[#00000049]">{ doc.title.substring(0,40)+'...'}</td>
+                            <td className=" border-b  border-[#00000049]"><a className=" px-2 py-1 bg-[#939292] text-xs rounded-md" target="blank" href={doc.url}>View</a></td>
+                            <td className=" text-white my-auto capitalize border-[#00000049] ">
+                                <button 
+                                onClick={handleDelete}
+                                className=" px-2 py-1 text-xs rounded-md bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC]">Delete</button></td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+            </div>
+        </div>}
+
+        { deleteUser && <div className=" w-full h-[100vh] fixed z-[10000] px-5 top-0 left-0 bg-[rgba(0,0,0,0.7)] flex justify-center items-center">
+            <div className="w-full md:w-[400px] rounded-md shadow p-5 bg-[#ffffff] relative flex justify-center flex-col text-sm font-Outfit font-medium items-center">
+                <p className=" text-base font-normal text-center text-[#000]">Are you Sure you Want to delete this Data?</p>
+                <span className=" flex flex-row space-x-3 mt-6 text-white">
+                    <button onClick={()=>{setDeleteUser(false)}} className="w-16 py-1 rounded-md bg-gray-500">Cancel</button>
+                    <button onClick={handleDeleteClick} className="w-16 py-1 rounded-md bg-red-700">Delete</button>
+                </span>
+            </div>
+        </div>}
 
         </>
      );

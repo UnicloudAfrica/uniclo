@@ -4,8 +4,14 @@ import arrowdown from './assets/Arrow_Down_Right_LG.svg';
 import adbg from './assets/adBG.svg';
 import admob from './assets/adMob.svg';
 import { motion } from "framer-motion";
+import {useContext} from 'react'
+import { ResourcesContext } from '../contexts/contextprovider';
+import { Link } from 'react-router-dom';
 
 const Resources = () => {
+
+
+    const [resourcesArray] = useContext(ResourcesContext);
 
     const data = [
         { topic: "Navigating the Cloud", desc: "A Guide for African Businesses" },
@@ -24,16 +30,16 @@ const Resources = () => {
         <div className=" mt-[8em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
             <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">Resources</p>
             <p className=" text-center font-normal mt-3 text-lg md:text-xl ">Stay informed and inspired</p>
+            <p className=" text-center font-normal mt-1 text-lg md:text-xl ">Explore our blog for insightful articles on cloud trends, best practices, and success stories</p>
             <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-8">
-                {data.map((item, index) => (
+                {resourcesArray.map((item, index) => (
                     <div key={index} className="w-full text-center">             
-                        <div className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]"></div>
-                        <p className="text-left mt-3 text-lg md:text-xl font-medium">{item.topic}</p>
-                        <p className="text-left mt-1 text-[#1e1e1e] text-sm md:text-base">{item.desc}</p>
-                        <button className=' flex space-x-8 mt-6 items-center'>
+                        <div className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
+                        <p className="text-left mt-3 text-lg md:text-xl font-medium">{item.title}</p>
+                        <p className="text-left mt-1 text-[#1e1e1e] text-sm md:text-base">{item.tagline.substring(0,30)+'...'}</p>
+                        <Link to={`/resources/${item.id}`}><button className=' flex space-x-8 mt-6 items-center'>
                             <p className=' gradient-text text-base'>View more</p>
-                            <img src={ arrowdown } className=' w-4 h-4' alt="" />
-                        </button>
+                        </button></Link>
                     </div>
                 ))}
             </div>

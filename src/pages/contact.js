@@ -2,6 +2,12 @@ import Ads from "../components/ad";
 import Footer from "../components/footer";
 import Navbar from "../components/navbar";
 import { motion } from "framer-motion";
+import office from './assets/office.svg';
+import chat from './assets/chat.svg';
+import message from './assets/message.svg';
+import fb from './assets/facebook.svg';
+import linked from './assets/linkedin.svg';
+import twi from './assets/twitter.svg';
 
 const Contact = () => {
     return ( 
@@ -19,7 +25,7 @@ const Contact = () => {
         whileInView={{y:0, opacity:1}}
         transition={{type:'tween', duration:0.5, delay:0.3}}
         className=" my-8 w-full">
-            <div className=" w-full p-3 mt-16 md:p-8 md:border rounded-[8px] border-[#DAE0E6]">
+            <div className=" w-full p-3 mt-16 md:p-8 border rounded-[30px] border-[#DAE0E6]">
                 <p className=" font-medium text-2xl md:text-3xl">Have a question, need support. or want to chat?</p>
                 <p className=" font-normal mt-3 text-base md:text-lg ">Our friendly team would love to hear from you.</p>
                 <div className=" w-full flex mt-8 flex-col md:flex-row justify-between mb-6">
@@ -54,6 +60,36 @@ const Contact = () => {
             </div>
         </motion.div>
 
+        <div className=" w-full p-3 mt-16 md:p-8 border rounded-[30px] border-[#DAE0E6] flex flex-col md:flex-row justify-center md:justify-between items-start">
+            <div className=" space-y-2 w-1/3">
+                <button className=" w-12 h-12 bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] rounded-[50%] flex justify-center items-center">
+                    <img src={ office } alt="" />
+                </button>
+                <p className=" font-medium text-xl">Our head office</p>
+                <p className=" text-base">100 Smith Street<br></br>Collingwood VIC 3066 AU</p>
+            </div>
+
+            <div className=" space-y-2 w-1/3">
+                <button className=" w-12 h-12 bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] rounded-[50%] flex justify-center items-center">
+                    <img src={ chat } alt="" />
+                </button>
+                <p className=" font-medium text-xl">Connect with us on</p>
+                <p className=" text-base">+23458900900 <span className=" block uppercase">or</span> <span className=" block gradient-text">support@unicloudafrica.com</span></p>
+            </div>
+
+            <div className=" space-y-2 w-1/3">
+                <button className=" w-12 h-12 bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] rounded-[50%] flex justify-center items-center">
+                    <img src={ message } alt="" />
+                </button>
+                <p className=" font-medium text-xl">Connect with us on social media</p>
+                <span className=" flex space-x-4">
+                    <img src={ fb } alt="" />
+                    <img src={ linked } alt="" />
+                    <img src={ twi } alt="" />
+                </span>
+            </div>
+
+        </div>
         </div>
         <Ads/>
         <Footer/>

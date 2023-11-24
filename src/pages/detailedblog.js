@@ -6,7 +6,8 @@ import { initializeApp } from "firebase/app";
 import {getFirestore, getDoc, doc } from 'firebase/firestore';
 import { motion } from "framer-motion";
 
-const DetailedSolution = ({ }) => {
+
+const DetailedBlog = () => {
 
     const firebaseConfig = {
         apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
@@ -21,7 +22,7 @@ const DetailedSolution = ({ }) => {
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app)
     
-    const[selectedSolutionItem, setSelectedSolutionItem] = useState([
+    const[selectedBlogItem, setSelectedBlogItem] = useState([
         {
             topic: "",
             desc: "",
@@ -31,22 +32,17 @@ const DetailedSolution = ({ }) => {
           }
     ]);
 
-    const cases = [
-        { topic: "Transforming [Client Name] with Cloud Migration", content: "Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing......." },
-        { topic: "Transforming [Client Name] with Cloud Migration", content: "Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing......." },
-    ];
-
     const { id } = useParams();
 
     useEffect(() => {
         if (id) {
-          const docRef = doc(db, 'solutions', id); // 'id' is the name of the document
+          const docRef = doc(db, 'blog', id); // 'id' is the name of the document
           getDoc(docRef)
             .then((doc) => {
               if (doc.exists()) {
-                const solu = { id: doc.id, ...doc.data() };
-                console.log('Document data:', solu);
-                setSelectedSolutionItem(solu);
+                const blogs = { id: doc.id, ...doc.data() };
+                console.log('Document data:', blogs);
+                setSelectedBlogItem(blogs);
               } else {
                 // Handle the case where the document does not exist
                 console.log("Document does not exist");
@@ -59,25 +55,25 @@ const DetailedSolution = ({ }) => {
         }
     }, [id, db]);
 
-    return ( 
+
+
+    return (  
         <>
         <Navbar/>
         <motion.div
          
         >
         <div className="mt-[8em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
-            <p className=" font-medium text-[40px] leading-[50px] text-center">Solutions</p>
-            <p className=" text-center font-normal mt-3 text-xl ">Tailored Cloud Solutions for Every Industry</p>
-            <div className=" w-full h-[350px] my-16 bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${selectedSolutionItem.url})`, backgroundSize: 'cover' }}>
+            <p className=" font-medium text-[40px] leading-[50px] text-center">{selectedBlogItem.title}</p>
+            <div className=" w-full h-[350px] my-12 bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${selectedBlogItem.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
 
             </div>
-            <p className=" font-medium text-[30px] leading-[40px] text-center">{selectedSolutionItem.topic}</p>
-            <p className=" mt-3 text-sm font-normal">{selectedSolutionItem.content}</p>
+            <p className=" mt-3 text-sm font-normal">{selectedBlogItem.content}</p>
 
             <p className=" font-medium text-[40px] leading-[50px] text-center mt-16">Use Cases</p>
             <p className=" text-center font-normal mt-3 text-xl ">Explore our case studies to see how our solutions have made a real impact.</p>
             <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-8 mb-[6em]">
-                {cases.map((item, index) => (
+                {/* {cases.map((item, index) => (
                     <div key={index} className="w-full text-center">             
                         <div className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]"></div>
                         <button className=" bg-[#3DC8F91A] px-3 py-2 mr-auto block mt-6 text-base">
@@ -86,7 +82,7 @@ const DetailedSolution = ({ }) => {
                         <p className="text-left mt-6 text-3xl font-medium">{item.topic}</p>
                         <p className="text-left mt-3 text-[#1E1E1ECC] text-sm">{item.content}</p>
                     </div>
-                ))}
+                ))} */}
             </div>
 
         </div>
@@ -94,7 +90,7 @@ const DetailedSolution = ({ }) => {
         <Footer/>
         </motion.div>
         </>
-     );
+    );
 }
  
-export default DetailedSolution;
+export default DetailedBlog;

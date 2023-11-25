@@ -39,7 +39,7 @@ const Blog = () => {
                         <button className=" bg-[#3DC8F91A] px-3 py-2 mr-auto rounded-[30px] block mt-6 text-sm md:text-base">
                             <p className=" gradient-text">{item.tag}</p>
                         </button>
-                        <p className="text-left mt-6 text-xl md:text-2xl font-medium">{item.title.substring(0,40) + '...'}</p>
+                        <p className="text-left mt-6 text-xl md:text-2xl font-medium md:h-[2.5em]">{item.title}</p>
                         <p className="text-left mt-3 text-[#1E1E1E99] text-sm">{item.content.substring(0,190) + '...'}</p>
                         <p className="text-left mt-3 text-[#121212] font-medium text-base">{item.date}</p>
                     </div></Link>

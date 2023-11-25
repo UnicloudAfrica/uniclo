@@ -84,13 +84,13 @@ const DetailedBlog = () => {
          
         >
         <div className="mt-[8em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
-            <p className=" font-medium text-[40px] leading-[50px] text-center">{selectedBlogItem.title}</p>
+            <p className=" font-medium text-2xl md:text-[40px] md:leading-[50px] text-center">{selectedBlogItem.title}</p>
             <div className=" w-full h-[350px] my-12 bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${selectedBlogItem.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
 
             </div>
             <p style={{ whiteSpace: 'pre-line' }} className=" mt-3 text-sm font-normal whitespace-pre-line">{selectedBlogItem.content}</p>
 
-            <p className=" font-medium text-[40px] leading-[50px] text-center mt-16">View  our latest blogs</p>
+            <p className=" font-medium text-2xl md:text-[40px] md:leading-[50px] text-center mt-16">View  our latest blogs</p>
             <div className={`grid grid-cols-1 md:grid-cols-${otherBlogs.length > 1 ? 2 : 1} gap-[32px] lg:gap-[4%] w-full mt-8 mb-[6em]`}>
               {otherBlogs.slice(0, 2).map((item, index) => (
                 <Link to={`/blogs/${item.id}`} key={index}>

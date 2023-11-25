@@ -43,7 +43,7 @@ const DetailedResources = () => {
             .then((doc) => {
               if (doc.exists()) {
                 const reso = { id: doc.id, ...doc.data() };
-                console.log('Document data:', reso);
+                // console.log('Document data:', reso);
                 setSelectedResourceItem(reso);
               } else {
                 // Handle the case where the document does not exist

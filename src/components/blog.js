@@ -15,7 +15,7 @@ const BlogHero = () => {
             {blogArray.map((item, index) => (
                 <div key={index} className="w-full ">             
                     <div className=" w-full h-[290px] bg-[#fff] rounded-[15px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
-                    <p className=" mt-6 text-lg font-medium">{item.title}</p>
+                    <p className=" mt-6 text-lg font-medium md:h-[4.5em]">{item.title}</p>
                     <p className=" mt-3 text-[#12121299] text-sm">{item.content.substring(0,100) + '...'}</p>
                     <Link to={`/blogs/${item.id}`}><button className=' flex mt-6 items-center'>
                         <p className=' gradient-text text-base'>Read More</p>

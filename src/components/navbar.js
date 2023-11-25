@@ -76,7 +76,7 @@ const Navbar = () => {
                     </span>
                     <p className=" font-medium cursor-pointer text-lg text-[#121212] font-Outfit mt-5 ">Resources</p>
                         <span className=' text-xs text-[#12121299] mt-3'>
-                            <Link to='/resources'><p className=' mt-3'>Our resources</p></Link>
+                            <Link to='/resources'><p className=' mt-3'>Our Resources</p></Link>
                             <Link to='/faq'><p className=' mt-3'>FAQ</p></Link>
                             <Link to='/blog'><p className=' mt-3'>Our Blog</p></Link>
                         </span>
@@ -154,7 +154,7 @@ const Navbar = () => {
                     </span>
                     { resourceDropdown && (<div className=' text-white bg-[#494E51] absolute w-[198px] top-10 rounded-[15px] py-3 px-6'>
                         <Link to='/resources'><span onClick={ closeResourceDropdown } className=' flex items-center space-x-4'>
-                            <p>Our resources</p>
+                            <p>Our Resources</p>
                             <img src={ outline } className=' w-3 h-3' alt="" />
                         </span></Link>
                         <Link to='/faq' className=''><span onClick={ closeResourceDropdown } className=' flex items-center mt-3 space-x-4'>

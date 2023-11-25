@@ -54,9 +54,19 @@ const BlogAdmin = () => {
 
     //date and time
     // For todays date;
-    Date.prototype.today = function () { 
-        return ((this.getDate() < 10)?"0":"") + this.getDate() +"/"+(((this.getMonth()+1) < 10)?"0":"") + (this.getMonth()+1) +"/"+ this.getFullYear();
-    }
+    Date.prototype.today = function () {
+        const months = [
+            "January", "February", "March", "April",
+            "May", "June", "July", "August",
+            "September", "October", "November", "December"
+        ];
+    
+        const day = this.getDate();
+        const month = months[this.getMonth()];
+        const year = this.getFullYear();
+    
+        return `${month} ${day}, ${year}`;
+    };
 
     // For the time now
     Date.prototype.timeNow = function () {
@@ -67,6 +77,7 @@ const BlogAdmin = () => {
     const date =  newDate.today();
     const time = newDate.timeNow();
 
+    // console.log(date)
     const sumbmitImg = ()=>{
         if(file && blogTitle && blogTag && blogContent){
             setLoadValue('Yes')

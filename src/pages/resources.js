@@ -5,21 +5,15 @@ import adbg from './assets/adBG.svg';
 import admob from './assets/adMob.svg';
 import { motion } from "framer-motion";
 import {useContext} from 'react'
-import { ResourcesContext } from '../contexts/contextprovider';
+import { ResourcesContext, CasesContext } from '../contexts/contextprovider';
 import { Link } from 'react-router-dom';
 
 const Resources = () => {
 
 
     const [resourcesArray] = useContext(ResourcesContext);
+    const [casesArray] = useContext(CasesContext);
 
-    const data = [
-        { topic: "Navigating the Cloud", desc: "A Guide for African Businesses" },
-        { topic: "A Guide for African Businesses", desc: "Emerging Trends in Africa" },
-    ];
-    const cases = [
-        { topic: "Transforming [Client Name] with Cloud Migration", content: "Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing......." },
-    ];
 
     return ( 
         <>
@@ -44,14 +38,15 @@ const Resources = () => {
                 ))}
             </div>
 
-            <p className=" mt-16 font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">Use Cases</p>
-            <div className=" grid grid-cols-1 w-full mt-8 gap-[32px]">
-                {cases.map((item, index) => (
-                    <div key={index} className="w-full text-center">             
-                        <div className=" w-full h-[290px] bg-[#F5F5F4] rounded-[15px]"></div>
-                        <p className="text-left mt-3 text-lg md:text-xl font-medium">{item.topic}</p>
-                        <p className="text-left mt-1 text-[#1e1e1e] text-sm md:text-base">{item.content}</p>
-                    </div>
+            <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] mt-[4em] text-center">Use Cases</p>
+            <p className=" text-center font-normal mt-3 text-lg md:text-xl ">Explore our case studies to see how our solutions have made a real impact.</p>
+            <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-8 mb-[6em]">
+                {casesArray.map((item, index) => (
+                    <Link to={`/use-cases/${item.id}`}><div key={index} className="w-full text-center">             
+                        <div className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
+                        <p className="text-left mt-6 text-xl md:text-3xl font-medium">{item.title}</p>
+                        <p className="text-left mt-3 text-[#1E1E1ECC] text-sm">{item.tagline.substring(0,200)+'...'}</p>
+                    </div></Link>
                 ))}
             </div>
 

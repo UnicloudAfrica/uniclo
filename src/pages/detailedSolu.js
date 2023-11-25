@@ -5,6 +5,8 @@ import { useRef, useEffect, useState } from 'react';
 import { initializeApp } from "firebase/app";
 import {getFirestore, getDoc, doc } from 'firebase/firestore';
 import { motion } from "framer-motion";
+import {useContext} from 'react'
+import { CasesContext } from '../contexts/contextprovider';
 
 const DetailedSolution = ({ }) => {
 
@@ -31,10 +33,7 @@ const DetailedSolution = ({ }) => {
           }
     ]);
 
-    const cases = [
-        { topic: "Transforming [Client Name] with Cloud Migration", content: "Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing......." },
-        { topic: "Transforming [Client Name] with Cloud Migration", content: "Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing Unlocking the Power of Cloud Computing......." },
-    ];
+    const [casesArray] = useContext(CasesContext);
 
     const { id } = useParams();
 
@@ -72,20 +71,17 @@ const DetailedSolution = ({ }) => {
 
             </div>
             <p className=" font-medium text-[30px] leading-[40px] text-center">{selectedSolutionItem.topic}</p>
-            <p className=" mt-3 text-sm font-normal">{selectedSolutionItem.content}</p>
+            <p style={{ whiteSpace: 'pre-line' }} className=" mt-3 text-sm whitespace-pre-line font-normal">{selectedSolutionItem.content}</p>
 
             <p className=" font-medium text-[40px] leading-[50px] text-center mt-16">Use Cases</p>
             <p className=" text-center font-normal mt-3 text-xl ">Explore our case studies to see how our solutions have made a real impact.</p>
             <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-8 mb-[6em]">
-                {cases.map((item, index) => (
-                    <div key={index} className="w-full text-center">             
-                        <div className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]"></div>
-                        <button className=" bg-[#3DC8F91A] px-3 py-2 mr-auto block mt-6 text-base">
-                            <p className=" gradient-text">App development</p>
-                        </button>
-                        <p className="text-left mt-6 text-3xl font-medium">{item.topic}</p>
-                        <p className="text-left mt-3 text-[#1E1E1ECC] text-sm">{item.content}</p>
-                    </div>
+                {casesArray.map((item, index) => (
+                    <Link to={`/use-cases/${item.id}`}><div key={index} className="w-full text-center">             
+                        <div className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
+                        <p className="text-left mt-6 text-xl md:text-3xl font-medium">{item.title}</p>
+                        <p className="text-left mt-3 text-[#1E1E1ECC] text-sm">{item.tagline.substring(0,200)+'...'}</p>
+                    </div></Link>
                 ))}
             </div>
 

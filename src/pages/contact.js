@@ -26,9 +26,9 @@ const Contact = () => {
         transition={{type:'tween', duration:0.5, delay:0.3}}
         className=" my-8 w-full">
             <div className=" w-full p-3 mt-16 md:p-8 border rounded-[30px] border-[#DAE0E6]">
-                <p className=" font-medium text-2xl md:text-3xl">Have a question, need support. or want to chat?</p>
+                <p className=" font-medium text-xl md:text-3xl">Have a question, need support. or want to chat?</p>
                 <p className=" font-normal mt-3 text-base md:text-lg ">Our friendly team would love to hear from you.</p>
-                <div className=" w-full flex mt-8 flex-col md:flex-row justify-between mb-6">
+                <div className=" w-full flex mt-8 flex-col md:flex-row justify-between mb-6 space-y-6 md:space-y-0">
                     <span className=" w-full md:w-[48%]">
                         <label className=" font-Outfit text-base text-[#1E1E1EB2] font-medium" for="first-name">First name</label>
                         <input type="text" id="Last Name" placeholder="First Name" class=" h-[45px] bg-[#F5F5F4] shadow-md shadow-[#1018280D] mt-2 text-gray-900 font-Outfit font-normal placeholder:font-Outfit placeholder:text-[#1E1E1E33] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"/>
@@ -60,8 +60,8 @@ const Contact = () => {
             </div>
         </motion.div>
 
-        <div className=" w-full p-3 mt-16 md:p-8 border rounded-[30px] border-[#DAE0E6] flex flex-col md:flex-row justify-center md:justify-between items-start">
-            <div className=" space-y-2 w-1/3">
+        <div className=" w-full p-5 mt-16 md:p-8 border rounded-[30px] border-[#DAE0E6] flex flex-col md:flex-row justify-center md:justify-between items-start space-y-6 md:space-y-0">
+            <div className=" space-y-2 w-full md:w-1/3">
                 <button className=" w-12 h-12 bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] rounded-[50%] flex justify-center items-center">
                     <img src={ office } alt="" />
                 </button>
@@ -69,7 +69,7 @@ const Contact = () => {
                 <p className=" text-base">100 Smith Street<br></br>Collingwood VIC 3066 AU</p>
             </div>
 
-            <div className=" space-y-2 w-1/3">
+            <div className=" space-y-2 w-full md:w-1/3">
                 <button className=" w-12 h-12 bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] rounded-[50%] flex justify-center items-center">
                     <img src={ chat } alt="" />
                 </button>
@@ -77,7 +77,7 @@ const Contact = () => {
                 <p className=" text-base">+23458900900 <span className=" block uppercase">or</span> <span className=" block gradient-text">support@unicloudafrica.com</span></p>
             </div>
 
-            <div className=" space-y-2 w-1/3">
+            <div className=" space-y-2 w-full md:w-1/3">
                 <button className=" w-12 h-12 bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] rounded-[50%] flex justify-center items-center">
                     <img src={ message } alt="" />
                 </button>

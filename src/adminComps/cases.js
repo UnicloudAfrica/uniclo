@@ -167,7 +167,6 @@ const Cases = () => {
             <table className=" text-center overflow-auto border-b w-full border-[#00000049] mt-3">
                 <thead>
                     <tr className=" text-[#000] text-sm font-Outfit font-medium">
-                        <th className="p-2 border-b border-[#00000049]">Tag</th>
                         <th className="p-2 border-b border-[#00000049]">Date</th>
                         <th className="p-2 border-b border-[#00000049]">Title</th>
                         <th className="p-2 border-b border-[#00000049]">Image</th>
@@ -178,7 +177,6 @@ const Cases = () => {
                     {caseArray.map((doc) => {
                         return (
                             <tr key={doc.id} id={doc.id} className="text-[#000] h-[4em] border-b border-[#00000049] overflow-hidden text-sm font-Outfit font-medium">
-                            <td className="p-2 border-b text-xs gradient-text border-[#00000049]"><button className=' px-2 py-1 bg-[#3DC8F91A] rounded-xl'>{doc.tagline}</button></td>
                             <td className="p-2 border-b  capitalize border-[#00000049]">{ doc.date}</td>
                             <td className="p-2 border-b  capitalize border-[#00000049]">{doc.title ? `${doc.title.substring(0, 30)}...` : 'No title'}</td>
                             <td className=" border-b  border-[#00000049]"><a className=" px-2 py-1 bg-[#939292] text-xs rounded-md" target="blank" href={doc.url}>View</a></td>

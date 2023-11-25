@@ -11,7 +11,7 @@ const Carousel = () => {
     return ( 
         <div className=' px-0 md:px-8 lg:px-6'>
             <div className="flex flex-col w-full mt-8 mb-10 rounded-[20px] border border-[#288DD11A]">
-                <div className=" w-full h-[80px] clip"></div>
+                <div className=" w-full h-[50px] md:h-[80px] clip"></div>
                 <div className=" relative w-full h-[230px] md:h-[200px] flex items-start py-5 md:py-0 md:items-center px-4 md:px-16">
                     <img src={ map } className=' w-[92px] h-[100px] md:w-auto md:h-auto' alt="" />
                     <div className=' w-full flex flex-col items-center mt-[25px] md:mt-0 ml-5 md:ml-[40px]'>
@@ -35,7 +35,7 @@ const Carousel = () => {
                         </div>
                     </div>
                 </div>
-                <div className=" w-full h-[80px] clip"></div>
+                <div className=" w-full h-[50px] md:h-[80px] clip"></div>
             </div>
         </div>
      );

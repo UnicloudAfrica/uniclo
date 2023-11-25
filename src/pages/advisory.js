@@ -12,7 +12,11 @@ const Advisory = () => {
         <Navbar/>
         <div className=" mt-[8em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
             <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">Our Advisory board</p>
-            <p className=" text-center font-normal mt-3 text-xl md:px-[12%]">We’re a small team that loves to create great experiences and make meaningful connections between builders and customers.</p>
+            <p className=" text-center font-normal mt-3 text-lg md:text-xl">Team and Leadership at UniCloud Africa: Pioneering Excellence in the Digital Frontier</p>
+
+            <p className=" text-base font-normal mt-6">At UniCloud Africa, our strength lies in a dynamic team led by visionary leaders with a passion for innovation. From seasoned executives with over decades of hands-on experience to experts in cloud computing, our diverse team is united by a common goal: to revolutionize the way businesses operate in Africa.
+            Our leadership, comprising industry trailblazers, brings a wealth of expertise in operations, finance, telecommunications, and technology, steering UniCloud Africa towards new heights of success. With a commitment to excellence and a focus on client empowerment, our team is dedicated to providing secure, scalable, and reliable cloud solutions that drive digital transformation across the continent.
+            Together, we are not just shaping the future of UniCloud Africa; we are propelling Africa's digital future forward, one innovation at a time. Join us on this transformative journey, where the strength of our team is the driving force behind your success in the digital age.</p>
 
             <div className=" my-[5em] w-full">
                 <div className=" mt-16 flex flex-col">
@@ -38,6 +42,7 @@ const Advisory = () => {
                             <img src={ rudman } className=" absolute top-0 left-0 w-full h-full object-cover rounded-[20px] border border-[#EAEBF0]" alt="" />
                         </div>
                     </div>
+
                     <div className=" w-full flex flex-col md:flex-row justify-between items-start mt-16">
                         <div className=" w-full md:w-[30%] h-[520px] bg-[#F5F5F4] rounded-[20px] relative">
                             <img src={ Seyi } className=" absolute top-0 left-0 w-full h-full object-cover rounded-[20px] border border-[#EAEBF0]" alt="" />
@@ -52,6 +57,7 @@ const Advisory = () => {
                             Seyi, in 2021, was appointed, by the Chief Judge of Lagos State, to the nine-man Governing Council of the Lagos Multi-Door Courthouse (LMDC), for the promotion of the court-connected Alternative Dispute Resolution (ADR), the first in Africa. He is the current Chairman, Finance & Administration Committee and a Member of the Financing Committee of LMDC Governing Council.</p>
                         </div>
                     </div>
+
                     <div className=" w-full flex flex-col-reverse md:flex-row justify-between items-start mt-16 md:text-right">
                         <div className=" w-full md:w-[65%]">
                             <p className=" font-medium text-black text-xl mt-5">Mr. Ladi Okuneye</p>
@@ -62,6 +68,22 @@ const Advisory = () => {
                             <img src={ Ladi } className=" absolute top-0 left-0 w-full h-full object-cover rounded-[20px] border border-[#EAEBF0]" alt="" />
                         </div>
                     </div>
+
+                    <div className=" w-full flex flex-col md:flex-row justify-between items-start mt-16">
+                        <div className=" w-full md:w-[30%] h-[520px] bg-[#F5F5F4] rounded-[20px] relative">
+                            {/* <img src={ Seyi } className=" absolute top-0 left-0 w-full h-full object-cover rounded-[20px] border border-[#EAEBF0]" alt="" /> */}
+                        </div>
+                        <div className=" w-full md:w-[65%]">
+                            <p className=" font-medium text-black text-xl mt-5">Mr. Chuck Umeh, P.E.</p>
+                            <p className=" font-extralight text-[#000000a2] text-base mt-2">Founder and Managing Director, Belcorp Integrated Systems <br/>Limited (Nigeria) and Bel Controls, LLC (United States)</p>
+                            <p className=" text-sm mt-3">Chuck Umeh is a distinguished Professional Engineer and the visionary Founder and Managing Director of Belcorp Integrated Systems Limited in Nigeria and Bel Controls, LLC in the United States. Specializing in developing cutting-edge systems for the Oil, Gas, and Energy (ODE) industries, Chuck brings a wealth of experience and expertise to the field.
+                            Chuck holds a Bachelor's Degree in Engineering Technology with an emphasis in Control Systems and a Master's in Microcomputer Systems, both earned at the University of Houston, USA. With over 25 years of professional experience, he is a seasoned expert in instrumentation and control systems, including Distributed Control Systems (DCS), Emergency Shutdown Systems (ESD), Fire and Gas Systems (FGS), and Supervisory Control and Data Acquisition (SCADA).
+                            Throughout his illustrious career, Chuck has navigated senior roles such as Lead Engineer, Research & Development Manager, and Projects General Manager. His leadership extends beyond borders, having successfully collaborated with diverse nationalities and regional capabilities, enriching his global perspective in the industry.
+                            Currently, Chuck divides his professional efforts between the United States and Nigeria, where he has established a significant presence in the ODE sector. His commitment to professional excellence is underscored by his membership in the International Society of Automation, showcasing his dedication to staying at the forefront of industry advancements.
+                            Chuck Umeh is not only a respected professional but also a family man. Married to Ify Umeh, they share the joy of raising three beautiful children – Beluchi, Ifunanya, and Lotanna. Chuck's legacy is not only evident in his professional achievements but also in the harmonious balance he strikes between his successful career and fulfilling family life.</p>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>

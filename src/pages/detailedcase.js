@@ -2,12 +2,13 @@ import Footer from "../components/footer";
 import Navbar from "../components/navbar";
 import { useParams, Link } from 'react-router-dom';
 import { useRef, useEffect, useState } from 'react';
+import React from 'react';
 import { initializeApp } from "firebase/app";
 import {getFirestore, getDoc, doc, getDocs, collection, query } from 'firebase/firestore';
 import { motion } from "framer-motion";
 
 
-const DetailedResources = () => {
+const DetailedCases = () => {
 
     const firebaseConfig = {
         apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
@@ -22,29 +23,29 @@ const DetailedResources = () => {
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app)
     
-    const[selectedResourceItem, setSelectedResourceItem] = useState([
+    const[selectedCaseItem, setSelectedCaseItem] = useState([
         {
             title: "",
             tagline: "",
             date: "",
             url: "",
-            content: "",
+            content: "\n",
           }
     ]);
+    const [otherCases, setOtherCases] = useState([]);
 
-    const [otherResources, setOtherResources] = useState([]);
 
     const { id } = useParams();
 
     useEffect(() => {
         if (id) {
-          const docRef = doc(db, 'resources', id); // 'id' is the name of the document
+          const docRef = doc(db, 'cases', id); // 'id' is the name of the document
           getDoc(docRef)
             .then((doc) => {
               if (doc.exists()) {
                 const reso = { id: doc.id, ...doc.data() };
                 console.log('Document data:', reso);
-                setSelectedResourceItem(reso);
+                setSelectedCaseItem(reso);
               } else {
                 // Handle the case where the document does not exist
                 console.log("Document does not exist");
@@ -57,24 +58,29 @@ const DetailedResources = () => {
         }
 
         // Fetch all documents in the 'cases' collection
-        const resourcesCollectionRef = collection(db, 'resources');
-        const q = query(resourcesCollectionRef);
+        const casesCollectionRef = collection(db, 'cases');
+        const q = query(casesCollectionRef);
         getDocs(q)
         .then((querySnapshot) => {
-            const otherResourcesData = [];
+            const otherCasesData = [];
             querySnapshot.forEach((doc) => {
-            const resourceData = { id: doc.id, ...doc.data() };
+            const caseData = { id: doc.id, ...doc.data() };
             if (id !== doc.id) {
-                otherResourcesData.push(resourceData);
+                otherCasesData.push(caseData);
             }
             });
-            setOtherResources(otherResourcesData);
+            setOtherCases(otherCasesData);
         })
         .catch((error) => {
             console.error("Error getting documents:", error);
         });
         
     }, [id, db]);
+
+    
+
+
+
 
     return ( 
         <>
@@ -83,18 +89,19 @@ const DetailedResources = () => {
          
         >
         <div className="mt-[8em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
-            <p className=" font-medium text-[40px] leading-[50px] text-center">Resources</p>
-            <div className=" w-full h-[350px] my-16 bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${selectedResourceItem.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+            <p className=" font-medium text-[40px] leading-[50px] text-center">Use Case</p>
+            <div className=" w-full h-[350px] my-16 bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${selectedCaseItem.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
 
             </div>
-            <p className=" font-medium text-[30px] leading-[40px] text-center">{selectedResourceItem.title}</p>
-            <p style={{ whiteSpace: 'pre-line' }} className=" mt-3 text-sm font-normal whitespace-pre-line">{selectedResourceItem.content}</p>
+            <p className=" font-medium text-[30px] leading-[40px] text-center">{selectedCaseItem.title}</p>
+            <p style={{ whiteSpace: 'pre-line' }} className=" mt-3 text-sm font-normal whitespace-pre-line" dangerouslySetInnerHTML={{ __html: selectedCaseItem.content }} />
 
-            <p className=" font-medium text-[40px] leading-[50px] text-center mt-16">Other Resources</p>
-    
-            <div className={`grid grid-cols-1 md:grid-cols-${otherResources.length > 1 ? 2 : 1} gap-[32px] lg:gap-[4%] w-full mt-8 mb-[6em]`}>
-                {otherResources.map((item, index) => (
-                    <Link to={`/resources/${item.id}`} key={index}>
+            <p className=" font-medium text-[40px] leading-[50px] text-center mt-16">Other Case Studies</p>
+            <p className=" text-center font-normal mt-3 text-xl ">Explore our case studies to see how our solutions have made a real impact.</p>
+
+            <div className={`grid grid-cols-1 md:grid-cols-${otherCases.length > 1 ? 2 : 1} gap-[32px] lg:gap-[4%] w-full mt-8 mb-[6em]`}>
+                {otherCases.map((item, index) => (
+                    <Link to={`/use-cases/${item.id}`} key={index}>
                     <div className="w-full text-center">
                         <div className="w-full h-[290px] bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
                         <p className="text-left mt-6 text-xl md:text-3xl font-medium">{item.title}</p>
@@ -112,4 +119,4 @@ const DetailedResources = () => {
      );
 }
  
-export default DetailedResources;
+export default DetailedCases;

@@ -18,6 +18,7 @@ import Cms from "./pages/cms";
 import Advisory from "./pages/advisory";
 import DetailedBlog from "./pages/detailedblog";
 import DetailedResources from "./pages/detailedresouces";
+import DetailedCases from "./pages/detailedcase";
 
 function App() {
   const location = useLocation();
@@ -44,6 +45,7 @@ function App() {
           <Route path="/blog" element={<Blog />} />
           <Route path="/solutions/:id" element={ <DetailedSolution />} />
           <Route path="/resources/:id" element={ <DetailedResources/> } />
+          <Route path="/use-cases/:id" element={ <DetailedCases/> } />
           <Route path="/blogs/:id" element={<DetailedBlog/> } />
           <Route path="/cms-admin" element={<Cms/>} />
         </Routes>

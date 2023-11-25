@@ -113,7 +113,7 @@ const FaqPage = () => {
                 />
             </div>
             <div
-            className={`mt-3 answer${openIndex === index ? ' open' : ''}`}
+            className={`mt-3 text-sm md:text-base answer${openIndex === index ? ' open' : ''}`}
             dangerouslySetInnerHTML={{ __html: faq.answer }}
           />
             </div>

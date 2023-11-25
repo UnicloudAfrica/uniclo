@@ -3,7 +3,7 @@ import Navbar from "../components/navbar";
 import { useParams, Link } from 'react-router-dom';
 import { useRef, useEffect, useState } from 'react';
 import { initializeApp } from "firebase/app";
-import {getFirestore, getDoc, doc } from 'firebase/firestore';
+import {getFirestore, getDoc, doc, getDocs, collection, query } from 'firebase/firestore';
 import { motion } from "framer-motion";
 
 
@@ -31,6 +31,7 @@ const DetailedBlog = () => {
             content: "",
           }
     ]);
+    const [otherBlogs, setOtherBlogs] = useState([]);
 
     const { id } = useParams();
 
@@ -53,6 +54,25 @@ const DetailedBlog = () => {
               console.error("Error getting document:", error);
             });
         }
+
+        // Fetch all documents in the 'blog' collection
+        const blogsCollectionRef = collection(db, 'blog');
+        const q = query(blogsCollectionRef);
+        getDocs(q)
+        .then((querySnapshot) => {
+            const otherBlogsData = [];
+            querySnapshot.forEach((doc) => {
+            const blogData = { id: doc.id, ...doc.data() };
+            if (id !== doc.id) {
+                otherBlogsData.push(blogData);
+            }
+            });
+            setOtherBlogs(otherBlogsData);
+        })
+        .catch((error) => {
+            console.error("Error getting documents:", error);
+        });
+
     }, [id, db]);
 
 
@@ -68,23 +88,20 @@ const DetailedBlog = () => {
             <div className=" w-full h-[350px] my-12 bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${selectedBlogItem.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
 
             </div>
-            <p className=" mt-3 text-sm font-normal">{selectedBlogItem.content}</p>
+            <p style={{ whiteSpace: 'pre-line' }} className=" mt-3 text-sm font-normal whitespace-pre-line">{selectedBlogItem.content}</p>
 
-            <p className=" font-medium text-[40px] leading-[50px] text-center mt-16">Use Cases</p>
-            <p className=" text-center font-normal mt-3 text-xl ">Explore our case studies to see how our solutions have made a real impact.</p>
-            <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-8 mb-[6em]">
-                {/* {cases.map((item, index) => (
-                    <div key={index} className="w-full text-center">             
-                        <div className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]"></div>
-                        <button className=" bg-[#3DC8F91A] px-3 py-2 mr-auto block mt-6 text-base">
-                            <p className=" gradient-text">App development</p>
-                        </button>
-                        <p className="text-left mt-6 text-3xl font-medium">{item.topic}</p>
-                        <p className="text-left mt-3 text-[#1E1E1ECC] text-sm">{item.content}</p>
-                    </div>
-                ))} */}
+            <p className=" font-medium text-[40px] leading-[50px] text-center mt-16">View  our latest blogs</p>
+            <div className={`grid grid-cols-1 md:grid-cols-${otherBlogs.length > 1 ? 2 : 1} gap-[32px] lg:gap-[4%] w-full mt-8 mb-[6em]`}>
+              {otherBlogs.slice(0, 2).map((item, index) => (
+                <Link to={`/blogs/${item.id}`} key={index}>
+                  <div className="w-full text-center">
+                    <div className="w-full h-[290px] bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
+                    <p className="text-left mt-6 text-xl md:text-3xl font-medium">{item.title}</p>
+                    <p className="text-left mt-3 text-[#1E1E1ECC] text-sm">{item.content.substring(0, 200) + '...'}</p>
+                  </div>
+                </Link>
+              ))}
             </div>
-
         </div>
 
         <Footer/>

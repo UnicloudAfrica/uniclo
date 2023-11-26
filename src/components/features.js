@@ -13,9 +13,6 @@ const Features = () => {
         <>
         <div className="py-[3em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
             <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            transition={{ duration: 1, type:'tween' }}
             className=' flex flex-col md:flex-row w-full justify-between items-start'
             >
                 <p className=" w-full md:w-[48%] font-medium text-2xl md:leading-[50px] lg:text-[40px]">Cloud services for service providers and enterprises</p>
@@ -25,9 +22,7 @@ const Features = () => {
             <div className=" grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[32px]  mt-8 md:mt-16">
 
                 <motion.div 
-                initial={{ y: 20, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                transition={{ duration: 1, type:'tween' }}
+               
                 className='w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[#288DD11A] to-[#3FE0C81A] p-5 lg:p-7'>
                     <span className=' flex flex-col md:flex-row items-start md:items-center md:space-x-3'>
                         <img 
@@ -39,9 +34,7 @@ const Features = () => {
                 </motion.div>
 
                 <motion.div 
-                initial={{ y: 20, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                transition={{ duration: 1, type:'tween' }}
+               
                 className='w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[#288DD11A] to-[#3FE0C81A] p-5 lg:p-7'>
                     <span className=' flex flex-col md:flex-row items-start md:items-center md:space-x-3'>
                         <img 
@@ -53,9 +46,7 @@ const Features = () => {
                 </motion.div>
 
                 <motion.div 
-                initial={{ y: 20, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                transition={{ duration: 1, type:'tween' }}
+               
                 className='w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[#288DD11A] to-[#3FE0C81A] p-5 lg:p-7'>
                     <span className=' flex flex-col md:flex-row items-start md:items-center md:space-x-3'>
                         <img 
@@ -67,9 +58,6 @@ const Features = () => {
                 </motion.div>
 
                 <motion.div 
-                initial={{ y: 20, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                transition={{ duration: 1, type:'tween' }}
                 className='w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[#288DD11A] to-[#3FE0C81A] p-5 lg:p-7'>
                     <span className=' flex flex-col md:flex-row items-start md:items-center md:space-x-3'>
                         <img 
@@ -81,9 +69,6 @@ const Features = () => {
                 </motion.div>
 
                 <motion.div 
-                initial={{ y: 20, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                transition={{ duration: 1, type:'tween' }}
                 className='w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[#288DD11A] to-[#3FE0C81A] p-5 lg:p-7'>
                     <span className=' flex flex-col md:flex-row items-start md:items-center md:space-x-3'>
                         <img 
@@ -95,9 +80,7 @@ const Features = () => {
                 </motion.div>
 
                 <motion.div 
-                initial={{ y: 20, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                transition={{ duration: 1, type:'tween' }}
+    
                 className='w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[#288DD11A] to-[#3FE0C81A] p-5 lg:p-7'>
                     <span className=' flex flex-col md:flex-row items-start md:items-center md:space-x-3'>
                         <img 

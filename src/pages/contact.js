@@ -21,9 +21,6 @@ const Contact = () => {
             <p className=" text-center font-normal mt-3 text-lg md:text-xl ">Got a question or need some help? Send us a note to Our Experts</p>
 
             <motion.div
-        initial={{y:200, opacity:0}}
-        whileInView={{y:0, opacity:1}}
-        transition={{type:'tween', duration:0.5, delay:0.3}}
         className=" my-8 w-full">
             <div className=" w-full p-3 mt-16 md:p-8 border rounded-[30px] border-[#DAE0E6]">
                 <p className=" font-medium text-xl md:text-3xl">Have a question, need support. or want to chat?</p>
@@ -66,7 +63,7 @@ const Contact = () => {
                     <img src={ office } alt="" />
                 </button>
                 <p className=" font-medium text-xl">Our head office</p>
-                <p className=" text-base">100 Smith Street<br></br>Collingwood VIC 3066 AU</p>
+                <p className=" text-sm text-[#676767]">Baderinwa Alabi Street, Central Lekki<br></br>Residents' Association, Rahman Adeboyejo<br></br> Street Lekki Phase 1 Lagos, Nigeria</p>
             </div>
 
             <div className=" space-y-2 w-full md:w-1/3">
@@ -74,7 +71,7 @@ const Contact = () => {
                     <img src={ chat } alt="" />
                 </button>
                 <p className=" font-medium text-xl">Connect with us on</p>
-                <p className=" text-base">+23458900900 <span className=" block uppercase">or</span> <span className=" block gradient-text">support@unicloudafrica.com</span></p>
+                <p className=" text-sm"> <span className=" block gradient-text">support@unicloudafrica.com</span></p>
             </div>
 
             <div className=" space-y-2 w-full md:w-1/3">
@@ -82,10 +79,10 @@ const Contact = () => {
                     <img src={ message } alt="" />
                 </button>
                 <p className=" font-medium text-xl">Connect with us on social media</p>
-                <span className=" flex space-x-4">
-                    <img src={ fb } alt="" />
-                    <img src={ linked } alt="" />
-                    <img src={ twi } alt="" />
+                <span className=" flex space-x-6">
+                    <img src={ fb } className=" w-4 h-4" alt="" />
+                    <img src={ linked } className=" w-4 h-4" alt="" />
+                    <img src={ twi } className=" w-4 h-4" alt="" />
                 </span>
             </div>
 

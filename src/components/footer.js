@@ -49,7 +49,7 @@ const Footer = () => {
             <div className=' text-base '>
                 <p className=' font-semibold mb-5 text-[#F9F9F9]'>Resources</p>
                 <span className=' mt-3'>
-                    <Link to='/resources'><p className=' mt-3'>Our resources</p></Link>
+                    <Link to='/resources'><p className=' mt-3'>Our Resources</p></Link>
                     <Link to='/faq'><p className=' mt-3'>FAQ</p></Link>
                     <Link to='/blog'><p className=' mt-3'>Our Blog</p></Link>
                 </span>

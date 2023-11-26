@@ -69,7 +69,7 @@ const Faq = () => {
             />
           </div>
           <div className={`answer${openIndex === index ? ' open' : ''}`}>
-            <p className="font-Outfit font-normal text-sm md:text-base mt-5 transition-all duration-500">
+            <p className="font-Outfit font-normal text-[#676767] text-sm md:text-base mt-5 transition-all duration-500">
               {faq.answer}
             </p>
           </div>

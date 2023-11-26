@@ -80,12 +80,9 @@ const FaqPage = () => {
          
         >
         <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        whileInView={{ y: 0, opacity: 1 }}
-        transition={{ duration: 1, type: 'tween' }}
         className="py-[3em] px-4 md:px-8 lg:px-16 w-full mt-[8em] font-Outfit text-[#121212]"
         >
-        <p className=" font-medium text-[40px] leading-[50px] text-center mb-6">
+        <p className=" font-medium text-[40px] leading-[50px] text-center mb-3">
             Frequently asked questions?
         </p>
         <p className=" font-medium text-lg md:text-xl text-center mb-16">
@@ -100,7 +97,7 @@ const FaqPage = () => {
                 openIndex === index ? ' active' : ''
             }`}
             >
-            <div className="flex flex-row justify-between w-full items-center">
+            <div className="flex flex-row justify-between w-full space-y-2 items-center">
                 <p className="font-Outfit text-base md:text-lg font-normal">
                 {faq.question}
                 </p>
@@ -113,7 +110,7 @@ const FaqPage = () => {
                 />
             </div>
             <div
-            className={`mt-3 text-sm md:text-base answer${openIndex === index ? ' open' : ''}`}
+            className={` text-sm md:text-base text-[#676767] answer${openIndex === index ? ' open' : ''}`}
             dangerouslySetInnerHTML={{ __html: faq.answer }}
           />
             </div>
@@ -122,14 +119,11 @@ const FaqPage = () => {
 
 
         <motion.div 
-        initial={{ y: 20, opacity: 0 }}
-        whileInView={{ y: 0, opacity: 1 }}
-        transition={{ duration: 1, type:'tween' }}
         className="  py-[3em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#fff]">
             <div className=" w-full h-[400px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] relative space-y-4">
                 <img src={ adbg } className=" absolute h-[300px]" alt="" />
                 <img src={ avatar } className='' alt="" />
-                <p className=' font-medium px-4 md:px-0 text-xl'>Still have questions?</p>
+                <p className=' font-semibold px-4 md:px-0 text-2xl'>Still have questions?</p>
                 <p className=' font-normal px-4 md:px-0 text-base text-[#FFFFFFCC]'>Can’t find the answer you’re looking for? Please chat to our friendly team.</p>
                 <button className=" px-9 py-4 bg-[#fff] rounded-[30px] text-base text-[#000] mt-4">Get started now</button>
             </div>

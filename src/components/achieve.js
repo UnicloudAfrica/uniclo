@@ -12,7 +12,7 @@ const Acheive = () => {
                         <p className=" text-[32px] md:text-[40px]">500+</p>
                         <p className="text-base md:text-xl">Clouds</p>
                     </span>
-                    <img src={ leftBorder } className=' centered absolute md:top-5 -top-12 left-[30%] md:left-0 z-10 rotate-90 md:rotate-0 h-[150px] md:h-auto' alt="" />
+                    {/* <img src={ leftBorder } className=' centered absolute md:top-5 -top-12 left-[30%] md:left-0 z-10 rotate-90 md:rotate-0 h-[150px] md:h-auto' alt="" /> */}
                     <span className=" flex flex-col ml-5 mr-5 md:mr-0 md:mt-10 justify-start">
                         <p className=" text-[32px] md:text-[40px]">24+</p>
                         <p className="text-base md:text-xl">Countries</p>
@@ -28,7 +28,7 @@ const Acheive = () => {
                         <p className=" text-[32px] md:text-[40px]">250+</p>
                         <p className="text-base md:text-xl">Partners</p>
                     </span>
-                    <img src={ rightBorder } className=' centered rotate-90 md:rotate-0 absolute -top-5 left-[30%] md:left-0 z-10 md:-top-12 lg:-top-0 h-[150px] md:h-auto md:w-full' alt="" />
+                    {/* <img src={ rightBorder } className=' centered rotate-90 md:rotate-0 absolute -top-5 left-[30%] md:left-0 z-10 md:top-2 h-[150px] md:h-auto md:w-full' alt="" /> */}
                     <span className=" flex flex-col mr-5 md:mt-10 text-right justify-start">
                         <p className=" text-[32px] md:text-[40px]">50+</p>
                         <p className="text-base md:text-xl">Data Center</p>

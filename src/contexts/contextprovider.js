@@ -9,6 +9,7 @@ export const EventsContext = createContext();
 export const ResourcesContext = createContext();
 export const SolutionsContext = createContext();
 export const CasesContext = createContext();
+export const PartnerContext = createContext();
 
 // Custom hook to fetch data from Firestore
 const useFirestoreData = (db, collectionName) => {
@@ -57,6 +58,7 @@ const ContextProvider = (props) => {
   const resourceArray = useFirestoreData(db, 'resources');
   const solutionArray = useFirestoreData(db, 'solutions');
   const caseArray = useFirestoreData(db, 'cases');
+  const partnersArray = useFirestoreData(db, 'Partner');
 
   return (
     <>
@@ -65,9 +67,11 @@ const ContextProvider = (props) => {
           <ResourcesContext.Provider value={[resourceArray]}>
             <SolutionsContext.Provider value={[solutionArray]}>
               <CasesContext.Provider value={[caseArray]}>
-                <BlogContext.Provider value={[blogArray]}>
-                  {props.children}
-                </BlogContext.Provider>
+                <PartnerContext.Provider value={[partnersArray]}>
+                  <BlogContext.Provider value={[blogArray]}>
+                    {props.children}
+                  </BlogContext.Provider>
+                </PartnerContext.Provider>
               </CasesContext.Provider>
             </SolutionsContext.Provider>
           </ResourcesContext.Provider>

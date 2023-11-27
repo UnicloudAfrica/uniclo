@@ -10,7 +10,7 @@ const Hero = () => {
           <p 
             className="font-medium text-[32px] leading-10 lg:text-6xl lg:leading-[80px]"
           >
-            The continent’s leading truly pan African cloud platform
+            The Continent’s Leading Truly Pan African Cloud Platform
           </p>
           <p
             className="w-full text-base md:text-2xl text-center font-normal mt-3 md:leading-[30px]"

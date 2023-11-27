@@ -74,7 +74,7 @@ const Services = () => {
         <div className=" mt-[8em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
             <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">Our Services</p>
             <p className=" text-center font-normal text-[#676767] mt-1 text-lg md:text-xl ">Discover a range of cloud services that empower your business to grow and succeed</p>
-            <div className=" grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-[32px] w-full mt-12">
+            <div className=" grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[32px] w-full mt-12">
                 {data.map((item, index) => (
                     <div key={index} className="w-full text-center">             
                         <div className=" w-full bg-gradient-to-r from-[#288DD11A] to-[#3FE0C81A] relative md:h-[300px] rounded-[20px] p-6">
@@ -112,7 +112,7 @@ const Services = () => {
                     </button>
                 </div>
             </div>
-            <div className=" grid grid-cols-1 md:grid-cols-3 gap-[32px] lg:gap-[4%] w-full mt-8 mb-[6em]">
+            <div className=" grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[32px] lg:gap-[4%] w-full mt-8 mb-[6em]">
                 {plan.map((item, index) => (
                     <div key={index} className="w-full text-center">             
                         <div className=" w-full bg-[#F5F5F4] rounded-[20px] p-6">

@@ -43,8 +43,11 @@ const Resources = () => {
                 {casesArray.map((item, index) => (
                     <Link to={`/use-cases/${item.id}`}><div key={index} className="w-full text-center">             
                         <div className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
-                        <p className="text-left mt-6 text-xl md:text-2xl font-medium">{item.title}</p>
+                        <p className="text-left mt-6 text-xl lg:text-2xl font-medium">{item.title}</p>
                         <p className="text-left mt-3 text-[#1E1E1ECC] text-sm">{item.tagline.substring(0,200)+'...'}</p>
+                        <button className=' flex mt-6 items-center'>
+                            <p className=' gradient-text text-base'>View more</p>
+                        </button>
                     </div></Link>
                 ))}
             </div>

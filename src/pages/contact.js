@@ -57,8 +57,8 @@ const Contact = () => {
             </div>
         </motion.div>
 
-        <div className=" w-full p-5 mt-16 md:p-8 border rounded-[30px] border-[#DAE0E6] flex flex-col md:flex-row justify-center md:justify-between items-start space-y-6 md:space-y-0">
-            <div className=" space-y-2 w-full md:w-1/3">
+        <div className=" w-full p-5 mt-16 md:p-8 border rounded-[30px] border-[#DAE0E6] flex flex-col lg:flex-row justify-center md:justify-between items-start space-y-6 lg:space-y-0">
+            <div className=" space-y-2 w-full lg:w-1/3">
                 <button className=" w-12 h-12 bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] rounded-[50%] flex justify-center items-center">
                     <img src={ office } alt="" />
                 </button>
@@ -66,7 +66,7 @@ const Contact = () => {
                 <p className=" text-sm text-[#676767]">Baderinwa Alabi Street, Central Lekki<br></br>Residents' Association, Rahman Adeboyejo<br></br> Street Lekki Phase 1 Lagos, Nigeria</p>
             </div>
 
-            <div className=" space-y-2 w-full md:w-1/3">
+            <div className=" space-y-2 w-full lg:w-1/3">
                 <button className=" w-12 h-12 bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] rounded-[50%] flex justify-center items-center">
                     <img src={ chat } alt="" />
                 </button>
@@ -74,7 +74,7 @@ const Contact = () => {
                 <p className=" text-sm"> <span className=" block gradient-text">support@unicloudafrica.com</span></p>
             </div>
 
-            <div className=" space-y-2 w-full md:w-1/3">
+            <div className=" space-y-2 w-full lg:w-1/3">
                 <button className=" w-12 h-12 bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] rounded-[50%] flex justify-center items-center">
                     <img src={ message } alt="" />
                 </button>

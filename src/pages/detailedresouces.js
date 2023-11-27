@@ -122,7 +122,7 @@ const DetailedResources = () => {
                     <Link to={`/resources/${item.id}`} key={index}>
                     <div className="w-full text-center">
                         <div className="w-full h-[290px] bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
-                        <p className="text-left mt-6 text-xl md:text-3xl font-medium">{item.title}</p>
+                        <p className="text-left mt-6 text-xl lg:text-3xl font-medium">{item.title}</p>
                         <p className="text-left mt-3 text-[#1E1E1ECC] text-sm">{item.tagline.substring(0, 200) + '...'}</p>
                     </div>
                     </Link>

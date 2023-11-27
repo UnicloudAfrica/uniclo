@@ -20,7 +20,7 @@ const Carousel = () => {
                 <p className=" text-base md:text-xl font-Outfit font-medium">
                 Making Cloud Service Available For Africa <span className="">Enterprises like:</span>
                 </p>
-                <div className="mt-4 w-full md:mt-5 flex justify-between space-x-6 md:space-x-0  overflow-x-scroll scrollbar-hide">
+                <div className="mt-4 w-full md:mt-5 flex justify-between space-x-6 lg:space-x-0  overflow-x-scroll scrollbar-hide">
                     <img src={binance} className= "w-[100px] md:w-auto md:h-auto " alt="" />
                     <img src={bitcoin} className=" w-[100px] md:w-auto md:h-auto " alt="" />
                     <img src={coinbase} className=" w-[100px] md:w-auto md:h-auto " alt="" />

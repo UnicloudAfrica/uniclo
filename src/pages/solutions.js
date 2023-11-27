@@ -30,7 +30,7 @@ const Solutions = () => {
 
             <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">Solutions</p>
             <p className=" text-center font-normal mt-3 text-lg md:text-xl text-[#676767] ">Discover Your Custom Cloud Advantage: Tailored Solutions for Every Industry</p>
-            <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-16 mb-[6em] md:mb-[10em]">
+            <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-16">
                 {solutionsArray.map((item, index) => (
                     <Link to={`/solutions/${item.id}`}><div key={item.id} id={item.id} className="w-full text-center">             
                         <div className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
@@ -43,13 +43,13 @@ const Solutions = () => {
                 ))}
             </div>
             
-            <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] mt-[4em] text-center">Use Cases</p>
+            <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] mt-16 lg:mt-40 text-center">Use Cases</p>
             <p className=" text-center font-normal mt-3 text-lg md:text-xl text-[#676767]">Explore our case studies to see how our solutions have made a real impact.</p>
             <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-8 mb-[6em]">
                 {casesArray.map((item, index) => (
                     <Link to={`/use-cases/${item.id}`}><div key={index} className="w-full text-center">             
                         <div className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
-                        <p className="text-left mt-6 text-xl md:text-2xl font-medium">{item.title}</p>
+                        <p className="text-left mt-6 text-xl lg:text-2xl font-medium">{item.title}</p>
                         <p className="text-left mt-3 text-[#676767] text-sm">{item.tagline.substring(0,200)+'...'}</p>
                         <button className=' flex mt-6 items-center'>
                             <p className=' gradient-text text-base'>View more</p>

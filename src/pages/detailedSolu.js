@@ -122,10 +122,10 @@ const DetailedSolution = ({ }) => {
             <p className=" text-center font-normal mt-3 text-xl text-[#676767]">Discover Your Custom Cloud Advantage: Tailored Solutions for Every Industry</p>
             <div className={`grid grid-cols-1 md:grid-cols-${otherSolutions.length > 1 ? 2 : 1} gap-[32px] lg:gap-[4%] w-full mt-8 mb-[6em]`}>
               {otherSolutions.slice(0, 2).map((item, index) => (
-                <Link to={`/blogs/${item.id}`} key={index}>
+                <Link to={`/solutions/${item.id}`} key={index}>
                   <div className="w-full text-center">
                     <div className="w-full h-[290px] bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
-                    <p className="text-left mt-6 text-xl md:text-2xl font-medium">{item.topic}</p>
+                    <p className="text-left mt-6 text-xl lg:text-2xl font-medium">{item.topic}</p>
                     <p className="text-left mt-3 text-[#1E1E1ECC] text-sm">{item.desc}</p>
                     <button className=' flex mt-6 items-center'>
                         <p className=' gradient-text text-base'>View more</p>

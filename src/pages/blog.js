@@ -26,6 +26,9 @@ const Blog = () => {
             <div className=" w-full flex justify-between items-center relative mt-8">
                 <select name="" id="" className="  px-3 md:px-6 py-3 border text-xs md:text-base border-[#EAEBF0] flex justify-center rounded-[10px] custom-dropdown w-[140px]  md:w-[250px]">
                     <option value="">All Categories</option>
+                    {/* <option value="">Cloud Computing</option>
+                    <option value="">Cloud Storage</option>
+                    <option value="">Web Hosting</option> */}
                 </select>
 
                 <input  placeholder="Search blog posts" className=" px-3 md:px-6 py-3 border text-xs md:text-base placeholder:text-[#1e1e1e] border-[#EAEBF0] flex justify-center rounded-[10px] w-[140px]  md:w-[250px] relative" type="text"/>
@@ -39,7 +42,7 @@ const Blog = () => {
                         <button className=" bg-[#3DC8F91A] px-3 py-2 mr-auto rounded-[30px] block mt-6 text-sm md:text-base">
                             <p className=" gradient-text">{item.tag}</p>
                         </button>
-                        <p className="text-left mt-6 text-xl md:text-2xl font-medium md:h-[2.5em]">{item.title}</p>
+                        <p className="text-left mt-6 text-xl lg:text-2xl font-medium lg:h-[2.5em]">{item.title}</p>
                         <p className="text-left mt-3 text-[#1E1E1E99] text-sm">{item.content.substring(0,190) + '...'}</p>
                         <p className="text-left mt-3 text-[#121212] font-medium text-base">{item.date}</p>
                     </div></Link>

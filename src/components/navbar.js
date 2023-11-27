@@ -57,7 +57,7 @@ const Navbar = () => {
         <>
         <div id="overlay" className=" w-full bg-[#fff] backdrop-blur-xl p-6 flex justify-center items-center pb-[100px] -translate-y-[150vh] shadow transition-all duration-700 top-[78px] fixed z-[9999]">
             <div className="w-full flex flex-col justify-center items-center space-y-5">
-                <div className=' w-full flex flex-row justify-between text-lg'>
+                <div className=' w-full flex flex-row justify-between md:hidden text-lg'>
                     <button className=' border border-[#EAEBF0] py-3 w-[48%] text-[#121212] text-center font-Outfit font-normal rounded-[30px]'>Login</button>
                     <button className=' bg-gradient-to-r from-[#288DD1] via-[#3fd0e0] to-[#3FE0C8] py-3 w-[48%] text-[#fff] text-center font-Outfit font-normal rounded-[30px]'>Register</button>
                 </div>

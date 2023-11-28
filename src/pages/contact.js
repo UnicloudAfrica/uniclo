@@ -23,7 +23,7 @@ const Contact = () => {
             <motion.div
         className=" my-8 w-full">
             <div className=" w-full p-3 mt-16 md:p-8 border rounded-[30px] border-[#DAE0E6]">
-                <p className=" font-medium text-xl md:text-3xl">Have a question, need support. or want to chat?</p>
+                <p className=" font-medium text-xl md:text-3xl">Have a question, need support, or want to chat?</p>
                 <p className=" font-normal mt-3 text-base md:text-lg ">Our friendly team would love to hear from you.</p>
                 <div className=" w-full flex mt-8 flex-col md:flex-row justify-between mb-6 space-y-6 md:space-y-0">
                     <span className=" w-full md:w-[48%]">

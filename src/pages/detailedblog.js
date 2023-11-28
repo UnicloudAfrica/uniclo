@@ -117,7 +117,7 @@ const DetailedBlog = () => {
             <div className=" w-full h-[350px] my-12 bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${selectedBlogItem.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
 
             </div>
-            <p style={{ whiteSpace: 'pre-line' }} className=" mt-3 text-base text-[#676767] font-normal md:px-[15%] whitespace-pre-line" dangerouslySetInnerHTML={{ __html: selectedBlogItem.content }}/>
+            <p style={{ whiteSpace: 'pre-line' }} className=" mt-3 text-base text-[#676767] text-justify font-normal md:px-[15%] whitespace-pre-line" dangerouslySetInnerHTML={{ __html: selectedBlogItem.content }}/>
             <div className=" md:px-[15%] mt-6">
               <button onClick={ handleLinkCopy } className=" flex px-3 py-2 border border-[#EAEBF0] rounded-[8px] justify-center items-center space-x-2">
                 <img src={ copy } className=" w-4 h-4" alt="" />
@@ -132,7 +132,7 @@ const DetailedBlog = () => {
                   <div className="w-full text-center">
                     <div className="w-full h-[290px] bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
                     <p className="text-left mt-6 text-xl lg:text-2xl font-medium md:h-[2.5em]">{item.title}</p>
-                    <p className="text-left mt-3 text-[#1E1E1ECC] text-sm">{item.content.substring(0, 200) + '...'}</p>
+                    <p className="text-left mt-3 text-[#1E1E1ECC] text-sm">{item.drawin.substring(0, 200) + '...'}</p>
                     <button className=' flex mt-6 items-center'>
                             <p className=' gradient-text text-base'>View more</p>
                         </button>
@@ -147,7 +147,7 @@ const DetailedBlog = () => {
                     <img src={adbg} className="hidden md:block absolute left-0 w-full h-full object-cover rounded-[30px]" alt="" />
                     <img src={admob} className="z-10 absolute top-0 h-full w-full object-cover block md:hidden" alt="" />
                     <p className=' font-semibold text-xl md:text-3xl'>Want product news and updates</p>
-                    <p className=' font-normal px-4 md:px-0 text-lg md:text-xl'>Subscribe to Unicloud Africa blog to get update right in your inbox</p>
+                    <p className=' font-normal px-4 md:px-0 text-lg md:text-xl'>Subscribe to UniCloud Africa blog to get update right in your inbox</p>
                     <div className=" flex flex-col md:flex-row items-center justify-center z-20  mt-4 md:space-x-6 space-y-4 md:space-y-0">
                         <input placeholder="Enter Email" className=" w-full md:w-auto h-[52px] bg-[#133D4C80] py-2.5 px-4 md:px-7 text-base placeholder:text-white placeholder:font-Outfit font-Outfit placeholder:text-sm  rounded-[30px]" type="text" />
                         <button className="  md:w-auto px-6 md:px-9 py-3 md:py-4 bg-[#fff] rounded-[30px] text-base text-[#000]">Subscribe</button>

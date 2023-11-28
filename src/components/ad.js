@@ -13,7 +13,7 @@ const Ads = () => {
             <img src={adbg} className="hidden md:block absolute left-0 w-full h-full object-cover rounded-[30px]" alt="" />
             <img src={admob} className="z-10 absolute top-0 h-full w-full object-cover block md:hidden" alt="" />
             <p className="font-semibold text-3xl md:text-5xl">Start today</p>
-            <p className="font-normal px-4 md:px-0 text-xl">Sign up now and you'll be up and running on Unicloud Africa in just minutes.</p>
+            <p className="font-normal px-4 md:px-0 text-xl">Sign up now and you'll be up and running on UniCloud Africa in just minutes.</p>
             <button className="px-9 py-4 bg-[#fff] rounded-[30px] text-base text-[#000] mt-4">Get started now</button>
         </div>
         </motion.div>

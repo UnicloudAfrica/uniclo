@@ -15,7 +15,7 @@ const Features = () => {
             <motion.div
             className=' flex flex-col md:flex-row w-full justify-between items-start'
             >
-                <p className=" w-full md:w-[48%] font-medium text-2xl lg:leading-[50px] md:text-3xl lg:text-[40px]">Cloud Services for Service Providers and Enterprises</p>
+                <p className=" w-full md:w-[48%] font-medium text-2xl md:text-3xl lg:text-4xl">Cloud Services for African Businesses and Government</p>
                 <p className=" w-full md:w-[48%] text-base mt-3 md:mt-0">Get on-demand, enterprise-grade cloud services for compute, networking, and storage, anywhere - on-premises, hybrid, multi-cloud, and at the edge. Pay only for what you use and lower your costs.</p>
             </motion.div>
             
@@ -28,7 +28,7 @@ const Features = () => {
                         <img 
                         src={ beneone }
                         alt="" />
-                        <p className=' font-medium text-xl mt-2'>Zero-risk, cloud services.</p>
+                        <p className=' font-medium text-xl mt-2'>Zero-risk, cloud services</p>
                     </span>
                     <p className=' text-[#121212CC] text-sm md:text-base mt-2'>Improve your Cloud Services with Access to fully-managed IT infrastructure on demand. Only pay for what you use. Scale up, down or turn it off at any time. No long-term contract or CapEx hardware investments.</p>
                 </motion.div>
@@ -40,7 +40,7 @@ const Features = () => {
                         <img 
                         src={ benetwo }
                         alt="" />
-                        <p className=' font-medium text-xl mt-2'>Hybrid-ready by design.</p>
+                        <p className=' font-medium text-xl mt-2'>Hybrid-ready by design</p>
                     </span>
                     <p className=' text-[#121212CC] text-sm md:text-base mt-2'>Simplify complex distributed infrastructure whether, on-prem, across multiple clouds or at the edge. Centralize your management capabilities and deliver the best price-performance ratio for any workload.</p>
                 </motion.div>
@@ -52,7 +52,7 @@ const Features = () => {
                         <img 
                         src={ benethree }
                         alt="" />
-                        <p className=' font-medium text-xl mt-2'>Global reach. Local appeal.</p>
+                        <p className=' font-medium text-xl mt-2'>Global reach. Local appeal</p>
                     </span>
                     <p className=' text-[#121212CC] text-sm md:text-base mt-2'>Deliver the performance and reliability your customers expect no matter the location. Offer low-latency edge services with our existing fully-managed clouds or global base of 300+ MSP partners.</p>
                 </motion.div>
@@ -63,7 +63,7 @@ const Features = () => {
                         <img 
                         src={ benefour }
                         alt="" />
-                        <p className=' font-medium text-xl mt-2'>Trust your cloud.</p>
+                        <p className=' font-medium text-xl mt-2'>Trust your cloud</p>
                     </span>
                     <p className=' text-[#121212CC] text-sm md:text-base mt-2'>Take control of your data with UniCloud’s secure-by-design infrastructure, data protection solutions, and our global network of partners. Isolate your data with click-to-provision options for dedicated storage at the controller level.</p>
                 </motion.div>
@@ -86,7 +86,7 @@ const Features = () => {
                         <img 
                         src={ benesix }
                         alt="" />
-                        <p className=' font-medium text-xl mt-2'>24/7/365 DevOps support.</p>
+                        <p className=' font-medium text-xl mt-2'>24/7/365 DevOps support</p>
                     </span>
                     <p className=' text-[#121212CC] text-sm md:text-base mt-2'>Free your IT team from ongoing maintenance. we deliver around-the-clock, proactive monitoring and support, and seamless upgrades, backed by our industry-best uptime SLAs.</p>
                 </motion.div>

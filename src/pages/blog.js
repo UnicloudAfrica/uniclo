@@ -43,7 +43,7 @@ const Blog = () => {
                             <p className=" gradient-text">{item.tag}</p>
                         </button>
                         <p className="text-left mt-6 text-xl lg:text-2xl font-medium lg:h-[2.5em]">{item.title}</p>
-                        <p className="text-left mt-3 text-[#1E1E1E99] text-sm">{item.content.substring(0,190) + '...'}</p>
+                        <p className="text-left mt-3 text-[#1E1E1E99] text-sm">{item.drawin.substring(0,190) + '...'}</p>
                         <p className="text-left mt-3 text-[#121212] font-medium text-base">{item.date}</p>
                     </div></Link>
                 ))}
@@ -55,7 +55,7 @@ const Blog = () => {
                     <img src={adbg} className="hidden md:block absolute left-0 w-full h-full object-cover rounded-[30px]" alt="" />
                     <img src={admob} className="z-10 absolute top-0 h-full w-full object-cover block md:hidden" alt="" />
                     <p className=' font-semibold text-xl md:text-3xl'>Want product news and updates</p>
-                    <p className=' font-normal px-4 md:px-0 text-lg md:text-xl'>Subscribe to Unicloud Africa blog to get update right in your inbox</p>
+                    <p className=' font-normal px-4 md:px-0 text-lg md:text-xl'>Subscribe to UniCloud Africa blog to get update right in your inbox</p>
                     <div className=" flex flex-col md:flex-row items-center justify-center z-20  mt-4 md:space-x-6 space-y-4 md:space-y-0">
                         <input placeholder="Enter Email" className=" w-full md:w-auto h-[52px] bg-[#133D4C80] py-2.5 px-4 md:px-7 text-base placeholder:text-white placeholder:font-Outfit font-Outfit placeholder:text-sm  rounded-[30px]" type="text" />
                         <button className="  md:w-auto px-6 md:px-9 py-3 md:py-4 bg-[#fff] rounded-[30px] text-base text-[#000]">Subscribe</button>

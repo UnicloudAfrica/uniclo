@@ -1,6 +1,7 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useRef } from 'react';
 import load from './assets/load.gif';
 import { initializeApp } from "firebase/app";
+import { Editor } from '@tinymce/tinymce-react';
 import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, deleteDoc} from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { PageContext, BlogContext } from '../contexts/contextprovider';
@@ -20,11 +21,14 @@ const BlogAdmin = () => {
     const db = getFirestore(app);
     const storage = getStorage(app);
 
+    
+
     //states
     const [page, setPage] = useContext(PageContext);
     const [blogTitle, setBlogTitle] = useState(null);
     const [fileName, setFileName] = useState(null);
     const [blogTag, setBlogTag] = useState(null);
+    const [blogDrawin, setBlogDrawin] = useState(null);
     const [blogContent, setBlogContent] = useState(null);
     const [file, setFile] = useState(null);
     const [loadValue, setLoadValue] = useState('No');
@@ -77,9 +81,18 @@ const BlogAdmin = () => {
     const date =  newDate.today();
     const time = newDate.timeNow();
 
+    const editorRef = useRef(null);
+
+    const log = () => {
+        if (editorRef.current) {
+            setBlogContent(editorRef.current.getContent());
+        }
+    };
+    console.log(blogContent)
+
     // console.log(date)
     const sumbmitImg = ()=>{
-        if(file && blogTitle && blogTag && blogContent){
+        if(file && blogTitle && blogTag && blogDrawin ){
             setLoadValue('Yes')
             const metadata = {
                 contentType: 'image/jpeg, image/png',
@@ -97,6 +110,7 @@ const BlogAdmin = () => {
                         time:time,
                         title:blogTitle,
                         tag:blogTag,
+                        drawin:blogDrawin,
                         content:blogContent,
                     }
                     addDoc(transactionDoc, docData)
@@ -162,8 +176,45 @@ const BlogAdmin = () => {
                 <label className=" font-Outfit text-base font-medium">Tag</label>
                 <input type="text" onInput={(e)=>{setBlogTag(e.target.value)}} placeholder="Your blog tag Here" className=" h-[45px] bg-[#F5F5F4] mt-2 shadow-md shadow-[#1018280D] mb-6 text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"/>
 
+                <label className=" font-Outfit text-base font-medium">Draw in</label>
+                <input type="text" onInput={(e)=>{setBlogDrawin(e.target.value)}} placeholder="Your blog Draw in Here" className=" h-[45px] bg-[#F5F5F4] mt-2 shadow-md shadow-[#1018280D] mb-6 text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"/>
+
                 <label className=" font-Outfit text-base font-medium">Content</label>
-                <textarea id="message" onInput={(e)=>{setBlogContent(e.target.value)}} rows={6} placeholder="Your blog content here..." className="shadow-md shadow-[#1018280D] mb-4 bg-[#F5F5F4] font-Outfit font-normal placeholder:font-Outfit text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"></textarea>
+                {/* <textarea id="message" onInput={(e)=>{setBlogContent(e.target.value)}} rows={6} placeholder="Your blog content here..." className="shadow-md shadow-[#1018280D] mb-4 bg-[#F5F5F4] font-Outfit font-normal placeholder:font-Outfit text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"></textarea> */}
+
+                <Editor
+                    apiKey='6nal7pczsjxywqe0s030u9o3x5hz0qcmx1skn7j0zr51wiha'
+                    onInit={(evt, editor) => {
+                        editorRef.current = editor
+                        // const contentArea = editor.getBody();
+
+                        // // Attach input event listener to the content area
+                        // contentArea.addEventListener('input', () => {
+                        //     log(editor.getContent());
+                        // });
+                    }}
+                    initialValue="<p>This is the initial content of the editor.</p>"
+                    init={{
+                    height: 300,
+                    menubar: false,
+                    plugins: [
+                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                        'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                    ],
+                    toolbar: 'undo redo | blocks | ' +
+                        'bold italic forecolor | alignleft aligncenter ' +
+                        'alignright alignjustify | bullist numlist outdent indent | ' +
+                        'removeformat | help',
+                    content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
+                    setup: editor => {
+                        editor.on('change', () => {
+                          log(editor.getContent());
+                        });
+                      },
+                    }}
+                />
+                <button onClick={log}>Log editor content</button>
 
                 <button onClick={sumbmitImg} className=" w-full flex h-[45px] mt-6 rounded-[8px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] hover:bg-opacity-75 transition-all justify-center items-center">
                     { loadValue === 'No' && <p className=" font-Outfit text-base text-white">Create blog</p> }

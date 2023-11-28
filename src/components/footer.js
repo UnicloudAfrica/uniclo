@@ -74,7 +74,7 @@ const Footer = () => {
 
         </div>
         <div className=' py-[1.5em] w-full text-center text-[#A5ACBA] font-Outfit text-base font-normal bg-[#0F171D]'>
-        © 2023 Unicloud Africa. All Rights Reserved.
+        © 2023 UniCloud Africa. All Rights Reserved.
         </div>
         </>
      );

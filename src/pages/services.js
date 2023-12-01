@@ -134,9 +134,9 @@ const Services = () => {
                                     <p className="">{item.ram}</p>
                                 </span>
                             </div>
-                            <button className=' mt-4 flex bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] w-full justify-center rounded-[30px] py-3 items-center'>
+                            <Link to='/about'><button className=' mt-4 flex bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] w-full justify-center rounded-[30px] py-3 items-center'>
                                 <p className=' text-[#121212] text-base'>Get Started</p>
-                            </button>
+                            </button></Link>
                         </div>
                     </div>
                 ))}

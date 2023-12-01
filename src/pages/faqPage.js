@@ -5,6 +5,7 @@ import adbg from './assets/adBG.svg';
 import avatar from './assets/avatar.svg';
 import Footer from '../components/footer';
 import { useState } from 'react'
+import { Link } from 'react-router-dom';
 
 
 const FaqPage = () => {
@@ -125,7 +126,7 @@ const FaqPage = () => {
                 <img src={ avatar } className='' alt="" />
                 <p className=' font-semibold px-4 md:px-0 text-2xl'>Still have questions?</p>
                 <p className=' font-normal px-4 md:px-0 text-base text-[#FFFFFFCC]'>Can’t find the answer you’re looking for? Please chat to our friendly team.</p>
-                <button className=" px-9 py-4 bg-[#fff] rounded-[30px] text-base text-[#000] mt-4">Get started now</button>
+                <Link to='/contact' className='z-20'><button className=" px-9 z-20 py-4 bg-[#fff] rounded-[30px] text-base text-[#000] mt-4">Get started now</button></Link>
             </div>
         </motion.div>
         </motion.div>

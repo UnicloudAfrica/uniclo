@@ -5,6 +5,7 @@ import admob from './assets/adMob.svg';
 import { motion } from "framer-motion";
 import {useContext} from 'react'
 import { PartnerContext } from '../contexts/contextprovider';
+import { Link } from "react-router-dom";
 
 const Partnership = () => {
 
@@ -40,7 +41,7 @@ const Partnership = () => {
                     <img src={admob} className="z-10 absolute top-0 h-full w-full object-cover block md:hidden" alt="" />
                 <p className=' font-semibold text-3xl md:text-4xl'>Partner with us today</p>
                 <p className=' font-normal px-4 md:px-0 text-xl'>Partner with us to deliver unmatched cloud solutions.</p>
-                <button className=" px-9 py-4 bg-[#fff] rounded-[30px] text-base text-[#000] mt-4">Contact Us</button>
+                <Link to='/contact' className=" z-20"><button className=" px-9 py-4 bg-[#fff] rounded-[30px] text-base text-[#000] mt-4">Contact Us</button></Link>
             </div>
         </motion.div>
 

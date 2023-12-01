@@ -34,10 +34,7 @@ const Events = () => {
                 <p className=" mt-16 text-center text-2xl font-medium">No Upcoming Events</p>
                 <p className=" mt-3 text-[#676767] md:px-[15%] text-base font-normal text-center">We are currently not hosting any upcoming events. Please check back soon for our latest event schedule.</p>
 
-                <motion.div 
-                initial={{ y: 20, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                transition={{ duration: 1, type:'tween' }}
+                <motion.div
                 className=" mt-16 w-full font-Outfit text-[#fff]">
                 <div className=" w-full h-[400px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] p-6 relative md:space-y-2">
                     <img src={adbg} className="hidden md:block absolute left-0 w-full h-full object-cover rounded-[30px]" alt="" />
@@ -87,10 +84,7 @@ const Events = () => {
                 ))}
             </div>
 
-            <motion.div 
-            initial={{ y: 20, opacity: 0 }}
-            whileInView={{ y: 0, opacity: 1 }}
-            transition={{ duration: 1, type:'tween' }}
+            <motion.div
             className="  py-[3em] w-full font-Outfit text-[#fff]">
                 <div className=" w-full h-[400px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] p-6 relative md:space-y-3">
                     <img src={adbg} className="hidden md:block absolute left-0 w-full h-full object-cover rounded-[30px]" alt="" />

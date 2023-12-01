@@ -68,6 +68,7 @@ const Footer = () => {
                 <span className=' mt-3'>
                     <Link to='/about'><p className=' mt-3'>Learn About Us</p></Link>
                     <Link to='/advisory-board'><p className=' mt-3'>Advisory Board</p></Link>
+                    <Link to='/career'><p className=' mt-3'>Career</p></Link>
                     <Link to='/terms'><p className=' mt-3'>Legal</p></Link>
                 </span>
             </div>

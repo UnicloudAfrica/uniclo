@@ -180,3 +180,6 @@ select.custom-dropdown {
 img {
   transition: transform 0.5s ease-in;
 }
+.no-focus-outline:focus {
+  outline: none;
+}

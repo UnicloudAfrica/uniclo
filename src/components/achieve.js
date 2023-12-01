@@ -5,7 +5,7 @@ import map from './assets/mapBig.svg';
 const Acheive = () => {
     return ( 
         <div className=" px-4 md:px-8 lg:px-16 my-[5em] flex flex-col justify-center w-full items-center">
-            <p className=" font-Outfit font-medium text-center text-2xl md:w-[500px] md:text-[40px] md:leading-[50px]">Our Achievement made us well known through out </p>
+            <p className=" font-Outfit font-medium text-center text-2xl md:px-[10%] md:text-[40px] md:leading-[50px]">Our Achievement made us well known through out to Our Dream</p>
             <div className=" flex flex-col md:flex-row items-center justify-center md:justify-between w-full font-Outfit font-medium mt-16">
                 <div className=" w-full md:w-[15%] flex md:flex-col justify-between md:justify-start relative items-start">
                     <span className=" flex flex-col ml-5 md:ml-0 md:pl-5 md:mb-0 justify-start md:pb-3 md:border-l">

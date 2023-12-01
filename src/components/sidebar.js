@@ -43,6 +43,8 @@ const Sidebar = () => {
     { name: 'Resources', icon: box },
     { name: 'Solutions', icon: settingIcon },
     { name: 'Use-Cases', icon: reciept },
+    { name: 'Advisory-Board', icon: trades },
+    { name: 'Career', icon: overviewIcon },
   ];
 
   const logOut = () => {

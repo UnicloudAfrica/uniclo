@@ -15,8 +15,8 @@ const Features = () => {
             <motion.div
             className=' flex flex-col md:flex-row w-full justify-between items-start'
             >
-                <p className=" w-full md:w-[48%] font-medium text-2xl md:text-3xl lg:text-4xl">Cloud Services for African Businesses and Government</p>
-                <p className=" w-full md:w-[48%] text-base mt-3 md:mt-0">Get on-demand, enterprise-grade cloud services for compute, networking, and storage, anywhere - on-premises, hybrid, multi-cloud, and at the edge. Pay only for what you use and lower your costs.</p>
+                <p className=" w-full md:w-[48%] font-medium text-2xl md:text-3xl lg:text-4xl xl:text-5xl">Cloud Services for African businesses & Government.</p>
+                <p className=" w-full md:w-[48%] text-base lg:text-lg xl:text-xl mt-3 md:mt-0">Get on-demand, enterprise-grade cloud services for compute, networking, and storage, anywhere - on-premises, hybrid, multi-cloud, and at the edge. Pay only for what you use and lower your costs.</p>
             </motion.div>
             
             <div className=" grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[32px]  mt-8 md:mt-16">

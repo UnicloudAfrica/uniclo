@@ -19,6 +19,8 @@ import Advisory from "./pages/advisory";
 import DetailedBlog from "./pages/detailedblog";
 import DetailedResources from "./pages/detailedresouces";
 import DetailedCases from "./pages/detailedcase";
+import DetailedBoard from "./pages/detailedboard";
+import Career from "./pages/career";
 
 function App() {
   const location = useLocation();
@@ -34,6 +36,7 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/about" element={<About />} />
           <Route path="/advisory-board" element={<Advisory/>} />
+          <Route path="/advisory-board/:id" element={<DetailedBoard/>} />
           <Route path="/faq" element={<FaqPage />} />
           <Route path="/partnership" element={<Partnership />} />
           <Route path="/contact" element={<Contact />} />
@@ -48,6 +51,7 @@ function App() {
           <Route path="/use-cases/:id" element={ <DetailedCases/> } />
           <Route path="/blogs/:id" element={<DetailedBlog/> } />
           <Route path="/cms-admin" element={<Cms/>} />
+          <Route path="/career" element={<Career/>} />
         </Routes>
       </AnimatePresence>
     </>

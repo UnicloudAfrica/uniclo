@@ -20,10 +20,10 @@ const Partnership = () => {
         <div className=" mt-[8em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
             <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">Partnerships</p>
             <p className=" text-center font-normal mt-3 text-lg text-[#676767] md:text-xl ">We're proud to collaborate with industry leaders to deliver unmatched cloud solutions</p>
-            <div className=" flex justify-center items-center mt-8">
+            <div className=" mt-8 flex flex-wrap justify-around space-y-4 space-x-0 md:space-x-[24px]">
             {partnerArray.map((item, index) => (
-                <div key={index} className=" text-center">
-                    <div className="w-[250px] h-[250px] bg-[#F5F5F4] border border-[#F5F5F7] rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
+                <div key={index} className=" text-center w-full md:w-[250px]">
+                    <div className="w-full h-[250px] bg-[#F5F5F4] border border-[#F5F5F7] rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
                     <p className="mt-3 text-xl font-medium">{item.name}</p>
                 </div>
             ))}
@@ -38,7 +38,7 @@ const Partnership = () => {
             <div className=" w-full h-[380px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] relative space-y-4">
                     <img src={adbg} className="hidden md:block absolute left-0 w-full h-full object-cover rounded-[30px]" alt="" />
                     <img src={admob} className="z-10 absolute top-0 h-full w-full object-cover block md:hidden" alt="" />
-                <p className=' font-semibold text-3xl md:text-5xl'>Partner with us today</p>
+                <p className=' font-semibold text-3xl md:text-4xl'>Partner with us today</p>
                 <p className=' font-normal px-4 md:px-0 text-xl'>Partner with us to deliver unmatched cloud solutions.</p>
                 <button className=" px-9 py-4 bg-[#fff] rounded-[30px] text-base text-[#000] mt-4">Contact Us</button>
             </div>

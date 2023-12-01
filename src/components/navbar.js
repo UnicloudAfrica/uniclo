@@ -67,6 +67,7 @@ const Navbar = () => {
                     <span className=' text-sm text-[#12121299] mt-3'>
                         <Link to='/about'><p className=' mt-3'>Learn About Us</p></Link>
                         <Link to='/advisory-board'><p className=' mt-3'>Advisory Board</p></Link>
+                        <Link to='/career'><p className=' mt-3'>Career</p></Link>
                         <Link to='/terms'><p className=' mt-3'>Legal</p></Link>
                     </span>
                     <p className=" font-medium cursor-pointer text-xl text-[#121212] font-Outfit mt-5 ">Services</p>
@@ -121,6 +122,10 @@ const Navbar = () => {
                         </span></Link>
                         <Link to='/advisory-board' className=''><span onClick={ closeAboutDropdown } className=' flex items-center mt-3 space-x-4'>
                             <p>Advisory Board</p>
+                            <img src={ outline } className=' w-3 h-3' alt="" />
+                        </span></Link>
+                        <Link to='/career' className=''><span onClick={ closeAboutDropdown } className=' flex items-center mt-3 space-x-4'>
+                            <p>Career</p>
                             <img src={ outline } className=' w-3 h-3' alt="" />
                         </span></Link>
                         <Link to='/terms' className=''><span onClick={ closeAboutDropdown } className=' flex items-center mt-3 space-x-4'>

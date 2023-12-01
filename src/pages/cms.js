@@ -10,6 +10,8 @@ import ResoucesAdmin from "../adminComps/resources";
 import SolutionsAdmin from "../adminComps/solutions";
 import Cases from "../adminComps/cases";
 import General from "../adminComps/general";
+import Board from "../adminComps/board";
+import Career from "../adminComps/career";
 
 const Cms = () => {
 
@@ -40,7 +42,7 @@ const Cms = () => {
     
 
     useEffect(() => {
-        const components = ['General', 'Blog', 'Events', 'Resources', 'Solutions', 'Use-Cases'];
+        const components = ['General', 'Blog', 'Events', 'Resources', 'Solutions', 'Use-Cases', 'Advisory-Board', 'Career'];
 
         components.forEach(component => {
             const element = document.getElementById(component);
@@ -87,6 +89,14 @@ const Cms = () => {
             <div id="Use-Cases" className=" md:left-[10%] lg:left-[20%] top-[80px] w-full md:w-[90%] lg:w-[80%] absolute py-6 px-3 md:px-6 ">
                 <p className=" font-Outfit text-xl md:text-3xl  font-medium text-[#666] -mt-3 mb-3">{ page }</p>
                 <Cases/>
+            </div>
+            <div id="Advisory-Board" className=" md:left-[10%] lg:left-[20%] top-[80px] w-full md:w-[90%] lg:w-[80%] absolute py-6 px-3 md:px-6 ">
+                <p className=" font-Outfit text-xl md:text-3xl  font-medium text-[#666] -mt-3 mb-3">{ page }</p>
+                <Board/>
+            </div>
+            <div id="Career" className=" md:left-[10%] lg:left-[20%] top-[80px] w-full md:w-[90%] lg:w-[80%] absolute py-6 px-3 md:px-6 ">
+                <p className=" font-Outfit text-xl md:text-3xl  font-medium text-[#666] -mt-3 mb-3">{ page }</p>
+                <Career/>
             </div>
         </div>
         </>

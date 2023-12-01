@@ -12,21 +12,10 @@ const Carousel = () => {
         <div className='px-0 md:px-8 lg:px-6'>
         <div className="flex flex-col w-full mt-8 mb-10 rounded-[20px] border border-[#288DD11A]">
           <div className="w-full h-[50px] md:h-[80px] clip"></div>
-          <div className="relative w-full h-[150px] md:h-[200px] flex items-start py-5 md:py-0 md:items-center px-4 md:px-16">
-            <div className=' w-[30%] md:w-[20%]'>
+          <div className="relative w-full flex items-start justify-center py-5 md:py-0 md:items-center px-4 md:px-16">
+            <div className=' flex flex-row justify-center py-4 space-x-4 md:py-6 items-center md:space-x-[10%]'>
                 <img src={map} className='w-[92px] h-[100px] md:w-auto md:h-auto' alt="" />
-            </div>
-            <div className=' w-[80%] flex flex-col'>
-                <p className=" text-base md:text-xl font-Outfit font-medium">
-                Making Cloud Service Available For Africa <span className="">Enterprises like:</span>
-                </p>
-                <div className="mt-4 w-full md:mt-5 flex justify-between space-x-6 lg:space-x-0  overflow-x-scroll scrollbar-hide">
-                    <img src={binance} className= "w-[100px] md:w-auto md:h-auto " alt="" />
-                    <img src={bitcoin} className=" w-[100px] md:w-auto md:h-auto " alt="" />
-                    <img src={coinbase} className=" w-[100px] md:w-auto md:h-auto " alt="" />
-                    <img src={tether} className=" w-[100px] md:w-auto md:h-auto " alt="" />
-                    <img src={bitmex} className=" w-[100px] md:w-auto md:h-auto " alt="" />
-                </div>
+                <p className=" text-base md:text-3xl xl:text-[32px] font-Outfit font-medium">Making Cloud Service Available For africa Enterprises and Government</p>
             </div>
           </div>
           <div className="w-full h-[50px] md:h-[80px] clip"></div>

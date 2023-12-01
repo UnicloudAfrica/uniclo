@@ -180,7 +180,6 @@ const BlogAdmin = () => {
                 <input type="text" onInput={(e)=>{setBlogDrawin(e.target.value)}} placeholder="Your blog Draw in Here" className=" h-[45px] bg-[#F5F5F4] mt-2 shadow-md shadow-[#1018280D] mb-6 text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"/>
 
                 <label className=" font-Outfit text-base font-medium">Content</label>
-                {/* <textarea id="message" onInput={(e)=>{setBlogContent(e.target.value)}} rows={6} placeholder="Your blog content here..." className="shadow-md shadow-[#1018280D] mb-4 bg-[#F5F5F4] font-Outfit font-normal placeholder:font-Outfit text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"></textarea> */}
 
                 <Editor
                     apiKey='6nal7pczsjxywqe0s030u9o3x5hz0qcmx1skn7j0zr51wiha'
@@ -214,7 +213,7 @@ const BlogAdmin = () => {
                       },
                     }}
                 />
-                <button onClick={log}>Log editor content</button>
+                {/* <button onClick={log}>Log editor content</button> */}
 
                 <button onClick={sumbmitImg} className=" w-full flex h-[45px] mt-6 rounded-[8px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] hover:bg-opacity-75 transition-all justify-center items-center">
                     { loadValue === 'No' && <p className=" font-Outfit text-base text-white">Create blog</p> }

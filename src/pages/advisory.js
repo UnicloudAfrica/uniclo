@@ -21,7 +21,7 @@ const Advisory = () => {
             Together, we are not just shaping the future of UniCloud Africa; we are propelling Africa's digital future forward, one innovation at a time. Join us on this transformative journey, where the strength of our team is the driving force behind your success in the digital age.</p>
 
             <div className="mt-16 w-full">
-                <div className=" mt-6 flex flex-wrap justify-around space-y-4 space-x-0 md:space-x-[24px] ">
+                <div className=" mt-6 flex flex-wrap justify-around space-y-4 md:space-y-8 space-x-0 md:space-x-[24px] ">
                     {boardArray.map((item, index) => (
                         <Link key={index} to={`/advisory-board/${item.id}`} className="flex items-center justify-center w-full md:w-[250px]">
                             <div className="w-full text-center">             

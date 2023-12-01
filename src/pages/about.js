@@ -34,7 +34,7 @@ const About = () => {
                 <p className=" text-3xl md:text-[50px] font-medium text-center">About us</p>
                 <p className=" text-base md:text-lg mt-6 font-normal text-center text-[#676767] md:px-[15%]">At UniCloud Africa, we are committed to revolutionizing the way businesses operate in Africa. With a team of experienced cloud experts and a passion for innovation, we aim to provide secure, scalable, and reliable cloud solutions that empower African organisations to thrive in the digital age.</p>
                 <div className=" px-0 md:px-8 lg:px-6 w-full">
-                    <div className=" border border-[#EAEBF0] h-[400px] w-full md:rounded-[20px] bg-[#3AF3FC] mt-16 group">
+                    <div className=" border border-[#EAEBF0] h-[400px] w-full md:rounded-[20px] bg-[#3AF3FC] mt-8 group">
 
                     </div>
                 </div>
@@ -95,8 +95,8 @@ const About = () => {
                     <Certifications/>
 
                     <div className="my-[5em] py-8 w-full bg-[#0F171D] flex justify-center items-center flex-col text-white">
-                        <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">Our leadership team</p>
-                        <p className=" text-center font-normal mt-3 text-base md:text-xl md:px-[12%] text-[#ffffffcc]">We’re a small team that loves to create great experiences and make meaningful connections between builders and customers.</p>
+                        <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">Industry Awards and Recognitions</p>
+                        <p className=" text-center font-normal mt-3 text-base md:text-xl md:px-[12%] text-[#ffffffcc]">Our solutions have been recognized for innovation and leadership. The awards and recognitions include:</p>
                         <div className=" flex justify-center items-center">
                             <div className=' grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-[32px] lg:gap-[5%] items-center justify-center mt-16 w-full md:px-16 space-y-10 md:space-y-0'>
                                 <img src={ awardOne } className=' ' alt="" />

@@ -39,7 +39,7 @@ const Career = () => {
                             <img src={ pin } alt="" />
                             <select
                                 name=""
-                                className="appearance-none text-[#676767] no-focus-outline ml-2"
+                                className="appearance-none text-[#676767] bg-transparent no-focus-outline ml-2"
                                 id=""
                                 onClick={ handleSelectClick }
                                 onBlur={ handleSelectBlur }
@@ -64,7 +64,7 @@ const Career = () => {
                 <div className="border-y py-10">
                     <div className=" flex flex-col lg:flex-row items- justify-around">
                         <div className=" w-full lg:w-[38%] relative space-y-3 lg:space-y-0">
-                            <p className=" font-Outfit text-base md:text-xl text-[#121212] font-semibold">Design</p>
+                            <p className=" font-Outfit text-base md:text-xl text-[#121212] font-medium">Design</p>
                             <p className=" font-Outfit text-sm md:text-base text-[#676767]" >Open positions in our design team.</p>
                         </div>
                         <div className=" w-full mt-4 lg:mt-0 lg:w-[58%] space-y-5">
@@ -72,21 +72,21 @@ const Career = () => {
                                 <div key={index} className="border border-[#EAECF0] rounded-[16px] bg-transparent w-full p-6 space-y-5">             
                                     <div className=" w-full flex justify-between items-center">
                                         <p className=" font-Outfit font-medium text-base md:text-lg">{item.title}</p>
-                                        <button className="  px-[10px] py-1 text-white font-Outfit rounded-2xl bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC]"><a target="blank" className=' w-full h-full' href={item.link}>Apply Now</a></button>
+                                        <button className="  px-[10px] py-1 text-white font-Outfit rounded-2xl bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC]"><a target="blank" className=' w-full h-full text-sm md:text-base' href={item.link}>Apply Now</a></button>
                                     </div>
                                     <p className=" text-sm md:text-base text-[#676767] text-opacity-80 font-normal font-Outfit">{item.desc}</p>
                                     <div className=" flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 w-full">
                                         <span className=" flex flex-row space-x-2">
                                             <img src={ time } className="" alt="" />
-                                            <p className=" font-Outfit text-[#121212] md:text-base text-sm font-medium">{item.duration}</p>
+                                            <p className=" font-Outfit text-[#676767] md:text-base text-sm font-medium">{item.duration}</p>
                                         </span>
                                         <span className=" flex flex-row space-x-2">
                                             <img src={ dollar } className="" alt="" />
-                                            <p className=" font-Outfit text-[#121212] md:text-base text-sm font-medium">{item.pay}</p>
+                                            <p className=" font-Outfit text-[#676767] md:text-base text-sm font-medium">{item.pay}</p>
                                         </span>
                                         <span className=" flex flex-row space-x-2 items-center">
-                                            <p className=" font-Outfit text-[#98A2B3]">Location:</p>
-                                            <p className=" font-Outfit text-[#121212] md:text-base text-sm font-medium">{item.location}</p>
+                                            <p className=" font-Outfit text-[#676767]">Location:</p>
+                                            <p className=" font-Outfit text-[#676767] md:text-base text-sm font-medium">{item.location}</p>
                                         </span>
                                     </div>
                                 </div>
@@ -99,7 +99,7 @@ const Career = () => {
                 <div className="py-10 border-b">
                     <div className=" flex flex-col lg:flex-row items- justify-around">
                         <div className=" w-full lg:w-[38%] relative space-y-3 lg:space-y-0">
-                            <p className=" font-Outfit text-base md:text-xl text-[#121212] font-semibold">Software Development</p>
+                            <p className=" font-Outfit text-base md:text-xl text-[#121212] font-medium">Software Development</p>
                             <p className=" font-Outfit text-sm md:text-base text-[#676767] " >Open positions in our software team.</p>
                         </div>
                         <div className=" w-full mt-4 lg:mt-0 lg:w-[58%] space-y-5">
@@ -107,21 +107,21 @@ const Career = () => {
                                 <div key={index} className="border border-[#EAECF0] rounded-[16px] bg-transparent w-full p-6 space-y-5">             
                                     <div className=" w-full flex justify-between items-center">
                                         <p className=" font-Outfit font-medium text-base md:text-lg">{item.title}</p>
-                                        <button className="  px-[10px] py-1 text-white font-Outfit rounded-2xl bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC]" ><a target="blank" className=' w-full h-full' href={item.link}>Apply Now</a></button>
+                                        <button className="  px-[10px] py-1 text-white font-Outfit rounded-2xl bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC]" ><a target="blank" className=' w-full h-full text-sm md:text-base' href={item.link}>Apply Now</a></button>
                                     </div>
                                     <p className=" text-sm md:text-base text-[#676767] text-opacity-80 font-normal font-Outfit">{item.desc}</p>
                                     <div className=" flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 w-full">
                                         <span className=" flex flex-row space-x-2">
                                             <img src={ time } className="" alt="" />
-                                            <p className=" font-Outfit text-[#121212] md:text-base text-sm font-medium">{item.duration}</p>
+                                            <p className=" font-Outfit text-[#676767] md:text-base text-sm font-medium">{item.duration}</p>
                                         </span>
                                         <span className=" flex flex-row space-x-2">
                                             <img src={ dollar } className="" alt="" />
-                                            <p className=" font-Outfit text-[#121212] md:text-base text-sm font-medium">{item.pay}</p>
+                                            <p className=" font-Outfit text-[#676767] md:text-base text-sm font-medium">{item.pay}</p>
                                         </span>
                                         <span className=" flex flex-row space-x-2 items-center">
-                                            <p className=" font-Outfit text-[#98A2B3]">Location:</p>
-                                            <p className=" font-Outfit text-[#121212] md:text-base text-sm font-medium">{item.location}</p>
+                                            <p className=" font-Outfit text-[#676767]">Location:</p>
+                                            <p className=" font-Outfit text-[#676767] md:text-base text-sm font-medium">{item.location}</p>
                                         </span>
                                     </div>
                                 </div>
@@ -134,7 +134,7 @@ const Career = () => {
                 <div className="py-10">
                     <div className=" flex flex-col lg:flex-row items- justify-around">
                         <div className=" w-full lg:w-[38%] relative space-y-3 lg:space-y-0">
-                            <p className=" font-Outfit text-base md:text-xl text-[#121212] font-semibold">Software Development</p>
+                            <p className=" font-Outfit text-base md:text-xl text-[#121212] font-medium">Software Development</p>
                             <p className=" font-Outfit text-sm md:text-base text-[#676767] " >Open positions in our software team.</p>
                         </div>
                         <div className=" w-full mt-4 lg:mt-0 lg:w-[58%] space-y-5">
@@ -142,21 +142,22 @@ const Career = () => {
                                 <div key={index} className="border border-[#EAECF0] rounded-[16px] bg-transparent w-full p-6 space-y-5">             
                                     <div className=" w-full flex justify-between items-center">
                                         <p className=" font-Outfit font-medium text-base md:text-lg">{item.title}</p>
-                                        <button className="  px-[10px] py-1 text-white font-Outfit rounded-2xl bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC]"><a target="blank" className=' w-full h-full' href={item.link}>Apply Now</a></button>
+                                        <button className="  px-[10px] py-1 text-white font-Outfit rounded-2xl bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC]"><a target="blank" className=' w-full h-full text-sm md:text-base
+                                        ' href={item.link}>Apply Now</a></button>
                                     </div>
                                     <p className=" text-sm md:text-base text-[#676767] text-opacity-80 font-normal font-Outfit">{item.desc}</p>
                                     <div className=" flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 w-full">
                                         <span className=" flex flex-row space-x-2">
                                             <img src={ time } className="" alt="" />
-                                            <p className=" font-Outfit text-[#121212] md:text-base text-sm font-medium">{item.duration}</p>
+                                            <p className=" font-Outfit text-[#676767] md:text-base text-sm font-medium">{item.duration}</p>
                                         </span>
                                         <span className=" flex flex-row space-x-2">
                                             <img src={ dollar } className="" alt="" />
-                                            <p className=" font-Outfit text-[#121212] md:text-base text-sm font-medium">{item.pay}</p>
+                                            <p className=" font-Outfit text-[#676767] md:text-base text-sm font-medium">{item.pay}</p>
                                         </span>
                                         <span className=" flex flex-row space-x-2 items-center">
-                                            <p className=" font-Outfit text-[#98A2B3]">Location:</p>
-                                            <p className=" font-Outfit text-[#121212] md:text-base text-sm font-medium">{item.location}</p>
+                                            <p className=" font-Outfit text-[#676767]">Location:</p>
+                                            <p className=" font-Outfit text-[#676767] md:text-base text-sm font-medium">{item.location}</p>
                                         </span>
                                     </div>
                                 </div>

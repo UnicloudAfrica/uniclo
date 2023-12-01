@@ -143,7 +143,7 @@ const DetailedBlog = () => {
 
             <motion.div
             className=" w-full font-Outfit text-[#fff]">
-                <div className=" w-full h-[400px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] relative md:space-y-4">
+                <div className=" w-full h-[400px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] relative">
                     <img src={adbg} className="hidden md:block absolute left-0 w-full h-full object-cover rounded-[30px]" alt="" />
                     <img src={admob} className="z-10 absolute top-0 h-full w-full object-cover block md:hidden" alt="" />
                     <p className=' font-semibold text-xl md:text-3xl'>Want product news and updates</p>

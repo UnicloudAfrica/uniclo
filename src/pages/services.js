@@ -87,7 +87,7 @@ const Services = () => {
             </div>
 
             <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center mt-16">Payment Plan</p>
-            <p className=" text-center font-normal mt-3 text-lg md:text-xl ">Our payment structure ensures you know exactly what you are paying for without any hidden fee.</p>
+            <p className=" text-center font-normal text-[#676767] mt-3 text-lg md:text-xl ">Our payment structure ensures you know exactly what you are paying for without any hidden fee.</p>
             <div className=" flex justify-center items-center mt-8">
                 <div className=" bg-[#EAEBF0] rounded-[20px]">
                     <button
@@ -143,7 +143,7 @@ const Services = () => {
             </div>
 
             <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] mt-[64px] text-center">Use Cases</p>
-            <p className=" text-center font-normal mt-3 text-lg md:text-xl ">Explore our case studies to see how our solutions have made a real impact.</p>
+            <p className=" text-center font-normal mt-3 text-lg text-[#676767] md:text-xl ">Explore our case studies to see how our solutions have made a real impact.</p>
             <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-8 mb-[3em]">
                 {casesArray.slice(0,2).map((item, index) => (
                     <Link to={`/use-cases/${item.id}`}><div key={index} className="w-full text-center">             

@@ -29,7 +29,7 @@ const Resources = () => {
                     <Link to={`/resources/${item.id}`}><div key={index} className="w-full text-center">             
                         <div className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
                         <p className="text-left mt-3 text-lg md:text-xl font-medium">{item.title}</p>
-                        <p className="text-left mt-1 text-[#1e1e1e] text-sm md:text-base">{item.tagline}</p>
+                        <p className="text-left mt-1 text-[#676767] text-sm md:text-base">{item.tagline}</p>
                         <button className=' flex space-x-8 mt-6 items-center'>
                             <p className=' gradient-text text-base'>View more</p>
                         </button>
@@ -54,12 +54,12 @@ const Resources = () => {
 
             <motion.div 
             className="  py-[3em] w-full font-Outfit text-[#fff]">
-                <div className=" w-full h-[400px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] relative md:space-y-4">
+                <div className=" w-full h-[400px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] relative">
                     <img src={adbg} className="hidden md:block absolute left-0 w-full h-full object-cover rounded-[30px]" alt="" />
                     <img src={admob} className="z-10 absolute top-0 h-full w-full object-cover block md:hidden" alt="" />
                     <p className=' font-semibold text-xl md:text-3xl'>Join our webinars and access whitepapers </p>
-                    <p className=' font-normal px-4 md:px-0 text-base md:text-xl'>We offer in-depth knowledge on cloud technologies and implementation.</p>
-                    <div className=" flex flex-col md:flex-row items-center justify-center z-20  mt-4 md:space-x-6 space-y-4 md:space-y-0">
+                    <p className=' font-normal px-4 md:px-0 text-base md:text-xl md:mt-2'>We offer in-depth knowledge on cloud technologies and implementation.</p>
+                    <div className=" flex flex-col md:flex-row items-center md:mt-4 justify-center z-20  mt-4 md:space-x-6 space-y-4 md:space-y-0">
                     <input placeholder="Enter Email" className=" w-full md:w-auto h-[52px] bg-[#133D4C80] py-2.5 px-4 md:px-7 text-base placeholder:text-white placeholder:font-Outfit font-Outfit placeholder:text-sm  rounded-[30px]" type="text" />
                         <button className=" w-full md:w-auto px-9 py-4 bg-[#fff] rounded-[30px] text-base text-[#000]">Subscribe</button>
                     </div>

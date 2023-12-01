@@ -82,7 +82,7 @@ const DetailedBoard = () => {
         <Navbar/>
         <div className="mt-[8em] px-4 md:px-8 lg:px-16 w-full flex flex-col justify-center items-center font-Outfit text-[#121212]">
             <p className=" md:text-5xl text-center font-medium">{selectedBoardItem.name}</p>
-            <div className=" mt-16 w-full md:w-[250px] h-[250px] bg-[#f5f5f4] rounded-[20px]" style={{ backgroundImage: `url(${selectedBoardItem.url})`, backgroundSize: 'cover' }}>
+            <div className=" mt-8 w-full md:w-[250px] h-[250px] bg-[#f5f5f4] rounded-[20px]" style={{ backgroundImage: `url(${selectedBoardItem.url})`, backgroundSize: 'cover' }}>
             </div>
             <p style={{ whiteSpace: 'pre-line' }} className=" mt-8 text-base text-[#676767] md:px-[15%] font-normal text-justify whitespace-pre-line mb-5"  dangerouslySetInnerHTML={{ __html: selectedBoardItem.about }}/>
 
@@ -90,7 +90,7 @@ const DetailedBoard = () => {
 
         <motion.div 
         className="  my-16 px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#fff]">
-            <div className=" w-full h-[380px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] relative space-y-4">
+            <div className=" w-full h-[380px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] relative">
                     <img src={adbg} className="hidden md:block absolute left-0 w-full h-full object-cover rounded-[30px]" alt="" />
                     <img src={admob} className="z-10 absolute top-0 h-full w-full object-cover block md:hidden" alt="" />
                 <p className=' font-semibold text-3xl md:text-4xl'>Partner with us today</p>

@@ -10,7 +10,7 @@ const BlogHero = () => {
     return ( 
         <div className=" px-4 md:px-8 lg:px-16 bg-[#f5f5f5] my-[5em] font-Outfit w-full flex flex-col justify-center items-center">
             <p className=" mt-16 font-medium text-2xl md:text-[40px] md:leading-[50px] text-center">Our Blog Section</p>
-            <p className=" text-center font-normal text-base md:text-xl md:px-[12%]">Whether you want to learn about Improving your business, or getting started on UniCloud Africa, we have the educational resources for you.</p>
+            <p className=" text-center font-normal text-base md:text-xl text-[#676767] md:px-[12%]">Whether you want to learn about Improving your business, or getting started on UniCloud Africa, we have the educational resources for you.</p>
             <div className=" grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-[32px] lg:gap-[20px] w-full mt-8">
             {blogArray.slice(0,2).map((item, index) => (
                 <Link to={`/blogs/${item.id}`}><div key={index} className="w-full ">             

@@ -159,7 +159,7 @@ const Contact = () => {
                     <img src={ office } alt="" />
                 </button>
                 <p className=" font-medium text-xl">Our head office</p>
-                <p className=" text-sm text-[#676767]">Baderinwa Alabi Street, Central Lekki<br></br>Residents' Association, Rahman Adeboyejo<br></br> Street Lekki Phase 1 Lagos, Nigeria</p>
+                <p className=" text-sm lg:pr-10 text-[#676767]">Baderinwa Alabi Street, Central Lekki Residents' Association, Rahman Adeboyejo Street Lekki Phase 1 Lagos, Nigeria</p>
             </div>
 
             <div className=" space-y-2 w-full lg:w-1/3">

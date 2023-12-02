@@ -1,8 +1,9 @@
-import logo from './assets/logo.svg';
 import arrowDown from './assets/arrow-down.svg';
 import outline from './assets/outline.svg';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
+import { GeneralContext } from "../contexts/contextprovider";
+import { useContext } from 'react';
 const Navbar = () => {
 
     function overlay(){
@@ -20,6 +21,7 @@ const Navbar = () => {
     const [resourceDropdown, setResourceDropdown] = useState(false);
     const [communityDropdown, setCommunityDropdown] = useState(false);
     const [aboutDropdown, setAboutDropdown] = useState(false);
+    const [generalitem, setGeneralItem] = useContext(GeneralContext);
 
     const toggleServiceDropdown = () => {
         setServiceDropdown(!serviceDropdown);
@@ -93,7 +95,7 @@ const Navbar = () => {
         <div className=" py-6 z-[99999] px-4 md:px-8 lg:px-16 flex justify-between items-center fixed w-full bg-white top-0 text-[#121212]">
             <span className="">
                 <img 
-                src={ logo }
+                src={ generalitem.logourl }
                 className=' w-[75px]'
                  alt="" />
             </span>

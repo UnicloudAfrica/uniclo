@@ -12,6 +12,7 @@ export const CasesContext = createContext();
 export const PartnerContext = createContext();
 export const BoardContext = createContext();
 export const CareerContext = createContext();
+export const GeneralContext = createContext();
 
 // Custom hook to fetch data from Firestore
 const useFirestoreData = (db, collectionName) => {
@@ -63,6 +64,18 @@ const ContextProvider = (props) => {
   const partnersArray = useFirestoreData(db, 'Partner');
   const boardArray = useFirestoreData(db, 'board');
   const careerArray = useFirestoreData(db, 'career');
+  const [generalitem, setGeneralItem] = useState([])
+  
+  useEffect(()=>{
+    const colRef = collection(db, 'general');
+    const q = query(colRef)
+    onSnapshot(q,(snapshot)=>{
+      snapshot.docs.forEach((doc)=>{
+          setGeneralItem(doc.data())
+      })
+    })
+        
+},[auth, db]);
 
   return (
     <>
@@ -74,9 +87,11 @@ const ContextProvider = (props) => {
                 <PartnerContext.Provider value={[partnersArray]}>
                   <BoardContext.Provider value={[boardArray]}>
                     <CareerContext.Provider value={[careerArray]}>
-                      <BlogContext.Provider value={[blogArray]}>
-                        {props.children}
-                      </BlogContext.Provider>
+                      <GeneralContext.Provider value={[generalitem, setGeneralItem]}>
+                        <BlogContext.Provider value={[blogArray]}>
+                          {props.children}
+                        </BlogContext.Provider>
+                      </GeneralContext.Provider>
                     </CareerContext.Provider>
                   </BoardContext.Provider>
                 </PartnerContext.Provider>

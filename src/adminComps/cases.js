@@ -1,5 +1,6 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useRef} from 'react';
 import load from './assets/load.gif';
+import { Editor } from '@tinymce/tinymce-react';
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, deleteDoc} from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -39,7 +40,7 @@ const Cases = () => {
     const [deleteUser, setDeleteUser] = useState(false);
     const [docID, setDocID] =useState('');
     const [loadValue, setLoadValue] = useState('No');
-    const [caseArray, setCaseArray] = useContext(CasesContext);
+    const [caseArray] = useContext(CasesContext);
 
     //date and time
     // For todays date;
@@ -110,6 +111,14 @@ const Cases = () => {
         setDocID(parentParent.id);
     };
 
+    const editorRef = useRef(null);
+
+    const log = () => {
+        if (editorRef.current) {
+            setCaseContent(editorRef.current.getContent());
+        }
+    };
+
     return ( 
         <>
         <div className=" flex justify-center items-center mt-3">
@@ -150,10 +159,41 @@ const Cases = () => {
                     </span>
                 </div>
                 <label className=" font-Outfit text-base font-medium" for="first-name">Tagline</label>
-                <input type="text" onInput={(e)=>{setCaseTag(e.target.value)}} placeholder="Your case tag Here" class=" h-[45px] bg-[#F5F5F4] mt-2 shadow-md shadow-[#1018280D] mb-6 text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"/>
+                <input type="text" maxLength={200} onInput={(e)=>{setCaseTag(e.target.value)}} placeholder="i.e About 160 Characters is advised (Max length: 200)" class=" h-[45px] bg-[#F5F5F4] mt-2 shadow-md shadow-[#1018280D] mb-6 text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"/>
 
                 <label className=" font-Outfit text-base font-medium" for="Message">Content</label>
-                <textarea id="message" onInput={(e)=>{setCaseContent(e.target.value)}} rows={6} placeholder="Your case content here..." class="shadow-md shadow-[#1018280D] mb-4 bg-[#F5F5F4] font-Outfit font-normal placeholder:font-Outfit text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"></textarea>
+                <Editor
+                    apiKey='6nal7pczsjxywqe0s030u9o3x5hz0qcmx1skn7j0zr51wiha'
+                    onInit={(evt, editor) => {
+                        editorRef.current = editor
+                        // const contentArea = editor.getBody();
+
+                        // // Attach input event listener to the content area
+                        // contentArea.addEventListener('input', () => {
+                        //     log(editor.getContent());
+                        // });
+                    }}
+                    initialValue="<p>This is the initial content of the editor.</p>"
+                    init={{
+                    height: 300,
+                    menubar: false,
+                    plugins: [
+                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                        'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                    ],
+                    toolbar: 'undo redo | blocks | ' +
+                        'bold italic forecolor | alignleft aligncenter ' +
+                        'alignright alignjustify | bullist numlist outdent indent | ' +
+                        'removeformat | help',
+                    content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
+                    setup: editor => {
+                        editor.on('change', () => {
+                          log(editor.getContent());
+                        });
+                      },
+                    }}
+                />
 
                 <button onClick={sumbmitImg} className=" w-full flex h-[45px] mt-6 rounded-[8px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] hover:bg-opacity-75 transition-all justify-center items-center">
                     { loadValue === 'No' && <p className=" font-Outfit text-base text-white">Create Case</p> }

@@ -1,11 +1,15 @@
-import logo from './assets/logo.svg';
 import fb from './assets/fb.svg';
 import twi from './assets/twi.svg';
 import ig from './assets/ig.svg';
 import whatsapp from './assets/whatsapp.svg';
 import { Link } from 'react-router-dom';
+import { useContext } from 'react';
+import { GeneralContext } from "../contexts/contextprovider";
 
 const Footer = () => {
+
+    const [generalitem, setGeneralItem] = useContext(GeneralContext);
+
     return ( 
         <>
         <div className=" mt-[1.5em] py-[3em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#A5ACBA] bg-[#0F171D] flex flex-col md:flex-row items-start justify-between space-y-5 md:space-y-0 z-[99]">
@@ -13,7 +17,7 @@ const Footer = () => {
             <div className=" space-y-6">
                 <span className="">
                     <img 
-                    src={ logo } 
+                    src={ generalitem.logourl } 
                     className=''
                     alt="" />
                 </span>

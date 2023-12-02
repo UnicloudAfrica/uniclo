@@ -1,5 +1,8 @@
 import overviewIcon from './assets/ova.svg';
 import settingIcon from './assets/setting.png';
+import solition from './assets/solution.png';
+import career from './assets/career.png';
+import advi from './assets/advis.png';
 import logo from './assets/logo.svg';
 import box from './assets/box.svg';
 import reciept from './assets/receipt.svg';
@@ -41,10 +44,10 @@ const Sidebar = () => {
     { name: 'Blog', icon: trades },
     { name: 'Events', icon: overviewIcon },
     { name: 'Resources', icon: box },
-    { name: 'Solutions', icon: settingIcon },
+    { name: 'Solutions', icon: solition },
     { name: 'Use-Cases', icon: reciept },
-    { name: 'Advisory-Board', icon: trades },
-    { name: 'Career', icon: overviewIcon },
+    { name: 'Advisory-Board', icon: advi },
+    { name: 'Career', icon: career },
   ];
 
   const logOut = () => {

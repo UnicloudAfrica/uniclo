@@ -88,7 +88,8 @@ const BlogAdmin = () => {
             setBlogContent(editorRef.current.getContent());
         }
     };
-    console.log(blogContent)
+    
+    // console.log(blogContent)
 
     // console.log(date)
     const sumbmitImg = ()=>{
@@ -174,10 +175,10 @@ const BlogAdmin = () => {
                     </span>
                 </div>
                 <label className=" font-Outfit text-base font-medium">Tag</label>
-                <input type="text" onInput={(e)=>{setBlogTag(e.target.value)}} placeholder="Your blog tag Here" className=" h-[45px] bg-[#F5F5F4] mt-2 shadow-md shadow-[#1018280D] mb-6 text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"/>
+                <input type="text" onInput={(e)=>{setBlogTag(e.target.value)}} placeholder="Your blog tag Here i.e (Cloud Computing, Web Hosting)" className=" h-[45px] bg-[#F5F5F4] mt-2 shadow-md shadow-[#1018280D] mb-6 text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"/>
 
                 <label className=" font-Outfit text-base font-medium">Draw in</label>
-                <input type="text" onInput={(e)=>{setBlogDrawin(e.target.value)}} placeholder="Your blog Draw in Here" className=" h-[45px] bg-[#F5F5F4] mt-2 shadow-md shadow-[#1018280D] mb-6 text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"/>
+                <input type="text" maxLength={250} onInput={(e)=>{setBlogDrawin(e.target.value)}} placeholder="Your blog Draw-in Here (Max: 250 Characters)" className=" h-[45px] bg-[#F5F5F4] mt-2 shadow-md shadow-[#1018280D] mb-6 text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"/>
 
                 <label className=" font-Outfit text-base font-medium">Content</label>
 

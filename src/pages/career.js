@@ -6,10 +6,12 @@ import dollar from './assets/dollar.svg';
 import pin from './assets/map-pin.svg';
 import arrow from'./assets/arrow-down.svg';
 import { PageContext, CareerContext } from '../contexts/contextprovider';
+import { Link } from 'react-router-dom';
 
 const Career = () => {
     const [isSelectOpen, setIsSelectOpen] = useState(false);
     const [careerArray] = useContext(CareerContext);
+    const [selectedLocation, setSelectedLocation] = useState('all'); // Initialize with 'all'
 
     const handleSelectClick = () => {
         setIsSelectOpen(!isSelectOpen);
@@ -18,11 +20,17 @@ const Career = () => {
     const handleSelectBlur = () => {
         setIsSelectOpen(false);
     };
+    const handleLocationChange = (e) => {
+        setSelectedLocation(e.target.value);
+    };
 
-    // Create separate arrays for each scope
-    const softwareDevelopmentArray = careerArray.filter(item => item.scope === 'Software Development');
-    const customerSupportArray = careerArray.filter(item => item.scope === 'Customer Support');
-    const designArray = careerArray.filter(item => item.scope === 'Design');
+    const filteredCareers = careerArray.filter((item) => {
+        if (selectedLocation === 'all') {
+            return true; // Show all items when 'all' is selected
+        } else {
+            return item.location === selectedLocation;
+        }
+    });
 
     return ( 
         <>
@@ -39,16 +47,17 @@ const Career = () => {
                             <img src={ pin } alt="" />
                             <select
                                 name=""
-                                className="appearance-none text-[#676767] bg-transparent no-focus-outline ml-2"
+                                className="appearance-none text-[#676767] w-[169px] flex md:w-[220px] bg-transparent no-focus-outline ml-2"
                                 id=""
                                 onClick={ handleSelectClick }
                                 onBlur={ handleSelectBlur }
+                                onChange={handleLocationChange}
                             >
                                 <option value="all">View All</option>
-                                <option value="">Nigeria</option>
-                                <option value="">Ghana</option>
-                                <option value="">South Africa</option>
-                                <option value="">Liberia</option>
+                                <option value="Nigeria">Nigeria</option>
+                                <option value="Ghana">Ghana</option>
+                                <option value="South Africa">South Africa</option>
+                                <option value="Liberia">Liberia</option>
                             </select>
                             <img src={ arrow } className={`absolute right-0 top-[20%] transition-transform ${
                             isSelectOpen ? 'rotate-180' : 'rotate-0'
@@ -60,19 +69,14 @@ const Career = () => {
 
             <div 
             className=" mt-16">
-                {/* //Design */}
-                <div className="border-y py-10">
-                    <div className=" flex flex-col lg:flex-row items- justify-around">
-                        <div className=" w-full lg:w-[38%] relative space-y-3 lg:space-y-0">
-                            <p className=" font-Outfit text-base md:text-xl text-[#121212] font-medium">Design</p>
-                            <p className=" font-Outfit text-sm md:text-base text-[#676767]" >Open positions in our design team.</p>
-                        </div>
-                        <div className=" w-full mt-4 lg:mt-0 lg:w-[58%] space-y-5">
-                            {designArray.map((item, index) => (
-                                <div key={index} className="border border-[#EAECF0] rounded-[16px] bg-transparent w-full p-6 space-y-5">             
+                <div className="">
+                    <div className=" flex flex-col justify-around">
+                        <div className=" w-full mt-4 space-y-5">
+                            {filteredCareers.map((item, index) => (
+                                <Link to={`/careers/${item.id}`}><div key={index} className="border border-[#EAECF0] hover:bg-[#F5F5F4] rounded-[16px] bg-transparent w-full p-6 space-y-5 mb-6">             
                                     <div className=" w-full flex justify-between items-center">
                                         <p className=" font-Outfit font-medium text-base md:text-lg">{item.title}</p>
-                                        <button className="  px-[10px] py-1 text-white font-Outfit rounded-2xl bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC]"><a target="blank" className=' w-full h-full text-sm md:text-base' href={item.link}>Apply Now</a></button>
+                                        <p className=' text-[#676767] font-Outfit text-base'>Posted: <span>{item.date}</span></p>
                                     </div>
                                     <p className=" text-sm md:text-base text-[#676767] text-opacity-80 font-normal font-Outfit">{item.desc}</p>
                                     <div className=" flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 w-full">
@@ -89,84 +93,11 @@ const Career = () => {
                                             <p className=" font-Outfit text-[#676767] md:text-base text-sm font-medium">{item.location}</p>
                                         </span>
                                     </div>
-                                </div>
+                                </div></Link>
                             ))}
                         </div>
                     </div>
                 </div>
-
-                {/* //software */}
-                <div className="py-10 border-b">
-                    <div className=" flex flex-col lg:flex-row items- justify-around">
-                        <div className=" w-full lg:w-[38%] relative space-y-3 lg:space-y-0">
-                            <p className=" font-Outfit text-base md:text-xl text-[#121212] font-medium">Software Development</p>
-                            <p className=" font-Outfit text-sm md:text-base text-[#676767] " >Open positions in our software team.</p>
-                        </div>
-                        <div className=" w-full mt-4 lg:mt-0 lg:w-[58%] space-y-5">
-                            {softwareDevelopmentArray.map((item, index) => (
-                                <div key={index} className="border border-[#EAECF0] rounded-[16px] bg-transparent w-full p-6 space-y-5">             
-                                    <div className=" w-full flex justify-between items-center">
-                                        <p className=" font-Outfit font-medium text-base md:text-lg">{item.title}</p>
-                                        <button className="  px-[10px] py-1 text-white font-Outfit rounded-2xl bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC]" ><a target="blank" className=' w-full h-full text-sm md:text-base' href={item.link}>Apply Now</a></button>
-                                    </div>
-                                    <p className=" text-sm md:text-base text-[#676767] text-opacity-80 font-normal font-Outfit">{item.desc}</p>
-                                    <div className=" flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 w-full">
-                                        <span className=" flex flex-row space-x-2">
-                                            <img src={ time } className="" alt="" />
-                                            <p className=" font-Outfit text-[#676767] md:text-base text-sm font-medium">{item.duration}</p>
-                                        </span>
-                                        <span className=" flex flex-row space-x-2">
-                                            <img src={ dollar } className="" alt="" />
-                                            <p className=" font-Outfit text-[#676767] md:text-base text-sm font-medium">{item.pay}</p>
-                                        </span>
-                                        <span className=" flex flex-row space-x-2 items-center">
-                                            <p className=" font-Outfit text-[#676767]">Location:</p>
-                                            <p className=" font-Outfit text-[#676767] md:text-base text-sm font-medium">{item.location}</p>
-                                        </span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                {/* //Customer */}
-                <div className="py-10">
-                    <div className=" flex flex-col lg:flex-row items- justify-around">
-                        <div className=" w-full lg:w-[38%] relative space-y-3 lg:space-y-0">
-                            <p className=" font-Outfit text-base md:text-xl text-[#121212] font-medium">Software Development</p>
-                            <p className=" font-Outfit text-sm md:text-base text-[#676767] " >Open positions in our software team.</p>
-                        </div>
-                        <div className=" w-full mt-4 lg:mt-0 lg:w-[58%] space-y-5">
-                            {customerSupportArray.map((item, index) => (
-                                <div key={index} className="border border-[#EAECF0] rounded-[16px] bg-transparent w-full p-6 space-y-5">             
-                                    <div className=" w-full flex justify-between items-center">
-                                        <p className=" font-Outfit font-medium text-base md:text-lg">{item.title}</p>
-                                        <button className="  px-[10px] py-1 text-white font-Outfit rounded-2xl bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC]"><a target="blank" className=' w-full h-full text-sm md:text-base
-                                        ' href={item.link}>Apply Now</a></button>
-                                    </div>
-                                    <p className=" text-sm md:text-base text-[#676767] text-opacity-80 font-normal font-Outfit">{item.desc}</p>
-                                    <div className=" flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 w-full">
-                                        <span className=" flex flex-row space-x-2">
-                                            <img src={ time } className="" alt="" />
-                                            <p className=" font-Outfit text-[#676767] md:text-base text-sm font-medium">{item.duration}</p>
-                                        </span>
-                                        <span className=" flex flex-row space-x-2">
-                                            <img src={ dollar } className="" alt="" />
-                                            <p className=" font-Outfit text-[#676767] md:text-base text-sm font-medium">{item.pay}</p>
-                                        </span>
-                                        <span className=" flex flex-row space-x-2 items-center">
-                                            <p className=" font-Outfit text-[#676767]">Location:</p>
-                                            <p className=" font-Outfit text-[#676767] md:text-base text-sm font-medium">{item.location}</p>
-                                        </span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-
             </div>
         </div>
         <Footer/>

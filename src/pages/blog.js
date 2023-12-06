@@ -26,9 +26,9 @@ const Blog = () => {
             <div className=" w-full flex justify-between items-center relative mt-8">
                 <select name="" id="" className="  px-3 md:px-6 py-3 border text-xs md:text-base border-[#EAEBF0] flex justify-center rounded-[10px] custom-dropdown w-[140px]  md:w-[250px]">
                     <option value="">All Categories</option>
-                    {/* <option value="">Cloud Computing</option>
+                    <option value="">Cloud Computing</option>
                     <option value="">Cloud Storage</option>
-                    <option value="">Web Hosting</option> */}
+                    <option value="">Web Hosting</option>
                 </select>
 
                 <input  placeholder="Search blog posts" className=" px-3 md:px-6 py-3 border text-xs md:text-base placeholder:text-[#1e1e1e] border-[#EAEBF0] flex justify-center rounded-[10px] w-[140px]  md:w-[250px] relative" type="text"/>

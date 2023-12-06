@@ -21,6 +21,7 @@ import DetailedResources from "./pages/detailedresouces";
 import DetailedCases from "./pages/detailedcase";
 import DetailedBoard from "./pages/detailedboard";
 import Career from "./pages/career";
+import DetailedCareer from "./pages/detailedcareer";
 
 function App() {
   const location = useLocation();
@@ -50,6 +51,7 @@ function App() {
           <Route path="/resources/:id" element={ <DetailedResources/> } />
           <Route path="/use-cases/:id" element={ <DetailedCases/> } />
           <Route path="/blogs/:id" element={<DetailedBlog/> } />
+          <Route path="/careers/:id" element={<DetailedCareer/> } />
           <Route path="/cms-admin" element={<Cms/>} />
           <Route path="/career" element={<Career/>} />
         </Routes>

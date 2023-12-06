@@ -58,23 +58,23 @@ const DetailedBlog = () => {
             });
         }
 
-        // Fetch all documents in the 'blog' collection
-        const blogsCollectionRef = collection(db, 'blog');
-        const q = query(blogsCollectionRef);
-        getDocs(q)
-        .then((querySnapshot) => {
-            const otherBlogsData = [];
-            querySnapshot.forEach((doc) => {
-            const blogData = { id: doc.id, ...doc.data() };
-            if (id !== doc.id) {
-                otherBlogsData.push(blogData);
-            }
-            });
-            setOtherBlogs(otherBlogsData);
-        })
-        .catch((error) => {
-            console.error("Error getting documents:", error);
+    // Fetch all documents in the 'blog' collection
+    const blogsCollectionRef = collection(db, 'blog');
+    const q = query(blogsCollectionRef);
+    getDocs(q)
+    .then((querySnapshot) => {
+        const otherBlogsData = [];
+        querySnapshot.forEach((doc) => {
+        const blogData = { id: doc.id, ...doc.data() };
+        if (id !== doc.id) {
+            otherBlogsData.push(blogData);
+        }
         });
+        setOtherBlogs(otherBlogsData);
+    })
+    .catch((error) => {
+        console.error("Error getting documents:", error);
+    });
 
     }, [id, db]);
 

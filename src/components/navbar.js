@@ -21,37 +21,49 @@ const Navbar = () => {
     const [resourceDropdown, setResourceDropdown] = useState(false);
     const [communityDropdown, setCommunityDropdown] = useState(false);
     const [aboutDropdown, setAboutDropdown] = useState(false);
+    const [openDropdown, setOpenDropdown] = useState(null);
     const [generalitem, setGeneralItem] = useContext(GeneralContext);
 
-    const toggleServiceDropdown = () => {
-        setServiceDropdown(!serviceDropdown);
+    const toggleDropdown = (dropdownName) => {
+        // Close any open dropdowns
+        if (openDropdown) {
+          openDropdown(false);
+        }
+    
+        // Toggle the clicked dropdown
+        switch (dropdownName) {
+          case 'service':
+            setServiceDropdown((prevState) => !prevState);
+            setOpenDropdown(() => setServiceDropdown);
+            break;
+          case 'resource':
+            setResourceDropdown((prevState) => !prevState);
+            setOpenDropdown(() => setResourceDropdown);
+            break;
+          case 'community':
+            setCommunityDropdown((prevState) => !prevState);
+            setOpenDropdown(() => setCommunityDropdown);
+            break;
+          case 'about':
+            setAboutDropdown((prevState) => !prevState);
+            setOpenDropdown(() => setAboutDropdown);
+            break;
+          default:
+            break;
+        }
       };
     
-      const closeServiceDropdown = () => {
+
+    const closeServiceDropdown = () => {
         setServiceDropdown(false);
     };
-
-    const toggleResourceDropdown = () => {
-        setResourceDropdown(!resourceDropdown);
-      };
-    
-      const closeResourceDropdown = () => {
+    const closeResourceDropdown = () => {
         setResourceDropdown(false);
     };
-    
-    const toggleCommunityDropdown = () => {
-        setCommunityDropdown(!communityDropdown);
-      };
-    
-      const closeCommunityDropdown = () => {
+    const closeCommunityDropdown = () => {
         setCommunityDropdown(false);
     };
-
-    const toggleAboutDropdown = () => {
-        setAboutDropdown(!aboutDropdown);
-      };
-    
-      const closeAboutDropdown = () => {
+    const closeAboutDropdown = () => {
         setAboutDropdown(false);
     };
 
@@ -113,7 +125,7 @@ const Navbar = () => {
                 </span></Link>
 
                 <div className=' relative'>
-                    <span onClick={ toggleAboutDropdown } className=' flex items-center space-x-2 cursor-pointer'>
+                    <span onClick={() => toggleDropdown('about')} className=' flex items-center space-x-2 cursor-pointer'>
                         <p>About</p>
                         <img src={ arrowDown } className=' w-3 h-3' alt="" />
                     </span>
@@ -138,7 +150,7 @@ const Navbar = () => {
                 </div>
 
                 <div className=' relative'>
-                    <span onClick={ toggleServiceDropdown } className=' flex items-center space-x-2 cursor-pointer'>
+                    <span onClick={() => toggleDropdown('service')} className=' flex items-center space-x-2 cursor-pointer'>
                         <p>Services</p>
                         <img src={ arrowDown } className=' w-3 h-3' alt="" />
                     </span>
@@ -155,7 +167,7 @@ const Navbar = () => {
                 </div>
 
                 <div className=' relative'>
-                    <span onClick={ toggleResourceDropdown } className=' flex items-center space-x-2 cursor-pointer'>
+                    <span onClick={() => toggleDropdown('resource')} className=' flex items-center space-x-2 cursor-pointer'>
                         <p>Resources</p>
                         <img src={ arrowDown } className=' w-3 h-3' alt="" />
                     </span>
@@ -176,7 +188,7 @@ const Navbar = () => {
                 </div>
                  
                 <div className=' relative'>
-                    <span onClick={ toggleCommunityDropdown } className=' flex items-center space-x-2 cursor-pointer'>
+                    <span onClick={() => toggleDropdown('community')} className=' flex items-center space-x-2 cursor-pointer'>
                         <p>Community</p>
                         <img src={ arrowDown } className=' w-3 h-3' alt="" />
                     </span>

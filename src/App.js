@@ -22,6 +22,7 @@ import DetailedCases from "./pages/detailedcase";
 import DetailedBoard from "./pages/detailedboard";
 import Career from "./pages/career";
 import DetailedCareer from "./pages/detailedcareer";
+import Login from "./adminComps/login";
 
 function App() {
   const location = useLocation();
@@ -52,6 +53,7 @@ function App() {
           <Route path="/use-cases/:id" element={ <DetailedCases/> } />
           <Route path="/blogs/:id" element={<DetailedBlog/> } />
           <Route path="/careers/:id" element={<DetailedCareer/> } />
+          <Route path="/cms-login" element={ <Login/> } />
           <Route path="/cms-admin" element={<Cms/>} />
           <Route path="/career" element={<Career/>} />
         </Routes>

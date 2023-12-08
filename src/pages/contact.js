@@ -9,13 +9,16 @@ import fb from './assets/facebook.svg';
 import linked from './assets/linkedin.svg';
 import twi from './assets/twitter.svg';
 import arrow from'./assets/arrow-down.svg';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { countries } from 'countries-list';
 import load from './assets/load.gif';
 import checked from './assets/checked.png';
 import warning from './assets/warning.png';
+import { GeneralContext } from "../contexts/contextprovider";
 
 const Contact = () => {
+
+    const [generalitem, setGeneralItem] = useContext(GeneralContext);
 
     const [isSelectOpen, setIsSelectOpen] = useState(false);
     const [selectedCountry, setSelectedCountry] = useState('');
@@ -381,7 +384,7 @@ const Contact = () => {
                     <img src={ office } alt="" />
                 </button>
                 <p className=" font-medium text-xl">Our head office</p>
-                <p className=" text-sm lg:pr-10 text-[#676767]">Baderinwa Alabi Street, Central Lekki Residents' Association, Rahman Adeboyejo Street Lekki Phase 1 Lagos, Nigeria</p>
+                <p className=" text-sm lg:pr-10 text-[#676767]">{generalitem.address}</p>
             </div>
 
             <div className=" space-y-2 w-full lg:w-1/3">
@@ -389,7 +392,7 @@ const Contact = () => {
                     <img src={ chat } alt="" />
                 </button>
                 <p className=" font-medium text-xl">Connect with us on</p>
-                <p className=" text-sm"> <span className=" block gradient-text">support@unicloudafrica.com</span></p>
+                <p className=" text-sm"> <span className=" block gradient-text">{generalitem.email}</span></p>
             </div>
 
             <div className=" space-y-2 w-full lg:w-1/3">
@@ -398,9 +401,9 @@ const Contact = () => {
                 </button>
                 <p className=" font-medium text-xl">Connect with us on social media</p>
                 <span className=" flex space-x-6">
-                    <img src={ fb } className=" w-4 h-4" alt="" />
-                    <img src={ linked } className=" w-4 h-4" alt="" />
-                    <img src={ twi } className=" w-4 h-4" alt="" />
+                    <a href={ generalitem.fb }><img src={ fb } className=" w-4 h-4" alt="" /></a>
+                    <a href={ generalitem.linkedin }><img src={ linked } className=" w-4 h-4" alt="" /></a>
+                    <a href={ generalitem.twitter }><img src={ twi } className=" w-4 h-4" alt="" /></a>
                 </span>
             </div>
 

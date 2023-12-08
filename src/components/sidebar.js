@@ -52,7 +52,7 @@ const Sidebar = () => {
 
   const logOut = () => {
     signOut(auth).then(() => {
-        Navigate('/gotze')
+        Navigate('/cms-login')
         }).catch((error) => {
         console.log('An error happened');
     });

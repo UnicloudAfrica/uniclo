@@ -24,21 +24,21 @@ const Footer = () => {
                 <p className=' font-normal text-base'>Cloud solutions for Africa's future.</p>
                 <span className=' flex items-center space-x-6'>
                     
-                    <img 
+                    <a href={ generalitem.fb }><img 
                     src={ fb }
-                    alt="" />
+                    alt="" /></a>
 
-                    <img 
+                    <a href={ generalitem.twitter }><img 
                     src={ twi }
-                    alt="" />
+                    alt="" /></a>
 
-                    <img 
+                    <a href={ generalitem.ig }><img 
                     src={ ig }
-                    alt="" />
+                    alt="" /></a>
 
-                    <img 
+                    <a href={ generalitem.whatsapp }><img 
                     src={ whatsapp }
-                    alt="" />
+                    alt="" /></a>
                 </span>
             </div>
 

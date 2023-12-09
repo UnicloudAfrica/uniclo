@@ -37,7 +37,7 @@ const Blog = () => {
 
             <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-6">
                 {blogArray.map((item, index) => (
-                    <Link to={`/blogs/${item.id}`}><div key={index} className="w-full text-center">             
+                    <Link  to={`/blogs/${encodeURIComponent(item.title)}`}><div key={index} className="w-full text-center">             
                         <div className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
                         <button className=" bg-[#3DC8F91A] px-3 py-2 mr-auto rounded-[30px] block mt-6 text-sm md:text-base">
                             <p className=" gradient-text">{item.tag}</p>

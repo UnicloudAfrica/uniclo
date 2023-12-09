@@ -5,7 +5,7 @@ import { useRef, useEffect, useState } from 'react';
 import { initializeApp } from "firebase/app";
 import adbg from './assets/adBG.svg';
 import admob from './assets/adMob.svg';
-import {getFirestore, getDoc, doc, getDocs, collection, query } from 'firebase/firestore';
+import {getFirestore, getDoc, doc, getDocs, collection, query,where } from 'firebase/firestore';
 import { motion } from "framer-motion";
 import copy from './assets/copy.svg';
 
@@ -36,47 +36,53 @@ const DetailedBlog = () => {
     ]);
     const [otherBlogs, setOtherBlogs] = useState([]);
 
-    const { id } = useParams();
+    const { title } = useParams();
 
     useEffect(() => {
-        if (id) {
-          const docRef = doc(db, 'blog', id); // 'id' is the name of the document
-          getDoc(docRef)
-            .then((doc) => {
-              if (doc.exists()) {
-                const blogs = { id: doc.id, ...doc.data() };
-                console.log('Document data:', blogs);
-                setSelectedBlogItem(blogs);
-              } else {
-                // Handle the case where the document does not exist
-                console.log("Document does not exist");
-              }
-            })
-            .catch((error) => {
-              // Handle any potential errors
-              console.error("Error getting document:", error);
-            });
-        }
 
-    // Fetch all documents in the 'blog' collection
-    const blogsCollectionRef = collection(db, 'blog');
-    const q = query(blogsCollectionRef);
-    getDocs(q)
-    .then((querySnapshot) => {
-        const otherBlogsData = [];
-        querySnapshot.forEach((doc) => {
-        const blogData = { id: doc.id, ...doc.data() };
-        if (id !== doc.id) {
-            otherBlogsData.push(blogData);
-        }
+      const decodedTitle = decodeURIComponent(title);
+      if (title) {
+    
+        const blogsCollectionRef = collection(db, 'blog');
+        const q = query(blogsCollectionRef, where('title', '==', decodedTitle));
+    
+        getDocs(q)
+          .then((querySnapshot) => {
+            if (!querySnapshot.empty) {
+              // Assuming there is only one document with the given title
+              const doc = querySnapshot.docs[0];
+              const blogs = { id: doc.id, ...doc.data() };
+              console.log('Document data:', blogs);
+              setSelectedBlogItem(blogs);
+            } else {
+              console.log("Document does not exist for decoded title:", decodedTitle);
+            }
+          })
+          .catch((error) => {
+            console.error("Error getting documents:", error);
+          });
+      }
+
+      // Fetch all documents in the 'blog' collection excluding the current title
+      const blogsCollectionRef = collection(db, 'blog');
+      const q = query(blogsCollectionRef);
+      getDocs(q)
+        .then((querySnapshot) => {
+          const otherBlogsData = [];
+          querySnapshot.forEach((doc) => {
+            const blogData = { id: doc.id, ...doc.data() };
+            // Exclude the current title from the list
+            if (decodedTitle !== doc.data().title) {
+              otherBlogsData.push(blogData);
+            }
+          });
+          setOtherBlogs(otherBlogsData);
+        })
+        .catch((error) => {
+          console.error("Error getting documents:", error);
         });
-        setOtherBlogs(otherBlogsData);
-    })
-    .catch((error) => {
-        console.error("Error getting documents:", error);
-    });
 
-    }, [id, db]);
+    }, [title, db]);
 
 
     //func to copy link
@@ -128,7 +134,7 @@ const DetailedBlog = () => {
             <p className=" font-medium text-3xl  text-center mt-16">View  our latest blogs</p>
             <div className={`grid grid-cols-1 md:grid-cols-${otherBlogs.length > 1 ? 2 : 1} gap-[32px] lg:gap-[4%] w-full mt-8 mb-[6em]`}>
               {otherBlogs.slice(0, 2).map((item, index) => (
-                <Link to={`/blogs/${item.id}`} key={index}>
+                <Link to={`/blogs/${encodeURIComponent(item.title)}`} key={index}>
                   <div className="w-full text-center">
                     <div className="w-full h-[290px] bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
                     <p className="text-left mt-6 text-xl lg:text-2xl font-medium md:h-[2.5em]">{item.title}</p>

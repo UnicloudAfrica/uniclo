@@ -67,41 +67,72 @@ const Navbar = () => {
         setAboutDropdown(false);
     };
 
+    const [sections, setSections] = useState({
+        about: false,
+        services: false,
+        resources: false,
+        community: false,
+    });
+    
+    const toggleSection = (section) => {
+        setSections((prevSections) => ({
+          ...prevSections,
+          [section]: !prevSections[section],
+        }));
+    };
+    
+
     return ( 
         <>
-        <div id="overlay" className=" w-full bg-[#fff] backdrop-blur-xl p-6 flex justify-center items-center pb-[100px] -translate-y-[150vh] shadow transition-all duration-700 top-[78px] fixed z-[9999]">
+        <div id="overlay" className="w-full h-full max-h-screen bg-[#fff] backdrop-blur-xl p-6 flex justify-center items-start -translate-y-[150vh] shadow transition-all duration-700 top-[78px] fixed z-[9999] overflow-y-auto">
             <div className="w-full flex flex-col justify-center items-center space-y-5">
-                <div className=' w-full flex flex-row justify-between md:hidden text-lg'>
-                    <button className=' border border-[#EAEBF0] py-3 w-[48%] text-[#121212] text-center font-Outfit font-normal rounded-[30px]'>Login</button>
-                    <button className=' bg-gradient-to-r from-[#288DD1] via-[#3fd0e0] to-[#3FE0C8] py-3 w-[48%] text-[#fff] text-center font-Outfit font-normal rounded-[30px]'>Register</button>
+                <div className='w-full flex flex-row justify-between md:hidden text-lg'>
+                    <button className='border border-[#EAEBF0] py-3 w-[48%] text-[#121212] text-center font-Outfit font-normal rounded-[30px]'>Login</button>
+                    <button className='bg-gradient-to-r from-[#288DD1] via-[#3fd0e0] to-[#3FE0C8] py-3 w-[48%] text-[#fff] text-center font-Outfit font-normal rounded-[30px]'>Register</button>
                 </div>
-                <div className=' w-full text-left font-Outfit'>
-                    <Link to='/'><p className=" font-medium cursor-pointer text-xl text-[#121212] font-Outfit mt-5 ">Home</p></Link>
-                    <p className=" font-medium cursor-pointer text-lg text-[#121212] font-Outfit mt-5 ">About</p>
-                    <span className=' text-sm text-[#12121299] mt-3'>
-                        <Link to='/about'><p className=' mt-3'>Learn About Us</p></Link>
-                        <Link to='/advisory-board'><p className=' mt-3'>Advisory Board</p></Link>
-                        <Link to='/career'><p className=' mt-3'>Career</p></Link>
-                        <Link to='/terms'><p className=' mt-3'>Legal</p></Link>
-                    </span>
-                    <p className=" font-medium cursor-pointer text-xl text-[#121212] font-Outfit mt-5 ">Services</p>
-                    <span className=' text-sm text-[#12121299] mt-3'>
-                        <Link to='/services'><p className=' mt-3'>Our Services</p></Link>
-                        <Link to='/solutions'><p className=' mt-3'>Solutions</p></Link>
-                    </span>
-                    <p className=" font-medium cursor-pointer text-xl text-[#121212] font-Outfit mt-5 ">Resources</p>
-                        <span className=' text-sm text-[#12121299] mt-3'>
-                            <Link to='/resources'><p className=' mt-3'>Our Resources</p></Link>
-                            <Link to='/faq'><p className=' mt-3'>FAQ</p></Link>
-                            <Link to='/blog'><p className=' mt-3'>Our Blog</p></Link>
-                        </span>
-                    <p className=" font-medium cursor-pointer text-xl text-[#121212] font-Outfit mt-5 ">Community</p>
-                        <span className=' text-sm text-[#12121299] mt-3'>
-                            <Link to='/partnership'><p className=' mt-3'>Partners</p></Link>
-                            <Link to='/events'><p className=' mt-3'>Events</p></Link>
-                        </span>
-                    <Link to = '/contact'><p className=" font-medium cursor-pointer text-lg text-[#121212] font-Outfit mt-5 ">Contact</p></Link>
-               </div>
+                <div className='w-full text-left font-Outfit'>
+                <Link to='/'>
+                    <p className="font-medium cursor-pointer text-lg text-[#121212] font-Outfit mt-5">Home</p>
+                </Link>
+                <CollapsibleSection
+                    title="About"
+                    isOpen={sections.about}
+                    onToggle={() => toggleSection('about')}
+                >
+                    <Link to='/about'><p className='text-sm text-[#12121299] mt-3'>Learn About Us</p></Link>
+                    <Link to='/advisory-board'><p className='text-sm text-[#12121299] mt-3'>Advisory Board</p></Link>
+                    <Link to='/career'><p className='text-sm text-[#12121299] mt-3'>Career</p></Link>
+                    <Link to='/terms'><p className='text-sm text-[#12121299] mt-3'>Legal</p></Link>
+                </CollapsibleSection>
+                <CollapsibleSection
+                    title="Services"
+                    isOpen={sections.services}
+                    onToggle={() => toggleSection('services')}
+                >
+                        <Link to='/services'><p className=' mt-3 text-sm text-[#12121299]'>Our Services</p></Link>
+                        <Link to='/solutions'><p className=' mt-3 text-sm text-[#12121299]'>Solutions</p></Link>
+                </CollapsibleSection>
+                <CollapsibleSection
+                    title="Resources"
+                    isOpen={sections.resources}
+                    onToggle={() => toggleSection('resources')}
+                >
+                            <Link to='/resources'><p className=' mt-3 text-sm text-[#12121299]'>Our Resources</p></Link>
+                            <Link to='/faq'><p className=' mt-3 text-sm text-[#12121299]'>FAQ</p></Link>
+                            <Link to='/blog'><p className=' mt-3 text-sm text-[#12121299]'>Our Blog</p></Link>
+                </CollapsibleSection>
+                <CollapsibleSection
+                    title="Community"
+                    isOpen={sections.community}
+                    onToggle={() => toggleSection('community')}
+                >
+                        <Link to='/partnership'><p className=' mt-3 text-sm text-[#12121299]'>Partners</p></Link>
+                        <Link to='/events'><p className=' mt-3 text-sm text-[#12121299]'>Events</p></Link>
+                </CollapsibleSection>
+                <Link to='/contact'>
+                    <p className="font-medium cursor-pointer text-lg text-[#121212] font-Outfit mt-5">Contact</p>
+                </Link>
+                </div>
             </div>
         </div>
         <div className=" py-6 z-[99999] px-4 md:px-8 lg:px-16 flex justify-between items-center fixed w-full bg-white top-0 text-[#121212]">
@@ -229,3 +260,14 @@ const Navbar = () => {
 }
  
 export default Navbar;
+
+const CollapsibleSection = ({ title, isOpen, onToggle, children }) => {
+    return (
+      <>
+        <p className="font-medium cursor-pointer text-lg text-[#121212] font-Outfit mt-5" onClick={onToggle}>
+          {title}
+        </p>
+        {isOpen && <div className="ml-4">{children}</div>}
+      </>
+    );
+  }

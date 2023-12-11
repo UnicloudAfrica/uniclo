@@ -4,7 +4,7 @@ import search from "./assets/search-normal.svg";
 import adbg from './assets/adBG.svg';
 import admob from './assets/adMob.svg';
 import { motion } from "framer-motion";
-import {useContext} from 'react'
+import {useContext, useState} from 'react'
 import { BlogContext } from '../contexts/contextprovider';
 import { Link } from 'react-router-dom';
 
@@ -12,6 +12,18 @@ const Blog = () => {
 
 
     const [blogArray] = useContext(BlogContext);
+    const [selectedTag, setSelectedTag] = useState('all');
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const filteredBlogs = blogArray.filter((blog) => {
+        const titleMatches = blog.title.toLowerCase().includes(searchQuery.toLowerCase());
+    
+        if (selectedTag === 'all') {
+            return titleMatches; // Show all blogs when 'all' is selected
+        } else {
+            return titleMatches && blog.tag.includes(selectedTag);
+        }
+    });
 
 
     return ( 
@@ -24,19 +36,25 @@ const Blog = () => {
             <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">Our Blog</p>
             <p className=" text-center font-normal mt-3 md:px-[15%] text-[#676767] text-lg md:text-xl ">Explore Our Blog for insightful articles on cloud trends, best pratices and success stories.</p>
             <div className=" w-full flex justify-between items-center relative mt-8">
-                <select name="" id="" className="  px-3 md:px-6 py-3 border text-xs md:text-base border-[#EAEBF0] flex justify-center rounded-[10px] custom-dropdown w-[140px]  md:w-[250px]">
-                    <option value="">All Categories</option>
-                    <option value="">Cloud Computing</option>
-                    <option value="">Cloud Storage</option>
-                    <option value="">Web Hosting</option>
+                <select name="" id=""  value={selectedTag} onChange={(e) => setSelectedTag(e.target.value)} className="  px-3 md:px-6 py-3 border text-xs md:text-base border-[#EAEBF0] flex justify-center rounded-[10px] custom-dropdown w-[140px]  md:w-[250px]">
+                    <option value="all">All Categories</option>
+                    <option value="Cloud Computing">Cloud Computing</option>
+                    <option value="Cloud Storage">Cloud Storage</option>
+                    <option value="Web Hosting">Web Hosting</option>
                 </select>
 
-                <input  placeholder="Search blog posts" className=" px-3 md:px-6 py-3 border text-xs md:text-base placeholder:text-[#1e1e1e] border-[#EAEBF0] flex justify-center rounded-[10px] w-[140px]  md:w-[250px] relative" type="text"/>
-                    <img src={ search } className=" right-3 top-[35%] md:right-6 md:top-[30%] absolute w-3 h-3 md:w-auto md:h-auto" alt="" />
+                <input
+                    placeholder="Search blog posts"
+                    className="px-3 md:px-6 py-3 border text-xs md:text-base placeholder:text-[#1e1e1e] border-[#EAEBF0] flex justify-center rounded-[10px] w-[140px] md:w-[250px] relative"
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <img src={ search } className=" right-3 top-[35%] md:right-6 md:top-[30%] absolute w-3 h-3 md:w-auto md:h-auto" alt="" />
             </div>
 
             <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-6">
-                {blogArray.map((item, index) => (
+                {filteredBlogs.map((item, index) => (
                     <Link  to={`/blogs/${encodeURIComponent(item.title)}`}><div key={index} className="w-full text-center">             
                         <div className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
                         <button className=" bg-[#3DC8F91A] px-3 py-2 mr-auto rounded-[30px] block mt-6 text-sm md:text-base">

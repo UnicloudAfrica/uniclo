@@ -1,16 +1,17 @@
 import Certifications from "../components/certifications";
 import Navbar from "../components/navbar";
-import awardOne from './assets/awardone.svg';
-import awardTwo from './assets/awardtwo.svg';
-import awardThree from './assets/awardthree.svg';
-import awardFour from './assets/awardfour.svg';
-import awardfive from './assets/awardfive.svg';
-import awardSix from './assets/awardSix.svg';
+// import awardOne from './assets/awardone.svg';
+// import awardTwo from './assets/awardtwo.svg';
+// import awardThree from './assets/awardthree.svg';
+// import awardFour from './assets/awardfour.svg';
+// import awardfive from './assets/awardfive.svg';
+// import awardSix from './assets/awardSix.svg';
 import Ads from "../components/ad";
-import mission from './assets/mission.svg';
-import vision from './assets/vision.svg';
+// import mission from './assets/mission.svg';
+// import vision from './assets/vision.svg';
 import Footer from "../components/footer";
 import { motion } from "framer-motion";
+import aboutBg from './assets/aboutbg.svg';
 
 
 
@@ -41,7 +42,7 @@ const About = () => {
                 <div className=" mt-[5em]">
                     <p className=" px-4 md:px-8 lg:px-16 text-center font-medium text-3xl md:text-[40px] leading-[50px]">Our Journey</p>
                     <p className=" text-lg md:text-xl mt-3 font-normal text-center text-[#676767]">Crafting a Cloud Computing Legacy for African Businesses</p>
-                    <p className=" px-4 md:px-8 lg:px-16 my-6 text-sm text-[#676767] text-justify font-normal">Founded in 2020 in the vibrant city of Lagos, Nigeria, UniCloud Africa emerged from the vision of a group of seasoned entrepreneurs. Fueled by a profound understanding of the challenges faced by African businesses—ranging from limited access to capital and unreliable infrastructure to a scarcity of skilled IT professionals—our founders embarked on a mission to revolutionize the cloud computing landscape for the African continent.<br></br><br></br>
+                    <p className=" px-4 md:px-8 lg:px-16 my-6 text-sm text-[#676767] text-justify font-normal">Founded in 2023 in the vibrant city of Lagos, Nigeria, UniCloud Africa emerged from the vision of a group of seasoned entrepreneurs. Fueled by a profound understanding of the challenges faced by African businesses—ranging from limited access to capital and unreliable infrastructure to a scarcity of skilled IT professionals—our founders embarked on a mission to revolutionize the cloud computing landscape for the African continent.<br></br><br></br>
                     Recognizing the increasing adoption of cloud computing as a catalyst for enhancing agility, scalability, and operational efficiency among African businesses, the founders set out to create a cloud computing provider that would be not only affordable and reliable but also tailored to the unique needs of the region.<br></br><br></br>
                     Today, UniCloud Africa stands as a beacon in the African tech landscape, proudly holding its position as one of the leading cloud computing providers on the continent. Our comprehensive suite of cloud services spans compute, storage, networking, and managed services, catering to businesses of all sizes—from dynamic startups to multinational corporations.<br></br><br></br>
                     At the core of UniCloud Africa's mission is a steadfast commitment to supporting the growth and development of African businesses. We have instituted various programs and initiatives designed to facilitate the seamless adoption of cloud computing, enabling businesses to harness its transformative power to their advantage. In collaboration with local universities and training organizations, we are actively nurturing the next generation of African professionals, equipping them with the skills essential for success in the dynamic realm of cloud computing.<br></br><br></br>
@@ -51,17 +52,13 @@ const About = () => {
                         <p className="  text-center font-medium text-3xl md:text-[40px] leading-[50px]">Our Vision and Mission</p>
                         <p className=" text-lg md:text-xl mt-4 font-normal text-[#676767] text-center md:px-[12%]">A vanguard for Africa's digital evolution, and catalyst for transformative change across industries and communities</p>
 
-                        <div className="flex flex-col md:flex-row justify-between items-start mt-8 md:space-x-[64px]">
-                            <img src={ vision } className=" block w-16 h-16 md:w-auto md:h-auto" alt="" />
-                            <div className=" flex flex-col items-start">
-                                <p className=" text-2xl mt-3 md:mt-0 md:text-3xl font-medium">Our Vision</p>
+                        <div className="flex flex-col md:flex-row justify-between items-center mt-8">
+                            <div style={{ backgroundImage: `url(${aboutBg})`, backgroundSize: 'cover', backgroundPosition: 'center'}} className=" w-[48%] h-[450px] bg-[#231546] rounded-[30px]"></div>
+                           
+                            <div className=" flex flex-col items-start md:w-[48%]">
+                                <p className=" text-2xl md:mt-0 md:text-3xl font-medium">Our Vision</p>
                                 <p className=" whitespace-pre-line mt-3 text-base text-[#676767] text-justify font-normal">Empowering Africa's Digital Future: With the mantra 'One Cloud, One Africa,' our vision is to create a truly Pan-African Cloud Platform that serves as the catalyst for technological innovation, economic growth, and sustainable development for Africa.</p>
-                            </div>
-                        </div>
-                        <div className="flex flex-col md:flex-row  justify-between items-start mt-16 md:space-x-[64px]">
-                            <img src={ mission } className=" block w-16 h-16 md:w-auto md:h-auto" alt="" />
-                            <div className=" flex flex-col items-start">
-                                <p className=" text-2xl mt-3 md:mt-0 md:text-3xl font-medium">Our Mission</p>
+                                <p className=" text-2xl mt-3 md:mt-8 md:text-3xl font-medium">Our Mission</p>
                                 <p className=" whitespace-pre-line mt-3 text-base text-[#676767] text-justify font-normal">Fostering Digital Excellence Across Africa: Our mission at UniCloud Africa is to responsibly deliver innovative and dependable cloud solutions that empower businesses and governments across the continent.</p>
                             </div>
                         </div>
@@ -94,7 +91,7 @@ const About = () => {
 
                     <Certifications/>
 
-                    <div className="my-[5em] py-8 w-full bg-[#0F171D] flex justify-center items-center flex-col text-white">
+                    {/* <div className="my-[5em] py-8 w-full bg-[#0F171D] flex justify-center items-center flex-col text-white">
                         <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">Industry Awards and Recognitions</p>
                         <p className=" text-center font-normal mt-3 text-base md:text-xl md:px-[12%] text-[#ffffffcc]">Our solutions have been recognized for innovation and leadership. The awards and recognitions include:</p>
                         <div className=" flex justify-center items-center">
@@ -107,7 +104,7 @@ const About = () => {
                                 <img src={ awardSix } className=' ' alt="" />
                             </div>
                         </div>
-                    </div>
+                    </div> */}
 
                     <div className=" my-[5em] w-full px-4 md:px-8 lg:px-16">
                         <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">Our Corporate Social Responsibility</p>

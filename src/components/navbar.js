@@ -140,7 +140,7 @@ const Navbar = () => {
                 <img 
                 src={ generalitem.logourl }
                 className=' w-[75px]'
-                 alt="" />
+                 alt="One cloud one africa" />
             </span>
             <div onClick={ overlay } className="menu-icon md:hidden">
                 <input className="menu-icon__cheeckbox" type="checkbox" />

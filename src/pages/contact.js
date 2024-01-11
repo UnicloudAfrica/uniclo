@@ -273,6 +273,7 @@ const Contact = () => {
                             <option value="Inquiry">Inquiry</option>
                             <option value="Business">Business</option>
                             <option value="Partnerships">Partnerships</option>
+                            <option value="Employment">Employment</option>
                             <option value="Infrastructure Deployment">Infrastructure Deployment</option>
                         </select>
                         <img
@@ -393,6 +394,7 @@ const Contact = () => {
                 </button>
                 <p className=" font-medium text-xl">Connect with us on</p>
                 <p className=" text-sm"> <span className=" block gradient-text">{generalitem.email}</span></p>
+                <p className=" text-sm"> <span className=" block gradient-text underline">+234 907 399 9979</span></p>
             </div>
 
             <div className=" space-y-2 w-full lg:w-1/3">

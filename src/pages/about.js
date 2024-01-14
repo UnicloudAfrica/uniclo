@@ -52,11 +52,11 @@ const About = () => {
                         <p className="  text-center font-medium text-3xl md:text-[40px] leading-[50px]">Our Vision and Mission</p>
                         <p className=" text-lg md:text-xl mt-4 font-normal text-[#676767] text-center md:px-[12%]">A vanguard for Africa's digital evolution, and catalyst for transformative change across industries and communities</p>
 
-                        <div className="flex flex-col md:flex-row justify-between items-center mt-8">
-                            <div style={{ backgroundImage: `url(${aboutBg})`, backgroundSize: 'cover', backgroundPosition: 'center'}} className=" w-[48%] h-[450px] bg-[#231546] rounded-[30px]"></div>
+                        <div className="flex flex-col lg:flex-row justify-between items-center mt-8">
+                            <div style={{ backgroundImage: `url(${aboutBg})`, backgroundSize: 'cover', backgroundPosition: 'center'}} className=" w-full lg:w-[48%] h-[450px] bg-[#231546] rounded-[10px] md:rounded-[30px]"></div>
                            
-                            <div className=" flex flex-col items-start md:w-[48%]">
-                                <p className=" text-2xl md:mt-0 md:text-3xl font-medium">Our Vision</p>
+                            <div className=" flex flex-col items-start lg:w-[48%]">
+                                <p className=" text-2xl mt-4 lg:mt-0 md:text-3xl font-medium">Our Vision</p>
                                 <p className=" whitespace-pre-line mt-3 text-base text-[#676767] text-justify font-normal">Empowering Africa's Digital Future: With the mantra 'One Cloud, One Africa,' our vision is to create a truly Pan-African Cloud Platform that serves as the catalyst for technological innovation, economic growth, and sustainable development for Africa.</p>
                                 <p className=" text-2xl mt-3 md:mt-8 md:text-3xl font-medium">Our Mission</p>
                                 <p className=" whitespace-pre-line mt-3 text-base text-[#676767] text-justify font-normal">Fostering Digital Excellence Across Africa: Our mission at UniCloud Africa is to responsibly deliver innovative and dependable cloud solutions that empower businesses and governments across the continent.</p>

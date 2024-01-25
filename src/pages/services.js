@@ -86,7 +86,7 @@ const Services = () => {
                 ))}
             </div>
 
-            <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center mt-16">Payment Plan</p>
+            {/* <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center mt-16">Payment Plan</p>
             <p className=" text-center font-normal text-[#676767] mt-3 text-lg md:text-xl ">Our payment structure ensures you know exactly what you are paying for without any hidden fee.</p>
             <div className=" flex justify-center items-center mt-8">
                 <div className=" bg-[#EAEBF0] rounded-[20px]">
@@ -111,8 +111,8 @@ const Services = () => {
                     Yearly
                     </button>
                 </div>
-            </div>
-            <div className=" grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[32px] lg:gap-[4%] w-full mt-8 mb-[6em]">
+            </div> */}
+            {/* <div className=" grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[32px] lg:gap-[4%] w-full mt-8 mb-[6em]">
                 {plan.map((item, index) => (
                     <div key={index} className="w-full text-center">             
                         <div className=" w-full bg-[#F5F5F4] rounded-[20px] p-6">
@@ -140,12 +140,12 @@ const Services = () => {
                         </div>
                     </div>
                 ))}
-            </div>
+            </div> */}
 
             <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] mt-[64px] text-center">Use Cases</p>
             <p className=" text-center font-normal mt-3 text-lg text-[#676767] md:text-xl ">Explore our case studies to see how our solutions have made a real impact.</p>
             <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-8 mb-[3em]">
-                {casesArray.slice(0,2).map((item, index) => (
+                {casesArray.map((item, index) => (
                     <Link to={`/use-cases/${item.id}`}><div key={index} className="w-full text-center">             
                         <div className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
                         <p className="text-left mt-6 text-xl md:text-2xl font-medium">{item.title}</p>
@@ -158,7 +158,7 @@ const Services = () => {
             </div>
 
             <motion.div 
-            className="  py-[3em] w-full font-Outfit text-[#fff]">
+            className=" md:mt-[128px]  py-[3em] w-full font-Outfit text-[#fff]">
                 <div className=" w-full h-[400px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] relative md:space-y-4">
                     <img src={adbg} className="hidden md:block absolute left-0 w-full h-full object-cover rounded-[30px]" alt="" />
                     <img src={admob} className="z-10 absolute top-0 h-full w-full object-cover block md:hidden" alt="" />

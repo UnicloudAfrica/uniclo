@@ -16,7 +16,7 @@ const Hero = () => {
           <p
             className="w-full text-base md:text-2xl text-center font-normal mt-3 md:leading-[30px]"
           >
-            Empower Your Business in Africa with Cloud Innovation.
+            Empower Your Business in Africa with Cloud Innovation
           </p>
           <Link to='/services'><button 
             

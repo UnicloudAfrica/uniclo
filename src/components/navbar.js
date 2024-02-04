@@ -3,6 +3,7 @@ import outline from './assets/outline.svg';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { GeneralContext } from "../contexts/contextprovider";
+import logo from './assets/logo.svg';
 import { useContext } from 'react';
 const Navbar = () => {
 
@@ -138,8 +139,8 @@ const Navbar = () => {
         <div className=" py-6 z-[99999] px-4 md:px-8 lg:px-16 flex justify-between items-center fixed w-full bg-white top-0 text-[#121212]">
             <span className="">
                 <img 
-                src={ generalitem.logourl }
-                className=' w-[75px]'
+                src={ logo }
+                className=' w-[75px] md:w-[120px]'
                  alt="One cloud one africa" />
             </span>
             <div onClick={ overlay } className="menu-icon md:hidden">

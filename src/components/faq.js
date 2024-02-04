@@ -42,7 +42,7 @@ const Faq = () => {
       className="py-[3em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]"
     >
       <p className=" font-medium text-[40px] leading-[50px] text-center mb-16">
-        Frequently asked questions?
+        Frequently Asked Questions (FAQs)?
       </p>
 
       {faqsData.map((faq, index) => (

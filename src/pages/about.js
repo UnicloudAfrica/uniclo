@@ -65,9 +65,9 @@ const About = () => {
                     </div>
 
                     <div className=" my-[5em] w-full px-4 md:px-8 lg:px-16">
-                        <p className=" font-medium text-2xl md:text-[40px] md:leading-[50px] text-center">Our core value</p>
+                        <p className=" font-medium text-2xl md:text-[40px] md:leading-[50px] text-center">Our Core Value</p>
                         <p className=" text-center font-normal text-base text-[#676767] md:text-lg md:px-[10%]">Navigating Excellence through Core Values </p>
-                        <p className=" text-[80px] md:text-[180px] text-center font-medium gradient-text">R.I.D.E</p>
+                        <p className=" text-[80px] md:text-[180px] text-center font-medium gradient-text">R I D E</p>
                         <div className=" flex flex-col w-full space-y-4">
                             <span className=" text-left">
                                 <p className=" text-[26px] font-medium">R<span className=" text-lg">esponsibility </span></p>

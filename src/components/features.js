@@ -28,9 +28,9 @@ const Features = () => {
                         <img 
                         src={ beneone }
                         alt="" />
-                        <p className=' font-medium text-xl mt-2'>Zero-risk, cloud services</p>
+                        <p className=' font-medium text-xl mt-2'>Zero-risk Cloud Services</p>
                     </span>
-                    <p className=' text-[#121212CC] text-sm md:text-base mt-2'>Improve your Cloud Services with Access to fully-managed IT infrastructure on demand. Only pay for what you use. Scale up, down or turn it off at any time. No long-term contract or CapEx hardware investments.</p>
+                    <p className=' text-[#121212CC] text-sm md:text-base mt-2'>Improve your cloud services with sccess to fully-managed IT infrastructure on demand. Only pay for what you use. Scale up, down or turn it off at any time. No long-term contract or CapEx hardware investments.</p>
                 </motion.div>
 
                 <motion.div 
@@ -40,7 +40,7 @@ const Features = () => {
                         <img 
                         src={ benetwo }
                         alt="" />
-                        <p className=' font-medium text-xl mt-2'>Hybrid-ready by design</p>
+                        <p className=' font-medium text-xl mt-2'>Hybrid-Ready by Design</p>
                     </span>
                     <p className=' text-[#121212CC] text-sm md:text-base mt-2'>Simplify complex distributed infrastructure whether, on-prem, across multiple clouds or at the edge. Centralize your management capabilities and deliver the best price-performance ratio for any workload.</p>
                 </motion.div>
@@ -52,9 +52,9 @@ const Features = () => {
                         <img 
                         src={ benethree }
                         alt="" />
-                        <p className=' font-medium text-xl mt-2'>Global reach. Local appeal</p>
+                        <p className=' font-medium text-xl mt-2'>Global Reach, Local Appeal</p>
                     </span>
-                    <p className=' text-[#121212CC] text-sm md:text-base mt-2'>Deliver the performance and reliability your customers expect no matter the location. Offer low-latency edge services with our existing fully-managed clouds or global base of 300+ MSP partners.</p>
+                    <p className=' text-[#121212CC] text-sm md:text-base mt-2'>Deliver the performance and reliability your customers expect no matter the location. Offer low-latency edge services with our existing fully-managed clouds or global base of MSP partners.</p>
                 </motion.div>
 
                 <motion.div 
@@ -63,7 +63,7 @@ const Features = () => {
                         <img 
                         src={ benefour }
                         alt="" />
-                        <p className=' font-medium text-xl mt-2'>Trust your cloud</p>
+                        <p className=' font-medium text-xl mt-2'>Trust your Cloud</p>
                     </span>
                     <p className=' text-[#121212CC] text-sm md:text-base mt-2'>Take control of your data with UniCloud’s secure-by-design infrastructure, data protection solutions, and our global network of partners. Isolate your data with click-to-provision options for dedicated storage at the controller level.</p>
                 </motion.div>
@@ -74,7 +74,7 @@ const Features = () => {
                         <img 
                         src={ benefive }
                         alt="" />
-                        <p className=' font-medium text-xl mt-2'>Centralized and easy monitoring</p>
+                        <p className=' font-medium text-xl mt-2'>Centralized and Easy Monitoring</p>
                     </span>
                     <p className=' text-[#121212CC] text-sm md:text-base mt-2'>Access our simple dashboard based cloud management. Web-based interface to monitor your applications and infrastructure with visualized dashboards, automated monitoring and alerting and detailed reporting.</p>
                 </motion.div>
@@ -86,9 +86,9 @@ const Features = () => {
                         <img 
                         src={ benesix }
                         alt="" />
-                        <p className=' font-medium text-xl mt-2'>24/7/365 DevOps support</p>
+                        <p className=' font-medium text-xl mt-2'>24/7/365 DevOps Support</p>
                     </span>
-                    <p className=' text-[#121212CC] text-sm md:text-base mt-2'>Free your IT team from ongoing maintenance. we deliver around-the-clock, proactive monitoring and support, and seamless upgrades, backed by our industry-best uptime SLAs.</p>
+                    <p className=' text-[#121212CC] text-sm md:text-base mt-2'>Free your IT team from ongoing maintenance. we deliver around-the-clock, proactive monitoring and support, and seamless upgrades, backed by our industry-leading uptime SLAs.</p>
                 </motion.div>
 
             </div>

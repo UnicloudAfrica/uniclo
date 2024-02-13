@@ -40,7 +40,7 @@ const Career = () => {
                 <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">Career</p>
                 <p className=" text-center font-normal mt-3 text-[#676767] md:px-[10%] text-lg md:text-xl ">Want to work with some of the best global talent and build cloud solutions for African enterprises and Government. Join the team — we’re hiring!</p>
 
-                <div className=" flex items-center mx-auto mt-8 space-x-4">
+                {/* <div className=" flex items-center mx-auto mt-8 space-x-4">
                     <p className=" text-base text-[#676767] font-medium">Location:</p>
                     <div className=" w-full flex border border-[#D0D5DD] rounded-lg p-2.5 space-x-4">
                         <div className="relative w-[169px] flex md:w-[220px]">
@@ -64,14 +64,14 @@ const Career = () => {
                         }`} alt=""/>
                         </div>
                     </div>
-                </div>
+                </div> */}
             </div>
 
             <div 
             className=" mt-16">
                 <div className="">
                     <div className=" flex flex-col justify-around">
-                        <div className=" w-full mt-4 space-y-5">
+                        {/* <div className=" w-full mt-4 space-y-5">
                             {filteredCareers.map((item, index) => (
                                 <Link to={`/careers/${item.id}`}><div key={index} className="border border-[#EAECF0] hover:bg-[#F5F5F4] rounded-[16px] bg-transparent w-full p-6 space-y-5 mb-6">             
                                     <div className=" w-full flex justify-between items-center">
@@ -95,8 +95,10 @@ const Career = () => {
                                     </div>
                                 </div></Link>
                             ))}
-                        </div>
+                        </div> */}
+                        <p className=' font-medium text-4xl capitalize text-center mb-16'>No Job Listings at this moment</p>
                     </div>
+                    
                 </div>
             </div>
         </div>

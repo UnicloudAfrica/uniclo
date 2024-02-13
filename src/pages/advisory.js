@@ -13,7 +13,7 @@ const Advisory = () => {
         <>
         <Navbar/>
         <div className=" mt-[8em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
-            <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">Our Advisory board</p>
+            <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">Management</p>
             <p className=" text-center font-normal mt-3 text-lg md:text-xl">Team and Leadership at UniCloud Africa: Pioneering Excellence in the Digital Frontier</p>
 
             <p className=" text-base font-normal mt-6 text-justify md:text-center text-[#676767]">At UniCloud Africa, our strength lies in a dynamic team led by visionary leaders with a passion for innovation. From seasoned executives with over decades of hands-on experience to experts in cloud computing, our diverse team is united by a common goal: to revolutionize the way businesses operate in Africa.

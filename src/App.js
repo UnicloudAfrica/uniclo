@@ -23,6 +23,7 @@ import DetailedBoard from "./pages/detailedboard";
 import Career from "./pages/career";
 import DetailedCareer from "./pages/detailedcareer";
 import Login from "./adminComps/login";
+import Management from "./pages/management";
 
 function App() {
   const location = useLocation();
@@ -38,6 +39,7 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/about" element={<About />} />
           <Route path="/advisory-board" element={<Advisory/>} />
+          <Route path="/management" element={<Management/>} />
           <Route path="/advisory-board/:id" element={<DetailedBoard/>} />
           <Route path="/faq" element={<FaqPage />} />
           <Route path="/partnership" element={<Partnership />} />

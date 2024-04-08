@@ -167,6 +167,10 @@ const Navbar = () => {
                             <img src={ outline } className=' w-3 h-3' alt="" />
                         </span></Link>
                         <Link to='/advisory-board' className=''><span onClick={ closeAboutDropdown } className=' flex items-center mt-3 space-x-4'>
+                            <p>Advisory Board</p>
+                            <img src={ outline } className=' w-3 h-3' alt="" />
+                        </span></Link>
+                        <Link to='/management' className=''><span onClick={ closeAboutDropdown } className=' flex items-center mt-3 space-x-4'>
                             <p>Management</p>
                             <img src={ outline } className=' w-3 h-3' alt="" />
                         </span></Link>

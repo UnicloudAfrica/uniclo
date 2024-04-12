@@ -101,7 +101,8 @@ const Navbar = () => {
                     onToggle={() => toggleSection('about')}
                 >
                     <Link to='/about'><p className='text-sm text-[#12121299] mt-3'>Learn About Us</p></Link>
-                    <Link to='/advisory-board'><p className='text-sm text-[#12121299] mt-3'>Management</p></Link>
+                    <Link to='/advisory-board'><p className='text-sm text-[#12121299] mt-3'>Advisory Board</p></Link>
+                    <Link to='/management'><p className='text-sm text-[#12121299] mt-3'>Management</p></Link>
                     <Link to='/career'><p className='text-sm text-[#12121299] mt-3'>Career</p></Link>
                     <Link to='/terms'><p className='text-sm text-[#12121299] mt-3'>Legal</p></Link>
                 </CollapsibleSection>

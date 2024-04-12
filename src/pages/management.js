@@ -1,13 +1,13 @@
 import Footer from "../components/footer";
 import Navbar from "../components/navbar";
 import { useContext } from "react";
-import { BoardContext } from "../contexts/contextprovider";
+import { ManageContext } from "../contexts/contextprovider";
 import { Link } from "react-router-dom";
 import Ads from "../components/ad";
 
 const Management = () => {
 
-    const [boardArray] = useContext(BoardContext);
+    const [manageArray] = useContext(ManageContext);
 
 
     return ( 
@@ -23,8 +23,8 @@ const Management = () => {
 
             <div className="mt-16 w-full">
                 <div className=" mt-6 flex flex-wrap justify-around space-y-4 md:space-y-8 space-x-0 md:space-x-[24px] ">
-                    {boardArray.map((item, index) => (
-                        <Link key={index} to={`/advisory-board/${item.id}`} className="flex items-center justify-center w-full md:w-[250px]">
+                    {manageArray.map((item, index) => (
+                        <Link key={index} to={`/management/${item.id}`} className="flex items-center justify-center w-full md:w-[250px]">
                             <div className="w-full text-center">             
                                 <div className="h-[280px] bg-[#F5F5F4] md:bg-center rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover' }}></div>
                                 <p className="text-center mt-4 text-lg lg:text-xl font-medium lg:h-[1.5em]">{item.name}</p>

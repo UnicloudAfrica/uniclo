@@ -11,6 +11,7 @@ export const SolutionsContext = createContext();
 export const CasesContext = createContext();
 export const PartnerContext = createContext();
 export const BoardContext = createContext();
+export const ManageContext = createContext();
 export const CareerContext = createContext();
 export const GeneralContext = createContext();
 
@@ -63,6 +64,7 @@ const ContextProvider = (props) => {
   const caseArray = useFirestoreData(db, 'cases');
   const partnersArray = useFirestoreData(db, 'Partner');
   const boardArray = useFirestoreData(db, 'board');
+  const manageArray = useFirestoreData(db, 'manage');
   const careerArray = useFirestoreData(db, 'career');
   const [generalitem, setGeneralItem] = useState([])
   
@@ -86,13 +88,15 @@ const ContextProvider = (props) => {
               <CasesContext.Provider value={[caseArray]}>
                 <PartnerContext.Provider value={[partnersArray]}>
                   <BoardContext.Provider value={[boardArray]}>
-                    <CareerContext.Provider value={[careerArray]}>
-                      <GeneralContext.Provider value={[generalitem, setGeneralItem]}>
-                        <BlogContext.Provider value={[blogArray]}>
-                          {props.children}
-                        </BlogContext.Provider>
-                      </GeneralContext.Provider>
-                    </CareerContext.Provider>
+                    <ManageContext.Provider value={[manageArray]}>
+                      <CareerContext.Provider value={[careerArray]}>
+                        <GeneralContext.Provider value={[generalitem, setGeneralItem]}>
+                          <BlogContext.Provider value={[blogArray]}>
+                            {props.children}
+                          </BlogContext.Provider>
+                        </GeneralContext.Provider>
+                      </CareerContext.Provider>
+                    </ManageContext.Provider>
                   </BoardContext.Provider>
                 </PartnerContext.Provider>
               </CasesContext.Provider>

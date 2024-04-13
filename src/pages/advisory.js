@@ -25,7 +25,7 @@ const Advisory = () => {
                     {boardArray.map((item, index) => (
                         <Link key={index} to={`/management/${encodeURIComponent(item.name)}`} className="flex items-center justify-center w-full md:mb-4 md:w-[250px]">
                             <div className="w-full text-center">             
-                                <div className="h-[280px] bg-[#F5F5F4] md:bg-center rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover' }}></div>
+                                <div className="h-[400px] md:h-[300px] bg-[#F5F5F4] md:bg-center rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover' }}></div>
                                 <p className="text-center mt-4 text-lg lg:text-xl font-medium lg:h-[1.5em]">{item.name}</p>
                                 <p className=" gradient-text text-sm">View More</p>
                             </div>

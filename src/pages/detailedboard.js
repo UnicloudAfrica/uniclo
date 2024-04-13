@@ -88,7 +88,7 @@ const DetailedBoard = () => {
         <Navbar/>
         <div className="mt-[8em] px-4 md:px-8 lg:px-16 w-full flex flex-col justify-center items-center font-Outfit text-[#121212]">
             <p className=" md:text-5xl text-center font-medium">{selectedBoardItem.name}</p>
-            <div className=" mt-8 w-full md:w-[250px] h-[250px] bg-[#f5f5f4] rounded-[20px]" style={{ backgroundImage: `url(${selectedBoardItem.url})`, backgroundSize: 'cover' }}>
+            <div className=" mt-8 w-full md:w-[250px] h-[400px] md:h-[300px] bg-[#f5f5f4] rounded-[20px]" style={{ backgroundImage: `url(${selectedBoardItem.url})`, backgroundSize: 'cover' }}>
             </div>
             <p style={{ whiteSpace: 'pre-line' }} className=" mt-8 text-base text-[#676767] md:px-[15%] font-normal text-justify whitespace-pre-line mb-5"  dangerouslySetInnerHTML={{ __html: selectedBoardItem.about }}/>
 

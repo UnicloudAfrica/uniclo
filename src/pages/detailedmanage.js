@@ -3,7 +3,7 @@ import Navbar from "../components/navbar";
 import { useParams, Link } from 'react-router-dom';
 import { useRef, useEffect, useState } from 'react';
 import { initializeApp } from "firebase/app";
-import {getFirestore, getDoc, doc, getDocs, collection, query } from 'firebase/firestore';
+import {getFirestore, getDoc, doc, getDocs, collection, query, where } from 'firebase/firestore';
 import { motion } from "framer-motion";
 import copy from './assets/copy.svg';
 import adbg from './assets/adBG.svg';
@@ -33,56 +33,62 @@ const DetailedManage = () => {
           }
     ]);
 
-    const [otherManages, setOtherManages] = useState([]);
+    // const [otherManages, setOtherManages] = useState([]);
 
-    const { id } = useParams();
+    const { name } = useParams();
 
     useEffect(() => {
-        if (id) {
-          const docRef = doc(db, 'manage', id); // 'id' is the name of the document
-          getDoc(docRef)
-            .then((doc) => {
-              if (doc.exists()) {
-                const reso = { id: doc.id, ...doc.data() };
-                // console.log('Document data:', reso);
-                setSelectedManageItem(reso);
+
+        const decodedName = decodeURIComponent(name);
+
+        if (name) {
+
+            const blogsCollectionRef = collection(db, 'manage');
+            const q = query(blogsCollectionRef, where('name', '==', decodedName));
+
+            getDocs(q)
+            .then((querySnapshot) => {
+              if (!querySnapshot.empty) {
+                // Assuming there is only one document with the given name
+                const doc = querySnapshot.docs[0];
+                const manages = { id: doc.id, ...doc.data() };
+                // console.log('Document data:', manages);
+                setSelectedManageItem(manages);
               } else {
-                // Handle the case where the document does not exist
-                console.log("Document does not exist");
+                console.log("Document does not exist for decoded title:", decodedName);
               }
             })
             .catch((error) => {
-              // Handle any potential errors
-              console.error("Error getting document:", error);
+              console.error("Error getting documents:", error);
             });
         }
 
-        // Fetch all documents in the 'cases' collection
-        const manageCollectionRef = collection(db, 'manage');
-        const q = query(manageCollectionRef);
-        getDocs(q)
-        .then((querySnapshot) => {
-            const otherManageData = [];
-            querySnapshot.forEach((doc) => {
-            const manageData = { id: doc.id, ...doc.data() };
-            if (id !== doc.id) {
-                otherManageData.push(manageData);
-            }
-            });
-            setOtherManages(otherManageData);
-        })
-        .catch((error) => {
-            console.error("Error getting documents:", error);
-        });
+        // // Fetch all documents in the 'cases' collection
+        // const manageCollectionRef = collection(db, 'manage');
+        // const q = query(manageCollectionRef);
+        // getDocs(q)
+        // .then((querySnapshot) => {
+        //     const otherManageData = [];
+        //     querySnapshot.forEach((doc) => {
+        //     const manageData = { id: doc.id, ...doc.data() };
+        //     if (id !== doc.id) {
+        //         otherManageData.push(manageData);
+        //     }
+        //     });
+        //     setOtherManages(otherManageData);
+        // })
+        // .catch((error) => {
+        //     console.error("Error getting documents:", error);
+        // });
         
-    }, [id, db]);
+    }, [name, db]);
 
     return ( 
         <>
         <Navbar/>
         <div className="mt-[8em] px-4 md:px-8 lg:px-16 w-full flex flex-col justify-center items-center font-Outfit text-[#121212]">
             <p className=" md:text-5xl text-center font-medium">{selectedManageItem.name}</p>
-            <div className=" mt-8 w-full md:w-[250px] h-[330px] bg-[#f5f5f4] rounded-[20px]" style={{ backgroundImage: `url(${selectedManageItem.url})`, backgroundSize: 'cover' }}>
+            <div className=" mt-8 w-full md:w-[250px] md:bg-center h-[330px] bg-[#f5f5f4] rounded-[20px]" style={{ backgroundImage: `url(${selectedManageItem.url})`, backgroundSize: 'cover' }}>
             </div>
             <p style={{ whiteSpace: 'pre-line' }} className=" mt-8 text-base text-[#676767] md:px-[15%] font-normal text-justify whitespace-pre-line mb-5"  dangerouslySetInnerHTML={{ __html: selectedManageItem.about }}/>
 

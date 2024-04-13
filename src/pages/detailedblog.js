@@ -52,7 +52,7 @@ const DetailedBlog = () => {
               // Assuming there is only one document with the given title
               const doc = querySnapshot.docs[0];
               const blogs = { id: doc.id, ...doc.data() };
-              console.log('Document data:', blogs);
+              // console.log('Document data:', blogs);
               setSelectedBlogItem(blogs);
             } else {
               console.log("Document does not exist for decoded title:", decodedTitle);

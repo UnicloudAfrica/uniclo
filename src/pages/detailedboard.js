@@ -3,7 +3,7 @@ import Navbar from "../components/navbar";
 import { useParams, Link } from 'react-router-dom';
 import { useRef, useEffect, useState } from 'react';
 import { initializeApp } from "firebase/app";
-import {getFirestore, getDoc, doc, getDocs, collection, query } from 'firebase/firestore';
+import {getFirestore, getDoc, doc, getDocs, collection, query, where } from 'firebase/firestore';
 import { motion } from "framer-motion";
 import copy from './assets/copy.svg';
 import adbg from './assets/adBG.svg';
@@ -33,49 +33,55 @@ const DetailedBoard = () => {
           }
     ]);
 
-    const [otherBoards, setOtherBoards] = useState([]);
+    // const [otherBoards, setOtherBoards] = useState([]);
 
-    const { id } = useParams();
+    const { name } = useParams();
 
     useEffect(() => {
-        if (id) {
-          const docRef = doc(db, 'board', id); // 'id' is the name of the document
-          getDoc(docRef)
-            .then((doc) => {
-              if (doc.exists()) {
-                const reso = { id: doc.id, ...doc.data() };
-                // console.log('Document data:', reso);
-                setSelectedBoardItem(reso);
-              } else {
-                // Handle the case where the document does not exist
-                console.log("Document does not exist");
-              }
-            })
-            .catch((error) => {
-              // Handle any potential errors
-              console.error("Error getting document:", error);
-            });
-        }
 
-        // Fetch all documents in the 'cases' collection
-        const boardCollectionRef = collection(db, 'board');
-        const q = query(boardCollectionRef);
+      const decodedName = decodeURIComponent(name);
+
+      if (name) {
+
+        const blogsCollectionRef = collection(db, 'board');
+        const q = query(blogsCollectionRef, where('name', '==', decodedName));
+
         getDocs(q)
-        .then((querySnapshot) => {
-            const otherBoardData = [];
-            querySnapshot.forEach((doc) => {
-            const boardData = { id: doc.id, ...doc.data() };
-            if (id !== doc.id) {
-                otherBoardData.push(boardData);
+          .then((querySnapshot) => {
+            if (!querySnapshot.empty) {
+              // Assuming there is only one document with the given name
+              const doc = querySnapshot.docs[0];
+              const boards = { id: doc.id, ...doc.data() };
+              // console.log('Document data:', manages);
+              setSelectedBoardItem(boards);
+            } else {
+              console.log("Document does not exist for decoded title:", decodedName);
             }
-            });
-            setOtherBoards(otherBoardData);
-        })
-        .catch((error) => {
+          })
+          .catch((error) => {
             console.error("Error getting documents:", error);
-        });
+          });
+      }
+
+      // Fetch all documents in the 'cases' collection
+      // const boardCollectionRef = collection(db, 'board');
+      // const q = query(boardCollectionRef);
+      // getDocs(q)
+      // .then((querySnapshot) => {
+      //     const otherBoardData = [];
+      //     querySnapshot.forEach((doc) => {
+      //     const boardData = { id: doc.id, ...doc.data() };
+      //     if (id !== doc.id) {
+      //         otherBoardData.push(boardData);
+      //     }
+      //     });
+      //     setOtherBoards(otherBoardData);
+      // })
+      // .catch((error) => {
+      //     console.error("Error getting documents:", error);
+      // });
         
-    }, [id, db]);
+    }, [name, db]);
 
     return ( 
         <>

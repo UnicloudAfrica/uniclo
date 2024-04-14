@@ -8,6 +8,8 @@ import admob from './assets/adMob.svg';
 import {getFirestore, getDoc, doc, getDocs, collection, query,where } from 'firebase/firestore';
 import { motion } from "framer-motion";
 import copy from './assets/copy.svg';
+import { useContext } from "react";
+import { BlogContext } from "../contexts/contextprovider";
 
 
 const DetailedBlog = () => {
@@ -25,6 +27,19 @@ const DetailedBlog = () => {
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app)
     
+    const [blogArray] = useContext(BlogContext);
+    const[ processedArray, setProcessedArray] = useState([]);
+   
+    
+    useEffect(()=>{
+        const processedBlogArray = blogArray.map(item => ({
+            ...item,
+            processedName: encodeURIComponent(item.title).replaceAll('%20', '-')
+        }));
+        setProcessedArray(processedBlogArray)
+    },[blogArray]);
+
+
     const[selectedBlogItem, setSelectedBlogItem] = useState([
         {
             topic: "",
@@ -40,7 +55,7 @@ const DetailedBlog = () => {
 
     useEffect(() => {
 
-      const decodedTitle = decodeURIComponent(title);
+      const decodedTitle = decodeURIComponent(title).replaceAll('-', ' ');
       if (title) {
     
         const blogsCollectionRef = collection(db, 'blog');
@@ -133,8 +148,8 @@ const DetailedBlog = () => {
 
             <p className=" font-medium text-3xl  text-center mt-16">View  our latest blogs</p>
             <div className={`grid grid-cols-1 md:grid-cols-${otherBlogs.length > 1 ? 2 : 1} gap-[32px] lg:gap-[4%] w-full mt-8 mb-[6em]`}>
-              {otherBlogs.slice(0, 2).map((item, index) => (
-                <Link to={`/blogs/${encodeURIComponent(item.title)}`} key={index}>
+              {processedArray.filter(item => item.title !== selectedBlogItem.title).slice(0, 2).map((item, index) => (
+                <Link to={`/blogs/${item.processedName}`} key={index}>
                   <div className="w-full text-center">
                     <div className="w-full h-[290px] bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
                     <p className="text-left mt-6 text-xl lg:text-2xl font-medium md:h-[2.5em]">{item.title}</p>

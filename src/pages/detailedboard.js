@@ -39,7 +39,7 @@ const DetailedBoard = () => {
 
     useEffect(() => {
 
-      const decodedName = decodeURIComponent(name);
+      const decodedName = decodeURIComponent(name).replaceAll('-', ' ');
 
       if (name) {
 

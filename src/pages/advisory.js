@@ -1,6 +1,6 @@
 import Footer from "../components/footer";
 import Navbar from "../components/navbar";
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { BoardContext } from "../contexts/contextprovider";
 import { Link } from "react-router-dom";
 import Ads from "../components/ad";
@@ -8,6 +8,18 @@ import Ads from "../components/ad";
 const Advisory = () => {
 
     const [boardArray] = useContext(BoardContext);
+    const[ processedArray, setProcessedArray] = useState([]);
+   
+    
+    useEffect(()=>{
+        const processedBoardArray = boardArray.map(item => ({
+            ...item,
+            processedName: encodeURIComponent(item.name).replaceAll('%20', '-')
+        }));
+        setProcessedArray(processedBoardArray)
+    },[boardArray])
+
+    
 
     return ( 
         <>
@@ -22,8 +34,8 @@ const Advisory = () => {
 
             <div className="mt-16 w-full">
                 <div className=" mt-6 flex flex-wrap justify-around space-y-4 md:space-y-0  space-x-0 md:space-x-[24px] ">
-                    {boardArray.map((item, index) => (
-                        <Link key={index} to={`/management/${encodeURIComponent(item.name)}`} className="flex items-center justify-center w-full md:mb-4 md:w-[250px]">
+                    {processedArray.map((item, index) => (
+                        <Link key={index} to={`/management/${item.processedName}`} className="flex items-center justify-center w-full md:mb-4 md:w-[250px]">
                             <div className="w-full text-center">             
                                 <div className="h-[400px] md:h-[300px] bg-[#F5F5F4] md:bg-center rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover' }}></div>
                                 <p className="text-center mt-4 text-lg lg:text-xl font-medium lg:h-[1.5em]">{item.name}</p>

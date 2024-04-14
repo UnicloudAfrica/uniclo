@@ -4,7 +4,7 @@ import search from "./assets/search-normal.svg";
 import adbg from './assets/adBG.svg';
 import admob from './assets/adMob.svg';
 import { motion } from "framer-motion";
-import {useContext, useState} from 'react'
+import {useContext, useState, useEffect} from 'react'
 import { BlogContext } from '../contexts/contextprovider';
 import { Link } from 'react-router-dom';
 
@@ -14,8 +14,19 @@ const Blog = () => {
     const [blogArray] = useContext(BlogContext);
     const [selectedTag, setSelectedTag] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
+    const[ processedArray, setProcessedArray] = useState([]);
+   
+    
+    useEffect(()=>{
+        const processedBlogArray = blogArray.map(item => ({
+            ...item,
+            processedName: encodeURIComponent(item.title).replaceAll('%20', '-')
+        }));
+        setProcessedArray(processedBlogArray)
+    },[blogArray]);
 
-    const filteredBlogs = blogArray.filter((blog) => {
+
+    const filteredBlogs = processedArray.filter((blog) => {
         const titleMatches = blog.title.toLowerCase().includes(searchQuery.toLowerCase());
     
         if (selectedTag === 'all') {
@@ -55,7 +66,7 @@ const Blog = () => {
 
             <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-6">
                 {filteredBlogs.map((item, index) => (
-                    <Link  to={`/blogs/${encodeURIComponent(item.title)}`}><div key={index} className="w-full text-center">             
+                    <Link  to={`/blogs/${item.processedName}`}><div key={index} className="w-full text-center">             
                         <div className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover', backgroundPosition: 'center' }}></div>
                         <button className=" bg-[#3DC8F91A] px-3 py-2 mr-auto rounded-[30px] block mt-6 text-sm md:text-base">
                             <p className=" gradient-text">{item.tag}</p>

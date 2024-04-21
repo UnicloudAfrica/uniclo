@@ -101,7 +101,7 @@ const Navbar = () => {
                     onToggle={() => toggleSection('about')}
                 >
                     <Link to='/about'><p className='text-sm text-[#12121299] mt-3'>Learn About Us</p></Link>
-                    {/* <Link to='/advisory-board'><p className='text-sm text-[#12121299] mt-3'>Advisory Board</p></Link> */}
+                    <Link to='/advisory-board'><p className='text-sm text-[#12121299] mt-3'>Advisory Board</p></Link>
                     <Link to='/management'><p className='text-sm text-[#12121299] mt-3'>Management</p></Link>
                     <Link to='/career'><p className='text-sm text-[#12121299] mt-3'>Career</p></Link>
                     <Link to='/terms'><p className='text-sm text-[#12121299] mt-3'>Legal</p></Link>
@@ -167,10 +167,10 @@ const Navbar = () => {
                             <p>Learn about us</p>
                             <img src={ outline } className=' w-3 h-3' alt="" />
                         </span></Link>
-                        {/* <Link to='/advisory-board' className=''><span onClick={ closeAboutDropdown } className=' flex items-center mt-3 space-x-4'>
+                        <Link to='/advisory-board' className=''><span onClick={ closeAboutDropdown } className=' flex items-center mt-3 space-x-4'>
                             <p>Advisory Board</p>
                             <img src={ outline } className=' w-3 h-3' alt="" />
-                        </span></Link> */}
+                        </span></Link>
                         <Link to='/management' className=''><span onClick={ closeAboutDropdown } className=' flex items-center mt-3 space-x-4'>
                             <p>Management</p>
                             <img src={ outline } className=' w-3 h-3' alt="" />

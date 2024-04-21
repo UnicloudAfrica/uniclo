@@ -32,19 +32,24 @@ const Advisory = () => {
              Our management team boasts seasoned executives with decades of hands-on experience, alongside experts in cloud computing, collectively fueled by a fervor for innovation. Guided by industry trailblazers, our leadership brings forth a wealth of expertise in operations, finance, telecommunications, and technology, steering UniCloud Africa towards unprecedented success.
               Committed to excellence and client empowerment, our team endeavors to deliver secure, scalable, and reliable cloud solutions, catalyzing digital transformation across Africa. Together, we are not only shaping the future of UniCloud Africa but also spearheading Africa's digital evolution, one innovation at a time. Embark on this transformative journey with us, where the resilience and ingenuity of our team serve as the cornerstone of your triumph in the digital era</p>
 
-            <div className="mt-16 w-full">
-                <div className=" mt-6 flex flex-wrap justify-around space-y-4 md:space-y-0  space-x-0 md:space-x-[24px] ">
-                    {processedArray.map((item, index) => (
-                        <Link key={index} to={`/management/${item.processedName}`} className="flex items-center justify-center w-full md:mb-4 md:w-[250px]">
-                            <div className="w-full text-center">             
-                                <div className="h-[400px] md:h-[300px] bg-[#F5F5F4] md:bg-center rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover' }}></div>
-                                <p className="text-center mt-4 text-lg lg:text-xl font-medium lg:h-[1.5em]">{item.name}</p>
-                                <p className=" gradient-text text-sm">View More</p>
-                            </div>
-                        </Link>
-                    ))}
+              <div className="mt-16 w-full">
+                    <div className="mt-6 flex flex-wrap justify-around space-y-4 md:space-y-0 space-x-0 md:space-x-[24px] ">
+                        {processedArray
+                            // Ensure 'order' property exists and is numeric
+                            .filter(item => typeof item.order === 'number')
+                            // Sort the array based on the 'order' property
+                            .sort((a, b) => a.order - b.order)
+                            .map((item, index) => (
+                                <Link key={index} to={`/management/${item.processedName}`} className="flex items-center justify-center w-full md:mb-4 md:w-[250px]">
+                                    <div className="w-full text-center">             
+                                        <div className="h-[400px] md:h-[300px] bg-[#F5F5F4] md:bg-center rounded-[20px]" style={{ backgroundImage: `url(${item.url})`, backgroundSize: 'cover' }}></div>
+                                        <p className="text-center mt-4 text-lg lg:text-xl font-medium lg:h-[1.5em]">{item.name}</p>
+                                        <p className="gradient-text text-sm">View More</p>
+                                    </div>
+                                </Link>
+                            ))}
+                    </div>
                 </div>
-            </div>
 
 
 

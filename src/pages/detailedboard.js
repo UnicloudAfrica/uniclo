@@ -91,7 +91,7 @@ const DetailedBoard = () => {
             <p className=" md:text-5xl text-center font-medium">{selectedBoardItem.name}</p>
             <div className=" mt-8 w-full md:w-[250px] h-[400px] md:h-[300px] bg-[#f5f5f4] rounded-[20px]" style={{ backgroundImage: `url(${selectedBoardItem.url})`, backgroundSize: 'cover' }}>
             </div>
-            <p className=" mt-8 text-base text-[#000] md:px-[15%] font-normal text-left w-full whitespace-pre-line ">{selectedBoardItem.name} is the {selectedBoardItem.position} at UniCloud Africa</p>
+            <p className=" mt-8 text-base text-[#000] md:px-[15%] font-normal text-left w-full whitespace-pre-line ">{selectedBoardItem.name}, Our {selectedBoardItem.position}.</p>
             <p style={{ whiteSpace: 'pre-line' }} className=" mt-3 text-base text-[#676767] md:px-[15%] font-normal text-justify whitespace-pre-line mb-5"  dangerouslySetInnerHTML={{ __html: selectedBoardItem.about }}/>
 
         </div>

@@ -138,7 +138,7 @@ const DetailedResources = () => {
                     <p className=' font-normal px-4 md:px-0 text-lg md:text-xl'>Subscribe to UniCloud Africa blog to get update right in your inbox</p>
                     <div className=" flex flex-col md:flex-row items-center justify-center z-20  mt-4 md:space-x-6 space-y-4 md:space-y-0">
                         <input placeholder="Enter Email" className=" w-full md:w-auto h-[52px] bg-[#133D4C80] py-2.5 px-4 md:px-7 text-base placeholder:text-white placeholder:font-Outfit font-Outfit placeholder:text-sm  rounded-[30px]" type="text" />
-                        <button className="  md:w-auto px-6 md:px-9 py-3 md:py-4 bg-[#fff] rounded-[30px] text-base text-[#000]">Subscribe</button>
+                        <Link to="/contact" target="_blank" rel="noopener noreferrer"><button className="  md:w-auto px-6 md:px-9 py-3 md:py-4 bg-[#fff] rounded-[30px] text-base text-[#000]">Subscribe</button></Link>
                     </div>
                 </div>
             </motion.div>

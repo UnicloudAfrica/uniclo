@@ -3,7 +3,7 @@ import settingIcon from "./assets/setting.png";
 import solition from "./assets/solution.png";
 import career from "./assets/career.png";
 import advi from "./assets/advis.png";
-import logo from "./assets/logo.png";
+import logo from "./assets/logo.svg";
 import box from "./assets/box.svg";
 import reciept from "./assets/receipt.svg";
 import trades from "./assets/trades.svg";
@@ -58,8 +58,8 @@ const Sidebar = () => {
 
   return (
     <>
-      <span className=" absolute top-5 right-4 flex md:hidden  items-center">
-        <img src={logo} alt="" />
+      <span className=" absolute top-5 right-4 flex md:hidden items-center">
+        <img src={logo} className=" w-12" alt="" />
       </span>
       <div className="fixed top-[80px] left-0 w-[80%] md:w-[100%] h-[100vh] md:border-r pt-6 border-[#00000029]">
         {pages.map((pageItem) => (

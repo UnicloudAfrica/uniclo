@@ -9,7 +9,7 @@ const Hero = () => {
       <div className=" text-center md:text-left py-10 flex flex-col text-[#121212]">
         <div className="w-full px-4 mt-28 md:px-8 lg:px-16 flex items-center justify-center flex-col font-Outfit text-center">
           <p className="font-medium text-[32px] leading-10 lg:text-6xl lg:leading-[80px]">
-            The Continent’s Leading Truly Pan African Cloud Platform
+            Africa's leading indigenous Pan-African Cloud Platform
           </p>
           <p className="w-full text-base md:text-2xl text-center font-normal mt-3 md:leading-[30px]">
             Empower Your Business in Africa with Cloud Innovation

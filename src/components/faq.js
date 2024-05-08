@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import arrowDown from './assets/arrowdown.svg';
+import arrowDown from "./assets/arrowdown.svg";
 
 const Faq = () => {
   const faqsData = [
@@ -38,10 +38,8 @@ const Faq = () => {
   };
 
   return (
-    <motion.div
-      className="py-[3em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]"
-    >
-      <p className=" font-medium text-[40px] leading-[50px] text-center mb-16">
+    <motion.div className="py-[3em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
+      <p className=" font-medium text-2xl md:text-[40px] md:leading-[50px] text-center mb-16">
         Frequently Asked Questions (FAQs)?
       </p>
 
@@ -50,7 +48,7 @@ const Faq = () => {
           key={index}
           onClick={() => toggleDropDown(index)}
           className={`border-y py-6 faq border-[#1E1E1E1A]${
-            openIndex === index ? ' active' : ''
+            openIndex === index ? " active" : ""
           }`}
         >
           <div className="flex flex-row justify-between w-full items-center">
@@ -60,12 +58,12 @@ const Faq = () => {
             <img
               src={arrowDown}
               className={`${
-                openIndex === index ? 'transform rotate-180' : ''
+                openIndex === index ? "transform rotate-180" : ""
               } transition-transform duration-300`}
               alt=""
             />
           </div>
-          <div className={`answer${openIndex === index ? ' open' : ''}`}>
+          <div className={`answer${openIndex === index ? " open" : ""}`}>
             <p className="font-Outfit font-normal text-[#676767] text-sm md:text-base mt-5 transition-all duration-500">
               {faq.answer}
             </p>

@@ -5,9 +5,9 @@ import { motion } from "framer-motion";
 import office from "./assets/office.svg";
 import chat from "./assets/chat.svg";
 import text from "./assets/message.svg";
-import fb from "./assets/facebook.svg";
+import x from "./assets/twitter.png";
 import linked from "./assets/linkedin.svg";
-import twi from "./assets/twitter.svg";
+import instagram from "./assets/instagram.png";
 import arrow from "./assets/arrow-down.svg";
 import { useState, useEffect, useContext } from "react";
 import { countries } from "countries-list";
@@ -201,7 +201,7 @@ const Contact = () => {
     <>
       <Navbar />
       <motion.div>
-        <div className=" mt-[8em] px-4 md:px-8 lg:px-16 font-Outfit w-full text-[#121212]">
+        <div className=" mt-[10em] px-4 md:px-8 lg:px-16 font-Outfit w-full text-[#121212]">
           <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">
             Contact us
           </p>
@@ -217,7 +217,7 @@ const Contact = () => {
                 Have a question, need support, or want to chat?
               </p>
               <p className=" font-normal mt-3 text-base md:text-lg text-[#1E1E1ECC] ">
-                Our friendly team would love to hear from you.
+                Our team would love to hear from you.
               </p>
 
               <div className=" w-full flex mt-8 flex-col md:flex-row justify-between md:mb- space-y-3 md:space-y-0">
@@ -252,7 +252,7 @@ const Contact = () => {
                     className="font-Outfit text-base text-[#1E1E1EB2] font-medium"
                     htmlFor="last-name"
                   >
-                    Last Name
+                    Last name
                   </label>
                   <input
                     type="text"
@@ -417,7 +417,7 @@ const Contact = () => {
                   checked={agreeToPrivacyPolicy}
                 />
                 <span className="ml-2 text-base text-[#1E1E1E99] font-Outfit font-medium">
-                  You agree to our friendly privacy policy.
+                  Click here to accept our privacy policy
                 </span>
               </label>
               {privacyPolicyError && (
@@ -448,7 +448,7 @@ const Contact = () => {
                 <img src={office} alt="" />
               </button>
               <div className=" space-y-2">
-                <p className=" font-medium text-xl">Our Lagos office</p>
+                <p className=" font-medium text-xl">Nigeria Office</p>
                 <p className=" text-sm lg:pr-10 text-[#676767]">
                   {generalitem.address}
                 </p>
@@ -457,8 +457,8 @@ const Contact = () => {
               <div className=" space-y-2">
                 <p className=" font-medium text-xl">South Africa office</p>
                 <p className=" text-sm lg:pr-10 text-[#676767]">
-                  78 Corltte Drive, Melrose Arch North Johannesburg 2196,
-                  South Africa.
+                  78, Corltte Drive, Melrose Arch North, Johannesburg 2196,
+                  South Africa.
                 </p>
               </div>
             </div>
@@ -467,7 +467,7 @@ const Contact = () => {
               <button className=" w-12 h-12 bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] rounded-[50%] flex justify-center items-center">
                 <img src={chat} alt="" />
               </button>
-              <p className=" font-medium text-xl">Connect with us on</p>
+              <p className=" font-medium text-xl"> Contact us on</p>
               <p className=" text-sm">
                 {" "}
                 <span className=" block gradient-text">
@@ -486,18 +486,18 @@ const Contact = () => {
               <button className=" w-12 h-12 bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] rounded-[50%] flex justify-center items-center">
                 <img src={text} alt="" />
               </button>
-              <p className=" font-medium text-xl">
+              {/* <p className=" font-medium text-xl">
                 Connect with us on social media
-              </p>
-              <span className=" flex space-x-6">
+              </p> */}
+              <span className=" flex space-x-6 mt-2">
                 <a href={generalitem.fb}>
-                  <img src={fb} className=" w-4 h-4" alt="" />
+                  <img src={x} className=" w-6" alt="" />
                 </a>
                 <a href={generalitem.linkedin}>
-                  <img src={linked} className=" w-4 h-4" alt="" />
+                  <img src={linked} className=" w-6" alt="" />
                 </a>
                 <a href={generalitem.twitter}>
-                  <img src={twi} className=" w-4 h-4" alt="" />
+                  <img src={instagram} className=" w-6" alt="" />
                 </a>
               </span>
             </div>

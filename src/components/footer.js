@@ -45,7 +45,7 @@ const Footer = () => {
               <p className=" mt-3">Our Services</p>
             </Link>
             <Link to="/solutions">
-              <p className=" mt-3">Solutions</p>
+              <p className=" mt-3">Industries</p>
             </Link>
           </span>
         </div>

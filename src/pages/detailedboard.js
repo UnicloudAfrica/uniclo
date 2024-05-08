@@ -93,7 +93,7 @@ const DetailedBoard = () => {
   return (
     <>
       <Navbar />
-      <div className="mt-[8em] px-4 md:px-8 lg:px-16 w-full flex flex-col justify-center items-center font-Outfit text-[#121212]">
+      <div className="mt-[10em] px-4 md:px-8 lg:px-16 w-full flex flex-col justify-center items-center font-Outfit text-[#121212]">
         <p className=" md:text-5xl text-center font-medium">
           {selectedBoardItem.name}
         </p>

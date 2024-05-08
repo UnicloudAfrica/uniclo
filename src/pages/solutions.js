@@ -22,7 +22,7 @@ const Solutions = () => {
       <div>
         <Navbar />
         <motion.div>
-          <div className=" mt-[8em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
+          <div className=" mt-[10em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
             <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">
               Solutions
             </p>
@@ -31,42 +31,47 @@ const Solutions = () => {
               Industry
             </p>
             <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-16">
-              {solutionsArray.map((item, index) => (
-                <Link to={`/solutions/${item.id}`}>
-                  <div
-                    key={item.id}
-                    id={item.id}
-                    className="w-full text-center"
-                  >
+              {solutionsArray
+                // Ensure 'order' property exists and is numeric
+                .filter((item) => typeof item.order === "number")
+                // Sort the array based on the 'order' property
+                .sort((a, b) => a.order - b.order)
+                .map((item, index) => (
+                  <Link to={`/solutions/${item.id}`}>
                     <div
-                      className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]"
-                      style={{
-                        backgroundImage: `url(${item.url})`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }}
-                    ></div>
-                    <p className="text-left mt-3 text-xl md:text-2xl font-medium">
-                      {item.topic}
-                    </p>
-                    <p className="text-left mt-1 text-[#676767] text-sm ">
-                      {item.desc}
-                    </p>
-                    <button className=" flex mt-6 items-center">
-                      <p className=" gradient-text text-base">View more</p>
-                    </button>
-                  </div>
-                </Link>
-              ))}
+                      key={item.id}
+                      id={item.id}
+                      className="w-full text-center"
+                    >
+                      <div
+                        className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]"
+                        style={{
+                          backgroundImage: `url(${item.url})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                        }}
+                      ></div>
+                      <p className="text-left mt-3 text-xl md:text-2xl font-medium">
+                        {item.topic}
+                      </p>
+                      <p className="text-left mt-1 text-[#676767] text-sm ">
+                        {item.desc}
+                      </p>
+                      <button className=" flex mt-6 items-center">
+                        <p className=" gradient-text text-base">View more</p>
+                      </button>
+                    </div>
+                  </Link>
+                ))}
             </div>
 
             <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] mt-16 lg:mt-40 text-center">
               Use Cases
             </p>
-            <p className=" text-center font-normal mt-3 text-lg md:text-xl text-[#676767]">
+            {/* <p className=" text-center font-normal mt-3 text-lg md:text-xl text-[#676767]">
               Explore our case studies to see how our solutions have made a real
               impact.
-            </p>
+            </p> */}
             <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-8 mb-[6em]">
               {casesArray.map((item, index) => (
                 <Link to={`/use-cases/${item.id}`}>

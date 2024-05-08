@@ -27,7 +27,7 @@ const About = () => {
     <>
       <Navbar />
       <motion.div>
-        <div className=" mt-[8em] w-full font-Outfit">
+        <div className=" mt-[10em] w-full font-Outfit">
           <p className=" text-3xl md:text-[50px] font-medium text-center">
             About us
           </p>
@@ -61,7 +61,7 @@ const About = () => {
               Recognizing the increasing adoption of cloud computing as a
               catalyst for enhancing agility, scalability, and operational
               efficiency among African businesses, the founders set out to
-              create a cloud computing provider that would be not only
+              create a cloud computing provider that would not only be
               affordable and reliable but also tailored to the unique needs of
               the region.<br></br>
               <br></br>
@@ -70,7 +70,8 @@ const About = () => {
               cloud computing providers on the continent. Our comprehensive
               suite of cloud services spans compute, storage, networking, and
               managed services, catering to businesses of all sizes—from dynamic
-              startups to multinational corporations.<br></br>
+              startups to multinational corporations and government parastatals.
+              <br></br>
               <br></br>
               At the core of UniCloud Africa's mission is a steadfast commitment
               to supporting the growth and development of African businesses. We
@@ -116,20 +117,23 @@ const About = () => {
                     Our Vision
                   </p>
                   <p className=" whitespace-pre-line mt-3 text-base text-[#676767] text-justify font-normal">
-                    Empowering Africa's Digital Future: With the mantra 'One
-                    Cloud, One Africa,' our vision is to create a truly
-                    Pan-African Cloud Platform that serves as the catalyst for
-                    technological innovation, economic growth, and sustainable
-                    development for Africa.
+                    To create a truly Pan-African cloud platform that serves as
+                    the catalyst for technological innovation, economic growth,
+                    and sustainable development in Africa.
                   </p>
                   <p className=" text-2xl mt-3 md:mt-8 md:text-3xl font-medium">
                     Our Mission
                   </p>
                   <p className=" whitespace-pre-line mt-3 text-base text-[#676767] text-justify font-normal">
-                    Fostering Digital Excellence Across Africa: Our mission at
-                    UniCloud Africa is to responsibly deliver innovative and
-                    dependable cloud solutions that empower businesses and
-                    governments across the continent.
+                    To foster digital excellence across Africa, and responsibly
+                    deliver innovative and dependable cloud solutions that
+                    empower businesses, and governments across the continent.
+                  </p>
+                  <p className=" text-2xl mt-3 md:mt-8 md:text-3xl font-medium">
+                    Our Mantra
+                  </p>
+                  <p className=" whitespace-pre-line mt-3 text-base text-[#676767] text-justify font-normal">
+                    One Cloud, One Africa - Empowering Africa's Digital Future
                   </p>
                 </div>
               </div>
@@ -137,7 +141,7 @@ const About = () => {
 
             <div className=" my-[5em] w-full px-4 md:px-8 lg:px-16">
               <p className=" font-medium text-2xl md:text-[40px] md:leading-[50px] text-center">
-                Our Core Value
+                Our Core Values
               </p>
               <p className=" text-center font-normal text-base text-[#676767] md:text-lg md:px-[10%]">
                 Navigating Excellence through Core Values{" "}
@@ -203,11 +207,11 @@ const About = () => {
                 </span>
               </div>
               <p className=" mt-9 font-normal text-base text-[#676767] text-justify">
-                As we R.I.D.E on the path of Responsibility, Innovation,
+                As we RIDE on the path of Responsibility, Innovation,
                 Dependability, and Excellence, we invite you to join us on this
                 journey, where these core values steer our actions, shape our
                 culture, and define our commitment to delivering unparalleled
-                value in the world of cloud computing.
+                value in the world of cloud solutions.
               </p>
             </div>
 
@@ -244,21 +248,22 @@ const About = () => {
                     <p className=" font-medium text-xl">Education</p>
                     <p className=" font-normal text-base text-[#676767]">
                       We support programs that provide access to quality
-                      education for children and adults in Africa.
+                      education for children, women and adults in Africa.
                     </p>
                   </span>
 
                   <span className=" text-left">
                     <p className=" font-medium text-xl">Environment</p>
                     <p className=" font-normal text-base text-[#676767]">
-                      We are committed to reducing our environmental impact and
-                      supporting sustainable development initiatives.
+                      We are committed to supporting sustainable development
+                      initiatives that promotes socio-economic advancement and
+                      reduces the environmental impact.
                     </p>
                   </span>
 
                   <span className=" text-left">
                     <p className=" font-medium text-xl">
-                      Diversity and inclusion
+                      Diversity and Inclusion
                     </p>
                     <p className=" font-normal text-base text-[#676767]">
                       We believe that diversity and inclusion are essential to
@@ -275,8 +280,16 @@ const About = () => {
                       supporting local charities and volunteering our time.
                     </p>
                   </span>
+                  <span className=" text-left">
+                    <p className=" font-medium text-xl">Enterprise</p>
+                    <p className=" font-normal text-base text-[#676767]">
+                      We provide cost effective solutions that enable
+                      enterprises maximize profit, enjoy unparalleled
+                      reliability, data sovereignty and security.
+                    </p>
+                  </span>
                 </div>
-                <div className=" w-full lg:w-[48%] mt-5 lg:mt-0 h-[400px] rounded-[30px] bg-[#231546] block corp"></div>
+                <div className=" w-full lg:w-[48%] mt-5 lg:mt-0 h-[400px] lg:h-[520px] rounded-[30px] bg-[#231546] block corp"></div>
               </div>
             </div>
 

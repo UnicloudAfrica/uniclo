@@ -126,7 +126,7 @@ const Services = () => {
     <>
       <Navbar />
       <motion.div>
-        <div className=" mt-[8em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
+        <div className=" mt-[10em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
           <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">
             Our Services
           </p>
@@ -209,10 +209,10 @@ const Services = () => {
           <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] mt-[64px] text-center">
             Use Cases
           </p>
-          <p className=" text-center font-normal mt-3 text-lg text-[#676767] md:text-xl ">
+          {/* <p className=" text-center font-normal mt-3 text-lg text-[#676767] md:text-xl ">
             Explore our case studies to see how our solutions have made a real
             impact.
-          </p>
+          </p> */}
           <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-8 mb-[3em]">
             {casesArray.map((item, index) => (
               <Link to={`/use-cases/${item.id}`}>

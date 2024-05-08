@@ -130,7 +130,7 @@ const Navbar = () => {
                 <p className=" mt-3 text-sm text-[#12121299]">Our Services</p>
               </Link>
               <Link to="/solutions">
-                <p className=" mt-3 text-sm text-[#12121299]">Solutions</p>
+                <p className=" mt-3 text-sm text-[#12121299]">Industries</p>
               </Link>
             </CollapsibleSection>
             <CollapsibleSection
@@ -274,7 +274,7 @@ const Navbar = () => {
                     onClick={closeServiceDropdown}
                     className=" flex items-center mt-3 space-x-4"
                   >
-                    <p>Solutions</p>
+                    <p>Industries</p>
                     <img src={outline} className=" w-3 h-3" alt="" />
                   </span>
                 </Link>

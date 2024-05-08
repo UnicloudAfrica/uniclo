@@ -16,7 +16,7 @@ const Resources = () => {
     <>
       <Navbar />
       <motion.div>
-        <div className=" mt-[8em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
+        <div className=" mt-[10em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
           <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">
             Resources
           </p>

@@ -1,5 +1,5 @@
-import fb from "./assets/fb.svg";
-import twi from "./assets/twi.svg";
+import linkin from "./assets/linkedin.png";
+import twi from "./assets/twitter.png";
 import ig from "./assets/ig.svg";
 import whatsapp from "./assets/whatsapp.svg";
 import { Link } from "react-router-dom";
@@ -21,19 +21,15 @@ const Footer = () => {
           </p>
           <span className=" mt-4 flex items-center space-x-6">
             <a href={generalitem.fb}>
-              <img src={fb} alt="" />
+              <img src={linkin} className=" w-6" alt="" />
             </a>
 
             <a href={generalitem.twitter}>
-              <img src={twi} alt="" />
+              <img src={twi} className=" w-6" alt="" />
             </a>
 
             <a href={generalitem.ig}>
-              <img src={ig} alt="" />
-            </a>
-
-            <a href={generalitem.whatsapp}>
-              <img src={whatsapp} alt="" />
+              <img src={ig} className=" w-6" alt="" />
             </a>
           </span>
         </div>

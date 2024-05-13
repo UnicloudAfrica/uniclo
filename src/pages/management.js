@@ -42,7 +42,7 @@ const Management = () => {
         </p>
 
         <div className="mt-16 w-full">
-          <div className=" mt-6 flex flex-wrap justify-around space-y-4 md:space-y-8 space-x-0 md:space-x-[24px] ">
+          <div className=" mt-6 flex flex-wrap justify-around space-y-4 md:space-y-0 lg:space-y-0 space-x-0 md:space-x-[24px] ">
             {processedArray.map((item, index) => (
               <Link
                 key={index}
@@ -57,10 +57,13 @@ const Management = () => {
                       backgroundSize: "cover",
                     }}
                   ></div>
-                  <p className="text-center mt-4 text-lg lg:text-xl font-medium lg:h-[1.5em]">
+                  <p className="text-left mt-4 text-lg lg:text-xl font-medium lg:h-[1.5em]">
                     {item.name}
                   </p>
-                  <p className=" gradient-text text-sm">View More</p>
+                  <p className="text-left text-sm lg:h-[8em] mt-2">
+                    {item.desc}
+                  </p>
+                  <p className=" gradient-text text-left text-sm">View More</p>
                 </div>
               </Link>
             ))}

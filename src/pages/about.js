@@ -45,10 +45,10 @@ const About = () => {
             <p className=" px-4 md:px-8 lg:px-16 text-center font-medium text-3xl md:text-[40px] leading-[50px]">
               Our Journey
             </p>
-            <p className=" text-lg md:text-xl mt-3 font-normal text-center text-[#676767]">
+            {/* <p className=" text-lg md:text-xl mt-3 font-normal text-center text-[#676767]">
               Crafting a Cloud Computing Legacy for African Businesses
-            </p>
-            <p className=" px-4 md:px-8 lg:px-16 my-6 text-sm text-[#676767] text-justify font-normal">
+            </p> */}
+            <p className=" px-4 md:px-8 lg:px-16 my-6 text-base text-[#676767] text-justify font-normal">
               Founded in 2023 in the vibrant city of Lagos, Nigeria, UniCloud
               Africa emerged from the vision of a group of seasoned
               entrepreneurs. Fueled by a profound understanding of the
@@ -97,10 +97,10 @@ const About = () => {
               <p className="  text-center font-medium text-3xl md:text-[40px] leading-[50px]">
                 Our Vision and Mission
               </p>
-              <p className=" text-lg md:text-xl mt-4 font-normal text-[#676767] text-center md:px-[12%]">
+              {/* <p className=" text-lg md:text-xl mt-4 font-normal text-[#676767] text-center md:px-[12%]">
                 A vanguard for Africa's digital evolution, and catalyst for
                 transformative change across industries and communities
-              </p>
+              </p> */}
 
               <div className="flex flex-col lg:flex-row justify-between items-center mt-8">
                 <div
@@ -143,9 +143,9 @@ const About = () => {
               <p className=" font-medium text-2xl md:text-[40px] md:leading-[50px] text-center">
                 Our Core Values
               </p>
-              <p className=" text-center font-normal text-base text-[#676767] md:text-lg md:px-[10%]">
+              {/* <p className=" text-center font-normal text-base text-[#676767] md:text-lg md:px-[10%]">
                 Navigating Excellence through Core Values{" "}
-              </p>
+              </p> */}
               <p className=" text-[80px] md:text-[180px] text-center font-medium gradient-text">
                 R I D E
               </p>
@@ -236,12 +236,12 @@ const About = () => {
               <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">
                 Our Corporate Social Responsibility
               </p>
-              <p className=" text-center font-normal mt-3 text-base text-[#676767] md:text-lg md:px-[5%]">
+              {/* <p className=" text-center font-normal mt-3 text-base text-[#676767] md:text-lg md:px-[5%]">
                 At UniCloud Africa, we stand at the intersection of innovation
                 and impact, recognizing our profound responsibility to uplift
                 the communities and regions we proudly serve in the African
                 continent.
-              </p>
+              </p> */}
               <div className=" w-full flex flex-col-reverse lg:flex-row justify-between mt-8 md:mt-16">
                 <div className=" w-full lg:w-[48%] flex flex-col space-y-6 mt-8 md:mt-0">
                   <span className=" text-left">

@@ -23,7 +23,7 @@ const Partnership = () => {
             unmatched cloud solutions
           </p>
           <div className=" mt-8 flex flex-wrap justify-around space-y-4 space-x-0 md:space-x-[24px]">
-            {partnerArray.map((item, index) => (
+            {/* {partnerArray.map((item, index) => (
               <div key={index} className=" text-center w-full md:w-[250px]">
                 <div
                   className="w-full h-[250px] bg-[#F5F5F4] border border-[#F5F5F7] rounded-[20px]"
@@ -35,14 +35,17 @@ const Partnership = () => {
                 ></div>
                 <p className="mt-3 text-xl font-medium">{item.name}</p>
               </div>
-            ))}
+            ))} */}
+            <p className=" capitalize text-2xl font-medium font-Outfit">
+              Our Partners will be updated soon
+            </p>
           </div>
         </div>
 
-        <p className=" mt-8 font-Outfit text-center font-normal px-4 text-[#676767] md:px-[12%] text-lg md:text-xl">
+        {/* <p className=" mt-8 font-Outfit text-center font-normal px-4 text-[#676767] md:px-[12%] text-lg md:text-xl">
           Our partnerships enable us to provide you with the best-in-class cloud
           services that drive business transformation.
-        </p>
+        </p> */}
 
         <motion.div className="  my-[5em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#fff]">
           <div className=" w-full h-[380px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] relative">

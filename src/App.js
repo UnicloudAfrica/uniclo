@@ -25,6 +25,7 @@ import DetailedCareer from "./pages/detailedcareer";
 import Login from "./adminComps/login";
 import Management from "./pages/management";
 import DetailedManage from "./pages/detailedmanage";
+import ExtResouce from "./pages/extResource";
 
 function App() {
   const location = useLocation();
@@ -39,10 +40,10 @@ function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/about" element={<About />} />
-          <Route path="/management" element={<Advisory/>} />
-          <Route path="/advisory-board" element={<Management/>} />
-          <Route path="/advisory-board/:name" element={<DetailedManage/>} />
-          <Route path="/management/:name" element={<DetailedBoard/>} />
+          <Route path="/management" element={<Advisory />} />
+          <Route path="/advisory-board" element={<Management />} />
+          <Route path="/advisory-board/:name" element={<DetailedManage />} />
+          <Route path="/management/:name" element={<DetailedBoard />} />
           <Route path="/faq" element={<FaqPage />} />
           <Route path="/partnership" element={<Partnership />} />
           <Route path="/contact" element={<Contact />} />
@@ -52,14 +53,18 @@ function App() {
           <Route path="/solutions" element={<Solutions />} />
           <Route path="/events" element={<Events />} />
           <Route path="/blog" element={<Blog />} />
-          <Route path="/solutions/:id" element={ <DetailedSolution />} />
-          <Route path="/resources/:id" element={ <DetailedResources/> } />
-          <Route path="/use-cases/:id" element={ <DetailedCases/> } />
-          <Route path="/blogs/:title" element={<DetailedBlog/> } />
-          <Route path="/careers/:id" element={<DetailedCareer/> } />
-          <Route path="/cms-login" element={ <Login/> } />
-          <Route path="/cms-admin" element={<Cms/>} />
-          <Route path="/career" element={<Career/>} />
+          <Route
+            path="/Africa-Data-Centres-and-Onix-Data-Centre-announce-partnership"
+            element={<ExtResouce />}
+          />
+          <Route path="/solutions/:id" element={<DetailedSolution />} />
+          <Route path="/resources/:id" element={<DetailedResources />} />
+          <Route path="/use-cases/:id" element={<DetailedCases />} />
+          <Route path="/blogs/:title" element={<DetailedBlog />} />
+          <Route path="/careers/:id" element={<DetailedCareer />} />
+          <Route path="/cms-login" element={<Login />} />
+          <Route path="/cms-admin" element={<Cms />} />
+          <Route path="/career" element={<Career />} />
         </Routes>
       </AnimatePresence>
     </>

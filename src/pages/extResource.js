@@ -94,7 +94,7 @@ const ExtResouce = () => {
           </p>
         </div>
         <div className=" mt-16 md:px-[15%] w-full">
-          <div className=" w-full h-[290px] md:h-[400px] bg-[#f1f1f1]">
+          <div className=" w-full h-[300px] md:h-[620px] bg-[#f1f1f1]">
             <iframe
               className=" w-full h-full"
               src="https://www.youtube.com/embed/gulR52moU0k"

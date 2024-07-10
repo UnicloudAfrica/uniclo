@@ -8,6 +8,7 @@ import { useContext, useState, useEffect } from "react";
 import { BlogContext } from "../contexts/contextprovider";
 import { Link } from "react-router-dom";
 import data24 from "./assets/data24.jpg";
+import dsc from "./assets/DSC_2041.jpg";
 
 const Blog = () => {
   const [blogArray] = useContext(BlogContext);
@@ -112,7 +113,7 @@ const Blog = () => {
               Explore insightful articles and resources about Unicloud Africa
             </p>
 
-            <div className=" flex items-center justify-center w-full mt-8">
+            <div className=" grid grid-cols-1 md:grid-cols-2 gap-8 items-center justify-center w-full mt-8">
               <Link to="/Africa-Data-Centres-and-Onix-Data-Centre-announce-partnership">
                 <div className=" w-full md:w-[500px] text-center">
                   <div
@@ -140,6 +141,39 @@ const Blog = () => {
 
                   <p className="text-left mt-3 text-[#121212] font-medium text-base">
                     June 08, 24
+                  </p>
+                </div>
+              </Link>
+
+              {/* link 2 */}
+              <Link to="/Benue-State-to-build-modern-data-center-and-cloud-system-with-UniCloud-Africa">
+                <div className=" w-full md:w-[500px] text-center">
+                  <div
+                    className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]"
+                    style={{
+                      backgroundImage: `url(${dsc})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
+                  ></div>
+
+                  <button className=" bg-[#3DC8F91A] px-3 py-2 mr-auto rounded-[30px] block mt-6 text-sm md:text-base relative">
+                    <p className=" gradient-text">Technology</p>
+                  </button>
+
+                  <p className="text-left mt-6 text-xl lg:text-2xl font-medium text-black">
+                    Benue State to build modern data center and cloud system
+                    with UniCloud Africa
+                  </p>
+                  <p className="text-left mt-3 text-[#1E1E1E99] text-sm">
+                    This project is a significant step forward for Benue’s
+                    digital transformation. The in-country cloud solution
+                    offered by UniCloud Africa ensures that the state’s data
+                    remains within Nigeria’s borders.
+                  </p>
+
+                  <p className="text-left mt-3 text-[#121212] font-medium text-base">
+                    July 10, 24
                   </p>
                 </div>
               </Link>

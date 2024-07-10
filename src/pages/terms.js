@@ -43,7 +43,7 @@ const Terms = () => {
             </div>
             <div className=" font-Outfit font-normal text-base mt-8 space-y-3">
               <p className=" font-Outfit text-2xl font-medium text-center">
-                LUser Agreement
+                User Agreement
               </p>
               <p className=" text-[#676767] text-justify">
                 By accessing or using the UniCloud Africa Service, you agree to

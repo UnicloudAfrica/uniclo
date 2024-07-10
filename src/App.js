@@ -26,6 +26,7 @@ import Login from "./adminComps/login";
 import Management from "./pages/management";
 import DetailedManage from "./pages/detailedmanage";
 import ExtResouce from "./pages/extResource";
+import ExtResouce1 from "./pages/extResource1";
 
 function App() {
   const location = useLocation();
@@ -56,6 +57,10 @@ function App() {
           <Route
             path="/Africa-Data-Centres-and-Onix-Data-Centre-announce-partnership"
             element={<ExtResouce />}
+          />
+          <Route
+            path="/Benue-State-to-build-modern-data-center-and-cloud-system-with-UniCloud-Africa"
+            element={<ExtResouce1 />}
           />
           <Route path="/solutions/:id" element={<DetailedSolution />} />
           <Route path="/resources/:id" element={<DetailedResources />} />

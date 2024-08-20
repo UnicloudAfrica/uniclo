@@ -20,7 +20,7 @@ const Footer = () => {
             Cloud solutions for Africa's future.
           </p>
           <span className=" mt-4 flex items-center space-x-6">
-            <a href={generalitem.fb}>
+            <a href={generalitem.linkedin}>
               <img src={linkin} className=" w-6" alt="" />
             </a>
 

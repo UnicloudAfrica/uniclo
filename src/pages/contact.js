@@ -455,10 +455,17 @@ const Contact = () => {
               </div>
 
               <div className=" space-y-2">
-                <p className=" font-medium text-xl">South Africa office</p>
+                <p className=" font-medium text-xl">South Africa Office</p>
                 <p className=" text-sm lg:pr-10 text-[#676767]">
                   78, Corltte Drive, Melrose Arch North, Johannesburg 2196,
                   South Africa.
+                </p>
+              </div>
+
+              <div className=" space-y-2">
+                <p className=" font-medium text-xl">Kenyan Office</p>
+                <p className=" text-sm lg:pr-10 text-[#676767]">
+                  P.O.Box 39562-00623, Parklands, Nairobi, Kenya
                 </p>
               </div>
             </div>
@@ -478,6 +485,12 @@ const Contact = () => {
                 {" "}
                 <span className=" block gradient-text underline">
                   +234 907 399 9979
+                </span>
+              </p>
+              <p className=" text-sm">
+                {" "}
+                <span className=" block gradient-text underline">
+                  +254 738 410 470
                 </span>
               </p>
             </div>

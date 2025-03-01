@@ -484,13 +484,13 @@ const Contact = () => {
               <p className=" text-sm">
                 {" "}
                 <span className=" block gradient-text underline">
-                  +234 907 399 9979
+                 +2348028431253
                 </span>
               </p>
               <p className=" text-sm">
                 {" "}
                 <span className=" block gradient-text underline">
-                  +254 738 410 470
+                +2348060040620
                 </span>
               </p>
             </div>

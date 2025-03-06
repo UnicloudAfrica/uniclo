@@ -105,7 +105,7 @@ const DetailedBoard = () => {
           }}
         ></div>
         <p className=" mt-8 text-base text-[#000] md:px-[15%] font-normal text-left w-full whitespace-pre-line ">
-          {selectedBoardItem.name}, Our {selectedBoardItem.position}.
+          {selectedBoardItem.name}, {selectedBoardItem.position}.
         </p>
         <p
           style={{ whiteSpace: "pre-line" }}

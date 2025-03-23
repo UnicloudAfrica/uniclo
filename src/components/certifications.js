@@ -1,9 +1,9 @@
-import certiOne from "./assets/certione.png";
-import certiTwo from "./assets/certiTwo.png";
-import certiThree from "./assets/certiThree.png";
-import certiFour from "./assets/certiFour.png";
-import certiFive from "./assets/certiFive.png";
-import certiSix from "./assets/certiSix.png";
+import certiOne from "./assets/1.png";
+import certiTwo from "./assets/2.png";
+import certiThree from "./assets/3.png";
+import certiFour from "./assets/4.png";
+import certiFive from "./assets/5.png";
+// import certiSix from "./assets/certiSix.png";
 
 const Certifications = () => {
   return (
@@ -17,12 +17,12 @@ const Certifications = () => {
         with the highest quality of service and support.
       </p>
       <div className=" flex flex-col md:flex-row md:flex-wrap justify-center items-center md:justify-around space-y-4 md:space-y-0 space-x-0 md:space-x-[24px] mt-16 w-full">
-        <img src={certiOne} className=" w-[150px]" alt="" />
-        <img src={certiTwo} className=" w-[150px]" alt="" />
         <img src={certiThree} className=" w-[150px]" alt="" />
         <img src={certiFour} className=" w-[150px]" alt="" />
+        <img src={certiTwo} className=" w-[150px]" alt="" />
         <img src={certiFive} className=" w-[150px] md" alt="" />
-        <img src={certiSix} className=" w-[150px]" alt="" />
+        <img src={certiOne} className=" w-[150px]" alt="" />
+        {/* <img src={certiSix} className=" w-[150px]" alt="" /> */}
       </div>
     </div>
   );

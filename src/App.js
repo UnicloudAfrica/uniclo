@@ -27,6 +27,23 @@ import Management from "./pages/management";
 import DetailedManage from "./pages/detailedmanage";
 import ExtResouce from "./pages/extResource";
 import ExtResouce1 from "./pages/extResource1";
+import DashboardLogin from "./dashboard/pages/login";
+import DashboardSignUp from "./dashboard/pages/sign-up";
+import VerifyMail from "./dashboard/pages/verifyMail";
+import Dashboard from "./dashboard/pages/dashboard";
+import { Modules } from "./dashboard/pages/modules";
+import PurchasedModules from "./dashboard/pages/purchasedModules";
+import PaymentHistory from "./dashboard/pages/paymentHistory";
+import SupportTicket from "./dashboard/pages/supportTicket";
+import Clients from "./dashboard/pages/clients";
+import ClientsOverview from "./dashboard/pages/clientsOverview";
+import AdminDashboard from "./adminDashboard/pages/adminDashboard";
+import AdminPartners from "./adminDashboard/pages/adminPartners";
+import AdminPartnerDetails from "./adminDashboard/pages/adminPartnerDetails";
+import AdminClients from "./adminDashboard/pages/adminClients";
+import AdminClientDetails from "./adminDashboard/pages/adminClientDetails";
+import AdminModules from "./adminDashboard/pages/adminModules";
+import AdminPayment from "./adminDashboard/pages/adminPayment";
 
 function App() {
   const location = useLocation();
@@ -70,6 +87,42 @@ function App() {
           <Route path="/cms-login" element={<Login />} />
           <Route path="/cms-admin" element={<Cms />} />
           <Route path="/career" element={<Career />} />
+
+          {/* dashboard pages */}
+          <Route path="/sign-in" element={<DashboardLogin />} />
+          <Route path="/sign-up" element={<DashboardSignUp />} />
+          <Route path="/verify-mail" element={<VerifyMail />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard/modules" element={<Modules />} />
+          <Route
+            path="/dashboard/purchased-modules"
+            element={<PurchasedModules />}
+          />
+          <Route path="/dashboard/clients" element={<Clients />} />
+          <Route
+            path="/dashboard/clients/overview"
+            element={<ClientsOverview />}
+          />
+          <Route
+            path="/dashboard/payment-history"
+            element={<PaymentHistory />}
+          />
+          <Route path="/dashboard/support-ticket" element={<SupportTicket />} />
+
+          {/* admin pages */}
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/admin-dashboard/partners" element={<AdminPartners />} />
+          <Route
+            path="/admin-dashboard/partners/details"
+            element={<AdminPartnerDetails />}
+          />
+          <Route path="/admin-dashboard/clients" element={<AdminClients />} />
+          <Route
+            path="/admin-dashboard/clients/details"
+            element={<AdminClientDetails />}
+          />
+          <Route path="/admin-dashboard/modules" element={<AdminModules />} />
+          <Route path="/admin-dashboard/payment" element={<AdminPayment />} />
         </Routes>
       </AnimatePresence>
     </>

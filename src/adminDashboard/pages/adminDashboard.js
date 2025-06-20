@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
@@ -11,6 +11,18 @@ import {
 } from "lucide-react";
 
 export default function AdminDashboard() {
+  // State to control mobile menu visibility
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Function to toggle mobile menu
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  // Function to close mobile menu
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
   const metrics = [
     {
       label: "Total Active Partners",
@@ -90,8 +102,11 @@ export default function AdminDashboard() {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
+      <AdminHeadbar onMenuClick={toggleMobileMenu} />
+      <AdminSidebar
+        isMobileMenuOpen={isMobileMenuOpen}
+        onCloseMobileMenu={closeMobileMenu}
+      />
       <AdminActiveTab />
       <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8">
         {/* Header with Export and Filter Buttons */}
@@ -208,7 +223,7 @@ export default function AdminDashboard() {
               {recentPartners.map((partner) => (
                 <div
                   key={partner.id}
-                  className="border-b border-gray-200 py-4 bg-white rounded-[12px] mb-2"
+                  className="border-b border-gray-200 py-4 px-4 bg-white rounded-[12px] mb-2"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-sm font-medium text-gray-900">
@@ -310,7 +325,7 @@ export default function AdminDashboard() {
               {recentClients.map((client) => (
                 <div
                   key={client.id}
-                  className="border-b border-gray-200 py-4 bg-white rounded-[12px] mb-2"
+                  className="border-b border-gray-200 py-4 px-4 bg-white rounded-[12px] mb-2"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-sm font-medium text-gray-900">

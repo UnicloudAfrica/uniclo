@@ -53,11 +53,33 @@ const CartModal = ({
                             {item.specs}
                           </span>
                         </div>
+                        {/* Quantity and Price Controls */}
+                        <div className="flex md:hidden justify-between items-center mt-3 w-1/4">
+                          <div className="flex items-start flex-col">
+                            <div className="flex items-center border border-gray-300 mt-2 rounded-[30px] py-2 px-4">
+                              <button
+                                onClick={() => updateCartQuantity(item.id, -1)}
+                                className=" text-[#1c1c1c] font-normal hover:bg-gray-100 transition-colors"
+                              >
+                                -
+                              </button>
+                              <span className="px-4  font-semibold text-sm min-w-[3rem] text-center">
+                                {item.quantity}
+                              </span>
+                              <button
+                                onClick={() => updateCartQuantity(item.id, 1)}
+                                className=" text-[#1c1c1c] font-normal hover:bg-gray-100 transition-colors"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
                     {/* Quantity and Price Controls */}
-                    <div className="flex justify-between items-center w-1/4">
+                    <div className=" hidden md:flex justify-between items-center w-1/4">
                       <div className="flex items-start flex-col">
                         <span className="text-sm text-[#1E1E1EB2] font-medium">
                           Number
@@ -91,9 +113,9 @@ const CartModal = ({
                       </div>
                       <button
                         onClick={() => removeItem(item.id)}
-                        className="text-[#EB4178] text-sm font-medium hover:text-red-600 transition-colors flex items-center"
+                        className="text-[#EB4178] text-sm font-medium hover:text-red-600 transition-colors flex items-center whitespace-nowrap mt-6 md:mt-0"
                       >
-                        <Trash2 className=" text-[#EB4178] w-4 mr-2" />
+                        <Trash2 className=" text-[#EB4178] w-4 mr-2 " />
                         Remove Product
                       </button>
                     </div>

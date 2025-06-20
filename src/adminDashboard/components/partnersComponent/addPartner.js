@@ -404,7 +404,7 @@ const AddPartner = ({ isOpen, onClose }) => {
                   <button
                     key={index}
                     onClick={() => setCurrentStep(index)}
-                    className={`px-4 py-2 ${
+                    className={`px-4 py-2 text-sm md:text-base ${
                       currentStep === index
                         ? "border-b-2 border-[#288DD1] text-[#288DD1]"
                         : "text-gray-500"

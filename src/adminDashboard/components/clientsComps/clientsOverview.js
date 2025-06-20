@@ -30,11 +30,14 @@ const OverviewClient = () => {
 
   return (
     <>
-      <div className="flex">
+      <div className="flex flex-col-reverse md:flex-row">
         {/* Left Sidebar */}
-        <div className="w-80  px-4  overflow-y-auto space-y-4 divide-y ">
+        <div className=" w-full md:w-80  px-4  overflow-y-auto space-y-4 divide-y ">
           {certificates.map((cert, index) => (
-            <div key={index} className=" pt-8 ">
+            <div
+              key={index}
+              className=" pt-8 flex items-center flex-col justify-center md:block "
+            >
               <img src={cert.img} alt={cert.title} />
               <p className=" mt-1.5 text-center text-[#1C1C1C80] text-xs font-normal">
                 {cert.title}
@@ -44,8 +47,8 @@ const OverviewClient = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 px-8">
-          <div className="max-w-2xl">
+        <div className="flex-1 md:px-8">
+          <div className=" w-full md:max-w-2xl">
             {/* Header */}
             <div className=" pb-4 border-b border-[#EDEFF6] mb-4">
               <div className=" flex justify-between items-center mb-2.5">

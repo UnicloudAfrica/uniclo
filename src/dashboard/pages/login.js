@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import sideBg from "./assets/sideBg.svg";
 import logo from "./assets/logo.png";
+import { Link } from "react-router-dom";
 
 export default function DashboardLogin() {
   const [showPassword, setShowPassword] = useState(false);
@@ -37,7 +38,7 @@ export default function DashboardLogin() {
           <div className="flex mb-6 bg-[#FAFAFA] border border-[#ECEDF0] rounded-[50px] p-3">
             <button
               onClick={() => setActiveTab("partner")}
-              className={`flex-1 py-2 px-4 rounded-[30px] text-sm font-normal transition-colors ${
+              className={`flex-1 py-2 px-4 rounded-[30px] text-sm font-normal whitespace-nowrap transition-colors ${
                 activeTab === "partner"
                   ? "bg-[#288DD1] text-white shadow-sm font-semibold"
                   : "text-[#676767] hover:text-gray-800 font-normal"
@@ -47,7 +48,7 @@ export default function DashboardLogin() {
             </button>
             <button
               onClick={() => setActiveTab("client")}
-              className={`flex-1 py-2 px-4 rounded-[30px] text-sm font-normal transition-colors ${
+              className={`flex-1 py-2 px-4 rounded-[30px] text-sm font-normal whitespace-nowrap transition-colors ${
                 activeTab === "client"
                   ? "bg-[#288DD1] text-white shadow-sm font-semibold"
                   : "text-[#676767] hover:text-gray-800 font-normal"
@@ -146,12 +147,13 @@ export default function DashboardLogin() {
               <span className="text-sm text-[#1E1E1E99]">
                 Don't have an account?{" "}
               </span>
-              <button
+              <Link
+                to="/sign-up"
                 type="button"
                 className="text-sm text-[#288DD1] hover:text-[#6db1df] font-medium"
               >
                 Signup
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -164,7 +166,7 @@ export default function DashboardLogin() {
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
-        className="flex-1 side-bg flex items-center justify-center relative overflow-hidden"
+        className="flex-1 side-bg hidden lg:flex items-center justify-center relative overflow-hidden"
       ></div>
     </div>
   );

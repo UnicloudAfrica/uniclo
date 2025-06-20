@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom"; // Added useLocation
+import { useNavigate, useLocation } from "react-router-dom";
 import home from "./assets/home.png";
 import activeHome from "./assets/activeHome.png";
 import modules from "./assets/module.png";
@@ -12,11 +12,12 @@ import paymentHistory from "./assets/history.png";
 import activePaymentHistory from "./assets/activeHistory.png";
 import supportTicket from "./assets/support.png";
 import activeSupportTicket from "./assets/activeSupport.png";
+import { LogOut, X } from "lucide-react";
 
-const AdminSidebar = () => {
+const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   const [activeItem, setActiveItem] = useState("Home");
   const navigate = useNavigate();
-  const location = useLocation(); // Hook to get the current location
+  const location = useLocation();
 
   // Map of paths to menu item names
   const pathToItemMap = {
@@ -33,7 +34,7 @@ const AdminSidebar = () => {
     const currentPath = location.pathname;
     const itemName = pathToItemMap[currentPath] || "Home"; // Default to "Home" if path not found
     setActiveItem(itemName);
-  }, [location.pathname]); // Re-run when pathname changes
+  }, [location.pathname]);
 
   const menuItems = [
     {
@@ -60,7 +61,6 @@ const AdminSidebar = () => {
       activeIcon: activemodules,
       path: "/admin-dashboard/modules",
     },
-
     {
       name: "Payment",
       icon: paymentHistory,
@@ -78,6 +78,7 @@ const AdminSidebar = () => {
   const handleItemClick = (itemName, path) => {
     setActiveItem(itemName);
     navigate(path);
+    onCloseMobileMenu(); // Close mobile menu after navigation
   };
 
   const renderMenuItem = (item, isBottom = false) => {
@@ -91,7 +92,6 @@ const AdminSidebar = () => {
             isActive ? "text-[#1C1C1C]" : "text-[#676767] hover:text-[#1C1C1C]"
           }`}
         >
-          {/* Add the black vertical bar for the active item */}
           <div className="relative flex items-center justify-center w-5 h-5 flex-shrink-0">
             {isActive && (
               <div className="absolute left-[-14px] w-1 h-4 bg-black rounded-[3px]" />
@@ -110,22 +110,114 @@ const AdminSidebar = () => {
     );
   };
 
+  const renderMobileMenuItem = (item) => {
+    const isActive = activeItem === item.name;
+
+    return (
+      <li key={item.name}>
+        <button
+          onClick={() => handleItemClick(item.name, item.path)}
+          className={`w-full flex items-center py-2 px-4 space-x-3 text-left transition-all duration-200 rounded-lg ${
+            isActive
+              ? "bg-[#ffffff15] text-white"
+              : "text-gray-200 hover:bg-[#ffffff15] hover:text-white"
+          }`}
+        >
+          <div className="flex items-center justify-center w-4 h-4 flex-shrink-0">
+            <img
+              src={isActive ? item.activeIcon : item.icon}
+              className="w-4 h-4 brightness-0 invert"
+              alt={item.name}
+            />
+          </div>
+          <span className="text-xs font-medium">{item.name}</span>
+        </button>
+      </li>
+    );
+  };
+
   return (
     <>
+      {/* Desktop Sidebar */}
       <div className="hidden md:block fixed top-[74px] left-0 z-[999] w-[80%] md:w-20 lg:w-[20%] h-full border-r border-[#C8CBD9] bg-[#fff] font-Outfit">
         <div className="flex flex-col h-full">
-          {/* Menu Header */}
           <div className="px-3 py-4 md:px-3.5 md:py-6 w-full border-b border-[#ECEDF0]">
             <button className="py-1 px-2 text-[#676767] font-normal text-sm lg:text-sm">
               ADMIN
             </button>
-            <div className="w-full">
-              {/* Menu Items */}
-              <nav className="flex-1 overflow-y-auto w-full mt-3 px-2">
-                <ul className="flex flex-col h-full w-full">
-                  {menuItems.map((item) => renderMenuItem(item))}
-                </ul>
-              </nav>
+            <nav className="flex-1 overflow-y-auto w-full mt-3 px-2">
+              <ul className="flex flex-col h-full w-full">
+                {menuItems.map((item) => renderMenuItem(item))}
+              </ul>
+            </nav>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Overlay Sidebar */}
+      <div className="md:hidden">
+        {/* Overlay Background */}
+        <div
+          className={`fixed inset-0 bg-black z-[999] transition-all duration-300 ease-in-out ${
+            isMobileMenuOpen
+              ? "bg-opacity-50 pointer-events-auto"
+              : "bg-opacity-0 pointer-events-none"
+          }`}
+          onClick={onCloseMobileMenu}
+        >
+          {/* Sidebar Panel */}
+          <div
+            className={`fixed top-0 left-0 h-full w-[280px] bg-[#14547F] text-white flex flex-col transform transition-transform duration-300 ease-in-out ${
+              isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header with Close Button */}
+            <div className="flex justify-between items-center p-6">
+              <div className="flex items-center"></div>
+              <button
+                onClick={onCloseMobileMenu}
+                className="text-white hover:bg-[#ffffff20] p-2 rounded-lg transition-colors duration-200"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* User Info */}
+            <div className="px-6 mt-4 pb-4 border-b border-[#E9EAF433]">
+              <div className="w-16 h-16 rounded-full bg-[#F1F1F11A] flex items-center justify-center text-[#fff] font-bold text-xl">
+                AD
+              </div>
+              <div className="mt-4">
+                <p className="text-sm font-medium">admin@email.com</p>
+                <p className="text-xs mt-1 text-[#F1F1F1CC]">Admin</p>
+              </div>
+            </div>
+
+            {/* Menu Items */}
+            <nav className="flex-1 overflow-y-auto py-4">
+              <ul className="space-y-1 px-4">
+                {menuItems.map((item) => renderMobileMenuItem(item))}
+                <li>
+                  <button
+                    className="w-full flex items-center py-3 px-4 space-x-3 text-left text-[#DC3F41] hover:bg-[#ffffff15] rounded-lg transition-colors duration-200"
+                    onClick={() => {
+                      // Add logout logic here
+                      onCloseMobileMenu();
+                    }}
+                  >
+                    <div className="flex items-center justify-center w-5 h-5 flex-shrink-0">
+                      <LogOut />
+                    </div>
+                    <span className="text-xs font-medium">Logout</span>
+                  </button>
+                </li>
+              </ul>
+            </nav>
+
+            {/* Footer */}
+            <div className="text-xs text-[#F1F1F1CC] font-Outfit px-6 py-4 border-t border-[#ffffff20]">
+              Version 1.0 - Live • Terms of Service
             </div>
           </div>
         </div>

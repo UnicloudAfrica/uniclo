@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Headbar from "../components/headbar";
 import Sidebar from "../components/sidebar";
 import ActiveTab from "../components/activeTab";
@@ -9,6 +9,19 @@ import cloud from "./assets/cloud-connection.svg";
 import monitor from "./assets/monitor.svg";
 
 export default function Dashboard() {
+  // State to control mobile menu visibility
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Function to toggle mobile menu
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  // Function to close mobile menu
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
   const freeTrail = {
     id: 1,
     title: "Z2 Large Compute Instances",
@@ -42,15 +55,18 @@ export default function Dashboard() {
 
   return (
     <>
-      <Headbar />
-      <Sidebar />
+      <Headbar onMenuClick={toggleMobileMenu} />
+      <Sidebar
+        isMobileMenuOpen={isMobileMenuOpen}
+        onCloseMobileMenu={closeMobileMenu}
+      />
       <ActiveTab />
       <main className=" absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%]  bg-[#FAFAFA]  min-h-full p-8">
         <p className=" text-[#7e7e7e] font-Outfit text-sm font-normal">
           Welcome back, Adaeze 👋🏽
         </p>
 
-        <div className=" w-[352px] mt-4 bg-[#288DD10D] py-6 px-5 rounded-[10px]">
+        <div className=" w-full md:w-[352px] mt-4 bg-[#288DD10D] py-6 px-5 rounded-[10px]">
           <div className=" flex items-center space-x-1">
             <img src={cloudCheck} className="" alt="" />
             <p className=" font-medium text-base text-[#288DD1]">
@@ -73,7 +89,7 @@ export default function Dashboard() {
           <p className=" text-[#7e7e7e] font-Outfit text-base font-normal">
             For you
           </p>
-          <div className="grid grid-cols-2 gap-4 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
             <div className=" relative w-full mt-4 border border-[#E9EAF4] py-6 px-5 rounded-[10px]">
               <div className=" max-w-[300px]">
                 <h3 className=" text-[#31373D] font-Outfit font-medium text-base">
@@ -107,7 +123,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className=" w-full grid grid-cols-2 gap-4">
+          <div className=" w-full grid grid-cols-1 md:grid-cols-2 gap-4">
             {pricingData.map((plan, index) => (
               <div
                 className=" relative w-full mt-4 border border-[#E9EAF4] py-6 px-5 rounded-[10px]"

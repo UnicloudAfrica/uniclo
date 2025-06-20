@@ -18,6 +18,19 @@ export default function Clients() {
   const dropdownRef = useRef(null);
   const [isAddClientOpen, setAddClient] = useState(false);
 
+  // State to control mobile menu visibility
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Function to toggle mobile menu
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  // Function to close mobile menu
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
   const openAddClient = () => setAddClient(true);
   const closeAddClient = () => setAddClient(false);
 
@@ -142,8 +155,11 @@ export default function Clients() {
 
   return (
     <>
-      <Headbar />
-      <Sidebar />
+      <Headbar onMenuClick={toggleMobileMenu} />
+      <Sidebar
+        isMobileMenuOpen={isMobileMenuOpen}
+        onCloseMobileMenu={closeMobileMenu}
+      />
       <ActiveTab />
       <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8">
         <button

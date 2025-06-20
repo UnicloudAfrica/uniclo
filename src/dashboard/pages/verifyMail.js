@@ -60,7 +60,7 @@ export default function VerifyMail() {
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
-        className="flex-1 side-bg flex items-center justify-center relative overflow-hidden"
+        className="flex-1 side-bg hidden lg:flex items-center justify-center relative overflow-hidden"
       ></div>
     </div>
   );

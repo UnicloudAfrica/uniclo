@@ -18,6 +18,18 @@ export default function SupportTicket() {
   const [isStartConvoOpen, setStartConvo] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  // State to control mobile menu visibility
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Function to toggle mobile menu
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  // Function to close mobile menu
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
 
   const openConvo = () => setStartConvo(true);
   const closeConvo = () => setStartConvo(false);
@@ -134,8 +146,11 @@ export default function SupportTicket() {
 
   return (
     <>
-      <Headbar />
-      <Sidebar />
+      <Headbar onMenuClick={toggleMobileMenu} />
+      <Sidebar
+        isMobileMenuOpen={isMobileMenuOpen}
+        onCloseMobileMenu={closeMobileMenu}
+      />
       <ActiveTab />
       <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8">
         <button

@@ -99,7 +99,7 @@ export default function VerificationCodeInput({
             onChange={(e) => handleChange(e.target, index)}
             onKeyDown={(e) => handleKeyDown(e, index)}
             onPaste={handlePaste}
-            className="w-8 h-12 sm:w-12 sm:h-16 md:w-12 md:h-16 text-center text-2xl sm:text-3xl font-semibold border border-[#D9D9D9] rounded-xl focus:border-[#288DD1] focus:outline-none focus:ring-1 focus:ring-[#288DD1]  transition-all duration-200 bg-white"
+            className="w-12 h-16 sm:w-12 sm:h-16 md:w-12 md:h-16 text-center text-2xl sm:text-3xl font-semibold border border-[#D9D9D9] rounded-xl focus:border-[#288DD1] focus:outline-none focus:ring-1 focus:ring-[#288DD1]  transition-all duration-200 bg-white"
           />
         ))}
       </div>

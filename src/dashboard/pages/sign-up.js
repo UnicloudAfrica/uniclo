@@ -6,6 +6,7 @@ import { CreateAccountStep } from "./signupsteps/stepone";
 import { BusinessInfoStep } from "./signupsteps/steptwo";
 import { BusinessAddressStep } from "./signupsteps/stepThree";
 import { UploadDocumentStep } from "./signupsteps/stepFour";
+import { Link } from "react-router-dom";
 
 export default function DashboardSignUp() {
   const [showPassword, setShowPassword] = useState(false);
@@ -164,7 +165,7 @@ export default function DashboardSignUp() {
     <div className="flex items-center justify-between mb-8">
       {steps.map((step, index) => (
         <React.Fragment key={step}>
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center text-center">
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                 index <= currentStep
@@ -175,7 +176,7 @@ export default function DashboardSignUp() {
               {index + 1}
             </div>
             <p
-              className={`text-xs mt-2 ${
+              className={`text-xs mt-2 text-center ${
                 index <= currentStep ? "text-[#288DD1]" : "text-gray-500"
               }`}
             >
@@ -214,7 +215,7 @@ export default function DashboardSignUp() {
           <div className="flex mb-6 bg-[#FAFAFA] border border-[#ECEDF0] rounded-[50px] p-3">
             <button
               onClick={() => setActiveTab("partner")}
-              className={`flex-1 py-2 px-4 rounded-[30px] text-sm font-normal transition-colors ${
+              className={`flex-1 py-2 px-4 rounded-[30px] text-sm font-normal whitespace-nowrap transition-colors ${
                 activeTab === "partner"
                   ? "bg-[#288DD1] text-white shadow-sm font-semibold"
                   : "text-[#676767] hover:text-gray-800 font-normal"
@@ -224,7 +225,7 @@ export default function DashboardSignUp() {
             </button>
             <button
               onClick={() => setActiveTab("client")}
-              className={`flex-1 py-2 px-4 rounded-[30px] text-sm font-normal transition-colors ${
+              className={`flex-1 py-2 px-4 rounded-[30px] text-sm font-normal whitespace-nowrap transition-colors ${
                 activeTab === "client"
                   ? "bg-[#288DD1] text-white shadow-sm font-semibold"
                   : "text-[#676767] hover:text-gray-800 font-normal"
@@ -260,12 +261,13 @@ export default function DashboardSignUp() {
             <span className="text-sm text-[#1E1E1E99]">
               Already have an account?{" "}
             </span>
-            <button
+            <Link
+              to="/sign-in"
               type="button"
               className="text-sm text-[#288DD1] hover:text-[#6db1df] font-medium"
             >
               Login
-            </button>
+            </Link>
           </div>
         </div>
       </div>
@@ -275,7 +277,7 @@ export default function DashboardSignUp() {
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
-        className="flex-1 side-bg flex items-center justify-center relative overflow-hidden"
+        className="flex-1 side-bg hidden lg:flex items-center justify-center relative overflow-hidden"
       ></div>
     </div>
   );

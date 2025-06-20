@@ -14,6 +14,18 @@ export const Modules = () => {
   const [cartItems, setCartItems] = useState([]);
   const [quantities, setQuantities] = useState({});
   const [isCartOpen, setIsCartOpen] = useState(false);
+  // State to control mobile menu visibility
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Function to toggle mobile menu
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  // Function to close mobile menu
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
 
   const accordionData = [
     {
@@ -210,8 +222,11 @@ export const Modules = () => {
 
   return (
     <>
-      <Headbar />
-      <Sidebar />
+      <Headbar onMenuClick={toggleMobileMenu} />
+      <Sidebar
+        isMobileMenuOpen={isMobileMenuOpen}
+        onCloseMobileMenu={closeMobileMenu}
+      />
       <ActiveTab />
       <main className=" absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%]  bg-[#FAFAFA]  min-h-full p-8">
         <button
@@ -265,7 +280,7 @@ export const Modules = () => {
               {/* Collapsible Content */}
               {openItems[item.id] && (
                 <div className="pb-4 rounded-md mb-2">
-                  <div className="w-full grid grid-cols-2 gap-4">
+                  <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
                     {item.content.map((plan, index) => {
                       const currentQuantity = quantities[plan.id] || 1;
 
@@ -343,12 +358,12 @@ export const Modules = () => {
         updateCartQuantity={updateCartQuantity}
         removeItem={removeItem}
       /> */}
-      {/* <CheckoutModal
+      <CheckoutModal
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
         cartItems={cartItems}
-      /> */}
-      <SuccessModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      />
+      {/* <SuccessModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} /> */}
     </>
   );
 };

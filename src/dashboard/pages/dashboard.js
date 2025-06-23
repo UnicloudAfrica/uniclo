@@ -7,6 +7,7 @@ import { ChevronRight } from "lucide-react";
 import mobile from "./assets/mobile.svg";
 import cloud from "./assets/cloud-connection.svg";
 import monitor from "./assets/monitor.svg";
+import { Link } from "react-router-dom";
 
 export default function Dashboard() {
   // State to control mobile menu visibility
@@ -77,12 +78,15 @@ export default function Dashboard() {
             Explore all Unicloud African modules that you have purchased
           </p>
 
-          <div className=" mt-2 space-x-2 flex items-center">
+          <Link
+            to="/dashboard/purchased-modules"
+            className=" mt-2 space-x-2 flex items-center"
+          >
             <p className=" font-Outfit font-normal text-xs text-[#288DD1]">
               SEE PURCHASED MODULES
             </p>
             <ChevronRight className=" w-4 text-[#288DD1]" />
-          </div>
+          </Link>
         </div>
 
         <div className=" mt-6 w-full ">
@@ -117,7 +121,7 @@ export default function Dashboard() {
               </div>
               <img
                 src={freeTrail.icon}
-                className=" absolute top-1/3 right-[60px]"
+                className=" absolute top-1/3 right-8 md:right-[60px] w-10  md:w-auto"
                 alt=""
               />
             </div>
@@ -155,7 +159,7 @@ export default function Dashboard() {
                 </div>
                 <img
                   src={plan.icon}
-                  className=" absolute top-1/3 right-[60px]"
+                  className=" absolute top-1/3 right-8 md:right-[60px] w-10  md:w-auto"
                   alt=""
                 />
               </div>

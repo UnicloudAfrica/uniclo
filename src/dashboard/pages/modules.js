@@ -262,7 +262,7 @@ export const Modules = () => {
                 onClick={() => toggleItem(item.id)}
                 className="w-full flex items-center justify-between py-4 px-0 text-left"
               >
-                <span className="text-[#1C1C1C] font-medium text-base">
+                <span className="text-[#288DD1] font-semibold text-base">
                   {item.title}
                 </span>
                 <div className="flex items-center text-[#676767] px-3 py-2 text-sm rounded-[8px] bg-[#F2F4F8]">
@@ -338,7 +338,7 @@ export const Modules = () => {
                           </div>
                           <img
                             src={plan.icon}
-                            className="absolute top-1/3 right-[60px]"
+                            className=" absolute top-1/3 right-8 md:right-[60px] w-10  md:w-auto"
                             alt=""
                           />
                         </div>

@@ -235,9 +235,7 @@ export default function DashboardSignUp() {
             </button>
           </div>
           <StepProgress currentStep={currentStep} steps={steps} />
-          <div className="max-h-[200px] overflow-y-auto pr-4">
-            {renderCurrentStep()}
-          </div>
+          <div className="">{renderCurrentStep()}</div>
           <div className="flex gap-4 mt-8">
             {currentStep > 0 && (
               <button

@@ -416,7 +416,7 @@ const AddPartner = ({ isOpen, onClose }) => {
               </div>
               {renderStep()}
             </div>
-            <div className="grid grid-cols-2 gap-3 items-center px-6 py-4 border-t rounded-b-[24px]">
+            <div className="grid grid-cols-2 gap-3 items-center px-6 py-4 -t rounded-b-[24px]">
               <button
                 onClick={currentStep > 0 ? handleBack : onClose}
                 className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
@@ -435,7 +435,7 @@ const AddPartner = ({ isOpen, onClose }) => {
                   onClick={onClose}
                   className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors"
                 >
-                  Finish
+                  Submit
                 </button>
               )}
             </div>

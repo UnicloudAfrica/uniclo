@@ -1,34 +1,43 @@
 import React from "react";
 
-export const BusinessAddressStep = ({ formData, updateFormData, errors }) => (
+export const BusinessAddressStep = ({
+  formData,
+  updateFormData,
+  errors,
+  countries,
+  isCountriesFetching,
+}) => (
   <div className="space-y-4">
     <div>
       <label
-        htmlFor="country"
+        htmlFor="countryId"
         className="block text-sm font-medium text-gray-700 mb-2"
       >
         Country
       </label>
       <span
-        className={`w-full input-field block transition-all off ${
-          errors.country ? "border-red-500 border" : ""
+        className={`w-full input-field block transition-all ${
+          errors.countryId ? "border-red-500 border" : ""
         }`}
       >
         <select
-          id="country"
-          value={formData.country}
-          onChange={(e) => updateFormData("country", e.target.value)}
-          className=" w-full bg-transparent outline-none"
+          id="countryId"
+          value={formData.countryId}
+          onChange={(e) => updateFormData("countryId", e.target.value)}
+          className="w-full bg-transparent outline-none"
+          disabled={isCountriesFetching}
         >
           <option value="">Select country</option>
-          <option value="nigeria">Nigeria</option>
-          <option value="ghana">Ghana</option>
-          <option value="kenya">Kenya</option>
-          <option value="south-africa">South Africa</option>
+          {countries &&
+            countries.map((country) => (
+              <option key={country.id} value={country.id}>
+                {country.name}
+              </option>
+            ))}
         </select>
       </span>
-      {errors.country && (
-        <p className="text-red-500 text-xs mt-1">{errors.country}</p>
+      {errors.countryId && (
+        <p className="text-red-500 text-xs mt-1">{errors.countryId}</p>
       )}
     </div>
     <div>

@@ -44,6 +44,8 @@ import AdminClients from "./adminDashboard/pages/adminClients";
 import AdminClientDetails from "./adminDashboard/pages/adminClientDetails";
 import AdminModules from "./adminDashboard/pages/adminModules";
 import AdminPayment from "./adminDashboard/pages/adminPayment";
+import ForgotPassword from "./dashboard/pages/forgotPassword";
+import ResetPassword from "./dashboard/pages/resetPassword";
 
 function App() {
   const location = useLocation();
@@ -91,6 +93,8 @@ function App() {
           {/* dashboard pages */}
           <Route path="/sign-in" element={<DashboardLogin />} />
           <Route path="/sign-up" element={<DashboardSignUp />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/verify-mail" element={<VerifyMail />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/modules" element={<Modules />} />

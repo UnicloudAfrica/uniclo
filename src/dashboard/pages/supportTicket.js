@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import StartModalConversation from "../components/startConversationModal";
 import TicketDrawer from "../components/ticketDrawer";
+import useAuthRedirect from "../../utils/authRedirect";
 
 export default function SupportTicket() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -20,6 +21,7 @@ export default function SupportTicket() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   // State to control mobile menu visibility
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isLoading } = useAuthRedirect();
 
   // Function to toggle mobile menu
   const toggleMobileMenu = () => {

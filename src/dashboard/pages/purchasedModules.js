@@ -4,12 +4,18 @@ import Sidebar from "../components/sidebar";
 import ActiveTab from "../components/activeTab";
 import { Filter, ChevronLeft, ChevronRight, Settings2 } from "lucide-react";
 import DetailedModules from "../components/detailsModules";
+import CartFloat from "../components/cartFloat";
+import useAuthRedirect from "../../utils/authRedirect";
+import { useFetchModules } from "../../hooks/modulesHook";
 
 export default function PurchasedModules() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   // State to control mobile menu visibility
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isLoading } = useAuthRedirect();
+  const { data: modules = [], isFetching: isModulesFetching } =
+    useFetchModules();
 
   // Function to toggle mobile menu
   const toggleMobileMenu = () => {
@@ -146,6 +152,7 @@ export default function PurchasedModules() {
 
   return (
     <>
+      <CartFloat />
       <Headbar onMenuClick={toggleMobileMenu} />
       <Sidebar
         isMobileMenuOpen={isMobileMenuOpen}

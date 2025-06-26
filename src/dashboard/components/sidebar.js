@@ -14,11 +14,15 @@ import supportTicket from "./assets/support.png";
 import activeSupportTicket from "./assets/activeSupport.png";
 import appSettings from "./assets/settings.png";
 import { LogOut, X } from "lucide-react";
+import useAuthStore from "../../stores/userAuthStore";
+import { useFetchProfile } from "../../hooks/resource";
 
 const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   const [activeItem, setActiveItem] = useState("Home");
   const navigate = useNavigate();
   const location = useLocation();
+  const { clearToken } = useAuthStore.getState();
+  const { data: profile, isFetching: isProfileFetching } = useFetchProfile();
 
   // Map of paths to menu item names
   const pathToItemMap = {
@@ -85,8 +89,28 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     onCloseMobileMenu(); // Close mobile menu after navigation
   };
 
+  const getInitials = (firstName, lastName) => {
+    if (!firstName && !lastName) return "";
+    const firstInitial = firstName?.trim()?.[0]?.toUpperCase() || "";
+    const lastInitial = lastName?.trim()?.[0]?.toUpperCase() || "";
+    return firstInitial + lastInitial;
+  };
+
+  const handleLogout = () => {
+    clearToken(); // Clear the token from the store
+    navigate("/sign-in"); // Redirect to sign-in page
+    onCloseMobileMenu(); // Close mobile menu if open
+  };
+
   const renderMenuItem = (item, isBottom = false) => {
     const isActive = activeItem === item.name;
+
+    const getInitials = (firstName, lastName) => {
+      if (!firstName && !lastName) return "";
+      const firstInitial = firstName?.trim()?.[0]?.toUpperCase() || "";
+      const lastInitial = lastName?.trim()?.[0]?.toUpperCase() || "";
+      return firstInitial + lastInitial;
+    };
 
     return (
       <li key={item.name} className={isBottom ? "mt-auto" : ""}>
@@ -152,7 +176,18 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
             <nav className="flex-1 overflow-y-auto w-full mt-3 px-2">
               <ul className="flex flex-col h-full w-full">
                 {menuItems.map((item) => renderMenuItem(item))}
-                {renderMenuItem(settingsItem, true)}
+                {/* {renderMenuItem(settingsItem, false)} */}
+                <button
+                  className="w-full flex items-center py-2 px-4 space-x-2 text-left text-[#DC3F41] hover:bg-[#ffffff15] rounded-lg transition-colors duration-200"
+                  onClick={handleLogout}
+                >
+                  <div className="flex items-center justify-center w-4 h-4 flex-shrink-0">
+                    <LogOut />
+                  </div>
+                  <span className="text-xs font-medium hidden lg:flex">
+                    Logout
+                  </span>
+                </button>
               </ul>
             </nav>
           </div>
@@ -190,11 +225,13 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
 
             <div className=" px-6 mt-4 pb-4 border-b border-[#E9EAF433]">
               <div className="w-16 h-16 rounded-full bg-[#F1F1F11A] flex items-center justify-center text-[#fff] font-bold text-zxl">
-                OA
+                {getInitials(profile?.first_name, profile?.last_name)}
               </div>
               <div className=" mt-4">
-                <p className="text-sm font-medium">myemail@email.com</p>
-                <p className="text-xs mt-1 text-[#F1F1F1CC]">Odinaka Adaeze</p>
+                <p className="text-sm font-medium">{profile?.email}</p>
+                <p className="text-xs mt-1 text-[#F1F1F1CC]">
+                  {profile?.first_name} {profile?.last_name}
+                </p>
               </div>
             </div>
 
@@ -202,7 +239,7 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
             <nav className="flex-1 overflow-y-auto py-4">
               <ul className="space-y-1 px-4">
                 {menuItems.map((item) => renderMobileMenuItem(item))}
-                {renderMobileMenuItem(settingsItem)}
+                {/* {renderMobileMenuItem(settingsItem, false)} */}
                 {/* <li className="pt-4 border-t border-[#ffffff20] mt-4">
                   <button className="w-full flex items-center py-3 px-4 space-x-3 text-left text-white hover:bg-[#ffffff15] rounded-lg transition-colors duration-200">
                     <div className="flex items-center justify-center w-5 h-5 flex-shrink-0">
@@ -214,10 +251,7 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
                 <li>
                   <button
                     className="w-full flex items-center py-3 px-4 space-x-3 text-left text-[#DC3F41] hover:bg-[#ffffff15] rounded-lg transition-colors duration-200"
-                    onClick={() => {
-                      // Add logout logic here
-                      onCloseMobileMenu();
-                    }}
+                    onClick={handleLogout}
                   >
                     <div className="flex items-center justify-center w-5 h-5 flex-shrink-0">
                       <LogOut />

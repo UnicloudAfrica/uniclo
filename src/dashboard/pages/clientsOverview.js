@@ -4,11 +4,14 @@ import Sidebar from "../components/sidebar";
 import ActiveTab from "../components/activeTab";
 import OverviewClient from "../components/overviewClient";
 import ClientModules from "../components/clientModules";
+import CartFloat from "../components/cartFloat";
+import useAuthRedirect from "../../utils/authRedirect";
 
 export default function ClientsOverview() {
   const [activeButton, setActiveButton] = useState("overview");
   // State to control mobile menu visibility
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isLoading } = useAuthRedirect();
 
   // Function to toggle mobile menu
   const toggleMobileMenu = () => {
@@ -40,6 +43,7 @@ export default function ClientsOverview() {
 
   return (
     <>
+      <CartFloat />
       <Headbar onMenuClick={toggleMobileMenu} />
       <Sidebar
         isMobileMenuOpen={isMobileMenuOpen}

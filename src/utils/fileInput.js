@@ -30,8 +30,24 @@ export const FileInput = ({
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
     if (file) {
-      onChange({ target: { files: [file] } });
+      convertToBase64(file);
     }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      convertToBase64(file);
+    }
+  };
+
+  const convertToBase64 = (file) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result; // Contains the base64 string
+      onChange({ target: { files: [base64String] } }); // Pass base64 string as the file
+    };
+    reader.readAsDataURL(file); // Converts file to base64
   };
 
   const handleRemoveFile = () => {
@@ -61,7 +77,7 @@ export const FileInput = ({
         <input
           id={id}
           type="file"
-          onChange={onChange}
+          onChange={handleFileChange} // Use the new handler
           accept={accept}
           className="hidden"
         />
@@ -69,7 +85,7 @@ export const FileInput = ({
           htmlFor={id}
           className="cursor-pointer flex flex-col items-center space-y-2"
         >
-          <div className="w-12 h-12 -[#288DD1] bg-opacity-10 rounded-full flex items-center justify-center">
+          <div className="w-12 h-12 bg-[#288DD1] bg-opacity-10 rounded-full flex items-center justify-center">
             <Upload className="w-6 h-6 text-[#288DD1]" />
           </div>
           <div>
@@ -85,7 +101,9 @@ export const FileInput = ({
           <div className="flex items-center space-x-2">
             <CheckCircle className="w-5 h-5 text-green-500" />
             <p className="text-sm text-gray-700 font-medium">
-              {selectedFile.name}
+              {typeof selectedFile === "string"
+                ? "Uploaded File"
+                : selectedFile.name}
             </p>
           </div>
           <button

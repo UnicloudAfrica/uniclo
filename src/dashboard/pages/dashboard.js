@@ -3,15 +3,22 @@ import Headbar from "../components/headbar";
 import Sidebar from "../components/sidebar";
 import ActiveTab from "../components/activeTab";
 import cloudCheck from "./assets/cloucCheck.svg";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Loader2 } from "lucide-react";
 import mobile from "./assets/mobile.svg";
 import cloud from "./assets/cloud-connection.svg";
 import monitor from "./assets/monitor.svg";
 import { Link } from "react-router-dom";
+import { useFetchProducts } from "../../hooks/productsHook";
+import useAuthRedirect from "../../utils/authRedirect";
+import CartFloat from "../components/cartFloat";
+import { useFetchSubs } from "../../hooks/subscriptionHooks";
 
 export default function Dashboard() {
   // State to control mobile menu visibility
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { data: subs, isFetching: isSubsFetching } = useFetchSubs();
+  const { isLoading } = useAuthRedirect();
+
 
   // Function to toggle mobile menu
   const toggleMobileMenu = () => {
@@ -54,8 +61,17 @@ export default function Dashboard() {
     },
   ];
 
+  if (isLoading) {
+    return (
+      <div className=" w-full h-svh flex items-center justify-center">
+        <Loader2 className=" w-12 text-[#288DD1] animate-spin" />
+      </div>
+    ); // Or a spinner
+  }
+
   return (
     <>
+      <CartFloat />
       <Headbar onMenuClick={toggleMobileMenu} />
       <Sidebar
         isMobileMenuOpen={isMobileMenuOpen}
@@ -121,7 +137,7 @@ export default function Dashboard() {
               </div>
               <img
                 src={freeTrail.icon}
-                className=" absolute top-1/3 right-8 md:right-[60px] w-10  md:w-auto"
+                className=" absolute top-1/3 right-8 lg:right-[60px] w-10  lg:w-auto"
                 alt=""
               />
             </div>
@@ -159,7 +175,7 @@ export default function Dashboard() {
                 </div>
                 <img
                   src={plan.icon}
-                  className=" absolute top-1/3 right-8 md:right-[60px] w-10  md:w-auto"
+                  className="  absolute top-1/3 right-8 lg:right-[60px] w-10  lg:w-auto"
                   alt=""
                 />
               </div>

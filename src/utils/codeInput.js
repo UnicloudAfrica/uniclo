@@ -1,14 +1,25 @@
 import { useState, useRef, useEffect } from "react";
+import { Loader2 } from "lucide-react";
+import { useResendOTP } from "../hooks/authHooks";
 
 export default function VerificationCodeInput({
-  length = 4,
+  length = 6,
+  code: initialCode,
+  onCodeChange = () => {},
   onComplete = () => {},
   onResend = () => {},
+  userEmail,
 }) {
-  const [code, setCode] = useState(new Array(length).fill(""));
-  const [timeLeft, setTimeLeft] = useState(50);
-  const [isActive, setIsActive] = useState(true);
+  const [code, setCode] = useState(initialCode || new Array(length).fill(""));
+  const [timeLeft, setTimeLeft] = useState(0); // Start with 0, set to 50 on success
+  const [isActive, setIsActive] = useState(false); // Start inactive, activate on success
   const inputRefs = useRef([]);
+  const { mutate, isPending } = useResendOTP();
+
+  // Sync code with parent state
+  useEffect(() => {
+    setCode(initialCode || new Array(length).fill(""));
+  }, [initialCode, length]);
 
   // Timer effect
   useEffect(() => {
@@ -35,7 +46,10 @@ export default function VerificationCodeInput({
   const handleChange = (element, index) => {
     if (isNaN(element.value)) return false;
 
-    setCode([...code.map((d, idx) => (idx === index ? element.value : d))]);
+    const newCode = [...code];
+    newCode[index] = element.value;
+    setCode(newCode);
+    onCodeChange(newCode); // Sync with parent
 
     // Focus next input
     if (element.nextSibling && element.value !== "") {
@@ -53,6 +67,7 @@ export default function VerificationCodeInput({
       const newCode = [...code];
       newCode[index] = "";
       setCode(newCode);
+      onCodeChange(newCode); // Sync with parent
     }
   };
 
@@ -62,7 +77,12 @@ export default function VerificationCodeInput({
     const pasteCode = pasteData.slice(0, length).split("");
 
     if (pasteCode.every((char) => !isNaN(char))) {
-      setCode([...pasteCode, ...new Array(length - pasteCode.length).fill("")]);
+      const newCode = [
+        ...pasteCode,
+        ...new Array(length - pasteCode.length).fill(""),
+      ];
+      setCode(newCode);
+      onCodeChange(newCode); // Sync with parent
       // Focus the next empty input or last input
       const nextIndex = Math.min(pasteCode.length, length - 1);
       inputRefs.current[nextIndex]?.focus();
@@ -70,19 +90,27 @@ export default function VerificationCodeInput({
   };
 
   const handleResend = () => {
-    if (timeLeft === 0) {
-      setTimeLeft(50);
-      setIsActive(true);
-      onResend();
+    if (timeLeft === 0 && !isPending && userEmail) {
+      mutate(
+        { email: userEmail }, // Trigger resend OTP mutation with userEmail
+        {
+          onSuccess: () => {
+            setTimeLeft(50); // Start timer on success
+            setIsActive(true); // Activate timer
+            onResend(); // Call onResend callback if provided
+          },
+        }
+      );
     }
   };
 
-  // Check if code is complete
+  // Check if code is complete and notify parent
   useEffect(() => {
+    onCodeChange(code); // Sync state on every change
     if (code.every((digit) => digit !== "")) {
       onComplete(code.join(""));
     }
-  }, [code, onComplete]);
+  }, [code]);
 
   return (
     <div className="flex flex-col items-center space-y-6 p-4 font-Outfit">
@@ -99,7 +127,7 @@ export default function VerificationCodeInput({
             onChange={(e) => handleChange(e.target, index)}
             onKeyDown={(e) => handleKeyDown(e, index)}
             onPaste={handlePaste}
-            className="w-12 h-16 sm:w-12 sm:h-16 md:w-12 md:h-16 text-center text-2xl sm:text-3xl font-semibold border border-[#D9D9D9] rounded-xl focus:border-[#288DD1] focus:outline-none focus:ring-1 focus:ring-[#288DD1]  transition-all duration-200 bg-white"
+            className="w-12 h-16 sm:w-12 sm:h-16 md:w-12 md:h-16 text-center text-2xl sm:text-3xl font-semibold border border-[#D9D9D9] rounded-xl focus:border-[#288DD1] focus:outline-none focus:ring-1 focus:ring-[#288DD1] transition-all duration-200 bg-white"
           />
         ))}
       </div>
@@ -110,14 +138,18 @@ export default function VerificationCodeInput({
           Code Sent.{" "}
           <button
             onClick={handleResend}
-            disabled={timeLeft > 0}
+            disabled={timeLeft > 0 || isPending || !userEmail}
             className={`font-medium transition-colors duration-200 ${
-              timeLeft > 0
+              timeLeft > 0 || isPending || !userEmail
                 ? "text-[#676767] cursor-not-allowed"
                 : "text-[#288DD1] hover:text-[#6db1df] cursor-pointer underline"
             }`}
           >
-            Resend Code
+            {isPending ? (
+              <Loader2 className="w-4 h-4 text-[#288DD1] animate-spin inline-block" />
+            ) : (
+              "Resend Code"
+            )}
           </button>
           {timeLeft > 0 && (
             <span className="text-[#288DD1]"> in {formatTime(timeLeft)}</span>

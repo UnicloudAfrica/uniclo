@@ -1,14 +1,25 @@
 import React, { useState } from "react";
-import { Eye, EyeOff, ChevronLeft } from "lucide-react";
+import { Eye, EyeOff, ChevronLeft, Loader2 } from "lucide-react"; // Added Loader2
 import sideBg from "./assets/sideBg.svg";
 import logo from "./assets/logo.png";
 import { CreateAccountStep } from "./signupsteps/stepone";
 import { BusinessInfoStep } from "./signupsteps/steptwo";
 import { BusinessAddressStep } from "./signupsteps/stepThree";
 import { UploadDocumentStep } from "./signupsteps/stepFour";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useCreateAccount } from "../../hooks/authHooks";
+import { useFetchCountries, useFetchIndustries } from "../../hooks/resource";
+import useAuthStore from "../../stores/userAuthStore";
+import useAuthRedirect from "../../utils/authRedirect";
 
 export default function DashboardSignUp() {
+  const Navigate = useNavigate();
+  const { data: countries, isFetching: isCountriesFetching } =
+    useFetchCountries();
+  const { data: industries, isFetching: isIndustriesFetching } =
+    useFetchIndustries();
+  const { userEmail, setUserEmail } = useAuthStore.getState();
+  const { mutate, isPending } = useCreateAccount();
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState("partner");
   const [currentStep, setCurrentStep] = useState(0);
@@ -23,7 +34,8 @@ export default function DashboardSignUp() {
     businessName: "",
     registrationNumber: "",
     tinNumber: "",
-    country: "",
+    countryId: "",
+    countryName: "",
     state: "",
     city: "",
     address: "",
@@ -31,7 +43,17 @@ export default function DashboardSignUp() {
     certificateOfIncorporation: null,
     utilityBill: null,
     tinCertificate: null,
+    industry: "",
+    businessType: "",
+    nationalIdDocument: null,
+    businessLogo: null,
+    businessEmail: "",
+    businessPhone: "",
+    businessWebsite: "",
   });
+  const { isLoading } = useAuthRedirect();
+
+ 
 
   const steps = [
     "Create Account",
@@ -69,9 +91,29 @@ export default function DashboardSignUp() {
         if (!formData.registrationNumber)
           newErrors.registrationNumber = "Registration number is required";
         if (!formData.tinNumber) newErrors.tinNumber = "TIN number is required";
+        if (!formData.industry) newErrors.industry = "Industry is required";
+        if (!formData.businessType)
+          newErrors.businessType = "Business type is required";
+        if (!formData.businessEmail)
+          newErrors.businessEmail = "Business email is required";
+        else if (!/\S+@\S+\.\S+/.test(formData.businessEmail))
+          newErrors.businessEmail = "Invalid email format";
+        if (!formData.businessPhone)
+          newErrors.businessPhone = "Business phone is required";
+        else if (!/^\+?\d{10,15}$/.test(formData.businessPhone))
+          newErrors.businessPhone = "Invalid phone number";
+        if (!formData.businessWebsite)
+          newErrors.businessWebsite = "Business website is required";
+        else if (
+          !/^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[\w-./?%&=]*)?$/.test(
+            formData.businessWebsite
+          )
+        ) {
+          newErrors.businessWebsite = "Invalid website URL";
+        }
         break;
       case 2:
-        if (!formData.country) newErrors.country = "Country is required";
+        if (!formData.countryId) newErrors.countryId = "Country is required";
         if (!formData.state) newErrors.state = "State is required";
         if (!formData.city) newErrors.city = "City is required";
         if (!formData.address) newErrors.address = "Address is required";
@@ -86,6 +128,10 @@ export default function DashboardSignUp() {
           newErrors.utilityBill = "Utility Bill is required";
         if (!formData.tinCertificate)
           newErrors.tinCertificate = "TIN Certificate is required";
+        if (!formData.nationalIdDocument)
+          newErrors.nationalIdDocument = "National ID is required";
+        if (!formData.businessLogo)
+          newErrors.businessLogo = "Business logo is required";
         break;
       default:
         break;
@@ -96,10 +142,19 @@ export default function DashboardSignUp() {
   };
 
   const updateFormData = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    if (field === "countryId") {
+      const selectedCountry = countries?.find((c) => c.id === parseInt(value));
+      setFormData((prev) => ({
+        ...prev,
+        countryId: value,
+        countryName: selectedCountry ? selectedCountry.name : "",
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+    }
   };
 
   const handleNext = () => {
@@ -109,7 +164,7 @@ export default function DashboardSignUp() {
       setCurrentStep(currentStep + 1);
       setErrors({});
     } else if (isValid && currentStep === steps.length - 1) {
-      console.log("Form submitted:", formData);
+      handleSubmit();
     }
   };
 
@@ -118,6 +173,48 @@ export default function DashboardSignUp() {
       setCurrentStep(currentStep - 1);
       setErrors({});
     }
+  };
+
+  const handleSubmit = (e) => {
+    if (e) e.preventDefault();
+
+    const userData = {
+      first_name: formData.contactPersonFirstName,
+      last_name: formData.contactPersonLastName,
+      phone: formData.contactPhone,
+      email: formData.email,
+      password: formData.password,
+      password_confirmation: formData.confirmPassword,
+      business_name: formData.businessName,
+      business_type: formData.businessType,
+      business_industry: formData.industry,
+      business_address: formData.address,
+      national_id_document: formData.nationalIdDocument,
+      business_logo: formData.businessLogo,
+      business_registration_document: formData.certificateOfIncorporation,
+      business_utility_bill_document: formData.utilityBill,
+      business_registration_number: formData.registrationNumber,
+      business_tin_number: formData.tinNumber,
+      business_email: formData.businessEmail,
+      business_phone: formData.businessPhone,
+      business_website: formData.businessWebsite,
+      business_zip: formData.postalCode,
+      country_id: formData.countryId,
+      country: formData.countryName,
+      city: formData.city,
+      state: formData.state,
+    };
+
+    mutate(userData, {
+      onSuccess: () => {
+        setUserEmail(formData.email);
+        Navigate("/verify-mail");
+      },
+      onError: (err) => {
+        setErrors({ general: err.message || "Failed to create account" });
+        console.log(err);
+      },
+    });
   };
 
   const renderCurrentStep = () => {
@@ -138,6 +235,8 @@ export default function DashboardSignUp() {
             formData={formData}
             updateFormData={updateFormData}
             errors={errors}
+            industries={industries}
+            isIndustriesFetching={isIndustriesFetching}
           />
         );
       case 2:
@@ -146,6 +245,8 @@ export default function DashboardSignUp() {
             formData={formData}
             updateFormData={updateFormData}
             errors={errors}
+            countries={countries}
+            isCountriesFetching={isCountriesFetching}
           />
         );
       case 3:
@@ -194,6 +295,14 @@ export default function DashboardSignUp() {
       ))}
     </div>
   );
+
+  if (isLoading) {
+    return (
+      <div className=" w-full h-svh flex items-center justify-center">
+        <Loader2 className=" w-12 text-[#288DD1] animate-spin" />
+      </div>
+    ); // Or a spinner
+  }
 
   return (
     <div className="min-h-screen flex p-8 font-Outfit">
@@ -248,11 +357,15 @@ export default function DashboardSignUp() {
             )}
             <button
               onClick={handleNext}
-              className="flex-1 bg-[#288DD1] hover:bg-[#6db1df] text-white font-semibold py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-1 focus:ring-[#288DD1] focus:ring-offset-2"
+              disabled={isPending}
+              className="flex-1 bg-[#288DD1] hover:bg-[#6db1df] text-white font-semibold py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-1 focus:ring-[#288DD1] focus:ring-offset-2 flex items-center justify-center"
             >
               {currentStep === steps.length - 1
                 ? "Complete Registration"
                 : "Next"}
+              {isPending && (
+                <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
+              )}
             </button>
           </div>
           <div className="text-center mt-6">

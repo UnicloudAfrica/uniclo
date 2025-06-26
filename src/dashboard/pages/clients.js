@@ -9,6 +9,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import AddClientModal from "../components/addClientModal";
+import CartFloat from "../components/cartFloat";
+import useAuthRedirect from "../../utils/authRedirect";
 
 export default function Clients() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -17,6 +19,7 @@ export default function Clients() {
   const [openDropdown, setOpenDropdown] = useState(null);
   const dropdownRef = useRef(null);
   const [isAddClientOpen, setAddClient] = useState(false);
+  const { isLoading } = useAuthRedirect();
 
   // State to control mobile menu visibility
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -155,6 +158,7 @@ export default function Clients() {
 
   return (
     <>
+      <CartFloat />
       <Headbar onMenuClick={toggleMobileMenu} />
       <Sidebar
         isMobileMenuOpen={isMobileMenuOpen}

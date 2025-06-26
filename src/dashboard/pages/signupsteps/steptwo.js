@@ -1,4 +1,10 @@
-export const BusinessInfoStep = ({ formData, updateFormData, errors }) => (
+export const BusinessInfoStep = ({
+  formData,
+  updateFormData,
+  errors,
+  industries,
+  isIndustriesFetching,
+}) => (
   <div className="space-y-4">
     <div className="grid grid-cols-2 gap-4">
       <div>
@@ -134,6 +140,132 @@ export const BusinessInfoStep = ({ formData, updateFormData, errors }) => (
       />
       {errors.tinNumber && (
         <p className="text-red-500 text-xs mt-1">{errors.tinNumber}</p>
+      )}
+    </div>
+    <div>
+      <label
+        htmlFor="industry"
+        className="block text-sm font-medium text-gray-700 mb-2"
+      >
+        Industry
+      </label>
+      <span
+        className={`w-full block input-field transition-all ${
+          errors.industry ? "border-red-500" : "border-gray-300"
+        }`}
+      >
+        <select
+          id="industry"
+          value={formData.industry}
+          onChange={(e) => updateFormData("industry", e.target.value)}
+          className="w-full bg-transparent outline-none"
+          disabled={isIndustriesFetching}
+        >
+          <option value="">Select an industry</option>
+          {industries &&
+            industries.message &&
+            industries.message.map((industry) => (
+              <option key={industry.name} value={industry.name}>
+                {industry.name}
+              </option>
+            ))}
+        </select>
+      </span>
+      {errors.industry && (
+        <p className="text-red-500 text-xs mt-1">{errors.industry}</p>
+      )}
+    </div>
+    <div>
+      <label
+        htmlFor="businessType"
+        className="block text-sm font-medium text-gray-700 mb-2"
+      >
+        Business Type
+      </label>
+      <span
+        className={`w-full block input-field transition-all ${
+          errors.businessType ? "border-red-500" : "border-gray-300"
+        }`}
+      >
+        <select
+          id="businessType"
+          value={formData.businessType}
+          onChange={(e) => updateFormData("businessType", e.target.value)}
+          className="w-full bg-transparent outline-none"
+        >
+          <option value="">Select business type</option>
+          <option value="BNG">BNG</option>
+          <option value="LLC">LLC</option>
+          <option value="NGO">NGO</option>
+          <option value="LLP">LLP</option>
+          <option value="Other">Other</option>
+        </select>
+      </span>
+      {errors.businessType && (
+        <p className="text-red-500 text-xs mt-1">{errors.businessType}</p>
+      )}
+    </div>
+    <div>
+      <label
+        htmlFor="businessEmail"
+        className="block text-sm font-medium text-gray-700 mb-2"
+      >
+        Business Email
+      </label>
+      <input
+        id="businessEmail"
+        type="email"
+        value={formData.businessEmail || ""}
+        onChange={(e) => updateFormData("businessEmail", e.target.value)}
+        placeholder="Enter business email"
+        className={`w-full input-field transition-all ${
+          errors.businessEmail ? "border-red-500" : "border-gray-300"
+        }`}
+      />
+      {errors.businessEmail && (
+        <p className="text-red-500 text-xs mt-1">{errors.businessEmail}</p>
+      )}
+    </div>
+    <div>
+      <label
+        htmlFor="businessPhone"
+        className="block text-sm font-medium text-gray-700 mb-2"
+      >
+        Business Phone
+      </label>
+      <input
+        id="businessPhone"
+        type="tel"
+        value={formData.businessPhone || ""}
+        onChange={(e) => updateFormData("businessPhone", e.target.value)}
+        placeholder="Enter business phone"
+        className={`w-full input-field transition-all ${
+          errors.businessPhone ? "border-red-500" : "border-gray-300"
+        }`}
+      />
+      {errors.businessPhone && (
+        <p className="text-red-500 text-xs mt-1">{errors.businessPhone}</p>
+      )}
+    </div>
+    <div>
+      <label
+        htmlFor="businessWebsite"
+        className="block text-sm font-medium text-gray-700 mb-2"
+      >
+        Business Website
+      </label>
+      <input
+        id="businessWebsite"
+        type="url"
+        value={formData.businessWebsite || ""}
+        onChange={(e) => updateFormData("businessWebsite", e.target.value)}
+        placeholder="Enter business website (e.g., https://example.com)"
+        className={`w-full input-field transition-all ${
+          errors.businessWebsite ? "border-red-500" : "border-gray-300"
+        }`}
+      />
+      {errors.businessWebsite && (
+        <p className="text-red-500 text-xs mt-1">{errors.businessWebsite}</p>
       )}
     </div>
   </div>

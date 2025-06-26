@@ -1,8 +1,11 @@
 import React, { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import sideBg from "./assets/sideBg.svg";
 import logo from "./assets/logo.png";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Added useNavigate
+import { useLoginAccount } from "../../hooks/authHooks";
+import useAuthStore from "../../stores/userAuthStore";
+import useAuthRedirect from "../../utils/authRedirect";
 
 export default function DashboardLogin() {
   const [showPassword, setShowPassword] = useState(false);
@@ -10,16 +13,72 @@ export default function DashboardLogin() {
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [activeTab, setActiveTab] = useState("partner");
+  const [errors, setErrors] = useState({}); // Added errors state
+  const { mutate, isPending } = useLoginAccount();
+  const navigate = useNavigate(); // Added for navigation
+  const { userEmail, setUserEmail } = useAuthStore.getState();
+  const { isLoading } = useAuthRedirect();
+
+  // Validation function
+  const validateForm = () => {
+    let newErrors = {};
+
+    if (!email) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = "Invalid email format";
+    }
+
+    if (!password) {
+      newErrors.password = "Password is required";
+    } else if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Handle form submission for login
+  const handleSubmit = (e) => {
+    if (e) e.preventDefault();
+
+    if (!validateForm()) return;
+
+    const userData = {
+      email,
+      password,
+    };
+
+    mutate(userData, {
+      onSuccess: () => {
+        setUserEmail(email);
+        navigate("/verify-mail"); // Redirect on success
+      },
+      onError: (err) => {
+        setErrors({ general: err.message || "Failed to login" });
+        console.log(err);
+      },
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className=" w-full h-svh flex items-center justify-center">
+        <Loader2 className=" w-12 text-[#288DD1] animate-spin" />
+      </div>
+    ); // Or a spinner
+  }
 
   return (
     <div className="min-h-screen flex p-8 font-Outfit">
       {/* Left Side - Login Form */}
-      <div className="flex-1 flex flex-col justify-center  py bg-white">
+      <div className="flex-1 flex flex-col justify-center py bg-white">
         <div className="max-w-md mx-auto w-full">
           {/* Logo */}
           <div className="mb-8">
             <div className="flex items-center justify-center">
-              <img src={logo} className=" w-[100px]" alt="" />
+              <img src={logo} className="w-[100px]" alt="Logo" />
             </div>
           </div>
 
@@ -59,7 +118,7 @@ export default function DashboardLogin() {
           </div>
 
           {/* Login Form */}
-          <div className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email Field */}
             <div>
               <label
@@ -74,8 +133,13 @@ export default function DashboardLogin() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter email address"
-                className="w-full input-field"
+                className={`w-full input-field ${
+                  errors.email ? "border-red-500" : "border-gray-300"
+                }`}
               />
+              {errors.email && (
+                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+              )}
             </div>
 
             {/* Password Field */}
@@ -93,7 +157,9 @@ export default function DashboardLogin() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter password"
-                  className="w-full pr-10 input-field"
+                  className={`w-full pr-10 input-field ${
+                    errors.password ? "border-red-500" : "border-gray-300"
+                  }`}
                 />
                 <button
                   type="button"
@@ -107,6 +173,9 @@ export default function DashboardLogin() {
                   )}
                 </button>
               </div>
+              {errors.password && (
+                <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+              )}
             </div>
 
             {/* Remember Me & Forgot Password */}
@@ -126,20 +195,30 @@ export default function DashboardLogin() {
                   Remember Me
                 </label> */}
               </div>
-              <button
-                type="button"
+              <Link
+                to="/forgot-password"
                 className="text-sm text-[#288DD1] hover:text-[#6db1df] font-medium"
               >
                 Forgot Password?
-              </button>
+              </Link>
             </div>
+
+            {/* General Error */}
+            {/* {errors.general && (
+              <p className="text-red-500 text-xs mt-1">{errors.general}</p>
+            )} */}
 
             {/* Login Button */}
             <button
-              onClick={() => console.log("Login clicked")}
-              className="w-full bg-[#288DD1] hover:bg-[#6db1df] text-white font-semibold py-3 px-4 rounded-[30px] transition-colors focus:outline-none focus:ring-1 focus:ring-[#288DD1] focus:ring-offset-2"
+              type="submit" // Changed to submit to work with form
+              disabled={isPending}
+              className="w-full bg-[#288DD1] hover:bg-[#6db1df] text-white font-semibold py-3 px-4 rounded-[30px] transition-colors focus:outline-none focus:ring-1 focus:ring-[#288DD1] focus:ring-offset-2 flex items-center justify-center"
             >
-              Login
+              {isPending ? (
+                <Loader2 className="w-4 text-white animate-spin" />
+              ) : (
+                "Login"
+              )}
             </button>
 
             {/* Sign Up Link */}
@@ -155,7 +234,7 @@ export default function DashboardLogin() {
                 Signup
               </Link>
             </div>
-          </div>
+          </form>
         </div>
       </div>
 

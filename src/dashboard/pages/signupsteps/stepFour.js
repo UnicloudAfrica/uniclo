@@ -19,6 +19,16 @@ export const UploadDocumentStep = ({ formData, updateFormData, errors }) => {
       label: "TIN Number Certificate",
       field: "tinCertificate",
     },
+    {
+      id: "nationalIdDocument",
+      label: "National ID Document",
+      field: "nationalIdDocument",
+    },
+    {
+      id: "businessLogo",
+      label: "Business Logo",
+      field: "businessLogo",
+    },
   ];
 
   return (

@@ -12,13 +12,14 @@ import { useFetchProducts } from "../../hooks/productsHook";
 import useAuthRedirect from "../../utils/authRedirect";
 import CartFloat from "../components/cartFloat";
 import { useFetchSubs } from "../../hooks/subscriptionHooks";
+import { useFetchProfile } from "../../hooks/resource";
 
 export default function Dashboard() {
   // State to control mobile menu visibility
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { data: subs, isFetching: isSubsFetching } = useFetchSubs();
   const { isLoading } = useAuthRedirect();
-
+  const { data: profile, isFetching: isProfileFetching } = useFetchProfile();
 
   // Function to toggle mobile menu
   const toggleMobileMenu = () => {
@@ -80,7 +81,7 @@ export default function Dashboard() {
       <ActiveTab />
       <main className=" absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%]  bg-[#FAFAFA]  min-h-full p-8">
         <p className=" text-[#7e7e7e] font-Outfit text-sm font-normal">
-          Welcome back, Adaeze 👋🏽
+          Welcome back, {profile?.first_name} 👋🏽
         </p>
 
         <div className=" w-full md:w-[352px] mt-4 bg-[#288DD10D] py-6 px-5 rounded-[10px]">

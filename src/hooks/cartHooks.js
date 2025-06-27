@@ -61,7 +61,7 @@ export const useEmptyCart = () => {
     },
     onSuccess: (data) => {
       //   console.log("Checkout successful:", data);
-      //   queryClient.invalidateQueries(["cart"]);
+      queryClient.invalidateQueries(["cart"]);
     },
     onError: (error) => {
       console.error("Checkout failed:", error);

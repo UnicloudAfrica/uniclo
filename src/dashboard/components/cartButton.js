@@ -41,7 +41,7 @@ const CartButton = () => {
         productable_id: item.productable_id,
         quantity: newQuantity,
       };
-      updateCartMutation.mutate({ cartID: item.cart_id, userData });
+      updateCartMutation.mutate({ cartID: item.id, userData });
     }
   };
 
@@ -52,7 +52,7 @@ const CartButton = () => {
         productable_type: item.productable_type,
         productable_id: item.productable_id,
       };
-      deleteCartMutation.mutate({ cartID: item.cart_id, userData });
+      deleteCartMutation.mutate({ cartID: item.id, userData });
     }
   };
 

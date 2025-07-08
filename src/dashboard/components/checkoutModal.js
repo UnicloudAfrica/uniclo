@@ -143,11 +143,11 @@ const CheckoutModal = ({
                     className="flex w-full items-center justify-between mb-2"
                   >
                     <span className="text-sm font-normal text-[#676767]">
-                      {line.type} - {line.qty} x $
-                      {parseFloat(line.unit_price_usd)?.toLocaleString()}
+                      {line.type} - {line.qty} x ₦
+                      {parseFloat(line.unit_price)?.toLocaleString()}
                     </span>
                     <span className="text-sm font-normal text-[#1c1c1c]">
-                      ${line.line_amount_usd?.toLocaleString()}
+                      ₦{line.line_amount?.toLocaleString()}
                     </span>
                   </div>
                 ))

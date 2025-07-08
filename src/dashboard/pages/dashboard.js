@@ -8,7 +8,10 @@ import mobile from "./assets/mobile.svg";
 import cloud from "./assets/cloud-connection.svg";
 import monitor from "./assets/monitor.svg";
 import { Link } from "react-router-dom";
-import { useFetchProducts } from "../../hooks/productsHook";
+import {
+  useFetchProductOffers,
+  useFetchProducts,
+} from "../../hooks/productsHook";
 import useAuthRedirect from "../../utils/authRedirect";
 import CartFloat from "../components/cartFloat";
 import { useFetchSubs } from "../../hooks/subscriptionHooks";
@@ -20,6 +23,8 @@ export default function Dashboard() {
   const { data: subs, isFetching: isSubsFetching } = useFetchSubs();
   const { isLoading } = useAuthRedirect();
   const { data: profile, isFetching: isProfileFetching } = useFetchProfile();
+  const { data: offers = [], isFetching: isOffersFetching } =
+    useFetchProductOffers();
 
   // Function to toggle mobile menu
   const toggleMobileMenu = () => {

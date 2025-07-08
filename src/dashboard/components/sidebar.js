@@ -56,12 +56,12 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       activeIcon: activePurchasedModules,
       path: "/dashboard/purchased-modules",
     },
-    {
-      name: "Clients",
-      icon: clients,
-      activeIcon: activeClients,
-      path: "/dashboard/clients",
-    },
+    // {
+    //   name: "Clients",
+    //   icon: clients,
+    //   activeIcon: activeClients,
+    //   path: "/dashboard/clients",
+    // },
     {
       name: "Payment History",
       icon: paymentHistory,

@@ -238,10 +238,10 @@ const DetailedTransaction = ({ selectedItem, isModalOpen, closeModal }) => {
                       <div className="flex justify-between">
                         <span>
                           Unit Price: ₦
-                          {parseFloat(line.unit_price_usd)?.toLocaleString()}
+                          {parseFloat(line.unit_price)?.toLocaleString()}
                         </span>
                         <span>
-                          Total: ₦{line.line_amount_usd?.toLocaleString()}
+                          Total: ₦{line.line_amount?.toLocaleString()}
                         </span>
                       </div>
                     </div>

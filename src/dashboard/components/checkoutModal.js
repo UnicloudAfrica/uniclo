@@ -18,11 +18,12 @@ const CheckoutModal = ({
     tax_amount: 0,
     lines: [],
   };
-  const { country, subtotal, tax_rate, tax_amount, lines } = metadata;
+  const { country, subtotal_local, tax_rate, total_local, tax_amount, lines } =
+    metadata;
   const { data: profile, isFetching: isProfileFetching } = useFetchProfile();
 
   // Use amount from checkoutData as the amount to pay
-  const totalWithTax = checkoutData?.amount || subtotal + tax_amount;
+  const totalWithTax = checkoutData?.amount || subtotal_local + tax_amount;
 
   // Determine the selected payment method's amount (if available)
   const selectedOption = checkoutData?.payment_gateway_options?.find(
@@ -142,11 +143,11 @@ const CheckoutModal = ({
                     className="flex w-full items-center justify-between mb-2"
                   >
                     <span className="text-sm font-normal text-[#676767]">
-                      {line.type} - {line.qty} x ₦
-                      {parseFloat(line.unit_price).toLocaleString()}
+                      {line.type} - {line.qty} x $
+                      {parseFloat(line.unit_price_usd)?.toLocaleString()}
                     </span>
                     <span className="text-sm font-normal text-[#1c1c1c]">
-                      ₦{line.line_amount.toLocaleString()}
+                      ${line.line_amount_usd?.toLocaleString()}
                     </span>
                   </div>
                 ))
@@ -159,7 +160,7 @@ const CheckoutModal = ({
                   Total for Items
                 </span>
                 <span className="text-sm font-normal text-[#1c1c1c]">
-                  ₦{subtotal.toLocaleString()}
+                  ₦{subtotal_local?.toLocaleString()}
                 </span>
               </div>
               <div className="flex w-full items-center justify-between mb-2">
@@ -167,14 +168,14 @@ const CheckoutModal = ({
                   Total including Tax ({(tax_rate.vat * 100).toFixed(2)}% VAT)
                 </span>
                 <span className="text-sm font-normal text-[#1c1c1c]">
-                  ₦{totalWithTax.toLocaleString()}
+                  ₦{total_local?.toLocaleString()}
                 </span>
               </div>
               <hr className="my-2 border-[#E9EAF4]" />
               <div className="flex w-full items-center justify-between font-semibold">
                 <span className="text-sm text-[#1C1C1C]">Amount to Pay</span>
                 <span className="text-sm text-[#1c1c1c]">
-                  ₦{amountToPay.toLocaleString()}
+                  ₦{amountToPay?.toLocaleString()}
                 </span>
               </div>
             </div>

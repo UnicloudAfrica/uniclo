@@ -97,8 +97,8 @@ const DetailedTransaction = ({ selectedItem, isModalOpen, closeModal }) => {
       const tableData = selectedItem.metadata.lines.map((line) => [
         line.type,
         line.qty.toString(),
-        `₦${parseFloat(line.unit_price).toLocaleString()}`,
-        `₦${line.line_amount.toLocaleString()}`,
+        `₦${parseFloat(line.unit_price_usd).toLocaleString()}`,
+        `₦${line.line_amount_usd.toLocaleString()}`,
       ]);
 
       autoTable(doc, {
@@ -238,9 +238,11 @@ const DetailedTransaction = ({ selectedItem, isModalOpen, closeModal }) => {
                       <div className="flex justify-between">
                         <span>
                           Unit Price: ₦
-                          {parseFloat(line.unit_price).toLocaleString()}
+                          {parseFloat(line.unit_price_usd)?.toLocaleString()}
                         </span>
-                        <span>Total: ₦{line.line_amount.toLocaleString()}</span>
+                        <span>
+                          Total: ₦{line.line_amount_usd?.toLocaleString()}
+                        </span>
                       </div>
                     </div>
                   ))}

@@ -194,10 +194,10 @@ export const BusinessInfoStep = ({
           className="w-full bg-transparent outline-none"
         >
           <option value="">Select business type</option>
-          <option value="BNG">BNG</option>
-          <option value="LLC">LLC</option>
-          <option value="NGO">NGO</option>
-          <option value="LLP">LLP</option>
+          <option value="BNG">Business Name</option>
+          <option value="LLC">Limited Liability Company</option>
+          <option value="NGO">Non-Governmental Organization</option>
+          <option value="LLP">Limited Liability Partnership</option>
           <option value="Other">Other</option>
         </select>
       </span>

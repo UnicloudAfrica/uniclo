@@ -5,14 +5,17 @@ import AdminActiveTab from "../components/adminActiveTab";
 import {
   ArrowDownRight,
   ArrowUpRight,
+  Loader2,
   MoreVertical,
   Settings2,
   Upload,
 } from "lucide-react";
+import useAuthRedirect from "../../utils/adminAuthRedirect";
 
 export default function AdminDashboard() {
   // State to control mobile menu visibility
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isLoading } = useAuthRedirect();
 
   // Function to toggle mobile menu
   const toggleMobileMenu = () => {
@@ -99,6 +102,14 @@ export default function AdminDashboard() {
       module: "Z6 Compute Instances",
     },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-svh flex items-center justify-center">
+        <Loader2 className="w-12 text-[#288DD1] animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <>

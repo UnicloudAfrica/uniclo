@@ -63,6 +63,12 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     //   path: "/dashboard/clients",
     // },
     {
+      name: "Service Request",
+      icon: clients,
+      activeIcon: activeClients,
+      path: "/dashboard/requests",
+    },
+    {
       name: "Payment History",
       icon: paymentHistory,
       activeIcon: activePaymentHistory,

@@ -68,6 +68,12 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       path: "/admin-dashboard/payment",
     },
     {
+      name: "Purchased Modules",
+      icon: modules,
+      activeIcon: activemodules,
+      path: "/admin-dashboard/purchased-modules",
+    },
+    {
       name: "Ticket",
       icon: supportTicket,
       activeIcon: activeSupportTicket,

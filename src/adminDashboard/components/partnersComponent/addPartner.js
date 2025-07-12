@@ -1,18 +1,22 @@
 import { useState } from "react";
-import { X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { FileInput } from "../../../utils/fileInput";
+import { useCreateCustomer } from "../../../hooks/adminHooks/customerHooks";
+import { useFetchCountries, useFetchIndustries } from "../../../hooks/resource";
 
-const CreateAccount = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-
+// Updated CreateAccount component with status field
+const CreateAccount = ({ formData, setFormData, errors }) => {
   const validate = () => {
-    if (!email || !/\S+@\S+\.\S+/.test(email)) return "Invalid email";
-    if (!password || password.length < 6)
-      return "Password must be at least 6 characters";
-    if (password !== confirmPassword) return "Passwords do not match";
-    return null;
+    const newErrors = {};
+    if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email))
+      newErrors.email = "Invalid email";
+    if (!formData.password || formData.password.length < 6)
+      newErrors.password = "Password must be at least 6 characters";
+    if (formData.password !== formData.confirmPassword)
+      newErrors.confirmPassword = "Passwords do not match";
+    if (!formData.role) newErrors.role = "Role is required";
+    if (!formData.status) newErrors.status = "Status is required";
+    return newErrors;
   };
 
   return (
@@ -22,75 +26,186 @@ const CreateAccount = () => {
           htmlFor="email"
           className="block text-sm font-medium text-gray-700 mb-2"
         >
-          Email
+          Email *
         </label>
         <input
           id="email"
           type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          value={formData.email}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           placeholder="Enter email address"
-          className="w-full input-field"
+          className={`w-full input-field ${
+            errors.email ? "border-red-500" : "border-gray-300"
+          } rounded px-3 py-2`}
         />
+        {errors.email && (
+          <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+        )}
       </div>
       <div>
         <label
           htmlFor="password"
           className="block text-sm font-medium text-gray-700 mb-2"
         >
-          Temporary Password
+          Temporary Password *
         </label>
         <input
+          id="password"
           type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          value={formData.password}
+          onChange={(e) =>
+            setFormData({ ...formData, password: e.target.value })
+          }
           placeholder="Enter Password"
-          className="w-full input-field"
+          className={`w-full input-field ${
+            errors.password ? "border-red-500" : "border-gray-300"
+          } rounded px-3 py-2`}
         />
+        {errors.password && (
+          <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+        )}
       </div>
       <div>
         <label
           htmlFor="confirm-password"
           className="block text-sm font-medium text-gray-700 mb-2"
         >
-          Confirm Password
+          Confirm Password *
         </label>
         <input
+          id="confirm-password"
           type="password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
+          value={formData.confirmPassword}
+          onChange={(e) =>
+            setFormData({ ...formData, confirmPassword: e.target.value })
+          }
           placeholder="Repeat Password"
-          className="w-full input-field"
+          className={`w-full input-field ${
+            errors.confirmPassword ? "border-red-500" : "border-gray-300"
+          } rounded px-3 py-2`}
         />
+        {errors.confirmPassword && (
+          <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
+        )}
       </div>
-      {validate() && <p className="text-red-500 text-sm">{validate()}</p>}
+      <div>
+        <label
+          htmlFor="role"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          Role *
+        </label>
+        <span
+          className={`w-full input-field block transition-all ${
+            errors.role ? "border-red-500 border" : "border-gray-300 border"
+          } rounded px-3 py-2`}
+        >
+          <select
+            id="role"
+            value={formData.role}
+            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+            className="w-full bg-transparent outline-none"
+          >
+            <option value="" disabled>
+              Select role
+            </option>
+            <option value="Client">Client</option>
+            <option value="Partner">Partner</option>
+          </select>
+        </span>
+        {errors.role && (
+          <p className="text-red-500 text-xs mt-1">{errors.role}</p>
+        )}
+      </div>
+      <div>
+        <label
+          htmlFor="status"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          Status *
+        </label>
+        <span
+          className={`w-full input-field block transition-all ${
+            errors.status ? "border-red-500 border" : "border-gray-300 border"
+          } rounded px-3 py-2`}
+        >
+          <select
+            id="status"
+            value={formData.status}
+            onChange={(e) =>
+              setFormData({ ...formData, status: e.target.value })
+            }
+            className="w-full bg-transparent outline-none"
+          >
+            <option value="" disabled>
+              Select status
+            </option>
+            <option value="verified">Verified</option>
+            <option value="inactive">Inactive</option>
+            <option value="suspended">Suspended</option>
+            <option value="pending">Pending</option>
+          </select>
+        </span>
+        {errors.status && (
+          <p className="text-red-500 text-xs mt-1">{errors.status}</p>
+        )}
+      </div>
     </div>
   );
 };
 
-const BusinessInfo = () => {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [businessName, setBusinessName] = useState("");
-  const [regNumber, setRegNumber] = useState("");
-  const [tinNumber, setTinNumber] = useState("");
+CreateAccount.validate = (formData) => {
+  const newErrors = {};
+  if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email))
+    newErrors.email = "Invalid email";
+  if (!formData.password || formData.password.length < 6)
+    newErrors.password = "Password must be at least 6 characters";
+  if (formData.password !== formData.confirmPassword)
+    newErrors.confirmPassword = "Passwords do not match";
+  if (!formData.role) newErrors.role = "Role is required";
+  if (!formData.status) newErrors.status = "Status is required";
+  return newErrors;
+};
 
+// BusinessInfo component (unchanged except for industry mapping fix)
+const BusinessInfo = ({
+  formData,
+  setFormData,
+  errors,
+  industries,
+  isIndustriesFetching,
+}) => {
   const validate = () => {
+    const newErrors = {};
+    if (!formData.firstName) newErrors.firstName = "First name is required";
+    if (!formData.lastName) newErrors.lastName = "Last name is required";
+    if (!formData.business.phone)
+      newErrors.businessPhone = "Business phone is required";
+    else if (!/^\+?\d{10,15}$/.test(formData.business.phone))
+      newErrors.businessPhone = "Invalid phone number";
     if (
-      !firstName ||
-      !lastName ||
-      !phone ||
-      !email ||
-      !businessName ||
-      !regNumber ||
-      !tinNumber
+      !formData.business.email ||
+      !/\S+@\S+\.\S+/.test(formData.business.email)
     )
-      return "All fields are required";
-    if (!/\S+@\S+\.\S+/.test(email)) return "Invalid email";
-    if (!/^\d{10}$/.test(phone)) return "Invalid phone number";
-    return null;
+      newErrors.businessEmail = "Invalid business email";
+    if (!formData.business.name)
+      newErrors.businessName = "Business name is required";
+    if (!formData.business.registration_number)
+      newErrors.registrationNumber = "Registration number is required";
+    if (!formData.business.tin_number)
+      newErrors.tinNumber = "TIN number is required";
+    if (!formData.business.type)
+      newErrors.businessType = "Business type is required";
+    if (!formData.business.industry)
+      newErrors.businessIndustry = "Industry is required";
+    if (!formData.business.website)
+      newErrors.businessWebsite = "Website is required";
+    if (
+      formData.business.website &&
+      !/^https?:\/\/\S+$/.test(formData.business.website)
+    )
+      newErrors.businessWebsite = "Invalid website URL";
+    return newErrors;
   };
 
   return (
@@ -101,130 +216,341 @@ const BusinessInfo = () => {
             htmlFor="first_name"
             className="block text-sm font-medium text-gray-700 mb-2"
           >
-            First Name
+            First Name *
           </label>
           <input
             id="first_name"
             type="text"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
+            value={formData.firstName}
+            onChange={(e) =>
+              setFormData({ ...formData, firstName: e.target.value })
+            }
             placeholder="Enter First Name"
-            className="w-full input-field"
+            className={`w-full input-field ${
+              errors.firstName ? "border-red-500" : "border-gray-300"
+            } rounded px-3 py-2`}
           />
+          {errors.firstName && (
+            <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
+          )}
         </div>
         <div>
           <label
             htmlFor="last_name"
             className="block text-sm font-medium text-gray-700 mb-2"
           >
-            Last Name
+            Last Name *
           </label>
           <input
             id="last_name"
             type="text"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
+            value={formData.lastName}
+            onChange={(e) =>
+              setFormData({ ...formData, lastName: e.target.value })
+            }
             placeholder="Enter Last Name"
-            className="w-full input-field"
+            className={`w-full input-field ${
+              errors.lastName ? "border-red-500" : "border-gray-300"
+            } rounded px-3 py-2`}
           />
+          {errors.lastName && (
+            <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
+          )}
         </div>
       </div>
       <div>
         <label
-          htmlFor="phone"
+          htmlFor="business_phone"
           className="block text-sm font-medium text-gray-700 mb-2"
         >
-          Contact Phone Number
+          Business Phone *
         </label>
         <input
-          id="phone"
+          id="business_phone"
           type="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="Enter phone number"
-          className="w-full input-field"
+          value={formData.business.phone}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              business: { ...formData.business, phone: e.target.value },
+            })
+          }
+          placeholder="Enter business phone (e.g., +1234567890)"
+          className={`w-full input-field ${
+            errors.businessPhone ? "border-red-500" : "border-gray-300"
+          } rounded px-3 py-2`}
         />
+        {errors.businessPhone && (
+          <p className="text-red-500 text-xs mt-1">{errors.businessPhone}</p>
+        )}
       </div>
       <div>
         <label
-          htmlFor="email"
+          htmlFor="business_email"
           className="block text-sm font-medium text-gray-700 mb-2"
         >
-          Email
+          Business Email *
         </label>
         <input
-          id="email"
+          id="business_email"
           type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Enter email address"
-          className="w-full input-field"
+          value={formData.business.email}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              business: { ...formData.business, email: e.target.value },
+            })
+          }
+          placeholder="Enter business email address"
+          className={`w-full input-field ${
+            errors.businessEmail ? "border-red-500" : "border-gray-300"
+          } rounded px-3 py-2`}
         />
+        {errors.businessEmail && (
+          <p className="text-red-500 text-xs mt-1">{errors.businessEmail}</p>
+        )}
       </div>
       <div>
         <label
           htmlFor="business_name"
           className="block text-sm font-medium text-gray-700 mb-2"
         >
-          Business Name
+          Business Name *
         </label>
         <input
           id="business_name"
           type="text"
-          value={businessName}
-          onChange={(e) => setBusinessName(e.target.value)}
+          value={formData.business.name}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              business: { ...formData.business, name: e.target.value },
+            })
+          }
           placeholder="Enter business Name"
-          className="w-full input-field"
+          className={`w-full input-field ${
+            errors.businessName ? "border-red-500" : "border-gray-300"
+          } rounded px-3 py-2`}
         />
+        {errors.businessName && (
+          <p className="text-red-500 text-xs mt-1">{errors.businessName}</p>
+        )}
       </div>
       <div>
         <label
-          htmlFor="reg_number"
+          htmlFor="registration_number"
           className="block text-sm font-medium text-gray-700 mb-2"
         >
-          Registration Number
+          Registration Number *
         </label>
         <input
-          id="reg_number"
+          id="registration_number"
           type="text"
-          value={regNumber}
-          onChange={(e) => setRegNumber(e.target.value)}
+          value={formData.business.registration_number}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              business: {
+                ...formData.business,
+                registration_number: e.target.value,
+              },
+            })
+          }
           placeholder="Enter Registration Number"
-          className="w-full input-field"
+          className={`w-full input-field ${
+            errors.registrationNumber ? "border-red-500" : "border-gray-300"
+          } rounded px-3 py-2`}
         />
+        {errors.registrationNumber && (
+          <p className="text-red-500 text-xs mt-1">
+            {errors.registrationNumber}
+          </p>
+        )}
       </div>
       <div>
         <label
           htmlFor="tin_number"
           className="block text-sm font-medium text-gray-700 mb-2"
         >
-          Tin Number
+          TIN Number *
         </label>
         <input
           id="tin_number"
           type="text"
-          value={tinNumber}
-          onChange={(e) => setTinNumber(e.target.value)}
-          placeholder="Enter Tin Number"
-          className="w-full input-field"
+          value={formData.business.tin_number}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              business: { ...formData.business, tin_number: e.target.value },
+            })
+          }
+          placeholder="Enter TIN Number"
+          className={`w-full input-field ${
+            errors.tinNumber ? "border-red-500" : "border-gray-300"
+          } rounded px-3 py-2`}
         />
+        {errors.tinNumber && (
+          <p className="text-red-500 text-xs mt-1">{errors.tinNumber}</p>
+        )}
       </div>
-      {validate() && <p className="text-red-500 text-sm">{validate()}</p>}
+      <div>
+        <label
+          htmlFor="businessType"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          Business Type *
+        </label>
+        <span
+          className={`w-full input-field block transition-all ${
+            errors.businessType
+              ? "border-red-500 border"
+              : "border-gray-300 border"
+          } rounded px-3 py-2`}
+        >
+          <select
+            id="businessType"
+            value={formData.business.type}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                business: { ...formData.business, type: e.target.value },
+              })
+            }
+            className="w-full bg-transparent outline-none"
+          >
+            <option value="" disabled>
+              Select business type
+            </option>
+            <option value="BNG">Business Name</option>
+            <option value="LLC">Limited Liability Company</option>
+            <option value="NGO">Non-Governmental Organization</option>
+            <option value="LLP">Limited Liability Partnership</option>
+            <option value="Other">Other</option>
+          </select>
+        </span>
+        {errors.businessType && (
+          <p className="text-red-500 text-xs mt-1">{errors.businessType}</p>
+        )}
+      </div>
+      <div>
+        <label
+          htmlFor="industry"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          Industry *
+        </label>
+        <span
+          className={`w-full input-field block transition-all ${
+            errors.businessIndustry
+              ? "border-red-500 border"
+              : "border-gray-300 border"
+          } rounded px-3 py-2`}
+        >
+          <select
+            id="industry"
+            value={formData.business.industry}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                business: { ...formData.business, industry: e.target.value },
+              })
+            }
+            className="w-full bg-transparent outline-none"
+            disabled={isIndustriesFetching}
+          >
+            <option value="" disabled>
+              {isIndustriesFetching
+                ? "Loading industries..."
+                : "Select an industry"}
+            </option>
+            {industries?.message?.map((industry) => (
+              <option key={industry.id} value={industry.id}>
+                {industry.name}
+              </option>
+            ))}
+          </select>
+        </span>
+        {errors.businessIndustry && (
+          <p className="text-red-500 text-xs mt-1">{errors.businessIndustry}</p>
+        )}
+      </div>
+      <div>
+        <label
+          htmlFor="website"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          Website *
+        </label>
+        <input
+          id="website"
+          type="text"
+          value={formData.business.website}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              business: { ...formData.business, website: e.target.value },
+            })
+          }
+          placeholder="Enter website (e.g., https://example.com)"
+          className={`w-full input-field ${
+            errors.businessWebsite ? "border-red-500" : "border-gray-300"
+          } rounded px-3 py-2`}
+        />
+        {errors.businessWebsite && (
+          <p className="text-red-500 text-xs mt-1">{errors.businessWebsite}</p>
+        )}
+      </div>
     </div>
   );
 };
 
-const BusinessAddress = () => {
-  const [address, setAddress] = useState("");
-  const [zipCode, setZipCode] = useState("");
-  const [country, setCountry] = useState("");
-  const [city, setCity] = useState("");
-  const [region, setRegion] = useState("");
+BusinessInfo.validate = (formData) => {
+  const newErrors = {};
+  if (!formData.firstName) newErrors.firstName = "First name is required";
+  if (!formData.lastName) newErrors.lastName = "Last name is required";
+  if (!formData.business.phone)
+    newErrors.businessPhone = "Business phone is required";
+  else if (!/^\+?\d{10,15}$/.test(formData.business.phone))
+    newErrors.businessPhone = "Invalid phone number";
+  if (!formData.business.email || !/\S+@\S+\.\S+/.test(formData.business.email))
+    newErrors.businessEmail = "Invalid business email";
+  if (!formData.business.name)
+    newErrors.businessName = "Business name is required";
+  if (!formData.business.registration_number)
+    newErrors.registrationNumber = "Registration number is required";
+  if (!formData.business.tin_number)
+    newErrors.tinNumber = "TIN number is required";
+  if (!formData.business.type)
+    newErrors.businessType = "Business type is required";
+  if (!formData.business.industry)
+    newErrors.businessIndustry = "Industry is required";
+  if (!formData.business.website)
+    newErrors.businessWebsite = "Website is required";
+  if (
+    formData.business.website &&
+    !/^https?:\/\/\S+$/.test(formData.business.website)
+  )
+    newErrors.businessWebsite = "Invalid website URL";
+  return newErrors;
+};
 
+// Updated BusinessAddress component to store country and country_id
+const BusinessAddress = ({
+  formData,
+  setFormData,
+  errors,
+  countries,
+  isCountriesFetching,
+}) => {
   const validate = () => {
-    if (!address || !zipCode || !country || !city || !region)
-      return "All fields are required";
-    return null;
+    const newErrors = {};
+    if (!formData.business.address) newErrors.address = "Address is required";
+    if (!formData.business.zip) newErrors.zip = "Zip code is required";
+    if (!formData.business.country_id)
+      newErrors.country = "Country is required";
+    if (!formData.business.city) newErrors.city = "City is required";
+    if (!formData.business.state) newErrors.state = "State/Region is required";
+    return newErrors;
   };
 
   return (
@@ -234,16 +560,26 @@ const BusinessAddress = () => {
           htmlFor="business_address"
           className="block text-sm font-medium text-gray-700 mb-2"
         >
-          Business Address
+          Business Address *
         </label>
         <input
           id="business_address"
           type="text"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
+          value={formData.business.address}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              business: { ...formData.business, address: e.target.value },
+            })
+          }
           placeholder="Enter business Address"
-          className="w-full input-field"
+          className={`w-full input-field ${
+            errors.address ? "border-red-500" : "border-gray-300"
+          } rounded px-3 py-2`}
         />
+        {errors.address && (
+          <p className="text-red-500 text-xs mt-1">{errors.address}</p>
+        )}
       </div>
       <div className="grid grid-cols-2 gap-6">
         <div>
@@ -251,36 +587,91 @@ const BusinessAddress = () => {
             htmlFor="zip_code"
             className="block text-sm font-medium text-gray-700 mb-2"
           >
-            Postal / Zip Code
+            Postal / Zip Code *
           </label>
           <input
             id="zip_code"
             type="text"
-            value={zipCode}
-            onChange={(e) => setZipCode(e.target.value)}
+            value={formData.business.zip}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                business: { ...formData.business, zip: e.target.value },
+              })
+            }
             placeholder="Enter Postal / Zip Code"
-            className="w-full input-field"
+            className={`w-full input-field ${
+              errors.zip ? "border-red-500" : "border-gray-300"
+            } rounded px-3 py-2`}
           />
+          {errors.zip && (
+            <p className="text-red-500 text-xs mt-1">{errors.zip}</p>
+          )}
         </div>
         <div>
           <label
             htmlFor="country"
             className="block text-sm font-medium text-gray-700 mb-2"
           >
-            Country
+            Country *
           </label>
-          <select
-            id="country"
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-            className="w-full input-field bg-transparent outline-none"
+          <span
+            className={`w-full input-field block transition-all ${
+              errors.country
+                ? "border-red-500 border"
+                : "border-gray-300 border"
+            } rounded px-3 py-2`}
           >
-            <option value="">Select country</option>
-            <option value="nigeria">Nigeria</option>
-            <option value="ghana">Ghana</option>
-            <option value="kenya">Kenya</option>
-            <option value="south-africa">South Africa</option>
-          </select>
+            <select
+              id="country"
+              value={formData.business.country_id || ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                console.log("Selected value:", value); // Debug: Log selected value
+                const selectedCountry = countries?.find(
+                  (c) => c.id === parseInt(value)
+                );
+                console.log("Selected country:", selectedCountry); // Debug: Log found country
+                setFormData((prev) => {
+                  const newFormData = {
+                    ...prev,
+                    business: {
+                      ...prev.business,
+                      country: selectedCountry ? selectedCountry.name : "",
+                      country_id: value,
+                    },
+                  };
+                  console.log(
+                    "Updated formData.business:",
+                    newFormData.business
+                  ); // Debug: Log updated formData
+                  return newFormData;
+                });
+              }}
+              className="w-full bg-transparent outline-none"
+              disabled={isCountriesFetching || !countries?.length}
+            >
+              <option value="" disabled>
+                {isCountriesFetching
+                  ? "Loading countries..."
+                  : "Select country"}
+              </option>
+              {countries?.length ? (
+                countries.map((country) => (
+                  <option key={country.id} value={country.id.toString()}>
+                    {country.name}
+                  </option>
+                ))
+              ) : (
+                <option value="" disabled>
+                  No countries available
+                </option>
+              )}
+            </select>
+          </span>
+          {errors.country && (
+            <p className="text-red-500 text-xs mt-1">{errors.country}</p>
+          )}
         </div>
       </div>
       <div className="grid grid-cols-2 gap-6">
@@ -289,97 +680,324 @@ const BusinessAddress = () => {
             htmlFor="city"
             className="block text-sm font-medium text-gray-700 mb-2"
           >
-            City
+            City *
           </label>
           <input
             id="city"
             type="text"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
+            value={formData.business.city}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                business: { ...formData.business, city: e.target.value },
+              })
+            }
             placeholder="Enter City"
-            className="w-full input-field"
+            className={`w-full input-field ${
+              errors.city ? "border-red-500" : "border-gray-300"
+            } rounded px-3 py-2`}
           />
+          {errors.city && (
+            <p className="text-red-500 text-xs mt-1">{errors.city}</p>
+          )}
         </div>
         <div>
           <label
-            htmlFor="region"
+            htmlFor="state"
             className="block text-sm font-medium text-gray-700 mb-2"
           >
-            State/Region/Province
+            State/Region/Province *
           </label>
           <input
-            id="region"
+            id="state"
             type="text"
-            value={region}
-            onChange={(e) => setRegion(e.target.value)}
+            value={formData.business.state}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                business: { ...formData.business, state: e.target.value },
+              })
+            }
             placeholder="Enter State/Region/Province"
-            className="w-full input-field"
+            className={`w-full input-field ${
+              errors.state ? "border-red-500" : "border-gray-300"
+            } rounded px-3 py-2`}
           />
+          {errors.state && (
+            <p className="text-red-500 text-xs mt-1">{errors.state}</p>
+          )}
         </div>
       </div>
-      {validate() && <p className="text-red-500 text-sm">{validate()}</p>}
     </div>
   );
 };
 
-const UploadFiles = () => {
+BusinessAddress.validate = (formData) => {
+  const newErrors = {};
+  if (!formData.business.address) newErrors.address = "Address is required";
+  if (!formData.business.zip) newErrors.zip = "Zip code is required";
+  if (!formData.business.country_id) newErrors.country = "Country is required";
+  if (!formData.business.city) newErrors.city = "City is required";
+  if (!formData.business.state) newErrors.state = "State/Region is required";
+  return newErrors;
+};
+
+// Updated UploadFiles component with corrected validation
+const UploadFiles = ({ formData, setFormData, errors }) => {
   const documentFields = [
     {
-      id: "certificateOfIncorporation",
-      label: "Certificate of Incorporation",
-      field: "certificateOfIncorporation",
+      id: "registration_document",
+      label: "Registeration Document",
+      field: "registration_document",
     },
-    { id: "utilityBill", label: "Utility Bill", field: "utilityBill" },
+    {
+      id: "utility_bill_document",
+      label: "Utility Bill",
+      field: "utility_bill_document",
+    },
     {
       id: "tinCertificate",
       label: "TIN Number Certificate",
       field: "tinCertificate",
     },
+    {
+      id: "nationalIdDocument",
+      label: "National ID Document",
+      field: "nationalIdDocument",
+    },
+    {
+      id: "businessLogo",
+      label: "Business Logo",
+      field: "businessLogo",
+    },
   ];
 
   const validate = () => {
-    return null; // Add file validation logic if needed
+    const newErrors = {};
+    documentFields.forEach(({ field }) => {
+      if (!formData.business[field])
+        newErrors[field] = `${
+          field.charAt(0).toUpperCase() +
+          field.slice(1).replace(/([A-Z])/g, " $1")
+        } is required`;
+    });
+    return newErrors;
+  };
+
+  const handleFileUpload = (field) => (e) => {
+    const file = e.target.files[0];
+    setFormData({
+      ...formData,
+      business: { ...formData.business, [field]: file },
+    });
   };
 
   return (
     <div className="space-y-5 w-full">
       {documentFields.map(({ id, label, field }) => (
-        <FileInput
-          key={id}
-          id={id}
-          label={label}
-          field={field}
-          accept=".pdf,.jpg,.jpeg,.png"
-        />
+        <div key={id}>
+          <FileInput
+            id={id}
+            label={label}
+            field={field}
+            onChange={handleFileUpload(field)}
+            error={errors[field]}
+            selectedFile={formData.business[field]}
+            accept=".pdf,.jpg,.jpeg,.png"
+          />
+          {errors[field] && (
+            <p className="text-red-500 text-xs mt-1">{errors[field]}</p>
+          )}
+        </div>
       ))}
-      {validate() && <p className="text-red-500 text-sm">{validate()}</p>}
     </div>
   );
 };
 
+UploadFiles.validate = (formData) => {
+  const newErrors = {};
+  const documentFields = [
+    { field: "registration_document" },
+    { field: "utility_bill_document" },
+    { field: "tinCertificate" },
+    { field: "nationalIdDocument" },
+    { field: "businessLogo" },
+  ];
+  documentFields.forEach(({ field }) => {
+    if (!formData.business[field])
+      newErrors[field] = `${
+        field.charAt(0).toUpperCase() +
+        field.slice(1).replace(/([A-Z])/g, " $1")
+      } is required`;
+  });
+  return newErrors;
+};
+
+// Updated AddPartner component
 const AddPartner = ({ isOpen, onClose }) => {
   const [currentStep, setCurrentStep] = useState(0);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    confirmPassword: "",
+    role: "",
+    status: "",
+    firstName: "",
+    lastName: "",
+    business: {
+      email: "",
+      name: "",
+      type: "",
+      industry: "",
+      address: "",
+      registration_number: "",
+      tin_number: "",
+      website: "",
+      zip: "",
+      country: "",
+      country_id: "",
+      city: "",
+      state: "",
+      phone: "",
+      registration_document: null,
+      utility_bill_document: null,
+      tinCertificate: null,
+      nationalIdDocument: null,
+      businessLogo: null,
+    },
+  });
+  const [errors, setErrors] = useState({});
+  const { mutate: createCustomer, isPending } = useCreateCustomer();
+  const { data: industries, isFetching: isIndustriesFetching } =
+    useFetchIndustries();
+  const { data: countries, isFetching: isCountriesFetching } =
+    useFetchCountries();
+
   const steps = [
-    { component: CreateAccount, label: "Create Account" },
-    { component: BusinessInfo, label: "Business Info" },
-    { component: BusinessAddress, label: "Business Address" },
-    { component: UploadFiles, label: "Upload Document" },
+    {
+      component: CreateAccount,
+      label: "Create Account",
+      validate: CreateAccount.validate,
+    },
+    {
+      component: (props) => (
+        <BusinessInfo
+          {...props}
+          industries={industries}
+          isIndustriesFetching={isIndustriesFetching}
+        />
+      ),
+      label: "Business Info",
+      validate: BusinessInfo.validate,
+    },
+    {
+      component: (props) => (
+        <BusinessAddress
+          {...props}
+          countries={countries}
+          isCountriesFetching={isCountriesFetching}
+        />
+      ),
+      label: "Business Address",
+      validate: BusinessAddress.validate,
+    },
+    {
+      component: UploadFiles,
+      label: "Upload Document",
+      validate: UploadFiles.validate,
+    },
   ];
 
-  const renderStep = () => {
-    const StepComponent = steps[currentStep].component;
-    return <StepComponent />;
+  const validateStep = () => {
+    const stepErrors = steps[currentStep].validate(formData);
+    setErrors(stepErrors);
+    return Object.keys(stepErrors).length === 0;
   };
 
   const handleNext = () => {
-    const StepComponent = steps[currentStep].component;
-    const stepInstance = <StepComponent />;
-    const error = stepInstance.props.children.props.validate();
-    if (!error) setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
+    if (validateStep()) {
+      setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
+      setErrors({});
+    }
   };
 
   const handleBack = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 0));
+    setErrors({});
+  };
+
+  const handleSubmit = () => {
+    if (validateStep()) {
+      const payload = {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        phone: formData.business.phone,
+        email: formData.email,
+        role: formData.role,
+        status: formData.status,
+        password: formData.password,
+        password_confirmation: formData.confirmPassword,
+        business: {
+          name: formData.business.name,
+          type: formData.business.type,
+          industry: formData.business.industry,
+          address: formData.business.address,
+          registration_number: formData.business.registration_number,
+          tin_number: formData.business.tin_number,
+          email: formData.business.email,
+          phone: formData.business.phone,
+          website: formData.business.website,
+          zip: formData.business.zip,
+          country: formData.business.country,
+          country_id: formData.business.country_id,
+          city: formData.business.city,
+          state: formData.business.state,
+          registration_document: formData.business.registration_document,
+          utility_bill_document: formData.business.utility_bill_document,
+          tin_certificate: formData.business.tinCertificate,
+          national_id_document: formData.business.nationalIdDocument,
+          logo: formData.business.businessLogo,
+        },
+      };
+      createCustomer(payload, {
+        onSuccess: () => {
+          // alert("Customer created successfully!");
+          setFormData({
+            email: "",
+            password: "",
+            confirmPassword: "",
+            role: "",
+            status: "",
+            firstName: "",
+            lastName: "",
+            business: {
+              email: "",
+              name: "",
+              type: "",
+              industry: "",
+              address: "",
+              registration_number: "",
+              tin_number: "",
+              website: "",
+              zip: "",
+              country: "",
+              country_id: "",
+              city: "",
+              state: "",
+              phone: "",
+              registration_document: null,
+              utility_bill_document: null,
+              tinCertificate: null,
+              nationalIdDocument: null,
+              businessLogo: null,
+            },
+          });
+          setCurrentStep(0);
+          onClose();
+        },
+        onError: (error) => console.log(`Error: ${error.message}`),
+      });
+    }
   };
 
   return (
@@ -403,20 +1021,25 @@ const AddPartner = ({ isOpen, onClose }) => {
                 {steps.map((step, index) => (
                   <button
                     key={index}
-                    onClick={() => setCurrentStep(index)}
+                    onClick={() => {
+                      if (index <= currentStep || validateStep()) {
+                        setCurrentStep(index);
+                        setErrors({});
+                      }
+                    }}
                     className={`px-4 py-2 text-sm md:text-base ${
                       currentStep === index
                         ? "border-b-2 border-[#288DD1] text-[#288DD1]"
-                        : "text-gray-500"
+                        : "text-gray-500 hover:text-[#288DD1]"
                     }`}
                   >
                     {step.label}
                   </button>
                 ))}
               </div>
-              {renderStep()}
+              {steps[currentStep].component({ formData, setFormData, errors })}
             </div>
-            <div className="grid grid-cols-2 gap-3 items-center px-6 py-4 -t rounded-b-[24px]">
+            <div className="grid grid-cols-2 gap-3 items-center px-6 py-4 rounded-b-[24px]">
               <button
                 onClick={currentStep > 0 ? handleBack : onClose}
                 className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
@@ -426,16 +1049,24 @@ const AddPartner = ({ isOpen, onClose }) => {
               {currentStep < steps.length - 1 ? (
                 <button
                   onClick={handleNext}
-                  className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isPending}
+                  className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
                   Next
+                  {isPending && (
+                    <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
+                  )}
                 </button>
               ) : (
                 <button
-                  onClick={onClose}
-                  className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors"
+                  onClick={handleSubmit}
+                  disabled={isPending}
+                  className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
                   Submit
+                  {isPending && (
+                    <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
+                  )}
                 </button>
               )}
             </div>

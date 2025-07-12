@@ -14,6 +14,7 @@ const ActiveTab = () => {
     "support-ticket": "Support Ticket",
     "app-settings": "App Settings",
     overview: "Overview",
+    requests: "Service Request",
   };
 
   // Generate breadcrumb items from the current pathname

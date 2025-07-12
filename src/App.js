@@ -46,6 +46,11 @@ import AdminModules from "./adminDashboard/pages/adminModules";
 import AdminPayment from "./adminDashboard/pages/adminPayment";
 import ForgotPassword from "./dashboard/pages/forgotPassword";
 import ResetPassword from "./dashboard/pages/resetPassword";
+import AdminSignup from "./adminDashboard/pages/adminSignup";
+import VerifyAdminMail from "./adminDashboard/pages/adminVerify";
+import Requests from "./dashboard/pages/requests";
+import AdminLogin from "./adminDashboard/pages/adminSignin";
+import AdminPurchasedModules from "./adminDashboard/pages/adminPurchasedModules";
 
 function App() {
   const location = useLocation();
@@ -103,6 +108,7 @@ function App() {
             element={<PurchasedModules />}
           />
           <Route path="/dashboard/clients" element={<Clients />} />
+          <Route path="/dashboard/requests" element={<Requests />} />
           <Route
             path="/dashboard/clients/overview"
             element={<ClientsOverview />}
@@ -114,6 +120,9 @@ function App() {
           <Route path="/dashboard/support-ticket" element={<SupportTicket />} />
 
           {/* admin pages */}
+          <Route path="/admin-signin" element={<AdminLogin />} />
+          {/* <Route path="/admin-signup" element={<AdminSignup />} /> */}
+          <Route path="/verify-admin-mail" element={<VerifyAdminMail />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/admin-dashboard/partners" element={<AdminPartners />} />
           <Route
@@ -126,6 +135,10 @@ function App() {
             element={<AdminClientDetails />}
           />
           <Route path="/admin-dashboard/modules" element={<AdminModules />} />
+          <Route
+            path="/admin-dashboard/purchased-modules"
+            element={<AdminPurchasedModules />}
+          />
           <Route path="/admin-dashboard/payment" element={<AdminPayment />} />
         </Routes>
       </AnimatePresence>

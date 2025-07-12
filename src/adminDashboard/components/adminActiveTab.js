@@ -14,6 +14,7 @@ const AdminActiveTab = () => {
     "support-ticket": "Ticket",
     overview: "Overview",
     details: "Details",
+    "purchased-modules": "Purchased Modules",
   };
 
   // Generate breadcrumb items from the current pathname

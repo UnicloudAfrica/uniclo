@@ -53,8 +53,6 @@ export default function DashboardSignUp() {
   });
   const { isLoading } = useAuthRedirect();
 
- 
-
   const steps = [
     "Create Account",
     "Business Info",
@@ -183,28 +181,30 @@ export default function DashboardSignUp() {
       last_name: formData.contactPersonLastName,
       phone: formData.contactPhone,
       email: formData.email,
+      role: "Client",
       password: formData.password,
       password_confirmation: formData.confirmPassword,
-      business_name: formData.businessName,
-      business_type: formData.businessType,
-      business_industry: formData.industry,
-      business_address: formData.address,
-      national_id_document: formData.nationalIdDocument,
-      business_logo: formData.businessLogo,
-      business_registration_document: formData.certificateOfIncorporation,
-      business_utility_bill_document: formData.utilityBill,
-      business_registration_number: formData.registrationNumber,
-      business_tin_number: formData.tinNumber,
-      business_email: formData.businessEmail,
-      business_phone: formData.businessPhone,
-      business_website: formData.businessWebsite,
-      business_zip: formData.postalCode,
-      country_id: formData.countryId,
-      country: formData.countryName,
-      city: formData.city,
-      state: formData.state,
+      business: {
+        name: formData.businessName,
+        type: formData.businessType,
+        industry: formData.industry,
+        address: formData.address,
+        national_id_document: formData.nationalIdDocument,
+        logo: formData.businessLogo,
+        registration_document: formData.certificateOfIncorporation,
+        utility_bill_document: formData.utilityBill,
+        registration_number: formData.registrationNumber,
+        tin_number: formData.tinNumber,
+        email: formData.businessEmail,
+        phone: formData.businessPhone,
+        website: formData.businessWebsite,
+        zip: formData.postalCode,
+        country_id: formData.countryId,
+        country: formData.countryName,
+        city: formData.city,
+        state: formData.state,
+      },
     };
-
     mutate(userData, {
       onSuccess: () => {
         setUserEmail(formData.email);

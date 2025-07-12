@@ -10,7 +10,7 @@ const fetchProducts = async () => {
 // **GET**: fetch products offexrs
 const fetchProductOffers = async () => {
   const res = await silentApi("GET", "/product-offers");
-  return res.data; // Extract only the data array
+  return res; // Extract only the data array
 };
 
 // Hook to fetch products

@@ -1,19 +1,21 @@
 import React, { useState } from "react";
 import { X, Loader2 } from "lucide-react";
+import { useCreateProject } from "../../hooks/projectHooks";
+import ToastUtils from "../../utils/toastUtil";
 
 const CreateProjectModal = ({ isOpen, onClose }) => {
+  const { mutate: createProject, isPending } = useCreateProject();
   const [formData, setFormData] = useState({
-    projectName: "",
+    name: "",
     description: "",
-    type: "VPC", // Default to VPC as per the image
+    type: "vpc", // Default to vpc as per the image
   });
   const [errors, setErrors] = useState({});
-  const [isPending, setIsPending] = useState(false); // Simulating loading
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.projectName) {
-      newErrors.projectName = "Project Name is required";
+    if (!formData.name) {
+      newErrors.name = "Project Name is required";
     }
     // Description is nullable, so no required validation
     if (!formData.type) {
@@ -30,14 +32,16 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
 
   const handleSubmit = () => {
     if (validateForm()) {
-      setIsPending(true);
-      console.log("Submitting Project Data:", formData);
-      // Simulate API call for project creation
-      setTimeout(() => {
-        setIsPending(false);
-        alert("Project created successfully!");
-        onClose(); // Close modal on success
-      }, 1500);
+      createProject(formData, {
+        onSuccess: () => {
+          ToastUtils.success("Project Created Successfully");
+          onClose(); // Close modal on success
+        },
+        onError: (error) => {
+          console.error("Error creating project:", error.message);
+          // setErrors({ general: "Failed to create project. Please try again." });
+        },
+      });
     }
   };
 
@@ -45,7 +49,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
     <>
       {isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
-          <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full">
+          <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full ">
             {/* Header */}
             <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] w-full">
               <h2 className="text-lg font-semibold text-[#575758]">
@@ -63,27 +67,23 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
               <div className="space-y-4 w-full">
                 <div>
                   <label
-                    htmlFor="projectName"
+                    htmlFor="name"
                     className="block text-sm font-medium text-gray-700 mb-2"
                   >
                     Project Name<span className="text-red-500">*</span>
                   </label>
                   <input
-                    id="projectName"
+                    id="name"
                     type="text"
-                    value={formData.projectName}
-                    onChange={(e) =>
-                      updateFormData("projectName", e.target.value)
-                    }
+                    value={formData.name}
+                    onChange={(e) => updateFormData("name", e.target.value)}
                     placeholder="Enter project name"
                     className={`w-full input-field ${
-                      errors.projectName ? "border-red-500" : "border-gray-300"
+                      errors.name ? "border-red-500" : "border-gray-300"
                     }`}
                   />
-                  {errors.projectName && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.projectName}
-                    </p>
+                  {errors.name && (
+                    <p className="text-red-500 text-xs mt-1">{errors.name}</p>
                   )}
                 </div>
                 <div>
@@ -120,8 +120,8 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                       <input
                         type="radio"
                         name="projectType"
-                        value="VPC"
-                        checked={formData.type === "VPC"}
+                        value="vpc"
+                        checked={formData.type === "vpc"}
                         onChange={(e) => updateFormData("type", e.target.value)}
                         className="h-4 w-4 text-[#288DD1] border-gray-300 focus:ring-[#288DD1]"
                       />
@@ -131,8 +131,8 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                       <input
                         type="radio"
                         name="projectType"
-                        value="DVS"
-                        checked={formData.type === "DVS"}
+                        value="dvs"
+                        checked={formData.type === "dvs"}
                         onChange={(e) => updateFormData("type", e.target.value)}
                         className="h-4 w-4 text-[#288DD1] border-gray-300 focus:ring-[#288DD1]"
                       />
@@ -143,6 +143,9 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                     <p className="text-red-500 text-xs mt-1">{errors.type}</p>
                   )}
                 </div>
+                {errors.general && (
+                  <p className="text-red-500 text-xs mt-1">{errors.general}</p>
+                )}
               </div>
             </div>
             {/* Footer */}

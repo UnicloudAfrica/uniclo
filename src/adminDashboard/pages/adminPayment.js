@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-
 import { Settings2, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import jsPDF from "jspdf";
 import AdminHeadbar from "../components/adminHeadbar";
@@ -19,6 +18,11 @@ export default function AdminPayment() {
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
   };
+
+  // Empty data array to show "No data found"
+  const data = [];
+  /*
+  // Original data for reference if needed later
   const data = [
     {
       id: 1,
@@ -121,6 +125,7 @@ export default function AdminPayment() {
       receiptId: "RCP-010-2025",
     },
   ];
+  */
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -170,7 +175,7 @@ export default function AdminPayment() {
     ];
 
     let yPos = 70;
-    details.forEach((detail, index) => {
+    details.forEach((detail) => {
       doc.setFont("helvetica", "bold");
       doc.text(detail.label, 20, yPos);
       doc.setFont("helvetica", "normal");
@@ -277,7 +282,7 @@ export default function AdminPayment() {
         </div>
 
         {/* Desktop Table */}
-        <div className="hidden md:block overflow-x-auto rounded-[12px] mt-6">
+        <div className="hidden md:block overflow-x-auto rounded-[12px] mt-6 border border-gray-200">
           <table className="w-full">
             <thead className="bg-[#F5F5F5]">
               <tr>
@@ -305,148 +310,167 @@ export default function AdminPayment() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-[#E8E6EA]">
-              {currentData.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {item.date}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {item.module}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {item.plan}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {item.amount}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {item.paymentMethod}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <StatusBadge status={item.status} />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <button
-                      onClick={(e) => downloadReceipt(item, e)}
-                      className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                    >
-                      <Download className="w-4 h-4" />
-                    </button>
+              {currentData.length > 0 ? (
+                currentData.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                      {item.date}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                      {item.module}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                      {item.plan}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                      {item.amount}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                      {item.paymentMethod}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <StatusBadge status={item.status} />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button
+                        onClick={(e) => downloadReceipt(item, e)}
+                        className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
+                      >
+                        <Download className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="7"
+                    className="px-6 py-4 text-center text-sm text-gray-500"
+                  >
+                    No payment data found.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
 
         {/* Mobile Cards */}
         <div className="md:hidden mt-6">
-          {currentData.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white border border-[#E8E6EA] rounded-[8px] p-4 mb-4"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-[#1C1C1C]">
-                  {item.module}
-                </h3>
-                <StatusBadge status={item.status} />
+          {currentData.length > 0 ? (
+            currentData.map((item) => (
+              <div
+                key={item.id}
+                className="bg-white border border-[#E8E6EA] rounded-[8px] p-4 mb-4"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-medium text-[#1C1C1C]">
+                    {item.module}
+                  </h3>
+                  <StatusBadge status={item.status} />
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="font-medium text-[#555E67]">Date:</span>
+                    <span className="text-[#575758]">{item.date}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-[#555E67]">Plan:</span>
+                    <span className="text-[#575758]">{item.plan}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-[#555E67]">Amount:</span>
+                    <span className="text-[#575758]">{item.amount}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-[#555E67]">
+                      Payment Method:
+                    </span>
+                    <span className="text-[#575758]">{item.paymentMethod}</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t border-[#E8E6EA]">
+                    <span className="font-medium text-[#555E67]">Receipt:</span>
+                    <button
+                      onClick={(e) => downloadReceipt(item, e)}
+                      className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="font-medium text-[#555E67]">Date:</span>
-                  <span className="text-[#575758]">{item.date}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium text-[#555E67]">Plan:</span>
-                  <span className="text-[#575758]">{item.plan}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium text-[#555E67]">Amount:</span>
-                  <span className="text-[#575758]">{item.amount}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium text-[#555E67]">
-                    Payment Method:
-                  </span>
-                  <span className="text-[#575758]">{item.paymentMethod}</span>
-                </div>
-                <div className="flex justify-between items-center pt-2 border-t border-[#E8E6EA]">
-                  <span className="font-medium text-[#555E67]">Receipt:</span>
-                  <button
-                    onClick={(e) => downloadReceipt(item, e)}
-                    className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                  >
-                    <Download className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+            ))
+          ) : (
+            <div className="bg-white rounded-[8px] shadow-sm p-4 text-center text-gray-500">
+              No payment data found.
             </div>
-          ))}
+          )}
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-center px-4 py-3 mt-6">
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-[#333333] rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
+        {data.length > 0 && ( // Only show pagination if there's data
+          <div className="flex items-center justify-center px-4 py-3 mt-6">
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-[#333333] rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
 
-            <div className="flex items-center space-x-1">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                let pageNumber;
-                if (totalPages <= 5) {
-                  pageNumber = i + 1;
-                } else if (currentPage <= 3) {
-                  pageNumber = i + 1;
-                } else if (currentPage >= totalPages - 2) {
-                  pageNumber = totalPages - 4 + i;
-                } else {
-                  pageNumber = currentPage - 2 + i;
-                }
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNumber;
+                  if (totalPages <= 5) {
+                    pageNumber = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNumber = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNumber = totalPages - 4 + i;
+                  } else {
+                    pageNumber = currentPage - 2 + i;
+                  }
 
-                return (
-                  <button
-                    key={pageNumber}
-                    onClick={() => handlePageChange(pageNumber)}
-                    className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                      currentPage === pageNumber
-                        ? "bg-[#288DD1] text-white"
-                        : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
-                    }`}
-                  >
-                    {pageNumber}
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={pageNumber}
+                      onClick={() => handlePageChange(pageNumber)}
+                      className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                        currentPage === pageNumber
+                          ? "bg-[#288DD1] text-white"
+                          : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      {pageNumber}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <span className="text-sm text-gray-700">of</span>
+
+              <button
+                onClick={() => handlePageChange(totalPages)}
+                className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                  currentPage === totalPages
+                    ? "bg-[#288DD1] text-white"
+                    : "text-gray-700 bg-white border border-[#333333] hover:bg-gray-50"
+                }`}
+              >
+                {totalPages}
+              </button>
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-[#333333] rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
-
-            <span className="text-sm text-gray-700">of</span>
-
-            <button
-              onClick={() => handlePageChange(totalPages)}
-              className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                currentPage === totalPages
-                  ? "bg-[#288DD1] text-white"
-                  : "text-gray-700 bg-white border border-[#333333] hover:bg-gray-50"
-              }`}
-            >
-              {totalPages}
-            </button>
-
-            <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-[#333333] rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
           </div>
-        </div>
+        )}
       </main>
     </>
   );

@@ -26,22 +26,30 @@ export default function AdminDashboard() {
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
   };
+
+  // Empty data arrays to show "No data found"
+
+  const recentPartners = [];
+  const recentClients = [];
+
+  // Original data for reference if needed later
   const metrics = [
     {
       label: "Total Active Partners",
-      value: "50.8K",
-      upward: "28.4%",
+      value: "0",
+      // upward: "0",
     },
     {
       label: "Total Active Clients",
-      value: "46,769",
-      downward: "12.6%",
+      value: "0",
+      // downward: "0",
     },
-    { label: "Total Modules", value: "50" },
-    { label: "Pending Tickets", value: "10" },
+    { label: "Total Modules", value: "0" },
+    { label: "Pending Tickets", value: "0" },
   ];
-
-  const recentPartners = [
+  /*
+    
+    const recentPartners = [
     {
       id: "PTL-001",
       name: "Sumo Partners",
@@ -102,6 +110,7 @@ export default function AdminDashboard() {
       module: "Z6 Compute Instances",
     },
   ];
+  */
 
   if (isLoading) {
     return (
@@ -137,33 +146,39 @@ export default function AdminDashboard() {
 
         {/* Metrics Header */}
         <div className="flex w-full flex-col md:flex-row justify-between items-center gap-4 mb-6">
-          {metrics.map((metric, index) => (
-            <div
-              key={index}
-              className={`flex-1 p-4 w-full rounded-[12px] bg-[#288DD10D] border border-[#288dd12d]`}
-            >
-              <p className="text-xs text-[#676767] capitalize">
-                {metric.label}
-              </p>
-              <div className="flex items-center mt-4 space-x-1.5">
-                <p className="text-lg md:text-2xl font-medium text-[#3272CA]">
-                  {metric.value}
+          {metrics.length > 0 ? (
+            metrics.map((metric, index) => (
+              <div
+                key={index}
+                className={`flex-1 p-4 w-full rounded-[12px] bg-[#288DD10D] border border-[#288dd12d]`}
+              >
+                <p className="text-xs text-[#676767] capitalize">
+                  {metric.label}
                 </p>
-                {metric.upward && (
-                  <span className="bg-[#00BF6B14] text-[#00BF6B] px-1 py-0.5 rounded-sm flex items-center font-medium text-[12px]">
-                    {metric.upward}
-                    <ArrowUpRight className="w-3 h-3 mr-0.5" />
-                  </span>
-                )}
-                {metric.downward && (
-                  <span className="bg-[#EB417833] text-[#EB4178] px-1 py-0.5 rounded-sm flex items-center font-medium text-[12px]">
-                    {metric.downward}
-                    <ArrowDownRight className="w-3 h-3 mr-0.5" />
-                  </span>
-                )}
+                <div className="flex items-center mt-4 space-x-1.5">
+                  <p className="text-lg md:text-2xl font-medium text-[#3272CA]">
+                    {metric.value}
+                  </p>
+                  {metric.upward && (
+                    <span className="bg-[#00BF6B14] text-[#00BF6B] px-1 py-0.5 rounded-sm flex items-center font-medium text-[12px]">
+                      {metric.upward}
+                      <ArrowUpRight className="w-3 h-3 mr-0.5" />
+                    </span>
+                  )}
+                  {metric.downward && (
+                    <span className="bg-[#EB417833] text-[#EB4178] px-1 py-0.5 rounded-sm flex items-center font-medium text-[12px]">
+                      {metric.downward}
+                      <ArrowDownRight className="w-3 h-3 mr-0.5" />
+                    </span>
+                  )}
+                </div>
               </div>
+            ))
+          ) : (
+            <div className="flex-1 p-4 w-full rounded-[12px] bg-gray-100 border border-gray-200 text-center text-gray-500">
+              No metrics available.
             </div>
-          ))}
+          )}
         </div>
 
         {/* Recent Partners Table/Card */}
@@ -176,7 +191,7 @@ export default function AdminDashboard() {
               See all
             </button>
           </div>
-          <div className="overflow-x-auto mt-4 rounded-[12px]">
+          <div className="overflow-x-auto mt-4 rounded-[12px] border border-gray-200">
             {/* Desktop Table */}
             <div className="hidden md:block">
               <table className="w-full">
@@ -202,68 +217,85 @@ export default function AdminDashboard() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#E8E6EA]">
-                  {recentPartners.map((partner) => (
-                    <tr key={partner.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-[#575758]">
-                        {partner.id}
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-[#575758]">
-                        {partner.name}
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-[#575758]">
-                        {partner.email}
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-[#575758]">
-                        {partner.phone}
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-[#575758]">
-                        {partner.clients}
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-[#288DD1] cursor-pointer text-center flex items-center">
-                        <MoreVertical className="text-[#288DD1] w-3" />
+                <tbody className="bg-white divide-y divide-[#E8E6EA]">
+                  {recentPartners.length > 0 ? (
+                    recentPartners.map((partner) => (
+                      <tr key={partner.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-[#575758]">
+                          {partner.id}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-[#575758]">
+                          {partner.name}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-[#575758]">
+                          {partner.email}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-[#575758]">
+                          {partner.phone}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-[#575758]">
+                          {partner.clients}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-[#288DD1] cursor-pointer text-center flex items-center">
+                          <MoreVertical className="text-[#288DD1] w-3" />
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan="6"
+                        className="px-4 py-2 text-center text-sm text-gray-500"
+                      >
+                        No recent partners found.
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
 
             {/* Mobile Cards */}
             <div className="md:hidden">
-              {recentPartners.map((partner) => (
-                <div
-                  key={partner.id}
-                  className="border-b border-gray-200 py-4 px-4 bg-white rounded-[12px] mb-2"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-medium text-gray-900">
-                      {partner.name}
-                    </h3>
-                    <span className="text-sm text-[#288DD1] cursor-pointer flex items-center">
-                      <MoreVertical className="text-[#288DD1] w-3 mr-1" />
-                    </span>
+              {recentPartners.length > 0 ? (
+                recentPartners.map((partner) => (
+                  <div
+                    key={partner.id}
+                    className="border border-gray-200 py-4 px-4 bg-white rounded-[12px] mb-2 shadow-sm"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-medium text-gray-900">
+                        {partner.name}
+                      </h3>
+                      <span className="text-sm text-[#288DD1] cursor-pointer flex items-center">
+                        <MoreVertical className="text-[#288DD1] w-3 mr-1" />
+                      </span>
+                    </div>
+                    <div className="space-y-1 text-sm text-gray-600">
+                      <div className="flex justify-between">
+                        <span className="font-medium">Partner ID:</span>
+                        <span>{partner.id}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Email:</span>
+                        <span>{partner.email}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Phone:</span>
+                        <span>{partner.phone}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Clients:</span>
+                        <span>{partner.clients}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-1 text-sm text-gray-600">
-                    <div className="flex justify-between">
-                      <span className="font-medium">Partner ID:</span>
-                      <span>{partner.id}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Email:</span>
-                      <span>{partner.email}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Phone:</span>
-                      <span>{partner.phone}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Clients:</span>
-                      <span>{partner.clients}</span>
-                    </div>
-                  </div>
+                ))
+              ) : (
+                <div className="bg-white rounded-[12px] shadow-sm p-4 text-center text-gray-500">
+                  No recent partners found.
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
@@ -278,7 +310,7 @@ export default function AdminDashboard() {
               See all
             </button>
           </div>
-          <div className="overflow-x-auto mt-4 rounded-[12px]">
+          <div className="overflow-x-auto mt-4 rounded-[12px] border border-gray-200">
             {/* Desktop Table */}
             <div className="hidden md:block">
               <table className="w-full">
@@ -304,68 +336,85 @@ export default function AdminDashboard() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#E8E6EA]">
-                  {recentClients.map((client) => (
-                    <tr key={client.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-[#575758]">
-                        {client.id}
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-[#575758]">
-                        {client.name}
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-[#575758]">
-                        {client.email}
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-[#575758]">
-                        {client.phone}
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-[#575758]">
-                        {client.module}
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-[#288DD1] cursor-pointer text-center flex items-center">
-                        <MoreVertical className="text-[#288DD1] w-3" />
+                <tbody className="bg-white divide-y divide-[#E8E6EA]">
+                  {recentClients.length > 0 ? (
+                    recentClients.map((client) => (
+                      <tr key={client.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-[#575758]">
+                          {client.id}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-[#575758]">
+                          {client.name}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-[#575758]">
+                          {client.email}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-[#575758]">
+                          {client.phone}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-[#575758]">
+                          {client.module}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-[#288DD1] cursor-pointer text-center flex items-center">
+                          <MoreVertical className="text-[#288DD1] w-3" />
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan="6"
+                        className="px-4 py-2 text-center text-sm text-gray-500"
+                      >
+                        No recent clients found.
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </div>
 
             {/* Mobile Cards */}
             <div className="md:hidden">
-              {recentClients.map((client) => (
-                <div
-                  key={client.id}
-                  className="border-b border-gray-200 py-4 px-4 bg-white rounded-[12px] mb-2"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-medium text-gray-900">
-                      {client.name}
-                    </h3>
-                    <span className="text-sm text-[#288DD1] cursor-pointer flex items-center">
-                      <MoreVertical className="text-[#288DD1] w-3 mr-1" />
-                    </span>
+              {recentClients.length > 0 ? (
+                recentClients.map((client) => (
+                  <div
+                    key={client.id}
+                    className="border border-gray-200 py-4 px-4 bg-white rounded-[12px] mb-2 shadow-sm"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-medium text-gray-900">
+                        {client.name}
+                      </h3>
+                      <span className="text-sm text-[#288DD1] cursor-pointer flex items-center">
+                        <MoreVertical className="text-[#288DD1] w-3 mr-1" />
+                      </span>
+                    </div>
+                    <div className="space-y-1 text-sm text-gray-600">
+                      <div className="flex justify-between">
+                        <span className="font-medium">ID:</span>
+                        <span>{client.id}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Email:</span>
+                        <span>{client.email}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Phone:</span>
+                        <span>{client.phone}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">Module:</span>
+                        <span>{client.module}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-1 text-sm text-gray-600">
-                    <div className="flex justify-between">
-                      <span className="font-medium">ID:</span>
-                      <span>{client.id}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Email:</span>
-                      <span>{client.email}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Phone:</span>
-                      <span>{client.phone}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Module:</span>
-                      <span>{client.module}</span>
-                    </div>
-                  </div>
+                ))
+              ) : (
+                <div className="bg-white rounded-[12px] shadow-sm p-4 text-center text-gray-500">
+                  No recent clients found.
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>

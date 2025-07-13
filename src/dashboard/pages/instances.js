@@ -3,9 +3,10 @@ import CartFloat from "../components/cartFloat";
 import Headbar from "../components/headbar";
 import ActiveTab from "../components/activeTab";
 import Sidebar from "../components/sidebar";
-import AddProjectModal from "../components/addProject";
+import AddInstanceModal from "../components/addInstanace";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-export default function Project() {
+export default function Instances() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAddProjectOpen, setAddProject] = useState(false);
@@ -69,9 +70,9 @@ export default function Project() {
       <ActiveTab />
       <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-medium text-[#1C1C1C]">
+          {/* <h2 className="text-base font-medium text-[#1C1C1C]">
             Compute Instances
-          </h2>
+          </h2> */}
           {/* <button className="flex items-center gap-2 px-3 py-2 text-sm bg-[#F2F4F8] rounded-[8px] text-gray-600 hover:text-gray-900 transition-colors">
             Quick Start
           </button> */}
@@ -81,7 +82,7 @@ export default function Project() {
           onClick={openAddProject}
           className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base mt-5 "
         >
-          Add client
+          Add Instances
         </button>
 
         {/* Desktop Table */}
@@ -227,19 +228,7 @@ export default function Project() {
                 disabled={currentPage === 1}
                 className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
+                <ChevronLeft />
               </button>
               <span className="text-sm text-gray-700">{currentPage}</span>
               <span className="text-sm text-gray-700">of</span>
@@ -249,26 +238,14 @@ export default function Project() {
                 disabled={currentPage === totalPages}
                 className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
+                <ChevronRight />
               </button>
             </div>
           </div>
         )}
       </main>
 
-      <AddProjectModal isOpen={isAddProjectOpen} onClose={closeAddProject} />
+      <AddInstanceModal isOpen={isAddProjectOpen} onClose={closeAddProject} />
     </>
   );
 }

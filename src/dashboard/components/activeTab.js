@@ -15,7 +15,9 @@ const ActiveTab = () => {
     "app-settings": "App Settings",
     overview: "Overview",
     projects: "Projects",
+    details: "Details",
     requests: "Service Request",
+    instances: "Instances",
   };
 
   // Generate breadcrumb items from the current pathname

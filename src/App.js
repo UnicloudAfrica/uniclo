@@ -51,6 +51,7 @@ import VerifyAdminMail from "./adminDashboard/pages/adminVerify";
 import Requests from "./dashboard/pages/requests";
 import AdminLogin from "./adminDashboard/pages/adminSignin";
 import AdminPurchasedModules from "./adminDashboard/pages/adminPurchasedModules";
+import Project from "./dashboard/pages/project";
 
 function App() {
   const location = useLocation();
@@ -109,6 +110,7 @@ function App() {
           />
           <Route path="/dashboard/clients" element={<Clients />} />
           <Route path="/dashboard/requests" element={<Requests />} />
+          <Route path="/dashboard/projects" element={<Project />} />
           <Route
             path="/dashboard/clients/overview"
             element={<ClientsOverview />}

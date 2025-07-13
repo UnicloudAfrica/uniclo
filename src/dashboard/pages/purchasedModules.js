@@ -52,22 +52,18 @@ export default function PurchasedModules() {
   const StatusBadge = ({ status }) => {
     const baseClass =
       "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize";
-
     const statusStyles = {
-      successful: "bg-[#00BF6B14] text-[#00BF6B]", // green
-      failed: "bg-[#EB417833] text-[#EB4178]", // red
-      pending: "bg-[#F5A62333] text-[#F5A623]", // amber/orange
+      successful: "bg-[#00BF6B14] text-[#00BF6B]",
+      failed: "bg-[#EB417833] text-[#EB4178]",
+      pending: "bg-[#F5A62333] text-[#F5A623]",
     };
-
     const styleClass = statusStyles[status] || "bg-gray-100 text-gray-600";
-
     return <span className={`${baseClass} ${styleClass}`}>{status}</span>;
   };
 
   const CredentialsBadge = ({ credentials }) => {
     const isReady = credentials !== null;
     const displayText = isReady ? "Ready" : "Not Ready";
-
     return (
       <span
         className={`inline-flex items-center px-2.5 capitalize py-1 rounded-full text-xs font-medium ${
@@ -84,7 +80,6 @@ export default function PurchasedModules() {
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(dateString);
-
     const options = {
       year: "numeric",
       month: "long",
@@ -93,13 +88,11 @@ export default function PurchasedModules() {
         ? {}
         : { hour: "numeric", minute: "2-digit", hour12: true }),
     };
-
     return date
       .toLocaleString("en-US", options)
       .replace(/,([^,]*)$/, isDateOnly ? "$1" : " -$1");
   };
 
-  // Skeleton component for desktop table rows
   const TableSkeleton = () => (
     <tbody className="bg-white divide-y divide-[#E8E6EA]">
       {[...Array(5)].map((_, index) => (
@@ -124,7 +117,6 @@ export default function PurchasedModules() {
     </tbody>
   );
 
-  // Skeleton component for mobile cards
   const MobileSkeleton = () => (
     <div className="md:hidden mt-6 space-y-4">
       {[...Array(5)].map((_, index) => (
@@ -175,171 +167,201 @@ export default function PurchasedModules() {
           </button>
         </div>
 
-        {/* Desktop Table */}
-        <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px]">
-          <table className="w-full">
-            <thead className="bg-[#F5F5F5]">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  MODULE
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  STATUS
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  Credentials
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  START DATE
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  Next BILLING DATE
-                </th>
-              </tr>
-            </thead>
-            {isModulesFetching ? (
-              <TableSkeleton />
-            ) : (
-              <tbody className="bg-white divide-y divide-[#E8E6EA]">
-                {currentData.map((item, index) => (
-                  <tr
-                    key={item.id}
-                    onClick={() => handleRowClick(item)}
-                    className="hover:bg-gray-50"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.productable.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <StatusBadge status={item.status} />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      <CredentialsBadge credentials={item.credentials} />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {formatDate(
-                        item?.subscription_item?.subscription?.created_at
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {formatDate(
-                        item?.subscription_item?.subscription?.next_billing_date
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            )}
-          </table>
-        </div>
-
-        {/* Mobile Cards */}
         {isModulesFetching ? (
-          <MobileSkeleton />
-        ) : (
-          <div className="md:hidden mt-6">
-            {currentData.map((item) => (
-              <div
-                key={item.id}
-                onClick={() => handleRowClick(item)}
-                className="border-b border-gray-200 py-4"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium text-gray-900">
-                    {item.productable.name}
-                  </h3>
-                  <StatusBadge status={item.status} />
-                </div>
-                <div className="space-y-1 text-sm text-gray-600">
-                  <div className="flex justify-between">
-                    <span className="font-medium">Credentials:</span>
-                    <CredentialsBadge credentials={item.credentials} />
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Start Date:</span>
-                    <span>
-                      {formatDate(
-                        item?.subscription_item?.subscription?.created_at
-                      )}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Next Billing Date:</span>
-                    <span>
-                      {formatDate(
-                        item?.subscription_item?.subscription?.next_billing_date
-                      )}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {!isModulesFetching && (
-          <div className="flex items-center justify-center px-4 py-3 border-t border-gray-200">
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-
-              <div className="flex items-center space-x-1">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNumber;
-                  if (totalPages <= 5) {
-                    pageNumber = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNumber = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNumber = totalPages - 4 + i;
-                  } else {
-                    pageNumber = currentPage - 2 + i;
-                  }
-
-                  return (
-                    <button
-                      key={pageNumber}
-                      onClick={() => handlePageChange(pageNumber)}
-                      className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                        currentPage === pageNumber
-                          ? "bg-[#288DD1] text-white"
-                          : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
-                      }`}
-                    >
-                      {pageNumber}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <span className="text-sm text-gray-700">of</span>
-
-              <button
-                onClick={() => handlePageChange(totalPages)}
-                className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                  currentPage === totalPages
-                    ? "bg-[#288DD1] text-white"
-                    : "text-gray-700 bg-white border border-[#333333] hover:bg-gray-50"
-                }`}
-              >
-                {totalPages}
-              </button>
-
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-[#333333] rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+          <>
+            <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px]">
+              <table className="w-full">
+                <thead className="bg-[#F5F5F5]">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                      MODULE
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                      STATUS
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                      Credentials
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                      START DATE
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                      Next BILLING DATE
+                    </th>
+                  </tr>
+                </thead>
+                <TableSkeleton />
+              </table>
             </div>
+            <MobileSkeleton />
+          </>
+        ) : modules.length === 0 ? (
+          <div className="flex items-center justify-center h-[calc(100vh-200px)]">
+            <p className="text-lg font-medium text-[#575758]">No Data Found</p>
           </div>
+        ) : (
+          <>
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px]">
+              <table className="w-full">
+                <thead className="bg-[#F5F5F5]">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                      MODULE
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                      STATUS
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                      Credentials
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                      START DATE
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                      Next BILLING DATE
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-[#E8E6EA]">
+                  {currentData.map((item) => (
+                    <tr
+                      key={item.id}
+                      onClick={() => handleRowClick(item)}
+                      className="hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                        {item.productable.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <StatusBadge status={item.status} />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                        <CredentialsBadge credentials={item.credentials} />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                        {formatDate(
+                          item?.subscription_item?.subscription?.created_at
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                        {formatDate(
+                          item?.subscription_item?.subscription
+                            ?.next_billing_date
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden mt-6">
+              {currentData.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => handleRowClick(item)}
+                  className="border-b border-gray-200 py-4"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-medium text-gray-900">
+                      {item.productable.name}
+                    </h3>
+                    <StatusBadge status={item.status} />
+                  </div>
+                  <div className="space-y-1 text-sm text-gray-600">
+                    <div className="flex justify-between">
+                      <span className="font-medium">Credentials:</span>
+                      <CredentialsBadge credentials={item.credentials} />
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Start Date:</span>
+                      <span>
+                        {formatDate(
+                          item?.subscription_item?.subscription?.created_at
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Next Billing Date:</span>
+                      <span>
+                        {formatDate(
+                          item?.subscription_item?.subscription
+                            ?.next_billing_date
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {modules.length > 0 && (
+              <div className="flex items-center justify-center px-4 py-3 border-t border-gray-200">
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+
+                  <div className="flex items-center space-x-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNumber;
+                      if (totalPages <= 5) {
+                        pageNumber = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNumber = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNumber = totalPages - 4 + i;
+                      } else {
+                        pageNumber = currentPage - 2 + i;
+                      }
+
+                      return (
+                        <button
+                          key={pageNumber}
+                          onClick={() => handlePageChange(pageNumber)}
+                          className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                            currentPage === pageNumber
+                              ? "bg-[#288DD1] text-white"
+                              : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <span className="text-sm text-gray-700">of</span>
+
+                  <button
+                    onClick={() => handlePageChange(totalPages)}
+                    className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                      currentPage === totalPages
+                        ? "bg-[#288DD1] text-white"
+                        : "text-gray-700 bg-white border border-[#333333] hover:bg-gray-50"
+                    }`}
+                  >
+                    {totalPages}
+                  </button>
+
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-[#333333] rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </main>
       <DetailedModules

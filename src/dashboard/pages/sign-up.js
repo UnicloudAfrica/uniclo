@@ -321,7 +321,7 @@ export default function DashboardSignUp() {
               Create an account on Unicloud Africa.
             </p>
           </div>
-          <div className="flex mb-6 bg-[#FAFAFA] border border-[#ECEDF0] rounded-[50px] p-3">
+          {/* <div className="flex mb-6 bg-[#FAFAFA] border border-[#ECEDF0] rounded-[50px] p-3">
             <button
               onClick={() => setActiveTab("partner")}
               className={`flex-1 py-2 px-4 rounded-[30px] text-sm font-normal whitespace-nowrap transition-colors ${
@@ -342,7 +342,7 @@ export default function DashboardSignUp() {
             >
               Register as Client
             </button>
-          </div>
+          </div> */}
           <StepProgress currentStep={currentStep} steps={steps} />
           <div className="">{renderCurrentStep()}</div>
           <div className="flex gap-4 mt-8">

@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { X, ChevronLeft, Loader2 } from "lucide-react";
+import PaystackPop from "@paystack/inline-js"; // Import PaystackPop
 import {
   useFetchComputerInstances,
   useFetchEbsVolumes,
   useFetchOsImages,
+  useFetchProfile, // Import useFetchProfile
 } from "../../hooks/resource"; // Assuming these hooks exist
 import { useFetchProjects } from "../../hooks/projectHooks"; // Assuming these hooks exist
 import { useCreateInstanceRequest } from "../../hooks/instancesHook"; // Assuming this hook exists
+import SuccessModal from "./successModalV2";
 
 // Re-using the StepProgress component
 const StepProgress = ({ currentStep, steps }) => (
@@ -51,6 +54,7 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
   const { data: ebsVolumes, isFetching: isEbsVolumesFetching } =
     useFetchEbsVolumes();
   const { data: projects, isFetching: isProjectsFetching } = useFetchProjects();
+  const { data: profile, isFetching: isProfileFetching } = useFetchProfile(); // Fetch user profile
 
   // Hook for creating instance request
   const {
@@ -75,6 +79,16 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState(null); // For general submission errors
   const [instanceRequestResponse, setInstanceRequestResponse] = useState(null); // To store API response for payment step
+
+  // Payment-related states
+  const [isPaying, setIsPaying] = useState(false);
+  const [saveCard, setSaveCard] = useState(false);
+  const [selectedPaymentOption, setSelectedPaymentOption] = useState(null); // To store the selected payment gateway option
+  const paystackKey = process.env.REACT_APP_PAYSTACK_KEY;
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false); // State for success modal
+
+  // Create Paystack instance once using useMemo
+  const popup = useMemo(() => new PaystackPop(), []);
 
   const availableTags = [
     "Web Server",
@@ -104,28 +118,38 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
     setGeneralError(null);
   }, [currentStep, isOpen]);
 
-  // Close modal on successful submission and reset form
+  // Handle successful submission: save response and move to payment step
   useEffect(() => {
-    if (isSubmissionSuccess) {
-      // No need to close here, as we transition to Payment step
-      // onClose(); // This would close the modal immediately after submission
-      // Reset form data after successful submission if needed, or let parent handle
-      setFormData({
-        name: "",
-        description: "",
-        selectedProject: null,
-        storage_size_gb: "",
-        selectedComputeInstance: null,
-        selectedEbsVolume: null,
-        selectedOsImage: null,
-        months: "",
-        tags: [],
-      });
-      setErrors({});
-      setGeneralError(null);
+    // console.log("useEffect for step change triggered.");
+    // console.log("isSubmissionSuccess:", isSubmissionSuccess);
+    // console.log("instanceRequestResponse:", instanceRequestResponse);
+
+    // Only proceed if submission was successful AND we have the response data
+    if (isSubmissionSuccess && instanceRequestResponse) {
+      // console.log("Condition met: Moving to step 3.");
       setCurrentStep(3); // Move to payment step
+      // Automatically select Paystack (card) if available and not already selected
+      if (
+        !selectedPaymentOption &&
+        instanceRequestResponse.payment_gateway_options?.length > 0
+      ) {
+        const paystackOption =
+          instanceRequestResponse.payment_gateway_options.find(
+            (option) =>
+              option.name.toLowerCase() === "paystack" &&
+              option.payment_type.toLowerCase() === "card"
+          );
+        if (paystackOption) {
+          setSelectedPaymentOption(paystackOption);
+        } else {
+          // Fallback to first available option if Paystack card is not found
+          setSelectedPaymentOption(
+            instanceRequestResponse.payment_gateway_options[0]
+          );
+        }
+      }
     }
-  }, [isSubmissionSuccess, onClose]);
+  }, [isSubmissionSuccess, instanceRequestResponse, selectedPaymentOption]);
 
   const validateStep = () => {
     const newErrors = {};
@@ -174,8 +198,8 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
   const updateFormData = (field, value) => {
     setFormData((prev) => {
       const newFormData = { ...prev, [field]: value };
-      console.log("Updating formData. New state for", field, ":", value);
-      console.log("Full new formData:", newFormData);
+      // console.log("Updating formData. New state for", field, ":", value);
+      // console.log("Full new formData:", newFormData);
       return newFormData;
     });
     setErrors((prev) => ({ ...prev, [field]: null }));
@@ -183,9 +207,7 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
   };
 
   const handleSelectChange = (field, value, optionsList) => {
-    console.log(
-      `handleSelectChange called for field: ${field}, value: ${value}`
-    );
+    // console.log(`handleSelectChange called for field: ${field}, value: ${value}`);
     if (!value) {
       // Handles "Select a project" option which has an empty string value
       updateFormData(field, null);
@@ -195,7 +217,7 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
     const selectedOption = optionsList?.find(
       (option) => String(option.id) === String(value)
     );
-    console.log("Found selected option:", selectedOption);
+    // console.log("Found selected option:", selectedOption);
     if (selectedOption) {
       updateFormData(field, selectedOption);
     } else {
@@ -204,6 +226,14 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
       );
       updateFormData(field, null); // Reset if selected option is not found
     }
+  };
+
+  const handlePaymentOptionChange = (e) => {
+    const selectedId = e.target.value;
+    const option = instanceRequestResponse?.payment_gateway_options?.find(
+      (opt) => String(opt.id) === String(selectedId)
+    );
+    setSelectedPaymentOption(option);
   };
 
   const handleCheckboxChange = (field, value) => {
@@ -229,8 +259,20 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
           setCurrentStep(currentStep + 1);
         }
       } else {
-        // This is the last step (Payment), if already submitted, then just close
-        onClose();
+        // This is the last step (Payment), trigger payment
+        if (
+          selectedPaymentOption?.name.toLowerCase() === "paystack" &&
+          selectedPaymentOption?.payment_type.toLowerCase() === "card"
+        ) {
+          handlePaystackPayment();
+        } else {
+          // For other payment methods or if Paystack is not card type, just close for now
+          // In a real app, you'd handle other payment flows here (e.g., bank transfer details)
+          alert(
+            `Payment method "${selectedPaymentOption?.name} (${selectedPaymentOption?.payment_type})" selected. Further implementation needed for non-card payments.`
+          );
+          onClose();
+        }
       }
     }
   };
@@ -241,6 +283,8 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
       setErrors({}); // Clear errors when going back
       setGeneralError(null); // Clear general error when going back
       setInstanceRequestResponse(null); // Clear response if going back from payment
+      setIsPaying(false); // Reset payment state
+      setSelectedPaymentOption(null); // Clear selected payment option
     }
   };
 
@@ -260,7 +304,8 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
 
       createInstanceRequest(dataToSubmit, {
         onSuccess: (response) => {
-          setInstanceRequestResponse(response); // Save the full response
+          console.log("createInstanceRequest onSuccess response:", response); // Keep this for now
+          setInstanceRequestResponse(response); // Save the full response data
           // currentStep is updated in useEffect based on isSubmissionSuccess
         },
         onError: (err) => {
@@ -274,10 +319,97 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
     }
   };
 
+  const handlePaystackPayment = useCallback(() => {
+    if (!paystackKey) {
+      console.error(
+        "Paystack key is missing. Please set REACT_APP_PAYSTACK_KEY in your environment variables."
+      );
+      alert("Payment gateway not configured. Please contact support.");
+      setIsPaying(false);
+      return;
+    }
+
+    if (!profile?.email) {
+      console.error("User email is missing for Paystack transaction.");
+      alert("User email is not available. Cannot proceed with payment.");
+      setIsPaying(false);
+      return;
+    }
+
+    // Use the total from the pricing breakdown for Paystack amount, or the amount from the main response data
+    const amountForPaystack =
+      selectedPaymentOption?.total || instanceRequestResponse?.data?.amount;
+
+    if (
+      amountForPaystack === undefined ||
+      amountForPaystack === null ||
+      !instanceRequestResponse?.identifier
+    ) {
+      console.error(
+        "Missing transaction identifier or amount from instance request response or selected payment option."
+      );
+      alert("Missing transaction details. Cannot proceed with payment.");
+      setIsPaying(false);
+      return;
+    }
+
+    setIsPaying(true);
+
+    popup.newTransaction({
+      key: paystackKey,
+      email: profile.email,
+      amount: amountForPaystack * 100, // Convert to kobo
+      reference: instanceRequestResponse.identifier,
+      channels: ["card"],
+      onSuccess: (transaction) => {
+        console.log("Paystack Payment Successful:", transaction);
+        setIsPaying(false);
+        setIsSuccessModalOpen(true); // Open the success modal
+        // onClose(); // Close main modal after success modal is shown and closed
+      },
+      onCancel: () => {
+        console.log("Paystack Payment Cancelled");
+        setIsPaying(false);
+        // alert("Payment cancelled.");
+      },
+      onError: (error) => {
+        console.error("Paystack Payment Error:", error);
+        // alert(`Payment failed: ${error.message || "Unknown error"}`);
+        setIsPaying(false);
+      },
+    });
+  }, [
+    paystackKey,
+    profile?.email,
+    instanceRequestResponse,
+    selectedPaymentOption,
+    popup,
+    onClose,
+  ]);
+
+  const handleSuccessModalClose = () => {
+    setIsSuccessModalOpen(false);
+    onClose(); // Close the main AddInstanceModal after the success modal is closed
+  };
+
   // Log projects data to see if it's being fetched correctly
   useEffect(() => {
-    console.log("Projects data:", projects);
+    // console.log("Projects data:", projects);
   }, [projects]);
+
+  // Determine if the "Complete Order" button should be disabled on the payment step
+  const isPaymentButtonDisabled =
+    isPaying ||
+    isProfileFetching ||
+    !profile?.email ||
+    !instanceRequestResponse ||
+    !selectedPaymentOption;
+
+  // Get total from pricing breakdown for display
+  const totalFromBreakdown =
+    instanceRequestResponse?.data?.metadata?.pricing_breakdown?.total;
+  // Get amount to pay from the selected payment option
+  const amountToPayFromGateway = selectedPaymentOption?.total;
 
   return (
     <>
@@ -292,7 +424,7 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
               <button
                 onClick={onClose}
                 className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
-                disabled={isSubmissionPending} // Disable close during submission
+                disabled={isSubmissionPending || isPaying} // Disable close during submission or payment
               >
                 <X className="w-5 h-5" />
               </button>
@@ -755,7 +887,7 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
                 )}
 
                 {currentStep === 3 && (
-                  // Step 4: Payment - Show API response here
+                  // Step 4: Payment - Show API response and payment options
                   <div className="text-center space-y-6 py-10">
                     <h3 className="text-2xl font-bold text-[#288DD1]">
                       Payment Details
@@ -776,47 +908,158 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
                         </p>
                       </div>
                     ) : instanceRequestResponse ? (
-                      <div className="bg-green-50 p-6 rounded-lg border border-green-200 text-left">
-                        <p className="text-green-700 text-lg font-semibold mb-2">
-                          Order Processed Successfully!
-                        </p>
-                        <p className="text-gray-800">
-                          <strong>Instance ID:</strong>{" "}
-                          {instanceRequestResponse.id}
-                        </p>
-                        <p className="text-gray-800">
-                          <strong>Instance Name:</strong>{" "}
-                          {instanceRequestResponse.name}
-                        </p>
-                        <p className="text-gray-800">
-                          <strong>Status:</strong>{" "}
-                          {instanceRequestResponse.status}
-                        </p>
-                        <p className="text-gray-800">
-                          <strong>Created At:</strong>{" "}
-                          {new Date(
-                            instanceRequestResponse.created_at
-                          ).toLocaleString()}
-                        </p>
-                        {/* Add more details from instanceRequestResponse as needed */}
-                        <p className="text-gray-700 italic mt-4">
-                          You can now find your new instance in the Instances
-                          list.
-                        </p>
+                      <div className="space-y-6">
+                        {/* Payment Method Selection */}
+                        <div>
+                          <label className="block text-sm font-medium text-[#1C1C1C] mb-2 text-left">
+                            Payment Method
+                          </label>
+                          <span className="w-full px-2 py-4 border border-[#E9EAF4] rounded-[10px] block">
+                            {instanceRequestResponse.payment_gateway_options &&
+                            instanceRequestResponse.payment_gateway_options
+                              .length > 0 ? (
+                              <select
+                                className="text-sm text-[#676767] w-full outline-none"
+                                value={selectedPaymentOption?.id || ""}
+                                onChange={handlePaymentOptionChange}
+                                disabled={isPaying || isProfileFetching}
+                              >
+                                {instanceRequestResponse.payment_gateway_options.map(
+                                  (option) => (
+                                    <option key={option.id} value={option.id}>
+                                      {option.name} ({option.payment_type})
+                                    </option>
+                                  )
+                                )}
+                              </select>
+                            ) : (
+                              <div className="flex items-center py-2 text-gray-500 text-sm">
+                                No payment methods available.
+                              </div>
+                            )}
+                          </span>
+                        </div>
+
+                        {/* Save Card Checkbox */}
+                        <div className="flex items-center justify-start w-full">
+                          <input
+                            type="checkbox"
+                            id="saveCard"
+                            checked={saveCard}
+                            onChange={(e) => setSaveCard(e.target.checked)}
+                            className="mr-2 h-4 w-4 text-[#288DD1] border-gray-300 rounded focus:ring-[#288DD1]"
+                            disabled={isPaying}
+                          />
+                          <label
+                            htmlFor="saveCard"
+                            className="text-sm text-[#676767]"
+                          >
+                            Save card details for later
+                          </label>
+                        </div>
+
+                        {/* Transaction Breakdown from instanceRequestResponse */}
+                        <div className="bg-[#F8F8F8] rounded-lg py-4 px-6 text-left">
+                          <h3 className="text-sm font-medium text-[#1C1C1C] mb-4">
+                            Transaction Breakdown
+                          </h3>
+                          {instanceRequestResponse?.metadata
+                            ?.pricing_breakdown ? (
+                            <>
+                              <div className="flex w-full items-center justify-between mb-2">
+                                <span className="text-sm font-normal text-[#676767]">
+                                  Compute Cost:
+                                </span>
+                                <span className="text-sm font-normal text-[#1c1c1c]">
+                                  ₦
+                                  {instanceRequestResponse?.metadata.pricing_breakdown.compute?.toLocaleString()}
+                                </span>
+                              </div>
+                              <div className="flex w-full items-center justify-between mb-2">
+                                <span className="text-sm font-normal text-[#676767]">
+                                  Storage Cost:
+                                </span>
+                                <span className="text-sm font-normal text-[#1c1c1c]">
+                                  ₦
+                                  {instanceRequestResponse?.metadata.pricing_breakdown.storage?.toLocaleString()}
+                                </span>
+                              </div>
+                              <div className="flex w-full items-center justify-between mb-2">
+                                <span className="text-sm font-normal text-[#676767]">
+                                  OS Cost:
+                                </span>
+                                <span className="text-sm font-normal text-[#1c1c1c]">
+                                  ₦
+                                  {instanceRequestResponse?.metadata.pricing_breakdown.os?.toLocaleString()}
+                                </span>
+                              </div>
+                              <hr className="my-2 border-[#E9EAF4]" />
+                              <div className="flex w-full items-center justify-between mb-2">
+                                <span className="text-sm font-medium text-[#676767]">
+                                  Subtotal:
+                                </span>
+                                <span className="text-sm font-normal text-[#1c1c1c]">
+                                  ₦
+                                  {instanceRequestResponse?.metadata.pricing_breakdown.subtotal?.toLocaleString()}
+                                </span>
+                              </div>
+                              <div className="flex w-full items-center justify-between mb-2">
+                                <span className="text-sm font-medium text-[#676767]">
+                                  Tax (
+                                  {(
+                                    (instanceRequestResponse?.metadata
+                                      .pricing_breakdown.tax /
+                                      instanceRequestResponse?.metadata
+                                        .pricing_breakdown.subtotal) *
+                                    100
+                                  ).toFixed(2)}
+                                  % VAT):
+                                </span>
+                                <span className="text-sm font-normal text-[#1c1c1c]">
+                                  ₦
+                                  {instanceRequestResponse?.metadata.pricing_breakdown.tax?.toLocaleString()}
+                                </span>
+                              </div>
+                              <hr className="my-2 border-[#E9EAF4]" />
+                              <div className="flex w-full items-center justify-between font-semibold">
+                                <span className="text-sm text-[#1C1C1C]">
+                                  Total:
+                                </span>
+                                <span className="text-sm text-[#1c1c1c]">
+                                  ₦{" "}
+                                  {instanceRequestResponse?.metadata.pricing_breakdown.total?.toLocaleString()}
+                                </span>
+                              </div>
+                              {selectedPaymentOption && (
+                                <div className="flex w-full items-center justify-between font-semibold mt-2">
+                                  <span className="text-sm text-[#1C1C1C]">
+                                    Amount to Pay:
+                                  </span>
+                                  <span className="text-sm text-[#1c1c1c]">
+                                    ₦{amountToPayFromGateway?.toLocaleString()}
+                                  </span>
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <p className="text-sm text-gray-500">
+                              No pricing breakdown available.
+                            </p>
+                          )}
+                        </div>
                       </div>
                     ) : (
                       <p className="text-gray-700">
-                        Click 'Complete Order' to finalize your request.
+                        Proceed to previous step to generate payment details.
                       </p>
                     )}
                   </div>
                 )}
-                {isSubmissionError &&
-                  currentStep !== 3 && ( // Show error if not on payment step and there's an error
-                    <p className="text-red-500 text-sm mt-4 text-center">
-                      {generalError}
-                    </p>
-                  )}
+                {isSubmissionError && currentStep !== 3 && (
+                  <p className="text-red-500 text-sm mt-4 text-center">
+                    {generalError}
+                  </p>
+                )}
               </div>
             </div>
             {/* Footer */}
@@ -825,7 +1068,7 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
                 <button
                   onClick={onClose}
                   className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
-                  disabled={isSubmissionPending}
+                  disabled={isSubmissionPending || isPaying}
                 >
                   Close
                 </button>
@@ -833,7 +1076,7 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
                   <button
                     onClick={handleBack}
                     className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
-                    disabled={isSubmissionPending}
+                    disabled={isSubmissionPending || isPaying}
                   >
                     <ChevronLeft className="w-4 h-4 mr-1 inline-block" /> Back
                   </button>
@@ -843,12 +1086,12 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
                 onClick={handleNext}
                 disabled={
                   isSubmissionPending ||
-                  (currentStep === 3 && !instanceRequestResponse)
+                  (currentStep === 3 && isPaymentButtonDisabled)
                 }
                 className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 {currentStep === steps.length - 1 ? "Complete Order" : "Next"}
-                {isSubmissionPending && (
+                {(isSubmissionPending || isPaying || isProfileFetching) && (
                   <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
                 )}
               </button>
@@ -856,6 +1099,13 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
           </div>
         </div>
       )}
+      <SuccessModal
+        isOpen={isSuccessModalOpen}
+        onClose={handleSuccessModalClose}
+        transactionReference={instanceRequestResponse?.identifier}
+        saveCard={saveCard}
+        closeEv={onClose}
+      />
     </>
   );
 };

@@ -49,12 +49,12 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   // Conditionally include Instances based on projects length
   const menuItems = [
     { name: "Home", icon: home, activeIcon: activeHome, path: "/dashboard" },
-    {
-      name: "Modules",
-      icon: modules,
-      activeIcon: activemodules,
-      path: "/dashboard/modules",
-    },
+    // {
+    //   name: "Modules",
+    //   icon: modules,
+    //   activeIcon: activemodules,
+    //   path: "/dashboard/modules",
+    // },
     {
       name: "Purchased Modules",
       icon: purchasedModules,

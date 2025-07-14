@@ -68,7 +68,7 @@ export const useCreateInstanceRequest = () => {
     mutationFn: createInstanceRequest,
     onSuccess: () => {
       // Invalidate instanceRequests query to refresh the list
-      queryClient.invalidateQueries(["instanceRequests"]);
+      //   queryClient.invalidateQueries(["instanceRequests"]);
     },
     onError: (error) => {
       console.error("Error creating instance request:", error);

@@ -3,8 +3,8 @@ import CartFloat from "../components/cartFloat";
 import Headbar from "../components/headbar";
 import ActiveTab from "../components/activeTab";
 import Sidebar from "../components/sidebar";
-import AddInstanceModal from "../components/addInstanace";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react"; // Import Loader2
+import AddInstanceModal from "../components/addInstanace"; // Corrected component name if it was addInstanace
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useFetchInstanceRequests } from "../../hooks/instancesHook";
 
 export default function Instances() {
@@ -45,7 +45,7 @@ export default function Instances() {
   const handleRowClick = (item) => {
     setSelectedItem(item);
     // Add modal logic or navigation to instance details if needed
-    alert(`Clicked on instance: ${item.name}`); // Example action
+    // alert(`Clicked on instance: ${item.name}`);
   };
 
   // Loading state
@@ -142,28 +142,36 @@ export default function Instances() {
                       {item.name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.instanceType}
+                      {item.compute_instance?.name || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.vCPUs}
+                      {item.compute_instance?.vcpus || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.ram}
+                      {item.compute_instance?.memory_gib
+                        ? `${item.compute_instance.memory_gib}GB`
+                        : "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.disk}
+                      {item.storage_size_gb
+                        ? `${item.storage_size_gb} GiB`
+                        : "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.operatingSystem}
+                      {item.os_image?.name || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.ha}
+                      {item.ha === true
+                        ? "Yes"
+                        : item.ha === false
+                        ? "No"
+                        : "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.user}
+                      {item.user?.name || item.user_id || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.account}
+                      {item.project?.name || item.project_id || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                       <span
@@ -172,10 +180,11 @@ export default function Instances() {
                             ? "bg-green-100 text-green-800"
                             : item.status === "Stopped"
                             ? "bg-red-100 text-red-800"
-                            : "bg-orange-100 text-orange-800" // For "Spawning" or other statuses
+                            : "bg-orange-100 text-orange-800" // For "payment_pending" or other statuses
                         }`}
                       >
-                        {item.status}
+                        {item.status?.replace(/_/g, " ") || "N/A"}{" "}
+                        {/* Replace underscores for better display */}
                       </span>
                     </td>
                   </tr>
@@ -213,44 +222,61 @@ export default function Instances() {
                         ? "bg-green-100 text-green-800"
                         : item.status === "Stopped"
                         ? "bg-red-100 text-red-800"
-                        : "bg-orange-100 text-orange-800" // For "Spawning" or other statuses
+                        : "bg-orange-100 text-orange-800" // For "payment_pending" or other statuses
                     }`}
                   >
-                    {item.status}
+                    {item.status?.replace(/_/g, " ") || "N/A"}{" "}
+                    {/* Replace underscores for better display */}
                   </span>
                 </div>
                 <div className="space-y-1 text-sm text-gray-600">
                   <div className="flex justify-between">
                     <span className="font-medium">Instance Type:</span>
-                    <span>{item.instanceType}</span>
+                    <span>{item.compute_instance?.name || "N/A"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium">vCPUs:</span>
-                    <span>{item.vCPUs}</span>
+                    <span>{item.compute_instance?.vcpus || "N/A"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium">RAM:</span>
-                    <span>{item.ram}</span>
+                    <span>
+                      {item.compute_instance?.memory_gib
+                        ? `${item.compute_instance.memory_gib}GB`
+                        : "N/A"}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium">Disk:</span>
-                    <span>{item.disk}</span>
+                    <span>
+                      {item.storage_size_gb
+                        ? `${item.storage_size_gb} GiB`
+                        : "N/A"}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium">OS:</span>
-                    <span>{item.operatingSystem}</span>
+                    <span>{item.os_image?.name || "N/A"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium">HA:</span>
-                    <span>{item.ha}</span>
+                    <span>
+                      {item.ha === true
+                        ? "Yes"
+                        : item.ha === false
+                        ? "No"
+                        : "N/A"}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium">User:</span>
-                    <span>{item.user}</span>
+                    <span>{item.user?.name || item.user_id || "N/A"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium">Account:</span>
-                    <span>{item.account}</span>
+                    <span>
+                      {item.project?.name || item.project_id || "N/A"}
+                    </span>
                   </div>
                 </div>
               </div>

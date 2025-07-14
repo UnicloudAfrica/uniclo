@@ -97,7 +97,7 @@ const CartFloat = () => {
     <>
       {/* Floating Button */}
       {cartItems.length > 1 && !isHidden && (
-        <div className="fixed bottom-6 right-6 z-[1002] flex items-center gap-2">
+        <div className="fixed bottom-6 right-6 z-[1002] hidden items-center gap-2">
           <button
             onClick={handleCartClick}
             className="bg-white shadow-lg py-3 px-5 rounded-full text-sm font-medium flex items-center gap-2 border border-gray-200 hover:shadow-xl transition-all"

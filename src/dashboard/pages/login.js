@@ -94,7 +94,7 @@ export default function DashboardLogin() {
           </div>
 
           {/* Tab Buttons */}
-          <div className="flex mb-6 bg-[#FAFAFA] border border-[#ECEDF0] rounded-[50px] p-3">
+          {/* <div className="flex mb-6 bg-[#FAFAFA] border border-[#ECEDF0] rounded-[50px] p-3">
             <button
               onClick={() => setActiveTab("partner")}
               className={`flex-1 py-2 px-4 rounded-[30px] text-sm font-normal whitespace-nowrap transition-colors ${
@@ -115,7 +115,7 @@ export default function DashboardLogin() {
             >
               Login as Client
             </button>
-          </div>
+          </div> */}
 
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-5">

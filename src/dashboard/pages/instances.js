@@ -4,12 +4,15 @@ import Headbar from "../components/headbar";
 import ActiveTab from "../components/activeTab";
 import Sidebar from "../components/sidebar";
 import AddInstanceModal from "../components/addInstanace";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react"; // Import Loader2
+import { useFetchInstanceRequests } from "../../hooks/instancesHook";
 
 export default function Instances() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isAddProjectOpen, setAddProject] = useState(false);
+  const [isAddInstancesOpen, setAddInstances] = useState(false);
+  const { data: instances, isFetching: isInstancesFetching } =
+    useFetchInstanceRequests();
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -19,34 +22,19 @@ export default function Instances() {
     setIsMobileMenuOpen(false);
   };
 
-  const openAddProject = () => setAddProject(true);
-  const closeAddProject = () => setAddProject(false);
-
-  // Mock data based on the screenshot
-  const instances = [
-    {
-      id: 1,
-      name: "Test-Windows",
-      instanceType: "z2.large",
-      vCPUs: "2",
-      ram: "4 GB",
-      disk: "30 GB",
-      operatingSystem: "Windows S.L.",
-      ha: "N/A",
-      user: "manreet",
-      account: "Tech-Supp",
-      status: "Spawning",
-    },
-  ];
+  const openAddInstances = () => setAddInstances(true);
+  const closeAddInstances = () => setAddInstances(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const totalPages = Math.ceil(instances.length / itemsPerPage);
+  // Calculate totalPages based on the actual instances length, handling null/undefined data
+  const totalPages = Math.ceil((instances?.length || 0) / itemsPerPage);
 
-  const currentData = instances.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const currentData =
+    instances?.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    ) || []; // Ensure currentData is an array even if instances is null/undefined
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -56,8 +44,28 @@ export default function Instances() {
 
   const handleRowClick = (item) => {
     setSelectedItem(item);
-    // Add modal logic if needed
+    // Add modal logic or navigation to instance details if needed
+    alert(`Clicked on instance: ${item.name}`); // Example action
   };
+
+  // Loading state
+  if (isInstancesFetching) {
+    return (
+      <>
+        <CartFloat />
+        <Headbar onMenuClick={toggleMobileMenu} />
+        <Sidebar
+          isMobileMenuOpen={isMobileMenuOpen}
+          onCloseMobileMenu={closeMobileMenu}
+        />
+        <ActiveTab />
+        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
+          <p className="ml-2 text-gray-700 mt-2">Loading instances...</p>
+        </main>
+      </>
+    );
+  }
 
   return (
     <>
@@ -79,14 +87,14 @@ export default function Instances() {
         </div>
 
         <button
-          onClick={openAddProject}
-          className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base mt-5 "
+          onClick={openAddInstances}
+          className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base mt-5 hover:bg-[#1976D2] transition-colors"
         >
           Add Instances
         </button>
 
         {/* Desktop Table */}
-        <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px]">
+        <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px] border border-gray-200">
           <table className="w-full">
             <thead className="bg-[#F5F5F5]">
               <tr>
@@ -123,112 +131,147 @@ export default function Instances() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-[#E8E6EA]">
-              {currentData.map((item) => (
-                <tr
-                  key={item.id}
-                  onClick={() => handleRowClick(item)}
-                  className="hover:bg-gray-50 cursor-pointer"
-                >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {item.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {item.instanceType}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {item.vCPUs}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {item.ram}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {item.disk}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {item.operatingSystem}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {item.ha}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {item.user}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {item.account}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {item.status}
+              {currentData.length > 0 ? (
+                currentData.map((item) => (
+                  <tr
+                    key={item.id}
+                    onClick={() => handleRowClick(item)}
+                    className="hover:bg-gray-50 cursor-pointer"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                      {item.name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                      {item.instanceType}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                      {item.vCPUs}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                      {item.ram}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                      {item.disk}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                      {item.operatingSystem}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                      {item.ha}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                      {item.user}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                      {item.account}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${
+                          item.status === "Running"
+                            ? "bg-green-100 text-green-800"
+                            : item.status === "Stopped"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-orange-100 text-orange-800" // For "Spawning" or other statuses
+                        }`}
+                      >
+                        {item.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="10"
+                    className="px-6 py-4 text-center text-sm text-gray-500"
+                  >
+                    No instances found.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
 
         {/* Mobile Cards */}
-        <div className="md:hidden mt-6">
-          {currentData.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => handleRowClick(item)}
-              className="border-b border-gray-200 py-4 cursor-pointer"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-gray-900">
-                  {item.name}
-                </h3>
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize bg-[#F5A62333] text-[#F5A623]">
-                  {item.status}
-                </span>
+        <div className="md:hidden mt-6 space-y-4">
+          {currentData.length > 0 ? (
+            currentData.map((item) => (
+              <div
+                key={item.id}
+                onClick={() => handleRowClick(item)}
+                className="bg-white rounded-[12px] shadow-sm p-4 cursor-pointer border border-gray-200"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-base font-semibold text-gray-900">
+                    {item.name}
+                  </h3>
+                  <span
+                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${
+                      item.status === "Running"
+                        ? "bg-green-100 text-green-800"
+                        : item.status === "Stopped"
+                        ? "bg-red-100 text-red-800"
+                        : "bg-orange-100 text-orange-800" // For "Spawning" or other statuses
+                    }`}
+                  >
+                    {item.status}
+                  </span>
+                </div>
+                <div className="space-y-1 text-sm text-gray-600">
+                  <div className="flex justify-between">
+                    <span className="font-medium">Instance Type:</span>
+                    <span>{item.instanceType}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">vCPUs:</span>
+                    <span>{item.vCPUs}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">RAM:</span>
+                    <span>{item.ram}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">Disk:</span>
+                    <span>{item.disk}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">OS:</span>
+                    <span>{item.operatingSystem}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">HA:</span>
+                    <span>{item.ha}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">User:</span>
+                    <span>{item.user}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">Account:</span>
+                    <span>{item.account}</span>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-1 text-sm text-gray-600">
-                <div className="flex justify-between">
-                  <span className="font-medium">Instance Type:</span>
-                  <span>{item.instanceType}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">vCPUs:</span>
-                  <span>{item.vCPUs}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">RAM:</span>
-                  <span>{item.ram}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Disk:</span>
-                  <span>{item.disk}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">OS:</span>
-                  <span>{item.operatingSystem}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">HA:</span>
-                  <span>{item.ha}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">User:</span>
-                  <span>{item.user}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Account:</span>
-                  <span>{item.account}</span>
-                </div>
-              </div>
+            ))
+          ) : (
+            <div className="bg-white rounded-[12px] shadow-sm p-4 text-center text-gray-500">
+              No instances found.
             </div>
-          ))}
+          )}
         </div>
 
         {/* Pagination */}
-        {instances.length > 0 && (
-          <div className="flex items-center justify-center px-4 py-3 border-t border-gray-200">
+        {instances?.length > 0 && ( // Only show pagination if there are instances
+          <div className="flex items-center justify-center px-4 py-3 border-t border-gray-200 bg-white rounded-b-[12px] mt-6">
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
                 className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <ChevronLeft />
+                <ChevronLeft className="w-4 h-4" />
               </button>
               <span className="text-sm text-gray-700">{currentPage}</span>
               <span className="text-sm text-gray-700">of</span>
@@ -238,14 +281,17 @@ export default function Instances() {
                 disabled={currentPage === totalPages}
                 className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <ChevronRight />
+                <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           </div>
         )}
       </main>
 
-      <AddInstanceModal isOpen={isAddProjectOpen} onClose={closeAddProject} />
+      <AddInstanceModal
+        isOpen={isAddInstancesOpen}
+        onClose={closeAddInstances}
+      />
     </>
   );
 }

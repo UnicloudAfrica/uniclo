@@ -16,6 +16,7 @@ import appSettings from "./assets/settings.png";
 import { LogOut, X } from "lucide-react";
 import useAuthStore from "../../stores/userAuthStore";
 import { useFetchProfile } from "../../hooks/resource";
+import { useFetchProjects } from "../../hooks/projectHooks";
 
 const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   const [activeItem, setActiveItem] = useState("Home");
@@ -23,13 +24,16 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   const location = useLocation();
   const { clearToken } = useAuthStore.getState();
   const { data: profile, isFetching: isProfileFetching } = useFetchProfile();
+  const { data: projects = [], isFetching: isProjectsFetching } =
+    useFetchProjects();
 
   // Map of paths to menu item names
   const pathToItemMap = {
     "/dashboard": "Home",
     "/dashboard/modules": "Modules",
     "/dashboard/purchased-modules": "Purchased Modules",
-    "/dashboard/clients": "Clients",
+    "/dashboard/projects": "Projects",
+    "/dashboard/instances": "Instances",
     "/dashboard/payment-history": "Payment History",
     "/dashboard/support-ticket": "Support Ticket",
     "/dashboard/app-settings": "App Settings",
@@ -42,6 +46,7 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     setActiveItem(itemName);
   }, [location.pathname]);
 
+  // Conditionally include Instances based on projects length
   const menuItems = [
     { name: "Home", icon: home, activeIcon: activeHome, path: "/dashboard" },
     {
@@ -56,25 +61,22 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       activeIcon: activePurchasedModules,
       path: "/dashboard/purchased-modules",
     },
-    // {
-    //   name: "Clients",
-    //   icon: clients,
-    //   activeIcon: activeClients,
-    //   path: "/dashboard/clients",
-    // },
-
     {
       name: "Projects",
       icon: clients,
       activeIcon: activeClients,
       path: "/dashboard/projects",
     },
-    {
-      name: "Instances",
-      icon: clients,
-      activeIcon: activeClients,
-      path: "/dashboard/instances",
-    },
+    ...(projects.length > 0
+      ? [
+          {
+            name: "Instances",
+            icon: clients,
+            activeIcon: activeClients,
+            path: "/dashboard/instances",
+          },
+        ]
+      : []),
     {
       name: "Payment History",
       icon: paymentHistory,
@@ -117,13 +119,6 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
 
   const renderMenuItem = (item, isBottom = false) => {
     const isActive = activeItem === item.name;
-
-    const getInitials = (firstName, lastName) => {
-      if (!firstName && !lastName) return "";
-      const firstInitial = firstName?.trim()?.[0]?.toUpperCase() || "";
-      const lastInitial = lastName?.trim()?.[0]?.toUpperCase() || "";
-      return firstInitial + lastInitial;
-    };
 
     return (
       <li key={item.name} className={isBottom ? "mt-auto" : ""}>
@@ -189,7 +184,6 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
             <nav className="flex-1 overflow-y-auto w-full mt-3 px-2">
               <ul className="flex flex-col h-full w-full">
                 {menuItems.map((item) => renderMenuItem(item))}
-                {/* {renderMenuItem(settingsItem, false)} */}
                 <button
                   className="w-full flex items-center py-2 px-4 space-x-2 text-left text-[#DC3F41] hover:bg-[#ffffff15] rounded-lg transition-colors duration-200"
                   onClick={handleLogout}
@@ -252,15 +246,6 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
             <nav className="flex-1 overflow-y-auto py-4">
               <ul className="space-y-1 px-4">
                 {menuItems.map((item) => renderMobileMenuItem(item))}
-                {/* {renderMobileMenuItem(settingsItem, false)} */}
-                {/* <li className="pt-4 border-t border-[#ffffff20] mt-4">
-                  <button className="w-full flex items-center py-3 px-4 space-x-3 text-left text-white hover:bg-[#ffffff15] rounded-lg transition-colors duration-200">
-                    <div className="flex items-center justify-center w-5 h-5 flex-shrink-0">
-                      <span className="text-white text-lg">?</span>
-                    </div>
-                    <span className="text-sm font-medium">Help & Support</span>
-                  </button>
-                </li> */}
                 <li>
                   <button
                     className="w-full flex items-center py-3 px-4 space-x-3 text-left text-[#DC3F41] hover:bg-[#ffffff15] rounded-lg transition-colors duration-200"

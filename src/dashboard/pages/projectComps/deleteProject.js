@@ -19,7 +19,7 @@ const ConfirmDeleteModal = ({ isOpen, onClose, projectId, projectName }) => {
     if (projectId) {
       deleteProject(projectId, {
         onSuccess: () => {
-          ToastUtils.success("Project Deleted Successfully");
+          //   ToastUtils.success("Project Deleted Successfully");
 
           onClose(); // Close modal on success
           navigate("/dashboard/projects"); // Navigate to the projects page

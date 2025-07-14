@@ -49,11 +49,11 @@ const Headbar = ({ onMenuClick }) => {
         {/* Logo */}
         <img src={logo} className="w-[71px] h-[54px]" alt="Logo" />
         {/* Centered Free Trial Button */}
-        <div className="absolute left-1/2 transform -translate-x-1/2">
+        {/* <div className="absolute left-1/2 transform -translate-x-1/2">
           <button className="bg-[#288DD11A] rounded-[10px] py-3 px-9 text-center font-normal text-base text-[#288DD1]">
             Free Trial
           </button>
-        </div>
+        </div> */}
         {/* User Info */}
         <div className="flex items-center space-x-6">
           <BellRing className="text-[#1C1C1C] w-5" />

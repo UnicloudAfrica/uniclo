@@ -78,7 +78,7 @@ export default function Dashboard() {
 
   return (
     <>
-      <CartFloat />
+      {/* <CartFloat /> */}
       <Headbar onMenuClick={toggleMobileMenu} />
       <Sidebar
         isMobileMenuOpen={isMobileMenuOpen}

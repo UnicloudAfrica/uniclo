@@ -1,6 +1,8 @@
+"use client";
 import React, { useCallback, useEffect, useState } from "react";
 import { X, Check, Loader2, AlertTriangle } from "lucide-react";
 import { useVerifyTransaction } from "../../hooks/transactionHooks";
+import { useQueryClient } from "@tanstack/react-query";
 
 const SuccessModal = ({
   isOpen,
@@ -19,6 +21,7 @@ const SuccessModal = ({
     isError,
     reset,
   } = useVerifyTransaction();
+  const queryClient = useQueryClient();
 
   const startVerification = useCallback(() => {
     if (transactionReference && !hasVerified && !isPending && !isSuccess) {
@@ -34,6 +37,7 @@ const SuccessModal = ({
           onSuccess: () => {
             setHasVerified(true);
             setHasError(false);
+            queryClient.invalidateQueries(["instances"]);
             closeEv();
           },
           onError: (err) => {
@@ -57,7 +61,7 @@ const SuccessModal = ({
     if (isOpen && transactionReference) {
       startVerification();
     }
-  }, [isOpen, transactionReference, startVerification]);
+  }, [isOpen, transactionReference]);
 
   const handleRetry = () => {
     reset(); // Reset react-query mutation state

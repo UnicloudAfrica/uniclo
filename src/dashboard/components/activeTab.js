@@ -8,7 +8,7 @@ const ActiveTab = () => {
   const pathMap = {
     dashboard: "Home",
     modules: "Modules",
-    "purchased-modules": "Purchased Modules",
+    "purchased-instances": "Purchased Instances",
     clients: "Clients",
     "payment-history": "Payment History",
     "support-ticket": "Support Ticket",

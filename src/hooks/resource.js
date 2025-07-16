@@ -7,6 +7,24 @@ const fetchCountries = async () => {
   const res = await silentApi("GET", "/countries");
   return res.data; // Extract only the data array
 };
+
+// GET: Fetch state by country ID
+const fetchStatesById = async (id) => {
+  const res = await silentApi("GET", `/countries/${id}`);
+  if (!res.data) {
+    throw new Error(`Failed to fetch states with ID ${id}`);
+  }
+  return res.data;
+};
+// GET: Fetch cities by state ID
+const fetchCitiesById = async (id) => {
+  const res = await silentApi("GET", `/states/${id}`);
+  if (!res.data) {
+    throw new Error(`Failed to fetch cities with ID ${id}`);
+  }
+  return res.data;
+};
+
 // **GET**: fetchProfile
 const fetchProfile = async () => {
   const res = await silentApi("GET", "/business/profile");
@@ -32,6 +50,11 @@ const fetchEbsVolumes = async () => {
   const res = await silentApi("GET", "/product-ebs-volume");
   return res.data; // Extract only the data array
 };
+// **GET**: fetch bandwith
+const fetchBandwidths = async () => {
+  const res = await silentApi("GET", "/product-bandwidth");
+  return res.data; // Extract only the data array
+};
 
 // Hook to fetch countries
 export const useFetchCountries = (options = {}) => {
@@ -39,6 +62,29 @@ export const useFetchCountries = (options = {}) => {
     queryKey: ["countries"],
     queryFn: fetchCountries,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+
+// Hook to fetch states  by country ID
+export const useFetchStatesById = (id, options = {}) => {
+  return useQuery({
+    queryKey: ["states", id],
+    queryFn: () => fetchStatesById(id),
+    enabled: !!id, // Only fetch if ID is provided
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+// Hook to fetch city  by state ID
+export const useFetchCitiesById = (id, options = {}) => {
+  return useQuery({
+    queryKey: ["states", id],
+    queryFn: () => fetchCitiesById(id),
+    enabled: !!id, // Only fetch if ID is provided
+    staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
   });
@@ -89,6 +135,16 @@ export const useFetchEbsVolumes = (options = {}) => {
   return useQuery({
     queryKey: ["ebs-volumes"],
     queryFn: fetchEbsVolumes,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+// Hook to fetch bandwidths
+export const useFetchBandwidths = (options = {}) => {
+  return useQuery({
+    queryKey: ["bandwidths"],
+    queryFn: fetchBandwidths,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     refetchOnWindowFocus: false,
     ...options,

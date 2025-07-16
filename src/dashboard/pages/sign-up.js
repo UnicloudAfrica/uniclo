@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Eye, EyeOff, ChevronLeft, Loader2 } from "lucide-react"; // Added Loader2
+import React, { useState, useEffect } from "react";
+import { Eye, EyeOff, ChevronLeft, Loader2 } from "lucide-react";
 import sideBg from "./assets/sideBg.svg";
 import logo from "./assets/logo.png";
 import { CreateAccountStep } from "./signupsteps/stepone";
@@ -8,7 +8,12 @@ import { BusinessAddressStep } from "./signupsteps/stepThree";
 import { UploadDocumentStep } from "./signupsteps/stepFour";
 import { Link, useNavigate } from "react-router-dom";
 import { useCreateAccount } from "../../hooks/authHooks";
-import { useFetchCountries, useFetchIndustries } from "../../hooks/resource";
+import {
+  useFetchCountries,
+  useFetchIndustries,
+  useFetchCitiesById,
+  useFetchStatesById,
+} from "../../hooks/resource";
 import useAuthStore from "../../stores/userAuthStore";
 import useAuthRedirect from "../../utils/authRedirect";
 
@@ -18,6 +23,7 @@ export default function DashboardSignUp() {
     useFetchCountries();
   const { data: industries, isFetching: isIndustriesFetching } =
     useFetchIndustries();
+
   const { userEmail, setUserEmail } = useAuthStore.getState();
   const { mutate, isPending } = useCreateAccount();
   const [showPassword, setShowPassword] = useState(false);
@@ -37,7 +43,9 @@ export default function DashboardSignUp() {
     countryId: "",
     countryName: "",
     state: "",
+    state_id: "",
     city: "",
+    city_id: "",
     address: "",
     postalCode: "",
     certificateOfIncorporation: null,
@@ -52,6 +60,12 @@ export default function DashboardSignUp() {
     businessWebsite: "",
   });
   const { isLoading } = useAuthRedirect();
+  const { data: states, isFetching: isStatesFetching } = useFetchStatesById(
+    formData?.countryId
+  );
+  const { data: cities, isFetching: isCitiesFetching } = useFetchCitiesById(
+    formData?.state_id
+  );
 
   const steps = [
     "Create Account",
@@ -111,9 +125,12 @@ export default function DashboardSignUp() {
         }
         break;
       case 2:
-        if (!formData.countryId) newErrors.countryId = "Country is required";
-        if (!formData.state) newErrors.state = "State is required";
-        if (!formData.city) newErrors.city = "City is required";
+        if (!formData.countryId && !formData.countryName)
+          newErrors.countryId = "Country is required";
+        if (!formData.state_id && !formData.state)
+          newErrors.state = "State is required";
+        if (!formData.city_id && !formData.city)
+          newErrors.city = "City is required";
         if (!formData.address) newErrors.address = "Address is required";
         if (!formData.postalCode)
           newErrors.postalCode = "Postal code is required";
@@ -134,30 +151,42 @@ export default function DashboardSignUp() {
       default:
         break;
     }
-    console.log("Validation errors:", newErrors);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const updateFormData = (field, value) => {
-    if (field === "countryId") {
-      const selectedCountry = countries?.find((c) => c.id === parseInt(value));
-      setFormData((prev) => ({
-        ...prev,
-        countryId: value,
-        countryName: selectedCountry ? selectedCountry.name : "",
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [field]: value,
-      }));
-    }
+    setFormData((prev) => {
+      const newFormData = { ...prev, [field]: value };
+      if (field === "countryId") {
+        newFormData.countryName =
+          value === "other"
+            ? ""
+            : countries?.find((c) => c.id === parseInt(value))?.name || "";
+        newFormData.state_id = "";
+        newFormData.state = "";
+        newFormData.city_id = "";
+        newFormData.city = "";
+      } else if (field === "state_id") {
+        newFormData.state =
+          value === "other"
+            ? ""
+            : states?.find((s) => s.id === parseInt(value))?.name || "";
+        newFormData.city_id = "";
+        newFormData.city = "";
+      } else if (field === "city_id") {
+        newFormData.city =
+          value === "other"
+            ? ""
+            : cities?.find((c) => c.id === parseInt(value))?.name || "";
+      }
+      return newFormData;
+    });
+    setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
   const handleNext = () => {
     const isValid = validateStep();
-    console.log("Is Step Valid:", isValid, "Current Step:", currentStep);
     if (isValid && currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
       setErrors({});
@@ -175,7 +204,6 @@ export default function DashboardSignUp() {
 
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
-
     const userData = {
       first_name: formData.contactPersonFirstName,
       last_name: formData.contactPersonLastName,
@@ -199,12 +227,24 @@ export default function DashboardSignUp() {
         phone: formData.businessPhone,
         website: formData.businessWebsite,
         zip: formData.postalCode,
-        country_id: formData.countryId,
-        country: formData.countryName,
-        city: formData.city,
-        state: formData.state,
+        country_id: formData.countryId === "other" ? null : formData.countryId,
+        country:
+          formData.countryName ||
+          countries?.find((c) => c.id === parseInt(formData.countryId))?.name ||
+          "",
+        state:
+          formData.state ||
+          states?.find((s) => s.id === parseInt(formData.state_id))?.name ||
+          "",
+        state_id: formData.state_id === "other" ? null : formData.state_id,
+        city:
+          formData.city ||
+          cities?.find((c) => c.id === parseInt(formData.city_id))?.name ||
+          "",
+        city_id: formData.city_id === "other" ? null : formData.city_id,
       },
     };
+
     mutate(userData, {
       onSuccess: () => {
         setUserEmail(formData.email);
@@ -247,6 +287,10 @@ export default function DashboardSignUp() {
             errors={errors}
             countries={countries}
             isCountriesFetching={isCountriesFetching}
+            states={states}
+            isStatesFetching={isStatesFetching}
+            cities={cities}
+            isCitiesFetching={isCitiesFetching}
           />
         );
       case 3:
@@ -298,10 +342,10 @@ export default function DashboardSignUp() {
 
   if (isLoading) {
     return (
-      <div className=" w-full h-svh flex items-center justify-center">
-        <Loader2 className=" w-12 text-[#288DD1] animate-spin" />
+      <div className="w-full h-svh flex items-center justify-center">
+        <Loader2 className="w-12 text-[#288DD1] animate-spin" />
       </div>
-    ); // Or a spinner
+    );
   }
 
   return (
@@ -321,30 +365,8 @@ export default function DashboardSignUp() {
               Create an account on Unicloud Africa.
             </p>
           </div>
-          {/* <div className="flex mb-6 bg-[#FAFAFA] border border-[#ECEDF0] rounded-[50px] p-3">
-            <button
-              onClick={() => setActiveTab("partner")}
-              className={`flex-1 py-2 px-4 rounded-[30px] text-sm font-normal whitespace-nowrap transition-colors ${
-                activeTab === "partner"
-                  ? "bg-[#288DD1] text-white shadow-sm font-semibold"
-                  : "text-[#676767] hover:text-gray-800 font-normal"
-              }`}
-            >
-              Register as Partner
-            </button>
-            <button
-              onClick={() => setActiveTab("client")}
-              className={`flex-1 py-2 px-4 rounded-[30px] text-sm font-normal whitespace-nowrap transition-colors ${
-                activeTab === "client"
-                  ? "bg-[#288DD1] text-white shadow-sm font-semibold"
-                  : "text-[#676767] hover:text-gray-800 font-normal"
-              }`}
-            >
-              Register as Client
-            </button>
-          </div> */}
           <StepProgress currentStep={currentStep} steps={steps} />
-          <div className="">{renderCurrentStep()}</div>
+          <div>{renderCurrentStep()}</div>
           <div className="flex gap-4 mt-8">
             {currentStep > 0 && (
               <button

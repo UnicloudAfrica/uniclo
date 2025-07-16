@@ -103,15 +103,20 @@ export default function ProjectDetails() {
   };
 
   const handleRowClick = (item) => {
-    alert(`Clicked on instance: ${item.name}`);
-    console.log("Selected Instance:", item);
+    // Encode the ID using btoa then encodeURIComponent
+    const encodedId = encodeURIComponent(btoa(item.identifier));
+    const instanceName = item.name; // No need to encode name as per request
+
+    // Navigate to the instance details page
+    navigate(
+      `/dashboard/instances/details?id=${encodedId}&name=${instanceName}`
+    );
   };
 
   // Loading state for project details
   if (isProjectFetching) {
     return (
       <>
-        <CartFloat />
         <Headbar onMenuClick={toggleMobileMenu} />
         <Sidebar
           isMobileMenuOpen={isMobileMenuOpen}
@@ -130,7 +135,6 @@ export default function ProjectDetails() {
   if (!projectDetails || projectError) {
     return (
       <>
-        <CartFloat />
         <Headbar onMenuClick={toggleMobileMenu} />
         <Sidebar
           isMobileMenuOpen={isMobileMenuOpen}
@@ -157,7 +161,6 @@ export default function ProjectDetails() {
 
   return (
     <>
-      <CartFloat />
       <Headbar onMenuClick={toggleMobileMenu} />
       <Sidebar
         isMobileMenuOpen={isMobileMenuOpen}
@@ -218,10 +221,7 @@ export default function ProjectDetails() {
                 {formatDate(projectDetails.created_at)}
               </span>
             </div>
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-600">Owner:</span>
-              <span className="text-gray-900">{projectDetails.owner}</span>
-            </div>
+            {/* Owner field is not in the provided project object, so it's removed */}
           </div>
         </div>
 
@@ -244,93 +244,78 @@ export default function ProjectDetails() {
                   Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  Instance Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  vCPUs
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  RAM
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                   Disk
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                  EBS Volume
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                   Operating System
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  HA
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  User
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  Account
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                   Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                  Action
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-[#E8E6EA]">
-              {projectDetails?.instances &&
-              projectDetails.instances?.length > 0 ? (
-                projectDetails.instances?.map(
-                  (
-                    item // Map through projectDetails.instances
-                  ) => (
-                    <tr
-                      key={item.id}
-                      onClick={() => handleRowClick(item)}
-                      className="hover:bg-gray-50 cursor-pointer"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                        {item.name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                        {item.instanceType}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                        {item.vCPUs}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                        {item.ram}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                        {item.disk}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                        {item.operatingSystem}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                        {item.ha}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                        {item.user}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                        {item.account}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${
-                            item.status === "Running"
-                              ? "bg-green-100 text-green-800"
-                              : item.status === "Stopped"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-gray-100 text-gray-800"
-                          }`}
-                        >
-                          {item.status}
-                        </span>
-                      </td>
-                    </tr>
-                  )
-                )
+              {currentData.length > 0 ? (
+                currentData.map((item) => (
+                  <tr
+                    key={item.id}
+                    onClick={() => handleRowClick(item)}
+                    className="hover:bg-gray-50 cursor-pointer"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                      {item.name || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                      {item.storage_size_gb
+                        ? `${item.storage_size_gb} GiB`
+                        : "N/A"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                      {item.ebs_volume?.name || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                      {item.os_image?.name || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${
+                          item.status === "Running"
+                            ? "bg-green-100 text-green-800"
+                            : item.status === "Stopped"
+                            ? "bg-red-100 text-red-800"
+                            : item.status === "spawning"
+                            ? "bg-blue-100 text-blue-800"
+                            : item.status === "payment_pending"
+                            ? "bg-orange-100 text-orange-800"
+                            : "bg-gray-100 text-gray-800" // Default for other statuses
+                        }`}
+                      >
+                        {item.status?.replace(/_/g, " ") || "N/A"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent row click from firing
+                          handleRowClick(item);
+                        }}
+                        className="text-[#288DD1] hover:underline text-sm font-medium"
+                      >
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                ))
               ) : (
                 <tr>
                   <td
-                    colSpan="10"
+                    colSpan="6" // Updated colspan to match new column count
                     className="px-6 py-4 text-center text-sm text-gray-500"
                   >
                     No instances found for this project.
@@ -343,69 +328,64 @@ export default function ProjectDetails() {
 
         {/* Mobile Cards */}
         <div className="md:hidden mt-6 space-y-4">
-          {projectDetails?.instances && projectDetails.instances?.length > 0 ? (
-            projectDetails.instances?.map(
-              (
-                item // Map through projectDetails.instances
-              ) => (
-                <div
-                  key={item.id}
-                  onClick={() => handleRowClick(item)}
-                  className="bg-white rounded-[12px] shadow-sm p-4 cursor-pointer border border-gray-200"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-base font-semibold text-gray-900">
-                      {item.name}
-                    </h3>
-                    <span
-                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${
-                        item.status === "Running"
-                          ? "bg-green-100 text-green-800"
-                          : item.status === "Stopped"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {item.status}
+          {currentData.length > 0 ? (
+            currentData.map((item) => (
+              <div
+                key={item.id}
+                onClick={() => handleRowClick(item)}
+                className="bg-white rounded-[12px] shadow-sm p-4 cursor-pointer border border-gray-200"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-base font-semibold text-gray-900">
+                    {item.name || "N/A"}
+                  </h3>
+                  <span
+                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${
+                      item.status === "Running"
+                        ? "bg-green-100 text-green-800"
+                        : item.status === "Stopped"
+                        ? "bg-red-100 text-red-800"
+                        : item.status === "spawning"
+                        ? "bg-blue-100 text-blue-800"
+                        : item.status === "payment_pending"
+                        ? "bg-orange-100 text-orange-800"
+                        : "bg-gray-100 text-gray-800"
+                    }`}
+                  >
+                    {item.status?.replace(/_/g, " ") || "N/A"}
+                  </span>
+                </div>
+                <div className="space-y-1 text-sm text-gray-600">
+                  <div className="flex justify-between">
+                    <span className="font-medium">Disk:</span>
+                    <span>
+                      {item.storage_size_gb
+                        ? `${item.storage_size_gb} GiB`
+                        : "N/A"}
                     </span>
                   </div>
-                  <div className="space-y-1 text-sm text-gray-600">
-                    <div className="flex justify-between">
-                      <span className="font-medium">Instance Type:</span>
-                      <span>{item.instanceType}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">vCPUs:</span>
-                      <span>{item.vCPUs}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">RAM:</span>
-                      <span>{item.ram}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Disk:</span>
-                      <span>{item.disk}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">OS:</span>
-                      <span>{item.operatingSystem}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">HA:</span>
-                      <span>{item.ha}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">User:</span>
-                      <span>{item.user}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Account:</span>
-                      <span>{item.account}</span>
-                    </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">EBS Volume:</span>
+                    <span>{item.ebs_volume?.name || "N/A"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">OS:</span>
+                    <span>{item.os_image?.name || "N/A"}</span>
                   </div>
                 </div>
-              )
-            )
+                <div className="mt-4 text-right">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent row click from firing
+                      handleRowClick(item);
+                    }}
+                    className="text-[#288DD1] hover:underline text-sm font-medium"
+                  >
+                    View Details
+                  </button>
+                </div>
+              </div>
+            ))
           ) : (
             <div className="bg-white rounded-[12px] shadow-sm p-4 text-center text-gray-500">
               No instances found for this project.
@@ -414,7 +394,7 @@ export default function ProjectDetails() {
         </div>
 
         {/* Pagination */}
-        {projectDetails?.instances?.length > itemsPerPage && (
+        {instances.length > itemsPerPage && (
           <div className="flex items-center justify-center px-4 py-3 border-t border-gray-200 bg-white rounded-b-[12px] mt-6">
             <div className="flex items-center space-x-2">
               <button

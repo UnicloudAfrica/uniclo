@@ -56,12 +56,6 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     //   path: "/dashboard/modules",
     // },
     {
-      name: "Purchased Modules",
-      icon: purchasedModules,
-      activeIcon: activePurchasedModules,
-      path: "/dashboard/purchased-modules",
-    },
-    {
       name: "Projects",
       icon: clients,
       activeIcon: activeClients,
@@ -75,8 +69,15 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
             activeIcon: activeClients,
             path: "/dashboard/instances",
           },
+          {
+            name: "Purchased Instances",
+            icon: purchasedModules,
+            activeIcon: activePurchasedModules,
+            path: "/dashboard/purchased-instances",
+          },
         ]
       : []),
+
     {
       name: "Payment History",
       icon: paymentHistory,

@@ -3,12 +3,61 @@ import api from "../index/api";
 import silentApi from "../index/silent";
 
 // GET: Fetch all instance requests
-const fetchInstanceRequests = async () => {
-  const res = await silentApi("GET", "/business/instances");
+const fetchInstanceRequests = async (params = {}) => {
+  // Define default parameters, including per_page
+  const defaultParams = {
+    per_page: 10, // Default to 10 items per page
+  };
+
+  // Merge provided params with defaults
+  const queryParams = { ...defaultParams, ...params };
+
+  // Build query string from parameters
+  const queryString = Object.keys(queryParams)
+    .filter(
+      (key) => queryParams[key] !== undefined && queryParams[key] !== null
+    )
+    .map((key) => `${key}=${encodeURIComponent(queryParams[key])}`)
+    .join("&");
+
+  // Construct the URI with the query string
+  const uri = `/business/instances${queryString ? `?${queryString}` : ""}`;
+
+  const res = await silentApi("GET", uri);
   if (!res.data) {
     throw new Error("Failed to fetch instance requests");
   }
-  return res.data;
+  return res;
+};
+
+// GET: Fetch all instance requests
+const fetchPurchasedInstances = async (params = {}) => {
+  // Define default parameters, including per_page
+  const defaultParams = {
+    per_page: 10, // Default to 10 items per page
+  };
+
+  // Merge provided params with defaults
+  const queryParams = { ...defaultParams, ...params };
+
+  // Build query string from parameters
+  const queryString = Object.keys(queryParams)
+    .filter(
+      (key) => queryParams[key] !== undefined && queryParams[key] !== null
+    )
+    .map((key) => `${key}=${encodeURIComponent(queryParams[key])}`)
+    .join("&");
+
+  // Construct the URI with the query string
+  const uri = `/business/purchased-instances${
+    queryString ? `?${queryString}` : ""
+  }`;
+
+  const res = await silentApi("GET", uri);
+  if (!res.data) {
+    throw new Error("Failed to fetch instance requests");
+  }
+  return res;
 };
 
 // GET: Fetch instance request by ID
@@ -39,10 +88,25 @@ const updateInstanceRequest = async ({ id, instanceData }) => {
 };
 
 // Hook to fetch all instance requests
-export const useFetchInstanceRequests = (options = {}) => {
+export const useFetchInstanceRequests = (params = {}, options = {}) => {
   return useQuery({
-    queryKey: ["instanceRequests"],
-    queryFn: fetchInstanceRequests,
+    // Update queryKey to include params, so different params result in different cached data
+    queryKey: ["instanceRequests", params],
+    // Pass params to the queryFn
+    queryFn: () => fetchInstanceRequests(params),
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+
+// Hook to fetch all purchased instance 
+export const useFetchPurchasedInstances = (params = {}, options = {}) => {
+  return useQuery({
+    // Update queryKey to include params, so different params result in different cached data
+    queryKey: ["instanceRequests", params],
+    // Pass params to the queryFn
+    queryFn: () => fetchPurchasedInstances(params),
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     refetchOnWindowFocus: false,
     ...options,

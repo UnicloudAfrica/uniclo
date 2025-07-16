@@ -55,6 +55,8 @@ import Project from "./dashboard/pages/projectmain";
 import Instances from "./dashboard/pages/instances";
 import ProjectDetails from "./dashboard/pages/projectDetails";
 import InstancesDetails from "./dashboard/pages/instancesDetails";
+import AdminProducts from "./adminDashboard/pages/adminProducts";
+import AdminTax from "./adminDashboard/pages/adminTax";
 
 function App() {
   const location = useLocation();
@@ -108,7 +110,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/modules" element={<Modules />} />
           <Route
-            path="/dashboard/purchased-modules"
+            path="/dashboard/purchased-instances"
             element={<PurchasedModules />}
           />
           <Route path="/dashboard/clients" element={<Clients />} />
@@ -154,6 +156,11 @@ function App() {
             element={<AdminPurchasedModules />}
           />
           <Route path="/admin-dashboard/payment" element={<AdminPayment />} />
+          <Route path="/admin-dashboard/products" element={<AdminProducts />} />
+          <Route
+            path="/admin-dashboard/tax-configuration"
+            element={<AdminTax />}
+          />
         </Routes>
       </AnimatePresence>
     </>

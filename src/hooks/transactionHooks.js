@@ -23,12 +23,13 @@ export const useVerifyTransaction = () => {
   return useMutation({
     mutationFn: ({ transactionIdentifier, userData }) =>
       verifyTransaction(transactionIdentifier, userData),
+    retry: false,
     onError: (error) => {
       console.error(error);
     },
     onSuccess: (data) => {
       // console.log(data);
-      queryClient.invalidateQueries(["cart"]);
+      // queryClient.invalidateQueries(["cart"]);
     },
   });
 };

@@ -55,17 +55,23 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       activeIcon: activeClients,
       path: "/admin-dashboard/clients",
     },
-    {
-      name: "Modules",
-      icon: modules,
-      activeIcon: activemodules,
-      path: "/admin-dashboard/modules",
-    },
+    // {
+    //   name: "Modules",
+    //   icon: modules,
+    //   activeIcon: activemodules,
+    //   path: "/admin-dashboard/modules",
+    // },
     {
       name: "Payment",
       icon: paymentHistory,
       activeIcon: activePaymentHistory,
       path: "/admin-dashboard/payment",
+    },
+    {
+      name: "Products",
+      icon: modules,
+      activeIcon: activemodules,
+      path: "/admin-dashboard/products",
     },
     {
       name: "Purchased Modules",
@@ -78,6 +84,12 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       icon: supportTicket,
       activeIcon: activeSupportTicket,
       path: "/admin-dashboard/support-ticket",
+    },
+    {
+      name: "Tax Configuration",
+      icon: modules,
+      activeIcon: activemodules,
+      path: "/admin-dashboard/tax-configuration",
     },
   ];
 

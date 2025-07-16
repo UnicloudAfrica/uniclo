@@ -43,7 +43,7 @@ export default function ClientsOverview() {
 
   return (
     <>
-      <CartFloat />
+      {/* <CartFloat /> */}
       <Headbar onMenuClick={toggleMobileMenu} />
       <Sidebar
         isMobileMenuOpen={isMobileMenuOpen}

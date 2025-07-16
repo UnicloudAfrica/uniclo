@@ -59,7 +59,7 @@ export default function Project() {
   if (isProjectsFetching) {
     return (
       <>
-        <CartFloat />
+        {/* <CartFloat /> */}
         <Headbar onMenuClick={toggleMobileMenu} />
         <Sidebar
           isMobileMenuOpen={isMobileMenuOpen}
@@ -76,7 +76,7 @@ export default function Project() {
 
   return (
     <>
-      <CartFloat />
+      {/* <CartFloat /> */}
       <Headbar onMenuClick={toggleMobileMenu} />
       <Sidebar
         isMobileMenuOpen={isMobileMenuOpen}

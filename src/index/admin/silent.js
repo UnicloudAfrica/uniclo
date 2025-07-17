@@ -1,6 +1,8 @@
 import config from "../../config";
 import useAdminAuthStore from "../../stores/adminAuthStore";
 
+let isRedirecting = false;
+
 const silentApi = async (method, uri, body = null) => {
   const url = config.adminURL + uri;
   const { token, setToken, clearToken } = useAdminAuthStore.getState();
@@ -36,7 +38,21 @@ const silentApi = async (method, uri, body = null) => {
     } else {
       // Handle 401 silently by clearing the token
       if (response.status === 401) {
-        clearToken(); // Clear token without redirecting or showing toasts
+        clearToken();
+        if (window.location.pathname === "/sign-in") {
+          // ToastUtils.error("Please check your account details.");
+          return;
+        } else {
+          // ToastUtils.error("Session expired. Redirecting to login...", {
+          //   duration: 3000,
+          // });
+          window.location = "/admin-signin";
+        }
+
+        // Reset redirection state after 5 seconds
+        setTimeout(() => {
+          isRedirecting = false;
+        }, 5000);
         throw new Error("Unauthorized");
       }
 

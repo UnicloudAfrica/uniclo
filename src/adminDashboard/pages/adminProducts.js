@@ -7,6 +7,7 @@ import BandWidth from "./productsComponents/bandwidth";
 import OSImages from "./productsComponents/osImages";
 import EBSImages from "./productsComponents/ebsImages";
 import Vms from "./productsComponents/vms";
+import ColocationSetting from "./productsComponents/colocation";
 
 export default function AdminProducts() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -18,6 +19,11 @@ export default function AdminProducts() {
     { id: "os-image", name: "OS Images Management", Component: OSImages },
     { id: "ebs-volumes", name: "EBS Volumes Management", Component: EBSImages },
     { id: "vms", name: "VMs Management", Component: Vms },
+    {
+      id: "colocation ",
+      name: "Colocation  Management",
+      Component: ColocationSetting,
+    },
   ];
 
   // Function to toggle mobile menu

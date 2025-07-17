@@ -57,9 +57,13 @@ import ProjectDetails from "./dashboard/pages/projectDetails";
 import InstancesDetails from "./dashboard/pages/instancesDetails";
 import AdminProducts from "./adminDashboard/pages/adminProducts";
 import AdminTax from "./adminDashboard/pages/adminTax";
+import TenantHome from "./tenantDashboard/pages/tenantHome";
+import { getSubdomain } from "./utils/getSubdomaim";
 
 function App() {
   const location = useLocation();
+  const subdomain = getSubdomain();
+  const isTenant = !!subdomain; // True for xyz.unicloudafrica.com, false for unicloudafrica.com
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -69,7 +73,10 @@ function App() {
     <>
       <AnimatePresence mode="wait">
         <Routes>
-          <Route path="/" element={<Landing />} />
+          <Route
+            path="/"
+            element={isTenant ? <TenantHome tenant={subdomain} /> : <Landing />}
+          />
           <Route path="/about" element={<About />} />
           <Route path="/management" element={<Advisory />} />
           <Route path="/advisory-board" element={<Management />} />

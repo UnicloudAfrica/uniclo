@@ -1,40 +1,39 @@
 import React, { useState } from "react";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { useFetchVmInstances } from "../../../hooks/adminHooks/vmHooks"; // Ensure this path is correct
+import AddVMModal from "./vmSubs/addVms";
+import EditVMModal from "./vmSubs/editVms";
+import DeleteVMModal from "./vmSubs/deleteVms";
 
 const Vms = () => {
   const { data: vms, isFetching: isVmsFetching } = useFetchVmInstances();
   const [isAddVMModalOpen, setIsAddVMModalOpen] = useState(false);
-  // You would typically have states for edit/delete modals here too
   const [isEditVMModalOpen, setIsEditVMModalOpen] = useState(false);
   const [isDeleteVMModalOpen, setIsDeleteVMModalOpen] = useState(false);
   const [selectedVM, setSelectedVM] = useState(null); // To pass data to modals
 
   const handleAddVM = () => {
     setIsAddVMModalOpen(true);
-    // Logic to open Add VM modal
   };
 
   const handleEditVM = (vm) => {
     setSelectedVM(vm);
     setIsEditVMModalOpen(true);
-    // Logic to open Edit VM modal
   };
 
   const handleDeleteVM = (vm) => {
     setSelectedVM(vm);
     setIsDeleteVMModalOpen(true);
-    // Logic to open Delete VM confirmation modal
   };
 
-  const formatCurrency = (amount, currency = "NGN") => {
-    // Assuming NGN based on previous context, adjust if needed
+  // Updated formatCurrency to use "USD" as the default currency
+  const formatCurrency = (amount, currency = "USD") => {
     if (amount === null || amount === undefined) return "N/A";
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: currency,
-      minimumFractionDigits: 0, // Prices seem to be whole numbers
-      maximumFractionDigits: 0,
+      minimumFractionDigits: 2, // Changed to 2 for typical currency display
+      maximumFractionDigits: 2,
     }).format(parseFloat(amount));
   };
 
@@ -90,32 +89,15 @@ const Vms = () => {
                 Name
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Identifier
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Family
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                 vCPUs
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                 Memory (GiB)
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Price/Hour
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Price/Day
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Price/Week
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Price/Month
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Created At
-              </th>
+                Price
+              </th>{" "}
+              {/* Changed from Price/Hour */}
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                 Action
               </th>
@@ -129,31 +111,13 @@ const Vms = () => {
                     {vm.name || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {vm.identifier || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {vm.family || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                     {vm.vcpus || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                     {formatMemory(vm.memory_gib)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatCurrency(vm.price_per_hour)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatCurrency(vm.price_per_day)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatCurrency(vm.price_per_week)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatCurrency(vm.price_per_month)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatDate(vm.created_at)}
+                    {formatCurrency(vm.price)} {/* Using vm.price */}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
                     <div className="flex items-center space-x-3">
@@ -178,7 +142,7 @@ const Vms = () => {
             ) : (
               <tr>
                 <td
-                  colSpan="11"
+                  colSpan="5"
                   className="px-6 py-4 text-center text-sm text-gray-500"
                 >
                   No VM instances found.
@@ -220,14 +184,6 @@ const Vms = () => {
               </div>
               <div className="space-y-1 text-sm text-gray-600">
                 <div className="flex justify-between">
-                  <span className="font-medium">Identifier:</span>
-                  <span>{vm.identifier || "N/A"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Family:</span>
-                  <span>{vm.family || "N/A"}</span>
-                </div>
-                <div className="flex justify-between">
                   <span className="font-medium">vCPUs:</span>
                   <span>{vm.vcpus || "N/A"}</span>
                 </div>
@@ -236,16 +192,9 @@ const Vms = () => {
                   <span>{formatMemory(vm.memory_gib)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium">Price/Hour:</span>
-                  <span>{formatCurrency(vm.price_per_hour)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Price/Month:</span>
-                  <span>{formatCurrency(vm.price_per_month)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Created At:</span>
-                  <span>{formatDate(vm.created_at)}</span>
+                  <span className="font-medium">Price:</span>{" "}
+                  {/* Changed from Price/Hour */}
+                  <span>{formatCurrency(vm.price)}</span> {/* Using vm.price */}
                 </div>
               </div>
             </div>
@@ -258,7 +207,6 @@ const Vms = () => {
       </div>
 
       {/* Modals (place your Add/Edit/Delete VM modals here) */}
-      {/* Example:
       <AddVMModal
         isOpen={isAddVMModalOpen}
         onClose={() => setIsAddVMModalOpen(false)}
@@ -273,7 +221,6 @@ const Vms = () => {
         onClose={() => setIsDeleteVMModalOpen(false)}
         vm={selectedVM}
       />
-      */}
     </>
   );
 };

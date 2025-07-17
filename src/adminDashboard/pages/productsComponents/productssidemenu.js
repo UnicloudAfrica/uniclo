@@ -7,6 +7,7 @@ const ProductSideMenu = ({ activeTab, onTabChange }) => {
     { id: "ebs-volumes", name: "EBS Volumes" },
     { id: "vms", name: "VMs" },
     { id: "bandwidth", name: "Bandwidth" },
+    { id: "colocation ", name: "Colocation " },
   ];
 
   return (

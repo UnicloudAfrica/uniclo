@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { useFetchOsImages } from "../../../hooks/adminHooks/os-imageHooks"; // Ensure this path is correct
 import AddOSImageModal from "./osSubs/addOs";
+import DeleteOS from "./osSubs/deleteOS";
+import EditOS from "./osSubs/editOs";
 
 const OSImages = () => {
   const { data: osImages, isFetching: isOSimagesFetching } = useFetchOsImages();
@@ -25,13 +27,14 @@ const OSImages = () => {
     setIsDeleteOSImageModalOpen(true);
   };
 
+  // Updated formatCurrency to use "USD" and 2 decimal places for standard currency display
   const formatCurrency = (amount, currency = "USD") => {
     if (amount === null || amount === undefined) return "N/A";
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      minimumFractionDigits: 2, // Standard for USD
+      maximumFractionDigits: 2, // Standard for USD
     }).format(parseFloat(amount));
   };
 
@@ -93,15 +96,6 @@ const OSImages = () => {
                 License Fee (USD)
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Collocation %
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Created At
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Updated At
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                 Action
               </th>
             </tr>
@@ -117,16 +111,8 @@ const OSImages = () => {
                     {image.identifier || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatCurrency(image.license_fee_usd)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatPercentage(image.collocation_percentage)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatDate(image.created_at)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatDate(image.updated_at)}
+                    {/* Assuming 'price' from the data corresponds to 'license_fee' */}
+                    {formatCurrency(image.price)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
                     <div className="flex items-center space-x-3">
@@ -198,19 +184,8 @@ const OSImages = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">License Fee (USD):</span>
-                  <span>{formatCurrency(image.license_fee_usd)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Collocation %:</span>
-                  <span>{formatPercentage(image.collocation_percentage)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Created At:</span>
-                  <span>{formatDate(image.created_at)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Updated At:</span>
-                  <span>{formatDate(image.updated_at)}</span>
+                  {/* Assuming 'price' from the data corresponds to 'license_fee' */}
+                  <span>{formatCurrency(image.price)}</span>
                 </div>
               </div>
             </div>
@@ -227,18 +202,18 @@ const OSImages = () => {
         isOpen={isAddOSImageModalOpen}
         onClose={() => setIsAddOSImageModalOpen(false)}
       />
-      {/* Example:
-      <EditOSImageModal
+
+      <EditOS
         isOpen={isEditOSImageModalOpen}
         onClose={() => setIsEditOSImageModalOpen(false)}
         osImage={selectedOSImage}
       />
-      <DeleteOSImageModal
+
+      <DeleteOS
         isOpen={isDeleteOSImageModalOpen}
         onClose={() => setIsDeleteOSImageModalOpen(false)}
         osImage={selectedOSImage}
       />
-      */}
     </>
   );
 };

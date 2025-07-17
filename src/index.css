@@ -20,6 +20,17 @@ body {
 }
 /* menu  */
 
+/* Target sonner toasts */
+[data-sonner-toast] {
+  font-family: "Outfit", sans-serif !important;
+}
+
+/* Optionally target specific parts of the toast (e.g., message and description) */
+[data-sonner-toast] [data-title],
+[data-sonner-toast] [data-description] {
+  font-family: "Outfit", sans-serif !important;
+}
+
 .demo {
   display: flex;
   align-items: center;

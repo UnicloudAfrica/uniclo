@@ -1,41 +1,42 @@
 import React, { useState } from "react";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { useFetchEbsVolumes } from "../../../hooks/adminHooks/ebsHooks"; // Ensure this path is correct
+import AddEBSModal from "./ebsSubs/addEbs";
+import EditEBSModal from "./ebsSubs/editEbs";
+import DeleteEBSModal from "./ebsSubs/deleteEbs";
+// import EditEBSModal from "./ebsSubs/editEbs"; // Uncomment when created
+// import DeleteEBSModal from "./ebsSubs/deleteEbs"; // Uncomment when created
 
 const EBSImages = () => {
   const { data: ebsVolumes, isFetching: isEbsVolumesFetching } =
     useFetchEbsVolumes();
   const [isAddEBSModalOpen, setIsAddEBSModalOpen] = useState(false);
-  // You would typically have states for edit/delete modals here too
   const [isEditEBSModalOpen, setIsEditEBSModalOpen] = useState(false);
   const [isDeleteEBSModalOpen, setIsDeleteEBSModalOpen] = useState(false);
   const [selectedEBSVolume, setSelectedEBSVolume] = useState(null); // To pass data to modals
 
   const handleAddEBSVolume = () => {
     setIsAddEBSModalOpen(true);
-    // Logic to open Add EBS Volume modal
   };
 
   const handleEditEBSVolume = (volume) => {
     setSelectedEBSVolume(volume);
     setIsEditEBSModalOpen(true);
-    // Logic to open Edit EBS Volume modal
   };
 
   const handleDeleteEBSVolume = (volume) => {
     setSelectedEBSVolume(volume);
     setIsDeleteEBSModalOpen(true);
-    // Logic to open Delete EBS Volume confirmation modal
   };
 
-  const formatCurrency = (amount, currency = "NGN") => {
-    // Assuming NGN based on previous context, adjust if needed
+  // Updated formatCurrency to use "USD" and 2 decimal places
+  const formatCurrency = (amount, currency = "USD") => {
     if (amount === null || amount === undefined) return "N/A";
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: currency,
-      minimumFractionDigits: 0, // Prices seem to be whole numbers
-      maximumFractionDigits: 0,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(parseFloat(amount));
   };
 
@@ -92,7 +93,7 @@ const EBSImages = () => {
                 Media Type
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Price/Month
+                Price
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                 IOPS Read
@@ -122,7 +123,7 @@ const EBSImages = () => {
                     {volume.media_type || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatCurrency(volume.price_per_month)}
+                    {formatCurrency(volume.price)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                     {volume.iops_read || "N/A"}
@@ -206,8 +207,8 @@ const EBSImages = () => {
                   <span>{volume.media_type || "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium">Price/Month:</span>
-                  <span>{formatCurrency(volume.price_per_month)}</span>
+                  <span className="font-medium">Price:</span>
+                  <span>{formatCurrency(volume.price)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">IOPS Read:</span>
@@ -232,7 +233,6 @@ const EBSImages = () => {
       </div>
 
       {/* Modals (place your Add/Edit/Delete EBS Volume modals here) */}
-      {/* Example:
       <AddEBSModal
         isOpen={isAddEBSModalOpen}
         onClose={() => setIsAddEBSModalOpen(false)}
@@ -242,12 +242,12 @@ const EBSImages = () => {
         onClose={() => setIsEditEBSModalOpen(false)}
         ebsVolume={selectedEBSVolume}
       />
+
       <DeleteEBSModal
         isOpen={isDeleteEBSModalOpen}
         onClose={() => setIsDeleteEBSModalOpen(false)}
         ebsVolume={selectedEBSVolume}
       />
-      */}
     </>
   );
 };

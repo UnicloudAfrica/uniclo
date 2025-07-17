@@ -201,7 +201,7 @@ export default function AdminLogin() {
             </button>
 
             {/* Sign Up Link */}
-            <div className="text-center">
+            {/* <div className="text-center">
               <span className="text-sm text-[#1E1E1E99]">
                 Don't have an account?{" "}
               </span>
@@ -212,7 +212,7 @@ export default function AdminLogin() {
               >
                 Signup
               </Link>
-            </div>
+            </div> */}
           </form>
         </div>
       </div>

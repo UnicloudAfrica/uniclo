@@ -73,10 +73,11 @@ function App() {
     <>
       <AnimatePresence mode="wait">
         <Routes>
-          <Route
+          {/* <Route
             path="/"
             element={isTenant ? <TenantHome tenant={subdomain} /> : <Landing />}
-          />
+          /> */}
+          <Route path="/" element={<Landing />} />
           <Route path="/about" element={<About />} />
           <Route path="/management" element={<Advisory />} />
           <Route path="/advisory-board" element={<Management />} />

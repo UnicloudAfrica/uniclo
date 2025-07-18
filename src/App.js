@@ -110,8 +110,8 @@ function App() {
           <Route path="/career" element={<Career />} />
 
           {/* dashboard pages */}
-          {/* <Route path="/sign-in" element={<DashboardLogin />} />
-          <Route path="/sign-up" element={<DashboardSignUp />} /> */}
+          <Route path="/sign-in" element={<DashboardLogin />} />
+          <Route path="/sign-up" element={<DashboardSignUp />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/verify-mail" element={<VerifyMail />} />

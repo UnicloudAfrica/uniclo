@@ -230,3 +230,9 @@ img {
   background-color: #288dd1;
   -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, 0.5);
 }
+.sub-input {
+  border-top-left-radius: 0.5rem /* 8px */;
+  border-bottom-left-radius: 0.5rem /* 8px */;
+  border-bottom-right-radius: 0px;
+  border-top-right-radius: 0px;
+}

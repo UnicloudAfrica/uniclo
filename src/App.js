@@ -59,6 +59,11 @@ import AdminProducts from "./adminDashboard/pages/adminProducts";
 import AdminTax from "./adminDashboard/pages/adminTax";
 import TenantHome from "./tenantDashboard/pages/tenantHome";
 import { getSubdomain } from "./utils/getSubdomaim";
+import DashboardSignUpV2 from "./dashboard/pages/sign-upV2";
+import DashboardLoginV2 from "./dashboard/pages/loginV2";
+import TenantRegister from "./tenantDashboard/pages/tenant-signup";
+import TenantLogin from "./tenantDashboard/pages/tenant-signin";
+import ClientDashboard from "./tenantDashboard/pages/client-dashboard";
 
 function App() {
   const location = useLocation();
@@ -169,6 +174,14 @@ function App() {
             path="/admin-dashboard/tax-configuration"
             element={<AdminTax />}
           />
+
+          {/* new pages */}
+          <Route path="/sign-upv2" element={<DashboardSignUpV2 />} />
+          <Route path="/sign-inv2" element={<DashboardLoginV2 />} />
+          <Route path="/tenant-home" element={<TenantHome />} />
+          <Route path="/tenant-sign-up" element={<TenantRegister />} />
+          <Route path="/tenant-sign-in" element={<TenantLogin />} />
+          <Route path="/client-dashboard" element={<ClientDashboard />} />
         </Routes>
       </AnimatePresence>
     </>

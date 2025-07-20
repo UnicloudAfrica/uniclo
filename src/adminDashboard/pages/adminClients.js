@@ -1,24 +1,31 @@
 import {
   ChevronLeft,
   ChevronRight,
-  MoreHorizontal,
+  Eye, // Import Eye icon
+  Trash2, // Import Trash2 icon
   Settings2,
+  Loader2,
 } from "lucide-react";
 import AdminActiveTab from "../components/adminActiveTab";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import { useEffect, useRef, useState } from "react";
-import AddClientModal from "../components/clientsComps/addClientModal";
+import { useFetchClients } from "../../hooks/adminHooks/clientHooks";
+import AddClientModal from "./clientComps/addClient";
+// import DeleteClientModal from "./clientComps/deleteClient";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 const AdminClients = () => {
+  const navigate = useNavigate(); // Initialize useNavigate
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [searchQuery, setSearchQuery] = useState("");
-  const [openDropdown, setOpenDropdown] = useState(null);
-  const dropdownRef = useRef(null);
   const [isAddClientOpen, setAddClient] = useState(false);
+  const [isDeleteClientModalOpen, setIsDeleteClientModalOpen] = useState(false); // State for delete modal
+  const [selectedClient, setSelectedClient] = useState(null); // State to hold client for deletion
   // State to control mobile menu visibility
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { data: clients, isFetching: isClientsFetching } = useFetchClients();
 
   // Function to toggle mobile menu
   const toggleMobileMenu = () => {
@@ -33,86 +40,15 @@ const AdminClients = () => {
   const openAddClient = () => setAddClient(true);
   const closeAddClient = () => setAddClient(false);
 
-  // Empty data array to show "No clients found"
-  const data = [];
-  /*
-  // Original data for reference if needed later
-  const data = [
-    {
-      id: "#CL-191",
-      name: "Surname Firstname",
-      email: "email@gmail.com",
-      phone: "0811222233",
-      module: "Z2 Compute Instances",
-    },
-    {
-      id: "#CL-192",
-      name: "Surname Firstname",
-      email: "email@gmail.com",
-      phone: "0811222233",
-      module: "Z4 Compute Instances",
-    },
-    {
-      id: "#CL-193",
-      name: "Surname Firstname",
-      email: "email@gmail.com",
-      phone: "0811222233",
-      module: "Z8 Compute Instances",
-    },
-    {
-      id: "#CL-194",
-      name: "Surname Firstname",
-      email: "email@gmail.com",
-      phone: "0811222233",
-      module: "Shared Storage",
-    },
-    {
-      id: "#CL-195",
-      name: "Surname Firstname",
-      email: "email@gmail.com",
-      phone: "0811222233",
-      module: "Z4 Compute Instances",
-    },
-    {
-      id: "#CL-196",
-      name: "Surname Firstname",
-      email: "email@gmail.com",
-      phone: "0811222233",
-      module: "Z4 Compute Instances",
-    },
-    {
-      id: "#CL-197",
-      name: "Surname Firstname",
-      email: "email@gmail.com",
-      phone: "0811222233",
-      module: "Z4 Compute Instances",
-    },
-    {
-      id: "#CL-198",
-      name: "Surname Firstname",
-      email: "email@gmail.com",
-      phone: "0811222233",
-      module: "Z4 Compute Instances",
-    },
-    {
-      id: "#CL-199",
-      name: "Surname Firstname",
-      email: "email@gmail.com",
-      phone: "0811222233",
-      module: "Z4 Compute Instances",
-    },
-    {
-      id: "#CL-200",
-      name: "Surname Firstname",
-      email: "email@gmail.com",
-      phone: "0811222233",
-      module: "Z4 Compute Instances",
-    },
-  ];
-  */
+  // Use the fetched clients data, default to empty array if not available yet
+  const clientData = clients || [];
 
-  const filteredData = data.filter((item) =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredData = clientData.filter(
+    (item) =>
+      item.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.last_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.phone.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
@@ -127,35 +63,35 @@ const AdminClients = () => {
     }
   };
 
-  const toggleDropdown = (itemId) => {
-    setOpenDropdown(openDropdown === itemId ? null : itemId);
+  const handleViewDetails = (client) => {
+    // Navigate to a client details page. Replace with your actual route.
+    // For now, a placeholder navigation or alert.
+    alert(
+      `Viewing details for client: ${client.first_name} ${client.last_name}`
+    );
+    // navigate(`/admin/clients/${client.id}`);
   };
 
-  const closeDropdown = () => {
-    setOpenDropdown(null);
+  const handleDeleteClient = (client) => {
+    setSelectedClient(client);
+    setIsDeleteClientModalOpen(true);
   };
 
-  const handleDropdownAction = (action, itemId) => {
-    console.log(`${action} for ${itemId}`);
-    closeDropdown();
+  const closeDeleteClientModal = () => {
+    setIsDeleteClientModalOpen(false);
+    setSelectedClient(null); // Clear selected client on close
   };
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setOpenDropdown(null);
-      }
-    };
-
-    if (openDropdown) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [openDropdown]);
+  const onClientDeleteConfirm = () => {
+    // This function will be called from DeleteClientModal after confirmation
+    // In a real app, you would trigger the actual delete API call here
+    console.log("Client deletion confirmed for:", selectedClient.id);
+    // After successful deletion, you might want to refetch clients or update the list
+    // For now, just close the modal.
+    closeDeleteClientModal();
+    // You might want to trigger a refetch of clients here
+    // queryClient.invalidateQueries(['clients']); // Assuming react-query
+  };
 
   return (
     <>
@@ -176,7 +112,7 @@ const AdminClients = () => {
           <div className="relative">
             <input
               type="text"
-              placeholder="Search Name"
+              placeholder="Search Name, Email, or Phone"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-72 px-4 py-2 bg-[#F5F5F5] rounded-[8px] border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#288DD1]"
@@ -188,225 +124,219 @@ const AdminClients = () => {
           </button>
         </div>
 
-        {/* Desktop Table */}
-        <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px] border border-gray-200">
-          <table className="w-full">
-            <thead className="bg-[#F5F5F5]">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  CLIENT ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  NAME
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  EMAIL ADDRESS
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  PHONE NUMBER
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  CURRENT MODULE
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  ACTION
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-[#E8E6EA]">
-              {currentData.length > 0 ? (
-                currentData.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.id}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.email}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.phone}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.module}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div
-                        className="relative"
-                        ref={openDropdown === item.id ? dropdownRef : null}
-                      >
-                        <button
-                          onClick={() => toggleDropdown(item.id)}
-                          className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                        >
-                          <MoreHorizontal className="w-4 h-4" />
-                        </button>
-                        {openDropdown === item.id && (
-                          <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+        {isClientsFetching ? (
+          <div className="flex justify-center items-center h-40">
+            <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
+            <p className="ml-2 text-gray-600">Loading clients...</p>
+          </div>
+        ) : (
+          <>
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px] border border-gray-200">
+              <table className="w-full">
+                <thead className="bg-[#F5F5F5]">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                      CLIENT ID
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                      NAME
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                      EMAIL ADDRESS
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                      PHONE NUMBER
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                      ACTION
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-[#E8E6EA]">
+                  {currentData.length > 0 ? (
+                    currentData.map((item) => (
+                      <tr key={item.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                          {item.id}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                          {item.first_name} {item.last_name}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                          {item.email}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                          {item.phone}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
+                          <div className="flex items-center space-x-3">
                             <button
-                              onClick={() =>
-                                handleDropdownAction("View Details", item.id)
-                              }
-                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent row click if any parent row has a click handler
+                                handleViewDetails(item);
+                              }}
+                              className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
+                              title="View Details"
                             >
-                              View Details
+                              <Eye className="w-4 h-4" />
                             </button>
                             <button
-                              onClick={() =>
-                                handleDropdownAction("Suspend Client", item.id)
-                              }
-                              className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent row click
+                                handleDeleteClient(item);
+                              }}
+                              className="text-red-500 hover:text-red-700 transition-colors"
+                              title="Delete Client"
                             >
-                              Suspend Client
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
-                        )}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan="5"
+                        className="px-6 py-4 text-center text-sm text-gray-500"
+                      >
+                        No clients found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden mt-6 space-y-4">
+              {currentData.length > 0 ? (
+                currentData.map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-white border border-[#E8E6EA] rounded-[8px] p-4 mb-4"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-medium text-[#1C1C1C]">
+                        {item.id}
+                      </h3>
+                      <div className="flex items-center space-x-3">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewDetails(item);
+                          }}
+                          className="text-[#288DD1] hover:text-[#1976D2] transition-colors p-1"
+                          title="View Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteClient(item);
+                          }}
+                          className="text-red-500 hover:text-red-700 transition-colors p-1"
+                          title="Delete Client"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
-                    </td>
-                  </tr>
+                    </div>
+                    <p className="text-sm text-[#575758]">
+                      Name: {item.first_name} {item.last_name}
+                    </p>
+                    <p className="text-sm text-[#575758]">
+                      Email: {item.email}
+                    </p>
+                    <p className="text-sm text-[#575758]">
+                      Phone: {item.phone}
+                    </p>
+                  </div>
                 ))
               ) : (
-                <tr>
-                  <td
-                    colSpan="6"
-                    className="px-6 py-4 text-center text-sm text-gray-500"
-                  >
-                    No clients found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Mobile Cards */}
-        <div className="md:hidden mt-6 space-y-4">
-          {currentData.length > 0 ? (
-            currentData.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white border border-[#E8E6EA] rounded-[8px] p-4 mb-4"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium text-[#1C1C1C]">
-                    {item.id}
-                  </h3>
-                  <div className="flex justify-end mt-2">
-                    <div
-                      className="relative"
-                      ref={openDropdown === item.id ? dropdownRef : null}
-                    >
-                      <button
-                        onClick={() => toggleDropdown(item.id)}
-                        className="text-[#288DD1] hover:text-[#1976D2] transition-colors p-1"
-                      >
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
-                      {openDropdown === item.id && (
-                        <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                          <button
-                            onClick={() =>
-                              handleDropdownAction("View Details", item.id)
-                            }
-                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            View Details
-                          </button>
-                          <button
-                            onClick={() =>
-                              handleDropdownAction("Suspend Client", item.id)
-                            }
-                            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                          >
-                            Suspend Client
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                <div className="bg-white rounded-[8px] shadow-sm p-4 text-center text-gray-500">
+                  No clients found.
                 </div>
-                <p className="text-sm text-[#575758]">{item.name}</p>
-                <p className="text-sm text-[#575758]">{item.email}</p>
-                <p className="text-sm text-[#575758]">{item.phone}</p>
-                <p className="text-sm text-[#575758] mt-2">{item.module}</p>
-              </div>
-            ))
-          ) : (
-            <div className="bg-white rounded-[8px] shadow-sm p-4 text-center text-gray-500">
-              No clients found.
+              )}
             </div>
-          )}
-        </div>
 
-        {/* Pagination */}
-        {filteredData.length > 0 && ( // Only show pagination if there's data after filtering
-          <div className="flex items-center justify-center px-4 mt-6">
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-[#333333] rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
+            {/* Pagination */}
+            {filteredData.length > 0 && ( // Only show pagination if there's data after filtering
+              <div className="flex items-center justify-center px-4 mt-6">
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-[#333333] rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
 
-              <div className="flex items-center space-x-1">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNumber;
-                  if (totalPages <= 5) {
-                    pageNumber = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNumber = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNumber = totalPages - 4 + i;
-                  } else {
-                    pageNumber = currentPage - 2 + i;
-                  }
+                  <div className="flex items-center space-x-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNumber;
+                      if (totalPages <= 5) {
+                        pageNumber = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNumber = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNumber = totalPages - 4 + i;
+                      } else {
+                        pageNumber = currentPage - 2 + i;
+                      }
 
-                  return (
-                    <button
-                      key={pageNumber}
-                      onClick={() => handlePageChange(pageNumber)}
-                      className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                        currentPage === pageNumber
-                          ? "bg-[#288DD1] text-white"
-                          : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
-                      }`}
-                    >
-                      {pageNumber}
-                    </button>
-                  );
-                })}
+                      return (
+                        <button
+                          key={pageNumber}
+                          onClick={() => handlePageChange(pageNumber)}
+                          className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                            currentPage === pageNumber
+                              ? "bg-[#288DD1] text-white"
+                              : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <span className="text-sm text-gray-700">of</span>
+
+                  <button
+                    onClick={() => handlePageChange(totalPages)}
+                    className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                      currentPage === totalPages
+                        ? "bg-[#288DD1] text-white"
+                        : "text-gray-700 bg-white border border-[#333333] hover:bg-gray-50"
+                    }`}
+                  >
+                    {totalPages}
+                  </button>
+
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-[#333333] rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-
-              <span className="text-sm text-gray-700">of</span>
-
-              <button
-                onClick={() => handlePageChange(totalPages)}
-                className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                  currentPage === totalPages
-                    ? "bg-[#288DD1] text-white"
-                    : "text-gray-700 bg-white border border-[#333333] hover:bg-gray-50"
-                }`}
-              >
-                {totalPages}
-              </button>
-
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-[#333333] rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
+            )}
+          </>
         )}
       </main>
 
       <AddClientModal isOpen={isAddClientOpen} onClose={closeAddClient} />
+      {/* <DeleteClientModal
+        isOpen={isDeleteClientModalOpen}
+        onClose={closeDeleteClientModal}
+        client={selectedClient}
+        onDeleteConfirm={onClientDeleteConfirm}
+      /> */}
     </>
   );
 };

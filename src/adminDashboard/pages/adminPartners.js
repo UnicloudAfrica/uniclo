@@ -1,9 +1,9 @@
-import { useRef, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
   Loader2,
-  MoreHorizontal,
+  Eye, // Imported Eye icon
+  Trash2, // Imported Trash2 icon
   Settings2,
 } from "lucide-react";
 import Skeleton from "react-loading-skeleton";
@@ -12,20 +12,28 @@ import AdminActiveTab from "../components/adminActiveTab";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AddPartner from "../components/partnersComponent/addPartner";
-import { useFetchCustomers } from "../../hooks/adminHooks/customerHooks";
+import { useEffect, useState } from "react"; // Removed useRef as dropdown is gone
 import useAuthRedirect from "../../utils/adminAuthRedirect";
+import {
+  useDeleteTenant,
+  useFetchTenants,
+} from "../../hooks/adminHooks/tenantHooks"; // Import useDeleteTenant
+import { useNavigate } from "react-router-dom"; // Import useNavigate
+import DeleteTenantModal from "./tenantComps/deleteTenant";
 
 const AdminPartners = () => {
+  const navigate = useNavigate(); // Initialize useNavigate
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [searchQuery, setSearchQuery] = useState("");
-  const [openDropdown, setOpenDropdown] = useState(null);
-  const dropdownRef = useRef(null);
+  // Removed openDropdown, dropdownButtonRefs, dropdownPosition, dropdownContentRef as they are no longer needed
   const { isLoading } = useAuthRedirect();
   const [isAddPartnerOpen, setAddPartner] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { data: customers, isFetching: isCustomersFetching } =
-    useFetchCustomers();
+  const { data: tenants, isFetching: isTenantsFetching } = useFetchTenants();
+
+  const [isDeleteTenantModalOpen, setIsDeleteTenantModalOpen] = useState(false); // State for delete modal
+  const [selectedTenantToDelete, setSelectedTenantToDelete] = useState(null); // State to hold tenant for deletion
 
   // Function to toggle mobile menu
   const toggleMobileMenu = () => {
@@ -41,8 +49,8 @@ const AdminPartners = () => {
   const closeAddPartner = () => setAddPartner(false);
 
   // Filter customers based on search query
-  const filteredData = customers
-    ? customers.filter((item) =>
+  const filteredData = tenants
+    ? tenants.filter((item) =>
         item.name.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : [];
@@ -59,18 +67,34 @@ const AdminPartners = () => {
     }
   };
 
-  const toggleDropdown = (itemId) => {
-    setOpenDropdown(openDropdown === itemId ? null : itemId);
+  // Function to encode the ID for URL
+  const encodeId = (id) => {
+    return encodeURIComponent(btoa(id));
   };
 
-  const closeDropdown = () => {
-    setOpenDropdown(null);
+  // Handle navigation to details page
+  const handleViewDetails = (item, event) => {
+    event.stopPropagation(); // Prevent row click from firing if button is clicked
+    const encodedId = encodeId(item.identifier);
+    navigate(
+      `/admin-dashboard/partners/details?id=${encodedId}&name=${encodeURIComponent(
+        item.name
+      )}`
+    );
   };
 
-  const handleDropdownAction = (action, itemId) => {
-    console.log(`${action} for ${itemId}`);
-    closeDropdown();
+  // Handle opening delete modal
+  const handleDeleteClick = (item, event) => {
+    event.stopPropagation(); // Prevent row click from firing if button is clicked
+    setSelectedTenantToDelete(item);
+    setIsDeleteTenantModalOpen(true);
   };
+
+  // Removed useEffect for click outside as there's no dropdown
+  useEffect(() => {
+    // No dropdown to close, so this effect is no longer needed.
+    // Keeping it here as a placeholder comment for clarity.
+  }, []);
 
   if (isLoading) {
     return (
@@ -91,18 +115,19 @@ const AdminPartners = () => {
       <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8">
         <button
           onClick={openAddPartner}
-          className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base"
+          className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base "
         >
           Add Partner
         </button>
         <div className="flex items-center justify-between mt-6 mb-6">
           <div className="relative">
             <input
-              type="text"
+              type="search"
               placeholder="Search Name"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-72 px-4 py-2 bg-[#F5F5F5] rounded-[8px]"
+              className="w-72 px-4 py-2 bg-[#F5F5F5] rounded-[8px] border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#288DD1]"
+              autoComplete="off" // Prevent autofill
             />
           </div>
           <button className="flex items-center gap-2 px-3 py-2 text-sm bg-[#F2F4F8] rounded-[8px] text-gray-600 hover:text-gray-900 transition-colors">
@@ -112,8 +137,8 @@ const AdminPartners = () => {
         </div>
 
         {/* Desktop Table */}
-        <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px]">
-          {isCustomersFetching ? (
+        <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px] border border-gray-200">
+          {isTenantsFetching ? (
             <table className="w-full">
               <thead className="bg-[#F5F5F5]">
                 <tr>
@@ -130,7 +155,7 @@ const AdminPartners = () => {
                     PHONE NUMBER
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                    NUMBER OF CLIENTS
+                    TYPE
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                     ACTION
@@ -185,7 +210,7 @@ const AdminPartners = () => {
                     PHONE NUMBER
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                    NUMBER OF CLIENTS
+                    TYPE
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                     ACTION
@@ -194,7 +219,13 @@ const AdminPartners = () => {
               </thead>
               <tbody className="bg-white divide-y divide-[#E8E6EA]">
                 {currentData.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50">
+                  <tr
+                    key={item.id}
+                    onClick={() =>
+                      handleViewDetails(item, { stopPropagation: () => {} })
+                    } // Allow row click for navigation
+                    className="hover:bg-gray-50 cursor-pointer"
+                  >
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                       {item.id}
                     </td>
@@ -208,39 +239,24 @@ const AdminPartners = () => {
                       {item.phone}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.clients}
+                      {item.type}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div
-                        className="relative"
-                        ref={openDropdown === item.id ? dropdownRef : null}
-                      >
+                      <div className="flex items-center space-x-3">
                         <button
-                          onClick={() => toggleDropdown(item.id)}
+                          onClick={(e) => handleViewDetails(item, e)}
                           className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
+                          title="View Details"
                         >
-                          <MoreHorizontal className="w-4 h-4" />
+                          <Eye className="w-4 h-4" />
                         </button>
-                        {openDropdown === item.id && (
-                          <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                            <button
-                              onClick={() =>
-                                handleDropdownAction("View Details", item.id)
-                              }
-                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            >
-                              View Details
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleDropdownAction("Suspend Client", item.id)
-                              }
-                              className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                            >
-                              Suspend Partner
-                            </button>
-                          </div>
-                        )}
+                        <button
+                          onClick={(e) => handleDeleteClick(item, e)}
+                          className="text-red-500 hover:text-red-700 transition-colors"
+                          title="Delete Partner"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -252,7 +268,7 @@ const AdminPartners = () => {
 
         {/* Mobile Cards */}
         <div className="md:hidden mt-6 space-y-4">
-          {isCustomersFetching ? (
+          {isTenantsFetching ? (
             Array.from({ length: itemsPerPage }).map((_, index) => (
               <div
                 key={index}
@@ -292,42 +308,30 @@ const AdminPartners = () => {
             currentData.map((item) => (
               <div
                 key={item.id}
-                className="border-b border-gray-200 py-4 px-4 bg-white rounded-[12px] mb-2"
+                onClick={() =>
+                  handleViewDetails(item, { stopPropagation: () => {} })
+                } // Allow card click for navigation
+                className="border-b border-gray-200 py-4 px-4 bg-white rounded-[12px] mb-2 cursor-pointer"
               >
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-medium text-gray-900">
                     {item.name}
                   </h3>
-                  <div
-                    className="relative"
-                    ref={openDropdown === item.id ? dropdownRef : null}
-                  >
+                  <div className="flex items-center space-x-3">
                     <button
-                      onClick={() => toggleDropdown(item.id)}
+                      onClick={(e) => handleViewDetails(item, e)}
                       className="text-[#288DD1] hover:text-[#1976D2] transition-colors p-1"
+                      title="View Details"
                     >
-                      <MoreHorizontal className="w-4 h-4" />
+                      <Eye className="w-4 h-4" />
                     </button>
-                    {openDropdown === item.id && (
-                      <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                        <button
-                          onClick={() =>
-                            handleDropdownAction("View Details", item.id)
-                          }
-                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        >
-                          View Details
-                        </button>
-                        <button
-                          onClick={() =>
-                            handleDropdownAction("Suspend Client", item.id)
-                          }
-                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                        >
-                          Suspend Partner
-                        </button>
-                      </div>
-                    )}
+                    <button
+                      onClick={(e) => handleDeleteClick(item, e)}
+                      className="text-red-500 hover:text-red-700 transition-colors p-1"
+                      title="Delete Partner"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
                 <div className="space-y-1 text-sm text-gray-600">
@@ -344,8 +348,8 @@ const AdminPartners = () => {
                     <span>{item.phone}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="font-medium">Clients:</span>
-                    <span>{item.clients}</span>
+                    <span className="font-medium">Type:</span>
+                    <span>{item.type}</span>
                   </div>
                 </div>
               </div>
@@ -354,7 +358,7 @@ const AdminPartners = () => {
         </div>
 
         {/* Pagination */}
-        {!isCustomersFetching && filteredData.length > 0 && (
+        {!isTenantsFetching && filteredData.length > 0 && (
           <div className="flex items-center justify-center px-4 mt-6">
             <div className="flex items-center space-x-2">
               <button
@@ -419,6 +423,12 @@ const AdminPartners = () => {
         )}
       </main>
       <AddPartner isOpen={isAddPartnerOpen} onClose={closeAddPartner} />
+      <DeleteTenantModal
+        isOpen={isDeleteTenantModalOpen}
+        onClose={() => setIsDeleteTenantModalOpen(false)}
+        tenantId={selectedTenantToDelete?.identifier}
+        tenantName={selectedTenantToDelete?.name}
+      />
     </>
   );
 };

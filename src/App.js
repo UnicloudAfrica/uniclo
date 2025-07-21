@@ -64,6 +64,7 @@ import DashboardLoginV2 from "./dashboard/pages/loginV2";
 import TenantRegister from "./tenantDashboard/pages/tenant-signup";
 import TenantLogin from "./tenantDashboard/pages/tenant-signin";
 import ClientDashboard from "./tenantDashboard/pages/client-dashboard";
+import AdminUsers from "./adminDashboard/pages/adminUsers";
 
 function App() {
   const location = useLocation();
@@ -153,6 +154,7 @@ function App() {
           {/* <Route path="/admin-signup" element={<AdminSignup />} /> */}
           <Route path="/verify-admin-mail" element={<VerifyAdminMail />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/admin-dashboard/admin-users" element={<AdminUsers />} />
           <Route path="/admin-dashboard/partners" element={<AdminPartners />} />
           <Route
             path="/admin-dashboard/partners/details"

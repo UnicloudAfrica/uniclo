@@ -62,6 +62,12 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     //   path: "/admin-dashboard/modules",
     // },
     {
+      name: "Admin Users",
+      icon: modules,
+      activeIcon: activemodules,
+      path: "/admin-dashboard/admin-users",
+    },
+    {
       name: "Payment",
       icon: paymentHistory,
       activeIcon: activePaymentHistory,

@@ -151,7 +151,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
-      <div className="bg-white rounded-[24px] max-w-[800px] mx-4 w-full h-[90vh] flex flex-col">
+      <div className="bg-white rounded-[24px] max-w-[800px] mx-4 w-full  flex flex-col">
         {/* Header */}
         <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
           <h2 className="text-lg font-semibold text-[#575758]">Add Client</h2>
@@ -164,7 +164,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
           </button>
         </div>
         {/* Content */}
-        <div className="px-6 py-6 w-full overflow-y-auto flex-1">
+        <div className="px-6 py-6 w-full overflow-y-auto max-h-[400px] flex-1">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* First Name */}
             <div>

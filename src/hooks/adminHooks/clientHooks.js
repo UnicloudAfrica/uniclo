@@ -18,7 +18,7 @@ const fetchClientById = async (id) => {
   if (!res) {
     throw new Error(`Failed to fetch client with ID ${id}`);
   }
-  return res;
+  return res.data;
 };
 
 // POST: Create a new client

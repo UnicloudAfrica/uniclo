@@ -12,27 +12,30 @@ import AdminSidebar from "../components/adminSidebar";
 import { useEffect, useRef, useState } from "react";
 import { useFetchClients } from "../../hooks/adminHooks/clientHooks";
 import AddClientModal from "./clientComps/addClient";
-// import DeleteClientModal from "./clientComps/deleteClient";
+import DeleteClientModal from "./clientComps/deleteClient";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
 
+// Function to encode the ID for URL
+const encodeId = (id) => {
+  return encodeURIComponent(btoa(id));
+};
+
 const AdminClients = () => {
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTenantId, setSelectedTenantId] = useState(""); // New state for tenant filter
   const [isAddClientOpen, setAddClient] = useState(false);
-  const [isDeleteClientModalOpen, setIsDeleteClientModalOpen] = useState(false); // State for delete modal
-  const [selectedClient, setSelectedClient] = useState(null); // State to hold client for deletion
-  // State to control mobile menu visibility
+  const [isDeleteClientModalOpen, setIsDeleteClientModalOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { data: clients, isFetching: isClientsFetching } = useFetchClients();
 
-  // Function to toggle mobile menu
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  // Function to close mobile menu
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
   };
@@ -40,16 +43,33 @@ const AdminClients = () => {
   const openAddClient = () => setAddClient(true);
   const closeAddClient = () => setAddClient(false);
 
-  // Use the fetched clients data, default to empty array if not available yet
   const clientData = clients || [];
 
-  const filteredData = clientData.filter(
-    (item) =>
+  // Extract unique tenants for the filter dropdown
+  const uniqueTenants = [
+    { id: "", name: "All Tenants" }, // Option to show all clients
+    ...Array.from(new Set(clientData.map((item) => item.tenant_id)))
+      .map((tenantId) => {
+        const tenant = clientData.find(
+          (item) => item.tenant_id === tenantId
+        )?.tenant;
+        return tenant ? { id: tenant.id, name: tenant.name } : null;
+      })
+      .filter(Boolean), // Remove null entries
+  ];
+
+  const filteredData = clientData.filter((item) => {
+    const matchesSearch =
       item.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.last_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.phone.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      item.phone.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesTenant =
+      selectedTenantId === "" || item.tenant_id === selectedTenantId;
+
+    return matchesSearch && matchesTenant;
+  });
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const currentData = filteredData.slice(
@@ -64,12 +84,13 @@ const AdminClients = () => {
   };
 
   const handleViewDetails = (client) => {
-    // Navigate to a client details page. Replace with your actual route.
-    // For now, a placeholder navigation or alert.
-    alert(
-      `Viewing details for client: ${client.first_name} ${client.last_name}`
+    const encodedId = encodeId(client.identifier);
+    const clientFullName = encodeURIComponent(
+      `${client.first_name} ${client.last_name}`
     );
-    // navigate(`/admin/clients/${client.id}`);
+    navigate(
+      `/admin-dashboard/clients/details?id=${encodedId}&name=${clientFullName}`
+    );
   };
 
   const handleDeleteClient = (client) => {
@@ -79,18 +100,12 @@ const AdminClients = () => {
 
   const closeDeleteClientModal = () => {
     setIsDeleteClientModalOpen(false);
-    setSelectedClient(null); // Clear selected client on close
+    setSelectedClient(null);
   };
 
   const onClientDeleteConfirm = () => {
-    // This function will be called from DeleteClientModal after confirmation
-    // In a real app, you would trigger the actual delete API call here
-    console.log("Client deletion confirmed for:", selectedClient.id);
-    // After successful deletion, you might want to refetch clients or update the list
-    // For now, just close the modal.
+    // console.log("Client deletion confirmed for:", selectedClient.id);
     closeDeleteClientModal();
-    // You might want to trigger a refetch of clients here
-    // queryClient.invalidateQueries(['clients']); // Assuming react-query
   };
 
   return (
@@ -108,20 +123,33 @@ const AdminClients = () => {
         >
           Add client
         </button>
-        <div className="flex items-center justify-between mt-6 mb-6">
-          <div className="relative">
+        <div className="flex flex-col md:flex-row items-center justify-between mt-6 mb-6 gap-4 md:gap-0">
+          <div className="relative w-full md:w-auto">
             <input
               type="text"
               placeholder="Search Name, Email, or Phone"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-72 px-4 py-2 bg-[#F5F5F5] rounded-[8px] border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#288DD1]"
+              className="w-full md:w-72 px-4 py-2 bg-[#F5F5F5] rounded-[8px] border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#288DD1]"
             />
           </div>
-          <button className="flex items-center gap-2 px-3 py-2 text-sm bg-[#F2F4F8] rounded-[8px] text-gray-600 hover:text-gray-900 transition-colors">
-            <Settings2 className="w-4 h-4 text-[#555E67]" />
-            Filter
-          </button>
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <select
+              value={selectedTenantId}
+              onChange={(e) => setSelectedTenantId(e.target.value)}
+              className="w-full md:w-auto px-4 py-2 bg-[#F5F5F5] rounded-[8px] border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#288DD1]"
+            >
+              {uniqueTenants.map((tenant) => (
+                <option key={tenant.id} value={tenant.id}>
+                  {tenant.name}
+                </option>
+              ))}
+            </select>
+            <button className="flex items-center gap-2 px-3 py-2 text-sm bg-[#F2F4F8] rounded-[8px] text-gray-600 hover:text-gray-900 transition-colors">
+              <Settings2 className="w-4 h-4 text-[#555E67]" />
+              Filter
+            </button>
+          </div>
         </div>
 
         {isClientsFetching ? (
@@ -137,7 +165,7 @@ const AdminClients = () => {
                 <thead className="bg-[#F5F5F5]">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                      CLIENT ID
+                      S/N
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                       NAME
@@ -149,16 +177,24 @@ const AdminClients = () => {
                       PHONE NUMBER
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                      TENANT NAME
+                    </th>{" "}
+                    {/* New column header */}
+                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                       ACTION
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-[#E8E6EA]">
                   {currentData.length > 0 ? (
-                    currentData.map((item) => (
-                      <tr key={item.id} className="hover:bg-gray-50">
+                    currentData.map((item, index) => (
+                      <tr
+                        key={item.id}
+                        className="hover:bg-gray-50 cursor-pointer"
+                        onClick={() => handleViewDetails(item)}
+                      >
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                          {item.id}
+                          {(currentPage - 1) * itemsPerPage + index + 1}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                           {item.first_name} {item.last_name}
@@ -169,6 +205,10 @@ const AdminClients = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                           {item.phone}
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                          {item.tenant?.name || "N/A"}
+                        </td>{" "}
+                        {/* Display tenant name */}
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
                           <div className="flex items-center space-x-3">
                             <button
@@ -198,7 +238,7 @@ const AdminClients = () => {
                   ) : (
                     <tr>
                       <td
-                        colSpan="5"
+                        colSpan="6"
                         className="px-6 py-4 text-center text-sm text-gray-500"
                       >
                         No clients found.
@@ -212,14 +252,15 @@ const AdminClients = () => {
             {/* Mobile Cards */}
             <div className="md:hidden mt-6 space-y-4">
               {currentData.length > 0 ? (
-                currentData.map((item) => (
+                currentData.map((item, index) => (
                   <div
                     key={item.id}
-                    className="bg-white border border-[#E8E6EA] rounded-[8px] p-4 mb-4"
+                    className="bg-white border border-[#E8E6EA] rounded-[8px] p-4 mb-4 cursor-pointer"
+                    onClick={() => handleViewDetails(item)}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-sm font-medium text-[#1C1C1C]">
-                        {item.id}
+                        S/N: {(currentPage - 1) * itemsPerPage + index + 1}
                       </h3>
                       <div className="flex items-center space-x-3">
                         <button
@@ -253,6 +294,10 @@ const AdminClients = () => {
                     <p className="text-sm text-[#575758]">
                       Phone: {item.phone}
                     </p>
+                    <p className="text-sm text-[#575758] mt-2">
+                      Tenant: {item.tenant?.name || "N/A"}
+                    </p>{" "}
+                    {/* Display tenant name */}
                   </div>
                 ))
               ) : (
@@ -331,12 +376,12 @@ const AdminClients = () => {
       </main>
 
       <AddClientModal isOpen={isAddClientOpen} onClose={closeAddClient} />
-      {/* <DeleteClientModal
+      <DeleteClientModal
         isOpen={isDeleteClientModalOpen}
         onClose={closeDeleteClientModal}
         client={selectedClient}
         onDeleteConfirm={onClientDeleteConfirm}
-      /> */}
+      />
     </>
   );
 };

@@ -18,6 +18,7 @@ const AdminActiveTab = () => {
     "purchased-modules": "Purchased Modules",
     "tax-configuration": "Tax Configuration",
     "admin-users": "Admin Users",
+    projects: "Admin Projects",
   };
 
   // Generate breadcrumb items from the current pathname

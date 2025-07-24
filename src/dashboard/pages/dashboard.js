@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Headbar from "../components/headbar";
 import Sidebar from "../components/sidebar";
 import ActiveTab from "../components/activeTab";
@@ -16,6 +16,7 @@ import useAuthRedirect from "../../utils/authRedirect";
 import CartFloat from "../components/cartFloat";
 import { useFetchSubs } from "../../hooks/subscriptionHooks";
 import { useFetchProfile } from "../../hooks/resource";
+import VerifyAccountPromptModal from "../components/verifyAccountPrompt";
 
 export default function Dashboard() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -26,6 +27,19 @@ export default function Dashboard() {
     data: offers = { trial: [], discount: [] },
     isFetching: isOffersFetching,
   } = useFetchProductOffers();
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+
+  // Effect to check profile verification status and show modal
+  useEffect(() => {
+    if (
+      !isLoading &&
+      !isProfileFetching &&
+      profile &&
+      (profile.verified === 0 || profile.verified === false)
+    ) {
+      setShowVerifyModal(true);
+    }
+  }, [isLoading, isProfileFetching, profile]);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -35,6 +49,9 @@ export default function Dashboard() {
     setIsMobileMenuOpen(false);
   };
 
+  const handleCloseVerifyModal = () => {
+    setShowVerifyModal(false);
+  };
   // Map icon strings to imported images
   const iconMap = {
     mobile: mobile,
@@ -218,6 +235,11 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
+      {/* Verify Account Prompt Modal */}
+      <VerifyAccountPromptModal
+        isOpen={showVerifyModal}
+        onClose={handleCloseVerifyModal}
+      />
     </>
   );
 }

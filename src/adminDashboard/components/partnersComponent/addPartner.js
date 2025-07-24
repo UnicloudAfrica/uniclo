@@ -16,11 +16,13 @@ const AddPartner = ({ isOpen, onClose }) => {
     password: "",
     confirmPassword: "",
     role: "tenant",
-    force_reset_password: true,
+    force_password_reset: true,
     status: "",
     domain: "",
     firstName: "",
     lastName: "",
+    verified: false,
+
     business: {
       email: "",
       name: "",
@@ -115,9 +117,11 @@ const AddPartner = ({ isOpen, onClose }) => {
         role: formData.role,
         password: formData.password,
         password_confirmation: formData.confirmPassword,
-        force_reset_password: formData.force_reset_password,
+        force_password_reset: formData.force_password_reset,
         status: formData.status,
         domain: `${formData.domain}.unicloudafrica.com`, // Append .unicloudafrica.com
+        verified: formData.business.verified,
+
         business: {
           name: formData.business.name,
           type: formData.business.type,
@@ -149,11 +153,13 @@ const AddPartner = ({ isOpen, onClose }) => {
             password: "",
             confirmPassword: "",
             role: "tenant",
-            force_reset_password: true,
+            force_password_reset: true,
             status: "",
             domain: "",
             firstName: "",
             lastName: "",
+            verified: false,
+
             business: {
               email: "",
               name: "",

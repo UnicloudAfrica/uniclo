@@ -9,6 +9,7 @@ import mobile from "./assets/mobile.svg";
 import cloud from "./assets/cloud-connection.svg";
 import monitor from "./assets/monitor.svg";
 import { Link } from "react-router-dom";
+import WorkInProgressModal from "../components/workInProgress";
 
 const ClientDashboard = ({ tenant = "Tenant" }) => {
   // Use dummy tenant data directly without fetching
@@ -19,6 +20,17 @@ const ClientDashboard = ({ tenant = "Tenant" }) => {
   });
 
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [showWipModal, setShowWipModal] = useState(true);
+
+  const handleOpenWipModal = () => {
+    // Function to open WIP modal
+    setShowWipModal(true);
+  };
+
+  const handleCloseWipModal = () => {
+    // Function to close WIP modal
+    setShowWipModal(false);
+  };
 
   const dummyData = {
     profile: {
@@ -234,6 +246,10 @@ const ClientDashboard = ({ tenant = "Tenant" }) => {
           </div>
         </div>
       </main>
+      <WorkInProgressModal
+        isOpen={showWipModal}
+        onClose={handleCloseWipModal}
+      />
     </>
   );
 };

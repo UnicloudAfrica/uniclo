@@ -37,6 +37,7 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/dashboard/payment-history": "Payment History",
     "/dashboard/support-ticket": "Support Ticket",
     "/dashboard/app-settings": "App Settings",
+    "/dashboard/account-settings": "Account Settings",
   };
 
   // Update activeItem based on the current path
@@ -89,6 +90,12 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       icon: supportTicket,
       activeIcon: activeSupportTicket,
       path: "/dashboard/support-ticket",
+    },
+    {
+      name: "Account Settings",
+      icon: appSettings,
+      activeIcon: appSettings,
+      path: "/dashboard/account-settings",
     },
   ];
 

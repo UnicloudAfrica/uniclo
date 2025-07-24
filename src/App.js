@@ -65,6 +65,10 @@ import TenantRegister from "./tenantDashboard/pages/tenant-signup";
 import TenantLogin from "./tenantDashboard/pages/tenant-signin";
 import ClientDashboard from "./tenantDashboard/pages/client-dashboard";
 import AdminUsers from "./adminDashboard/pages/adminUsers";
+import AdminProjects from "./adminDashboard/pages/adminProjects";
+import AdminProjectDetails from "./adminDashboard/pages/adminProjectDetails";
+import AdminInstances from "./adminDashboard/pages/adminInstances";
+import Settings from "./dashboard/pages/settings";
 
 function App() {
   const location = useLocation();
@@ -116,8 +120,8 @@ function App() {
           <Route path="/career" element={<Career />} />
 
           {/* dashboard pages */}
-          <Route path="/sign-in" element={<DashboardLogin />} />
-          <Route path="/sign-up" element={<DashboardSignUp />} />
+          {/* <Route path="/sign-in" element={<DashboardLogin />} />
+          <Route path="/sign-up" element={<DashboardSignUp />} /> */}
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/verify-mail" element={<VerifyMail />} />
@@ -135,6 +139,7 @@ function App() {
             element={<ProjectDetails />}
           />
           <Route path="/dashboard/instances" element={<Instances />} />
+          <Route path="/dashboard/account-settings" element={<Settings />} />
           <Route
             path="/dashboard/instances/details"
             element={<InstancesDetails />}
@@ -172,14 +177,24 @@ function App() {
           />
           <Route path="/admin-dashboard/payment" element={<AdminPayment />} />
           <Route path="/admin-dashboard/products" element={<AdminProducts />} />
+          <Route path="/admin-dashboard/projects" element={<AdminProjects />} />
+          <Route
+            path="/admin-dashboard/projects/details"
+            element={<AdminProjectDetails />}
+          />
+          <Route
+            path="/admin-dashboard/instances"
+            element={<AdminInstances />}
+          />
+
           <Route
             path="/admin-dashboard/tax-configuration"
             element={<AdminTax />}
           />
 
           {/* new pages */}
-          <Route path="/sign-upv2" element={<DashboardSignUpV2 />} />
-          <Route path="/sign-inv2" element={<DashboardLoginV2 />} />
+          <Route path="/sign-up" element={<DashboardSignUpV2 />} />
+          <Route path="/sign-in" element={<DashboardLoginV2 />} />
           <Route path="/tenant-home" element={<TenantHome />} />
           <Route path="/tenant-sign-up" element={<TenantRegister />} />
           <Route path="/tenant-sign-in" element={<TenantLogin />} />

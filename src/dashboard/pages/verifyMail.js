@@ -48,13 +48,28 @@ export default function VerifyMail() {
     const userData = { email, otp };
 
     verifyEmail(userData, {
-      onSuccess: () => {
+      onSuccess: (res) => {
         clearUserEmail();
-        navigate("/dashboard"); // Redirect on success
+
+        const userRole = res?.data?.role;
+
+        switch (userRole) {
+          case "tenant":
+            navigate("/dashboard");
+            break;
+          case "client":
+            navigate("/client-dashboard");
+            break;
+          case "admin":
+            navigate("/admin-dashboard");
+            break;
+          default:
+            navigate("/dashboard");
+            break;
+        }
       },
       onError: (err) => {
-        setErrors({ general: err.message || "Failed to verify email" });
-        console.log(err);
+        // setErrors({ general: err.message || "Failed to verify email" });
       },
     });
   };

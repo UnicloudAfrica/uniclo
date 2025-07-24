@@ -49,14 +49,39 @@ export default function VerifyAdminMail() {
     const email = userEmail;
     const userData = { email, otp };
 
+    // verifyEmail(userData, {
+    //   onSuccess: () => {
+    //     clearUserEmail();
+    //     navigate("/admin-dashboard"); // Redirect on success
+    //   },
+    //   onError: (err) => {
+    //     setErrors({ general: err.message || "Failed to verify email" });
+    //     console.log(err);
+    //   },
+    // });
     verifyEmail(userData, {
-      onSuccess: () => {
+      onSuccess: (res) => {
         clearUserEmail();
-        navigate("/admin-dashboard"); // Redirect on success
+
+        const userRole = res?.data?.role;
+
+        switch (userRole) {
+          case "tenant":
+            navigate("/dashboard");
+            break;
+          case "client":
+            navigate("/client-dashboard");
+            break;
+          case "admin":
+            navigate("/admin-dashboard");
+            break;
+          default:
+            navigate("/dashboard");
+            break;
+        }
       },
       onError: (err) => {
-        setErrors({ general: err.message || "Failed to verify email" });
-        console.log(err);
+        // setErrors({ general: err.message || "Failed to verify email" });
       },
     });
   };

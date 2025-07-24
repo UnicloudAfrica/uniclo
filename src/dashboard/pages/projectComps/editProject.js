@@ -5,19 +5,21 @@ import ToastUtils from "../../../utils/toastUtil";
 const EditDescriptionModal = ({
   isOpen,
   onClose,
-  currentDescription,
+  projectDetails,
   projectId,
 }) => {
-  const [newDescription, setNewDescription] = useState(currentDescription);
+  const [newDescription, setNewDescription] = useState(
+    projectDetails.description
+  );
   const [saveError, setSaveError] = useState(null);
 
   const { mutate: updateProject, isPending } = useUpdateProject();
 
   // Update local state when currentDescription prop changes
   useEffect(() => {
-    setNewDescription(currentDescription);
+    setNewDescription(projectDetails.description);
     setSaveError(null);
-  }, [currentDescription]);
+  }, [projectDetails.description]);
 
   const handleSave = () => {
     setSaveError(null); // Clear error before new attempt

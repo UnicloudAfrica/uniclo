@@ -26,7 +26,12 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/admin-dashboard/modules": "Modules",
     "/admin-dashboard/clients": "Clients",
     "/admin-dashboard/payment": "Payment",
+    "/admin-dashboard/projects": "Projects",
+    "/admin-dashboard/instances": "Instances",
+    "/admin-dashboard/products": "Products",
     "/admin-dashboard/support-ticket": "Support Ticket",
+    "/admin-dashboard/admin-users": "Admin Users",
+    "/admin-dashboard/tax-configuration": "Tax Configuration",
   };
 
   // Update activeItem based on the current path
@@ -90,6 +95,18 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       icon: supportTicket,
       activeIcon: activeSupportTicket,
       path: "/admin-dashboard/support-ticket",
+    },
+    {
+      name: "Projects",
+      icon: modules,
+      activeIcon: activemodules,
+      path: "/admin-dashboard/projects",
+    },
+    {
+      name: "Instances",
+      icon: modules,
+      activeIcon: activemodules,
+      path: "/admin-dashboard/instances",
     },
     {
       name: "Tax Configuration",

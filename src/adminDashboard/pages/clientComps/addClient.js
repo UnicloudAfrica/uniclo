@@ -19,7 +19,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
     password: "", // Will be hardcoded for now as per example, but usually generated/set by user
     password_confirmation: "", // New field for password confirmation
     tenant_id: "", // Selected from dropdown
-    force_reset_password: true, // Hardcoded
+    force_password_reset: true, // Hardcoded
     verified: false, // Hardcoded
     country_id: "", // Selected from dropdown
     country: "", // Name of the selected country
@@ -51,13 +51,6 @@ const AddClientModal = ({ isOpen, onClose }) => {
     error,
   } = useCreateClient(); // Assuming useCreateClient hook exists
 
-  useEffect(() => {
-    if (isSuccess) {
-      onClose(); // Close modal on successful client creation
-      // Optionally, show a success toast message here
-    }
-  }, [isSuccess, onClose]);
-
   const validateForm = () => {
     const newErrors = {};
     if (!formData.first_name.trim())
@@ -72,7 +65,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
     if (formData.password !== formData.password_confirmation) {
       newErrors.password_confirmation = "Passwords do not match";
     }
-    if (!formData.tenant_id) newErrors.tenant_id = "Tenant is required";
+    // if (!formData.tenant_id) newErrors.tenant_id = "Tenant is required";
     if (!formData.country_id) newErrors.country_id = "Country is required";
     if (!formData.state_id) newErrors.state_id = "State is required";
     if (!formData.city.trim()) newErrors.city = "City is required"; // City is still required
@@ -120,7 +113,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
         password: formData.password, // Hardcoded for now
         password_confirmation: formData.password_confirmation, // Include password confirmation
         tenant_id: formData.tenant_id,
-        force_reset_password: formData.force_reset_password, // Hardcoded
+        force_password_reset: formData.force_password_reset, // Hardcoded
         verified: formData.verified, // Hardcoded
         country_id: formData.country_id,
         country: formData.country,

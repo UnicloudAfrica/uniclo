@@ -1,21 +1,20 @@
 import {
   ChevronLeft,
   ChevronRight,
-  Eye, // Import Eye icon
-  Trash2, // Import Trash2 icon
+  Eye,
+  Trash2,
   Settings2,
   Loader2,
 } from "lucide-react";
 import AdminActiveTab from "../components/adminActiveTab";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useFetchClients } from "../../hooks/adminHooks/clientHooks";
 import AddClientModal from "./clientComps/addClient";
 import DeleteClientModal from "./clientComps/deleteClient";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
 
-// Function to encode the ID for URL
 const encodeId = (id) => {
   return encodeURIComponent(btoa(id));
 };
@@ -25,7 +24,7 @@ const AdminClients = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTenantId, setSelectedTenantId] = useState(""); // New state for tenant filter
+  const [selectedTenantId, setSelectedTenantId] = useState("");
   const [isAddClientOpen, setAddClient] = useState(false);
   const [isDeleteClientModalOpen, setIsDeleteClientModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
@@ -45,9 +44,8 @@ const AdminClients = () => {
 
   const clientData = clients || [];
 
-  // Extract unique tenants for the filter dropdown
   const uniqueTenants = [
-    { id: "", name: "All Tenants" }, // Option to show all clients
+    { id: "", name: "All Tenants" },
     ...Array.from(new Set(clientData.map((item) => item.tenant_id)))
       .map((tenantId) => {
         const tenant = clientData.find(
@@ -55,15 +53,18 @@ const AdminClients = () => {
         )?.tenant;
         return tenant ? { id: tenant.id, name: tenant.name } : null;
       })
-      .filter(Boolean), // Remove null entries
+      .filter(Boolean),
   ];
 
   const filteredData = clientData.filter((item) => {
+    const lowerCaseSearchQuery = searchQuery.toLowerCase();
     const matchesSearch =
-      item.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.last_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.phone.toLowerCase().includes(searchQuery.toLowerCase());
+      (item.first_name &&
+        item.first_name.toLowerCase().includes(lowerCaseSearchQuery)) ||
+      (item.last_name &&
+        item.last_name.toLowerCase().includes(lowerCaseSearchQuery)) ||
+      (item.email && item.email.toLowerCase().includes(lowerCaseSearchQuery)) ||
+      (item.phone && item.phone.toLowerCase().includes(lowerCaseSearchQuery));
 
     const matchesTenant =
       selectedTenantId === "" || item.tenant_id === selectedTenantId;
@@ -104,7 +105,6 @@ const AdminClients = () => {
   };
 
   const onClientDeleteConfirm = () => {
-    // console.log("Client deletion confirmed for:", selectedClient.id);
     closeDeleteClientModal();
   };
 
@@ -131,6 +131,7 @@ const AdminClients = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full md:w-72 px-4 py-2 bg-[#F5F5F5] rounded-[8px] border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#288DD1]"
+              autoComplete="off" // Prevent autofill
             />
           </div>
           <div className="flex items-center gap-2 w-full md:w-auto">
@@ -178,8 +179,7 @@ const AdminClients = () => {
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                       TENANT NAME
-                    </th>{" "}
-                    {/* New column header */}
+                    </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                       ACTION
                     </th>
@@ -207,13 +207,12 @@ const AdminClients = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                           {item.tenant?.name || "N/A"}
-                        </td>{" "}
-                        {/* Display tenant name */}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
                           <div className="flex items-center space-x-3">
                             <button
                               onClick={(e) => {
-                                e.stopPropagation(); // Prevent row click if any parent row has a click handler
+                                e.stopPropagation();
                                 handleViewDetails(item);
                               }}
                               className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
@@ -223,7 +222,7 @@ const AdminClients = () => {
                             </button>
                             <button
                               onClick={(e) => {
-                                e.stopPropagation(); // Prevent row click
+                                e.stopPropagation();
                                 handleDeleteClient(item);
                               }}
                               className="text-red-500 hover:text-red-700 transition-colors"
@@ -296,8 +295,7 @@ const AdminClients = () => {
                     </p>
                     <p className="text-sm text-[#575758] mt-2">
                       Tenant: {item.tenant?.name || "N/A"}
-                    </p>{" "}
-                    {/* Display tenant name */}
+                    </p>
                   </div>
                 ))
               ) : (
@@ -308,7 +306,7 @@ const AdminClients = () => {
             </div>
 
             {/* Pagination */}
-            {filteredData.length > 0 && ( // Only show pagination if there's data after filtering
+            {filteredData.length > 0 && (
               <div className="flex items-center justify-center px-4 mt-6">
                 <div className="flex items-center space-x-2">
                   <button

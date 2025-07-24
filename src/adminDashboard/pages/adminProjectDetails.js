@@ -1,21 +1,19 @@
-import React, { useState, useEffect } from "react";
-import CartFloat from "../components/cartFloat";
-import Headbar from "../components/headbar";
-import Sidebar from "../components/sidebar";
-import ActiveTab from "../components/activeTab";
+import React, { useEffect, useState } from "react";
+import AdminHeadbar from "../components/adminHeadbar";
+import AdminSidebar from "../components/adminSidebar";
+import AdminActiveTab from "../components/adminActiveTab";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useFetchProjectById } from "../../hooks/adminHooks/projectHooks";
 import {
   ChevronLeft,
   ChevronRight,
   Loader2,
   Pencil,
   Trash2,
-  X,
-} from "lucide-react"; // Import Pencil and Trash2
-import AddInstanceModal from "../components/addInstanace";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useFetchProjectById } from "../../hooks/projectHooks";
+} from "lucide-react";
 import EditDescriptionModal from "./projectComps/editProject";
 import ConfirmDeleteModal from "./projectComps/deleteProject";
+import EditProjectModal from "./projectComps/editProject";
 
 // Function to decode the ID from URL
 const decodeId = (encodedId) => {
@@ -27,7 +25,7 @@ const decodeId = (encodedId) => {
   }
 };
 
-export default function ProjectDetails() {
+export default function AdminProjectDetails() {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -56,7 +54,7 @@ export default function ProjectDetails() {
     if (projectDetails?.instances) {
       setInstances(projectDetails.instances);
     } else {
-      setInstances([]); // Ensure it's an empty array if no instances
+      setInstances([]);
     }
   }, [projectDetails]);
 
@@ -109,7 +107,7 @@ export default function ProjectDetails() {
 
     // Navigate to the instance details page
     navigate(
-      `/dashboard/instances/details?id=${encodedId}&name=${instanceName}`
+      `/admin-dashboard/instances/details?id=${encodedId}&name=${instanceName}`
     );
   };
 
@@ -120,12 +118,12 @@ export default function ProjectDetails() {
   if (isProjectFetching) {
     return (
       <>
-        <Headbar onMenuClick={toggleMobileMenu} />
-        <Sidebar
+        <AdminHeadbar onMenuClick={toggleMobileMenu} />
+        <AdminSidebar
           isMobileMenuOpen={isMobileMenuOpen}
           onCloseMobileMenu={closeMobileMenu}
         />
-        <ActiveTab />
+        <AdminActiveTab />
         <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8 flex items-center justify-center flex-col">
           <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
           <p className="ml-2 text-gray-700 mt-2">Loading project details...</p>
@@ -138,18 +136,18 @@ export default function ProjectDetails() {
   if (!projectDetails || projectError) {
     return (
       <>
-        <Headbar onMenuClick={toggleMobileMenu} />
-        <Sidebar
+        <AdminHeadbar onMenuClick={toggleMobileMenu} />
+        <AdminSidebar
           isMobileMenuOpen={isMobileMenuOpen}
           onCloseMobileMenu={closeMobileMenu}
         />
-        <ActiveTab />
+        <AdminActiveTab />
         <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8 flex items-center justify-center flex-col text-center">
           <p className=" text-sm md:text-base font-normal text-gray-700 mb-4">
             This project could not be found.
           </p>
           <button
-            onClick={() => navigate("/dashboard/projects")}
+            onClick={() => navigate("/admin-dashboard/projects")}
             className="px-6 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors"
           >
             Go to Projects Page
@@ -161,12 +159,12 @@ export default function ProjectDetails() {
 
   return (
     <>
-      <Headbar onMenuClick={toggleMobileMenu} />
-      <Sidebar
+      <AdminHeadbar onMenuClick={toggleMobileMenu} />
+      <AdminSidebar
         isMobileMenuOpen={isMobileMenuOpen}
         onCloseMobileMenu={closeMobileMenu}
       />
-      <ActiveTab />
+      <AdminActiveTab />
       <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-[#1E1E1EB2]">
@@ -418,8 +416,11 @@ export default function ProjectDetails() {
           </div>
         )}
       </main>
+
+      {/* 
       <AddInstanceModal isOpen={isAddInstanceOpen} onClose={closeAddInstance} />
-      <EditDescriptionModal
+      */}
+      <EditProjectModal
         isOpen={isEditDescriptionModalOpen}
         onClose={() => setIsEditDescriptionModalOpen(false)}
         projectId={projectId}

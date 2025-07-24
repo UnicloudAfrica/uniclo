@@ -47,7 +47,7 @@ export default function DashboardLoginV2() {
     const userData = {
       email,
       password,
-      role: activeTab === "partner" ? "Partner" : "Client", // Include role based on tab
+      role: activeTab === "partner" ? "tenant" : "client", // Include role based on tab
     };
 
     mutate(userData, {

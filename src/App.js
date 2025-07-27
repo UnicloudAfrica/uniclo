@@ -69,6 +69,8 @@ import AdminProjects from "./adminDashboard/pages/adminProjects";
 import AdminProjectDetails from "./adminDashboard/pages/adminProjectDetails";
 import AdminInstances from "./adminDashboard/pages/adminInstances";
 import Settings from "./dashboard/pages/settings";
+import DashboardTaxConfigurations from "./dashboard/pages/taxConfiguration";
+import Products from "./dashboard/pages/products";
 
 function App() {
   const location = useLocation();
@@ -134,12 +136,17 @@ function App() {
           <Route path="/dashboard/clients" element={<Clients />} />
           <Route path="/dashboard/requests" element={<Requests />} />
           <Route path="/dashboard/projects" element={<Project />} />
+          <Route path="/dashboard/products" element={<Products />} />
           <Route
             path="/dashboard/projects/details"
             element={<ProjectDetails />}
           />
           <Route path="/dashboard/instances" element={<Instances />} />
           <Route path="/dashboard/account-settings" element={<Settings />} />
+          <Route
+            path="/dashboard/tax-configurations"
+            element={<DashboardTaxConfigurations />}
+          />
           <Route
             path="/dashboard/instances/details"
             element={<InstancesDetails />}

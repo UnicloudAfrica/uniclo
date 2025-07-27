@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "../index/api";
-import silentApi from "../index/silent";
+import silentTenantApi from "../index/tenant/silentTenant";
+import tenantApi from "../index/tenant/tenantApi";
 
 // GET: Fetch all instance requests
 const fetchInstanceRequests = async (params = {}) => {
@@ -21,9 +21,9 @@ const fetchInstanceRequests = async (params = {}) => {
     .join("&");
 
   // Construct the URI with the query string
-  const uri = `/business/instances${queryString ? `?${queryString}` : ""}`;
+  const uri = `/admin/instances${queryString ? `?${queryString}` : ""}`;
 
-  const res = await silentApi("GET", uri);
+  const res = await silentTenantApi("GET", uri);
   if (!res.data) {
     throw new Error("Failed to fetch instance requests");
   }
@@ -49,11 +49,11 @@ const fetchPurchasedInstances = async (params = {}) => {
     .join("&");
 
   // Construct the URI with the query string
-  const uri = `/business/purchased-instances${
+  const uri = `/admin/purchased-instances${
     queryString ? `?${queryString}` : ""
   }`;
 
-  const res = await silentApi("GET", uri);
+  const res = await silentTenantApi("GET", uri);
   if (!res.data) {
     throw new Error("Failed to fetch instance requests");
   }
@@ -62,7 +62,7 @@ const fetchPurchasedInstances = async (params = {}) => {
 
 // GET: Fetch instance request by ID
 const fetchInstanceRequestById = async (id) => {
-  const res = await silentApi("GET", `/business/instances/${id}`);
+  const res = await silentTenantApi("GET", `/admin/instances/${id}`);
   if (!res.data) {
     throw new Error(`Failed to fetch instance request with ID ${id}`);
   }
@@ -71,7 +71,7 @@ const fetchInstanceRequestById = async (id) => {
 
 // POST: Create a new instance request
 const createInstanceRequest = async (instanceData) => {
-  const res = await api("POST", "/business/instances", instanceData);
+  const res = await tenantApi("POST", "/admin/instances", instanceData);
   if (!res.data) {
     throw new Error("Failed to create instance request");
   }
@@ -80,7 +80,7 @@ const createInstanceRequest = async (instanceData) => {
 
 // PATCH: Update an instance request
 const updateInstanceRequest = async ({ id, instanceData }) => {
-  const res = await api("PATCH", `/business/instances/${id}`, instanceData);
+  const res = await tenantApi("PATCH", `/admin/instances/${id}`, instanceData);
   if (!res.data) {
     throw new Error(`Failed to update instance request with ID ${id}`);
   }
@@ -100,7 +100,7 @@ export const useFetchInstanceRequests = (params = {}, options = {}) => {
   });
 };
 
-// Hook to fetch all purchased instance 
+// Hook to fetch all purchased instance
 export const useFetchPurchasedInstances = (params = {}, options = {}) => {
   return useQuery({
     // Update queryKey to include params, so different params result in different cached data

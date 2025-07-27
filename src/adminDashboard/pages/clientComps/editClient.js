@@ -80,7 +80,7 @@ export const EditClientModal = ({ client, onClose, onClientUpdated }) => {
         email: formData.email,
         phone: formData.phone,
         address: formData.address,
-        zip: formData.zip,
+        zip_code: formData.zip,
         country: formData.country, // Send country name
         country_id: countryId, // Send country ID
         city: formData.city,

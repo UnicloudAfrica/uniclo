@@ -18,7 +18,9 @@ const ActiveTab = () => {
     details: "Details",
     requests: "Service Request",
     instances: "Instances",
+    products: "Products",
     "account-settings": "Account Settings",
+    "tax-configurations": "Tax Configurations",
   };
 
   // Generate breadcrumb items from the current pathname

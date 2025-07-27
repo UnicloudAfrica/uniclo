@@ -16,6 +16,7 @@ import ResourceAllocationStep from "./instancesubcomps/resourceAllocationStep";
 import SummaryStep from "./instancesubcomps/summaryStep";
 import PaymentStep from "./instancesubcomps/paymentStep";
 import SuccessModal from "./successModalV2";
+import { useFetchClients } from "../../hooks/clientHooks";
 
 const AddInstanceModal = ({ isOpen, onClose }) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -28,6 +29,8 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
     useFetchEbsVolumes();
   const { data: projects, isFetching: isProjectsFetching } = useFetchProjects();
   const { data: profile, isFetching: isProfileFetching } = useFetchProfile();
+
+  const { data: clients, isFetching: isClientsFetching } = useFetchClients();
   const {
     mutate: createInstanceRequest,
     isPending: isSubmissionPending,
@@ -40,11 +43,13 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
     name: "",
     description: "",
     selectedProject: null,
+    user_id: "", // New field for selected client ID
     storage_size_gb: "",
     selectedComputeInstance: null,
     selectedEbsVolume: null,
     selectedOsImage: null,
     bandwidth_id: null,
+    number_of_instances: null,
     months: "",
     tags: [],
   });
@@ -111,6 +116,9 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
       if (!formData.name.trim()) newErrors.name = "Instance Name is required";
       if (!formData.selectedProject)
         newErrors.selectedProject = "Project is required";
+      if (!formData.user_id)
+        // Validate user_id
+        newErrors.user_id = "Client is required";
       if (formData.tags.length === 0)
         newErrors.tags = "At least one tag must be selected";
     } else if (currentStep === 1) {
@@ -122,6 +130,11 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
       )
         newErrors.storage_size_gb =
           "Storage Size must be an integer and at least 30 GiB";
+      if (!formData.number_of_instances)
+        newErrors.number_of_instances = "Number of instances is required";
+      else if (isNaN(formData.number_of_instances))
+        newErrors.number_of_instances =
+          "Number of instances must be an integer";
       if (!formData.selectedComputeInstance)
         newErrors.selectedComputeInstance = "Compute Instance is required";
       if (!formData.selectedEbsVolume)
@@ -232,7 +245,9 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
         name: formData.name,
         description: formData.description || null,
         project_id: formData.selectedProject?.id,
+        user_id: formData.user_id, // Include user_id in the submission payload
         storage_size_gb: parseInt(formData.storage_size_gb),
+        number_of_instances: parseInt(formData.number_of_instances),
         compute_instance_id: formData.selectedComputeInstance?.id,
         ebs_volume_id: formData.selectedEbsVolume?.id,
         os_image_id: formData.selectedOsImage?.id,
@@ -355,6 +370,8 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
                   isSubmissionPending={isSubmissionPending}
                   projects={projects}
                   isProjectsFetching={isProjectsFetching}
+                  clients={clients}
+                  isClientsFetching={isClientsFetching}
                   availableTags={availableTags}
                 />
               )}

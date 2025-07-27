@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../index/api";
 import silentApi from "../index/silent";
+import silentTenantApi from "../index/tenant/silentTenant";
 
 // **GET**: fetchCountries
 const fetchCountries = async () => {
@@ -27,7 +28,8 @@ const fetchCitiesById = async (id) => {
 
 // **GET**: fetchProfile
 const fetchProfile = async () => {
-  const res = await silentApi("GET", "/business/profile");
+  console.log("FETCHING PROFILE DATA...");
+  const res = await silentTenantApi("GET", "/admin/user-profile");
   return res.data; // Extract only the data array
 };
 // **GET**: fetch industry
@@ -92,11 +94,21 @@ export const useFetchCitiesById = (id, options = {}) => {
 
 // Hook to fetch Profile
 export const useFetchProfile = (options = {}) => {
+  const queryClient = useQueryClient();
+  const profileQueryState = queryClient.getQueryState(["profile"]);
+
+  const shouldEnable =
+    !profileQueryState || profileQueryState.status !== "error";
+
   return useQuery({
     queryKey: ["profile"],
     queryFn: fetchProfile,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    retry: false,
     refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+    enabled: shouldEnable,
     ...options,
   });
 };

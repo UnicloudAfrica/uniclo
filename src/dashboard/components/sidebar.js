@@ -31,6 +31,7 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   const pathToItemMap = {
     "/dashboard": "Home",
     "/dashboard/modules": "Modules",
+    "/dashboard/products": "Products",
     "/dashboard/purchased-modules": "Purchased Modules",
     "/dashboard/projects": "Projects",
     "/dashboard/instances": "Instances",
@@ -38,6 +39,7 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/dashboard/support-ticket": "Support Ticket",
     "/dashboard/app-settings": "App Settings",
     "/dashboard/account-settings": "Account Settings",
+    "/dashboard/tax-configurations": "Tax Configurations",
   };
 
   // Update activeItem based on the current path
@@ -58,9 +60,15 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     // },
     {
       name: "Projects",
+      icon: appSettings,
+      activeIcon: appSettings,
+      path: "/dashboard/projects",
+    },
+    {
+      name: "Clients",
       icon: clients,
       activeIcon: activeClients,
-      path: "/dashboard/projects",
+      path: "/dashboard/clients",
     },
     ...(projects.length > 0
       ? [
@@ -80,6 +88,13 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       : []),
 
     {
+      name: "Products",
+      icon: modules,
+      activeIcon: activemodules,
+      path: "/dashboard/products",
+    },
+
+    {
       name: "Payment History",
       icon: paymentHistory,
       activeIcon: activePaymentHistory,
@@ -90,6 +105,12 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       icon: supportTicket,
       activeIcon: activeSupportTicket,
       path: "/dashboard/support-ticket",
+    },
+    {
+      name: "Tax Configurations",
+      icon: appSettings,
+      activeIcon: appSettings,
+      path: "/dashboard/tax-configurations",
     },
     {
       name: "Account Settings",

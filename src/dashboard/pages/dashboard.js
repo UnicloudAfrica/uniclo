@@ -15,8 +15,8 @@ import {
 import useAuthRedirect from "../../utils/authRedirect";
 import CartFloat from "../components/cartFloat";
 import { useFetchSubs } from "../../hooks/subscriptionHooks";
-import { useFetchProfile } from "../../hooks/resource";
 import VerifyAccountPromptModal from "../components/verifyAccountPrompt";
+import { useFetchProfile } from "../../hooks/resource";
 
 export default function Dashboard() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

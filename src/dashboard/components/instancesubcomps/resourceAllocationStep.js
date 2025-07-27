@@ -97,6 +97,32 @@ const ResourceAllocationStep = ({
       </div>
       <div>
         <label
+          htmlFor="storage_size_gb"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          Number of Instances<span className="text-red-500">*</span>
+        </label>
+        <input
+          id="number_of_instances"
+          type="number"
+          value={formData.number_of_instances}
+          onChange={(e) =>
+            updateFormData("number_of_instances", e.target.value)
+          }
+          placeholder="Number of instances"
+          className={`w-full input-field ${
+            errors.number_of_instances ? "border-red-500" : "border-gray-300"
+          }`}
+          disabled={isSubmissionPending}
+        />
+        {errors.number_of_instances && (
+          <p className="text-red-500 text-xs mt-1">
+            {errors.number_of_instances}
+          </p>
+        )}
+      </div>
+      <div>
+        <label
           htmlFor="ebs_volume_id"
           className="block text-sm font-medium text-gray-700 mb-2"
         >

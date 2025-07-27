@@ -59,7 +59,7 @@ const EditDescriptionModal = ({
         <textarea
           value={newDescription}
           onChange={(e) => setNewDescription(e.target.value)}
-          className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#288DD1] resize-y"
+          className="input-field"
           rows="6"
           placeholder="Enter new description"
           disabled={isPending}

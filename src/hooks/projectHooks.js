@@ -1,10 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "../index/api";
-import silentApi from "../index/silent";
+import silentTenantApi from "../index/tenant/silentTenant";
+import tenantApi from "../index/tenant/tenantApi";
+// import api from "../index/api";
+// import silentApi from "../index/silent";
 
 // GET: Fetch all projects
 const fetchProjects = async () => {
-  const res = await silentApi("GET", "/business/projects");
+  const res = await silentTenantApi("GET", "/admin/projects");
   if (!res.data) {
     throw new Error("Failed to fetch projects");
   }
@@ -13,7 +15,7 @@ const fetchProjects = async () => {
 
 // GET: Fetch project by ID
 const fetchProjectById = async (id) => {
-  const res = await silentApi("GET", `/business/projects/${id}`);
+  const res = await silentTenantApi("GET", `/admin/projects/${id}`);
   if (!res.data) {
     throw new Error(`Failed to fetch project with ID ${id}`);
   }
@@ -22,7 +24,7 @@ const fetchProjectById = async (id) => {
 
 // POST: Create a new project
 const createProject = async (projectData) => {
-  const res = await api("POST", "/business/projects", projectData);
+  const res = await tenantApi("POST", "/admin/projects", projectData);
   if (!res.data) {
     throw new Error("Failed to create project");
   }
@@ -31,7 +33,7 @@ const createProject = async (projectData) => {
 
 // PATCH: Update a project
 const updateProject = async ({ id, projectData }) => {
-  const res = await api("PATCH", `/business/projects/${id}`, projectData);
+  const res = await tenantApi("PATCH", `/admin/projects/${id}`, projectData);
   if (!res.data) {
     throw new Error(`Failed to update project with ID ${id}`);
   }
@@ -40,7 +42,7 @@ const updateProject = async ({ id, projectData }) => {
 
 // DELETE: Delete a project
 const deleteProject = async (id) => {
-  const res = await api("DELETE", `/business/projects/${id}`);
+  const res = await tenantApi("DELETE", `/admin/projects/${id}`);
   if (!res.data) {
     throw new Error(`Failed to delete project with ID ${id}`);
   }

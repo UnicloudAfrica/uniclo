@@ -1,47 +1,64 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "../index/api";
-import silentApi from "../index/silent";
+import silentTenantApi from "../index/tenant/silentTenant";
+import tenantApi from "../index/tenant/tenantApi";
 
-// GET: Fetch all Profile
-const fetchProfile = async () => {
-  const res = await silentApi("GET", "/user/profile");
-  if (!res.data) {
+const fetchTenantProfile = async () => {
+  const res = await silentTenantApi("GET", "/admin/profile");
+  if (!res) {
     throw new Error("Failed to fetch profile");
   }
-  return res.data;
+  return res;
 };
 
-// POST: Create a new profile
 const createProfile = async (profileData) => {
-  const res = await api("POST", "/user/profile", profileData);
+  const res = await tenantApi("POST", "/admin/profile", profileData);
   if (!res.data) {
     throw new Error("Failed to create profile");
   }
   return res.data;
 };
 
-// Hook to fetch all profile
-export const useFetchProfile = (options = {}) => {
+const updateProfile = async (profileData) => {
+  const res = await tenantApi("PATCH", "/admin/profile", profileData);
+  if (!res.data) {
+    throw new Error("Failed to update profile");
+  }
+  return res.data;
+};
+
+export const useFetchTenantProfile = (options = {}) => {
   return useQuery({
-    queryKey: ["profile"],
-    queryFn: fetchProfile,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    queryKey: ["tenant-profile"],
+    queryFn: fetchTenantProfile,
+    staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
+    retry: false,
     ...options,
   });
 };
 
-// Hook to create a profile
 export const useCreateProfile = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createProfile,
     onSuccess: () => {
-      // Invalidate profiles query to refresh the list
-      queryClient.invalidateQueries(["profiles"]);
+      queryClient.invalidateQueries(["tenant-profile"]);
     },
     onError: (error) => {
       console.error("Error creating profile:", error);
+    },
+  });
+};
+
+export const useUpdateProfile = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateProfile,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["tenant-profile"]);
+    },
+    onError: (error) => {
+      console.error("Error updating profile:", error);
     },
   });
 };

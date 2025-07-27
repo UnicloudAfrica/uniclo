@@ -11,6 +11,8 @@ const ConfigurationStep = ({
   isSubmissionPending,
   projects,
   isProjectsFetching,
+  clients,
+  isClientsFetching,
   availableTags,
 }) => (
   <div className="space-y-4 w-full">
@@ -71,7 +73,7 @@ const ConfigurationStep = ({
         }`}
       >
         {isProjectsFetching ? (
-          <div className="flex items-center py-2">
+          <div className="flex items-center ">
             <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
             <span className="text-gray-500 text-sm">Loading projects...</span>
           </div>
@@ -82,7 +84,7 @@ const ConfigurationStep = ({
             onChange={(e) =>
               handleSelectChange("selectedProject", e.target.value, projects)
             }
-            className="w-full bg-transparent outline-none py-2"
+            className="w-full bg-transparent outline-none "
             disabled={isSubmissionPending}
           >
             <option value="">Select a project</option>
@@ -93,7 +95,7 @@ const ConfigurationStep = ({
             ))}
           </select>
         ) : (
-          <div className="flex items-center py-2 text-gray-500 text-sm">
+          <div className="flex items-center  text-gray-500 text-sm">
             No projects available.
           </div>
         )}
@@ -102,6 +104,51 @@ const ConfigurationStep = ({
         <p className="text-red-500 text-xs mt-1">{errors.selectedProject}</p>
       )}
     </div>
+
+    {/* New Client Selection Field */}
+    <div>
+      <label
+        htmlFor="user_id"
+        className="block text-sm font-medium text-gray-700 mb-2"
+      >
+        Assign to Client<span className="text-red-500">*</span>
+      </label>
+      <span
+        className={`w-full input-field block transition-all ${
+          errors.user_id ? "border-red-500 border" : ""
+        }`}
+      >
+        {isClientsFetching ? (
+          <div className="flex items-center ">
+            <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
+            <span className="text-gray-500 text-sm">Loading clients...</span>
+          </div>
+        ) : Array.isArray(clients) && clients.length > 0 ? (
+          <select
+            id="user_id"
+            value={formData.user_id || ""}
+            onChange={(e) => updateFormData("user_id", e.target.value)}
+            className="w-full bg-transparent outline-none "
+            disabled={isSubmissionPending}
+          >
+            <option value="">Select a client</option>
+            {clients.map((client) => (
+              <option key={client.id} value={client.id}>
+                {client.first_name} {client.last_name} ({client.email})
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div className="flex items-center  text-gray-500 text-sm">
+            No clients available.
+          </div>
+        )}
+      </span>
+      {errors.user_id && (
+        <p className="text-red-500 text-xs mt-1">{errors.user_id}</p>
+      )}
+    </div>
+
     <CheckboxGroup
       label="Tags"
       options={availableTags}

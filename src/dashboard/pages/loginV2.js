@@ -184,11 +184,6 @@ export default function DashboardLoginV2() {
               </Link>
             </div>
 
-            {/* General Error */}
-            {errors.general && (
-              <p className="text-red-500 text-xs mt-1">{errors.general}</p>
-            )}
-
             {/* Login Button */}
             <button
               type="submit"

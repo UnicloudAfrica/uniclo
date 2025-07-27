@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import {
   useFetchBandwidths,
+  useFetchChargeOptions,
   useFetchComputerInstances,
   useFetchEbsVolumes,
   useFetchOsImages,
@@ -19,8 +20,10 @@ const ProductCharge = () => {
     useFetchBandwidths();
   const { data: ebsVolumes, isFetching: isEbsVolumesFetching } =
     useFetchEbsVolumes();
-  const { data: productCharge, isFetching: iProductChargeFetching } =
+  const { data: productCharge, isFetching: isProductChargeFetching } =
     useFetchProductCharge();
+  const { data: chargeOptions, isFetching: isChargeOptionsFetching } =
+    useFetchChargeOptions();
 
   const openAddProductChargeModal = () => setIsAddProductChargeModalOpen(true);
   const closeAddProductChargeModal = () =>
@@ -55,6 +58,8 @@ const ProductCharge = () => {
         isBandwidthsFetching={isBandwidthsFetching}
         ebsVolumes={ebsVolumes}
         isEbsVolumesFetching={isEbsVolumesFetching}
+        chargeOptions={chargeOptions}
+        isChargeOptionsFetching={isChargeOptionsFetching}
       />
     </>
   );

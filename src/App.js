@@ -71,6 +71,7 @@ import AdminInstances from "./adminDashboard/pages/adminInstances";
 import Settings from "./dashboard/pages/settings";
 import DashboardTaxConfigurations from "./dashboard/pages/taxConfiguration";
 import Products from "./dashboard/pages/products";
+import TenantAdmin from "./dashboard/pages/tenantAdmin";
 
 function App() {
   const location = useLocation();
@@ -137,6 +138,7 @@ function App() {
           <Route path="/dashboard/requests" element={<Requests />} />
           <Route path="/dashboard/projects" element={<Project />} />
           <Route path="/dashboard/products" element={<Products />} />
+          <Route path="/dashboard/admin-users" element={<TenantAdmin />} />
           <Route
             path="/dashboard/projects/details"
             element={<ProjectDetails />}

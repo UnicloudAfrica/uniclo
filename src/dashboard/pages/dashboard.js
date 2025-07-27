@@ -17,12 +17,15 @@ import CartFloat from "../components/cartFloat";
 import { useFetchSubs } from "../../hooks/subscriptionHooks";
 import VerifyAccountPromptModal from "../components/verifyAccountPrompt";
 import { useFetchProfile } from "../../hooks/resource";
+import { useFetchTenantDashboard } from "../../hooks/profileHooks";
 
 export default function Dashboard() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { data: subs, isFetching: isSubsFetching } = useFetchSubs();
   const { isLoading } = useAuthRedirect();
   const { data: profile, isFetching: isProfileFetching } = useFetchProfile();
+  const { data: dashboard, isFetching: isDashboardFetching } =
+    useFetchTenantDashboard();
   const {
     data: offers = { trial: [], discount: [] },
     isFetching: isOffersFetching,

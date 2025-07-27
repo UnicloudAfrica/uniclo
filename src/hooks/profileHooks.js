@@ -9,6 +9,13 @@ const fetchTenantProfile = async () => {
   }
   return res;
 };
+const fetchTenantDashboard = async () => {
+  const res = await silentTenantApi("GET", "/admin/dashboard");
+  if (!res) {
+    throw new Error("Failed to fetch dashboard");
+  }
+  return res;
+};
 
 const createProfile = async (profileData) => {
   const res = await tenantApi("POST", "/admin/profile", profileData);
@@ -30,6 +37,17 @@ export const useFetchTenantProfile = (options = {}) => {
   return useQuery({
     queryKey: ["tenant-profile"],
     queryFn: fetchTenantProfile,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    retry: false,
+    ...options,
+  });
+};
+
+export const useFetchTenantDashboard = (options = {}) => {
+  return useQuery({
+    queryKey: ["tenant-dashboard"],
+    queryFn: fetchTenantDashboard,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     retry: false,

@@ -4,10 +4,10 @@ import { useCreatePricing } from "../../../hooks/pricingHooks";
 import ToastUtils from "../../../utils/toastUtil";
 
 const productTypeMap = {
-  "Compute Instance": "App\\Models\\ComputeInstance",
-  "EBS Volume": "App\\Models\\EbsVolume",
-  Bandwidth: "App\\Models\\Bandwidth",
-  "OS Image": "App\\Models\\OsImage",
+  "Compute Instance": "ComputeInstance",
+  "EBS Volume": "EbsVolume",
+  Bandwidth: "Bandwidth",
+  "OS Image": "OsImage",
 };
 
 const AddPricing = ({
@@ -283,24 +283,24 @@ const AddPricing = ({
                     <p className="text-red-500 text-xs mt-1">{errors.price}</p>
                   )}
                 </div>
-
-                <div className="flex justify-end pt-4">
-                  <button
-                    type="submit"
-                    disabled={isPending}
-                    className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                  >
-                    {isPending ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Adding...
-                      </>
-                    ) : (
-                      "Add Pricing"
-                    )}
-                  </button>
-                </div>
               </form>
+            </div>
+            <div className="flex justify-end px-6 py-4">
+              <button
+                type="submit"
+                onClick={handleSubmit}
+                disabled={isPending}
+                className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  "Add Pricing"
+                )}
+              </button>
             </div>
           </div>
         </div>

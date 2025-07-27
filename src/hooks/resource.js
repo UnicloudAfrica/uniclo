@@ -30,32 +30,37 @@ const fetchCitiesById = async (id) => {
 const fetchProfile = async () => {
   console.log("FETCHING PROFILE DATA...");
   const res = await silentTenantApi("GET", "/admin/user-profile");
-  return res.data; // Extract only the data array
+  return res.data;
 };
 // **GET**: fetch industry
 const fetchIndustries = async () => {
   const res = await silentApi("GET", "/industries");
-  return res.data; // Extract only the data array
+  return res.data;
+};
+// **GET**: fetch product charge
+const fetchProductCharges = async () => {
+  const res = await silentApi("GET", "/product-charge");
+  return res.data;
 };
 // **GET**: fetch computer instances
 const fetchComputerInstances = async () => {
   const res = await silentApi("GET", "/product-compute-instance");
-  return res.data; // Extract only the data array
+  return res.data;
 };
 // **GET**: fetch computer instances
 const fetchOsImages = async () => {
   const res = await silentApi("GET", "/product-os-image");
-  return res.data; // Extract only the data array
+  return res.data;
 };
 // **GET**: fetch ebs volumes
 const fetchEbsVolumes = async () => {
   const res = await silentApi("GET", "/product-ebs-volume");
-  return res.data; // Extract only the data array
+  return res.data;
 };
 // **GET**: fetch bandwith
 const fetchBandwidths = async () => {
   const res = await silentApi("GET", "/product-bandwidth");
-  return res.data; // Extract only the data array
+  return res.data;
 };
 
 // Hook to fetch countries
@@ -117,6 +122,16 @@ export const useFetchIndustries = (options = {}) => {
   return useQuery({
     queryKey: ["industries"],
     queryFn: fetchIndustries,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+// Hook to fetch product charges
+export const useFetchChargeOptions = (options = {}) => {
+  return useQuery({
+    queryKey: ["prouct-charges-slug"],
+    queryFn: fetchProductCharges,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     refetchOnWindowFocus: false,
     ...options,

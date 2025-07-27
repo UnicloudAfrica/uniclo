@@ -39,6 +39,7 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/dashboard/support-ticket": "Support Ticket",
     "/dashboard/app-settings": "App Settings",
     "/dashboard/account-settings": "Account Settings",
+    "/dashboard/admin-users": "Admin Users",
     "/dashboard/tax-configurations": "Tax Configurations",
   };
 
@@ -111,6 +112,12 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       icon: appSettings,
       activeIcon: appSettings,
       path: "/dashboard/tax-configurations",
+    },
+    {
+      name: "Admin Users",
+      icon: modules,
+      activeIcon: activemodules,
+      path: "/dashboard/admin-users",
     },
     {
       name: "Account Settings",

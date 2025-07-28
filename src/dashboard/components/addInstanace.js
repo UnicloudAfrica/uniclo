@@ -116,9 +116,7 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
       if (!formData.name.trim()) newErrors.name = "Instance Name is required";
       if (!formData.selectedProject)
         newErrors.selectedProject = "Project is required";
-      if (!formData.user_id)
-        // Validate user_id
-        newErrors.user_id = "Client is required";
+      // user_id is no longer compulsory, so no validation here
       if (formData.tags.length === 0)
         newErrors.tags = "At least one tag must be selected";
     } else if (currentStep === 1) {
@@ -245,7 +243,6 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
         name: formData.name,
         description: formData.description || null,
         project_id: formData.selectedProject?.id,
-        user_id: formData.user_id, // Include user_id in the submission payload
         storage_size_gb: parseInt(formData.storage_size_gb),
         number_of_instances: parseInt(formData.number_of_instances),
         compute_instance_id: formData.selectedComputeInstance?.id,
@@ -257,6 +254,11 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
         months: parseInt(formData.months),
         tags: formData.tags,
       };
+
+      // Only include user_id if it has a value
+      if (formData.user_id) {
+        dataToSubmit.user_id = formData.user_id;
+      }
 
       createInstanceRequest(dataToSubmit, {
         onSuccess: (response) => {

@@ -3,22 +3,18 @@ import { X, Loader2 } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useUpdateTenantAdmin } from "../../../hooks/adminUserHooks";
 
-export const EditAdminModal = ({ isOpen, onClose, admin, onUpdateSuccess }) => {
-  // State to hold form data, initialized with admin prop
+export const EditAdminModal = ({ isOpen, onClose, admin }) => {
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
     email: "",
     phone: "",
-    address: "",
-    zip: "",
-    country_id: "", // Assuming country_id is used for country selection
-    city: "",
-    state: "",
-    role: "", // Assuming role can be edited
+    workspace_role: "member",
+    password: "",
+    password_confirmation: "",
   });
+  const [errors, setErrors] = useState({});
 
-  // Populate form data when the modal opens or admin prop changes
   useEffect(() => {
     if (admin) {
       setFormData({
@@ -26,69 +22,102 @@ export const EditAdminModal = ({ isOpen, onClose, admin, onUpdateSuccess }) => {
         last_name: admin.last_name || "",
         email: admin.email || "",
         phone: admin.phone || "",
-        address: admin.address || "",
-        zip: admin.zip || "",
-        country_id: admin.country_id || "", // Use country_id if available
-        city: admin.city || "",
-        state: admin.state || "",
-        role: admin.role || "",
+        workspace_role: admin.pivot?.workspace_role || "",
+        password: "",
+        password_confirmation: "",
       });
+      setErrors({});
     }
   }, [admin]);
 
-  // Use the useUpdateAdmin hook
-  const {
-    mutate: updateAdmin, // Renamed mutate to updateAdmin for clarity
-    isPending,
-    isError,
-    error,
-    isSuccess,
-  } = useUpdateTenantAdmin();
+  const { mutate: updateAdmin, isPending } = useUpdateTenantAdmin();
 
-  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
     }));
+    if (errors[name]) {
+      setErrors((prevErrors) => ({ ...prevErrors, [name]: null }));
+    }
   };
 
-  // Handle form submission
+  const validateForm = () => {
+    let newErrors = {};
+    if (!formData.first_name.trim())
+      newErrors.first_name = "First name is required.";
+    if (!formData.last_name.trim())
+      newErrors.last_name = "Last name is required.";
+    if (!formData.phone.trim()) newErrors.phone = "Phone number is required.";
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required.";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Email address is invalid.";
+    }
+    if (!formData.workspace_role) {
+      newErrors.workspace_role = "Workspace role is required.";
+    }
+
+    // Password validation only if password field is touched
+    if (formData.password.trim() || formData.password_confirmation.trim()) {
+      if (!formData.password.trim()) {
+        newErrors.password = "Password is required.";
+      } else if (formData.password.length < 6) {
+        newErrors.password = "Password must be at least 6 characters long.";
+      }
+      if (!formData.password_confirmation.trim()) {
+        newErrors.password_confirmation = "Confirm password is required.";
+      } else if (formData.password_confirmation !== formData.password) {
+        newErrors.password_confirmation = "Passwords do not match.";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!admin?.identifier) {
-      //   ToastUtils.error("Admin ID is missing for update.");
+      ToastUtils.error("Admin identifier is missing for update.");
       return;
     }
 
-    // Prepare data for update. Only send fields that are editable and might have changed.
-    const updatedData = {
-      id: admin.identifier, // Admin ID is required for the update mutation
+    if (!validateForm()) {
+      ToastUtils.error("Please correct the errors in the form.");
+      return;
+    }
+
+    const adminData = {
       first_name: formData.first_name,
       last_name: formData.last_name,
       email: formData.email,
       phone: formData.phone,
-      address: formData.address,
-      zip: formData.zip,
-      country_id: formData.country_id,
-      city: formData.city,
-      state: formData.state,
-      role: formData.role,
+      workspace_role: formData.workspace_role,
     };
 
-    updateAdmin(updatedData, {
-      onSuccess: () => {
-        // ToastUtils.success("Admin updated successfully!");
-        onClose(); // Close the modal on successful update
-      },
-      onError: (err) => {
-        console.error("Failed to update admin:", err);
-        // ToastUtils.error(
-        //   err?.message || "Failed to update admin. Please try again."
-        // );
-      },
-    });
+    // Only add password fields if they are provided
+    if (formData.password.trim()) {
+      adminData.password = formData.password;
+      adminData.password_confirmation = formData.password_confirmation;
+    }
+
+    updateAdmin(
+      { id: admin.identifier, adminData },
+      {
+        onSuccess: () => {
+          ToastUtils.success("Admin updated successfully!");
+          onClose();
+        },
+        onError: (err) => {
+          //   console.error("Failed to update admin:", err);
+          //   ToastUtils.error(
+          //     err.message || "Failed to update admin. Please try again."
+          //   );
+        },
+      }
+    );
   };
 
   if (!isOpen) return null;
@@ -96,8 +125,7 @@ export const EditAdminModal = ({ isOpen, onClose, admin, onUpdateSuccess }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1001] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[800px] mx-4 w-full">
-        {/* Header */}
-        <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] w-full">
+        <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
           <h2 className="text-lg font-semibold text-[#1E1E1EB2]">
             Edit Admin: {admin?.first_name} {admin?.last_name}
           </h2>
@@ -105,25 +133,23 @@ export const EditAdminModal = ({ isOpen, onClose, admin, onUpdateSuccess }) => {
             onClick={onClose}
             className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
             aria-label="Close"
-            disabled={isPending} // Disable close button while saving
+            disabled={isPending}
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Content - Form */}
         <form
           onSubmit={handleSubmit}
           className="px-6 py-6 w-full max-h-[400px] overflow-y-auto"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* First Name */}
             <div>
               <label
                 htmlFor="first_name"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                First Name
+                First Name<span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -131,17 +157,21 @@ export const EditAdminModal = ({ isOpen, onClose, admin, onUpdateSuccess }) => {
                 name="first_name"
                 value={formData.first_name}
                 onChange={handleChange}
-                className="input-field"
-                required
+                className={`input-field ${
+                  errors.first_name ? "border-red-500" : ""
+                }`}
+                disabled={isPending}
               />
+              {errors.first_name && (
+                <p className="text-red-500 text-xs mt-1">{errors.first_name}</p>
+              )}
             </div>
-            {/* Last Name */}
             <div>
               <label
                 htmlFor="last_name"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Last Name
+                Last Name<span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -149,17 +179,21 @@ export const EditAdminModal = ({ isOpen, onClose, admin, onUpdateSuccess }) => {
                 name="last_name"
                 value={formData.last_name}
                 onChange={handleChange}
-                className="input-field"
-                required
+                className={`input-field ${
+                  errors.last_name ? "border-red-500" : ""
+                }`}
+                disabled={isPending}
               />
+              {errors.last_name && (
+                <p className="text-red-500 text-xs mt-1">{errors.last_name}</p>
+              )}
             </div>
-            {/* Email */}
             <div>
               <label
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Email
+                Email<span className="text-red-500">*</span>
               </label>
               <input
                 type="email"
@@ -167,17 +201,21 @@ export const EditAdminModal = ({ isOpen, onClose, admin, onUpdateSuccess }) => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="input-field"
-                required
+                className={`input-field ${
+                  errors.email ? "border-red-500" : ""
+                }`}
+                disabled={isPending}
               />
+              {errors.email && (
+                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+              )}
             </div>
-            {/* Phone */}
             <div>
               <label
                 htmlFor="phone"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Phone
+                Phone<span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -185,123 +223,112 @@ export const EditAdminModal = ({ isOpen, onClose, admin, onUpdateSuccess }) => {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                className="input-field"
+                className={`input-field ${
+                  errors.phone ? "border-red-500" : ""
+                }`}
+                disabled={isPending}
               />
+              {errors.phone && (
+                <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+              )}
             </div>
-            {/* Address */}
-            {/* <div className="md:col-span-2">
+
+            <div>
               <label
-                htmlFor="address"
+                htmlFor="workspace_role"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Address
+                Workspace Role<span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                id="address"
-                name="address"
-                value={formData.address}
+              <select
+                id="workspace_role"
+                name="workspace_role"
+                value={formData.workspace_role}
                 onChange={handleChange}
-                className="input-field"
-              />
-            </div> */}
-            {/* City */}
-            {/* <div>
+                className={`input-field ${
+                  errors.workspace_role ? "border-red-500" : ""
+                }`}
+                disabled={isPending}
+              >
+                <option value="member">Member</option>
+                <option value="admin">Admin</option>
+              </select>
+              {errors.workspace_role && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.workspace_role}
+                </p>
+              )}
+            </div>
+
+            <div className="md:col-span-2">
               <label
-                htmlFor="city"
+                htmlFor="password"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                City
+                New Password
               </label>
               <input
-                type="text"
-                id="city"
-                name="city"
-                value={formData.city}
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
                 onChange={handleChange}
-                className="input-field"
+                className={`input-field ${
+                  errors.password ? "border-red-500" : ""
+                }`}
+                placeholder="Leave blank to keep current password"
+                disabled={isPending}
               />
-            </div> */}
-            {/* State */}
-            {/* <div>
+              {errors.password && (
+                <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+              )}
+            </div>
+            <div className="md:col-span-2">
               <label
-                htmlFor="state"
+                htmlFor="password_confirmation"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                State
+                Confirm New Password
               </label>
               <input
-                type="text"
-                id="state"
-                name="state"
-                value={formData.state}
+                type="password"
+                id="password_confirmation"
+                name="password_confirmation"
+                value={formData.password_confirmation}
                 onChange={handleChange}
-                className="input-field"
+                className={`input-field ${
+                  errors.password_confirmation ? "border-red-500" : ""
+                }`}
+                placeholder="Confirm new password"
+                disabled={isPending}
               />
-            </div> */}
-            {/* Zip */}
-            {/* <div>
-              <label
-                htmlFor="zip"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Zip Code
-              </label>
-              <input
-                type="text"
-                id="zip"
-                name="zip"
-                value={formData.zip}
-                onChange={handleChange}
-                className="input-field"
-              />
-            </div> */}
-            {/* Country ID (or actual country name, depending on API) */}
-            {/* <div>
-              <label
-                htmlFor="country_id"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Country
-              </label>
-              <input
-                type="text" // Could be a select dropdown with country options in a real app
-                id="country_id"
-                name="country_id"
-                value={formData.country_id}
-                onChange={handleChange}
-                className="input-field"
-              />
-            </div> */}
+              {errors.password_confirmation && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.password_confirmation}
+                </p>
+              )}
+            </div>
           </div>
 
-          {/* Loading/Error messages */}
           {isPending && (
             <div className="flex items-center justify-center text-[#288DD1] my-4">
               <Loader2 className="w-5 h-5 animate-spin mr-2" />
               Saving changes...
             </div>
           )}
-          {/* 
-          {isError && (
-            <p className="text-red-500 text-sm my-4 text-center">
-              Error: {error?.message || "Failed to update admin."}
-            </p>
-          )} */}
         </form>
 
-        {/* Footer */}
         <div className="flex items-center justify-end px-6 py-4 border-t rounded-b-[24px]">
           <div className="flex gap-3">
             <button
               onClick={onClose}
               className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
-              disabled={isPending} // Disable if saving is in progress
+              disabled={isPending}
             >
               Cancel
             </button>
             <button
-              type="submit" // This button will submit the form
+              type="submit"
               onClick={handleSubmit}
               disabled={isPending}
               className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"

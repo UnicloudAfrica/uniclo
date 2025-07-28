@@ -19,8 +19,8 @@ const AddClientModal = ({ isOpen, onClose }) => {
     last_name: "",
     email: "",
     phone: "",
-    password: "", // New field
-    password_confirmation: "", // New field
+    password: "",
+    password_confirmation: "",
     verified: false,
     country_id: "",
     country: "",
@@ -30,6 +30,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
     city: "",
     address: "",
     zip_code: "",
+    force_password_reset: false,
   });
   const [errors, setErrors] = useState({});
 
@@ -63,6 +64,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
         city: "",
         address: "",
         zip_code: "",
+        force_password_reset: false,
       });
       setErrors({});
     }
@@ -216,12 +218,9 @@ const AddClientModal = ({ isOpen, onClose }) => {
       last_name: formData.last_name,
       email: formData.email,
       phone: formData.phone,
-      password: formData.password,
-      password_confirmation: formData.password_confirmation,
       role: "client",
       tenant_id: profile?.tenant_id,
       verified: formData.verified,
-      force_password_reset: true, // Hardcoded as requested
       country_id: parseInt(formData.country_id),
       country: formData.country,
       state: formData.state,
@@ -230,16 +229,25 @@ const AddClientModal = ({ isOpen, onClose }) => {
       zip_code: formData.zip_code,
     };
 
+    if (formData.password.trim()) {
+      payload.password = formData.password;
+      payload.password_confirmation = formData.password_confirmation;
+    }
+
+    if (formData.force_password_reset) {
+      payload.force_password_reset = formData.force_password_reset;
+    }
+
     createClient(payload, {
       onSuccess: () => {
         ToastUtils.success("Client added successfully!");
         onClose();
       },
       onError: (err) => {
-        // console.error("Failed to add client:", err);
-        // ToastUtils.error(
-        //   err.message || "Failed to add client. Please try again."
-        // );
+        console.error("Failed to add client:", err);
+        ToastUtils.error(
+          err.message || "Failed to add client. Please try again."
+        );
       },
     });
   };
@@ -365,56 +373,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
                 )}
               </div>
 
-              {/* Password Fields */}
-              <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Password<span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  placeholder="Enter password"
-                  className={`w-full input-field ${
-                    errors.password ? "border-red-500" : "border-gray-300"
-                  }`}
-                  disabled={isPending}
-                />
-                {errors.password && (
-                  <p className="text-red-500 text-xs mt-1">{errors.password}</p>
-                )}
-              </div>
-              <div>
-                <label
-                  htmlFor="password_confirmation"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Confirm Password<span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="password_confirmation"
-                  type="password"
-                  value={formData.password_confirmation}
-                  onChange={handleInputChange}
-                  placeholder="Confirm password"
-                  className={`w-full input-field ${
-                    errors.password_confirmation
-                      ? "border-red-500"
-                      : "border-gray-300"
-                  }`}
-                  disabled={isPending}
-                />
-                {errors.password_confirmation && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.password_confirmation}
-                  </p>
-                )}
-              </div>
-
+              {/* Country, State, City, Address, Zip Code Section */}
               <div>
                 <label
                   htmlFor="country_id"
@@ -657,8 +616,83 @@ const AddClientModal = ({ isOpen, onClose }) => {
                   htmlFor="verified"
                   className="ml-2 block text-sm text-gray-900"
                 >
-                  Verified Account
+                  Verify Account
                 </label>
+              </div>
+            </div>
+
+            {/* Password & Security Section */}
+            <div className="md:col-span-2 border-t border-gray-200 pt-4 mt-4">
+              <h3 className="text-base font-semibold text-gray-800 mb-3">
+                Password & Security
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Password<span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    placeholder="Enter password"
+                    className={`w-full input-field ${
+                      errors.password ? "border-red-500" : "border-gray-300"
+                    }`}
+                    disabled={isPending}
+                  />
+                  {errors.password && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.password}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label
+                    htmlFor="password_confirmation"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Confirm Password<span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    id="password_confirmation"
+                    type="password"
+                    value={formData.password_confirmation}
+                    onChange={handleInputChange}
+                    placeholder="Confirm password"
+                    className={`w-full input-field ${
+                      errors.password_confirmation
+                        ? "border-red-500"
+                        : "border-gray-300"
+                    }`}
+                    disabled={isPending}
+                  />
+                  {errors.password_confirmation && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.password_confirmation}
+                    </p>
+                  )}
+                </div>
+                <div className="md:col-span-2 flex items-center mt-2">
+                  <input
+                    id="force_password_reset"
+                    type="checkbox"
+                    checked={formData.force_password_reset}
+                    onChange={handleInputChange}
+                    className="h-4 w-4 text-[#288DD1] border-gray-300 rounded focus:ring-[#288DD1]"
+                    disabled={isPending}
+                  />
+                  <label
+                    htmlFor="force_password_reset"
+                    className="ml-2 block text-sm text-gray-900"
+                  >
+                    Force Password Reset on Next Login
+                  </label>
+                </div>
               </div>
             </div>
           </form>

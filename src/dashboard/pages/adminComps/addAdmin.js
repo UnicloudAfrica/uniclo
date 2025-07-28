@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useCreateTenantAdmin } from "../../../hooks/adminUserHooks";
 
 export const AddTenantAdminModal = ({ isOpen, onClose }) => {
-  // State for form fields
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -11,10 +10,11 @@ export const AddTenantAdminModal = ({ isOpen, onClose }) => {
     email: "",
     password: "",
     password_confirmation: "",
+    workspace_role: "admin",
+    force_password_reset: true,
   });
   const [errors, setErrors] = useState({});
 
-  // Use the useCreateAdmin hook
   const {
     mutate: createAdmin,
     isPending,
@@ -23,20 +23,17 @@ export const AddTenantAdminModal = ({ isOpen, onClose }) => {
     isSuccess,
   } = useCreateTenantAdmin();
 
-  // Handle input changes
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData((prevData) => ({
       ...prevData,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
-    // Clear error for the current field as user types
     if (errors[name]) {
       setErrors((prevErrors) => ({ ...prevErrors, [name]: null }));
     }
   };
 
-  // Basic form validation
   const validateForm = () => {
     let newErrors = {};
     if (!formData.first_name.trim())
@@ -54,20 +51,20 @@ export const AddTenantAdminModal = ({ isOpen, onClose }) => {
     } else if (formData.password.length < 6) {
       newErrors.password = "Password must be at least 6 characters long.";
     }
-    // Password confirmation validation
     if (!formData.password_confirmation.trim()) {
       newErrors.password_confirmation = "Confirm password is required.";
     } else if (formData.password_confirmation !== formData.password) {
       newErrors.password_confirmation = "Passwords do not match.";
+    }
+    if (!formData.workspace_role) {
+      newErrors.workspace_role = "Workspace role is required.";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle form submission
   const handleSubmit = (e) => {
-    // Removed async keyword
     e.preventDefault();
 
     if (validateForm()) {
@@ -78,10 +75,10 @@ export const AddTenantAdminModal = ({ isOpen, onClose }) => {
         email: formData.email,
         password: formData.password,
         password_confirmation: formData.password_confirmation,
-        role: "tenant",
+        workspace_role: formData.workspace_role,
+        force_password_reset: formData.force_password_reset,
       };
 
-      // Call mutate directly without await
       createAdmin(adminData, {
         onSuccess: () => {
           setTimeout(() => {
@@ -92,9 +89,10 @@ export const AddTenantAdminModal = ({ isOpen, onClose }) => {
               email: "",
               password: "",
               password_confirmation: "",
+              workspace_role: "admin",
+              force_password_reset: true,
             });
             setErrors({});
-            // ToastUtils.success("Admin added");
             onClose();
           }, 1500);
         },
@@ -110,7 +108,6 @@ export const AddTenantAdminModal = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1001] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[800px] w-full mx-4 flex flex-col">
-        {/* Header */}
         <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
           <h2 className="text-lg font-semibold text-[#575758]">
             Add New Admin
@@ -125,10 +122,8 @@ export const AddTenantAdminModal = ({ isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Content */}
         <div className="px-6 py-6 w-full overflow-y-auto max-h-[400px] flex-1">
           <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
-            {/* First Name */}
             <div>
               <label
                 htmlFor="first_name"
@@ -153,7 +148,6 @@ export const AddTenantAdminModal = ({ isOpen, onClose }) => {
               )}
             </div>
 
-            {/* Last Name */}
             <div>
               <label
                 htmlFor="last_name"
@@ -178,7 +172,6 @@ export const AddTenantAdminModal = ({ isOpen, onClose }) => {
               )}
             </div>
 
-            {/* Phone Number */}
             <div>
               <label
                 htmlFor="phone"
@@ -203,7 +196,6 @@ export const AddTenantAdminModal = ({ isOpen, onClose }) => {
               )}
             </div>
 
-            {/* Email Address */}
             <div>
               <label
                 htmlFor="email"
@@ -228,7 +220,6 @@ export const AddTenantAdminModal = ({ isOpen, onClose }) => {
               )}
             </div>
 
-            {/* Password */}
             <div>
               <label
                 htmlFor="password"
@@ -253,7 +244,6 @@ export const AddTenantAdminModal = ({ isOpen, onClose }) => {
               )}
             </div>
 
-            {/* Password Confirmation */}
             <div>
               <label
                 htmlFor="password_confirmation"
@@ -282,29 +272,53 @@ export const AddTenantAdminModal = ({ isOpen, onClose }) => {
               )}
             </div>
 
-            {isPending && (
-              <div className="flex items-center justify-center text-[#288DD1] col-span-full">
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                Adding admin...
-              </div>
-            )}
+            <div>
+              <label
+                htmlFor="workspace_role"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Workspace Role<span className="text-red-500">*</span>
+              </label>
+              <select
+                id="workspace_role"
+                name="workspace_role"
+                value={formData.workspace_role}
+                onChange={handleChange}
+                className={`w-full input-field ${
+                  errors.workspace_role ? "border-red-500" : "border-gray-300"
+                }`}
+                disabled={isPending}
+              >
+                <option value="member">Member</option>
+                <option value="admin">Admin</option>
+              </select>
+              {errors.workspace_role && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.workspace_role}
+                </p>
+              )}
+            </div>
 
-            {/* {isError && (
-              <p className="text-red-500 text-sm text-center col-span-full">
-                Error:{" "}
-                {error?.message || "Failed to add admin. Please try again."}
-              </p>
-            )}
-
-            {isSuccess && ( // Using isSuccess from the hook
-              <p className="text-green-600 text-sm text-center col-span-full">
-                Admin added successfully!
-              </p>
-            )} */}
+            <div className="flex items-center mt-2">
+              <input
+                id="force_password_reset"
+                type="checkbox"
+                name="force_password_reset"
+                checked={formData.force_password_reset}
+                onChange={handleChange}
+                className="h-4 w-4 text-[#288DD1] border-gray-300 rounded focus:ring-[#288DD1]"
+                disabled={isPending}
+              />
+              <label
+                htmlFor="force_password_reset"
+                className="ml-2 block text-sm text-gray-900"
+              >
+                Force Password Reset on Next Login
+              </label>
+            </div>
           </form>
         </div>
 
-        {/* Footer */}
         <div className="flex items-center justify-end px-6 py-4 border-t rounded-b-[24px]">
           <div className="flex gap-3">
             <button

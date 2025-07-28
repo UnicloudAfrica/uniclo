@@ -1,9 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Headbar from "../components/headbar";
 import Sidebar from "../components/sidebar";
 import ActiveTab from "../components/activeTab";
 import cloudCheck from "./assets/cloucCheck.svg";
-import { ChevronRight, Loader2 } from "lucide-react";
+import {
+  ChevronRight,
+  Loader2,
+  ArrowUpRight,
+  ArrowDownRight,
+} from "lucide-react";
 import mobile from "./assets/mobile.svg";
 import cloud from "./assets/cloud-connection.svg";
 import monitor from "./assets/monitor.svg";
@@ -19,6 +24,13 @@ import VerifyAccountPromptModal from "../components/verifyAccountPrompt";
 import { useFetchProfile } from "../../hooks/resource";
 import { useFetchTenantDashboard } from "../../hooks/profileHooks";
 
+const MetricCardSkeleton = () => (
+  <div className="flex-1 p-4 w-full rounded-[12px] bg-gray-100 border border-gray-200 animate-pulse">
+    <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+    <div className="h-6 bg-gray-300 rounded w-3/4"></div>
+  </div>
+);
+
 export default function Dashboard() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { data: subs, isFetching: isSubsFetching } = useFetchSubs();
@@ -32,7 +44,6 @@ export default function Dashboard() {
   } = useFetchProductOffers();
   const [showVerifyModal, setShowVerifyModal] = useState(false);
 
-  // Effect to check profile verification status and show modal
   useEffect(() => {
     if (
       !isLoading &&
@@ -55,13 +66,12 @@ export default function Dashboard() {
   const handleCloseVerifyModal = () => {
     setShowVerifyModal(false);
   };
-  // Map icon strings to imported images
+
   const iconMap = {
     mobile: mobile,
     storage: cloud,
   };
 
-  // Function to format amounts with thousand separators
   const formatAmount = (amount) => {
     return amount.toLocaleString("en-NG", {
       minimumFractionDigits: 2,
@@ -69,7 +79,20 @@ export default function Dashboard() {
     });
   };
 
-  // Skeleton component for offer cards
+  // Prepare metrics data from dashboard.message
+  const metrics = useMemo(() => {
+    if (!dashboard?.message) return [];
+    const { partners, client, active_instances, pending_instances, support } =
+      dashboard.message;
+    return [
+      { label: "Partners", value: partners },
+      { label: "Clients", value: client },
+      { label: "Active Instances", value: active_instances },
+      { label: "Pending Instances", value: pending_instances },
+      { label: "Support Tickets", value: support },
+    ];
+  }, [dashboard]);
+
   const OfferSkeleton = () => (
     <div className="relative w-full mt-4 border border-[#E9EAF4] py-6 px-5 rounded-[10px] animate-pulse">
       <div className="max-w-[300px]">
@@ -98,7 +121,6 @@ export default function Dashboard() {
 
   return (
     <>
-      {/* <CartFloat /> */}
       <Headbar onMenuClick={toggleMobileMenu} />
       <Sidebar
         isMobileMenuOpen={isMobileMenuOpen}
@@ -131,6 +153,40 @@ export default function Dashboard() {
           </Link>
         </div>
 
+        {/* New Metrics Section */}
+        <div className="flex w-full flex-col md:flex-row justify-between items-center gap-4 mb-6 mt-6">
+          {isDashboardFetching ? (
+            <>
+              <MetricCardSkeleton />
+              <MetricCardSkeleton />
+              <MetricCardSkeleton />
+              <MetricCardSkeleton />
+              <MetricCardSkeleton />
+            </>
+          ) : metrics.length > 0 ? (
+            metrics.map((metric, index) => (
+              <div
+                key={index}
+                className={`flex-1 p-4 w-full rounded-[12px] bg-[#288DD10D] border border-[#288dd12d]`}
+              >
+                <p className="text-xs text-[#676767] capitalize">
+                  {metric.label}
+                </p>
+                <div className="flex items-center mt-4 space-x-1.5">
+                  <p className="text-lg md:text-2xl font-medium text-[#3272CA]">
+                    {metric.value}
+                  </p>
+                  {/* Removed upward/downward conditional rendering as per request */}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="flex-1 p-4 w-full rounded-[12px] bg-gray-100 border border-gray-200 text-center text-gray-500">
+              No metrics available.
+            </div>
+          )}
+        </div>
+
         <div className="mt-6 w-full">
           <p className="text-[#7e7e7e] font-Outfit text-base font-normal">
             For you
@@ -139,8 +195,8 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
             {isOffersFetching ? (
               <OfferSkeleton />
-            ) : offers.trial.length > 0 ? (
-              offers.trial.map((offer) => (
+            ) : offers?.trial?.length > 0 ? (
+              offers?.trial?.map((offer) => (
                 <div
                   className="relative w-full mt-4 border border-[#E9EAF4] py-6 px-5 rounded-[10px]"
                   key={offer.id}
@@ -190,8 +246,8 @@ export default function Dashboard() {
                 <OfferSkeleton />
                 <OfferSkeleton />
               </>
-            ) : offers.discount.length > 0 ? (
-              offers.discount.map((offer) => (
+            ) : offers?.discount?.length > 0 ? (
+              offers?.discount?.map((offer) => (
                 <div
                   className="relative w-full mt-4 border border-[#E9EAF4] py-6 px-5 rounded-[10px]"
                   key={offer.id}
@@ -238,7 +294,6 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
-      {/* Verify Account Prompt Modal */}
       <VerifyAccountPromptModal
         isOpen={showVerifyModal}
         onClose={handleCloseVerifyModal}

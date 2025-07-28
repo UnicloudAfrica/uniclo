@@ -14,7 +14,7 @@ const fetchTenantDashboard = async () => {
   if (!res) {
     throw new Error("Failed to fetch dashboard");
   }
-  return res;
+  return res.data;
 };
 
 const createProfile = async (profileData) => {
@@ -27,6 +27,13 @@ const createProfile = async (profileData) => {
 
 const updateProfile = async (profileData) => {
   const res = await tenantApi("PATCH", "/admin/profile", profileData);
+  if (!res.data) {
+    throw new Error("Failed to update profile");
+  }
+  return res.data;
+};
+const updateUserProfile = async (profileData) => {
+  const res = await tenantApi("PATCH", "/admin/user-profile", profileData);
   if (!res.data) {
     throw new Error("Failed to update profile");
   }
@@ -74,6 +81,19 @@ export const useUpdateProfile = () => {
     mutationFn: updateProfile,
     onSuccess: () => {
       queryClient.invalidateQueries(["tenant-profile"]);
+    },
+    onError: (error) => {
+      console.error("Error updating profile:", error);
+    },
+  });
+};
+
+export const useUserUpdateProfile = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateUserProfile,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["profile"]);
     },
     onError: (error) => {
       console.error("Error updating profile:", error);

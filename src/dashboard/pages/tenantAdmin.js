@@ -1,18 +1,20 @@
 import React, { useState } from "react";
+import { Loader2, SquarePen, Trash2, Eye } from "lucide-react";
 import Headbar from "../components/headbar";
 import Sidebar from "../components/sidebar";
 import ActiveTab from "../components/activeTab";
 import { useFetchTenantAdmins } from "../../hooks/adminUserHooks";
-import { Loader2, SquarePen, Trash2 } from "lucide-react";
 import { AddTenantAdminModal } from "./adminComps/addAdmin";
 import { EditAdminModal } from "./adminComps/editAdmin";
 import { DeleteAdminModal } from "./adminComps/deleteAdmin";
+import { ViewAdminModal } from "./adminComps/viewAdmin";
 
 export default function TenantAdmin() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showAddAdminModal, setShowAddAdminModal] = useState(false);
   const [showEditAdminModal, setShowEditAdminModal] = useState(false);
   const [showDeleteAdminModal, setShowDeleteAdminModal] = useState(false);
+  const [showViewAdminModal, setShowViewAdminModal] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState(null);
 
   const { data: adminUsers, isFetching: isUsersFetching } =
@@ -40,18 +42,28 @@ export default function TenantAdmin() {
     setShowDeleteAdminModal(true);
   };
 
+  const handleViewAdmin = (admin) => {
+    setSelectedAdmin(admin);
+    setShowViewAdminModal(true);
+  };
+
   const closeAddAdminModal = () => {
     setShowAddAdminModal(false);
   };
 
   const closeEditAdminModal = () => {
     setShowEditAdminModal(false);
-    setSelectedAdmin(null); // Clear selected admin
+    setSelectedAdmin(null);
   };
 
   const closeDeleteAdminModal = () => {
     setShowDeleteAdminModal(false);
-    setSelectedAdmin(null); // Clear selected admin
+    setSelectedAdmin(null);
+  };
+
+  const closeViewAdminModal = () => {
+    setShowViewAdminModal(false);
+    setSelectedAdmin(null);
   };
 
   return (
@@ -68,7 +80,7 @@ export default function TenantAdmin() {
             onClick={handleAddAdmin}
             className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base "
           >
-            Add Admin
+            Invite Admin
           </button>
         </div>
 
@@ -79,81 +91,128 @@ export default function TenantAdmin() {
           </div>
         ) : adminUsers && adminUsers.length > 0 ? (
           <>
-            {/* Desktop Table View */}
             <div className="hidden md:block bg-white rounded-lg shadow-sm overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-[#F2F2F2]">
-                  <tr>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      First Name
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Last Name
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Phone
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Email
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {adminUsers.map((admin) => (
-                    <tr key={admin.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {admin.first_name || "N/A"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {admin.last_name || "N/A"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {admin.phone || "N/A"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {admin.email || "N/A"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          onClick={() => handleEditAdmin(admin)}
-                          className="text-[#288DD1] hover:text-[#1976D2] mr-3"
-                          title="Edit Admin"
-                        >
-                          <SquarePen className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteAdmin(admin)}
-                          className="text-red-600 hover:text-red-900"
-                          title="Delete Admin"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-[#F2F2F2]">
+                    <tr>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
+                      >
+                        First Name
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
+                      >
+                        Last Name
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Phone
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Email
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Status
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Expired
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Actions
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {adminUsers.map((admin) => (
+                      <tr key={admin.id}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {admin.first_name || "N/A"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {admin.last_name || "N/A"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {admin.phone || "N/A"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {admin.email || "N/A"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <span
+                            className={`px-3 py-1 inline-flex text-xs leading-5 font-normal rounded-full ${
+                              admin.pivot?.is_accepted
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {admin.pivot?.is_accepted
+                              ? "Accepted"
+                              : "Not Accepted"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <span
+                            className={`px-3 py-1 inline-flex text-xs leading-5 font-normal rounded-full ${
+                              admin.pivot?.is_expired
+                                ? "bg-red-100 text-red-800"
+                                : "bg-green-100 text-green-800"
+                            }`}
+                          >
+                            {admin.pivot?.is_expired
+                              ? "Expired"
+                              : "Not Expired"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex items-center justify-end space-x-3">
+                            <button
+                              onClick={() => handleViewAdmin(admin)}
+                              className="text-[#288DD1] hover:text-[#1976D2]"
+                              title="View Admin"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleEditAdmin(admin)}
+                              className="text-[#288DD1] hover:text-[#1976D2]"
+                              title="Edit Admin"
+                            >
+                              <SquarePen className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteAdmin(admin)}
+                              className="text-red-600 hover:text-red-900"
+                              title="Delete Admin"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            {/* Mobile Card View */}
             <div className="md:hidden grid grid-cols-1 gap-4">
               {adminUsers.map((admin) => (
                 <div
@@ -167,18 +226,25 @@ export default function TenantAdmin() {
                     </h3>
                     <div className="flex space-x-2">
                       <button
+                        onClick={() => handleViewAdmin(admin)}
+                        className="text-[#288DD1] hover:text-[#1976D2]"
+                        title="View Admin"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
                         onClick={() => handleEditAdmin(admin)}
                         className="text-[#288DD1] hover:text-[#1976D2]"
                         title="Edit Admin"
                       >
-                        <SquarePen className="w-5 h-5" />
+                        <SquarePen className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteAdmin(admin)}
                         className="text-red-600 hover:text-red-900"
                         title="Delete Admin"
                       >
-                        <Trash2 className="w-5 h-5" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -190,6 +256,32 @@ export default function TenantAdmin() {
                     <span className="font-medium">Phone:</span>{" "}
                     {admin.phone || "N/A"}
                   </p>
+                  <div className="flex justify-between items-center mt-2">
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">Status:</span>{" "}
+                      <span
+                        className={`px-3 py-1 inline-flex text-xs leading-5 font-normal rounded-full ${
+                          admin.pivot?.is_accepted
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {admin.pivot?.is_accepted ? "Accepted" : "Not Accepted"}
+                      </span>
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">Expired:</span>{" "}
+                      <span
+                        className={`px-3 py-1 inline-flex text-xs leading-5 font-normal rounded-full ${
+                          admin.pivot?.is_expired
+                            ? "bg-red-100 text-red-800"
+                            : "bg-green-100 text-green-800"
+                        }`}
+                      >
+                        {admin.pivot?.is_expired ? "Expired" : "Not Expired"}
+                      </span>
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -212,6 +304,11 @@ export default function TenantAdmin() {
       <DeleteAdminModal
         isOpen={showDeleteAdminModal}
         onClose={closeDeleteAdminModal}
+        admin={selectedAdmin}
+      />
+      <ViewAdminModal
+        isOpen={showViewAdminModal}
+        onClose={closeViewAdminModal}
         admin={selectedAdmin}
       />
     </>

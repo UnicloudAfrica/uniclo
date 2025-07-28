@@ -95,7 +95,7 @@ const ConfigurationStep = ({
             ))}
           </select>
         ) : (
-          <div className="flex items-center  text-gray-500 text-sm">
+          <div className="flex items-center text-gray-500 text-sm">
             No projects available.
           </div>
         )}
@@ -105,13 +105,13 @@ const ConfigurationStep = ({
       )}
     </div>
 
-    {/* New Client Selection Field */}
+    {/* Assign to Client Field - Now optional */}
     <div>
       <label
         htmlFor="user_id"
         className="block text-sm font-medium text-gray-700 mb-2"
       >
-        Assign to Client<span className="text-red-500">*</span>
+        Assign to Client
       </label>
       <span
         className={`w-full input-field block transition-all ${
@@ -131,7 +131,7 @@ const ConfigurationStep = ({
             className="w-full bg-transparent outline-none "
             disabled={isSubmissionPending}
           >
-            <option value="">Select a client</option>
+            <option value="">Select a client (Optional)</option>
             {clients.map((client) => (
               <option key={client.id} value={client.id}>
                 {client.first_name} {client.last_name} ({client.email})
@@ -139,7 +139,7 @@ const ConfigurationStep = ({
             ))}
           </select>
         ) : (
-          <div className="flex items-center  text-gray-500 text-sm">
+          <div className="flex items-center text-gray-500 text-sm">
             No clients available.
           </div>
         )}

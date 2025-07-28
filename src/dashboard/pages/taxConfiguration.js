@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Loader2, PlusCircle, Trash2 } from "lucide-react";
 import ToastUtils from "../../utils/toastUtil";
 import Headbar from "../components/headbar";
@@ -17,6 +17,25 @@ export default function DashboardTaxConfigurations() {
   const [isDeleteTaxConfigModalOpen, setIsDeleteTaxConfigModalOpen] =
     useState(false);
   const [selectedTaxConfig, setSelectedTaxConfig] = useState(null);
+  const [activeCountryTab, setActiveCountryTab] = useState("");
+
+  const groupedTaxConfigurations = useMemo(() => {
+    if (!taxConfigurations) return {};
+    const grouped = {};
+    taxConfigurations.forEach((countryData) => {
+      const countryName = countryData.country || "Unknown Country";
+      grouped[countryName] = countryData;
+    });
+    return grouped;
+  }, [taxConfigurations]);
+
+  useEffect(() => {
+    if (Object.keys(groupedTaxConfigurations).length > 0) {
+      setActiveCountryTab(Object.keys(groupedTaxConfigurations)[0]);
+    } else {
+      setActiveCountryTab("");
+    }
+  }, [groupedTaxConfigurations]);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -30,7 +49,6 @@ export default function DashboardTaxConfigurations() {
     setIsAddTaxTypeModalOpen(true);
   };
 
-  // Handler to open the delete confirmation modal
   const handleDeleteTaxConfig = (taxConfig) => {
     setSelectedTaxConfig(taxConfig);
     setIsDeleteTaxConfigModalOpen(true);
@@ -38,8 +56,14 @@ export default function DashboardTaxConfigurations() {
 
   const formatRate = (rate) => {
     if (rate === null || rate === undefined) return "N/A";
-    return `${parseFloat(rate).toFixed(2)}%`;
+    const numericRate = parseFloat(String(rate).replace("%", ""));
+    return `${numericRate.toFixed(2)}%`;
   };
+
+  const currentCountryTaxes = useMemo(() => {
+    const selectedCountryData = groupedTaxConfigurations[activeCountryTab];
+    return selectedCountryData ? selectedCountryData.taxes : [];
+  }, [groupedTaxConfigurations, activeCountryTab]);
 
   return (
     <>
@@ -64,43 +88,68 @@ export default function DashboardTaxConfigurations() {
             <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
             <p className="ml-2 text-gray-700">Loading tax configurations...</p>
           </div>
+        ) : !taxConfigurations || taxConfigurations.length === 0 ? (
+          <div className="w-full text-center py-8 text-gray-600">
+            No configurations found.
+          </div>
         ) : (
           <>
+            {Object.keys(groupedTaxConfigurations).length > 0 && (
+              <div className="flex border-b w-full border-[#EAECF0] mb-6 overflow-x-auto whitespace-nowrap">
+                {Object.keys(groupedTaxConfigurations).map((countryName) => (
+                  <button
+                    key={countryName}
+                    className={`font-medium text-sm pb-4 px-4 transition-all ${
+                      activeCountryTab === countryName
+                        ? "border-b-2 border-[#288DD1] text-[#288DD1]"
+                        : "text-[#1C1C1C] hover:text-[#288DD1]"
+                    }`}
+                    onClick={() => setActiveCountryTab(countryName)}
+                  >
+                    {countryName}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px] border border-gray-200">
-              <table className="w-full">
-                <thead className="bg-[#F5F5F5]">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                      Tax Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                      Country
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                      Rate
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-[#E8E6EA]">
-                  {taxConfigurations && taxConfigurations.length > 0 ? (
-                    taxConfigurations.map((config) => (
-                      <tr key={config.id} className="hover:bg-gray-50">
+              {currentCountryTaxes.length > 0 ? (
+                <table className="w-full">
+                  <thead className="bg-[#F5F5F5]">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                        Tax Type
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                        Country
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                        Rate
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                        Action
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-[#E8E6EA]">
+                    {currentCountryTaxes.map((tax) => (
+                      <tr
+                        key={`${activeCountryTab}-${tax.slug}`}
+                        className="hover:bg-gray-50"
+                      >
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                          {config.tax_type?.name || "N/A"}
+                          {tax.name || "N/A"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                          {config.country?.name || "N/A"}
+                          {activeCountryTab || "N/A"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                          {formatRate(config.rate)}
+                          {formatRate(tax.rate)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
                           <div className="flex items-center space-x-3">
                             <button
-                              onClick={() => handleDeleteTaxConfig(config)}
+                              onClick={() => handleDeleteTaxConfig(tax)}
                               className="text-red-500 hover:text-red-700 transition-colors"
                               title="Delete Tax Configuration"
                             >
@@ -109,34 +158,29 @@ export default function DashboardTaxConfigurations() {
                           </div>
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan="4"
-                        className="px-6 py-4 text-center text-sm text-gray-500"
-                      >
-                        No tax configurations found.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="px-6 py-4 text-center text-sm text-gray-500 bg-white">
+                  No tax configurations found for {activeCountryTab}.
+                </div>
+              )}
             </div>
 
             <div className="md:hidden mt-6 space-y-4">
-              {taxConfigurations && taxConfigurations.length > 0 ? (
-                taxConfigurations.map((config) => (
+              {currentCountryTaxes.length > 0 ? (
+                currentCountryTaxes.map((tax) => (
                   <div
-                    key={config.id}
+                    key={`${activeCountryTab}-${tax.slug}`}
                     className="bg-white rounded-[12px] shadow-sm p-4 border border-gray-200"
                   >
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-base font-semibold text-gray-900">
-                        {config.tax_type?.name || "N/A"}
+                        {tax.name || "N/A"}
                       </h3>
                       <button
-                        onClick={() => handleDeleteTaxConfig(config)}
+                        onClick={() => handleDeleteTaxConfig(tax)}
                         className="text-red-500 hover:text-red-700 transition-colors"
                         title="Delete Tax Configuration"
                       >
@@ -146,18 +190,18 @@ export default function DashboardTaxConfigurations() {
                     <div className="border-t border-gray-100 pt-2 mt-2">
                       <div className="flex justify-between text-sm text-gray-600">
                         <span className="font-medium">Country:</span>
-                        <span>{config.country?.name || "N/A"}</span>
+                        <span>{activeCountryTab || "N/A"}</span>
                       </div>
                       <div className="flex justify-between text-sm text-gray-600">
                         <span className="font-medium">Rate:</span>
-                        <span>{formatRate(config.rate)}</span>
+                        <span>{formatRate(tax.rate)}</span>
                       </div>
                     </div>
                   </div>
                 ))
               ) : (
                 <div className="bg-white rounded-[12px] shadow-sm p-4 text-center text-gray-500">
-                  No tax configurations found.
+                  No tax configurations found for {activeCountryTab}.
                 </div>
               )}
             </div>
@@ -169,13 +213,6 @@ export default function DashboardTaxConfigurations() {
         isOpen={isAddTaxTypeModalOpen}
         onClose={() => setIsAddTaxTypeModalOpen(false)}
       />
-      {/*
-      <EditTaxTypeModal
-        isOpen={isEditTaxTypeModalOpen}
-        onClose={() => setIsEditTaxTypeModalOpen(false)}
-        taxConfig={selectedTaxConfig}
-      />
-      */}
       <DeleteTaxConfigModal
         isOpen={isDeleteTaxConfigModalOpen}
         onClose={() => setIsDeleteTaxConfigModalOpen(false)}

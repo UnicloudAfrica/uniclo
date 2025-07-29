@@ -57,13 +57,11 @@ const DeleteTaxConfigModal = ({ isOpen, onClose, taxConfig }) => {
                   : "N/A"}
               </span>{" "}
               for{" "}
+              <span className="font-semibold">{taxConfig.name || "N/A"}</span>{" "}
+              {/* in{" "}
               <span className="font-semibold">
-                {taxConfig.tax_type?.name || "N/A"}
-              </span>{" "}
-              in{" "}
-              <span className="font-semibold">
-                {taxConfig.country?.name || "N/A"}
-              </span>
+                {taxConfig.country || "N/A"}
+              </span> */}
               ? This action cannot be undone.
             </p>
           ) : (

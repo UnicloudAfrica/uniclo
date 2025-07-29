@@ -72,6 +72,7 @@ const AddTaxTypeModal = ({ isOpen, onClose }) => {
 
       const rateValue = parseFloat(rateEntry.rate);
       if (isNaN(rateValue) || rateValue < 0 || rateValue > 100) {
+        // Updated validation
         newErrors[`rate-${index}-rate`] = "Rate must be between 0 and 100.";
       }
 
@@ -108,14 +109,14 @@ const AddTaxTypeModal = ({ isOpen, onClose }) => {
 
     mutate(dataToSubmit, {
       onSuccess: () => {
-        // ToastUtils.success("Tax rates added successfully");
+        ToastUtils.success("Tax rates added successfully");
         onClose();
       },
       onError: (err) => {
-        // console.error("Failed to add Tax Rates:", err);
-        // ToastUtils.error(
-        //   err.message || "Failed to add tax rates. Please try again."
-        // );
+        console.error("Failed to add Tax Rates:", err);
+        ToastUtils.error(
+          err.message || "Failed to add tax rates. Please try again."
+        );
       },
     });
   };

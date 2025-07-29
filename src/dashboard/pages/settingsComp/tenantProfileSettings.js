@@ -9,7 +9,6 @@ import {
 import {
   useCreateProfile,
   useFetchTenantProfile,
-  useUpdateProfile,
 } from "../../../hooks/profileHooks";
 import AccountSettingsInputs from "./accoutsettingsInput";
 import AccountSettingsColors from "./accountSettingsColor";
@@ -21,7 +20,7 @@ const TenantProfileSettings = () => {
     isFetching: isProfileFetching,
     refetch: refetchTenantProfile,
   } = useFetchTenantProfile();
-  const { mutate: updateProfile, isPending: isSaving } = useUpdateProfile(); // Use updateProfile for PATCH
+  const { mutate: updateProfile, isPending: isSaving } = useCreateProfile();
 
   const [businessData, setBusinessData] = useState({
     name: "",
@@ -298,10 +297,10 @@ const TenantProfileSettings = () => {
         refetchTenantProfile();
       },
       onError: (err) => {
-        console.error("Failed to update profile:", err);
-        ToastUtils.error(
-          err.message || "Failed to update settings. Please try again."
-        );
+        // console.error("Failed to update profile:", err);
+        // ToastUtils.error(
+        //   err.message || "Failed to update settings. Please try again."
+        // );
       },
     });
   };

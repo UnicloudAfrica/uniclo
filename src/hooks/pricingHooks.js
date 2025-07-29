@@ -1,13 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import tenantApi from "../index/tenant/tenantApi";
 import silentTenantApi from "../index/tenant/silentTenant";
+import tenantApi from "../index/tenant/tenantApi";
 
 const fetchPricing = async () => {
   const res = await silentTenantApi("GET", "/admin/pricing");
   if (!res) {
     throw new Error("Failed to fetch pricing data");
   }
-  return res.data;
+  return res;
 };
 
 const createPricing = async (pricingData) => {
@@ -22,6 +22,32 @@ const updatePricing = async (pricingData) => {
   const res = await tenantApi("PATCH", "/admin/pricing", pricingData);
   if (!res.data) {
     throw new Error("Failed to update pricing data");
+  }
+  return res.data;
+};
+
+const deletePricing = async (id) => {
+  const res = await tenantApi("DELETE", `/admin/pricing/${id}`);
+  if (!res.data) {
+    throw new Error("Failed to delete pricing data");
+  }
+  return res.data;
+};
+
+// New function for resync-pricing
+const resyncPricing = async () => {
+  const res = await tenantApi("GET", "/admin/resync-pricing");
+  if (!res.data) {
+    throw new Error("Failed to resync pricing data");
+  }
+  return res.data;
+};
+
+// New function for sync-pricing
+const syncPricing = async () => {
+  const res = await tenantApi("GET", "/admin/sync-pricing");
+  if (!res.data) {
+    throw new Error("Failed to sync pricing data");
   }
   return res.data;
 };
@@ -94,6 +120,47 @@ export const useUpdatePricing = () => {
     },
     onError: (error) => {
       console.error("Error updating pricing data:", error);
+    },
+  });
+};
+
+export const useDeletePricing = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deletePricing,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["admin-pricing"]);
+    },
+    onError: (error) => {
+      console.error("Error deleting pricing data:", error);
+    },
+  });
+};
+
+// New hook for resync-pricing
+export const useResyncPricing = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: resyncPricing,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["admin-pricing"]);
+    },
+    onError: (error) => {
+      console.error("Error resyncing pricing data:", error);
+    },
+  });
+};
+
+// New hook for sync-pricing
+export const useSyncPricing = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: syncPricing,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["admin-pricing"]); // Invalidate pricing data after sync
+    },
+    onError: (error) => {
+      console.error("Error syncing pricing data:", error);
     },
   });
 };

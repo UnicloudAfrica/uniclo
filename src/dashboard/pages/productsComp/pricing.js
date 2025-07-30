@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Loader2, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Trash2, ChevronLeft, ChevronRight, Edit } from "lucide-react";
 import {
   useFetchBandwidths,
   useFetchComputerInstances,
@@ -13,8 +13,8 @@ import {
   useResyncPricing,
 } from "../../../hooks/pricingHooks";
 import AddPricing from "./addPricing";
+import EditPricingModal from "./editPricing";
 import ToastUtils from "../../../utils/toastUtil";
-// import DeletePricingModal from "./pricingComps/deletePricing"; // Commented out as per request
 
 const TableRowSkeleton = () => (
   <tr className="animate-pulse">
@@ -54,6 +54,8 @@ const Pricing = () => {
   const [isAddPricingModalOpen, setIsAddPricingModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
+  const [itemToEdit, setItemToEdit] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -87,6 +89,16 @@ const Pricing = () => {
     setIsDeleteModalOpen(false);
   };
 
+  const openEditModal = (item) => {
+    setItemToEdit(item);
+    setIsEditModalOpen(true);
+  };
+
+  const closeEditModal = () => {
+    setItemToEdit(null);
+    setIsEditModalOpen(false);
+  };
+
   const handleDeleteConfirm = () => {
     if (itemToDelete) {
       deletePricing(itemToDelete.id, {
@@ -112,8 +124,7 @@ const Pricing = () => {
         refetch();
       },
       onError: (err) => {
-        // console.error("Failed to sync pricing:", err);
-        // ToastUtils.error(err.message || "Failed to sync pricing. Please try again.");
+        // Error handling can be added here if needed
       },
     });
   };
@@ -125,8 +136,7 @@ const Pricing = () => {
         refetch();
       },
       onError: (err) => {
-        // console.error("Failed to resync pricing:", err);
-        // ToastUtils.error(err.message || "Failed to resync pricing. Please try again.");
+        // Error handling can be added here if needed
       },
     });
   };
@@ -164,16 +174,15 @@ const Pricing = () => {
   }, [pricing, activeTab]);
 
   const totalPages = Math.ceil(currentTabItems.length / itemsPerPage);
-  const currentItems = currentTabItems.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
   };
+  const currentItems = currentTabItems.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <>
@@ -181,7 +190,7 @@ const Pricing = () => {
         <button
           onClick={handleSyncPricing}
           disabled={isSyncing || isResyncing}
-          className="px-6 py-3 bg-[#6C757D] text-white font-medium rounded-full hover:bg-[#5A6268] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+          className="px-6 py-3 border border-[#288DD1] text-[#288DD1] font-medium rounded-full hover:bg-[#1976D2] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
         >
           {isSyncing ? (
             <>
@@ -196,7 +205,7 @@ const Pricing = () => {
         <button
           onClick={handleResyncPricing}
           disabled={isSyncing || isResyncing}
-          className="px-6 py-3 bg-[#007BFF] text-white font-medium rounded-full hover:bg-[#0056B3] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+          className="px-6 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
         >
           {isResyncing ? (
             <>
@@ -206,13 +215,6 @@ const Pricing = () => {
           ) : (
             "Resync Pricing"
           )}
-        </button>
-
-        <button
-          onClick={openAddPricingModal}
-          className="px-6 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors flex items-center justify-center"
-        >
-          Add New Pricing
         </button>
       </div>
 
@@ -244,7 +246,6 @@ const Pricing = () => {
               ))}
             </div>
 
-            {/* Table for desktop */}
             <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px] shadow-sm border border-gray-200">
               <table className="min-w-full divide-y divide-[#E8E6EA]">
                 <thead className="bg-[#F5F5F5]">
@@ -294,7 +295,14 @@ const Pricing = () => {
                             item.local_currency
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex items-center space-x-2">
+                          <button
+                            onClick={() => openEditModal(item)}
+                            className="text-[#288DD1] hover:text-[#1976D2] transition-colors p-1 rounded-full hover:bg-gray-100"
+                            title="Edit Pricing"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
                           <button
                             onClick={() => openDeleteModal(item)}
                             className="text-red-500 hover:text-red-700 transition-colors p-1 rounded-full hover:bg-gray-100"
@@ -320,7 +328,6 @@ const Pricing = () => {
               </table>
             </div>
 
-            {/* Pagination for desktop table */}
             {totalPages > 1 && (
               <div className="hidden md:flex items-center justify-center px-4 mt-6">
                 <div className="flex items-center space-x-2">
@@ -347,7 +354,6 @@ const Pricing = () => {
               </div>
             )}
 
-            {/* Cards for mobile */}
             <div className="md:hidden mt-6 space-y-4">
               {isPricingFetching ? (
                 Array.from({ length: 3 }).map((_, i) => (
@@ -379,7 +385,14 @@ const Pricing = () => {
                       <span className="font-medium">Set Price:</span>{" "}
                       {formatCurrency(item.local_price, item.local_currency)}
                     </p>
-                    <div className="mt-4 flex justify-end">
+                    <div className="mt-4 flex justify-end space-x-2">
+                      <button
+                        onClick={() => openEditModal(item)}
+                        className="text-[#288DD1] hover:text-[#1976D2] transition-colors p-2 rounded-full hover:bg-gray-100"
+                        title="Edit Pricing"
+                      >
+                        <Edit className="w-5 h-5" />
+                      </button>
                       <button
                         onClick={() => openDeleteModal(item)}
                         className="text-red-500 hover:text-red-700 transition-colors p-2 rounded-full hover:bg-gray-100"
@@ -398,7 +411,6 @@ const Pricing = () => {
               )}
             </div>
 
-            {/* Pagination for mobile cards */}
             {totalPages > 1 && (
               <div className="md:hidden flex items-center justify-center px-4 mt-6">
                 <div className="flex items-center space-x-2">
@@ -441,14 +453,12 @@ const Pricing = () => {
         isEbsVolumesFetching={isEbsVolumesFetching}
       />
 
-      {/* DeletePricingModal is commented out as requested */}
-      {/* <DeletePricingModal
-        isOpen={isDeleteModalOpen}
-        onClose={closeDeleteModal}
-        item={itemToDelete}
-        onDeleteConfirm={handleDeleteConfirm}
-        isDeleting={isDeleting}
-      /> */}
+      <EditPricingModal
+        isOpen={isEditModalOpen}
+        onClose={closeEditModal}
+        itemToEdit={itemToEdit}
+        refetchPricing={refetch}
+      />
     </>
   );
 };

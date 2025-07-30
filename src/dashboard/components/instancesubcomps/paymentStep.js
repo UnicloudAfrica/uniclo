@@ -123,110 +123,26 @@ const PaymentStep = ({
           </h3>
           {instanceRequestResponse?.metadata?.pricing_breakdown ? (
             <>
-              <div className="flex w-full items-center justify-between mb-2">
-                <span className="text-sm font-normal text-[#676767]">
-                  Compute Cost:
-                </span>
-                <span className="text-sm font-normal text-[#1c1c1c]">
-                  ₦
-                  {instanceRequestResponse.metadata.pricing_breakdown.compute?.toLocaleString() ||
-                    0}
-                </span>
-              </div>
-              <div className="flex w-full items-center justify-between mb-2">
-                <span className="text-sm font-normal text-[#676767]">
-                  Storage Cost:
-                </span>
-                <span className="text-sm font-normal text-[#1c1c1c]">
-                  ₦
-                  {instanceRequestResponse.metadata.pricing_breakdown.storage?.toLocaleString() ||
-                    0}
-                </span>
-              </div>
-              <div className="flex w-full items-center justify-between mb-2">
-                <span className="text-sm font-normal text-[#676767]">
-                  OS Cost:
-                </span>
-                <span className="text-sm font-normal text-[#1c1c1c]">
-                  ₦
-                  {instanceRequestResponse.metadata.pricing_breakdown.os?.toLocaleString() ||
-                    0}
-                </span>
-              </div>
-              <div className="flex w-full items-center justify-between mb-2">
-                <span className="text-sm font-normal text-[#676767]">
-                  Bandwidth Cost:
-                </span>
-                <span className="text-sm font-normal text-[#1c1c1c]">
-                  ₦
-                  {instanceRequestResponse.metadata.pricing_breakdown.bandwidth?.toLocaleString() ||
-                    0}
-                </span>
-              </div>
-              <div className="flex w-full items-center justify-between mb-2">
-                <span className="text-sm font-normal text-[#676767]">
-                  Base Total:
-                </span>
-                <span className="text-sm font-normal text-[#1c1c1c]">
-                  ₦
-                  {instanceRequestResponse.metadata.pricing_breakdown.base_total?.toLocaleString() ||
-                    0}
-                </span>
-              </div>
-              <div className="flex w-full items-center justify-between mb-2">
-                <span className="text-sm font-normal text-[#676767]">
-                  Offer Type:
-                </span>
-                <span className="text-sm font-normal text-[#1c1c1c]">
-                  {instanceRequestResponse.metadata.pricing_breakdown
-                    .offer_type || "N/A"}
-                </span>
-              </div>
-              <div className="flex w-full items-center justify-between mb-2">
-                <span className="text-sm font-normal text-[#676767]">
-                  Discount (
-                  {instanceRequestResponse.metadata.pricing_breakdown
-                    .discount_pct || 0}
-                  %):
-                </span>
-                <span className="text-sm font-normal text-[#1c1c1c]">
-                  ₦
-                  {instanceRequestResponse.metadata.pricing_breakdown.discount_cost?.toLocaleString() ||
-                    0}
-                </span>
-              </div>
-              <div className="flex w-full items-center justify-between mb-2">
-                <span className="text-sm font-normal text-[#676767]">
-                  Discounted Total:
-                </span>
-                <span className="text-sm font-normal text-[#1c1c1c]">
-                  ₦
-                  {instanceRequestResponse.metadata.pricing_breakdown.discounted_total?.toLocaleString() ||
-                    0}
-                </span>
-              </div>
-              <div className="flex w-full items-center justify-between mb-2">
-                <span className="text-sm font-normal text-[#676767]">
-                  Offer Ends At:
-                </span>
-                <span className="text-sm font-normal text-[#1c1c1c]">
-                  {instanceRequestResponse.metadata.pricing_breakdown
-                    .offer_ends_at || "N/A"}
-                </span>
-              </div>
-              <div className="flex w-full items-center justify-between mb-2">
-                <span className="text-sm font-normal text-[#676767]">
-                  Collocation (
-                  {instanceRequestResponse.metadata.pricing_breakdown
-                    .collocation_pct || 0}
-                  %):
-                </span>
-                <span className="text-sm font-normal text-[#1c1c1c]">
-                  ₦
-                  {instanceRequestResponse.metadata.pricing_breakdown.collocation_cost?.toLocaleString() ||
-                    0}
-                </span>
-              </div>
+              {instanceRequestResponse.metadata.pricing_breakdown.lines.map(
+                (line) => (
+                  <div
+                    key={line.slug}
+                    className="flex w-full items-center justify-between mb-2"
+                  >
+                    <span className="text-sm font-normal text-[#676767]">
+                      {line.name}:
+                    </span>
+                    <span className="text-sm font-normal text-[#1c1c1c]">
+                      ₦
+                      {(
+                        line.total_usd *
+                        instanceRequestResponse.metadata.pricing_breakdown
+                          .exchange_rate
+                      ).toLocaleString()}
+                    </span>
+                  </div>
+                )
+              )}
               <hr className="my-2 border-[#E9EAF4]" />
               <div className="flex w-full items-center justify-between mb-2">
                 <span className="text-sm font-medium text-[#676767]">
@@ -234,25 +150,30 @@ const PaymentStep = ({
                 </span>
                 <span className="text-sm font-normal text-[#1c1c1c]">
                   ₦
-                  {instanceRequestResponse.metadata.pricing_breakdown.subtotal?.toLocaleString() ||
-                    0}
+                  {(
+                    instanceRequestResponse.metadata.pricing_breakdown
+                      .subtotal_usd *
+                    instanceRequestResponse.metadata.pricing_breakdown
+                      .exchange_rate
+                  ).toLocaleString()}
                 </span>
               </div>
               <div className="flex w-full items-center justify-between mb-2">
                 <span className="text-sm font-medium text-[#676767]">
                   Tax (
                   {(
-                    (instanceRequestResponse.metadata.pricing_breakdown.tax /
-                      instanceRequestResponse.metadata.pricing_breakdown
-                        .subtotal) *
-                    100
+                    instanceRequestResponse.metadata.pricing_breakdown.tax_rate
+                      ?.vat * 100
                   ).toFixed(2)}
                   % VAT):
                 </span>
                 <span className="text-sm font-normal text-[#1c1c1c]">
                   ₦
-                  {instanceRequestResponse.metadata.pricing_breakdown.tax?.toLocaleString() ||
-                    0}
+                  {(
+                    instanceRequestResponse.metadata.pricing_breakdown.tax_usd *
+                    instanceRequestResponse.metadata.pricing_breakdown
+                      .exchange_rate
+                  ).toLocaleString()}
                 </span>
               </div>
               <hr className="my-2 border-[#E9EAF4]" />
@@ -260,7 +181,7 @@ const PaymentStep = ({
                 <span className="text-sm text-[#1C1C1C]">Total:</span>
                 <span className="text-sm text-[#1c1c1c]">
                   ₦
-                  {instanceRequestResponse.metadata.pricing_breakdown.total?.toLocaleString() ||
+                  {instanceRequestResponse.metadata.pricing_breakdown.total_local?.toLocaleString() ||
                     0}
                 </span>
               </div>

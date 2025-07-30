@@ -97,7 +97,7 @@ const ResourceAllocationStep = ({
       </div>
       <div>
         <label
-          htmlFor="storage_size_gb"
+          htmlFor="number_of_instances"
           className="block text-sm font-medium text-gray-700 mb-2"
         >
           Number of Instances<span className="text-red-500">*</span>
@@ -105,10 +105,15 @@ const ResourceAllocationStep = ({
         <input
           id="number_of_instances"
           type="number"
+          min="1" // Added min attribute
           value={formData.number_of_instances}
-          onChange={(e) =>
-            updateFormData("number_of_instances", e.target.value)
-          }
+          onChange={(e) => {
+            const value = e.target.value;
+            if (value === "" || parseInt(value) >= 1) {
+              // Allow empty string for initial input, and positive integers
+              updateFormData("number_of_instances", value);
+            }
+          }}
           placeholder="Number of instances"
           className={`w-full input-field ${
             errors.number_of_instances ? "border-red-500" : "border-gray-300"

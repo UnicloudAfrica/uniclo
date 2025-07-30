@@ -28,8 +28,12 @@ const fetchCitiesById = async (id) => {
 
 // **GET**: fetchProfile
 const fetchProfile = async () => {
-  console.log("FETCHING PROFILE DATA...");
   const res = await silentTenantApi("GET", "/admin/user-profile");
+  return res.data;
+};
+// **GET**: fetchWorkspace
+const fetchWorkspace = async () => {
+  const res = await silentTenantApi("GET", "/admin/workspaces");
   return res.data;
 };
 // **GET**: fetch industry
@@ -114,6 +118,16 @@ export const useFetchProfile = (options = {}) => {
     refetchOnReconnect: false,
     refetchOnMount: false,
     enabled: shouldEnable,
+    ...options,
+  });
+};
+// Hook to fetch workspaces
+export const useFetchWorkSpaces = (options = {}) => {
+  return useQuery({
+    queryKey: ["workspaces"],
+    queryFn: fetchWorkspace,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
     ...options,
   });
 };

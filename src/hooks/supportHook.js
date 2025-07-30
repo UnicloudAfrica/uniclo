@@ -1,10 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../index/api";
 import silentApi from "../index/silent";
+import tenantApi from "../index/tenant/tenantApi";
+import silentTenantApi from "../index/tenant/silentTenant";
 
 // GET: Fetch all support messages
 const fetchSupportMessages = async () => {
-  const res = await silentApi("GET", "/business/support-message");
+  const res = await silentTenantApi("GET", "/admin/support");
   if (!res.data) {
     throw new Error("Failed to fetch support messages");
   }
@@ -13,7 +15,7 @@ const fetchSupportMessages = async () => {
 
 // GET: Fetch support message by ID
 const fetchSupportMessageById = async (id) => {
-  const res = await silentApi("GET", `/business/support-message/${id}`);
+  const res = await silentTenantApi("GET", `/admin/support/${id}`);
   if (!res.data) {
     throw new Error(`Failed to fetch support message with ID ${id}`);
   }
@@ -22,7 +24,7 @@ const fetchSupportMessageById = async (id) => {
 
 // POST: Create a new support message
 const createSupportMessage = async (messageData) => {
-  const res = await api("POST", "/business/support-message", messageData);
+  const res = await tenantApi("POST", "/admin/support", messageData);
   if (!res.data) {
     throw new Error("Failed to create support message");
   }
@@ -31,11 +33,7 @@ const createSupportMessage = async (messageData) => {
 
 // PATCH: Update a support message
 const updateSupportMessage = async ({ id, messageData }) => {
-  const res = await api(
-    "PATCH",
-    `/business/support-message/${id}`,
-    messageData
-  );
+  const res = await tenantApi("PATCH", `/admin/support/${id}`, messageData);
   if (!res.data) {
     throw new Error(`Failed to update support message with ID ${id}`);
   }

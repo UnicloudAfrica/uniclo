@@ -26,11 +26,9 @@ export default function DashboardSignUpV2() {
     phone: "",
   });
 
-  // Function to validate the form fields
   const validateForm = () => {
     const newErrors = {};
 
-    // Common validations for both Partner and Client
     if (!formData.email) {
       newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
@@ -57,7 +55,6 @@ export default function DashboardSignUpV2() {
       newErrors.contactPersonLastName = "Last name is required";
     }
 
-    // Partner-specific validations
     if (activeTab === "partner") {
       if (!formData.companyName) {
         newErrors.companyName = "Company name is required";
@@ -75,7 +72,6 @@ export default function DashboardSignUpV2() {
           "Invalid phone number format (e.g., +1234567890)";
       }
     } else {
-      // Client-specific validations
       if (!formData.phone) {
         newErrors.phone = "Phone number is required";
       } else if (!/^\+?\d{10,15}$/.test(formData.phone)) {
@@ -87,13 +83,11 @@ export default function DashboardSignUpV2() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Function to update form data and clear associated errors
   const updateFormData = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -104,22 +98,22 @@ export default function DashboardSignUpV2() {
         email: formData.email,
         password: formData.password,
         password_confirmation: formData.confirmPassword,
-        phone: formData.businessPhone,
       };
 
       if (activeTab === "partner") {
         userData.role = "tenant";
-        userData.domain = formData.subdomain;
+        // Append .unicloudafrica.com to the subdomain
+        userData.domain = `${formData.subdomain}.unicloudafrica.com`;
         userData.business = {
           name: formData.companyName,
           phone: formData.businessPhone,
         };
+        userData.phone = formData.businessPhone; // Ensure phone is also sent at top level for tenant
       } else {
         userData.role = "client";
         userData.phone = formData.phone;
       }
 
-      // Call the useCreateAccount mutation
       mutate(userData, {
         onSuccess: () => {
           ToastUtils.success(
@@ -129,14 +123,12 @@ export default function DashboardSignUpV2() {
           navigate("/verify-mail");
         },
         onError: (err) => {
-          // Display a general error message from the API response or a fallback
-          // const errorMessage =
-          //   err.response?.data?.message ||
-          //   err.message ||
-          //   "Failed to create account. Please try again.";
-          // setErrors({ general: errorMessage });
-          // ToastUtils.error(errorMessage);
-          // console.error("Account creation error:", err);
+          const errorMessage =
+            err.response?.data?.message ||
+            err.message ||
+            "Failed to create account. Please try again.";
+          setErrors({ general: errorMessage });
+          ToastUtils.error(errorMessage);
         },
       });
     }
@@ -144,7 +136,6 @@ export default function DashboardSignUpV2() {
 
   return (
     <div className="min-h-screen flex p-8 font-Outfit">
-      {/* Left Section: Sign Up Form */}
       <div className="flex-1 flex flex-col justify-center bg-white">
         <div className="max-w-md mx-auto w-full">
           <div className="mb-8">
@@ -161,7 +152,6 @@ export default function DashboardSignUpV2() {
             </p>
           </div>
 
-          {/* Tab Selector for Partner/Client */}
           <div className="flex w-full mb-6 bg-[#FAFAFA] border border-[#ECEDF0] rounded-[50px] p-3">
             <button
               onClick={() => setActiveTab("partner")}
@@ -185,10 +175,8 @@ export default function DashboardSignUpV2() {
             </button>
           </div>
 
-          {/* Sign Up Form */}
           <form onSubmit={handleSubmit}>
             <div className="space-y-4">
-              {/* First Name and Last Name */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -238,7 +226,6 @@ export default function DashboardSignUpV2() {
                 </div>
               </div>
 
-              {/* Email */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Email <span className="text-red-500">*</span>
@@ -257,7 +244,6 @@ export default function DashboardSignUpV2() {
                 )}
               </div>
 
-              {/* Password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Password <span className="text-red-500">*</span>
@@ -285,7 +271,6 @@ export default function DashboardSignUpV2() {
                 )}
               </div>
 
-              {/* Confirm Password */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Confirm Password <span className="text-red-500">*</span>
@@ -319,7 +304,6 @@ export default function DashboardSignUpV2() {
                 )}
               </div>
 
-              {/* Partner-specific Fields */}
               {activeTab === "partner" && (
                 <>
                   <div>
@@ -400,7 +384,6 @@ export default function DashboardSignUpV2() {
                 </>
               )}
 
-              {/* Client-specific Phone Field */}
               {activeTab === "client" && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -421,7 +404,6 @@ export default function DashboardSignUpV2() {
                 </div>
               )}
 
-              {/* General Error */}
               {errors.general && (
                 <p className="text-red-500 text-xs mt-1 text-center">
                   {errors.general}
@@ -429,7 +411,6 @@ export default function DashboardSignUpV2() {
               )}
             </div>
 
-            {/* Submit Button */}
             <div className="flex gap-4 mt-8">
               <button
                 type="submit"
@@ -443,7 +424,6 @@ export default function DashboardSignUpV2() {
               </button>
             </div>
 
-            {/* Login Link */}
             <div className="text-center mt-6">
               <span className="text-sm text-[#1E1E1E99]">
                 Already have an account?{" "}
@@ -460,7 +440,6 @@ export default function DashboardSignUpV2() {
         </div>
       </div>
 
-      {/* Right Section: Background Image */}
       <div
         style={{
           backgroundImage: `url(${sideBg})`,

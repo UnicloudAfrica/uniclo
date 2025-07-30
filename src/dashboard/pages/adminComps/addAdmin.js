@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useCreateTenantAdmin } from "../../../hooks/adminUserHooks";
+import { useFetchWorkSpaces } from "../../../hooks/resource";
 
 export const AddTenantAdminModal = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
@@ -22,6 +23,8 @@ export const AddTenantAdminModal = ({ isOpen, onClose }) => {
     error,
     isSuccess,
   } = useCreateTenantAdmin();
+
+  const { workSpaces: data, isFetching } = useFetchWorkSpaces();
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;

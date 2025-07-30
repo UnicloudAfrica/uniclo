@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import { X, ChevronLeft, Loader2 } from "lucide-react";
 import PaystackPop from "@paystack/inline-js";
 import {
@@ -17,9 +23,12 @@ import SummaryStep from "./instancesubcomps/summaryStep";
 import PaymentStep from "./instancesubcomps/paymentStep";
 import SuccessModal from "./successModalV2";
 import { useFetchClients } from "../../hooks/clientHooks";
+import ToastUtils from "../../utils/toastUtil";
 
 const AddInstanceModal = ({ isOpen, onClose }) => {
   const [currentStep, setCurrentStep] = useState(0);
+  const contentRef = useRef(null); // Ref for the scrollable content area
+
   const { data: computerInstances, isFetching: isComputerInstancesFetching } =
     useFetchComputerInstances();
   const { data: osImages, isFetching: isOsImagesFetching } = useFetchOsImages();
@@ -29,8 +38,8 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
     useFetchEbsVolumes();
   const { data: projects, isFetching: isProjectsFetching } = useFetchProjects();
   const { data: profile, isFetching: isProfileFetching } = useFetchProfile();
-
   const { data: clients, isFetching: isClientsFetching } = useFetchClients();
+
   const {
     mutate: createInstanceRequest,
     isPending: isSubmissionPending,
@@ -43,7 +52,7 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
     name: "",
     description: "",
     selectedProject: null,
-    user_id: "", // New field for selected client ID
+    user_id: "",
     storage_size_gb: "",
     selectedComputeInstance: null,
     selectedEbsVolume: null,
@@ -90,6 +99,13 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
     setGeneralError(null);
   }, [currentStep, isOpen]);
 
+  // Scroll to top on step change
+  useEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTop = 0;
+    }
+  }, [currentStep]);
+
   useEffect(() => {
     if (isSubmissionSuccess && instanceRequestResponse) {
       setCurrentStep(3);
@@ -116,7 +132,6 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
       if (!formData.name.trim()) newErrors.name = "Instance Name is required";
       if (!formData.selectedProject)
         newErrors.selectedProject = "Project is required";
-      // user_id is no longer compulsory, so no validation here
       if (formData.tags.length === 0)
         newErrors.tags = "At least one tag must be selected";
     } else if (currentStep === 1) {
@@ -150,11 +165,10 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
   };
 
   const updateFormData = (field, value) => {
-    setFormData((prev) => {
-      const newValue =
-        field === "bandwidth_id" && value ? parseInt(value) : value;
-      return { ...prev, [field]: newValue };
-    });
+    setFormData((prev) => ({
+      ...prev,
+      [field]: field === "bandwidth_id" && value ? parseInt(value) : value,
+    }));
     setErrors((prev) => ({ ...prev, [field]: null }));
     setGeneralError(null);
   };
@@ -167,14 +181,7 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
     const selectedOption = optionsList?.find(
       (option) => String(option.id) === String(value)
     );
-    if (selectedOption) {
-      updateFormData(field, selectedOption);
-    } else {
-      console.warn(
-        `Selected ID ${value} not found in options for field ${field}.`
-      );
-      updateFormData(field, null);
-    }
+    updateFormData(field, selectedOption || null);
   };
 
   const handlePaymentOptionChange = (e) => {
@@ -188,10 +195,12 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
   const handleCheckboxChange = (field, value) => {
     setFormData((prev) => {
       const currentValues = prev[field];
-      if (currentValues.includes(value)) {
-        return { ...prev, [field]: currentValues.filter((v) => v !== value) };
-      }
-      return { ...prev, [field]: [...currentValues, value] };
+      return {
+        ...prev,
+        [field]: currentValues.includes(value)
+          ? currentValues.filter((v) => v !== value)
+          : [...currentValues, value],
+      };
     });
     setErrors((prev) => ({ ...prev, [field]: null }));
     setGeneralError(null);
@@ -223,6 +232,8 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
           onClose();
         }
       }
+    } else {
+      ToastUtils.error("Please check the errors in your form.");
     }
   };
 
@@ -255,7 +266,6 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
         tags: formData.tags,
       };
 
-      // Only include user_id if it has a value
       if (formData.user_id) {
         dataToSubmit.user_id = formData.user_id;
       }
@@ -272,18 +282,18 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
           );
         },
       });
+    } else {
+      ToastUtils.warn("Please check the errors in your form.");
     }
   };
 
   const handlePaystackPayment = useCallback(() => {
     if (!paystackKey) {
-      console.error("Paystack key is missing.");
       alert("Payment gateway not configured. Please contact support.");
       setIsPaying(false);
       return;
     }
     if (!profile?.email) {
-      console.error("User email is missing for Paystack transaction.");
       alert("User email is not available. Cannot proceed with payment.");
       setIsPaying(false);
       return;
@@ -295,7 +305,6 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
       amountForPaystack === null ||
       !instanceRequestResponse?.identifier
     ) {
-      console.error("Missing transaction identifier or amount.");
       alert("Missing transaction details. Cannot proceed with payment.");
       setIsPaying(false);
       return;
@@ -308,12 +317,10 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
       reference: instanceRequestResponse.identifier,
       channels: ["card"],
       onSuccess: (transaction) => {
-        console.log("Paystack Payment Successful:", transaction);
         setIsPaying(false);
         setIsSuccessModalOpen(true);
       },
       onCancel: () => {
-        console.log("Paystack Payment Cancelled");
         setIsPaying(false);
       },
       onError: (error) => {
@@ -361,7 +368,10 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
             <div className="px-6 py-3">
               <StepProgress currentStep={currentStep} steps={steps} />
             </div>
-            <div className="px-6 pb-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start">
+            <div
+              ref={contentRef}
+              className="px-6 pb-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start"
+            >
               {currentStep === 0 && (
                 <ConfigurationStep
                   formData={formData}

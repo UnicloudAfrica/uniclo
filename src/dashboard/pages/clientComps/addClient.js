@@ -140,14 +140,16 @@ const AddClientModal = ({ isOpen, onClose }) => {
     } else if (!/^\d+$/.test(formData.phone)) {
       newErrors.phone = "Phone Number must contain only digits";
     }
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters long";
+
+    if (formData.password.trim()) {
+      if (formData.password.length < 6) {
+        newErrors.password = "Password must be at least 6 characters long";
+      }
+      if (formData.password !== formData.password_confirmation) {
+        newErrors.password_confirmation = "Passwords do not match";
+      }
     }
-    if (formData.password !== formData.password_confirmation) {
-      newErrors.password_confirmation = "Passwords do not match";
-    }
+
     if (!formData.country_id) newErrors.country_id = "Country is required";
     if (!formData.state.trim()) newErrors.state = "State is required";
     if (!formData.city.trim()) newErrors.city = "City is required";
@@ -227,15 +229,12 @@ const AddClientModal = ({ isOpen, onClose }) => {
       city: formData.city,
       address: formData.address,
       zip_code: formData.zip_code,
+      force_password_reset: formData.force_password_reset,
     };
 
     if (formData.password.trim()) {
       payload.password = formData.password;
       payload.password_confirmation = formData.password_confirmation;
-    }
-
-    if (formData.force_password_reset) {
-      payload.force_password_reset = formData.force_password_reset;
     }
 
     createClient(payload, {
@@ -244,10 +243,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
         onClose();
       },
       onError: (err) => {
-        console.error("Failed to add client:", err);
-        ToastUtils.error(
-          err.message || "Failed to add client. Please try again."
-        );
+        // Error handling can be added here if needed
       },
     });
   };
@@ -373,7 +369,6 @@ const AddClientModal = ({ isOpen, onClose }) => {
                 )}
               </div>
 
-              {/* Country, State, City, Address, Zip Code Section */}
               <div>
                 <label
                   htmlFor="country_id"
@@ -621,7 +616,6 @@ const AddClientModal = ({ isOpen, onClose }) => {
               </div>
             </div>
 
-            {/* Password & Security Section */}
             <div className="md:col-span-2 border-t border-gray-200 pt-4 mt-4">
               <h3 className="text-base font-semibold text-gray-800 mb-3">
                 Password & Security

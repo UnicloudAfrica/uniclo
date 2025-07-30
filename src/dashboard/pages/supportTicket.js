@@ -4,11 +4,10 @@ import Sidebar from "../components/sidebar";
 import ActiveTab from "../components/activeTab";
 import {
   Settings2,
-  MoreHorizontal,
   EyeIcon,
   ChevronLeft,
   ChevronRight,
-  Loader2, // Import Loader2 for loading indicator
+  Loader2,
 } from "lucide-react";
 import StartModalConversation from "../components/startConversationModal";
 import TicketDrawer from "../components/ticketDrawer";
@@ -23,7 +22,6 @@ export default function SupportTicket() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isLoading: isAuthLoading } = useAuthRedirect();
-  // Fetch support messages using the hook
   const { data: supportTickets, isFetching: isSupportTicketsFetching } =
     useFetchSupportMessages();
 
@@ -45,16 +43,28 @@ export default function SupportTicket() {
 
   const closeTicketDrawer = () => {
     setIsDrawerOpen(false);
-    setTimeout(() => setSelectedTicket(null), 300); // Sync with animation duration
+    setTimeout(() => setSelectedTicket(null), 300);
   };
 
-  // Calculate total pages and current data based on fetched supportTickets
+  const formatDate = (isoString) => {
+    if (!isoString) return "N/A";
+    const date = new Date(isoString);
+    return date.toLocaleString("en-US", {
+      month: "2-digit",
+      day: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  };
+
   const totalPages = Math.ceil((supportTickets?.length || 0) / itemsPerPage);
   const currentData =
     supportTickets?.slice(
       (currentPage - 1) * itemsPerPage,
       currentPage * itemsPerPage
-    ) || []; // Ensure currentData is an array even if supportTickets is null/undefined
+    ) || [];
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -62,22 +72,6 @@ export default function SupportTicket() {
     }
   };
 
-  const PriorityBadge = ({ priority }) => {
-    const isInProgress = priority === "In-progress";
-    return (
-      <span
-        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-          isInProgress
-            ? "bg-[#00BF6B14] text-[#00BF6B]"
-            : "bg-[#EB417833] text-[#EB4178]"
-        }`}
-      >
-        {priority}
-      </span>
-    );
-  };
-
-  // Show loading state if authentication is still loading or support tickets are fetching
   if (isAuthLoading || isSupportTicketsFetching) {
     return (
       <>
@@ -120,7 +114,6 @@ export default function SupportTicket() {
           </button>
         </div>
 
-        {/* Desktop Table */}
         <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px] border border-gray-200">
           {currentData.length > 0 ? (
             <table className="w-full">
@@ -139,7 +132,7 @@ export default function SupportTicket() {
                     DATE UPDATED
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                    PRIORITY
+                    STATUS
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                     ACTION
@@ -156,13 +149,21 @@ export default function SupportTicket() {
                       {item.subject}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.dateCreated}
+                      {formatDate(item.created_at)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.dateUpdated}
+                      {formatDate(item.updated_at)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <PriorityBadge priority={item.priority} />
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                          item.status === "open"
+                            ? "bg-[#00BF6B14] text-[#00BF6B]" // Green for open
+                            : "bg-[#EB417833] text-[#EB4178]" // Red for closed (or other status)
+                        }`}
+                      >
+                        {item.status}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <button className="text-[#288DD1] hover:text-[#1976D2] transition-colors">
@@ -183,7 +184,6 @@ export default function SupportTicket() {
           )}
         </div>
 
-        {/* Mobile Cards */}
         <div className="md:hidden mt-6 space-y-4">
           {currentData.length > 0 ? (
             currentData.map((item) => (
@@ -195,7 +195,15 @@ export default function SupportTicket() {
                   <h3 className="text-base font-semibold text-[#1C1C1C]">
                     {item.id}
                   </h3>
-                  <PriorityBadge priority={item.priority} />
+                  <span
+                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                      item.status === "open"
+                        ? "bg-[#00BF6B14] text-[#00BF6B]"
+                        : "bg-[#EB417833] text-[#EB4178]"
+                    }`}
+                  >
+                    {item.status}
+                  </span>
                 </div>
                 <p className="text-sm text-[#575758] font-medium">
                   {item.subject}
@@ -203,11 +211,11 @@ export default function SupportTicket() {
                 <div className="text-xs text-gray-600 mt-2">
                   <div className="flex justify-between">
                     <span>Created:</span>
-                    <span>{item.dateCreated}</span>
+                    <span>{formatDate(item.created_at)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Updated:</span>
-                    <span>{item.dateUpdated}</span>
+                    <span>{formatDate(item.updated_at)}</span>
                   </div>
                 </div>
                 <div className="flex justify-end mt-3">
@@ -227,7 +235,6 @@ export default function SupportTicket() {
           )}
         </div>
 
-        {/* Pagination */}
         {supportTickets?.length > 0 && (
           <div className="flex items-center justify-center px-4 py-3 mt-6 bg-white rounded-b-[12px] border-t border-gray-200">
             <div className="flex items-center space-x-2">

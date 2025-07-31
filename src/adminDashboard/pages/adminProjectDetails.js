@@ -14,6 +14,7 @@ import {
 import EditDescriptionModal from "./projectComps/editProject";
 import ConfirmDeleteModal from "./projectComps/deleteProject";
 import EditProjectModal from "./projectComps/editProject";
+import AddAdminInstance from "./instanceComp/addInstance";
 
 // Function to decode the ID from URL
 const decodeId = (encodedId) => {
@@ -417,9 +418,9 @@ export default function AdminProjectDetails() {
         )}
       </main>
 
-      {/* 
-      <AddInstanceModal isOpen={isAddInstanceOpen} onClose={closeAddInstance} />
-      */}
+      {/*
+       */}
+      {/* <AddAdminInstance isOpen={isAddInstanceOpen} onClose={closeAddInstance} /> */}
       <EditProjectModal
         isOpen={isEditDescriptionModalOpen}
         onClose={() => setIsEditDescriptionModalOpen(false)}

@@ -72,6 +72,8 @@ import Settings from "./dashboard/pages/settings";
 import DashboardTaxConfigurations from "./dashboard/pages/taxConfiguration";
 import Products from "./dashboard/pages/products";
 import TenantAdmin from "./dashboard/pages/tenantAdmin";
+import AdminInstancesDetails from "./adminDashboard/pages/adminInstancesDetails";
+import Calculator from "./pages/calculator";
 
 function App() {
   const location = useLocation();
@@ -105,6 +107,7 @@ function App() {
           <Route path="/solutions" element={<Solutions />} />
           <Route path="/events" element={<Events />} />
           <Route path="/blog" element={<Blog />} />
+          <Route path="/calculator" element={<Calculator />} />
           <Route
             path="/Africa-Data-Centres-and-Onix-Data-Centre-announce-partnership"
             element={<ExtResouce />}
@@ -194,6 +197,10 @@ function App() {
           <Route
             path="/admin-dashboard/instances"
             element={<AdminInstances />}
+          />
+          <Route
+            path="/admin-dashboard/instances/details"
+            element={<AdminInstancesDetails />}
           />
 
           <Route

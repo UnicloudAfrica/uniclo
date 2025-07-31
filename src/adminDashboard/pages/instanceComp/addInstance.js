@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useFetchProjects } from "../../../hooks/adminHooks/projectHooks";
-
 import {
   useFetchBandwidths,
   useFetchComputerInstances,
@@ -9,7 +8,13 @@ import {
   useFetchOsImages,
 } from "../../../hooks/resource";
 import StepProgress from "../../../dashboard/components/instancesubcomps/stepProgress";
-const AddAdminInstance = () => {
+import ToastUtils from "../../../utils/toastUtil";
+import ConfigurationStep from "./configurationStep";
+import ResourceAllocationStep from "./resourceAllocationStep";
+import SummaryStep from "./summaryStep";
+import { useCreateInstanceRequest } from "../../../hooks/adminHooks/instancesHook";
+
+const AddAdminInstance = ({ isOpen, onClose }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const { data: computerInstances, isFetching: isComputerInstancesFetching } =
     useFetchComputerInstances();
@@ -19,18 +24,19 @@ const AddAdminInstance = () => {
   const { data: ebsVolumes, isFetching: isEbsVolumesFetching } =
     useFetchEbsVolumes();
   const { data: projects, isFetching: isProjectsFetching } = useFetchProjects();
-  //   const {
-  //     mutate: createInstanceRequest,
-  //     isPending: isSubmissionPending,
-  //     isSuccess: isSubmissionSuccess,
-  //     isError: isSubmissionError,
-  //     error: submissionError,
-  //   } = useCreateInstance();
+  const {
+    mutate: createInstanceRequest,
+    isPending: isSubmissionPending,
+    isSuccess: isSubmissionSuccess,
+    isError: isSubmissionError,
+    error: submissionError,
+  } = useCreateInstanceRequest();
 
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     selectedProject: null,
+    number_of_instances: 1,
     storage_size_gb: "",
     selectedComputeInstance: null,
     selectedEbsVolume: null,
@@ -38,6 +44,7 @@ const AddAdminInstance = () => {
     bandwidth_id: null,
     months: "",
     tags: [],
+    fast_track: false,
   });
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState(null);
@@ -57,27 +64,20 @@ const AddAdminInstance = () => {
     "Data Processing",
     "Others",
   ];
-
-  const steps = [
-    "Configuration Details",
-    "Resource Allocation",
-    "Summary",
-    // "Payment" step is intentionally excluded for admin flow
-  ];
+  const steps = ["Configuration Details", "Resource Allocation", "Summary"];
 
   useEffect(() => {
     setGeneralError(null);
   }, [currentStep]);
 
-  // Handle successful submission
   useEffect(() => {
     if (isSubmissionSuccess) {
       ToastUtils.success("Instance created successfully!");
-      // Optionally reset form or redirect
       setFormData({
         name: "",
         description: "",
         selectedProject: null,
+        number_of_instances: 1,
         storage_size_gb: "",
         selectedComputeInstance: null,
         selectedEbsVolume: null,
@@ -85,24 +85,37 @@ const AddAdminInstance = () => {
         bandwidth_id: null,
         months: "",
         tags: [],
+        fast_track: false,
       });
       setErrors({});
       setGeneralError(null);
-      setCurrentStep(0); // Reset to first step
-      // In a real app, you might want to close a modal or redirect here
-      // onClose(); // If this component is part of a modal
+      setCurrentStep(0);
+      onClose();
     }
     if (isSubmissionError) {
-      setGeneralError(submissionError?.message || "Failed to create instance.");
+      // setGeneralError(submissionError?.message || "Failed to create instance.");
+      // ToastUtils.error(
+      //   submissionError?.message || "Failed to create instance."
+      // );
     }
-  }, [isSubmissionSuccess, isSubmissionError, submissionError]);
+  }, [isSubmissionSuccess, isSubmissionError, submissionError, onClose]);
 
   const validateStep = () => {
     const newErrors = {};
     if (currentStep === 0) {
       if (!formData.name.trim()) newErrors.name = "Instance Name is required";
+      if (!formData.description.trim())
+        newErrors.description = "Description is required";
       if (!formData.selectedProject)
         newErrors.selectedProject = "Project is required";
+      if (
+        !formData.number_of_instances ||
+        isNaN(formData.number_of_instances) ||
+        parseInt(formData.number_of_instances) < 1
+      ) {
+        newErrors.number_of_instances =
+          "Number of Instances must be an integer and at least 1";
+      }
       if (formData.tags.length === 0)
         newErrors.tags = "At least one tag must be selected";
     } else if (currentStep === 1) {
@@ -127,13 +140,26 @@ const AddAdminInstance = () => {
         newErrors.months = "Term (Months) must be an integer and at least 1";
     }
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+
+    if (Object.keys(newErrors).length > 0) {
+      ToastUtils.warning(
+        "Please check the form for errors and make sure all required fields are filled."
+      );
+      return false;
+    }
+    return true;
   };
 
   const updateFormData = (field, value) => {
     setFormData((prev) => {
       const newValue =
-        field === "bandwidth_id" && value ? parseInt(value) : value;
+        (field === "bandwidth_id" ||
+          field === "number_of_instances" ||
+          field === "storage_size_gb" ||
+          field === "months") &&
+        value
+          ? parseInt(value)
+          : value;
       return { ...prev, [field]: newValue };
     });
     setErrors((prev) => ({ ...prev, [field]: null }));
@@ -171,8 +197,9 @@ const AddAdminInstance = () => {
     if (validateStep()) {
       const dataToSubmit = {
         name: formData.name,
-        description: formData.description || null,
+        description: formData.description,
         project_id: formData.selectedProject?.id,
+        number_of_instances: parseInt(formData.number_of_instances),
         storage_size_gb: parseInt(formData.storage_size_gb),
         compute_instance_id: formData.selectedComputeInstance?.id,
         ebs_volume_id: formData.selectedEbsVolume?.id,
@@ -182,9 +209,9 @@ const AddAdminInstance = () => {
           : null,
         months: parseInt(formData.months),
         tags: formData.tags,
+        fast_track: formData.fast_track,
       };
-
-      createInstanceRequest(dataToSubmit); // Call the mutation
+      createInstanceRequest(dataToSubmit);
     }
   };
 
@@ -193,7 +220,6 @@ const AddAdminInstance = () => {
       if (currentStep < steps.length - 1) {
         setCurrentStep(currentStep + 1);
       } else {
-        // Last step (Summary), proceed to submit
         handleSubmit();
       }
     }
@@ -207,18 +233,12 @@ const AddAdminInstance = () => {
     }
   };
 
-  // This component is not a modal, so onClose might not be directly applicable
-  // If this component is intended to be used within a modal, the parent should pass onClose.
-  // For now, I'll keep the onClose prop for consistency if it's eventually wrapped.
-  const onClose = () => {
-    // Implement logic to close or reset the overall view if needed
-    // For example, if this component is rendered conditionally by a parent,
-    // the parent would update its state to unmount this component.
+  const resetForm = () => {
     setFormData({
-      // Reset form on close
       name: "",
       description: "",
       selectedProject: null,
+      number_of_instances: 1,
       storage_size_gb: "",
       selectedComputeInstance: null,
       selectedEbsVolume: null,
@@ -226,10 +246,16 @@ const AddAdminInstance = () => {
       bandwidth_id: null,
       months: "",
       tags: [],
+      fast_track: false,
     });
     setErrors({});
     setGeneralError(null);
     setCurrentStep(0);
+  };
+
+  const handleClose = () => {
+    onClose();
+    resetForm();
   };
 
   const isAnyFetching =
@@ -239,95 +265,104 @@ const AddAdminInstance = () => {
     isEbsVolumesFetching ||
     isProjectsFetching;
 
-  return (
-    <div className="flex flex-col h-full font-Outfit">
-      <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] w-full">
-        <h2 className="text-lg font-semibold text-[#575758]">
-          Add New Instance (Admin)
-        </h2>
-        {/* Removed close button if not a modal, or keep if wrapped by one */}
-        {/* <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
-          disabled={isSubmissionPending}
-        >
-          <X className="w-5 h-5" />
-        </button> */}
-      </div>
-      <div className="px-6 py-3">
-        <StepProgress currentStep={currentStep} steps={steps} />
-      </div>
-      <div className="flex-1 px-6 pb-6 w-full overflow-y-auto flex flex-col items-center justify-start">
-        {isAnyFetching ? (
-          <div className="flex justify-center items-center h-full min-h-[200px]">
-            <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
-            <p className="ml-2 text-gray-600">Loading resources...</p>
-          </div>
-        ) : (
-          <>
-            {currentStep === 0 && (
-              <ConfigurationStep
-                formData={formData}
-                errors={errors}
-                updateFormData={updateFormData}
-                handleSelectChange={handleSelectChange}
-                handleCheckboxChange={handleCheckboxChange}
-                isSubmissionPending={isSubmissionPending}
-                projects={projects}
-                isProjectsFetching={isProjectsFetching}
-                availableTags={availableTags}
-              />
-            )}
-            {currentStep === 1 && (
-              <ResourceAllocationStep
-                formData={formData}
-                errors={errors}
-                updateFormData={updateFormData}
-                handleSelectChange={handleSelectChange}
-                isSubmissionPending={isSubmissionPending}
-                computerInstances={computerInstances}
-                isComputerInstancesFetching={isComputerInstancesFetching}
-                ebsVolumes={ebsVolumes}
-                isEbsVolumesFetching={isEbsVolumesFetching}
-                bandwidths={bandwidths}
-                isBandwidthsFetching={isBandwidthsFetching}
-                osImages={osImages}
-                isOsImagesFetching={isOsImagesFetching}
-              />
-            )}
-            {currentStep === 2 && <SummaryStep formData={formData} />}
-            {generalError && (
-              <p className="text-red-500 text-sm mt-4 text-center">
-                {generalError}
-              </p>
-            )}
-          </>
-        )}
-      </div>
-      <div className="flex items-center justify-between px-6 py-4 border-t">
-        <div className="flex gap-3">
-          {currentStep > 0 && (
-            <button
-              onClick={handleBack}
-              className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
-              disabled={isSubmissionPending}
-            >
-              <ChevronLeft className="w-4 h-4 mr-1 inline-block" /> Back
-            </button>
-          )}
+  const renderStep = () => {
+    if (isAnyFetching) {
+      return (
+        <div className="flex justify-center items-center h-full min-h-[200px]">
+          <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
+          <p className="ml-2 text-gray-600">Loading resources...</p>
         </div>
-        <button
-          onClick={handleNext}
-          disabled={isSubmissionPending || isAnyFetching}
-          className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-        >
-          {currentStep === steps.length - 1 ? "Create Instance" : "Next"}
-          {isSubmissionPending && (
-            <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-          )}
-        </button>
-      </div>
-    </div>
+      );
+    }
+
+    switch (currentStep) {
+      case 0:
+        return (
+          <ConfigurationStep
+            formData={formData}
+            errors={errors}
+            updateFormData={updateFormData}
+            handleSelectChange={handleSelectChange}
+            handleCheckboxChange={handleCheckboxChange}
+            projects={projects}
+            availableTags={availableTags}
+          />
+        );
+      case 1:
+        return (
+          <ResourceAllocationStep
+            formData={formData}
+            errors={errors}
+            updateFormData={updateFormData}
+            handleSelectChange={handleSelectChange}
+            computerInstances={computerInstances}
+            ebsVolumes={ebsVolumes}
+            bandwidths={bandwidths}
+            osImages={osImages}
+          />
+        );
+      case 2:
+        return <SummaryStep formData={formData} bandwidths={bandwidths} />;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <>
+      {isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
+          <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full">
+            <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] w-full">
+              <h2 className="text-lg font-semibold text-[#575758]">
+                Add New Instance
+              </h2>
+              <button
+                onClick={handleClose}
+                className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
+                disabled={isSubmissionPending}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="px-6 py-3">
+              <StepProgress currentStep={currentStep} steps={steps} />
+            </div>
+            <div className="px-6 pb-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start">
+              {renderStep()}
+              {generalError && (
+                <p className="text-red-500 text-sm mt-4 text-center">
+                  {generalError}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center justify-between px-6 py-4 border-t">
+              <div className="flex gap-3">
+                {currentStep > 0 && (
+                  <button
+                    onClick={handleBack}
+                    className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
+                    disabled={isSubmissionPending}
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-1 inline-block" /> Back
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={handleNext}
+                disabled={isSubmissionPending || isAnyFetching}
+                className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                {currentStep === steps.length - 1 ? "Create Instance" : "Next"}
+                {isSubmissionPending && (
+                  <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

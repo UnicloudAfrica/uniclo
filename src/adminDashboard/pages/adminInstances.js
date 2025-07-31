@@ -4,6 +4,7 @@ import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useFetchInstanceRequests } from "../../hooks/adminHooks/instancesHook";
+import AddAdminInstance from "./instanceComp/addInstance";
 
 export default function AdminInstances() {
   const [selectedItem, setSelectedItem] = useState(null);
@@ -268,10 +269,10 @@ export default function AdminInstances() {
         )}
       </main>
 
-      {/* <AddInstanceModal
+      <AddAdminInstance
         isOpen={isAddInstancesOpen}
         onClose={closeAddInstances}
-      /> */}
+      />
     </>
   );
 }

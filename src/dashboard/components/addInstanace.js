@@ -289,12 +289,14 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
 
   const handlePaystackPayment = useCallback(() => {
     if (!paystackKey) {
-      alert("Payment gateway not configured. Please contact support.");
+      ToastUtils.warning(
+        "Payment gateway not configured. Please contact support."
+      );
       setIsPaying(false);
       return;
     }
     if (!profile?.email) {
-      alert("User email is not available. Cannot proceed with payment.");
+      // alert("User email is not available. Cannot proceed with payment.");
       setIsPaying(false);
       return;
     }
@@ -305,7 +307,9 @@ const AddInstanceModal = ({ isOpen, onClose }) => {
       amountForPaystack === null ||
       !instanceRequestResponse?.identifier
     ) {
-      alert("Missing transaction details. Cannot proceed with payment.");
+      ToastUtils.warning(
+        "Missing transaction details. Cannot proceed with payment."
+      );
       setIsPaying(false);
       return;
     }

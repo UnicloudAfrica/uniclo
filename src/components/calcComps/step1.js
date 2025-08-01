@@ -7,6 +7,7 @@ export const Step1Configuration = ({ handleNext }) => {
     compute_flavor_id: null,
     os_image_id: null,
     runtime_days: 1,
+    // Store volumes with their custom capacity instead of quantity
     volumes: {},
     floating_ip_count: 0,
     ip_bandwidth_id: null,
@@ -59,13 +60,13 @@ export const Step1Configuration = ({ handleNext }) => {
         price: 0.0,
       },
     ],
+    // Updated EBS volumes data: capacity is no longer fixed, and we use a pricePerGB
     ebs_volumes: [
-      { id: "volume-1", name: "Standard SSD", capacity: 100, price: 0.1 },
+      { id: "volume-1", name: "Standard SSD", pricePerGB: 0.1 },
       {
         id: "volume-2",
         name: "High-Performance SSD",
-        capacity: 500,
-        price: 0.3,
+        pricePerGB: 0.3,
       },
     ],
     ip_bandwidths: [
@@ -94,14 +95,14 @@ export const Step1Configuration = ({ handleNext }) => {
     setFormData((prev) => ({ ...prev, [field]: item.id }));
   };
 
-  // Helper function to handle volume quantity changes
-  const handleVolumeQuantityChange = (volumeId, value) => {
-    const quantity = parseInt(value, 10);
+  // New helper function to handle volume capacity changes
+  const handleVolumeCapacityChange = (volumeId, value) => {
+    const capacity = parseInt(value, 10);
     setFormData((prev) => ({
       ...prev,
       volumes: {
         ...prev.volumes,
-        [volumeId]: quantity > 0 ? quantity : 1,
+        [volumeId]: capacity > 0 ? capacity : 1,
       },
     }));
   };
@@ -111,9 +112,11 @@ export const Step1Configuration = ({ handleNext }) => {
     setFormData((prev) => {
       const newVolumes = { ...prev.volumes };
       if (newVolumes[volumeId]) {
+        // If already selected, deselect it
         delete newVolumes[volumeId];
       } else {
-        newVolumes[volumeId] = 1;
+        // If not selected, select it with a default capacity of 30 GB
+        newVolumes[volumeId] = 30;
       }
       return { ...prev, volumes: newVolumes };
     });
@@ -130,10 +133,11 @@ export const Step1Configuration = ({ handleNext }) => {
 
   // Main function to format and pass the data to the parent component
   const handleNextClick = () => {
+    // Format volumes to an array of objects with id and capacity
     const volumesArray = Object.entries(formData.volumes).map(
-      ([volumeId, quantity]) => ({
+      ([volumeId, capacity]) => ({
         ebs_volume_id: volumeId,
-        quantity: quantity,
+        capacity: capacity,
       })
     );
 
@@ -152,7 +156,7 @@ export const Step1Configuration = ({ handleNext }) => {
   };
 
   return (
-    <div className="container mx-auto p-4 md:p-8">
+    <div className="container mx-auto p-4 md:p-8 font-outfit">
       <div className="space-y-10">
         {/* Core Configuration Section */}
         <div className="space-y-6">
@@ -309,7 +313,7 @@ export const Step1Configuration = ({ handleNext }) => {
             Optional: Add Block Storage
           </h3>
           <p className="text-gray-600">
-            Select the type and quantity of EBS volumes you need.
+            Select the type of EBS volumes and enter the capacity you need.
           </p>
           <div className="overflow-x-auto border border-gray-200 rounded-lg">
             <table className="min-w-full divide-y divide-gray-200">
@@ -322,13 +326,10 @@ export const Step1Configuration = ({ handleNext }) => {
                     Name
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Capacity
+                    Price/GB/mo
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Price/mo
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Quantity
+                    Capacity (GB)
                   </th>
                 </tr>
               </thead>
@@ -353,11 +354,8 @@ export const Step1Configuration = ({ handleNext }) => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {item.name}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {item.capacity} GB
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      ${item.price}
+                      ${item.pricePerGB}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       {formData.volumes[item.id] && (
@@ -365,7 +363,7 @@ export const Step1Configuration = ({ handleNext }) => {
                           type="number"
                           value={formData.volumes[item.id]}
                           onChange={(e) =>
-                            handleVolumeQuantityChange(item.id, e.target.value)
+                            handleVolumeCapacityChange(item.id, e.target.value)
                           }
                           min="1"
                           className="w-20 input-field border border-gray-300 rounded-lg p-2"

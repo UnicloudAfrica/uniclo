@@ -17,11 +17,11 @@ export default function Products() {
     setIsMobileMenuOpen(false);
   };
 
-  const [activeProductTab, setActiveProductTab] = useState("product-charge"); // Default active tab
+  const [activeProductTab, setActiveProductTab] = useState("tenant-pricing"); // Default active tab
 
   // Define an array of product components for scalability
   const productComponents = [
-    { id: "product-charge", name: "Product Charge", Component: ProductCharge },
+    // { id: "product-charge", name: "Product Charge", Component: ProductCharge },
     {
       id: "tenant-pricing",
       name: "Tenant Pricing",

@@ -3,7 +3,7 @@ import React from "react";
 const ProductSideMenu = ({ activeTab, onTabChange }) => {
   // Define the tabs as an array of objects
   const tabs = [
-    { id: "product-charge", name: "Product Charge" },
+    // { id: "product-charge", name: "Product Charge" },
     { id: "tenant-pricing", name: "Tenant Pricing" },
   ];
 

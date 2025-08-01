@@ -43,12 +43,9 @@ const StepProgress = ({ currentStep, steps }) => (
   </div>
 );
 
-// File: components/Step3Breakdown.js
-
-// File: App.js (main calculator component)
 export default function Calculator() {
   const [currentStep, setCurrentStep] = useState(0);
-  const [selectedOptions, setSelectedOptions] = useState({});
+  const [billingData, setBillingData] = useState({});
   const [personalInfo, setPersonalInfo] = useState({
     fullName: "",
     email: "",
@@ -61,12 +58,14 @@ export default function Calculator() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [currentStep]);
 
-  const handleNext = () => setCurrentStep((prev) => prev + 1);
-  const handlePrev = () => setCurrentStep((prev) => prev - 1);
-
-  const handleSelect = (category, item) => {
-    setSelectedOptions((prev) => ({ ...prev, [category]: item }));
+  // Updated handleNext to accept data from Step1Configuration
+  const handleNextWithData = (data) => {
+    setBillingData(data);
+    setCurrentStep((prev) => prev + 1);
   };
+
+  // Existing handlePrev remains unchanged
+  const handlePrev = () => setCurrentStep((prev) => prev - 1);
 
   const handlePersonalInfoChange = (e) => {
     const { id, value, name, type } = e.target;
@@ -79,26 +78,20 @@ export default function Calculator() {
   const renderStep = () => {
     switch (currentStep) {
       case 0:
-        return (
-          <Step1Configuration
-            selectedOptions={selectedOptions}
-            handleSelect={handleSelect}
-            handleNext={handleNext}
-          />
-        );
+        return <Step1Configuration handleNext={handleNextWithData} />;
       case 1:
         return (
           <Step2ContactForm
             personalInfo={personalInfo}
             handleInputChange={handlePersonalInfoChange}
-            handleNext={handleNext}
+            handleNext={() => setCurrentStep((prev) => prev + 1)}
             handlePrev={handlePrev}
           />
         );
       case 2:
         return (
           <Step3Breakdown
-            selectedOptions={selectedOptions}
+            billingData={billingData}
             personalInfo={personalInfo}
             handlePrev={handlePrev}
           />

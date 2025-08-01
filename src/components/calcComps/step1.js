@@ -1,113 +1,44 @@
-import { CheckCircle, ChevronRight } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { CheckCircle, ChevronRight, Cpu, HardDrive, Cloud } from "lucide-react";
 
-export const Step1Configuration = ({
-  selectedOptions,
-  handleSelect,
-  handleNext,
-}) => {
-  const isFormValid =
-    selectedOptions.instance &&
-    selectedOptions.storage &&
-    selectedOptions.bandwidth &&
-    selectedOptions.osImage;
+export const Step1Configuration = ({ handleNext }) => {
+  const [calculationType, setCalculationType] = useState(null);
+
+  const [formData, setFormData] = useState({
+    compute_flavor_id: null,
+    os_image_id: null,
+    runtime_days: 1,
+    volumes: {},
+    floating_ip_count: 0,
+    ip_bandwidth_id: null,
+    ip_runtime_days: 1,
+  });
 
   const mockData = {
-    instances: [
+    compute_flavors: [
       {
-        id: "instance-1",
+        id: "flavor-1",
         name: "Standard Compute",
         vcpus: 2,
         memory: "4 GB",
         price: 0.05,
       },
       {
-        id: "instance-2",
+        id: "flavor-2",
         name: "High-Memory Compute",
         vcpus: 4,
         memory: "16 GB",
         price: 0.15,
       },
       {
-        id: "instance-3",
-        name: "GPU-Accelerated",
-        vcpus: 8,
-        memory: "32 GB",
-        price: 0.5,
-      },
-      {
-        id: "instance-4",
-        name: "Standard Compute",
-        vcpus: 2,
-        memory: "4 GB",
-        price: 0.05,
-      },
-      {
-        id: "instance-5",
-        name: "High-Memory Compute",
-        vcpus: 4,
-        memory: "16 GB",
-        price: 0.15,
-      },
-      {
-        id: "instance-6",
-        name: "GPU-Accelerated",
-        vcpus: 8,
-        memory: "32 GB",
-        price: 0.5,
-      },
-      {
-        id: "instance-7",
-        name: "Standard Compute",
-        vcpus: 2,
-        memory: "4 GB",
-        price: 0.05,
-      },
-      {
-        id: "instance-8",
-        name: "High-Memory Compute",
-        vcpus: 4,
-        memory: "16 GB",
-        price: 0.15,
-      },
-      {
-        id: "instance-9",
+        id: "flavor-3",
         name: "GPU-Accelerated",
         vcpus: 8,
         memory: "32 GB",
         price: 0.5,
       },
     ],
-    storage: [
-      {
-        id: "storage-1",
-        name: "Standard SSD",
-        type: "SSD",
-        capacity: 100,
-        price: 0.1,
-      },
-      {
-        id: "storage-2",
-        name: "High-Performance SSD",
-        type: "NVMe",
-        capacity: 500,
-        price: 0.3,
-      },
-    ],
-    bandwidth: [
-      {
-        id: "bandwidth-1",
-        name: "Standard Bandwidth",
-        speed: "100 Mbps",
-        price: 0.01,
-      },
-      {
-        id: "bandwidth-2",
-        name: "High-Speed Bandwidth",
-        speed: "1 Gbps",
-        price: 0.03,
-      },
-    ],
-    osImages: [
+    os_images: [
       {
         id: "os-1",
         name: "Ubuntu 22.04 LTS",
@@ -126,28 +57,191 @@ export const Step1Configuration = ({
         logo: "https://placehold.co/40x40/FFC107/000000?text=C",
         price: 0.0,
       },
+    ],
+    ebs_volumes: [
+      { id: "volume-1", name: "Standard SSD", capacity: 100, price: 0.1 },
       {
-        id: "os-4",
-        name: "Fedora 38",
-        logo: "https://placehold.co/40x40/1A004F/ffffff?text=F",
-        price: 0.0,
+        id: "volume-2",
+        name: "High-Performance SSD",
+        capacity: 500,
+        price: 0.3,
+      },
+    ],
+    ip_bandwidths: [
+      {
+        id: "bandwidth-1",
+        name: "Standard Bandwidth",
+        speed: "100 Mbps",
+        price: 0.01,
+      },
+      {
+        id: "bandwidth-2",
+        name: "High-Speed Bandwidth",
+        speed: "1 Gbps",
+        price: 0.03,
       },
     ],
   };
 
-  return (
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSelect = (field, item) => {
+    setFormData((prev) => ({ ...prev, [field]: item.id }));
+  };
+
+  const handleVolumeQuantityChange = (volumeId, value) => {
+    const quantity = parseInt(value, 10);
+    setFormData((prev) => ({
+      ...prev,
+      volumes: {
+        ...prev.volumes,
+        [volumeId]: quantity > 0 ? quantity : 1,
+      },
+    }));
+  };
+
+  const toggleVolumeSelection = (volumeId) => {
+    setFormData((prev) => {
+      const newVolumes = { ...prev.volumes };
+      if (newVolumes[volumeId]) {
+        delete newVolumes[volumeId];
+      } else {
+        newVolumes[volumeId] = 1;
+      }
+      return { ...prev, volumes: newVolumes };
+    });
+  };
+
+  const isFormValid = useMemo(() => {
+    switch (calculationType) {
+      case "compute-os":
+        return (
+          formData.compute_flavor_id &&
+          formData.os_image_id &&
+          formData.runtime_days > 0
+        );
+      case "storage":
+        return Object.keys(formData.volumes).length > 0;
+      case "networking":
+        return (
+          formData.floating_ip_count >= 0 &&
+          formData.ip_bandwidth_id &&
+          formData.ip_runtime_days > 0
+        );
+      default:
+        return false;
+    }
+  }, [calculationType, formData]);
+
+  // This function formats the data to match the requested output structure.
+  const handleNextClick = () => {
+    let outputData;
+
+    switch (calculationType) {
+      case "compute-os":
+        outputData = {
+          compute_flavor_id: formData.compute_flavor_id,
+          os_image_id: formData.os_image_id,
+          runtime_days: formData.runtime_days,
+        };
+        break;
+      case "storage":
+        // The output for volumes needs to be an array of objects.
+        const volumesArray = Object.entries(formData.volumes).map(
+          ([volumeId, quantity]) => ({
+            ebs_volume_id: volumeId,
+            quantity: quantity,
+          })
+        );
+        outputData = {
+          volumes: volumesArray,
+        };
+        break;
+      case "networking":
+        outputData = {
+          floating_ip_count: formData.floating_ip_count,
+          ip_bandwidth_id: formData.ip_bandwidth_id,
+          ip_runtime_days: formData.ip_runtime_days,
+        };
+        break;
+      default:
+        outputData = {};
+    }
+
+    handleNext(outputData);
+  };
+
+  const renderSelectionStep = () => (
+    <div className="space-y-6">
+      <h3 className="text-2xl font-semibold text-[#121212] mb-2">
+        Choose a billing calculator
+      </h3>
+      <p className="text-gray-600 mb-6">
+        Select a cloud service to configure and calculate its cost.
+      </p>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <button
+          onClick={() => setCalculationType("compute-os")}
+          className="bg-white rounded-xl  p-6 flex flex-col items-center justify-center text-center space-y-4 cursor-pointer border border-gray-200 hover:border-[#288DD1]"
+        >
+          <Cpu className="text-[#288DD1] w-12 h-12" />
+          <span className="text-lg font-medium text-gray-800">
+            Compute & OS
+          </span>
+        </button>
+        <button
+          onClick={() => setCalculationType("storage")}
+          className="bg-white rounded-xl  p-6 flex flex-col items-center justify-center text-center space-y-4 cursor-pointer border border-gray-200 hover:border-[#288DD1]"
+        >
+          <HardDrive className="text-[#288DD1] w-12 h-12" />
+          <span className="text-lg font-medium text-gray-800">
+            Block Storage
+          </span>
+        </button>
+        <button
+          onClick={() => setCalculationType("networking")}
+          className="bg-white rounded-xl  p-6 flex flex-col items-center justify-center text-center space-y-4 cursor-pointer border border-gray-200 hover:border-[#288DD1]"
+        >
+          <Cloud className="text-[#288DD1] w-12 h-12" />
+          <span className="text-lg font-medium text-gray-800">Networking</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderComputeOsForm = () => (
     <div className="space-y-6">
       <h3 className="text-2xl font-semibold text-[#121212]">
-        Configure Your Cloud Solution
+        Configure Compute & OS
       </h3>
       <p className="text-gray-600">
-        Choose the resources that best fit your project requirements.
+        Choose the VM size and operating system image.
       </p>
 
-      {/* Instance Selection */}
+      <div>
+        <label
+          htmlFor="runtime_days"
+          className="block text-lg font-medium text-[#121212] mb-2"
+        >
+          Runtime Days<span className="text-red-500">*</span>
+        </label>
+        <input
+          id="runtime_days"
+          type="number"
+          value={formData.runtime_days}
+          onChange={(e) =>
+            handleInputChange("runtime_days", parseInt(e.target.value, 10))
+          }
+          min="1"
+          className="w-full input-field border border-gray-300 rounded-lg p-2"
+        />
+      </div>
+
       <div className="space-y-4">
         <label className="block text-lg font-medium text-[#121212]">
-          Compute Instance
+          Compute Flavor<span className="text-red-500">*</span>
         </label>
         <div className="overflow-x-auto border border-gray-200 rounded-lg">
           <table className="min-w-full divide-y divide-gray-200">
@@ -171,15 +265,15 @@ export const Step1Configuration = ({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {mockData.instances.map((item) => (
+              {mockData.compute_flavors.map((item) => (
                 <tr
                   key={item.id}
                   className={`cursor-pointer transition-colors duration-200 ${
-                    selectedOptions.instance?.id === item.id
+                    formData.compute_flavor_id === item.id
                       ? "bg-[#ECF6FE]"
                       : "hover:bg-gray-50"
                   }`}
-                  onClick={() => handleSelect("instance", item)}
+                  onClick={() => handleSelect("compute_flavor_id", item)}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {item.name}
@@ -194,7 +288,7 @@ export const Step1Configuration = ({
                     ${item.price}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    {selectedOptions.instance?.id === item.id ? (
+                    {formData.compute_flavor_id === item.id ? (
                       <CheckCircle className="text-[#288DD1] w-5 h-5" />
                     ) : (
                       <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
@@ -207,23 +301,19 @@ export const Step1Configuration = ({
         </div>
       </div>
 
-      {/* Storage Selection */}
       <div className="space-y-4">
         <label className="block text-lg font-medium text-[#121212]">
-          Storage
+          Operating System<span className="text-red-500">*</span>
         </label>
         <div className="overflow-x-auto border border-gray-200 rounded-lg">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
+                  Image
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Capacity
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Price/mo
+                  Price/hr
                 </th>
                 <th className="relative px-6 py-3">
                   <span className="sr-only">Select</span>
@@ -231,27 +321,31 @@ export const Step1Configuration = ({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {mockData.storage.map((item) => (
+              {mockData.os_images.map((item) => (
                 <tr
                   key={item.id}
                   className={`cursor-pointer transition-colors duration-200 ${
-                    selectedOptions.storage?.id === item.id
+                    formData.os_image_id === item.id
                       ? "bg-[#ECF6FE]"
                       : "hover:bg-gray-50"
                   }`}
-                  onClick={() => handleSelect("storage", item)}
+                  onClick={() => handleSelect("os_image_id", item)}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {item.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {item.capacity} GB
+                    <div className="flex items-center">
+                      <img
+                        src={item.logo}
+                        alt={item.name}
+                        className="w-6 h-6 mr-3 rounded-full"
+                      />
+                      {item.name}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     ${item.price}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    {selectedOptions.storage?.id === item.id ? (
+                    {formData.os_image_id === item.id ? (
                       <CheckCircle className="text-[#288DD1] w-5 h-5" />
                     ) : (
                       <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
@@ -263,11 +357,136 @@ export const Step1Configuration = ({
           </table>
         </div>
       </div>
+    </div>
+  );
 
-      {/* Bandwidth Selection */}
+  const renderBlockStorageForm = () => (
+    <div className="space-y-6">
+      <h3 className="text-2xl font-semibold text-[#121212]">
+        Configure Block Storage
+      </h3>
+      <p className="text-gray-600">
+        Select the type and quantity of EBS volumes you need.
+      </p>
+      <div className="overflow-x-auto border border-gray-200 rounded-lg">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Select
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Name
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Capacity
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Price/mo
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Quantity
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {mockData.ebs_volumes.map((item) => (
+              <tr
+                key={item.id}
+                className={`transition-colors duration-200 ${
+                  formData.volumes[item.id]
+                    ? "bg-[#ECF6FE]"
+                    : "hover:bg-gray-50"
+                }`}
+              >
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <input
+                    type="checkbox"
+                    checked={!!formData.volumes[item.id]}
+                    onChange={() => toggleVolumeSelection(item.id)}
+                    className="h-4 w-4 text-[#288DD1] focus:ring-[#288DD1] border-gray-300 rounded"
+                  />
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  {item.name}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {item.capacity} GB
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  ${item.price}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  {formData.volumes[item.id] && (
+                    <input
+                      type="number"
+                      value={formData.volumes[item.id]}
+                      onChange={(e) =>
+                        handleVolumeQuantityChange(item.id, e.target.value)
+                      }
+                      min="1"
+                      className="w-20 input-field border border-gray-300 rounded-lg p-2"
+                    />
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  const renderNetworkingForm = () => (
+    <div className="space-y-6">
+      <h3 className="text-2xl font-semibold text-[#121212]">
+        Configure Networking
+      </h3>
+      <p className="text-gray-600">
+        Specify the number of public IPs and their bandwidth.
+      </p>
+
+      <div>
+        <label
+          htmlFor="floating_ip_count"
+          className="block text-lg font-medium text-[#121212] mb-2"
+        >
+          Number of Public IPs<span className="text-red-500">*</span>
+        </label>
+        <input
+          id="floating_ip_count"
+          type="number"
+          value={formData.floating_ip_count}
+          onChange={(e) =>
+            handleInputChange("floating_ip_count", parseInt(e.target.value, 10))
+          }
+          min="0"
+          className="w-full input-field border border-gray-300 rounded-lg p-2"
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="ip_runtime_days"
+          className="block text-lg font-medium text-[#121212] mb-2"
+        >
+          IP Runtime Days<span className="text-red-500">*</span>
+        </label>
+        <input
+          id="ip_runtime_days"
+          type="number"
+          value={formData.ip_runtime_days}
+          onChange={(e) =>
+            handleInputChange("ip_runtime_days", parseInt(e.target.value, 10))
+          }
+          min="1"
+          className="w-full input-field border border-gray-300 rounded-lg p-2"
+        />
+      </div>
+
       <div className="space-y-4">
         <label className="block text-lg font-medium text-[#121212]">
-          Bandwidth
+          IP Bandwidth<span className="text-red-500">*</span>
         </label>
         <div className="overflow-x-auto border border-gray-200 rounded-lg">
           <table className="min-w-full divide-y divide-gray-200">
@@ -288,15 +507,15 @@ export const Step1Configuration = ({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {mockData.bandwidth.map((item) => (
+              {mockData.ip_bandwidths.map((item) => (
                 <tr
                   key={item.id}
                   className={`cursor-pointer transition-colors duration-200 ${
-                    selectedOptions.bandwidth?.id === item.id
+                    formData.ip_bandwidth_id === item.id
                       ? "bg-[#ECF6FE]"
                       : "hover:bg-gray-50"
                   }`}
-                  onClick={() => handleSelect("bandwidth", item)}
+                  onClick={() => handleSelect("ip_bandwidth_id", item)}
                 >
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {item.name}
@@ -308,7 +527,7 @@ export const Step1Configuration = ({
                     ${item.price}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    {selectedOptions.bandwidth?.id === item.id ? (
+                    {formData.ip_bandwidth_id === item.id ? (
                       <CheckCircle className="text-[#288DD1] w-5 h-5" />
                     ) : (
                       <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
@@ -320,78 +539,40 @@ export const Step1Configuration = ({
           </table>
         </div>
       </div>
+    </div>
+  );
 
-      {/* OS Image Selection */}
-      <div className="space-y-4">
-        <label className="block text-lg font-medium text-[#121212]">
-          Operating System
-        </label>
-        <div className="overflow-x-auto border border-gray-200 rounded-lg">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Image
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Price/hr
-                </th>
-                <th className="relative px-6 py-3">
-                  <span className="sr-only">Select</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {mockData.osImages.map((item) => (
-                <tr
-                  key={item.id}
-                  className={`cursor-pointer transition-colors duration-200 ${
-                    selectedOptions.osImage?.id === item.id
-                      ? "bg-[#ECF6FE]"
-                      : "hover:bg-gray-50"
-                  }`}
-                  onClick={() => handleSelect("osImage", item)}
-                >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    <div className="flex items-center">
-                      <img
-                        src={item.logo}
-                        alt={item.name}
-                        className="w-6 h-6 mr-3 rounded-full"
-                      />
-                      {item.name}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    ${item.price}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    {selectedOptions.osImage?.id === item.id ? (
-                      <CheckCircle className="text-[#288DD1] w-5 h-5" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+  return (
+    <div className="container mx-auto p-4 md:p-8">
+      {!calculationType ? (
+        renderSelectionStep()
+      ) : (
+        <>
+          {calculationType === "compute-os" && renderComputeOsForm()}
+          {calculationType === "storage" && renderBlockStorageForm()}
+          {calculationType === "networking" && renderNetworkingForm()}
 
-      <div className="flex justify-end mt-8">
-        <button
-          onClick={handleNext}
-          disabled={!isFormValid}
-          className={`px-8 py-3 rounded-full text-white font-medium transition-colors duration-200 flex items-center justify-center ${
-            isFormValid
-              ? "bg-gradient-to-r from-[#288DD1] via-[#3fd0e0] to-[#3FE0C8]  hover:bg-[#1976D2] hover:animate-pulse"
-              : "bg-gray-400 cursor-not-allowed"
-          }`}
-        >
-          Next Step <ChevronRight className="ml-2 w-4 h-4" />
-        </button>
-      </div>
+          <div className="flex justify-between mt-8">
+            <button
+              onClick={() => setCalculationType(null)}
+              className="px-6 py-3 rounded-full text-[#288DD1] font-medium border border-[#288DD1] hover:bg-[#ECF6FE] transition-colors duration-200"
+            >
+              Back
+            </button>
+            <button
+              onClick={handleNextClick}
+              disabled={!isFormValid}
+              className={`px-8 py-3 rounded-full text-white font-medium transition-colors duration-200 flex items-center justify-center ${
+                isFormValid
+                  ? "bg-gradient-to-r from-[#288DD1] via-[#3fd0e0] to-[#3FE0C8] hover:animate-pulse"
+                  : "bg-gray-400 cursor-not-allowed"
+              }`}
+            >
+              Review Configuration <ChevronRight className="ml-2 w-4 h-4" />
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 };

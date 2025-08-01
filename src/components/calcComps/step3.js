@@ -1,7 +1,6 @@
 import React, { useMemo } from "react";
 
 export const Step3Breakdown = ({ billingData, personalInfo, handlePrev }) => {
-  // Mock data to simulate a full price catalog for breakdown calculations
   const mockData = {
     compute_flavors: {
       "flavor-1": {
@@ -44,89 +43,89 @@ export const Step3Breakdown = ({ billingData, personalInfo, handlePrev }) => {
         speed: "1 Gbps",
       },
     },
-    // Adding a mock price for floating IPs as it's not in the previous mockData
     floating_ip_price: 5.0, // $5 per month per IP
+    cross_connect_price: 100.0, // A fixed price for a cross connect
   };
 
-  // Memoized function to calculate the total cost based on the provided billing data
   const calculateTotal = useMemo(() => {
     let total = 0;
 
-    // Check if the configuration is for Compute & OS
+    // Calculate Compute & OS cost
     if (billingData.compute_flavor_id) {
       const flavor = mockData.compute_flavors[billingData.compute_flavor_id];
       const osImage = mockData.os_images[billingData.os_image_id];
       const hourlyCost = flavor.price + osImage.price;
-      total = hourlyCost * 24 * billingData.runtime_days;
+      total += hourlyCost * 24 * billingData.runtime_days;
     }
 
-    // Check if the configuration is for Block Storage
-    else if (billingData.volumes) {
-      total = billingData.volumes.reduce((sum, volume) => {
+    // Calculate Block Storage cost
+    if (billingData.volumes && billingData.volumes.length > 0) {
+      const monthlyStorageCost = billingData.volumes.reduce((sum, volume) => {
         const volumeData = mockData.ebs_volumes[volume.ebs_volume_id];
-        // Assuming the price is per GB per month
         return sum + volumeData.price * volumeData.capacity * volume.quantity;
       }, 0);
+      total += (monthlyStorageCost / 30) * billingData.runtime_days;
     }
 
-    // Check if the configuration is for Networking
-    else if (billingData.ip_bandwidth_id) {
+    // Calculate Networking cost
+    if (billingData.floating_ip_count > 0 && billingData.ip_bandwidth_id) {
       const bandwidth = mockData.ip_bandwidths[billingData.ip_bandwidth_id];
-      const ipCount = billingData.floating_ip_count;
-      const ipRuntimeDays = billingData.ip_runtime_days;
-
-      // Assuming an average monthly data transfer of 1000 GB per IP
+      const ipCost = mockData.floating_ip_price * billingData.floating_ip_count;
+      // Assuming 1000 GB transfer per IP for simplicity
       const estimatedDataTransferCost =
-        bandwidth.price * 1000 * (ipRuntimeDays / 30);
-      const ipCost =
-        mockData.floating_ip_price * ipCount * (ipRuntimeDays / 30);
-      total = estimatedDataTransferCost + ipCost;
+        bandwidth.price * 1000 * billingData.floating_ip_count;
+      total +=
+        (ipCost + estimatedDataTransferCost) *
+        (billingData.ip_runtime_days / 30);
+    }
+
+    // Add Cross Connect cost
+    if (billingData.cross_connect) {
+      total += mockData.cross_connect_price;
     }
 
     return total.toFixed(2);
   }, [billingData, mockData]);
 
-  // Memoized total cost value
   const totalCost = calculateTotal;
 
-  // Helper function to render the compute breakdown details
   const renderComputeBreakdown = () => {
     const flavor = mockData.compute_flavors[billingData.compute_flavor_id];
     const osImage = mockData.os_images[billingData.os_image_id];
     return (
-      <>
+      <div className="space-y-2">
+        <h4 className="text-xl font-semibold text-[#121212] border-b pb-2 mb-2">
+          Compute & OS
+        </h4>
         <div className="flex justify-between py-1">
-          <span className="font-medium text-gray-700">Compute Flavor:</span>
+          <span className="font-medium text-gray-700">Flavor:</span>
           <span className="text-gray-600">{flavor.name}</span>
         </div>
         <div className="flex justify-between py-1">
-          <span className="font-medium text-gray-700">vCPUs:</span>
-          <span className="text-gray-600">{flavor.vcpus}</span>
-        </div>
-        <div className="flex justify-between py-1">
-          <span className="font-medium text-gray-700">Memory:</span>
-          <span className="text-gray-600">{flavor.memory}</span>
-        </div>
-        <div className="flex justify-between py-1">
-          <span className="font-medium text-gray-700">Operating System:</span>
+          <span className="font-medium text-gray-700">OS:</span>
           <span className="text-gray-600">{osImage.name}</span>
         </div>
         <div className="flex justify-between py-1">
           <span className="font-medium text-gray-700">Runtime:</span>
           <span className="text-gray-600">{billingData.runtime_days} days</span>
         </div>
-      </>
+      </div>
     );
   };
 
-  // Helper function to render the storage breakdown details
   const renderStorageBreakdown = () => {
     return (
-      <>
-        {billingData.volumes.map((volume, index) => {
+      <div className="space-y-2">
+        <h4 className="text-xl font-semibold text-[#121212] border-b pb-2 mb-2">
+          Block Storage
+        </h4>
+        {billingData.volumes.map((volume) => {
           const volumeData = mockData.ebs_volumes[volume.ebs_volume_id];
           return (
-            <div key={index} className="flex justify-between py-1">
+            <div
+              key={volume.ebs_volume_id}
+              className="flex justify-between py-1"
+            >
               <span className="font-medium text-gray-700">
                 {volumeData.name}:
               </span>
@@ -136,21 +135,23 @@ export const Step3Breakdown = ({ billingData, personalInfo, handlePrev }) => {
             </div>
           );
         })}
-      </>
+      </div>
     );
   };
 
-  // Helper function to render the networking breakdown details
   const renderNetworkingBreakdown = () => {
     const bandwidth = mockData.ip_bandwidths[billingData.ip_bandwidth_id];
     return (
-      <>
+      <div className="space-y-2">
+        <h4 className="text-xl font-semibold text-[#121212] border-b pb-2 mb-2">
+          Networking
+        </h4>
         <div className="flex justify-between py-1">
           <span className="font-medium text-gray-700">Public IPs:</span>
           <span className="text-gray-600">{billingData.floating_ip_count}</span>
         </div>
         <div className="flex justify-between py-1">
-          <span className="font-medium text-gray-700">Bandwidth:</span>
+          <span className="font-medium text-gray-700">IP Bandwidth:</span>
           <span className="text-gray-600">
             {bandwidth.name} ({bandwidth.speed})
           </span>
@@ -161,7 +162,13 @@ export const Step3Breakdown = ({ billingData, personalInfo, handlePrev }) => {
             {billingData.ip_runtime_days} days
           </span>
         </div>
-      </>
+        {billingData.cross_connect && (
+          <div className="flex justify-between py-1">
+            <span className="font-medium text-gray-700">Cross Connect:</span>
+            <span className="text-gray-600">Included</span>
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -176,13 +183,14 @@ export const Step3Breakdown = ({ billingData, personalInfo, handlePrev }) => {
       </p>
 
       <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 space-y-4">
-        <div>
-          <h4 className="text-xl font-semibold text-[#121212] border-b pb-2 mb-2">
-            Configuration Summary
-          </h4>
+        <div className="space-y-6">
           {billingData.compute_flavor_id && renderComputeBreakdown()}
-          {billingData.volumes && renderStorageBreakdown()}
-          {billingData.ip_bandwidth_id && renderNetworkingBreakdown()}
+          {billingData.volumes &&
+            billingData.volumes.length > 0 &&
+            renderStorageBreakdown()}
+          {billingData.floating_ip_count > 0 &&
+            billingData.ip_bandwidth_id &&
+            renderNetworkingBreakdown()}
         </div>
 
         <div className="border-t pt-4">

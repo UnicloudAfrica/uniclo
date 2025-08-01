@@ -2,8 +2,7 @@ import React, { useState, useMemo } from "react";
 import { CheckCircle, ChevronRight, Cpu, HardDrive, Cloud } from "lucide-react";
 
 export const Step1Configuration = ({ handleNext }) => {
-  const [calculationType, setCalculationType] = useState(null);
-
+  // State to hold all form data for the single, combined form
   const [formData, setFormData] = useState({
     compute_flavor_id: null,
     os_image_id: null,
@@ -12,8 +11,10 @@ export const Step1Configuration = ({ handleNext }) => {
     floating_ip_count: 0,
     ip_bandwidth_id: null,
     ip_runtime_days: 1,
+    cross_connect: false, // New optional field
   });
 
+  // Mock data to simulate fetching from an API
   const mockData = {
     compute_flavors: [
       {
@@ -83,14 +84,17 @@ export const Step1Configuration = ({ handleNext }) => {
     ],
   };
 
+  // Helper function to handle basic input changes
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Helper function for table row selections
   const handleSelect = (field, item) => {
     setFormData((prev) => ({ ...prev, [field]: item.id }));
   };
 
+  // Helper function to handle volume quantity changes
   const handleVolumeQuantityChange = (volumeId, value) => {
     const quantity = parseInt(value, 10);
     setFormData((prev) => ({
@@ -102,6 +106,7 @@ export const Step1Configuration = ({ handleNext }) => {
     }));
   };
 
+  // Helper function to toggle a volume's selection status
   const toggleVolumeSelection = (volumeId) => {
     setFormData((prev) => {
       const newVolumes = { ...prev.volumes };
@@ -114,465 +119,409 @@ export const Step1Configuration = ({ handleNext }) => {
     });
   };
 
+  // Validation logic: "Next" is only enabled if the core configuration is complete
   const isFormValid = useMemo(() => {
-    switch (calculationType) {
-      case "compute-os":
-        return (
-          formData.compute_flavor_id &&
-          formData.os_image_id &&
-          formData.runtime_days > 0
-        );
-      case "storage":
-        return Object.keys(formData.volumes).length > 0;
-      case "networking":
-        return (
-          formData.floating_ip_count >= 0 &&
-          formData.ip_bandwidth_id &&
-          formData.ip_runtime_days > 0
-        );
-      default:
-        return false;
-    }
-  }, [calculationType, formData]);
+    return (
+      formData.compute_flavor_id &&
+      formData.os_image_id &&
+      formData.runtime_days > 0
+    );
+  }, [formData]);
 
-  // This function formats the data to match the requested output structure.
+  // Main function to format and pass the data to the parent component
   const handleNextClick = () => {
-    let outputData;
+    const volumesArray = Object.entries(formData.volumes).map(
+      ([volumeId, quantity]) => ({
+        ebs_volume_id: volumeId,
+        quantity: quantity,
+      })
+    );
 
-    switch (calculationType) {
-      case "compute-os":
-        outputData = {
-          compute_flavor_id: formData.compute_flavor_id,
-          os_image_id: formData.os_image_id,
-          runtime_days: formData.runtime_days,
-        };
-        break;
-      case "storage":
-        // The output for volumes needs to be an array of objects.
-        const volumesArray = Object.entries(formData.volumes).map(
-          ([volumeId, quantity]) => ({
-            ebs_volume_id: volumeId,
-            quantity: quantity,
-          })
-        );
-        outputData = {
-          volumes: volumesArray,
-        };
-        break;
-      case "networking":
-        outputData = {
-          floating_ip_count: formData.floating_ip_count,
-          ip_bandwidth_id: formData.ip_bandwidth_id,
-          ip_runtime_days: formData.ip_runtime_days,
-        };
-        break;
-      default:
-        outputData = {};
-    }
+    const outputData = {
+      compute_flavor_id: formData.compute_flavor_id,
+      os_image_id: formData.os_image_id,
+      runtime_days: formData.runtime_days,
+      volumes: volumesArray,
+      floating_ip_count: formData.floating_ip_count,
+      ip_bandwidth_id: formData.ip_bandwidth_id,
+      ip_runtime_days: formData.ip_runtime_days,
+      cross_connect: formData.cross_connect,
+    };
 
     handleNext(outputData);
   };
 
-  const renderSelectionStep = () => (
-    <div className="space-y-6">
-      <h3 className="text-2xl font-semibold text-[#121212] mb-2">
-        Choose a billing calculator
-      </h3>
-      <p className="text-gray-600 mb-6">
-        Select a cloud service to configure and calculate its cost.
-      </p>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <button
-          onClick={() => setCalculationType("compute-os")}
-          className="bg-white rounded-xl  p-6 flex flex-col items-center justify-center text-center space-y-4 cursor-pointer border border-gray-200 hover:border-[#288DD1]"
-        >
-          <Cpu className="text-[#288DD1] w-12 h-12" />
-          <span className="text-lg font-medium text-gray-800">
-            Compute & OS
-          </span>
-        </button>
-        <button
-          onClick={() => setCalculationType("storage")}
-          className="bg-white rounded-xl  p-6 flex flex-col items-center justify-center text-center space-y-4 cursor-pointer border border-gray-200 hover:border-[#288DD1]"
-        >
-          <HardDrive className="text-[#288DD1] w-12 h-12" />
-          <span className="text-lg font-medium text-gray-800">
-            Block Storage
-          </span>
-        </button>
-        <button
-          onClick={() => setCalculationType("networking")}
-          className="bg-white rounded-xl  p-6 flex flex-col items-center justify-center text-center space-y-4 cursor-pointer border border-gray-200 hover:border-[#288DD1]"
-        >
-          <Cloud className="text-[#288DD1] w-12 h-12" />
-          <span className="text-lg font-medium text-gray-800">Networking</span>
-        </button>
-      </div>
-    </div>
-  );
-
-  const renderComputeOsForm = () => (
-    <div className="space-y-6">
-      <h3 className="text-2xl font-semibold text-[#121212]">
-        Configure Compute & OS
-      </h3>
-      <p className="text-gray-600">
-        Choose the VM size and operating system image.
-      </p>
-
-      <div>
-        <label
-          htmlFor="runtime_days"
-          className="block text-lg font-medium text-[#121212] mb-2"
-        >
-          Runtime Days<span className="text-red-500">*</span>
-        </label>
-        <input
-          id="runtime_days"
-          type="number"
-          value={formData.runtime_days}
-          onChange={(e) =>
-            handleInputChange("runtime_days", parseInt(e.target.value, 10))
-          }
-          min="1"
-          className="w-full input-field border border-gray-300 rounded-lg p-2"
-        />
-      </div>
-
-      <div className="space-y-4">
-        <label className="block text-lg font-medium text-[#121212]">
-          Compute Flavor<span className="text-red-500">*</span>
-        </label>
-        <div className="overflow-x-auto border border-gray-200 rounded-lg">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  vCPUs
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Memory
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Price/hr
-                </th>
-                <th className="relative px-6 py-3">
-                  <span className="sr-only">Select</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {mockData.compute_flavors.map((item) => (
-                <tr
-                  key={item.id}
-                  className={`cursor-pointer transition-colors duration-200 ${
-                    formData.compute_flavor_id === item.id
-                      ? "bg-[#ECF6FE]"
-                      : "hover:bg-gray-50"
-                  }`}
-                  onClick={() => handleSelect("compute_flavor_id", item)}
-                >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {item.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {item.vcpus}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {item.memory}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    ${item.price}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    {formData.compute_flavor_id === item.id ? (
-                      <CheckCircle className="text-[#288DD1] w-5 h-5" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <label className="block text-lg font-medium text-[#121212]">
-          Operating System<span className="text-red-500">*</span>
-        </label>
-        <div className="overflow-x-auto border border-gray-200 rounded-lg">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Image
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Price/hr
-                </th>
-                <th className="relative px-6 py-3">
-                  <span className="sr-only">Select</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {mockData.os_images.map((item) => (
-                <tr
-                  key={item.id}
-                  className={`cursor-pointer transition-colors duration-200 ${
-                    formData.os_image_id === item.id
-                      ? "bg-[#ECF6FE]"
-                      : "hover:bg-gray-50"
-                  }`}
-                  onClick={() => handleSelect("os_image_id", item)}
-                >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    <div className="flex items-center">
-                      <img
-                        src={item.logo}
-                        alt={item.name}
-                        className="w-6 h-6 mr-3 rounded-full"
-                      />
-                      {item.name}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    ${item.price}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    {formData.os_image_id === item.id ? (
-                      <CheckCircle className="text-[#288DD1] w-5 h-5" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderBlockStorageForm = () => (
-    <div className="space-y-6">
-      <h3 className="text-2xl font-semibold text-[#121212]">
-        Configure Block Storage
-      </h3>
-      <p className="text-gray-600">
-        Select the type and quantity of EBS volumes you need.
-      </p>
-      <div className="overflow-x-auto border border-gray-200 rounded-lg">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Select
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Capacity
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Price/mo
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Quantity
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {mockData.ebs_volumes.map((item) => (
-              <tr
-                key={item.id}
-                className={`transition-colors duration-200 ${
-                  formData.volumes[item.id]
-                    ? "bg-[#ECF6FE]"
-                    : "hover:bg-gray-50"
-                }`}
-              >
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  <input
-                    type="checkbox"
-                    checked={!!formData.volumes[item.id]}
-                    onChange={() => toggleVolumeSelection(item.id)}
-                    className="h-4 w-4 text-[#288DD1] focus:ring-[#288DD1] border-gray-300 rounded"
-                  />
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {item.name}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {item.capacity} GB
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  ${item.price}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  {formData.volumes[item.id] && (
-                    <input
-                      type="number"
-                      value={formData.volumes[item.id]}
-                      onChange={(e) =>
-                        handleVolumeQuantityChange(item.id, e.target.value)
-                      }
-                      min="1"
-                      className="w-20 input-field border border-gray-300 rounded-lg p-2"
-                    />
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-
-  const renderNetworkingForm = () => (
-    <div className="space-y-6">
-      <h3 className="text-2xl font-semibold text-[#121212]">
-        Configure Networking
-      </h3>
-      <p className="text-gray-600">
-        Specify the number of public IPs and their bandwidth.
-      </p>
-
-      <div>
-        <label
-          htmlFor="floating_ip_count"
-          className="block text-lg font-medium text-[#121212] mb-2"
-        >
-          Number of Public IPs<span className="text-red-500">*</span>
-        </label>
-        <input
-          id="floating_ip_count"
-          type="number"
-          value={formData.floating_ip_count}
-          onChange={(e) =>
-            handleInputChange("floating_ip_count", parseInt(e.target.value, 10))
-          }
-          min="0"
-          className="w-full input-field border border-gray-300 rounded-lg p-2"
-        />
-      </div>
-
-      <div>
-        <label
-          htmlFor="ip_runtime_days"
-          className="block text-lg font-medium text-[#121212] mb-2"
-        >
-          IP Runtime Days<span className="text-red-500">*</span>
-        </label>
-        <input
-          id="ip_runtime_days"
-          type="number"
-          value={formData.ip_runtime_days}
-          onChange={(e) =>
-            handleInputChange("ip_runtime_days", parseInt(e.target.value, 10))
-          }
-          min="1"
-          className="w-full input-field border border-gray-300 rounded-lg p-2"
-        />
-      </div>
-
-      <div className="space-y-4">
-        <label className="block text-lg font-medium text-[#121212]">
-          IP Bandwidth<span className="text-red-500">*</span>
-        </label>
-        <div className="overflow-x-auto border border-gray-200 rounded-lg">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Speed
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Price/GB
-                </th>
-                <th className="relative px-6 py-3">
-                  <span className="sr-only">Select</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {mockData.ip_bandwidths.map((item) => (
-                <tr
-                  key={item.id}
-                  className={`cursor-pointer transition-colors duration-200 ${
-                    formData.ip_bandwidth_id === item.id
-                      ? "bg-[#ECF6FE]"
-                      : "hover:bg-gray-50"
-                  }`}
-                  onClick={() => handleSelect("ip_bandwidth_id", item)}
-                >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {item.name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {item.speed}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    ${item.price}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    {formData.ip_bandwidth_id === item.id ? (
-                      <CheckCircle className="text-[#288DD1] w-5 h-5" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="container mx-auto p-4 md:p-8">
-      {!calculationType ? (
-        renderSelectionStep()
-      ) : (
-        <>
-          {calculationType === "compute-os" && renderComputeOsForm()}
-          {calculationType === "storage" && renderBlockStorageForm()}
-          {calculationType === "networking" && renderNetworkingForm()}
+      <div className="space-y-10">
+        {/* Core Configuration Section */}
+        <div className="space-y-6">
+          <h3 className="text-2xl font-semibold text-[#121212]">
+            Core Configuration
+          </h3>
+          <p className="text-gray-600">
+            Select a compute flavor and operating system.
+          </p>
 
-          <div className="flex justify-between mt-8">
-            <button
-              onClick={() => setCalculationType(null)}
-              className="px-6 py-3 rounded-full text-[#288DD1] font-medium border border-[#288DD1] hover:bg-[#ECF6FE] transition-colors duration-200"
+          <div>
+            <label
+              htmlFor="runtime_days"
+              className="block text-lg font-medium text-[#121212] mb-2"
             >
-              Back
-            </button>
-            <button
-              onClick={handleNextClick}
-              disabled={!isFormValid}
-              className={`px-8 py-3 rounded-full text-white font-medium transition-colors duration-200 flex items-center justify-center ${
-                isFormValid
-                  ? "bg-gradient-to-r from-[#288DD1] via-[#3fd0e0] to-[#3FE0C8] hover:animate-pulse"
-                  : "bg-gray-400 cursor-not-allowed"
-              }`}
-            >
-              Review Configuration <ChevronRight className="ml-2 w-4 h-4" />
-            </button>
+              Runtime Days<span className="text-red-500">*</span>
+            </label>
+            <input
+              id="runtime_days"
+              type="number"
+              value={formData.runtime_days}
+              onChange={(e) =>
+                handleInputChange("runtime_days", parseInt(e.target.value, 10))
+              }
+              min="1"
+              className="w-full input-field border border-gray-300 rounded-lg p-2"
+            />
           </div>
-        </>
-      )}
+
+          <div className="space-y-4">
+            <label className="block text-lg font-medium text-[#121212]">
+              Compute Flavor<span className="text-red-500">*</span>
+            </label>
+            <div className="overflow-x-auto border border-gray-200 rounded-lg">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      vCPUs
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Memory
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Price/hr
+                    </th>
+                    <th className="relative px-6 py-3">
+                      <span className="sr-only">Select</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {mockData.compute_flavors.map((item) => (
+                    <tr
+                      key={item.id}
+                      className={`cursor-pointer transition-colors duration-200 ${
+                        formData.compute_flavor_id === item.id
+                          ? "bg-[#ECF6FE]"
+                          : "hover:bg-gray-50"
+                      }`}
+                      onClick={() => handleSelect("compute_flavor_id", item)}
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {item.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {item.vcpus}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {item.memory}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        ${item.price}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        {formData.compute_flavor_id === item.id ? (
+                          <CheckCircle className="text-[#288DD1] w-5 h-5" />
+                        ) : (
+                          <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <label className="block text-lg font-medium text-[#121212]">
+              Operating System<span className="text-red-500">*</span>
+            </label>
+            <div className="overflow-x-auto border border-gray-200 rounded-lg">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Image
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Price/hr
+                    </th>
+                    <th className="relative px-6 py-3">
+                      <span className="sr-only">Select</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {mockData.os_images.map((item) => (
+                    <tr
+                      key={item.id}
+                      className={`cursor-pointer transition-colors duration-200 ${
+                        formData.os_image_id === item.id
+                          ? "bg-[#ECF6FE]"
+                          : "hover:bg-gray-50"
+                      }`}
+                      onClick={() => handleSelect("os_image_id", item)}
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <div className="flex items-center">
+                          <img
+                            src={item.logo}
+                            alt={item.name}
+                            className="w-6 h-6 mr-3 rounded-full"
+                          />
+                          {item.name}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        ${item.price}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        {formData.os_image_id === item.id ? (
+                          <CheckCircle className="text-[#288DD1] w-5 h-5" />
+                        ) : (
+                          <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* Optional Block Storage Section */}
+        <div className="space-y-6">
+          <h3 className="text-2xl font-semibold text-[#121212] flex items-center">
+            <HardDrive className="mr-3 text-gray-500" />
+            Optional: Add Block Storage
+          </h3>
+          <p className="text-gray-600">
+            Select the type and quantity of EBS volumes you need.
+          </p>
+          <div className="overflow-x-auto border border-gray-200 rounded-lg">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Select
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Capacity
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Price/mo
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Quantity
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {mockData.ebs_volumes.map((item) => (
+                  <tr
+                    key={item.id}
+                    className={`transition-colors duration-200 ${
+                      formData.volumes[item.id]
+                        ? "bg-[#ECF6FE]"
+                        : "hover:bg-gray-50"
+                    }`}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <input
+                        type="checkbox"
+                        checked={!!formData.volumes[item.id]}
+                        onChange={() => toggleVolumeSelection(item.id)}
+                        className="h-4 w-4 text-[#288DD1] focus:ring-[#288DD1] border-gray-300 rounded"
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {item.name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {item.capacity} GB
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      ${item.price}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      {formData.volumes[item.id] && (
+                        <input
+                          type="number"
+                          value={formData.volumes[item.id]}
+                          onChange={(e) =>
+                            handleVolumeQuantityChange(item.id, e.target.value)
+                          }
+                          min="1"
+                          className="w-20 input-field border border-gray-300 rounded-lg p-2"
+                        />
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Optional Networking Section */}
+        <div className="space-y-6">
+          <h3 className="text-2xl font-semibold text-[#121212] flex items-center">
+            <Cloud className="mr-3 text-gray-500" />
+            Optional: Configure Networking
+          </h3>
+          <p className="text-gray-600">
+            Specify the number of public IPs and their bandwidth.
+          </p>
+
+          <div>
+            <label
+              htmlFor="floating_ip_count"
+              className="block text-lg font-medium text-[#121212] mb-2"
+            >
+              Number of Public IPs
+            </label>
+            <input
+              id="floating_ip_count"
+              type="number"
+              value={formData.floating_ip_count}
+              onChange={(e) =>
+                handleInputChange(
+                  "floating_ip_count",
+                  parseInt(e.target.value, 10)
+                )
+              }
+              min="0"
+              className="w-full input-field border border-gray-300 rounded-lg p-2"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="ip_runtime_days"
+              className="block text-lg font-medium text-[#121212] mb-2"
+            >
+              IP Runtime Days
+            </label>
+            <input
+              id="ip_runtime_days"
+              type="number"
+              value={formData.ip_runtime_days}
+              onChange={(e) =>
+                handleInputChange(
+                  "ip_runtime_days",
+                  parseInt(e.target.value, 10)
+                )
+              }
+              min="1"
+              className="w-full input-field border border-gray-300 rounded-lg p-2"
+            />
+          </div>
+
+          <div className="space-y-4">
+            <label className="block text-lg font-medium text-[#121212]">
+              IP Bandwidth
+            </label>
+            <div className="overflow-x-auto border border-gray-200 rounded-lg">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Speed
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Price/GB
+                    </th>
+                    <th className="relative px-6 py-3">
+                      <span className="sr-only">Select</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {mockData.ip_bandwidths.map((item) => (
+                    <tr
+                      key={item.id}
+                      className={`cursor-pointer transition-colors duration-200 ${
+                        formData.ip_bandwidth_id === item.id
+                          ? "bg-[#ECF6FE]"
+                          : "hover:bg-gray-50"
+                      }`}
+                      onClick={() => handleSelect("ip_bandwidth_id", item)}
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {item.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {item.speed}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        ${item.price}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        {formData.ip_bandwidth_id === item.id ? (
+                          <CheckCircle className="text-[#288DD1] w-5 h-5" />
+                        ) : (
+                          <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="cross_connect"
+              checked={formData.cross_connect}
+              onChange={(e) =>
+                handleInputChange("cross_connect", e.target.checked)
+              }
+              className="h-4 w-4 text-[#288DD1] focus:ring-[#288DD1] border-gray-300 rounded"
+            />
+            <label
+              htmlFor="cross_connect"
+              className="text-lg font-medium text-[#121212]"
+            >
+              Include Cross Connect
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end mt-8">
+        <button
+          onClick={handleNextClick}
+          disabled={!isFormValid}
+          className={`px-8 py-3 rounded-full text-white font-medium transition-colors duration-200 flex items-center justify-center ${
+            isFormValid
+              ? "bg-gradient-to-r from-[#288DD1] via-[#3fd0e0] to-[#3FE0C8] hover:animate-pulse"
+              : "bg-gray-400 cursor-not-allowed"
+          }`}
+        >
+          Review Configuration <ChevronRight className="ml-2 w-4 h-4" />
+        </button>
+      </div>
     </div>
   );
 };

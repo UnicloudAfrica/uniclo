@@ -29,6 +29,7 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/admin-dashboard/projects": "Projects",
     "/admin-dashboard/instances": "Instances",
     "/admin-dashboard/products": "Products",
+    "/admin-dashboard/leads": "Leads",
     "/admin-dashboard/support-ticket": "Support Ticket",
     "/admin-dashboard/admin-users": "Admin Users",
     "/admin-dashboard/tax-configuration": "Tax Configuration",
@@ -66,6 +67,12 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     //   activeIcon: activemodules,
     //   path: "/admin-dashboard/modules",
     // },
+    {
+      name: "Leads",
+      icon: modules,
+      activeIcon: activemodules,
+      path: "/admin-dashboard/leads",
+    },
     {
       name: "Admin Users",
       icon: modules,

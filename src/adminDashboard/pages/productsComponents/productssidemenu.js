@@ -8,6 +8,8 @@ const ProductSideMenu = ({ activeTab, onTabChange }) => {
     { id: "vms", name: "VMs" },
     { id: "bandwidth", name: "Bandwidth" },
     { id: "colocation ", name: "Colocation " },
+    { id: "ips", name: "Floating IPs " },
+    { id: "cross-connect", name: "Cross Connects" },
   ];
 
   return (

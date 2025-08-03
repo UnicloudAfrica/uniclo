@@ -74,6 +74,7 @@ import Products from "./dashboard/pages/products";
 import TenantAdmin from "./dashboard/pages/tenantAdmin";
 import AdminInstancesDetails from "./adminDashboard/pages/adminInstancesDetails";
 import Calculator from "./pages/calculator";
+import AdminLeads from "./adminDashboard/pages/adminLeads";
 
 function App() {
   const location = useLocation();
@@ -190,6 +191,7 @@ function App() {
           <Route path="/admin-dashboard/payment" element={<AdminPayment />} />
           <Route path="/admin-dashboard/products" element={<AdminProducts />} />
           <Route path="/admin-dashboard/projects" element={<AdminProjects />} />
+          <Route path="/admin-dashboard/leads" element={<AdminLeads />} />
           <Route
             path="/admin-dashboard/projects/details"
             element={<AdminProjectDetails />}

@@ -1,18 +1,17 @@
-import React, { useState, useEffect } from "react";
-
+import { useState, useEffect } from "react";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 import Ads from "../components/ad";
-import { Step1Configuration } from "../components/calcComps/step1";
 import { Step2ContactForm } from "../components/calcComps/step2";
 import { Step3Breakdown } from "../components/calcComps/step3";
+import Step1Configuration from "../components/calcComps/step1";
 
 const STEPS = ["Configuration", "Personal Details", "Breakdown"];
 
 const StepProgress = ({ currentStep, steps }) => (
   <div className="flex items-center justify-between mb-8 w-full max-w-xl mx-auto">
     {steps.map((step, index) => (
-      <React.Fragment key={step}>
+      <div key={step} className="flex items-center">
         <div className="flex flex-col items-center text-center">
           <div
             className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors duration-300 ${
@@ -38,7 +37,7 @@ const StepProgress = ({ currentStep, steps }) => (
             }`}
           />
         )}
-      </React.Fragment>
+      </div>
     ))}
   </div>
 );
@@ -47,31 +46,35 @@ export default function Calculator() {
   const [currentStep, setCurrentStep] = useState(0);
   const [billingData, setBillingData] = useState({});
   const [personalInfo, setPersonalInfo] = useState({
-    fullName: "",
+    first_name: "",
+    last_name: "",
     email: "",
     phone: "",
-    role: "user",
+    company: "",
+    country_iso: "",
+    lead_type: "partner",
+    source: "",
+    notes: "",
   });
 
-  // Scrolls to the top of the window whenever the step changes
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [currentStep]);
 
-  // Updated handleNext to accept data from Step1Configuration
   const handleNextWithData = (data) => {
     setBillingData(data);
     setCurrentStep((prev) => prev + 1);
   };
 
-  // Existing handlePrev remains unchanged
   const handlePrev = () => setCurrentStep((prev) => prev - 1);
 
   const handlePersonalInfoChange = (e) => {
     const { id, value, name, type } = e.target;
+    const field = type === "radio" ? name : id;
+    const finalValue = type === "radio" && value === "user" ? "client" : value;
     setPersonalInfo((prev) => ({
       ...prev,
-      [type === "radio" ? name : id]: value,
+      [field]: finalValue,
     }));
   };
 
@@ -115,7 +118,6 @@ export default function Calculator() {
             networking options.
           </p>
         </div>
-
         <div className="max-w-5xl w-full mt-10 p-6 md:p-10 rounded-[24px] bg-[#FAFAFA] border border-[#ECEDF0] shadow-md">
           <StepProgress currentStep={currentStep} steps={STEPS} />
           {renderStep()}

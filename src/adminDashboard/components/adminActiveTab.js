@@ -16,6 +16,7 @@ const AdminActiveTab = () => {
     details: "Details",
     products: "products",
     instances: "Instances",
+    leads: "Leads",
     "purchased-modules": "Purchased Modules",
     "tax-configuration": "Tax Configuration",
     "admin-users": "Admin Users",

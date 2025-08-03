@@ -8,6 +8,8 @@ import OSImages from "./productsComponents/osImages";
 import EBSImages from "./productsComponents/ebsImages";
 import Vms from "./productsComponents/vms";
 import ColocationSetting from "./productsComponents/colocation";
+import FloatingIP from "./productsComponents/floatingIP";
+import CrossConnect from "./productsComponents/crossConnect";
 
 export default function AdminProducts() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -23,6 +25,12 @@ export default function AdminProducts() {
       id: "colocation ",
       name: "Colocation  Management",
       Component: ColocationSetting,
+    },
+    { id: "ips", name: "Floating IP Management", Component: FloatingIP },
+    {
+      id: "cross-connect",
+      name: "Cross Connect Management",
+      Component: CrossConnect,
     },
   ];
 

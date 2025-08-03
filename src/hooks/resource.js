@@ -66,13 +66,23 @@ const fetchBandwidths = async () => {
   const res = await silentApi("GET", "/product-bandwidth");
   return res.data;
 };
+// **GET**: fetch bandwith
+const fetchCrossConnects = async () => {
+  const res = await silentApi("GET", "/product-cross-connect");
+  return res.data;
+};
+// **GET**: fetch floating ips
+const fetchFloatingIPs = async () => {
+  const res = await silentApi("GET", "/product-floating-ip");
+  return res.data;
+};
 
 // Hook to fetch countries
 export const useFetchCountries = (options = {}) => {
   return useQuery({
     queryKey: ["countries"],
     queryFn: fetchCountries,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
   });
@@ -112,7 +122,7 @@ export const useFetchProfile = (options = {}) => {
   return useQuery({
     queryKey: ["profile"],
     queryFn: fetchProfile,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 1000 * 60 * 5,
     retry: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -136,7 +146,7 @@ export const useFetchIndustries = (options = {}) => {
   return useQuery({
     queryKey: ["industries"],
     queryFn: fetchIndustries,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
   });
@@ -146,7 +156,7 @@ export const useFetchChargeOptions = (options = {}) => {
   return useQuery({
     queryKey: ["prouct-charges-slug"],
     queryFn: fetchProductCharges,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
   });
@@ -156,7 +166,7 @@ export const useFetchComputerInstances = (options = {}) => {
   return useQuery({
     queryKey: ["computer-instances"],
     queryFn: fetchComputerInstances,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
   });
@@ -166,7 +176,7 @@ export const useFetchOsImages = (options = {}) => {
   return useQuery({
     queryKey: ["os-images"],
     queryFn: fetchOsImages,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
   });
@@ -176,7 +186,7 @@ export const useFetchEbsVolumes = (options = {}) => {
   return useQuery({
     queryKey: ["ebs-volumes"],
     queryFn: fetchEbsVolumes,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
   });
@@ -186,7 +196,27 @@ export const useFetchBandwidths = (options = {}) => {
   return useQuery({
     queryKey: ["bandwidths"],
     queryFn: fetchBandwidths,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+// Hook to fetch cross connects
+export const useFetchCrossConnect = (options = {}) => {
+  return useQuery({
+    queryKey: ["cross-connects"],
+    queryFn: fetchCrossConnects,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+// Hook to fetch Floating IP
+export const useFetchFloatingIPs = (options = {}) => {
+  return useQuery({
+    queryKey: ["floating-ips"],
+    queryFn: fetchFloatingIPs,
+    staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
   });

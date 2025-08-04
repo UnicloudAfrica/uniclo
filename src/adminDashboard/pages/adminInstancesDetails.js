@@ -52,7 +52,7 @@ export default function AdminInstancesDetails() {
   };
 
   const handleGoBack = () => {
-    window.location.href = "/dashboard/instances";
+    window.location.href = "/admin-dashboard/instances";
   };
 
   const handleOpenPaymentModal = (transaction) => {

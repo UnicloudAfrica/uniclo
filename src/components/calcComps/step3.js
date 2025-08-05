@@ -1,9 +1,9 @@
-import { useMemo, useEffect } from "react";
+import React, { useMemo } from "react";
 import { Loader2 } from "lucide-react";
 import { useCreateLeads } from "../../hooks/leadsHook";
 
 export const Step3Breakdown = ({ billingData, personalInfo, handlePrev }) => {
-  const { mutate, isPending, data } = useCreateLeads();
+  const { mutate, isPending, data, isSuccess } = useCreateLeads();
 
   const formattedData = useMemo(
     () => ({
@@ -13,7 +13,7 @@ export const Step3Breakdown = ({ billingData, personalInfo, handlePrev }) => {
         email: personalInfo.email,
         phone: personalInfo.phone,
         company: personalInfo.company,
-        country_iso: personalInfo.country_iso,
+        country: personalInfo.country,
         lead_type: personalInfo.lead_type,
         source: personalInfo.source,
         notes: personalInfo.notes,
@@ -37,74 +37,9 @@ export const Step3Breakdown = ({ billingData, personalInfo, handlePrev }) => {
     [billingData, personalInfo]
   );
 
-  useEffect(() => {
-    // console.log(JSON.stringify(formattedData, null, 2));
+  const handleFinalSubmit = () => {
     mutate(formattedData);
-  }, []);
-
-  const renderComputeBreakdown = () => (
-    <div className="space-y-2">
-      <h4 className="text-xl font-semibold text-[#121212] border-b pb-2 mb-2">
-        Compute & OS
-      </h4>
-      <div className="flex justify-between py-1">
-        <span className="font-medium text-gray-700">Flavor:</span>
-        <span className="text-gray-600">{billingData.compute_instance_id}</span>
-      </div>
-      <div className="flex justify-between py-1">
-        <span className="font-medium text-gray-700">OS:</span>
-        <span className="text-gray-600">{billingData.os_image_id}</span>
-      </div>
-      <div className="flex justify-between py-1">
-        <span className="font-medium text-gray-700">Runtime:</span>
-        <span className="text-gray-600">{billingData.months} months</span>
-      </div>
-      <div className="flex justify-between py-1">
-        <span className="font-medium text-gray-700">Instances:</span>
-        <span className="text-gray-600">{billingData.number_of_instances}</span>
-      </div>
-    </div>
-  );
-
-  const renderStorageBreakdown = () => (
-    <div className="space-y-2">
-      <h4 className="text-xl font-semibold text-[#121212] border-b pb-2 mb-2">
-        Block Storage
-      </h4>
-      {billingData.volumes.map((volume, index) => (
-        <div key={index} className="flex justify-between py-1">
-          <span className="font-medium text-gray-700">Volume {index + 1}:</span>
-          <span className="text-gray-600">{volume.capacity} GB</span>
-        </div>
-      ))}
-    </div>
-  );
-
-  const renderNetworkingBreakdown = () => (
-    <div className="space-y-2">
-      <h4 className="text-xl font-semibold text-[#121212] border-b pb-2 mb-2">
-        Networking
-      </h4>
-      <div className="flex justify-between py-1">
-        <span className="font-medium text-gray-700">Public IPs:</span>
-        <span className="text-gray-600">{billingData.floating_ip_count}</span>
-      </div>
-      <div className="flex justify-between py-1">
-        <span className="font-medium text-gray-700">Bandwidth:</span>
-        <span className="text-gray-600">{billingData.bandwidth_id}</span>
-      </div>
-      <div className="flex justify-between py-1">
-        <span className="font-medium text-gray-700">Runtime:</span>
-        <span className="text-gray-600">{billingData.months} months</span>
-      </div>
-      {billingData.cross_connect_id && (
-        <div className="flex justify-between py-1">
-          <span className="font-medium text-gray-700">Cross Connect:</span>
-          <span className="text-gray-600">Included</span>
-        </div>
-      )}
-    </div>
-  );
+  };
 
   const displayLeadType =
     personalInfo.lead_type === "client" ? "User" : personalInfo.lead_type;
@@ -113,9 +48,7 @@ export const Step3Breakdown = ({ billingData, personalInfo, handlePrev }) => {
     return (
       <div className="flex flex-col items-center justify-center h-full min-h-[300px]">
         <Loader2 className="w-12 h-12 animate-spin text-[#288DD1]" />
-        <p className="mt-4 text-gray-700 text-lg">
-          Calculating your estimated cost...
-        </p>
+        <p className="mt-4 text-gray-700 text-lg">Submitting your request...</p>
       </div>
     );
   }
@@ -130,13 +63,46 @@ export const Step3Breakdown = ({ billingData, personalInfo, handlePrev }) => {
         estimated cost.
       </p>
       <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 space-y-4">
-        <div className="space-y-6">
-          {billingData.compute_instance_id && renderComputeBreakdown()}
-          {billingData.volumes?.length > 0 && renderStorageBreakdown()}
-          {billingData.floating_ip_count > 0 &&
-            billingData.bandwidth_id &&
-            renderNetworkingBreakdown()}
-        </div>
+        {isSuccess && (
+          <div className="space-y-6">
+            <h4 className="text-xl font-semibold text-[#121212] border-b pb-2 mb-2">
+              Pricing Breakdown
+            </h4>
+            <div className="space-y-2">
+              {data?.pricing?.lines?.map((line, index) => (
+                <div key={index} className="flex justify-between py-1">
+                  <span className="font-medium text-gray-700">{line.name}</span>
+                  <span className="text-gray-600">
+                    {line.quantity} x {line.currency} {line.unit_local}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="border-t pt-4">
+              <div className="flex justify-between py-1">
+                <span className="font-medium text-gray-700">Subtotal:</span>
+                <span className="text-gray-600">
+                  {data?.pricing?.currency}{" "}
+                  {data?.pricing?.subtotal?.toFixed(2)}
+                </span>
+              </div>
+              <div className="flex justify-between py-1">
+                <span className="font-medium text-gray-700">Tax:</span>
+                <span className="text-gray-600">
+                  {data?.pricing?.currency} {data?.pricing?.tax?.toFixed(2)}
+                </span>
+              </div>
+              <div className="flex justify-between py-1">
+                <p className="text-xl font-bold text-[#121212]">
+                  Estimated Total Cost:
+                </p>
+                <p className="text-xl font-bold text-[#288DD1]">
+                  {data?.pricing?.currency} {data?.pricing?.total?.toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="border-t pt-4">
           <h4 className="text-xl font-semibold text-[#121212] border-b pb-2 mb-2">
             Personal Information
@@ -163,10 +129,10 @@ export const Step3Breakdown = ({ billingData, personalInfo, handlePrev }) => {
               <span className="text-gray-600">{personalInfo.company}</span>
             </div>
           )}
-          {personalInfo.country_iso && (
+          {personalInfo.country && (
             <div className="flex justify-between py-1">
               <span className="font-medium text-gray-700">Country:</span>
-              <span className="text-gray-600">{personalInfo.country_iso}</span>
+              <span className="text-gray-600">{personalInfo.country}</span>
             </div>
           )}
           <div className="flex justify-between py-1">
@@ -186,22 +152,38 @@ export const Step3Breakdown = ({ billingData, personalInfo, handlePrev }) => {
             </div>
           )}
         </div>
-        <div className="border-t pt-4 text-center">
-          <p className="text-2xl font-bold text-[#121212]">
-            Estimated Total Cost
-          </p>
-          <p className="text-5xl font-extrabold text-[#288DD1] mt-2">
-            ${data?.total_cost?.toFixed(2) || "0.00"}
-          </p>
-        </div>
+        {/* {isSuccess && (
+          <div className="border-t pt-4 text-center">
+            <p className="text-green-500 font-medium">
+              Your request has been submitted! Your lead ID is:{" "}
+              <strong>{data?.lead_id}</strong>.
+            </p>
+          </div>
+        )} */}
       </div>
-      <div className="flex justify-start mt-8">
+      <div className="flex justify-between mt-8">
         <button
           onClick={handlePrev}
           className="px-6 py-3 rounded-full text-gray-700 font-medium transition-colors duration-200 bg-gray-200 hover:bg-gray-300"
         >
           Previous
         </button>
+        {isSuccess ? (
+          <a
+            href="/sign-up"
+            className="px-6 py-3 rounded-full text-white font-medium transition-colors duration-200 bg-[#288DD1] hover:bg-[#1976D2] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Sign Up Now
+          </a>
+        ) : (
+          <button
+            onClick={handleFinalSubmit}
+            disabled={isPending}
+            className="px-6 py-3 rounded-full text-white font-medium transition-colors duration-200 bg-[#288DD1] hover:bg-[#1976D2] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isPending ? "Submitting..." : "Submit"}
+          </button>
+        )}
       </div>
     </div>
   );

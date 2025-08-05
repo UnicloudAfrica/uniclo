@@ -51,7 +51,7 @@ export default function Calculator() {
     email: "",
     phone: "",
     company: "",
-    country_iso: "",
+    country: "",
     lead_type: "partner",
     source: "",
     notes: "",

@@ -79,6 +79,22 @@ const createCustomStage = async (leadData) => {
   }
   return res.data;
 };
+// POST: post a new Lead doc
+const addLeadDoc = async (leadData) => {
+  const res = await api("POST", "/lead-documents", leadData);
+  if (!res.data) {
+    throw new Error("Failed to create Lead doc");
+  }
+  return res.data;
+};
+
+const convertLeadToUser = async (id) => {
+  const res = await api("GET", `/lead-convert-to-user/${id}`);
+  if (!res.data) {
+    throw new Error(`Failed to convert lead with ID ${id} to user`);
+  }
+  return res.data;
+};
 
 // Hook to fetch all leads
 export const useFetchLeads = (options = {}) => {
@@ -165,6 +181,40 @@ export const useCreateCustomStage = () => {
     },
     onError: (error) => {
       console.error("Error creating Custom-Stage:", error);
+    },
+  });
+};
+export const useAddLeadDocument = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: addLeadDoc,
+    onSuccess: () => {
+      // Invalidate CustomStages query to refresh the list
+      queryClient.invalidateQueries(["admin-leads"]);
+    },
+    onError: (error) => {
+      console.error("Error creating lead doc:", error);
+    },
+  });
+};
+
+export const useConvertLeadToUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id) => convertLeadToUser(id),
+
+    onSuccess: (data, variables) => {
+      const id = variables;
+
+      queryClient.invalidateQueries({ queryKey: ["admin-lead", id] });
+      queryClient.invalidateQueries({ queryKey: ["admin-leads"] });
+      queryClient.invalidateQueries(["clients"]);
+      // console.log(`Lead with ID ${id} successfully converted to user.`);
+    },
+
+    onError: (error) => {
+      // console.error("Error converting lead to user:", error);
     },
   });
 };

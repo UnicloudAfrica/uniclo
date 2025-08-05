@@ -29,10 +29,10 @@ const EditLead = ({ isOpen, onClose, lead }) => {
   useEffect(() => {
     if (isOpen && lead) {
       setFormData({
-        status: lead.status || "",
-        notes: lead.notes || "",
-        follow_up_date: lead.follow_up_date || "",
-        assigned_to: lead.assigned_to.id || "unassigned",
+        status: lead?.status || "",
+        notes: lead?.notes || "",
+        follow_up_date: lead?.follow_up_date || "",
+        assigned_to: lead?.assigned_to?.id || "unassigned",
       });
       setErrors({});
     }

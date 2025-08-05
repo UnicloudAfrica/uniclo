@@ -10,15 +10,16 @@ import {
   Download,
   PlusCircle,
   ChevronDown,
-  X,
 } from "lucide-react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import { useFetchLeadById } from "../../hooks/adminHooks/leadsHook";
+import { useConvertLeadToUser } from "../../hooks/adminHooks/leadsHook";
 import EditLead from "./leadComps/editLead";
 import AddLeadStage from "./leadComps/addLeadStage";
 import { EditLeadStage } from "./leadComps/editLeadStage";
+import AddLeadDocument from "./leadComps/addLeadDoc";
 
 const DetailItem = ({ label, value, className = "" }) => (
   <div className={`flex flex-col ${className}`}>
@@ -55,6 +56,7 @@ const DocumentItem = ({ doc, onDownload, onUpdate }) => (
 export default function AdminLeadDetails() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isEditLeadOpen, setIsEditLeadOpen] = useState(false);
+  const [isAddDocOpen, setIsAddDocOpen] = useState(false);
   const [isAddStageModalOpen, setIsAddStageModalOpen] = useState(false);
   const [isEditStageModalOpen, setIsEditStageModalOpen] = useState(false);
   const [isActionsDropdownOpen, setIsActionsDropdownOpen] = useState(false);
@@ -96,6 +98,8 @@ export default function AdminLeadDetails() {
   }, [dropdownRef]);
 
   const { data: leadDetails, isFetching, isError } = useFetchLeadById(leadId);
+  const { mutate: convertLead, isPending: isConverting } =
+    useConvertLeadToUser();
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
@@ -118,18 +122,24 @@ export default function AdminLeadDetails() {
   const openEditStageModal = () => setIsEditStageModalOpen(true);
   const closeEditStageModal = () => setIsEditStageModalOpen(false);
 
+  const openAddDocModal = () => setIsAddDocOpen(true);
+  const closeAddDocModal = () => setIsAddDocOpen(false);
+
   const handleEditStage = (stage) => {
     setEditingStage(stage);
     openEditStageModal();
   };
 
   const handleGoBack = () => navigate("/admin-dashboard/leads");
+
   const handleConvertLead = () => {
-    console.log("Converting lead to user...");
+    if (leadId) {
+      convertLead(leadId);
+    }
     setIsActionsDropdownOpen(false);
   };
 
-  const handleAddDocument = () => console.log("Adding new document...");
+  const handleAddDocument = () => openAddDocModal();
   const handleDownloadDoc = (doc) => console.log("Downloading:", doc.name);
   const handleUpdateDoc = (doc) => console.log("Updating:", doc.name);
 
@@ -186,7 +196,7 @@ export default function AdminLeadDetails() {
     created_at,
     assigned_to,
     pricing_summary,
-    country_iso,
+    country,
     notes,
     documents,
     follow_up_date,
@@ -239,7 +249,17 @@ export default function AdminLeadDetails() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8">
+      <main className=" top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8 relative">
+        {/* Loading Overlay */}
+        {isConverting && (
+          <div className="absolute inset-0 bg-gray-100 bg-opacity-75 z-20 flex flex-col items-center justify-center">
+            <Loader2 className="w-12 h-12 animate-spin text-[#288DD1]" />
+            <p className="mt-4 text-lg font-semibold text-gray-700">
+              Converting Lead to User...
+            </p>
+          </div>
+        )}
+
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center">
             <button
@@ -283,10 +303,16 @@ export default function AdminLeadDetails() {
                   </button>
                   <button
                     onClick={handleConvertLead}
-                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    disabled={isConverting}
+                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     role="menuitem"
                   >
-                    <User className="w-4 h-4 mr-2" /> Convert to User
+                    {isConverting ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <User className="w-4 h-4 mr-2" />
+                    )}
+                    {isConverting ? "Converting..." : "Convert to User"}
                   </button>
                 </div>
               </div>
@@ -306,7 +332,7 @@ export default function AdminLeadDetails() {
             <DetailItem label="Email" value={email} />
             <DetailItem label="Phone" value={phone} />
             <DetailItem label="Source" value={source} />
-            <DetailItem label="Country" value={country_iso} />
+            <DetailItem label="Country" value={country} />
             <DetailItem label="Lead Type" value={lead_type} />
             <DetailItem label="Created At" value={formattedCreatedAt} />
             <DetailItem
@@ -392,7 +418,10 @@ export default function AdminLeadDetails() {
                     {stage.description || "No description."}
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 mt-2 text-sm">
-                    <DetailItem label="Status" value={stage.status} />
+                    <DetailItem
+                      label="Status"
+                      value={formatStatusForDisplay(stage.status)}
+                    />
                     <DetailItem
                       label="Started"
                       value={
@@ -430,7 +459,20 @@ export default function AdminLeadDetails() {
 
         <div className="bg-white rounded-[12px] p-6 shadow-sm mb-8">
           <h2 className="text-xl font-semibold text-[#575758] mb-4">Notes</h2>
-          <p className="text-gray-900">{notes || "No notes available."}</p>
+          {notes && notes.length > 0 ? (
+            <div className="space-y-3">
+              {notes.split("\n\n").map((note, index) => (
+                <div key={index} className="flex items-start">
+                  <span className="text-gray-500 mr-2">&bull;</span>
+                  <p className="text-gray-900 leading-relaxed">
+                    {note.trim() || "No content for this note."}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500">No notes available.</p>
+          )}
         </div>
 
         <div className="bg-white rounded-[12px] p-6 shadow-sm mb-8">
@@ -475,6 +517,12 @@ export default function AdminLeadDetails() {
         isOpen={isEditStageModalOpen}
         onClose={closeEditStageModal}
         stage={editingStage}
+        lead={leadDetails}
+      />
+      <AddLeadDocument
+        isOpen={isAddDocOpen}
+        onClose={closeAddDocModal}
+        lead={leadDetails}
       />
     </>
   );

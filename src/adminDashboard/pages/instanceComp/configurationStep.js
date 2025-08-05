@@ -1,5 +1,4 @@
 import React from "react";
-import { Loader2 } from "lucide-react";
 import CheckboxGroup from "./checkGroup";
 
 export const ConfigurationStep = ({
@@ -8,9 +7,9 @@ export const ConfigurationStep = ({
   updateFormData,
   handleSelectChange,
   handleCheckboxChange,
-  isSubmissionPending,
+  tenants,
+  clients,
   projects,
-  isProjectsFetching,
   availableTags,
 }) => (
   <div className="space-y-4 w-full">
@@ -30,7 +29,6 @@ export const ConfigurationStep = ({
         className={`w-full input-field ${
           errors.name ? "border-red-500" : "border-gray-300"
         }`}
-        disabled={isSubmissionPending}
       />
       {errors.name && (
         <p className="text-red-500 text-xs mt-1">{errors.name}</p>
@@ -52,7 +50,6 @@ export const ConfigurationStep = ({
         className={`w-full input-field ${
           errors.description ? "border-red-500" : "border-gray-300"
         }`}
-        disabled={isSubmissionPending}
       ></textarea>
       {errors.description && (
         <p className="text-red-500 text-xs mt-1">{errors.description}</p>
@@ -70,12 +67,7 @@ export const ConfigurationStep = ({
           errors.selectedProject ? "border-red-500 border" : ""
         }`}
       >
-        {isProjectsFetching ? (
-          <div className="flex items-center ">
-            <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
-            <span className="text-gray-500 text-sm">Loading projects...</span>
-          </div>
-        ) : projects && projects.length > 0 ? (
+        {projects && projects.length > 0 ? (
           <select
             id="project_id"
             value={formData.selectedProject?.id || ""}
@@ -83,7 +75,6 @@ export const ConfigurationStep = ({
               handleSelectChange("selectedProject", e.target.value, projects)
             }
             className="w-full bg-transparent outline-none "
-            disabled={isSubmissionPending}
           >
             <option value="">Select a project</option>
             {projects.map((project) => (
@@ -93,7 +84,7 @@ export const ConfigurationStep = ({
             ))}
           </select>
         ) : (
-          <div className="flex items-center  text-gray-500 text-sm">
+          <div className="flex items-center text-gray-500 text-sm">
             No projects available.
           </div>
         )}
@@ -102,6 +93,109 @@ export const ConfigurationStep = ({
         <p className="text-red-500 text-xs mt-1">{errors.selectedProject}</p>
       )}
     </div>
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-gray-700">
+        Assign To<span className="text-red-500">*</span>
+      </label>
+      <div className="flex space-x-4">
+        <label className="inline-flex items-center">
+          <input
+            type="radio"
+            value="client"
+            checked={formData.assigned_to_type === "client"}
+            onChange={(e) => updateFormData("assigned_to_type", e.target.value)}
+            className="form-radio text-[#288DD1]"
+          />
+          <span className="ml-2 text-gray-700">Client</span>
+        </label>
+        <label className="inline-flex items-center">
+          <input
+            type="radio"
+            value="tenant"
+            checked={formData.assigned_to_type === "tenant"}
+            onChange={(e) => updateFormData("assigned_to_type", e.target.value)}
+            className="form-radio text-[#288DD1]"
+          />
+          <span className="ml-2 text-gray-700">Partner</span>
+        </label>
+      </div>
+    </div>
+    {formData.assigned_to_type === "client" && (
+      <div>
+        <label
+          htmlFor="selectedClient"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          Client<span className="text-red-500">*</span>
+        </label>
+        <span
+          className={`w-full input-field block transition-all ${
+            errors.user_id ? "border-red-500 border" : ""
+          }`}
+        >
+          {clients && clients.length > 0 ? (
+            <select
+              id="selectedClient"
+              value={formData.user_id || ""}
+              onChange={(e) => handleSelectChange("user_id", e.target.value)}
+              className="w-full bg-transparent outline-none"
+            >
+              <option value="">Select a client</option>
+              {clients.map((client) => (
+                <option key={client.id} value={client.id}>
+                  {client.first_name} {client.last_name} ({client.email})
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div className="flex items-center text-gray-500 text-sm">
+              No clients available.
+            </div>
+          )}
+        </span>
+        {errors.user_id && (
+          <p className="text-red-500 text-xs mt-1">{errors.user_id}</p>
+        )}
+      </div>
+    )}
+    {formData.assigned_to_type === "tenant" && (
+      <div>
+        <label
+          htmlFor="selectedTenant"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          Partner<span className="text-red-500">*</span>
+        </label>
+        <span
+          className={`w-full input-field block transition-all ${
+            errors.tenant_id ? "border-red-500 border" : ""
+          }`}
+        >
+          {tenants && tenants.length > 0 ? (
+            <select
+              id="selectedTenant"
+              value={formData.tenant_id || ""}
+              onChange={(e) => handleSelectChange("tenant_id", e.target.value)}
+              className="w-full bg-transparent outline-none"
+            >
+              <option value="">Select a partner</option>
+              {tenants.map((tenant) => (
+                <option key={tenant.id} value={tenant.id}>
+                  {tenant.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div className="flex items-center text-gray-500 text-sm">
+              No partners available.
+            </div>
+          )}
+        </span>
+        {errors.tenant_id && (
+          <p className="text-red-500 text-xs mt-1">{errors.tenant_id}</p>
+        )}
+      </div>
+    )}
     <div>
       <label
         htmlFor="number_of_instances"
@@ -119,7 +213,6 @@ export const ConfigurationStep = ({
         className={`w-full input-field ${
           errors.number_of_instances ? "border-red-500" : "border-gray-300"
         }`}
-        disabled={isSubmissionPending}
       />
       {errors.number_of_instances && (
         <p className="text-red-500 text-xs mt-1">
@@ -133,7 +226,6 @@ export const ConfigurationStep = ({
       selectedValues={formData.tags}
       onChange={(tag) => handleCheckboxChange("tags", tag)}
       error={errors.tags}
-      disabled={isSubmissionPending}
       required
     />
     <div className="flex items-center">
@@ -143,7 +235,6 @@ export const ConfigurationStep = ({
         checked={formData.fast_track}
         onChange={(e) => updateFormData("fast_track", e.target.checked)}
         className="h-4 w-4 text-[#288DD1] focus:ring-[#288DD1] border-gray-300 rounded"
-        disabled={isSubmissionPending}
       />
       <label
         htmlFor="fast_track"

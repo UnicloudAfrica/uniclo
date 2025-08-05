@@ -7,7 +7,7 @@ import ToastUtils from "../../../utils/toastUtil";
 
 const leadStatusOptions = ["pending", "in_progress", "completed", "skipped"];
 
-export const EditLeadStage = ({ isOpen, onClose, stage }) => {
+export const EditLeadStage = ({ isOpen, onClose, stage, lead }) => {
   const [formData, setFormData] = useState({
     status: "",
     notes: "",
@@ -48,7 +48,7 @@ export const EditLeadStage = ({ isOpen, onClose, stage }) => {
     if (!validateForm()) return;
 
     if (stage?.id) {
-      const updatedData = { status: formData.status };
+      const updatedData = { status: formData.status, lead_id: lead.id };
 
       if (formData.notes) {
         updatedData.notes = formData.notes;
@@ -74,8 +74,6 @@ export const EditLeadStage = ({ isOpen, onClose, stage }) => {
       // ToastUtils.error("Cannot update: Lead ID is missing.");
     }
   };
-
-  console.log(stage);
 
   if (!isOpen) return null;
 
@@ -172,7 +170,7 @@ export const EditLeadStage = ({ isOpen, onClose, stage }) => {
                   <option disabled>Loading admins...</option>
                 ) : (
                   admins?.map((admin) => (
-                    <option key={admin.id} value={admin.id}>
+                    <option key={admin.id} value={admin.identifier}>
                       {admin.first_name} {admin.last_name} ({admin.email})
                     </option>
                   ))

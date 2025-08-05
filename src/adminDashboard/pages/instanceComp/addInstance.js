@@ -4,7 +4,9 @@ import { useFetchProjects } from "../../../hooks/adminHooks/projectHooks";
 import {
   useFetchBandwidths,
   useFetchComputerInstances,
+  useFetchCrossConnect,
   useFetchEbsVolumes,
+  useFetchFloatingIPs,
   useFetchOsImages,
 } from "../../../hooks/resource";
 import StepProgress from "../../../dashboard/components/instancesubcomps/stepProgress";
@@ -13,6 +15,8 @@ import ConfigurationStep from "./configurationStep";
 import ResourceAllocationStep from "./resourceAllocationStep";
 import SummaryStep from "./summaryStep";
 import { useCreateInstanceRequest } from "../../../hooks/adminHooks/instancesHook";
+import { useFetchTenants } from "../../../hooks/adminHooks/tenantHooks";
+import { useFetchClients } from "../../../hooks/adminHooks/clientHooks";
 
 const AddAdminInstance = ({ isOpen, onClose }) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -23,7 +27,14 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
     useFetchBandwidths();
   const { data: ebsVolumes, isFetching: isEbsVolumesFetching } =
     useFetchEbsVolumes();
+  const { data: crossConnects, isFetching: isCrossConnectsFetching } =
+    useFetchCrossConnect();
+  const { data: floatingIps, isFetching: isFloatingIpsFetching } =
+    useFetchFloatingIPs();
   const { data: projects, isFetching: isProjectsFetching } = useFetchProjects();
+  const { data: tenants, isFetching: isTenantsFetching } = useFetchTenants();
+  const { data: clients, isFetching: isClientsFetching } = useFetchClients();
+
   const {
     mutate: createInstanceRequest,
     isPending: isSubmissionPending,
@@ -42,9 +53,17 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
     selectedEbsVolume: null,
     selectedOsImage: null,
     bandwidth_id: null,
+    bandwidth_count: 0,
+    floating_ip_id: null,
+    floating_ip_count: 0,
+    cross_connect_id: null,
+    cross_connect_count: 0,
     months: "",
     tags: [],
     fast_track: false,
+    assigned_to_type: "project",
+    tenant_id: null,
+    user_id: null,
   });
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState(null);
@@ -83,20 +102,22 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
         selectedEbsVolume: null,
         selectedOsImage: null,
         bandwidth_id: null,
+        bandwidth_count: 0,
+        floating_ip_id: null,
+        floating_ip_count: 0,
+        cross_connect_id: null,
+        cross_connect_count: 0,
         months: "",
         tags: [],
         fast_track: false,
+        assigned_to_type: "project",
+        tenant_id: null,
+        user_id: null,
       });
       setErrors({});
       setGeneralError(null);
       setCurrentStep(0);
       onClose();
-    }
-    if (isSubmissionError) {
-      // setGeneralError(submissionError?.message || "Failed to create instance.");
-      // ToastUtils.error(
-      //   submissionError?.message || "Failed to create instance."
-      // );
     }
   }, [isSubmissionSuccess, isSubmissionError, submissionError, onClose]);
 
@@ -106,8 +127,13 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
       if (!formData.name.trim()) newErrors.name = "Instance Name is required";
       if (!formData.description.trim())
         newErrors.description = "Description is required";
-      if (!formData.selectedProject)
-        newErrors.selectedProject = "Project is required";
+
+      if (formData.assigned_to_type === "client") {
+        if (!formData.user_id) newErrors.user_id = "Client is required";
+      } else if (formData.assigned_to_type === "tenant") {
+        if (!formData.tenant_id) newErrors.tenant_id = "Partner is required";
+      }
+
       if (
         !formData.number_of_instances ||
         isNaN(formData.number_of_instances) ||
@@ -124,20 +150,42 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
       else if (
         isNaN(formData.storage_size_gb) ||
         parseInt(formData.storage_size_gb) < 30
-      )
+      ) {
         newErrors.storage_size_gb =
           "Storage Size must be an integer and at least 30 GiB";
+      }
       if (!formData.selectedComputeInstance)
         newErrors.selectedComputeInstance = "Compute Instance is required";
       if (!formData.selectedEbsVolume)
         newErrors.selectedEbsVolume = "EBS Volume is required";
       if (!formData.selectedOsImage)
         newErrors.selectedOsImage = "OS Image is required";
-      if (!formData.bandwidth_id)
-        newErrors.bandwidth_id = "Bandwidth is required";
       if (!formData.months) newErrors.months = "Term (Months) is required";
       else if (isNaN(formData.months) || parseInt(formData.months) < 1)
         newErrors.months = "Term (Months) must be an integer and at least 1";
+
+      if (
+        formData.bandwidth_id &&
+        (!formData.bandwidth_count || parseInt(formData.bandwidth_count) <= 0)
+      ) {
+        newErrors.bandwidth_count = "Bandwidth count must be greater than 0.";
+      }
+      if (
+        formData.floating_ip_id &&
+        (!formData.floating_ip_count ||
+          parseInt(formData.floating_ip_count) <= 0)
+      ) {
+        newErrors.floating_ip_count =
+          "Floating IP count must be greater than 0.";
+      }
+      if (
+        formData.cross_connect_id &&
+        (!formData.cross_connect_count ||
+          parseInt(formData.cross_connect_count) <= 0)
+      ) {
+        newErrors.cross_connect_count =
+          "Cross Connect count must be greater than 0.";
+      }
     }
     setErrors(newErrors);
 
@@ -152,21 +200,44 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
 
   const updateFormData = (field, value) => {
     setFormData((prev) => {
-      const newValue =
-        (field === "bandwidth_id" ||
-          field === "number_of_instances" ||
-          field === "storage_size_gb" ||
-          field === "months") &&
-        value
-          ? parseInt(value)
-          : value;
-      return { ...prev, [field]: newValue };
+      let newValue = value;
+      if (
+        [
+          "bandwidth_count",
+          "number_of_instances",
+          "storage_size_gb",
+          "months",
+          "floating_ip_count",
+          "cross_connect_count",
+        ].includes(field)
+      ) {
+        newValue = value ? parseInt(value) : 0;
+      }
+
+      const updatedState = { ...prev, [field]: newValue };
+
+      if (field === "assigned_to_type") {
+        updatedState.user_id = null;
+        updatedState.tenant_id = null;
+      }
+
+      return updatedState;
     });
     setErrors((prev) => ({ ...prev, [field]: null }));
     setGeneralError(null);
   };
 
   const handleSelectChange = (field, value, optionsList) => {
+    if (
+      field === "bandwidth_id" ||
+      field === "floating_ip_id" ||
+      field === "cross_connect_id" ||
+      field === "tenant_id" ||
+      field === "user_id"
+    ) {
+      updateFormData(field, value);
+      return;
+    }
     if (!value) {
       updateFormData(field, null);
       return;
@@ -198,19 +269,33 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
       const dataToSubmit = {
         name: formData.name,
         description: formData.description,
-        project_id: formData.selectedProject?.id,
         number_of_instances: parseInt(formData.number_of_instances),
         storage_size_gb: parseInt(formData.storage_size_gb),
         compute_instance_id: formData.selectedComputeInstance?.id,
         ebs_volume_id: formData.selectedEbsVolume?.id,
         os_image_id: formData.selectedOsImage?.id,
-        bandwidth_id: formData.bandwidth_id
-          ? parseInt(formData.bandwidth_id)
-          : null,
         months: parseInt(formData.months),
         tags: formData.tags,
         fast_track: formData.fast_track,
       };
+
+      if (formData.selectedProject)
+        dataToSubmit.project_id = formData.selectedProject.id;
+      if (formData.tenant_id) dataToSubmit.tenant_id = formData.tenant_id;
+      if (formData.user_id) dataToSubmit.user_id = formData.user_id;
+      if (formData.bandwidth_id) {
+        dataToSubmit.bandwidth_id = formData.bandwidth_id;
+        dataToSubmit.bandwidth_count = formData.bandwidth_count;
+      }
+      if (formData.floating_ip_id) {
+        dataToSubmit.floating_ip_id = formData.floating_ip_id;
+        dataToSubmit.floating_ip_count = formData.floating_ip_count;
+      }
+      if (formData.cross_connect_id) {
+        dataToSubmit.cross_connect_id = formData.cross_connect_id;
+        dataToSubmit.cross_connect_count = formData.cross_connect_count;
+      }
+
       createInstanceRequest(dataToSubmit);
     }
   };
@@ -244,9 +329,17 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
       selectedEbsVolume: null,
       selectedOsImage: null,
       bandwidth_id: null,
+      bandwidth_count: 0,
+      floating_ip_id: null,
+      floating_ip_count: 0,
+      cross_connect_id: null,
+      cross_connect_count: 0,
       months: "",
       tags: [],
       fast_track: false,
+      assigned_to_type: "project",
+      tenant_id: null,
+      user_id: null,
     });
     setErrors({});
     setGeneralError(null);
@@ -263,7 +356,11 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
     isOsImagesFetching ||
     isBandwidthsFetching ||
     isEbsVolumesFetching ||
-    isProjectsFetching;
+    isProjectsFetching ||
+    isTenantsFetching ||
+    isClientsFetching ||
+    isCrossConnectsFetching ||
+    isFloatingIpsFetching;
 
   const renderStep = () => {
     if (isAnyFetching) {
@@ -285,6 +382,8 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
             handleSelectChange={handleSelectChange}
             handleCheckboxChange={handleCheckboxChange}
             projects={projects}
+            tenants={tenants}
+            clients={clients}
             availableTags={availableTags}
           />
         );
@@ -299,10 +398,21 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
             ebsVolumes={ebsVolumes}
             bandwidths={bandwidths}
             osImages={osImages}
+            floatingIps={floatingIps}
+            crossConnects={crossConnects}
           />
         );
       case 2:
-        return <SummaryStep formData={formData} bandwidths={bandwidths} />;
+        return (
+          <SummaryStep
+            formData={formData}
+            bandwidths={bandwidths}
+            floatingIps={floatingIps}
+            crossConnects={crossConnects}
+            tenants={tenants}
+            clients={clients}
+          />
+        );
       default:
         return null;
     }

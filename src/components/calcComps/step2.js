@@ -125,7 +125,7 @@ export const Step2ContactForm = ({
         </div>
         <div>
           <label
-            htmlFor="country_iso"
+            htmlFor="country"
             className="block text-sm font-medium text-gray-700"
           >
             Country
@@ -137,14 +137,14 @@ export const Step2ContactForm = ({
               </div>
             ) : (
               <select
-                id="country_iso"
-                value={personalInfo.country_iso}
+                id="country"
+                value={personalInfo.country}
                 onChange={handleInputChange}
                 className={inputClass}
               >
                 <option value="">Select a country</option>
                 {countries?.map((country) => (
-                  <option key={country.iso2} value={country.iso2}>
+                  <option key={country.iso2} value={country.name}>
                     {country.name}
                   </option>
                 ))}

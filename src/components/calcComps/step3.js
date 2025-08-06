@@ -2,6 +2,24 @@ import React, { useMemo } from "react";
 import { Loader2 } from "lucide-react";
 import { useCreateLeads } from "../../hooks/leadsHook";
 
+// Helper function to format price based on currency
+const formatPrice = (amount, currencyCode) => {
+  if (typeof amount !== "number") {
+    amount = parseFloat(amount);
+  }
+  if (isNaN(amount)) {
+    return "N/A";
+  }
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currencyCode,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    currencyDisplay: "symbol",
+  }).format(amount);
+};
+
 export const Step3Breakdown = ({ billingData, personalInfo, handlePrev }) => {
   const { mutate, isPending, data, isSuccess } = useCreateLeads();
 
@@ -32,6 +50,7 @@ export const Step3Breakdown = ({ billingData, personalInfo, handlePrev }) => {
         bandwidth_count: billingData.floating_ip_count,
         floating_ip_count: billingData.floating_ip_count,
         cross_connect_id: billingData.cross_connect_id,
+        currency: billingData.currency === "Nigeria" ? "NGN" : "USD",
       },
     }),
     [billingData, personalInfo]
@@ -73,7 +92,8 @@ export const Step3Breakdown = ({ billingData, personalInfo, handlePrev }) => {
                 <div key={index} className="flex justify-between py-1">
                   <span className="font-medium text-gray-700">{line.name}</span>
                   <span className="text-gray-600">
-                    {line.quantity} x {line.currency} {line.unit_local}
+                    {line.quantity} x{" "}
+                    {formatPrice(line.unit_local, line.currency)}
                   </span>
                 </div>
               ))}
@@ -82,14 +102,16 @@ export const Step3Breakdown = ({ billingData, personalInfo, handlePrev }) => {
               <div className="flex justify-between py-1">
                 <span className="font-medium text-gray-700">Subtotal:</span>
                 <span className="text-gray-600">
-                  {data?.pricing?.currency}{" "}
-                  {data?.pricing?.subtotal?.toFixed(2)}
+                  {formatPrice(
+                    data?.pricing?.subtotal,
+                    data?.pricing?.currency
+                  )}
                 </span>
               </div>
               <div className="flex justify-between py-1">
                 <span className="font-medium text-gray-700">Tax:</span>
                 <span className="text-gray-600">
-                  {data?.pricing?.currency} {data?.pricing?.tax?.toFixed(2)}
+                  {formatPrice(data?.pricing?.tax, data?.pricing?.currency)}
                 </span>
               </div>
               <div className="flex justify-between py-1">
@@ -97,7 +119,7 @@ export const Step3Breakdown = ({ billingData, personalInfo, handlePrev }) => {
                   Estimated Total Cost:
                 </p>
                 <p className="text-xl font-bold text-[#288DD1]">
-                  {data?.pricing?.currency} {data?.pricing?.total?.toFixed(2)}
+                  {formatPrice(data?.pricing?.total, data?.pricing?.currency)}
                 </p>
               </div>
             </div>

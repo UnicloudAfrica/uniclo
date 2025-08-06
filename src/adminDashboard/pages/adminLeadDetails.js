@@ -20,6 +20,11 @@ import EditLead from "./leadComps/editLead";
 import AddLeadStage from "./leadComps/addLeadStage";
 import { EditLeadStage } from "./leadComps/editLeadStage";
 import AddLeadDocument from "./leadComps/addLeadDoc";
+import UpdateLeadDoc from "./leadComps/updateLeadDoc";
+
+const formatStatusForDisplay = (status) => {
+  return status.replace(/_/g, " ");
+};
 
 const DetailItem = ({ label, value, className = "" }) => (
   <div className={`flex flex-col ${className}`}>
@@ -29,26 +34,44 @@ const DetailItem = ({ label, value, className = "" }) => (
 );
 
 const DocumentItem = ({ doc, onDownload, onUpdate }) => (
-  <div className="flex items-center justify-between p-3 border-b border-gray-200 last:border-b-0">
-    <div className="flex items-center">
-      <FileText className="w-5 h-5 text-gray-500 mr-2" />
-      <span className="text-sm font-medium text-gray-800">{doc.name}</span>
+  <div className="bg-gray-50 rounded-lg p-4 shadow-sm border border-gray-200 flex flex-col space-y-2">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center">
+        <FileText className="w-5 h-5 text-gray-500 mr-2" />
+        <span className="text-sm font-medium text-gray-800">{doc.name}</span>
+      </div>
+      <div className="flex items-center space-x-2">
+        {/* <button
+          onClick={() => onDownload(doc)}
+          className="text-blue-600 hover:text-blue-800 transition-colors"
+          title="Download Document"
+        >
+          <Download className="w-4 h-4" />
+        </button> */}
+        <button
+          onClick={() => onUpdate(doc)}
+          className="text-green-600 hover:text-green-800 transition-colors"
+          title="Update Document"
+        >
+          <Edit className="w-4 h-4" />
+        </button>
+      </div>
     </div>
-    <div className="flex items-center space-x-2">
-      <button
-        onClick={() => onDownload(doc)}
-        className="text-blue-600 hover:text-blue-800 transition-colors"
-        title="Download Document"
-      >
-        <Download className="w-4 h-4" />
-      </button>
-      <button
-        onClick={() => onUpdate(doc)}
-        className="text-green-600 hover:text-green-800 transition-colors"
-        title="Update Document"
-      >
-        <Edit className="w-4 h-4" />
-      </button>
+    <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+      <p className=" capitalize">
+        <span className="font-medium capitalize">Status:</span>{" "}
+        {formatStatusForDisplay(doc.status) || "N/A"}
+      </p>
+      <p className=" capitalize">
+        <span className="font-medium">Type:</span>{" "}
+        {formatStatusForDisplay(doc.document_type) || "N/A"}
+      </p>
+      <p className="col-span-2">
+        <span className="font-medium">Uploaded By:</span>{" "}
+        {doc.uploaded_by?.first_name && doc.uploaded_by?.last_name
+          ? `${doc.uploaded_by.first_name} ${doc.uploaded_by.last_name}`
+          : doc.uploaded_by || "N/A"}
+      </p>
     </div>
   </div>
 );
@@ -61,6 +84,8 @@ export default function AdminLeadDetails() {
   const [isEditStageModalOpen, setIsEditStageModalOpen] = useState(false);
   const [isActionsDropdownOpen, setIsActionsDropdownOpen] = useState(false);
   const [editingStage, setEditingStage] = useState(null);
+  const [isUpdateDocModalOpen, setIsUpdateDocModalOpen] = useState(false);
+  const [editingDocument, setEditingDocument] = useState(null);
   const [leadId, setLeadId] = useState(null);
   const [leadNameFromUrl, setLeadNameFromUrl] = useState("");
   const navigate = useNavigate();
@@ -125,6 +150,9 @@ export default function AdminLeadDetails() {
   const openAddDocModal = () => setIsAddDocOpen(true);
   const closeAddDocModal = () => setIsAddDocOpen(false);
 
+  const openUpdateDocModal = () => setIsUpdateDocModalOpen(true);
+  const closeUpdateDocModal = () => setIsUpdateDocModalOpen(false);
+
   const handleEditStage = (stage) => {
     setEditingStage(stage);
     openEditStageModal();
@@ -141,7 +169,10 @@ export default function AdminLeadDetails() {
 
   const handleAddDocument = () => openAddDocModal();
   const handleDownloadDoc = (doc) => console.log("Downloading:", doc.name);
-  const handleUpdateDoc = (doc) => console.log("Updating:", doc.name);
+  const handleUpdateDoc = (doc) => {
+    setEditingDocument(doc);
+    openUpdateDocModal();
+  };
 
   if (isFetching || leadId === null) {
     return (
@@ -237,10 +268,6 @@ export default function AdminLeadDetails() {
 
   const statusColorClass = getStatusColorClass(status);
 
-  const formatStatusForDisplay = (status) => {
-    return status.replace(/_/g, " ");
-  };
-
   return (
     <>
       <AdminHeadbar onMenuClick={toggleMobileMenu} />
@@ -250,7 +277,6 @@ export default function AdminLeadDetails() {
       />
       <AdminActiveTab />
       <main className=" top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8 relative">
-        {/* Loading Overlay */}
         {isConverting && (
           <div className="absolute inset-0 bg-gray-100 bg-opacity-75 z-20 flex flex-col items-center justify-center">
             <Loader2 className="w-12 h-12 animate-spin text-[#288DD1]" />
@@ -447,6 +473,27 @@ export default function AdminLeadDetails() {
                       }
                     />
                   </div>
+                  <div className="mt-4">
+                    <h5 className="text-md font-semibold text-gray-700 mb-2">
+                      Documents for this Stage:
+                    </h5>
+                    {stage.documents && stage.documents.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {stage.documents.map((doc) => (
+                          <DocumentItem
+                            key={doc.id}
+                            doc={doc}
+                            onDownload={handleDownloadDoc}
+                            onUpdate={handleUpdateDoc}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-sm">
+                        No documents for this stage.
+                      </p>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -486,7 +533,7 @@ export default function AdminLeadDetails() {
             </button>
           </div>
           {documents && documents.length > 0 ? (
-            <div className="divide-y divide-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {documents.map((doc) => (
                 <DocumentItem
                   key={doc.id}
@@ -523,6 +570,12 @@ export default function AdminLeadDetails() {
         isOpen={isAddDocOpen}
         onClose={closeAddDocModal}
         lead={leadDetails}
+      />
+      <UpdateLeadDoc
+        isOpen={isUpdateDocModalOpen}
+        onClose={closeUpdateDocModal}
+        leadId={leadId}
+        document={editingDocument}
       />
     </>
   );

@@ -23,6 +23,36 @@ const CoreConfiguration = ({
       item.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   };
+  const formatPrice = (price, currency) => {
+    if (typeof price !== "number") {
+      price = parseFloat(price);
+    }
+    if (isNaN(price)) {
+      return "N/A";
+    }
+
+    let currencySymbol = "";
+    if (currency === "USD") {
+      currencySymbol = "$";
+    } else if (currency === "NGN") {
+      currencySymbol = "₦";
+    } else {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: currency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+        currencyDisplay: "symbol",
+      }).format(price);
+    }
+
+    const formattedPrice = new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(price);
+
+    return `${currencySymbol}${formattedPrice}`;
+  };
 
   const getDisplayItems = (items, searchTerm, section, showAll) => {
     const filtered = filterItems(items, searchTerm);
@@ -50,6 +80,20 @@ const CoreConfiguration = ({
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-start mb-4">
+        <label htmlFor="currency" className="sr-only">
+          Select Currency
+        </label>
+        <select
+          id="currency"
+          value={formData.currency}
+          onChange={(e) => handleInputChange("currency", e.target.value)}
+          className="border border-gray-300 rounded-lg p-2 w-full max-w-[120px] text-sm font-medium text-gray-700"
+        >
+          <option value="USD">USD</option>
+          <option value="Nigeria">NGN</option>
+        </select>
+      </div>
       <h3 className="text-2xl font-semibold text-[#121212] flex items-center">
         <Cpu className="mr-3 text-gray-500" />
         Core Configuration
@@ -168,7 +212,7 @@ const CoreConfiguration = ({
                         {item.memory} GiB
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        ${item.price}
+                        {formatPrice(item.local_price, item.local_currency)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         {formData.compute_instance_id === item.id ? (
@@ -257,7 +301,7 @@ const CoreConfiguration = ({
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        ${item.price}
+                        {formatPrice(item.local_price, item.local_currency)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         {formData.os_image_id === item.id ? (

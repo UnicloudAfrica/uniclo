@@ -13,29 +13,32 @@ import BlockStorage from "./components/BlockStorage";
 import Networking from "./components/Networking";
 
 const Step1Configuration = ({ handleNext }) => {
-  const { data: computerInstances, isFetching: isComputerInstancesFetching } =
-    useFetchComputerInstances();
-  const { data: osImages, isFetching: isOsImagesFetching } = useFetchOsImages();
-  const { data: crossConnects, isFetching: isCrossConnectsFetching } =
-    useFetchCrossConnect();
-  const { data: floatingIps, isFetching: isFloatingIpsFetching } =
-    useFetchFloatingIPs();
-  const { data: bandwidths, isFetching: isBandwidthsFetching } =
-    useFetchBandwidths();
-  const { data: ebsVolumes, isFetching: isEbsVolumesFetching } =
-    useFetchEbsVolumes();
-
   const [formData, setFormData] = useState({
     compute_instance_id: null,
+    currency: "USD",
     os_image_id: null,
     months: 1,
     number_of_instances: 1,
-    volumes: {},
+    volumes: {}, // Reverted to object for multiple volumes or single selection
     floating_ip_id: null,
     floating_ip_count: 0,
     bandwidth_id: null,
     cross_connect_id: null,
   });
+
+  const { data: computerInstances, isFetching: isComputerInstancesFetching } =
+    useFetchComputerInstances(formData.currency);
+  const { data: osImages, isFetching: isOsImagesFetching } = useFetchOsImages(
+    formData.currency
+  );
+  const { data: crossConnects, isFetching: isCrossConnectsFetching } =
+    useFetchCrossConnect(formData.currency);
+  const { data: floatingIps, isFetching: isFloatingIpsFetching } =
+    useFetchFloatingIPs(formData.currency);
+  const { data: bandwidths, isFetching: isBandwidthsFetching } =
+    useFetchBandwidths(formData.currency);
+  const { data: ebsVolumes, isFetching: isEbsVolumesFetching } =
+    useFetchEbsVolumes(formData.currency);
 
   const [searchTerms, setSearchTerms] = useState({
     compute: "",
@@ -67,17 +70,23 @@ const Step1Configuration = ({ handleNext }) => {
   };
 
   const handleVolumeSelection = (volumeId) => {
-    setFormData((prev) => ({
-      ...prev,
-      volumes: prev.volumes[volumeId] ? {} : { [volumeId]: 30 },
-    }));
+    setFormData((prev) => {
+      const newVolumes = {};
+      if (!prev.volumes[volumeId]) {
+        newVolumes[volumeId] = 30; // Default capacity when selected
+      }
+      return { ...prev, volumes: newVolumes };
+    });
   };
 
   const handleVolumeCapacityChange = (volumeId, value) => {
     const capacity = parseInt(value, 10);
     setFormData((prev) => ({
       ...prev,
-      volumes: { [volumeId]: capacity > 0 ? capacity : 1 },
+      volumes: {
+        ...prev.volumes,
+        [volumeId]: capacity > 0 ? capacity : 1,
+      },
     }));
   };
 
@@ -93,12 +102,19 @@ const Step1Configuration = ({ handleNext }) => {
   };
 
   const isFormValid = useMemo(() => {
-    return (
+    const isCoreConfigValid =
       formData.compute_instance_id &&
       formData.os_image_id &&
       formData.months > 0 &&
-      formData.number_of_instances > 0
-    );
+      formData.number_of_instances > 0;
+
+    const isBlockStorageValid =
+      Object.keys(formData.volumes).length > 0 &&
+      Object.values(formData.volumes).every(
+        (capacity) => capacity && capacity >= 30
+      );
+
+    return isCoreConfigValid && isBlockStorageValid;
   }, [formData]);
 
   const handleNextClick = () => {
@@ -119,6 +135,7 @@ const Step1Configuration = ({ handleNext }) => {
       floating_ip_count: formData.floating_ip_count,
       bandwidth_id: formData.bandwidth_id,
       cross_connect_id: formData.cross_connect_id,
+      currency: formData.currency,
     };
 
     handleNext(outputData);

@@ -2,6 +2,37 @@ import { HardDrive } from "lucide-react";
 import SearchBar from "./SearchBar";
 import ShowMoreButton from "./ShowMoreButton";
 
+const formatPrice = (price, currency) => {
+  if (typeof price !== "number") {
+    price = parseFloat(price);
+  }
+  if (isNaN(price)) {
+    return "N/A";
+  }
+
+  let currencySymbol = "";
+  if (currency === "USD") {
+    currencySymbol = "$";
+  } else if (currency === "NGN") {
+    currencySymbol = "₦";
+  } else {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+      currencyDisplay: "symbol",
+    }).format(price);
+  }
+
+  const formattedPrice = new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(price);
+
+  return `${currencySymbol}${formattedPrice}`;
+};
+
 const BlockStorage = ({
   formData,
   searchTerms,
@@ -33,16 +64,16 @@ const BlockStorage = ({
     showAllItems.storage
   );
   const filteredEbsCount = filterItems(ebsVolumes, searchTerms.storage).length;
-  const selectedVolumesCount = Object.keys(formData.volumes).length;
 
   return (
     <div className="space-y-6">
       <h3 className="text-2xl font-semibold text-[#121212] flex items-center">
         <HardDrive className="mr-3 text-gray-500" />
-        Optional: Add Block Storage
-        {selectedVolumesCount > 0 && (
+        Block Storage
+        <span className="text-lg font-normal text-red-500"> *</span>
+        {Object.keys(formData.volumes).length > 0 && (
           <span className="ml-2 text-sm font-normal text-gray-500">
-            ({selectedVolumesCount} selected)
+            (1 selected)
           </span>
         )}
       </h3>
@@ -94,7 +125,8 @@ const BlockStorage = ({
                   >
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       <input
-                        type="checkbox"
+                        type="radio"
+                        name="ebsVolume"
                         checked={!!formData.volumes[item.id]}
                         onChange={() => handleVolumeSelection(item.id)}
                         className="h-4 w-4 text-[#288DD1] focus:ring-[#288DD1] border-gray-300 rounded"
@@ -104,13 +136,13 @@ const BlockStorage = ({
                       {item.name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      ${item.price}
+                      {formatPrice(item.local_price, item.local_currency)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      {formData.volumes[item.id] && (
+                      {!!formData.volumes[item.id] && (
                         <input
                           type="number"
-                          value={formData.volumes[item.id]}
+                          value={formData.volumes[item.id] || ""}
                           onChange={(e) =>
                             handleVolumeCapacityChange(item.id, e.target.value)
                           }

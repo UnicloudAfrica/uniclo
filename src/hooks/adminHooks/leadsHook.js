@@ -14,11 +14,11 @@ const fetchLeads = async () => {
 // GET: Fetch lead stats
 const fetchLeadStats = async () => {
   const res = await silentApi("GET", "/lead-statistics");
-  if (!res.data) {
+  if (!res) {
     throw new Error("Failed to fetch lead statistics");
   }
 
-  return res.data;
+  return res;
 };
 
 // const fetchLeads = async (params = {}) => {
@@ -53,6 +53,15 @@ const fetchLeadById = async (id) => {
 
   return res.data;
 };
+// GET: Download doc
+const downloadDoc = async (id) => {
+  const res = await silentApi("GET", `/lead-download-document/${id}`);
+  if (!res.data) {
+    throw new Error(`Failed to fetch doc with ID ${id}`);
+  }
+
+  return res.data;
+};
 
 // PATCH: Update a lead
 const updateLead = async ({ id, leadData }) => {
@@ -69,6 +78,14 @@ const updateLeadStage = async ({ id, stageData }) => {
     throw new Error(`Failed to update lead with ID ${id}`);
   }
   return res.data;
+};
+// PATCH: Update a doc
+const updateDocument = async ({ id, docData }) => {
+  const res = await api("PATCH", `/lead-review-document/${id}`, docData);
+  if (!res) {
+    throw new Error(`Failed to update doc with ID ${id}`);
+  }
+  return res;
 };
 
 // POST: Create a new Lead Stage
@@ -140,6 +157,17 @@ export const useFetchLeadById = (id, options = {}) => {
     ...options,
   });
 };
+// Hook to download doc
+export const useDownloadDoc = (id, options = {}) => {
+  return useQuery({
+    queryKey: ["admin-download-doc", id],
+    queryFn: () => downloadDoc(id),
+    enabled: !!id, // Only fetch if ID is provided
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
 
 // Hook to update a lead
 export const useUpdateLead = () => {
@@ -167,6 +195,21 @@ export const useUpdateLeadStage = () => {
     },
     onError: (error) => {
       console.error("Error updating lead:", error);
+    },
+  });
+};
+// Hook to update a doc
+export const useUpdateDoc = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateDocument,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries(["admin-leads"]);
+      queryClient.invalidateQueries(["admin-leads-stage"]);
+      queryClient.invalidateQueries(["admin-lead-stage", variables.id]);
+    },
+    onError: (error) => {
+      console.error("Error updating doc:", error);
     },
   });
 };

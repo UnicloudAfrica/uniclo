@@ -5,6 +5,7 @@
   "private": true,
   "dependencies": {
     "@paystack/inline-js": "^2.22.6",
+    "@tanstack/react-query": "^5.81.2",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -20,12 +21,13 @@
     "react": "^18.2.0",
     "react-datepicker": "^4.24.0",
     "react-dom": "^18.2.0",
+    "react-file-viewer": "^1.2.1",
     "react-loading-skeleton": "^3.5.0",
+    "react-pdf": "^10.0.1",
     "react-router-dom": "^6.18.0",
     "react-scripts": "^5.0.1",
     "sonner": "^2.0.5",
     "web-vitals": "^2.1.4",
-    "@tanstack/react-query": "^5.81.2",
     "zustand": "^5.0.5"
   },
   "scripts": {

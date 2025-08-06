@@ -15,6 +15,7 @@ import {
   useFetchLeads,
   useFetchLeadStats,
 } from "../../hooks/adminHooks/leadsHook";
+import CreateLead from "./leadComps/createLead";
 
 const formatCreatedAt = (dateString) => {
   const date = new Date(dateString);
@@ -39,6 +40,10 @@ export default function AdminLeads() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const contentRef = useRef(null);
+  const [isCreateLeadsModalVisible, setCreateLeadsModal] = useState(false);
+
+  const openCreateLead = () => setCreateLeadsModal(true);
+  const closeCreateLead = () => setCreateLeadsModal(false);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -140,6 +145,13 @@ export default function AdminLeads() {
                 )}
             </div>
           )}
+
+          <button
+            onClick={openCreateLead}
+            className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base mb-6"
+          >
+            Create New Lead
+          </button>
 
           {isLeadsFetching ? (
             <div className="flex justify-center items-center h-48">
@@ -359,6 +371,10 @@ export default function AdminLeads() {
           )}
         </div>
       </main>
+      <CreateLead
+        isOpen={isCreateLeadsModalVisible}
+        onClose={closeCreateLead}
+      />
     </>
   );
 }

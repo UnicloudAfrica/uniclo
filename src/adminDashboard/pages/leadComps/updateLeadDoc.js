@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, FileText, Download, Loader2 } from "lucide-react";
+import { X, FileText, Loader2 } from "lucide-react";
 import {
   useDownloadDoc,
   useUpdateDoc,
@@ -11,25 +11,22 @@ const formatStatusForDisplay = (status) => {
     : "N/A";
 };
 
-const formatDate = (dateString) => {
-  return dateString ? new Date(dateString).toLocaleString() : "N/A";
-};
-
 const documentStatusOptions = [
   "approved",
   "rejected",
   "requires_update",
-  "pending_review",
+  //   "pending_review",
 ];
 
 const UpdateLeadDoc = ({ isOpen, onClose, document, leadId }) => {
   const [status, setStatus] = useState("");
   const [reviewNotes, setReviewNotes] = useState("");
-  const [downloadLinkState, setDownloadLinkState] = useState(null); // State to store the fetched download link
+  const [documentUrl, setDocumentUrl] = useState(null); // State to hold the object URL
+  const [documentType, setDocumentType] = useState(null); // To store document MIME type
 
   const { mutate, isPending: isUpdatingDoc } = useUpdateDoc();
   const {
-    data: fetchedDownloadLink,
+    data: fetchedDownloadData, // Binary or base64 data
     isFetching: isDownloading,
     refetch: fetchDownloadLink,
   } = useDownloadDoc(document?.identifier, {
@@ -40,23 +37,52 @@ const UpdateLeadDoc = ({ isOpen, onClose, document, leadId }) => {
     if (isOpen && document) {
       setStatus(document.status || "");
       setReviewNotes(document.review_notes || "");
-      setDownloadLinkState(null);
+      setDocumentUrl(null); // Reset document URL when modal opens
+      setDocumentType(null); // Reset document type
     }
   }, [isOpen, document]);
 
+  console.log(fetchedDownloadData);
+
   useEffect(() => {
-    if (fetchedDownloadLink) {
-      setDownloadLinkState(fetchedDownloadLink); // Store the fetched link
-      //   window.open(fetchedDownloadLink, "_blank")
+    if (fetchedDownloadData) {
+      let blob;
+      let mimeType = "application/pdf"; // Default to PDF
+
+      // Handle ArrayBuffer (binary data)
+      if (fetchedDownloadData instanceof ArrayBuffer) {
+        // Infer MIME type from Content-Type or filename
+        mimeType = document?.name?.endsWith(".pdf")
+          ? "application/pdf"
+          : document?.name?.endsWith(".png")
+          ? "image/png"
+          : document?.name?.endsWith(".jpg") ||
+            document?.name?.endsWith(".jpeg")
+          ? "image/jpeg"
+          : "application/octet-stream";
+        blob = new Blob([fetchedDownloadData], { type: mimeType });
+      } else {
+        console.error("Unexpected data format:", typeof fetchedDownloadData);
+        return;
+      }
+
+      // Create object URL for rendering
+      const url = URL.createObjectURL(blob);
+      setDocumentUrl(url);
+      setDocumentType(mimeType);
+
+      // Cleanup on unmount or when new data is fetched
+      return () => {
+        URL.revokeObjectURL(url);
+      };
     }
-  }, [fetchedDownloadLink]);
+  }, [fetchedDownloadData, document?.name]);
 
-  if (!isOpen) return null;
-
-  const handleDownload = () => {
+  const handleViewDocument = () => {
     if (document?.identifier) {
-      fetchDownloadLink();
+      fetchDownloadLink(); // Trigger the query to fetch the binary/base64 data
     } else {
+      console.log("Document ID is not available.");
     }
   };
 
@@ -80,6 +106,8 @@ const UpdateLeadDoc = ({ isOpen, onClose, document, leadId }) => {
     );
   };
 
+  if (!isOpen) return null;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full">
@@ -95,7 +123,7 @@ const UpdateLeadDoc = ({ isOpen, onClose, document, leadId }) => {
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start">
+        <div className="px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[600px] justify-start">
           <div className="space-y-3 w-full mb-6 text-sm text-gray-600">
             <div className="flex items-center">
               <FileText className="w-5 h-5 text-gray-500 mr-2" />
@@ -105,18 +133,42 @@ const UpdateLeadDoc = ({ isOpen, onClose, document, leadId }) => {
             </div>
 
             <button
-              onClick={handleDownload}
+              onClick={handleViewDocument}
               disabled={isDownloading}
               className="flex items-center px-4 py-2 bg-[#288DD1] text-white rounded-full hover:bg-blue-600 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isDownloading ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
-                <Download className="w-4 h-4 mr-2" />
+                <FileText className="w-4 h-4 mr-2" />
               )}
-              {isDownloading ? "Downloading..." : "Download Document"}
+              {isDownloading ? "Loading..." : "View Document"}
             </button>
           </div>
+
+          {/* Render the document */}
+          {documentUrl && (
+            <div className="w-full max-h-[400px] overflow-auto mb-6">
+              {documentType === "application/pdf" ? (
+                <embed
+                  src={documentUrl}
+                  type="application/pdf"
+                  width="100%"
+                  height="400px"
+                />
+              ) : documentType.startsWith("image/") ? (
+                <img
+                  src={documentUrl}
+                  alt={document?.name || "Document"}
+                  className="max-w-full h-auto"
+                />
+              ) : (
+                <p className="text-red-500">
+                  Unsupported file type for preview.
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="space-y-4 w-full">
             <div>

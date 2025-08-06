@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
+import fileApi from "../../index/admin/fileapi";
 
 // GET: Fetch all leads
 const fetchLeads = async () => {
@@ -55,12 +56,18 @@ const fetchLeadById = async (id) => {
 };
 // GET: Download doc
 const downloadDoc = async (id) => {
-  const res = await silentApi("GET", `/lead-download-document/${id}`);
-  if (!res.data) {
-    throw new Error(`Failed to fetch doc with ID ${id}`);
+  try {
+    const res = await silentApi("GET", `/lead-download-document/${id}`);
+    console.log("Downloaded data type:", typeof res); // Should be "object" for ArrayBuffer
+    console.log("Downloaded data length:", res.byteLength || res.length); // Size of binary data
+    if (!res) {
+      throw new Error(`Failed to fetch doc with ID ${id}`);
+    }
+    return res; // Return ArrayBuffer
+  } catch (error) {
+    console.error("Download error:", error);
+    throw error;
   }
-
-  return res.data;
 };
 
 // PATCH: Update a lead
@@ -88,6 +95,14 @@ const updateDocument = async ({ id, docData }) => {
   return res;
 };
 
+// POST: Create a new Lead
+const createNewLead = async (leadData) => {
+  const res = await api("POST", "/leads", leadData);
+  if (!res.data) {
+    throw new Error("Failed to create Lead ");
+  }
+  return res.data;
+};
 // POST: Create a new Lead Stage
 const createCustomStage = async (leadData) => {
   const res = await api("POST", "/lead-stage", leadData);
@@ -214,6 +229,20 @@ export const useUpdateDoc = () => {
   });
 };
 //  hook to create custom stage
+export const useCreateNewLead = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createNewLead,
+    onSuccess: () => {
+      // Invalidate CustomStages query to refresh the list
+      queryClient.invalidateQueries(["admin-leads"]);
+      queryClient.invalidateQueries(["admin-leads-stage"]);
+    },
+    onError: (error) => {
+      console.error("Error creating Lead:", error);
+    },
+  });
+};
 export const useCreateCustomStage = () => {
   const queryClient = useQueryClient();
   return useMutation({

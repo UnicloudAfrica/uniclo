@@ -124,7 +124,7 @@ const UpdateLeadDoc = ({ isOpen, onClose, document, leadId }) => {
           </button>
         </div>
         <div className="px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[600px] justify-start">
-          <div className="space-y-3 w-full mb-6 text-sm text-gray-600">
+          {/* <div className="space-y-3 w-full mb-6 text-sm text-gray-600">
             <div className="flex items-center">
               <FileText className="w-5 h-5 text-gray-500 mr-2" />
               <span className="font-medium text-gray-800">
@@ -144,7 +144,7 @@ const UpdateLeadDoc = ({ isOpen, onClose, document, leadId }) => {
               )}
               {isDownloading ? "Loading..." : "View Document"}
             </button>
-          </div>
+          </div> */}
 
           {/* Render the document */}
           {documentUrl && (

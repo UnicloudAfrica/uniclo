@@ -8,31 +8,26 @@ import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useFetchInstanceRequests } from "../../hooks/instancesHook";
 
 export default function Instances() {
-  const [selectedItem, setSelectedItem] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAddInstancesOpen, setAddInstances] = useState(false);
-
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10; // This will be passed as per_page to the API
+  const [instanceCount, setInstanceCount] = useState(0);
+  const itemsPerPage = 10;
+  const maxInstances = 20;
 
-  // Fetch instances using the useFetchInstanceRequests hook with pagination parameters
   const { data: instancesResponse, isFetching: isInstancesFetching } =
     useFetchInstanceRequests({ page: currentPage, per_page: itemsPerPage });
 
-  // Extract the actual instance data from the 'data' property of the response
   const instances = instancesResponse?.data || [];
-  // Extract pagination metadata from the 'meta' property of the response
   const totalPages = instancesResponse?.meta?.last_page || 1;
   const totalInstances = instancesResponse?.meta?.total || 0;
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
+  useEffect(() => {
+    setInstanceCount(totalInstances);
+  }, [totalInstances]);
 
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-  };
-
+  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
   const openAddInstances = () => setAddInstances(true);
   const closeAddInstances = () => setAddInstances(false);
 
@@ -43,15 +38,11 @@ export default function Instances() {
   };
 
   const handleRowClick = (item) => {
-    // Encode the ID using btoa then encodeURIComponent
     const encodedId = encodeURIComponent(btoa(item.identifier));
-    const instanceName = item.name; // No need to encode name as per request
-
-    // Navigate to the instance details page
+    const instanceName = item.name;
     window.location.href = `/dashboard/instances/details?id=${encodedId}&name=${instanceName}`;
   };
 
-  // Loading state
   if (isInstancesFetching) {
     return (
       <>
@@ -61,9 +52,9 @@ export default function Instances() {
           onCloseMobileMenu={closeMobileMenu}
         />
         <ActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8 flex items-center justify-center">
+        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
-          <p className="ml-2 text-gray-700 mt-2">Loading instances...</p>
+          <p className="ml-2 text-[#288DD1] mt-2">Loading instances...</p>
         </main>
       </>
     );
@@ -77,19 +68,24 @@ export default function Instances() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <ActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8">
+      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
         <div className="flex items-center justify-between">
-          {/* Quick Start button removed as per previous instructions */}
+          <button
+            onClick={openAddInstances}
+            disabled={instanceCount >= maxInstances}
+            className={`rounded-[30px] py-3 px-9 text-white font-normal text-base mt-5 transition-colors ${
+              instanceCount >= maxInstances
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-[#288DD1] hover:bg-[#1976D2]"
+            }`}
+          >
+            Add Instances
+          </button>
+          <div className="text-base font-normal text-[#288DD1]">
+            Instances Used: {instanceCount} / {maxInstances}
+          </div>
         </div>
 
-        <button
-          onClick={openAddInstances}
-          className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base mt-5 hover:bg-[#1976D2] transition-colors"
-        >
-          Add Instances
-        </button>
-
-        {/* Desktop Table */}
         <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px] border border-gray-200">
           <table className="w-full">
             <thead className="bg-[#F5F5F5]">
@@ -111,8 +107,7 @@ export default function Instances() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                   Action
-                </th>{" "}
-                {/* New Action column header */}
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-[#E8E6EA]">
@@ -120,7 +115,7 @@ export default function Instances() {
                 instances.map((item) => (
                   <tr
                     key={item.id}
-                    onClick={() => handleRowClick(item)} // Row click for navigation
+                    onClick={() => handleRowClick(item)}
                     className="hover:bg-gray-50 cursor-pointer"
                   >
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
@@ -155,7 +150,7 @@ export default function Instances() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
                       <button
                         onClick={(e) => {
-                          e.stopPropagation(); // Prevent row click from firing
+                          e.stopPropagation();
                           handleRowClick(item);
                         }}
                         className="text-[#288DD1] hover:underline text-sm font-medium"
@@ -168,7 +163,7 @@ export default function Instances() {
               ) : (
                 <tr>
                   <td
-                    colSpan="6" // Updated colspan
+                    colSpan="6"
                     className="px-6 py-4 text-center text-sm text-gray-500"
                   >
                     No instances found.
@@ -179,13 +174,12 @@ export default function Instances() {
           </table>
         </div>
 
-        {/* Mobile Cards */}
         <div className="md:hidden mt-6 space-y-4">
           {instances.length > 0 ? (
             instances.map((item) => (
               <div
                 key={item.id}
-                onClick={() => handleRowClick(item)} // Row click for navigation
+                onClick={() => handleRowClick(item)}
                 className="bg-white rounded-[12px] shadow-sm p-4 cursor-pointer border border-gray-200"
               >
                 <div className="flex items-center justify-between mb-2">
@@ -227,7 +221,7 @@ export default function Instances() {
                 <div className="mt-4 text-right">
                   <button
                     onClick={(e) => {
-                      e.stopPropagation(); // Prevent row click from firing
+                      e.stopPropagation();
                       handleRowClick(item);
                     }}
                     className="text-[#288DD1] hover:underline text-sm font-medium"
@@ -244,7 +238,6 @@ export default function Instances() {
           )}
         </div>
 
-        {/* Pagination */}
         {totalInstances > 0 && (
           <div className="flex items-center justify-center px-4 py-3 border-t border-gray-200 bg-white rounded-b-[12px] mt-6">
             <div className="flex items-center space-x-2">

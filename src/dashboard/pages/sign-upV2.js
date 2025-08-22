@@ -6,6 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCreateAccount } from "../../hooks/authHooks";
 import useAuthStore from "../../stores/userAuthStore";
 import ToastUtils from "../../utils/toastUtil";
+import VerifyRCInput from "../../utils/verifyRcInput";
 
 export default function DashboardSignUpV2() {
   const navigate = useNavigate();
@@ -329,6 +330,8 @@ export default function DashboardSignUpV2() {
                       </p>
                     )}
                   </div>
+
+                  <VerifyRCInput />
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Subdomain <span className="text-red-500">*</span>

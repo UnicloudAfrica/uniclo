@@ -39,7 +39,7 @@ const fetchWorkspace = async () => {
 // **GET**: fetch industry
 const fetchIndustries = async () => {
   const res = await silentApi("GET", "/industries");
-  return res.data;
+  return res;
 };
 // **GET**: fetch product charge
 const fetchProductCharges = async () => {

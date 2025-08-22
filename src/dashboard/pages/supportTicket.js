@@ -81,7 +81,7 @@ export default function SupportTicket() {
           onCloseMobileMenu={closeMobileMenu}
         />
         <ActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8 flex items-center justify-center flex-col">
+        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center flex-col">
           <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
           <p className="ml-2 text-gray-700 mt-2">Loading support tickets...</p>
         </main>
@@ -97,7 +97,7 @@ export default function SupportTicket() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <ActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8">
+      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
         <button
           onClick={openConvo}
           className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"

@@ -93,7 +93,7 @@ export default function AdminPartnerDetails() {
           onCloseMobileMenu={closeMobileMenu}
         />
         <AdminActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8 flex items-center justify-center flex-col">
+        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center flex-col">
           <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
           <p className="ml-2 text-gray-700 mt-2">Loading partner details...</p>
         </main>
@@ -111,7 +111,7 @@ export default function AdminPartnerDetails() {
           onCloseMobileMenu={closeMobileMenu}
         />
         <AdminActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8 flex flex-col items-center justify-center text-center">
+        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex flex-col items-center justify-center text-center">
           <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
           <p className="text-lg font-semibold text-gray-700 mb-4">
             Partner details not found.
@@ -135,7 +135,7 @@ export default function AdminPartnerDetails() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8">
+      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
         <h1 className="text-2xl font-bold text-[#1E1E1EB2] mb-6">
           {tenantName} Details
         </h1>

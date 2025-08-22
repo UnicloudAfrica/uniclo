@@ -272,7 +272,7 @@ export default function AdminPayment() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main className=" absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%]  bg-[#FAFAFA]  min-h-full p-8">
+      <main className=" absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%]  bg-[#FAFAFA]  min-h-full p-6 md:p-8">
         <div className="flex items-center justify-between ">
           <h2 className="text-base font-medium text-[#1C1C1C]">Payment</h2>
           <button className="flex items-center gap-2 px-3 py-2 text-sm bg-[#F2F4F8] rounded-[8px] text-gray-600 hover:text-gray-900 transition-colors">

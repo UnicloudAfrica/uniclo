@@ -76,6 +76,8 @@ import AdminInstancesDetails from "./adminDashboard/pages/adminInstancesDetails"
 import Calculator from "./pages/calculator";
 import AdminLeads from "./adminDashboard/pages/adminLeads";
 import AdminLeadDetails from "./adminDashboard/pages/adminLeadDetails";
+import TenantCalculator from "./dashboard/pages/calculator";
+import Admincalculator from "./adminDashboard/pages/admincalculator";
 
 function App() {
   const location = useLocation();
@@ -142,6 +144,7 @@ function App() {
           <Route path="/dashboard/clients" element={<Clients />} />
           <Route path="/dashboard/requests" element={<Requests />} />
           <Route path="/dashboard/projects" element={<Project />} />
+          <Route path="/dashboard/calculator" element={<TenantCalculator />} />
           <Route path="/dashboard/products" element={<Products />} />
           <Route path="/dashboard/admin-users" element={<TenantAdmin />} />
           <Route
@@ -210,6 +213,10 @@ function App() {
             element={<AdminInstancesDetails />}
           />
 
+          <Route
+            path="/admin-dashboard/calculator"
+            element={<Admincalculator />}
+          />
           <Route
             path="/admin-dashboard/tax-configuration"
             element={<AdminTax />}

@@ -98,12 +98,6 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       path: "/admin-dashboard/purchased-modules",
     },
     {
-      name: "Ticket",
-      icon: supportTicket,
-      activeIcon: activeSupportTicket,
-      path: "/admin-dashboard/support-ticket",
-    },
-    {
       name: "Projects",
       icon: modules,
       activeIcon: activemodules,
@@ -116,10 +110,22 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       path: "/admin-dashboard/instances",
     },
     {
+      name: "Calculator",
+      icon: modules,
+      activeIcon: activemodules,
+      path: "/admin-dashboard/calculator",
+    },
+    {
       name: "Tax Configuration",
       icon: modules,
       activeIcon: activemodules,
       path: "/admin-dashboard/tax-configuration",
+    },
+    {
+      name: "Ticket",
+      icon: supportTicket,
+      activeIcon: activeSupportTicket,
+      path: "/admin-dashboard/support-ticket",
     },
   ];
 

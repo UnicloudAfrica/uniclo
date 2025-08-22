@@ -50,7 +50,7 @@ const PricingCardSkeleton = () => (
   </div>
 );
 
-const Pricing = () => {
+const Pricing = ({ activeProductType }) => {
   const [isAddPricingModalOpen, setIsAddPricingModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
@@ -141,24 +141,9 @@ const Pricing = () => {
     });
   };
 
-  const productTypes = useMemo(() => {
-    if (pricing) {
-      return Object.keys(pricing);
-    }
-    return [];
-  }, [pricing]);
-
-  const [activeTab, setActiveTab] = useState("");
-
-  useEffect(() => {
-    if (productTypes.length > 0 && !activeTab) {
-      setActiveTab(productTypes[0]);
-    }
-  }, [productTypes, activeTab]);
-
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab]);
+  }, [activeProductType]);
 
   const formatCurrency = (amount, currency = "USD") => {
     return new Intl.NumberFormat("en-US", {
@@ -170,8 +155,10 @@ const Pricing = () => {
   };
 
   const currentTabItems = useMemo(() => {
-    return pricing && pricing[activeTab] ? pricing[activeTab] : [];
-  }, [pricing, activeTab]);
+    return pricing && pricing[activeProductType]
+      ? pricing[activeProductType]
+      : [];
+  }, [pricing, activeProductType]);
 
   const totalPages = Math.ceil(currentTabItems.length / itemsPerPage);
   const handlePageChange = (page) => {
@@ -184,10 +171,48 @@ const Pricing = () => {
     currentPage * itemsPerPage
   );
 
+  if (isPricingFetching) {
+    return (
+      <div className="w-full text-center py-8">
+        <Loader2 className="w-8 h-8 mx-auto text-[#288DD1] animate-spin" />
+        <p className="text-gray-600 mt-2">Loading pricing data...</p>
+      </div>
+    );
+  }
+
+  if (!pricing || !activeProductType || !pricing[activeProductType]) {
+    return (
+      <div className="w-full text-center py-12">
+        <div className="max-w-md mx-auto">
+          <p className="text-gray-600 text-lg mb-4">
+            No data available at the moment
+          </p>
+          <p className="text-gray-500 text-sm mb-6">
+            Try syncing your pricing data to refresh the information
+          </p>
+          <button
+            onClick={handleResyncPricing}
+            disabled={isResyncing}
+            className="px-6 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mx-auto"
+          >
+            {isResyncing ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Syncing...
+              </>
+            ) : (
+              "Sync Pricing"
+            )}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="flex flex-wrap justify-end gap-3 mb-4">
-        <button
+        {/* <button
           onClick={handleSyncPricing}
           disabled={isSyncing || isResyncing}
           className="px-6 py-3 border border-[#288DD1] text-[#288DD1] font-medium rounded-full hover:bg-[#1976D2] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
@@ -200,7 +225,7 @@ const Pricing = () => {
           ) : (
             "Sync Pricing"
           )}
-        </button>
+        </button> */}
 
         <button
           onClick={handleResyncPricing}
@@ -210,233 +235,191 @@ const Pricing = () => {
           {isResyncing ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Resyncing...
+              Syncing...
             </>
           ) : (
-            "Resync Pricing"
+            "Sync Pricing"
           )}
         </button>
       </div>
 
       <div className="w-full">
-        {isPricingFetching ? (
-          <div className="w-full text-center py-8">
-            <Loader2 className="w-8 h-8 mx-auto text-[#288DD1] animate-spin" />
-            <p className="text-gray-600 mt-2">Loading pricing data...</p>
-          </div>
-        ) : productTypes.length === 0 ? (
-          <div className="w-full text-center py-8 text-gray-600">
-            No pricing data available. Add new pricing to get started.
-          </div>
-        ) : (
-          <>
-            <div className="flex border-b w-full border-[#EAECF0] mb-6 overflow-x-auto whitespace-nowrap">
-              {productTypes.map((type) => (
-                <button
-                  key={type}
-                  className={`font-medium text-sm pb-4 px-4 transition-all ${
-                    activeTab === type
-                      ? "border-b-2 border-[#288DD1] text-[#288DD1]"
-                      : "text-[#1C1C1C] hover:text-[#288DD1]"
-                  }`}
-                  onClick={() => setActiveTab(type)}
-                >
-                  {type.replace(/([A-Z])/g, " $1").trim()}
-                </button>
-              ))}
-            </div>
-
-            <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px] shadow-sm border border-gray-200">
-              <table className="min-w-full divide-y divide-[#E8E6EA]">
-                <thead className="bg-[#F5F5F5]">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase tracking-wider">
-                      Product Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase tracking-wider">
-                      Product Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase tracking-wider">
-                      Original Price
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase tracking-wider">
-                      Set Price
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase tracking-wider">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-[#E8E6EA]">
-                  {isPricingFetching ? (
-                    Array.from({ length: 5 }).map((_, i) => (
-                      <TableRowSkeleton key={i} />
-                    ))
-                  ) : currentItems.length > 0 ? (
-                    currentItems.map((item) => (
-                      <tr key={item.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                          {item.productable.name ||
-                            item.productable.identifier ||
-                            "N/A"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                          {item.productable_type.split("\\").pop()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                          {formatCurrency(
-                            item.productable.local_price,
-                            item.productable.local_currency
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                          {formatCurrency(
-                            item.local_price,
-                            item.local_currency
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex items-center space-x-2">
-                          <button
-                            onClick={() => openEditModal(item)}
-                            className="text-[#288DD1] hover:text-[#1976D2] transition-colors p-1 rounded-full hover:bg-gray-100"
-                            title="Edit Pricing"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => openDeleteModal(item)}
-                            className="text-red-500 hover:text-red-700 transition-colors p-1 rounded-full hover:bg-gray-100"
-                            title="Delete Pricing"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan="5"
-                        className="px-6 py-4 text-center text-gray-600"
-                      >
-                        No pricing data available for{" "}
-                        {activeTab.replace(/([A-Z])/g, " $1").trim()}.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {totalPages > 1 && (
-              <div className="hidden md:flex items-center justify-center px-4 mt-6">
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-[#333333] rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-
-                  <span className="text-sm font-medium text-gray-700">
-                    Page {currentPage} of {totalPages}
-                  </span>
-
-                  <button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-[#333333] rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <div className="md:hidden mt-6 space-y-4">
-              {isPricingFetching ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <PricingCardSkeleton key={i} />
-                ))
-              ) : currentItems.length > 0 ? (
+        <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px] shadow-sm border border-gray-200">
+          <table className="min-w-full divide-y divide-[#E8E6EA]">
+            <thead className="bg-[#F5F5F5]">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase tracking-wider">
+                  Product Name
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase tracking-wider">
+                  Product Type
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase tracking-wider">
+                  Original Price
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase tracking-wider">
+                  Set Price
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase tracking-wider">
+                  Action
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-[#E8E6EA]">
+              {currentItems.length > 0 ? (
                 currentItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="bg-white rounded-lg shadow-sm p-4 border border-gray-200"
-                  >
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                  <tr key={item.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                       {item.productable.name ||
                         item.productable.identifier ||
                         "N/A"}
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-1">
-                      <span className="font-medium">Product Type:</span>{" "}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                       {item.productable_type.split("\\").pop()}
-                    </p>
-                    <p className="text-sm text-gray-600 mb-1">
-                      <span className="font-medium">Original Price:</span>{" "}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                       {formatCurrency(
                         item.productable.local_price,
                         item.productable.local_currency
                       )}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      <span className="font-medium">Set Price:</span>{" "}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                       {formatCurrency(item.local_price, item.local_currency)}
-                    </p>
-                    <div className="mt-4 flex justify-end space-x-2">
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex items-center space-x-2">
                       <button
                         onClick={() => openEditModal(item)}
-                        className="text-[#288DD1] hover:text-[#1976D2] transition-colors p-2 rounded-full hover:bg-gray-100"
+                        className="text-[#288DD1] hover:text-[#1976D2] transition-colors p-1 rounded-full hover:bg-gray-100"
                         title="Edit Pricing"
                       >
-                        <Edit className="w-5 h-5" />
+                        <Edit className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => openDeleteModal(item)}
-                        className="text-red-500 hover:text-red-700 transition-colors p-2 rounded-full hover:bg-gray-100"
+                        className="text-red-500 hover:text-red-700 transition-colors p-1 rounded-full hover:bg-gray-100"
                         title="Delete Pricing"
                       >
-                        <Trash2 className="w-5 h-5" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
-                    </div>
-                  </div>
+                    </td>
+                  </tr>
                 ))
               ) : (
-                <div className="text-center py-8 text-gray-600">
-                  No pricing data available for{" "}
-                  {activeTab.replace(/([A-Z])/g, " $1").trim()}.
-                </div>
+                <tr>
+                  <td
+                    colSpan="5"
+                    className="px-6 py-4 text-center text-gray-600"
+                  >
+                    No data available at the moment.
+                  </td>
+                </tr>
               )}
+            </tbody>
+          </table>
+        </div>
+
+        {totalPages > 1 && (
+          <div className="hidden md:flex items-center justify-center px-4 mt-6">
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-[#333333] rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              <span className="text-sm font-medium text-gray-700">
+                Page {currentPage} of {totalPages}
+              </span>
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-[#333333] rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
+          </div>
+        )}
 
-            {totalPages > 1 && (
-              <div className="md:hidden flex items-center justify-center px-4 mt-6">
-                <div className="flex items-center space-x-2">
+        <div className="md:hidden mt-6 space-y-4">
+          {currentItems.length > 0 ? (
+            currentItems.map((item) => (
+              <div
+                key={item.id}
+                className="bg-white rounded-lg shadow-sm p-4 border border-gray-200"
+              >
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                  {item.productable.name ||
+                    item.productable.identifier ||
+                    "N/A"}
+                </h3>
+                <p className="text-sm text-gray-600 mb-1">
+                  <span className="font-medium">Product Type:</span>{" "}
+                  {item.productable_type.split("\\").pop()}
+                </p>
+                <p className="text-sm text-gray-600 mb-1">
+                  <span className="font-medium">Original Price:</span>{" "}
+                  {formatCurrency(
+                    item.productable.local_price,
+                    item.productable.local_currency
+                  )}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium">Set Price:</span>{" "}
+                  {formatCurrency(item.local_price, item.local_currency)}
+                </p>
+                <div className="mt-4 flex justify-end space-x-2">
                   <button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-[#333333] rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => openEditModal(item)}
+                    className="text-[#288DD1] hover:text-[#1976D2] transition-colors p-2 rounded-full hover:bg-gray-100"
+                    title="Edit Pricing"
                   >
-                    <ChevronLeft className="w-4 h-4" />
+                    <Edit className="w-5 h-5" />
                   </button>
-
-                  <span className="text-sm font-medium text-gray-700">
-                    Page {currentPage} of {totalPages}
-                  </span>
-
                   <button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-[#333333] rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => openDeleteModal(item)}
+                    className="text-red-500 hover:text-red-700 transition-colors p-2 rounded-full hover:bg-gray-100"
+                    title="Delete Pricing"
                   >
-                    <ChevronRight className="w-4 h-4" />
+                    <Trash2 className="w-5 h-5" />
                   </button>
                 </div>
               </div>
-            )}
-          </>
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-600">
+              No data available at the moment.
+            </div>
+          )}
+        </div>
+
+        {totalPages > 1 && (
+          <div className="md:hidden flex items-center justify-center px-4 mt-6">
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-[#333333] rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              <span className="text-sm font-medium text-gray-700">
+                Page {currentPage} of {totalPages}
+              </span>
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-[#333333] rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         )}
       </div>
 

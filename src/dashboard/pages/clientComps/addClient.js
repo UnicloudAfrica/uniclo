@@ -1,3 +1,4 @@
+// src/components/client/AddClientModal.jsx
 import React, { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import {
@@ -5,14 +6,18 @@ import {
   useFetchCountries,
   useFetchStatesById,
   useFetchProfile,
+  useFetchIndustries,
 } from "../../../hooks/resource";
 import ToastUtils from "../../../utils/toastUtil";
 import { useCreateClient } from "../../../hooks/clientHooks";
+import ClientBusinessInputs from "./subComps/clientBusinessInputs";
 
 const AddClientModal = ({ isOpen, onClose }) => {
   const { data: profile, isFetching: isProfileFetching } = useFetchProfile();
   const { data: countries, isFetching: isCountriesFetching } =
     useFetchCountries();
+  const { data: industries, isFetching: isIndustriesFetching } =
+    useFetchIndustries();
 
   const [formData, setFormData] = useState({
     first_name: "",
@@ -31,6 +36,12 @@ const AddClientModal = ({ isOpen, onClose }) => {
     address: "",
     zip_code: "",
     force_password_reset: false,
+    business_name: "",
+    business_type: "",
+    industry: "",
+    registration_number: "",
+    tin_number: "",
+    website: "",
   });
   const [errors, setErrors] = useState({});
 
@@ -65,6 +76,12 @@ const AddClientModal = ({ isOpen, onClose }) => {
         address: "",
         zip_code: "",
         force_password_reset: false,
+        business_name: "",
+        business_type: "",
+        industry: "",
+        registration_number: "",
+        tin_number: "",
+        website: "",
       });
       setErrors({});
     }
@@ -140,7 +157,6 @@ const AddClientModal = ({ isOpen, onClose }) => {
     } else if (!/^\d+$/.test(formData.phone)) {
       newErrors.phone = "Phone Number must contain only digits";
     }
-
     if (formData.password.trim()) {
       if (formData.password.length < 6) {
         newErrors.password = "Password must be at least 6 characters long";
@@ -149,12 +165,20 @@ const AddClientModal = ({ isOpen, onClose }) => {
         newErrors.password_confirmation = "Passwords do not match";
       }
     }
-
     if (!formData.country_id) newErrors.country_id = "Country is required";
     if (!formData.state.trim()) newErrors.state = "State is required";
     if (!formData.city.trim()) newErrors.city = "City is required";
     if (!formData.address.trim()) newErrors.address = "Address is required";
     if (!formData.zip_code.trim()) newErrors.zip_code = "Zip Code is required";
+    if (!formData.business_name.trim())
+      newErrors.business_name = "Business Name is required";
+    if (!formData.business_type.trim())
+      newErrors.business_type = "Business Type is required";
+    if (!formData.industry && !isIndustriesFetching && industries?.length > 0)
+      newErrors.industry = "Industry is required";
+    if (formData.website.trim() && !/^https?:\/\/\S+/.test(formData.website)) {
+      newErrors.website = "Invalid website URL";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -230,6 +254,12 @@ const AddClientModal = ({ isOpen, onClose }) => {
       address: formData.address,
       zip_code: formData.zip_code,
       force_password_reset: formData.force_password_reset,
+      business_name: formData.business_name,
+      business_type: formData.business_type,
+      industry: formData.industry,
+      registration_number: formData.registration_number,
+      tin_number: formData.tin_number,
+      website: formData.website,
     };
 
     if (formData.password.trim()) {
@@ -615,6 +645,14 @@ const AddClientModal = ({ isOpen, onClose }) => {
                 </label>
               </div>
             </div>
+
+            <ClientBusinessInputs
+              formData={formData}
+              handleInputChange={handleInputChange}
+              errors={errors}
+              industries={industries}
+              isIndustriesFetching={isIndustriesFetching}
+            />
 
             <div className="md:col-span-2 border-t border-gray-200 pt-4 mt-4">
               <h3 className="text-base font-semibold text-gray-800 mb-3">

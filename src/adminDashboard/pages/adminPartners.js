@@ -112,7 +112,7 @@ const AdminPartners = () => {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8">
+      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
         <button
           onClick={openAddPartner}
           className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base "

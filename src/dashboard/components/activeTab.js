@@ -19,6 +19,7 @@ const ActiveTab = () => {
     requests: "Service Request",
     instances: "Instances",
     products: "Products",
+    calculator: "Calculator",
     "admin-users": "Admin Users",
     "account-settings": "Account Settings",
     "tax-configurations": "Tax Configurations",

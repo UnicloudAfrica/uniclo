@@ -15,6 +15,7 @@ const AdminActiveTab = () => {
     overview: "Overview",
     details: "Details",
     products: "products",
+    calculator: "Calculator",
     instances: "Instances",
     leads: "Leads",
     "purchased-modules": "Purchased Modules",
@@ -44,7 +45,7 @@ const AdminActiveTab = () => {
   const breadcrumbItems = getBreadcrumbItems();
 
   return (
-    <div className="font-Outfit fixed top-[74px] left-0 md:left-20 lg:left-[20%] h-[52px] px-8 border-b border-[#C8CBD9] flex items-center w-full md:w-[calc(100%-5rem)] lg:w-[80%] z-[99] bg-white">
+    <div className="font-Outfit fixed top-[74px] left-0 md:left-20 lg:left-[20%] h-[52px] px-6 md:px-8 border-b border-[#C8CBD9] flex items-center w-full md:w-[calc(100%-5rem)] lg:w-[80%] z-[99] bg-white">
       {/* <button className="text-[#288DD1]/50 font-Outfit font-normal text-sm">
         Menu
       </button> */}

@@ -127,9 +127,9 @@ export default function Dashboard() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <ActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8">
+      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
         <p className="text-[#7e7e7e] font-Outfit text-sm font-normal">
-          Welcome back, {profile?.first_name} 👋🏽
+          Welcome, {profile?.first_name} 👋🏽
         </p>
 
         <div className="w-full md:w-[352px] mt-4 bg-[#288DD10D] py-6 px-5 rounded-[10px]">

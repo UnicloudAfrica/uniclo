@@ -60,7 +60,7 @@ export default function AdminInstances() {
           onCloseMobileMenu={closeMobileMenu}
         />
         <AdminActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8 flex items-center justify-center">
+        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
           <p className="ml-2 text-gray-700 mt-2">Loading instances...</p>
         </main>
@@ -76,7 +76,7 @@ export default function AdminInstances() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8">
+      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
         <div className="flex items-center justify-between">
           {/* Quick Start button removed as per previous instructions */}
         </div>

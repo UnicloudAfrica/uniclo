@@ -1,15 +1,10 @@
+// src/components/VerifyAccountPromptModal.jsx
 import { X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 const VerifyAccountPromptModal = ({ isOpen, onClose }) => {
-  const navigate = useNavigate();
+  const isActivated = false;
 
-  if (!isOpen) return null;
-
-  const handleNavigateToSettings = () => {
-    navigate("/dashboard/account-settings");
-    onClose(); // Close the modal after navigating
-  };
+  if (!isOpen || isActivated) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1200] font-Outfit">
@@ -23,19 +18,15 @@ const VerifyAccountPromptModal = ({ isOpen, onClose }) => {
           </button>
         </div>
         <div className="my-4">
-          <h3 className="text-xl font-semibold text-[#121212] mb-3">
-            Account Verification Required
+          <h3 className="text-xl font-semibold text-[#000] mb-3">
+            Account Awaiting Approval
           </h3>
           <p className="text-[#676767] text-sm mb-6">
-            Please update your account information and complete the verification
-            process to access all features.
+            We're thrilled to have you! Your account is currently{" "}
+            <span className="text-[#FCA5A5] font-medium">under review</span> by
+            our team. You'll be able to access the dashboard soon. For updates,{" "}
+            <span className="text-[#FCA5A5] font-medium">contact support</span>.
           </p>
-          <button
-            onClick={handleNavigateToSettings}
-            className="w-full bg-[#288DD1] hover:bg-[#6db1df] text-white font-semibold py-3 px-4 rounded-[30px] transition-colors focus:outline-none focus:ring-1 focus:ring-[#288DD1] focus:ring-offset-2"
-          >
-            Go to Settings
-          </button>
         </div>
       </div>
     </div>

@@ -37,19 +37,19 @@ const deletePricing = async (id) => {
 // New function for resync-pricing
 const resyncPricing = async () => {
   const res = await tenantApi("GET", "/admin/resync-pricing");
-  if (!res.data) {
+  if (!res) {
     throw new Error("Failed to resync pricing data");
   }
-  return res.data;
+  return res;
 };
 
 // New function for sync-pricing
 const syncPricing = async () => {
   const res = await tenantApi("GET", "/admin/sync-pricing");
-  if (!res.data) {
+  if (!res) {
     throw new Error("Failed to sync pricing data");
   }
-  return res.data;
+  return res;
 };
 
 export const useFetchPricing = (options = {}) => {

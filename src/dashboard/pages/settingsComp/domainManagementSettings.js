@@ -27,27 +27,50 @@ const DomainManagementSettings = () => {
       )}
 
       {!isDomainFetching && !domainError && (
-        <div className="mb-4">
-          <label
-            htmlFor="domainName"
-            className="block text-gray-700 text-sm font-medium mb-2"
-          >
-            Associated Domain
-          </label>
-          <input
-            type="text"
-            id="domainName"
-            value={domainToDisplay}
-            readOnly
-            className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            placeholder="No domain associated"
-          />
-          {domainSettings && domainSettings.length === 0 && (
-            <p className="text-gray-500 text-sm mt-2">
-              No domain currently associated with this tenant.
-            </p>
-          )}
-        </div>
+        <>
+          <div className="mb-4">
+            <label
+              htmlFor="domainName"
+              className="block text-gray-700 text-sm font-medium mb-2"
+            >
+              Associated Domain
+            </label>
+            <input
+              type="text"
+              id="domainName"
+              value={domainToDisplay}
+              readOnly
+              className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              placeholder="No domain associated"
+            />
+            {domainSettings && domainSettings.length === 0 && (
+              <p className="text-gray-500 text-sm mt-2">
+                No domain currently associated with this tenant.
+              </p>
+            )}
+          </div>
+          <div className="mb-4">
+            <label
+              htmlFor="domainName"
+              className="block text-gray-700 text-sm font-medium mb-2"
+            >
+              Associated Sub-Domain
+            </label>
+            <input
+              type="text"
+              id="domainName"
+              value={domainToDisplay}
+              readOnly
+              className="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              placeholder="No domain associated"
+            />
+            {domainSettings && domainSettings.length === 0 && (
+              <p className="text-gray-500 text-sm mt-2">
+                No domain currently associated with this tenant.
+              </p>
+            )}
+          </div>
+        </>
       )}
 
       {/* You can still add other management forms/fields below this if needed */}

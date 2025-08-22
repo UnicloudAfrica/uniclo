@@ -122,14 +122,16 @@ export const ViewAdminModal = ({ isOpen, onClose, admin }) => {
               </span>
             </div>
           ) : (
-            <div className="flex justify-between items-center">
-              <span className="font-medium text-gray-700">
-                Invite Expires At:
-              </span>
-              <span className="text-gray-900">
-                {formatDate(admin.pivot?.invite_expires_at)}
-              </span>
-            </div>
+            <>
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-gray-700">
+                  Invite Expires At:
+                </span>
+                <span className="text-gray-900">
+                  {formatDate(admin.pivot?.invite_expires_at)}
+                </span>
+              </div>
+            </>
           )}
           <div className="flex justify-between items-center">
             <span className="font-medium text-gray-700">Created At:</span>
@@ -140,6 +142,12 @@ export const ViewAdminModal = ({ isOpen, onClose, admin }) => {
         </div>
 
         <div className="flex items-center justify-end px-6 py-4 border-t rounded-b-[24px]">
+          {/* Resend Invite button added here */}
+          <div className="flex justify-end items-center">
+            <button className="px-6 py-2 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mr-4">
+              Resend Invite
+            </button>
+          </div>
           <button
             onClick={onClose}
             className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"

@@ -243,7 +243,7 @@ export default function AdminLeadDetails() {
           onCloseMobileMenu={() => updateUiState({ isMobileMenuOpen: false })}
         />
         <AdminActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8 flex items-center justify-center">
+        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
           <p className="ml-2 text-gray-700">Loading lead details...</p>
         </main>
@@ -265,7 +265,7 @@ export default function AdminLeadDetails() {
           onCloseMobileMenu={() => updateUiState({ isMobileMenuOpen: false })}
         />
         <AdminActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8 flex flex-col items-center justify-center text-center">
+        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex flex-col items-center justify-center text-center">
           <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
           <p className="text-lg font-semibold text-gray-700 mb-4">
             This lead couldn't be found.
@@ -317,7 +317,7 @@ export default function AdminLeadDetails() {
       />
       <AdminActiveTab />
 
-      <main className="top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-8 relative">
+      <main className="top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 relative">
         {/* Converting Overlay */}
         {isConverting && (
           <div className="absolute inset-0 bg-gray-100 bg-opacity-75 z-20 flex flex-col items-center justify-center">
@@ -399,7 +399,7 @@ export default function AdminLeadDetails() {
         </div>
 
         {/* Lead Overview */}
-        <div className="bg-white rounded-[12px] p-6 shadow-sm mb-8">
+        <div className="bg-white rounded-[12px] p-3 md:p-6 shadow-sm mb-8">
           <h2 className="text-xl font-semibold text-[#575758] mb-4">
             Lead Overview
           </h2>
@@ -437,7 +437,7 @@ export default function AdminLeadDetails() {
 
         {/* Assigned Admin & Pricing */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-          <div className="bg-white rounded-[12px] p-6 shadow-sm">
+          <div className="bg-white rounded-[12px] p-3 md:p-6 shadow-sm">
             <h2 className="text-xl font-semibold text-[#575758] mb-4">
               Assigned Admin
             </h2>
@@ -454,7 +454,7 @@ export default function AdminLeadDetails() {
             )}
           </div>
 
-          <div className="bg-white rounded-[12px] p-6 shadow-sm">
+          <div className="bg-white rounded-[12px] p-3 md:p-6 shadow-sm">
             <h2 className="text-xl font-semibold text-[#575758] mb-4">
               Pricing Breakdown
             </h2>
@@ -479,7 +479,7 @@ export default function AdminLeadDetails() {
         </div>
 
         {/* Stages */}
-        <div className="bg-white rounded-[12px] p-6 mb-8">
+        <div className="bg-white rounded-[12px] p-3 md:p-6 mb-8">
           <h2 className="text-xl font-semibold text-[#575758] mb-4">Stages</h2>
           {stages && stages.length > 0 ? (
             <div className="space-y-4">
@@ -559,7 +559,7 @@ export default function AdminLeadDetails() {
         </div>
 
         {/* Notes */}
-        <div className="bg-white rounded-[12px] p-6 shadow-sm mb-8">
+        <div className="bg-white rounded-[12px] p-3 md:p-6 shadow-sm mb-8">
           <h2 className="text-xl font-semibold text-[#575758] mb-4">Notes</h2>
           {notes && notes.length > 0 ? (
             <div className="space-y-3">
@@ -578,7 +578,7 @@ export default function AdminLeadDetails() {
         </div>
 
         {/* Documents */}
-        <div className="bg-white rounded-[12px] p-6 shadow-sm mb-8">
+        <div className="bg-white rounded-[12px] p-3 md:p-6 shadow-sm mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-[#575758]">Documents</h2>
             <button

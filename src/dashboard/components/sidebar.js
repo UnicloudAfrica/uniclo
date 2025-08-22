@@ -94,6 +94,12 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       activeIcon: activemodules,
       path: "/dashboard/products",
     },
+    {
+      name: "Calculator",
+      icon: modules,
+      activeIcon: activemodules,
+      path: "/dashboard/calculator",
+    },
 
     {
       name: "Payment History",

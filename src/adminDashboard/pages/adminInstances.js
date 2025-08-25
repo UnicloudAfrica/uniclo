@@ -99,12 +99,12 @@ export default function AdminInstances() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                   Disk
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                {/* <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                   EBS Volume
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                   Operating System
-                </th>
+                </th> */}
                 <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                   Status
                 </th>
@@ -130,12 +130,12 @@ export default function AdminInstances() {
                         ? `${item.storage_size_gb} GiB`
                         : "N/A"}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                    {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                       {item.ebs_volume?.name || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                       {item.os_image?.name || "N/A"}
-                    </td>
+                    </td> */}
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                       <span
                         className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${
@@ -214,14 +214,14 @@ export default function AdminInstances() {
                         : "N/A"}
                     </span>
                   </div>
-                  <div className="flex justify-between">
+                  {/* <div className="flex justify-between">
                     <span className="font-medium">EBS Volume:</span>
                     <span>{item.ebs_volume?.name || "N/A"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium">OS:</span>
                     <span>{item.os_image?.name || "N/A"}</span>
-                  </div>
+                  </div> */}
                 </div>
                 <div className="mt-4 text-right">
                   <button

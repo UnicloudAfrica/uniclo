@@ -21,6 +21,15 @@ const fetchTenantById = async (id) => {
   return res;
 };
 
+// GET: Fetch tenant's subtenants
+const fetchSubTenantByTenantID = async (id) => {
+  const res = await silentApi("GET", `/tenant-clients/${id}`);
+  if (!res) {
+    throw new Error(`Failed to fetch tenant with ID ${id}`);
+  }
+  return res.message;
+};
+
 // POST: Create a new tenant
 const createTenant = async (tenantData) => {
   // Make the API call using your existing 'api' utility
@@ -78,6 +87,19 @@ export const useFetchTenantById = (id, options = {}) => {
   return useQuery({
     queryKey: ["tenants", id],
     queryFn: () => fetchTenantById(id),
+    enabled: !!id, // Only fetch if ID is provided
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    retry: false,
+    ...options,
+  });
+};
+
+// Hook to fetch sub tenant by ID
+export const useFetchSubTenantByTenantID = (id, options = {}) => {
+  return useQuery({
+    queryKey: ["sub-tenants", id],
+    queryFn: () => fetchSubTenantByTenantID(id),
     enabled: !!id, // Only fetch if ID is provided
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,

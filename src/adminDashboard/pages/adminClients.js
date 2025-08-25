@@ -174,9 +174,9 @@ const AdminClients = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                       EMAIL ADDRESS
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                    {/* <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                       PHONE NUMBER
-                    </th>
+                    </th> */}
                     <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                       TENANT NAME
                     </th>
@@ -202,9 +202,9 @@ const AdminClients = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                           {item.email}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                        {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                           {item.phone}
-                        </td>
+                        </td> */}
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                           {item.tenant?.name || "N/A"}
                         </td>
@@ -290,9 +290,9 @@ const AdminClients = () => {
                     <p className="text-sm text-[#575758]">
                       Email: {item.email}
                     </p>
-                    <p className="text-sm text-[#575758]">
+                    {/* <p className="text-sm text-[#575758]">
                       Phone: {item.phone}
-                    </p>
+                    </p> */}
                     <p className="text-sm text-[#575758] mt-2">
                       Tenant: {item.tenant?.name || "N/A"}
                     </p>

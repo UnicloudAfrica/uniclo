@@ -1,3 +1,4 @@
+// src/components/PaymentModal.jsx
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { X, Loader2 } from "lucide-react";
 import PaystackPop from "@paystack/inline-js";
@@ -10,13 +11,10 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }) => {
 
   const paystackKey = process.env.REACT_APP_PAYSTACK_KEY;
   const { data: profile, isFetching: isProfileFetching } = useFetchProfile();
-
   const popup = useMemo(() => new PaystackPop(), []);
 
-  // Set initial selected payment option when modal opens or transaction changes
   useEffect(() => {
     if (isOpen && transaction?.payment_gateway_options?.length > 0) {
-      // Prioritize Paystack Card if available, otherwise pick the first option
       const paystackCardOption = transaction.payment_gateway_options.find(
         (option) =>
           option.name.toLowerCase() === "paystack" &&
@@ -26,7 +24,7 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }) => {
         paystackCardOption || transaction.payment_gateway_options[0]
       );
     } else {
-      setSelectedPaymentOption(null); // Reset when closed or no options
+      setSelectedPaymentOption(null);
     }
   }, [isOpen, transaction]);
 
@@ -39,21 +37,13 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }) => {
   };
 
   const handlePaystackCardPayment = useCallback(() => {
-    if (!paystackKey) {
-      console.error("Paystack key is missing.");
-      alert("Payment gateway not configured. Please contact support.");
-      return;
-    }
-
-    if (!profile?.email) {
-      console.error("User email is missing for Paystack transaction.");
-      alert("User email is not available. Cannot proceed with payment.");
-      return;
-    }
-
-    if (!transaction?.amount || !transaction?.identifier) {
-      console.error("Missing transaction amount or reference.");
-      alert("Missing transaction details. Cannot proceed with payment.");
+    if (
+      !paystackKey ||
+      !profile?.email ||
+      !transaction?.amount ||
+      !transaction?.identifier
+    ) {
+      // alert("Payment cannot proceed due to missing configuration or details.");
       return;
     }
 
@@ -62,22 +52,19 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }) => {
     popup.newTransaction({
       key: paystackKey,
       email: profile.email,
-      amount: transaction.amount * 100, // Convert to kobo
+      amount: transaction.amount * 100,
       reference: transaction.identifier,
       channels: ["card"],
       onSuccess: (response) => {
-        console.log("Paystack Card Payment Successful:", response);
         setIsPaying(false);
-        onPaymentInitiated(transaction.identifier, saveCard); // Notify parent
-        onClose(); // Close this modal
+        onPaymentInitiated(transaction.identifier, saveCard);
+        onClose();
       },
       onCancel: () => {
-        console.log("Paystack Card Payment Cancelled");
         setIsPaying(false);
         alert("Payment cancelled.");
       },
       onError: (error) => {
-        console.error("Paystack Card Payment Error:", error);
         alert(`Payment failed: ${error.message || "Unknown error"}`);
         setIsPaying(false);
       },
@@ -95,21 +82,44 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }) => {
   const handleBankTransferPaid = () => {
     if (transaction?.identifier) {
       onPaymentInitiated(transaction.identifier, saveCard);
-      onClose(); // Close this modal
+      onClose();
     } else {
-      alert("No transaction reference available.");
+      // alert("No transaction reference available.");
     }
   };
 
   if (!isOpen || !transaction) return null;
 
   const pricingBreakdown = transaction.metadata?.pricing_breakdown;
-  const amountToPay = selectedPaymentOption?.total;
+  const amountToPay = pricingBreakdown?.total || 0;
+
+  // Extract costs from pricing_breakdown.lines with number validation
+  const computeCost =
+    Number(
+      pricingBreakdown?.lines?.find((line) => line.slug === "compute")
+        ?.total_local
+    ) || 0;
+  const storageCost =
+    Number(
+      pricingBreakdown?.lines?.find((line) => line.slug === "storage")
+        ?.total_local
+    ) || 0;
+  const osCost =
+    Number(
+      pricingBreakdown?.lines?.find((line) => line.slug === "os-image")
+        ?.total_local
+    ) || 0;
+  const bandwidthCost =
+    Number(
+      pricingBreakdown?.lines?.find((line) => line.slug === "bandwidth")
+        ?.total_local
+    ) || 0;
+
+  console.log(transaction);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1010] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full">
-        {/* Header */}
         <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] w-full">
           <h2 className="text-lg font-semibold text-[#575758]">
             Complete Payment
@@ -122,11 +132,8 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }) => {
             <X className="w-5 h-5" />
           </button>
         </div>
-
-        {/* Content */}
         <div className="px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start">
           <div className="space-y-6 w-full">
-            {/* Payment Method Selection */}
             <div>
               <label className="block text-sm font-medium text-[#1C1C1C] mb-2 text-left">
                 Payment Method
@@ -153,8 +160,6 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }) => {
                 )}
               </span>
             </div>
-
-            {/* Save Card Checkbox */}
             {selectedPaymentOption?.payment_type.toLowerCase() === "card" && (
               <div className="flex items-center justify-start w-full">
                 <input
@@ -170,8 +175,6 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }) => {
                 </label>
               </div>
             )}
-
-            {/* Transaction Breakdown */}
             <div className="bg-[#F8F8F8] rounded-lg py-4 px-6 text-left">
               <h3 className="text-sm font-medium text-[#1C1C1C] mb-4">
                 Transaction Breakdown
@@ -183,8 +186,8 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }) => {
                       Compute Cost:
                     </span>
                     <span className="text-sm font-normal text-[#1c1c1c]">
-                      {pricingBreakdown.currency}
-                      {pricingBreakdown.compute?.toLocaleString()}
+                      {pricingBreakdown.currency}{" "}
+                      {Number(computeCost).toLocaleString()}
                     </span>
                   </div>
                   <div className="flex w-full items-center justify-between mb-2">
@@ -192,8 +195,8 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }) => {
                       Storage Cost:
                     </span>
                     <span className="text-sm font-normal text-[#1c1c1c]">
-                      {pricingBreakdown.currency}
-                      {pricingBreakdown.storage?.toLocaleString()}
+                      {pricingBreakdown.currency}{" "}
+                      {Number(storageCost).toLocaleString()}
                     </span>
                   </div>
                   <div className="flex w-full items-center justify-between mb-2">
@@ -201,8 +204,8 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }) => {
                       OS Cost:
                     </span>
                     <span className="text-sm font-normal text-[#1c1c1c]">
-                      {pricingBreakdown.currency}
-                      {pricingBreakdown.os?.toLocaleString()}
+                      {pricingBreakdown.currency}{" "}
+                      {Number(osCost).toLocaleString()}
                     </span>
                   </div>
                   <div className="flex w-full items-center justify-between mb-2">
@@ -210,8 +213,8 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }) => {
                       Bandwidth Cost:
                     </span>
                     <span className="text-sm font-normal text-[#1c1c1c]">
-                      {pricingBreakdown.currency}
-                      {pricingBreakdown.bandwidth?.toLocaleString()}
+                      {pricingBreakdown.currency}{" "}
+                      {Number(bandwidthCost).toLocaleString()}
                     </span>
                   </div>
                   <hr className="my-2 border-[#E9EAF4]" />
@@ -220,43 +223,40 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }) => {
                       Subtotal:
                     </span>
                     <span className="text-sm font-normal text-[#1c1c1c]">
-                      {pricingBreakdown.currency}
-                      {pricingBreakdown.subtotal?.toLocaleString()}
+                      {pricingBreakdown.currency}{" "}
+                      {Number(pricingBreakdown.subtotal).toLocaleString()}
                     </span>
                   </div>
                   <div className="flex w-full items-center justify-between mb-2">
                     <span className="text-sm font-medium text-[#676767]">
                       Tax (
-                      {(
-                        (pricingBreakdown.tax / pricingBreakdown.subtotal) *
-                        100
+                      {Number(
+                        (pricingBreakdown.tax / pricingBreakdown.subtotal) * 100
                       ).toFixed(2)}
                       % VAT):
                     </span>
                     <span className="text-sm font-normal text-[#1c1c1c]">
-                      {pricingBreakdown.currency}
-                      {pricingBreakdown.tax?.toLocaleString()}
+                      {pricingBreakdown.currency}{" "}
+                      {Number(pricingBreakdown.tax).toLocaleString()}
                     </span>
                   </div>
                   <hr className="my-2 border-[#E9EAF4]" />
                   <div className="flex w-full items-center justify-between font-semibold">
                     <span className="text-sm text-[#1C1C1C]">Total:</span>
                     <span className="text-sm text-[#1c1c1c]">
-                      {pricingBreakdown.currency}
-                      {pricingBreakdown.total?.toLocaleString()}
+                      {pricingBreakdown.currency}{" "}
+                      {Number(pricingBreakdown.total).toLocaleString()}
                     </span>
                   </div>
-                  {selectedPaymentOption && (
-                    <div className="flex w-full items-center justify-between font-semibold mt-2">
-                      <span className="text-sm text-[#1C1C1C]">
-                        Amount to Pay:
-                      </span>
-                      <span className="text-sm text-[#1c1c1c]">
-                        {pricingBreakdown.currency}
-                        {amountToPay?.toLocaleString()}
-                      </span>
-                    </div>
-                  )}
+                  <div className="flex w-full items-center justify-between font-semibold mt-2">
+                    <span className="text-sm text-[#1C1C1C]">
+                      Amount to Pay:
+                    </span>
+                    <span className="text-sm text-[#1c1c1c]">
+                      {pricingBreakdown.currency}{" "}
+                      {Number(amountToPay).toLocaleString()}
+                    </span>
+                  </div>
                 </>
               ) : (
                 <p className="text-sm text-gray-500">
@@ -266,8 +266,6 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }) => {
             </div>
           </div>
         </div>
-
-        {/* Footer */}
         <div className="flex items-center justify-end px-6 py-4 border-t rounded-b-[24px]">
           <button
             onClick={onClose}

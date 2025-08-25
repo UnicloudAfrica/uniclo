@@ -18,7 +18,6 @@ const AddClientModal = ({ isOpen, onClose }) => {
     useFetchCountries();
   const { data: industries, isFetching: isIndustriesFetching } =
     useFetchIndustries();
-
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -37,24 +36,27 @@ const AddClientModal = ({ isOpen, onClose }) => {
     zip_code: "",
     force_password_reset: false,
     business_name: "",
-    business_type: "",
+    company_type: "",
     industry: "",
     registration_number: "",
     tin_number: "",
     website: "",
+    verification_token: "",
   });
   const [errors, setErrors] = useState({});
 
   const { data: states, isFetching: isStatesFetching } = useFetchStatesById(
     formData.country_id,
-    { enabled: !!formData.country_id }
+    {
+      enabled: !!formData.country_id,
+    }
   );
-
   const { data: cities, isFetching: isCitiesFetching } = useFetchCitiesById(
     formData.state_id,
-    { enabled: !!formData.state_id }
+    {
+      enabled: !!formData.state_id,
+    }
   );
-
   const { mutate: createClient, isPending } = useCreateClient();
 
   useEffect(() => {
@@ -77,11 +79,12 @@ const AddClientModal = ({ isOpen, onClose }) => {
         zip_code: "",
         force_password_reset: false,
         business_name: "",
-        business_type: "",
+        company_type: "",
         industry: "",
         registration_number: "",
         tin_number: "",
         website: "",
+        verification_token: "",
       });
       setErrors({});
     }
@@ -92,11 +95,9 @@ const AddClientModal = ({ isOpen, onClose }) => {
       const selectedCountry = countries.find(
         (c) => c.id === parseInt(formData.country_id)
       );
-      if (selectedCountry) {
-        setFormData((prev) => ({ ...prev, country: selectedCountry.name }));
-      }
       setFormData((prev) => ({
         ...prev,
+        country: selectedCountry?.name || "",
         state_id: "",
         state: "",
         city_id: "",
@@ -119,10 +120,12 @@ const AddClientModal = ({ isOpen, onClose }) => {
       const selectedState = states.find(
         (s) => s.id === parseInt(formData.state_id)
       );
-      if (selectedState) {
-        setFormData((prev) => ({ ...prev, state: selectedState.name }));
-      }
-      setFormData((prev) => ({ ...prev, city_id: "", city: "" }));
+      setFormData((prev) => ({
+        ...prev,
+        state: selectedState?.name || "",
+        city_id: "",
+        city: "",
+      }));
     } else if (!formData.state_id) {
       setFormData((prev) => ({ ...prev, state: "", city_id: "", city: "" }));
     }
@@ -133,9 +136,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
       const selectedCity = cities.find(
         (c) => c.id === parseInt(formData.city_id)
       );
-      if (selectedCity) {
-        setFormData((prev) => ({ ...prev, city: selectedCity.name }));
-      }
+      setFormData((prev) => ({ ...prev, city: selectedCity?.name || "" }));
     } else if (!formData.city_id) {
       setFormData((prev) => ({ ...prev, city: "" }));
     }
@@ -147,23 +148,17 @@ const AddClientModal = ({ isOpen, onClose }) => {
       newErrors.first_name = "First Name is required";
     if (!formData.last_name.trim())
       newErrors.last_name = "Last Name is required";
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    if (!formData.email.trim()) newErrors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(formData.email))
       newErrors.email = "Email is invalid";
-    }
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Phone Number is required";
-    } else if (!/^\d+$/.test(formData.phone)) {
+    if (!formData.phone.trim()) newErrors.phone = "Phone Number is required";
+    else if (!/^\d+$/.test(formData.phone))
       newErrors.phone = "Phone Number must contain only digits";
-    }
     if (formData.password.trim()) {
-      if (formData.password.length < 6) {
+      if (formData.password.length < 6)
         newErrors.password = "Password must be at least 6 characters long";
-      }
-      if (formData.password !== formData.password_confirmation) {
+      if (formData.password !== formData.password_confirmation)
         newErrors.password_confirmation = "Passwords do not match";
-      }
     }
     if (!formData.country_id) newErrors.country_id = "Country is required";
     if (!formData.state.trim()) newErrors.state = "State is required";
@@ -172,13 +167,12 @@ const AddClientModal = ({ isOpen, onClose }) => {
     if (!formData.zip_code.trim()) newErrors.zip_code = "Zip Code is required";
     if (!formData.business_name.trim())
       newErrors.business_name = "Business Name is required";
-    if (!formData.business_type.trim())
-      newErrors.business_type = "Business Type is required";
+    if (!formData.company_type.trim())
+      newErrors.company_type = "Business Type is required";
     if (!formData.industry && !isIndustriesFetching && industries?.length > 0)
       newErrors.industry = "Industry is required";
-    if (formData.website.trim() && !/^https?:\/\/\S+/.test(formData.website)) {
+    if (formData.website.trim() && !/^https?:\/\/\S+/.test(formData.website))
       newErrors.website = "Invalid website URL";
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -224,16 +218,12 @@ const AddClientModal = ({ isOpen, onClose }) => {
 
   const handleCityChange = (e) => {
     const cityId = e.target.value;
-    setFormData((prev) => ({
-      ...prev,
-      city_id: cityId,
-    }));
+    setFormData((prev) => ({ ...prev, city_id: cityId }));
     setErrors((prev) => ({ ...prev, city_id: null }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (!validateForm()) {
       ToastUtils.error("Please correct the errors in the form.");
       return;
@@ -254,12 +244,15 @@ const AddClientModal = ({ isOpen, onClose }) => {
       address: formData.address,
       zip_code: formData.zip_code,
       force_password_reset: formData.force_password_reset,
-      business_name: formData.business_name,
-      business_type: formData.business_type,
-      industry: formData.industry,
-      registration_number: formData.registration_number,
-      tin_number: formData.tin_number,
-      website: formData.website,
+      business: {
+        business_name: formData.business_name,
+        company_type: formData.company_type,
+        industry: formData.industry,
+        registration_number: formData.registration_number,
+        tin_number: formData.tin_number,
+        website: formData.website,
+      },
+      verification_token: formData.verification_token,
     };
 
     if (formData.password.trim()) {
@@ -269,11 +262,11 @@ const AddClientModal = ({ isOpen, onClose }) => {
 
     createClient(payload, {
       onSuccess: () => {
-        ToastUtils.success("Client added successfully!");
+        // ToastUtils.success("Client added successfully!");
         onClose();
       },
       onError: (err) => {
-        // Error handling can be added here if needed
+        // ToastUtils.error(err.message || "Failed to add client.");
       },
     });
   };
@@ -285,7 +278,6 @@ const AddClientModal = ({ isOpen, onClose }) => {
     !formData.country_id || isStatesFetching || isPending;
   const isCitySelectDisabled =
     !formData.state_id || isCitiesFetching || isPending;
-
   const showStateInput = !states || states.length === 0;
   const showCityInput = !cities || cities.length === 0;
 
@@ -302,7 +294,6 @@ const AddClientModal = ({ isOpen, onClose }) => {
             <X className="w-5 h-5" />
           </button>
         </div>
-
         <div className="px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start">
           <form onSubmit={handleSubmit} className="space-y-4 w-full">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -398,7 +389,6 @@ const AddClientModal = ({ isOpen, onClose }) => {
                   <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
                 )}
               </div>
-
               <div>
                 <label
                   htmlFor="country_id"
@@ -445,7 +435,6 @@ const AddClientModal = ({ isOpen, onClose }) => {
                   </p>
                 )}
               </div>
-
               <div>
                 <label
                   htmlFor="state"
@@ -504,7 +493,6 @@ const AddClientModal = ({ isOpen, onClose }) => {
                   <p className="text-red-500 text-xs mt-1">{errors.state}</p>
                 )}
               </div>
-
               <div>
                 <label
                   htmlFor="city"
@@ -582,7 +570,6 @@ const AddClientModal = ({ isOpen, onClose }) => {
                   <p className="text-red-500 text-xs mt-1">{errors.city}</p>
                 )}
               </div>
-
               <div>
                 <label
                   htmlFor="address"
@@ -627,7 +614,6 @@ const AddClientModal = ({ isOpen, onClose }) => {
                   <p className="text-red-500 text-xs mt-1">{errors.zip_code}</p>
                 )}
               </div>
-
               <div className="md:col-span-2 flex items-center mt-4">
                 <input
                   id="verified"
@@ -645,15 +631,14 @@ const AddClientModal = ({ isOpen, onClose }) => {
                 </label>
               </div>
             </div>
-
             <ClientBusinessInputs
               formData={formData}
               handleInputChange={handleInputChange}
               errors={errors}
               industries={industries}
               isIndustriesFetching={isIndustriesFetching}
+              target="client"
             />
-
             <div className="md:col-span-2 border-t border-gray-200 pt-4 mt-4">
               <h3 className="text-base font-semibold text-gray-800 mb-3">
                 Password & Security
@@ -729,7 +714,6 @@ const AddClientModal = ({ isOpen, onClose }) => {
             </div>
           </form>
         </div>
-
         <div className="flex items-center justify-end px-6 py-4 border-t rounded-b-[24px]">
           <div className="flex gap-3">
             <button
@@ -741,7 +725,9 @@ const AddClientModal = ({ isOpen, onClose }) => {
             </button>
             <button
               onClick={handleSubmit}
-              disabled={isPending || isProfileFetching}
+              disabled={
+                isPending || isProfileFetching || !formData.verification_token
+              }
               className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Submit

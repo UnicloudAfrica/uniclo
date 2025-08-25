@@ -1,80 +1,56 @@
+// src/components/admin/AdminPartners.jsx
 import {
   ChevronLeft,
   ChevronRight,
   Loader2,
-  Eye, // Imported Eye icon
-  Trash2, // Imported Trash2 icon
+  Eye,
+  Trash2,
   Settings2,
 } from "lucide-react";
 import Skeleton from "react-loading-skeleton";
-import "react-loading-skeleton/dist/skeleton.css"; // Import skeleton styles
+import "react-loading-skeleton/dist/skeleton.css";
 import AdminActiveTab from "../components/adminActiveTab";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AddPartner from "../components/partnersComponent/addPartner";
-import { useEffect, useState } from "react"; // Removed useRef as dropdown is gone
+import { useState } from "react";
 import useAuthRedirect from "../../utils/adminAuthRedirect";
-import {
-  useDeleteTenant,
-  useFetchTenants,
-} from "../../hooks/adminHooks/tenantHooks"; // Import useDeleteTenant
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useFetchTenants } from "../../hooks/adminHooks/tenantHooks";
+import { useNavigate } from "react-router-dom";
 import DeleteTenantModal from "./tenantComps/deleteTenant";
 
+const encodeId = (id) => encodeURIComponent(btoa(id));
+
+const companyTypeMap = {
+  RC: "Limited Liability Company",
+  BN: "Business Name",
+  IT: "Incorporated Trustees",
+  LL: "Limited Liability",
+  LLP: "Limited Liability Partnership",
+  Other: "Other",
+};
+
+const formatCompanyType = (type) => companyTypeMap[type] || "Unknown";
+
 const AdminPartners = () => {
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [searchQuery, setSearchQuery] = useState("");
-  // Removed openDropdown, dropdownButtonRefs, dropdownPosition, dropdownContentRef as they are no longer needed
   const { isLoading } = useAuthRedirect();
   const [isAddPartnerOpen, setAddPartner] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { data: tenants, isFetching: isTenantsFetching } = useFetchTenants();
+  const [isDeleteTenantModalOpen, setIsDeleteTenantModalOpen] = useState(false);
+  const [selectedTenantToDelete, setSelectedTenantToDelete] = useState(null);
 
-  const [isDeleteTenantModalOpen, setIsDeleteTenantModalOpen] = useState(false); // State for delete modal
-  const [selectedTenantToDelete, setSelectedTenantToDelete] = useState(null); // State to hold tenant for deletion
-
-  // Function to toggle mobile menu
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  // Function to close mobile menu
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-  };
-
+  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
   const openAddPartner = () => setAddPartner(true);
   const closeAddPartner = () => setAddPartner(false);
 
-  // Filter customers based on search query
-  const filteredData = tenants
-    ? tenants.filter((item) =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : [];
-
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const currentData = filteredData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const handlePageChange = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  // Function to encode the ID for URL
-  const encodeId = (id) => {
-    return encodeURIComponent(btoa(id));
-  };
-
-  // Handle navigation to details page
   const handleViewDetails = (item, event) => {
-    event.stopPropagation(); // Prevent row click from firing if button is clicked
+    event.stopPropagation();
     const encodedId = encodeId(item.identifier);
     navigate(
       `/admin-dashboard/partners/details?id=${encodedId}&name=${encodeURIComponent(
@@ -83,18 +59,26 @@ const AdminPartners = () => {
     );
   };
 
-  // Handle opening delete modal
   const handleDeleteClick = (item, event) => {
-    event.stopPropagation(); // Prevent row click from firing if button is clicked
+    event.stopPropagation();
     setSelectedTenantToDelete(item);
     setIsDeleteTenantModalOpen(true);
   };
 
-  // Removed useEffect for click outside as there's no dropdown
-  useEffect(() => {
-    // No dropdown to close, so this effect is no longer needed.
-    // Keeping it here as a placeholder comment for clarity.
-  }, []);
+  const filteredData = tenants
+    ? tenants.filter((item) =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const currentData = filteredData.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
+  };
 
   if (isLoading) {
     return (
@@ -115,7 +99,7 @@ const AdminPartners = () => {
       <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
         <button
           onClick={openAddPartner}
-          className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base "
+          className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base"
         >
           Add Partner
         </button>
@@ -127,7 +111,7 @@ const AdminPartners = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-72 px-4 py-2 bg-[#F5F5F5] rounded-[8px] border border-gray-200 focus:outline-none focus:ring-1 focus:ring-[#288DD1]"
-              autoComplete="off" // Prevent autofill
+              autoComplete="off"
             />
           </div>
           <button className="flex items-center gap-2 px-3 py-2 text-sm bg-[#F2F4F8] rounded-[8px] text-gray-600 hover:text-gray-900 transition-colors">
@@ -142,22 +126,43 @@ const AdminPartners = () => {
             <table className="w-full">
               <thead className="bg-[#F5F5F5]">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase"
+                  >
+                    S/N
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase"
+                  >
                     PARTNER ID
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase"
+                  >
                     NAME
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                  {/* <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                     EMAIL ADDRESS
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                  </th> */}
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase"
+                  >
                     PHONE NUMBER
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase"
+                  >
                     TYPE
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase"
+                  >
                     ACTION
                   </th>
                 </tr>
@@ -166,19 +171,22 @@ const AdminPartners = () => {
                 {Array.from({ length: itemsPerPage }).map((_, index) => (
                   <tr key={index} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
+                      <Skeleton width={50} height={20} />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <Skeleton width={80} height={20} />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Skeleton width={120} height={20} />
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    {/* <td className="px-6 py-4 whitespace-nowrap">
                       <Skeleton width={150} height={20} />
-                    </td>
+                    </td> */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Skeleton width={100} height={20} />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Skeleton width={50} height={20} />
+                      <Skeleton width={100} height={20} />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Skeleton width={30} height={20} />
@@ -197,49 +205,73 @@ const AdminPartners = () => {
             <table className="w-full">
               <thead className="bg-[#F5F5F5]">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase"
+                  >
+                    S/N
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase"
+                  >
                     PARTNER ID
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase"
+                  >
                     NAME
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                  {/* <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                     EMAIL ADDRESS
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                  </th> */}
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase"
+                  >
                     PHONE NUMBER
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase"
+                  >
                     TYPE
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase"
+                  >
                     ACTION
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-[#E8E6EA]">
-                {currentData.map((item) => (
+                {currentData.map((item, index) => (
                   <tr
                     key={item.id}
                     onClick={() =>
                       handleViewDetails(item, { stopPropagation: () => {} })
-                    } // Allow row click for navigation
+                    }
                     className="hover:bg-gray-50 cursor-pointer"
                   >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                       {item.id}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                       {item.name}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                    {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                       {item.email}
-                    </td>
+                    </td> */}
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                       {item.phone}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.type}
+                      {formatCompanyType(item.company_type)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-3">
@@ -247,6 +279,7 @@ const AdminPartners = () => {
                           onClick={(e) => handleViewDetails(item, e)}
                           className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
                           title="View Details"
+                          aria-label={`View details for ${item.name}`}
                         >
                           <Eye className="w-4 h-4" />
                         </button>
@@ -254,6 +287,7 @@ const AdminPartners = () => {
                           onClick={(e) => handleDeleteClick(item, e)}
                           className="text-red-500 hover:text-red-700 transition-colors"
                           title="Delete Partner"
+                          aria-label={`Delete ${item.name}`}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -281,19 +315,23 @@ const AdminPartners = () => {
                 <div className="space-y-1">
                   <div className="flex justify-between">
                     <Skeleton width={80} height={16} />
-                    <Skeleton width={80} height={16} />
+                    <Skeleton width={50} height={16} />
                   </div>
                   <div className="flex justify-between">
                     <Skeleton width={80} height={16} />
-                    <Skeleton width={120} height={16} />
+                    <Skeleton width={80} height={16} />
                   </div>
+                  {/* <div className="flex justify-between">
+                    <Skeleton width={80} height={16} />
+                    <Skeleton width={120} height={16} />
+                  </div> */}
                   <div className="flex justify-between">
                     <Skeleton width={80} height={16} />
                     <Skeleton width={100} height={16} />
                   </div>
                   <div className="flex justify-between">
                     <Skeleton width={80} height={16} />
-                    <Skeleton width={50} height={16} />
+                    <Skeleton width={100} height={16} />
                   </div>
                 </div>
               </div>
@@ -305,30 +343,34 @@ const AdminPartners = () => {
               </p>
             </div>
           ) : (
-            currentData.map((item) => (
+            currentData.map((item, index) => (
               <div
                 key={item.id}
                 onClick={() =>
                   handleViewDetails(item, { stopPropagation: () => {} })
-                } // Allow card click for navigation
+                }
                 className="border-b border-gray-200 py-4 px-4 bg-white rounded-[12px] mb-2 cursor-pointer"
+                role="button"
+                aria-label={`View details for ${item.name}`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-sm font-medium text-gray-900">
-                    {item.name}
+                    S/N: {(currentPage - 1) * itemsPerPage + index + 1}
                   </h3>
                   <div className="flex items-center space-x-3">
                     <button
                       onClick={(e) => handleViewDetails(item, e)}
-                      className="text-[#288DD1] hover:text-[#1976D2] transition-colors p-1"
+                      className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
                       title="View Details"
+                      aria-label={`View details for ${item.name}`}
                     >
                       <Eye className="w-4 h-4" />
                     </button>
                     <button
                       onClick={(e) => handleDeleteClick(item, e)}
-                      className="text-red-500 hover:text-red-700 transition-colors p-1"
+                      className="text-red-500 hover:text-red-700 transition-colors"
                       title="Delete Partner"
+                      aria-label={`Delete ${item.name}`}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -340,16 +382,20 @@ const AdminPartners = () => {
                     <span>{item.id}</span>
                   </div>
                   <div className="flex justify-between">
+                    <span className="font-medium">Name:</span>
+                    <span>{item.name}</span>
+                  </div>
+                  {/* <div className="flex justify-between">
                     <span className="font-medium">Email:</span>
                     <span>{item.email}</span>
-                  </div>
+                  </div> */}
                   <div className="flex justify-between">
                     <span className="font-medium">Phone:</span>
                     <span>{item.phone}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium">Type:</span>
-                    <span>{item.type}</span>
+                    <span>{formatCompanyType(item.company_type)}</span>
                   </div>
                 </div>
               </div>
@@ -368,7 +414,6 @@ const AdminPartners = () => {
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-
               <div className="flex items-center space-x-1">
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNumber;
@@ -381,7 +426,6 @@ const AdminPartners = () => {
                   } else {
                     pageNumber = currentPage - 2 + i;
                   }
-
                   return (
                     <button
                       key={pageNumber}
@@ -397,9 +441,7 @@ const AdminPartners = () => {
                   );
                 })}
               </div>
-
               <span className="text-sm text-gray-700">of</span>
-
               <button
                 onClick={() => handlePageChange(totalPages)}
                 className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
@@ -410,7 +452,6 @@ const AdminPartners = () => {
               >
                 {totalPages}
               </button>
-
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}

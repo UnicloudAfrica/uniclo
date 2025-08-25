@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+// src/components/admin/AddAdminInstance.jsx
+import { ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
+import { useState } from "react";
 import { useFetchProjects } from "../../../hooks/adminHooks/projectHooks";
 import {
   useFetchBandwidths,
@@ -9,14 +10,14 @@ import {
   useFetchFloatingIPs,
   useFetchOsImages,
 } from "../../../hooks/resource";
+import { useCreateInstanceRequest } from "../../../hooks/adminHooks/instancesHook";
+import { useFetchTenants } from "../../../hooks/adminHooks/tenantHooks";
+import { useFetchClients } from "../../../hooks/adminHooks/clientHooks";
 import StepProgress from "../../../dashboard/components/instancesubcomps/stepProgress";
 import ToastUtils from "../../../utils/toastUtil";
 import ConfigurationStep from "./configurationStep";
 import ResourceAllocationStep from "./resourceAllocationStep";
 import SummaryStep from "./summaryStep";
-import { useCreateInstanceRequest } from "../../../hooks/adminHooks/instancesHook";
-import { useFetchTenants } from "../../../hooks/adminHooks/tenantHooks";
-import { useFetchClients } from "../../../hooks/adminHooks/clientHooks";
 
 const AddAdminInstance = ({ isOpen, onClose }) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -35,13 +36,19 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
   const { data: tenants, isFetching: isTenantsFetching } = useFetchTenants();
   const { data: clients, isFetching: isClientsFetching } = useFetchClients();
 
-  const {
-    mutate: createInstanceRequest,
-    isPending: isSubmissionPending,
-    isSuccess: isSubmissionSuccess,
-    isError: isSubmissionError,
-    error: submissionError,
-  } = useCreateInstanceRequest();
+  const { mutate: createInstanceRequest, isPending: isSubmissionPending } =
+    useCreateInstanceRequest({
+      onSuccess: () => {
+        ToastUtils.success("Instance created successfully!");
+        resetForm();
+        setCurrentStep(0);
+        onClose();
+      },
+      onError: (error) => {
+        ToastUtils.error(error?.message || "Failed to create instance");
+        setGeneralError(error?.message || "Failed to create instance");
+      },
+    });
 
   const [formData, setFormData] = useState({
     name: "",
@@ -85,55 +92,17 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
   ];
   const steps = ["Configuration Details", "Resource Allocation", "Summary"];
 
-  useEffect(() => {
-    setGeneralError(null);
-  }, [currentStep]);
-
-  useEffect(() => {
-    if (isSubmissionSuccess) {
-      ToastUtils.success("Instance created successfully!");
-      setFormData({
-        name: "",
-        description: "",
-        selectedProject: null,
-        number_of_instances: 1,
-        storage_size_gb: "",
-        selectedComputeInstance: null,
-        selectedEbsVolume: null,
-        selectedOsImage: null,
-        bandwidth_id: null,
-        bandwidth_count: 0,
-        floating_ip_id: null,
-        floating_ip_count: 0,
-        cross_connect_id: null,
-        cross_connect_count: 0,
-        months: "",
-        tags: [],
-        fast_track: false,
-        assigned_to_type: "project",
-        tenant_id: null,
-        user_id: null,
-      });
-      setErrors({});
-      setGeneralError(null);
-      setCurrentStep(0);
-      onClose();
-    }
-  }, [isSubmissionSuccess, isSubmissionError, submissionError, onClose]);
-
   const validateStep = () => {
     const newErrors = {};
     if (currentStep === 0) {
       if (!formData.name.trim()) newErrors.name = "Instance Name is required";
       if (!formData.description.trim())
         newErrors.description = "Description is required";
-
       if (formData.assigned_to_type === "client") {
         if (!formData.user_id) newErrors.user_id = "Client is required";
       } else if (formData.assigned_to_type === "tenant") {
         if (!formData.tenant_id) newErrors.tenant_id = "Partner is required";
       }
-
       if (
         !formData.number_of_instances ||
         isNaN(formData.number_of_instances) ||
@@ -163,7 +132,6 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
       if (!formData.months) newErrors.months = "Term (Months) is required";
       else if (isNaN(formData.months) || parseInt(formData.months) < 1)
         newErrors.months = "Term (Months) must be an integer and at least 1";
-
       if (
         formData.bandwidth_id &&
         (!formData.bandwidth_count || parseInt(formData.bandwidth_count) <= 0)
@@ -188,7 +156,6 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
       }
     }
     setErrors(newErrors);
-
     if (Object.keys(newErrors).length > 0) {
       ToastUtils.warning(
         "Please check the form for errors and make sure all required fields are filled."
@@ -213,14 +180,11 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
       ) {
         newValue = value ? parseInt(value) : 0;
       }
-
       const updatedState = { ...prev, [field]: newValue };
-
       if (field === "assigned_to_type") {
         updatedState.user_id = null;
         updatedState.tenant_id = null;
       }
-
       return updatedState;
     });
     setErrors((prev) => ({ ...prev, [field]: null }));
@@ -278,7 +242,6 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
         tags: formData.tags,
         fast_track: formData.fast_track,
       };
-
       if (formData.selectedProject)
         dataToSubmit.project_id = formData.selectedProject.id;
       if (formData.tenant_id) dataToSubmit.tenant_id = formData.tenant_id;
@@ -295,7 +258,6 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
         dataToSubmit.cross_connect_id = formData.cross_connect_id;
         dataToSubmit.cross_connect_count = formData.cross_connect_count;
       }
-
       createInstanceRequest(dataToSubmit);
     }
   };
@@ -343,7 +305,6 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
     });
     setErrors({});
     setGeneralError(null);
-    setCurrentStep(0);
   };
 
   const handleClose = () => {
@@ -371,7 +332,6 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
         </div>
       );
     }
-
     switch (currentStep) {
       case 0:
         return (

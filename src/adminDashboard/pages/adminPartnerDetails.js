@@ -7,6 +7,7 @@ import PartnerModules from "../components/partnersComponent/partnerModules";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { useFetchTenantById } from "../../hooks/adminHooks/tenantHooks";
+import PartnerClients from "../components/partnersComponent/partnerClients";
 
 // Function to decode the ID from URL (re-used from other files)
 const decodeId = (encodedId) => {
@@ -65,12 +66,14 @@ export default function AdminPartnerDetails() {
     {
       label: "Overview",
       value: "overview",
-      component: <OverviewPartner partnerDetails={partnerDetails} />, // Pass partnerDetails
+      component: (
+        <OverviewPartner partnerDetails={partnerDetails} tenantId={tenantId} />
+      ), // Pass partnerDetails
     },
     {
       label: "Clients",
       value: "clients",
-      component: " <PartnerClients tenantId={tenantId} />",
+      component: <PartnerClients tenantId={tenantId} />,
     },
     {
       label: "Purchased Modules History",

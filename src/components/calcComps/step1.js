@@ -11,8 +11,11 @@ import {
 import CoreConfiguration from "./components/CoreConfiguration";
 import BlockStorage from "./components/BlockStorage";
 import Networking from "./components/Networking";
+import { useCreateQuote } from "../../hooks/adminHooks/quoteHooks";
 
 const Step1Configuration = ({ handleNext }) => {
+  const { mutate, isPending } = useCreateQuote();
+
   const [formData, setFormData] = useState({
     compute_instance_id: null,
     currency: "USD",

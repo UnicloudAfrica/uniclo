@@ -1,9 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { Loader2, RefreshCcw } from "lucide-react";
-import { useCreateQuote } from "../../../hooks/adminHooks/quoteHooks";
-import { useFetchTenants } from "../../../hooks/adminHooks/tenantHooks";
-import { useFetchCountries } from "../../../hooks/resource";
 import { formatPrice, getCurrencySymbol } from "../../../utils/resource";
+import { useFetchCountries, useFetchProfile } from "../../../hooks/resource";
+import { useCreateTenantQuote } from "../../../hooks/quoteHooks";
 
 const PricingSummary = ({ pricingData, currency }) => {
   if (!pricingData?.line_items || !pricingData?.amounts) {
@@ -87,14 +86,13 @@ const PricingSummary = ({ pricingData, currency }) => {
   );
 };
 
-export const Step2Summary = ({ billingData, handlePrev }) => {
+export const TenantStep2Summary = ({ billingData, handlePrev }) => {
   const [quoteData, setQuoteData] = useState(null);
-  const { data: tenants, isFetching: isTenantsFetching } = useFetchTenants();
   const { data: countries, isFetching } = useFetchCountries();
-  const { mutate, isPending } = useCreateQuote();
+  const { data: profile, isFetching: isProfileFetching } = useFetchProfile();
+  const { mutate, isPending } = useCreateTenantQuote();
 
   const [formData, setFormData] = useState({
-    tenant_id: "",
     email: "",
     emails: [""],
     subject: "",
@@ -132,7 +130,7 @@ export const Step2Summary = ({ billingData, handlePrev }) => {
             }
           : undefined,
       },
-      tenant_id: formData.tenant_id,
+      tenant_id: profile?.tenant_id || "", // Use tenant_id from profile
       email: formData.email,
       emails: formData.emails.filter((email) => email.trim() !== ""),
       subject: formData.subject,
@@ -140,7 +138,7 @@ export const Step2Summary = ({ billingData, handlePrev }) => {
       bill_to_name: formData.bill_to_name,
       country: formData.country,
     }),
-    [billingData, formData]
+    [billingData, formData, profile]
   );
 
   const handleInputChange = (e) => {
@@ -235,7 +233,7 @@ export const Step2Summary = ({ billingData, handlePrev }) => {
                 onClick={handleReset}
                 className="flex items-center px-4 py-2 rounded-full text-gray-700 font-medium bg-gray-200 hover:bg-gray-300"
               >
-                <RefreshCcw className=" w-4" />
+                <RefreshCcw className="w-4 h-4" />
                 <span className="ml-2">Reset</span>
               </button>
             </div>
@@ -248,25 +246,6 @@ export const Step2Summary = ({ billingData, handlePrev }) => {
                 Additional Information
               </h4>
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tenant
-                  </label>
-                  <select
-                    name="tenant_id"
-                    value={formData.tenant_id}
-                    onChange={handleInputChange}
-                    className="w-full input-field"
-                    disabled={isTenantsFetching}
-                  >
-                    <option value="">Select Tenant</option>
-                    {tenants?.map((tenant) => (
-                      <option key={tenant.id} value={tenant.id}>
-                        {tenant.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Primary Email

@@ -3,7 +3,7 @@ import Headbar from "../components/headbar";
 import ActiveTab from "../components/activeTab";
 import Sidebar from "../components/sidebar";
 import Step1Configuration from "../../components/calcComps/step1";
-import { Step2Summary } from "../../adminDashboard/pages/calcComp/breakdownCalculator";
+import { TenantStep2Summary } from "./calcomps/tenantPricingBreakdown";
 
 const STEPS = ["Configuration", "Breakdown"];
 
@@ -67,7 +67,10 @@ export default function TenantCalculator() {
 
       case 1:
         return (
-          <Step2Summary billingData={billingData} handlePrev={handlePrev} />
+          <TenantStep2Summary
+            billingData={billingData}
+            handlePrev={handlePrev}
+          />
         );
       default:
         return null;

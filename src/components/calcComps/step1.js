@@ -13,12 +13,12 @@ import BlockStorage from "./components/BlockStorage";
 import Networking from "./components/Networking";
 import { useCreateQuote } from "../../hooks/adminHooks/quoteHooks";
 
-const Step1Configuration = ({ handleNext }) => {
+const Step1Configuration = ({ handleNext, src = "landing" }) => {
   const { mutate, isPending } = useCreateQuote();
 
   const [formData, setFormData] = useState({
     compute_instance_id: null,
-    currency: "USD",
+    currency: "Nigeria",
     os_image_id: null,
     months: 1,
     number_of_instances: 1,
@@ -148,6 +148,7 @@ const Step1Configuration = ({ handleNext }) => {
     <div className="container mx-auto p-4 md:p-8 font-outfit">
       <div className="space-y-10">
         <CoreConfiguration
+          src={src}
           formData={formData}
           searchTerms={searchTerms}
           showAllItems={showAllItems}

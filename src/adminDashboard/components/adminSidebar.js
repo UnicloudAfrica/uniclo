@@ -121,12 +121,12 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       activeIcon: activemodules,
       path: "/admin-dashboard/tax-configuration",
     },
-    // {
-    //   name: "Ticket",
-    //   icon: supportTicket,
-    //   activeIcon: activeSupportTicket,
-    //   path: "/admin-dashboard/support-ticket",
-    // },
+    {
+      name: "Ticket",
+      icon: supportTicket,
+      activeIcon: activeSupportTicket,
+      path: "/admin-dashboard/support-ticket",
+    },
   ];
 
   const handleItemClick = (itemName, path) => {

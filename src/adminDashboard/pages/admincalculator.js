@@ -64,7 +64,9 @@ export default function Admincalculator() {
   const renderStep = () => {
     switch (currentStep) {
       case 0:
-        return <Step1Configuration handleNext={handleNextWithData} />;
+        return (
+          <Step1Configuration src="dashboard" handleNext={handleNextWithData} />
+        );
 
       case 1:
         return (

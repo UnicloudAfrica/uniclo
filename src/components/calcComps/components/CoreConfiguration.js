@@ -4,6 +4,7 @@ import ShowMoreButton from "./ShowMoreButton";
 import { CheckCircle } from "lucide-react";
 
 const CoreConfiguration = ({
+  src,
   formData,
   searchTerms,
   showAllItems,
@@ -80,20 +81,22 @@ const CoreConfiguration = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-start mb-4">
-        <label htmlFor="currency" className="sr-only">
-          Select Currency
-        </label>
-        <select
-          id="currency"
-          value={formData.currency}
-          onChange={(e) => handleInputChange("currency", e.target.value)}
-          className="border border-gray-300 rounded-lg p-2 w-full max-w-[120px] text-sm font-medium text-gray-700"
-        >
-          <option value="USD">USD</option>
-          <option value="Nigeria">NGN</option>
-        </select>
-      </div>
+      {src === "landing" && (
+        <div className="flex justify-start mb-4">
+          <label htmlFor="currency" className="sr-only">
+            Select Currency
+          </label>
+          <select
+            id="currency"
+            value={formData.currency}
+            onChange={(e) => handleInputChange("currency", e.target.value)}
+            className="border border-gray-300 rounded-lg p-2 w-full max-w-[120px] text-sm font-medium text-gray-700"
+          >
+            <option value="USD">USD</option>
+            <option value="Nigeria">NGN</option>
+          </select>
+        </div>
+      )}
       <h3 className="text-2xl font-semibold text-[#121212] flex items-center">
         <Cpu className="mr-3 text-gray-500" />
         Core Configuration

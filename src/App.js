@@ -78,6 +78,7 @@ import AdminLeads from "./adminDashboard/pages/adminLeads";
 import AdminLeadDetails from "./adminDashboard/pages/adminLeadDetails";
 import TenantCalculator from "./dashboard/pages/calculator";
 import Admincalculator from "./adminDashboard/pages/admincalculator";
+import AdminSupportTicket from "./adminDashboard/pages/adminSupport";
 
 function App() {
   const location = useLocation();
@@ -220,6 +221,10 @@ function App() {
           <Route
             path="/admin-dashboard/tax-configuration"
             element={<AdminTax />}
+          />
+          <Route
+            path="/admin-dashboard/support-ticket"
+            element={<AdminSupportTicket />}
           />
 
           {/* new pages */}

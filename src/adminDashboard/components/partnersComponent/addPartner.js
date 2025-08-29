@@ -26,6 +26,7 @@ const AddPartner = ({ isOpen, onClose }) => {
     business: {
       email: "",
       name: "",
+      type: "",
       company_type: "",
       industry: "",
       address: "",
@@ -91,6 +92,7 @@ const AddPartner = ({ isOpen, onClose }) => {
 
   const validateStep = () => {
     const stepErrors = steps[currentStep].validate(formData);
+    // console.log("Validation errors:", stepErrors);
     setErrors(stepErrors);
     return Object.keys(stepErrors).length === 0;
   };
@@ -125,6 +127,7 @@ const AddPartner = ({ isOpen, onClose }) => {
         business: {
           name: formData.business.name,
           company_type: formData.business.company_type,
+          type: formData.business.type,
           industry: formData.business.industry,
           address: formData.business.address,
           registration_number: formData.business.registration_number,
@@ -163,6 +166,7 @@ const AddPartner = ({ isOpen, onClose }) => {
             business: {
               email: "",
               name: "",
+              type: "",
               company_type: "",
               industry: "",
               address: "",

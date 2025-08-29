@@ -192,20 +192,59 @@ const BusinessInfo = ({
       </div>
       <div>
         <label
-          htmlFor="company_type"
+          htmlFor="businessType"
           className="block text-sm font-medium text-gray-700 mb-2"
         >
           Business Type *
         </label>
         <span
           className={`w-full input-field block transition-all ${
-            errors.company_type
+            errors.businessType
               ? "border-red-500 border"
               : "border-gray-300 border"
           } rounded px-3 py-2`}
         >
           <select
-            id="company_type"
+            id="businessType"
+            value={formData.business.type}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                business: { ...formData.business, type: e.target.value },
+              })
+            }
+            className="w-full bg-transparent outline-none"
+          >
+            <option value="" disabled>
+              Select business type
+            </option>
+            <option value="BNG">Business Name</option>
+            <option value="LLC">Limited Liability Company</option>
+            <option value="NGO">Non-Governmental Organization</option>
+            <option value="LLP">Limited Liability Partnership</option>
+            <option value="Other">Other</option>
+          </select>
+        </span>
+        {errors.businessType && (
+          <p className="text-red-500 text-xs mt-1">{errors.businessType}</p>
+        )}
+      </div>
+      <div>
+        <label
+          htmlFor="companyType"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          Company Type *
+        </label>
+        <span
+          className={`w-full input-field block transition-all ${
+            errors.companyType
+              ? "border-red-500 border"
+              : "border-gray-300 border"
+          } rounded px-3 py-2`}
+        >
+          <select
+            id="companyType"
             value={formData.business.company_type}
             onChange={(e) =>
               setFormData({
@@ -221,15 +260,15 @@ const BusinessInfo = ({
             <option value="" disabled>
               Select business type
             </option>
-            <option value="BNG">Business Name</option>
-            <option value="LLC">Limited Liability Company</option>
-            <option value="NGO">Non-Governmental Organization</option>
+            <option value="RC">Limited Liability Company</option>
+            <option value="BN">Business Name</option>
+            <option value="IT">Incorporated Trustees</option>
+            <option value="LL">Limited Liability</option>
             <option value="LLP">Limited Liability Partnership</option>
-            <option value="Other">Other</option>
           </select>
         </span>
-        {errors.company_type && (
-          <p className="text-red-500 text-xs mt-1">{errors.company_type}</p>
+        {errors.companyType && (
+          <p className="text-red-500 text-xs mt-1">{errors.companyType}</p>
         )}
       </div>
       <div>
@@ -347,6 +386,8 @@ BusinessInfo.validate = (formData) => {
     newErrors.tinNumber = "TIN number is required";
   if (!formData.business.type)
     newErrors.businessType = "Business type is required";
+  if (!formData.business.company_type)
+    newErrors.companyType = "Company type is required";
   if (!formData.business.industry)
     newErrors.businessIndustry = "Industry is required";
   if (!formData.business.website)

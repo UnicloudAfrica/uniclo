@@ -260,7 +260,7 @@ const BusinessInfo = ({
                 ? "Loading industries..."
                 : "Select an industry"}
             </option>
-            {industries?.message?.map((industry) => (
+            {industries?.map((industry) => (
               <option key={industry.id} value={industry.id}>
                 {industry.name}
               </option>

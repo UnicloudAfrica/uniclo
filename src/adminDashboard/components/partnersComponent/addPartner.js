@@ -26,7 +26,7 @@ const AddPartner = ({ isOpen, onClose }) => {
     business: {
       email: "",
       name: "",
-      type: "",
+      company_type: "",
       industry: "",
       address: "",
       registration_number: "",
@@ -124,7 +124,7 @@ const AddPartner = ({ isOpen, onClose }) => {
 
         business: {
           name: formData.business.name,
-          type: formData.business.type,
+          company_type: formData.business.company_type,
           industry: formData.business.industry,
           address: formData.business.address,
           registration_number: formData.business.registration_number,
@@ -163,7 +163,7 @@ const AddPartner = ({ isOpen, onClose }) => {
             business: {
               email: "",
               name: "",
-              type: "",
+              company_type: "",
               industry: "",
               address: "",
               registration_number: "",

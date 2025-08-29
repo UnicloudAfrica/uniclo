@@ -192,25 +192,28 @@ const BusinessInfo = ({
       </div>
       <div>
         <label
-          htmlFor="businessType"
+          htmlFor="company_type"
           className="block text-sm font-medium text-gray-700 mb-2"
         >
           Business Type *
         </label>
         <span
           className={`w-full input-field block transition-all ${
-            errors.businessType
+            errors.company_type
               ? "border-red-500 border"
               : "border-gray-300 border"
           } rounded px-3 py-2`}
         >
           <select
-            id="businessType"
-            value={formData.business.type}
+            id="company_type"
+            value={formData.business.company_type}
             onChange={(e) =>
               setFormData({
                 ...formData,
-                business: { ...formData.business, type: e.target.value },
+                business: {
+                  ...formData.business,
+                  company_type: e.target.value,
+                },
               })
             }
             className="w-full bg-transparent outline-none"
@@ -225,8 +228,8 @@ const BusinessInfo = ({
             <option value="Other">Other</option>
           </select>
         </span>
-        {errors.businessType && (
-          <p className="text-red-500 text-xs mt-1">{errors.businessType}</p>
+        {errors.company_type && (
+          <p className="text-red-500 text-xs mt-1">{errors.company_type}</p>
         )}
       </div>
       <div>

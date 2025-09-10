@@ -79,6 +79,9 @@ import AdminLeadDetails from "./adminDashboard/pages/adminLeadDetails";
 import TenantCalculator from "./dashboard/pages/calculator";
 import Admincalculator from "./adminDashboard/pages/admincalculator";
 import AdminSupportTicket from "./adminDashboard/pages/adminSupport";
+import AdminRegion from "./adminDashboard/pages/adminRegion";
+import AdminCountryPricing from "./adminDashboard/pages/adminCountryPricing";
+import AdminKeyPairs from "./adminDashboard/pages/adminKeyPairs";
 
 function App() {
   const location = useLocation();
@@ -197,6 +200,11 @@ function App() {
           <Route path="/admin-dashboard/products" element={<AdminProducts />} />
           <Route path="/admin-dashboard/projects" element={<AdminProjects />} />
           <Route path="/admin-dashboard/leads" element={<AdminLeads />} />
+          <Route path="/admin-dashboard/regions" element={<AdminRegion />} />
+          <Route
+            path="/admin-dashboard/country-pricing"
+            element={<AdminCountryPricing />}
+          />
           <Route
             path="/admin-dashboard/leads/details"
             element={<AdminLeadDetails />}
@@ -208,6 +216,10 @@ function App() {
           <Route
             path="/admin-dashboard/instances"
             element={<AdminInstances />}
+          />
+          <Route
+            path="/admin-dashboard/key-pairs"
+            element={<AdminKeyPairs />}
           />
           <Route
             path="/admin-dashboard/instances/details"

@@ -33,6 +33,8 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/admin-dashboard/support-ticket": "Support Ticket",
     "/admin-dashboard/admin-users": "Admin Users",
     "/admin-dashboard/tax-configuration": "Tax Configuration",
+    "/admin-dashboard/country-pricing": "Country Pricing",
+    "/admin-dashboard/key-pairs": "Key Pairs",
   };
 
   // Update activeItem based on the current path
@@ -50,17 +52,30 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       path: "/admin-dashboard",
     },
     {
-      name: "Partners",
-      icon: partners,
-      activeIcon: activepartners,
-      path: "/admin-dashboard/partners",
-    },
-    {
-      name: "Clients",
+      name: "Tenants & Users",
       icon: clients,
       activeIcon: activeClients,
-      path: "/admin-dashboard/clients",
+      path: "/admin-dashboard/partners",
     },
+
+    // {
+    //   name: "Partners",
+    //   icon: partners,
+    //   activeIcon: activepartners,
+    //   path: "/admin-dashboard/partners",
+    // },
+    // {
+    //   name: "Clients",
+    //   icon: clients,
+    //   activeIcon: activeClients,
+    //   path: "/admin-dashboard/clients",
+    // },
+    // {
+    //   name: "Admin Users",
+    //   icon: modules,
+    //   activeIcon: activemodules,
+    //   path: "/admin-dashboard/admin-users",
+    // },
     // {
     //   name: "Modules",
     //   icon: modules,
@@ -74,12 +89,6 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       path: "/admin-dashboard/leads",
     },
     {
-      name: "Admin Users",
-      icon: modules,
-      activeIcon: activemodules,
-      path: "/admin-dashboard/admin-users",
-    },
-    {
       name: "Payment",
       icon: paymentHistory,
       activeIcon: activePaymentHistory,
@@ -90,6 +99,12 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       icon: modules,
       activeIcon: activemodules,
       path: "/admin-dashboard/products",
+    },
+    {
+      name: "Infra",
+      icon: modules,
+      activeIcon: activemodules,
+      path: "/admin-dashboard/key-pairs",
     },
     {
       name: "Purchased Modules",
@@ -110,10 +125,22 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       path: "/admin-dashboard/instances",
     },
     {
+      name: "Regions",
+      icon: modules,
+      activeIcon: activemodules,
+      path: "/admin-dashboard/regions",
+    },
+    {
       name: "Calculator",
       icon: modules,
       activeIcon: activemodules,
       path: "/admin-dashboard/calculator",
+    },
+    {
+      name: "Country Pricing",
+      icon: modules,
+      activeIcon: activemodules,
+      path: "/admin-dashboard/country-pricing",
     },
     {
       name: "Tax Configuration",

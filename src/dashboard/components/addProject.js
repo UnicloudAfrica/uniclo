@@ -5,9 +5,11 @@ import ToastUtils from "../../utils/toastUtil";
 
 const CreateProjectModal = ({ isOpen, onClose }) => {
   const { mutate: createProject, isPending } = useCreateProject();
+  // const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
   const [formData, setFormData] = useState({
     name: "",
     description: "",
+    default_region: "lagos-1",
     type: "vpc", // Default to vpc as per the image
   });
   const [errors, setErrors] = useState({});
@@ -17,6 +19,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
     if (!formData.name) {
       newErrors.name = "Project Name is required";
     }
+    // if (!formData.default_region) newErrors.default_region = "Default Region is required";
     // Description is nullable, so no required validation
     if (!formData.type) {
       newErrors.type = "Type is required";
@@ -111,6 +114,37 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                     </p>
                   )}
                 </div>
+                {/* <div>
+                  <label
+                    htmlFor="default_region"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Region<span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="default_region"
+                    value={formData.default_region}
+                    onChange={(e) => updateFormData("default_region", e.target.value)}
+                    className={`w-full input-field ${
+                      errors.default_region ? "border-red-500" : "border-gray-300"
+                    }`}
+                    disabled={isRegionsFetching}
+                  >
+                    <option value="" disabled>
+                      {isRegionsFetching
+                        ? "Loading regions..."
+                        : "Select a region"}
+                    </option>
+                    {regions?.map((region) => (
+                      <option key={region.code} value={region.code}>
+                        {region.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.default_region && (
+                    <p className="text-red-500 text-xs mt-1">{errors.default_region}</p>
+                  )}
+                </div> */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Type<span className="text-red-500">*</span>

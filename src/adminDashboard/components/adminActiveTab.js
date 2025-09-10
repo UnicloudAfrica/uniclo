@@ -18,10 +18,13 @@ const AdminActiveTab = () => {
     calculator: "Calculator",
     instances: "Instances",
     leads: "Leads",
+    regions: "Regions",
     "purchased-modules": "Purchased Modules",
     "tax-configuration": "Tax Configuration",
     "admin-users": "Admin Users",
     projects: "Admin Projects",
+    "key-pairs": "Key Pairs",
+    "country-pricing": "Country Pricing",
   };
 
   // Generate breadcrumb items from the current pathname

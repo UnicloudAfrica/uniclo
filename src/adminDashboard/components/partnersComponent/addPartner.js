@@ -1,6 +1,12 @@
+// src/components/AddPartner.jsx
 import React, { useState } from "react";
 import { Loader2, X } from "lucide-react";
-import { useFetchCountries, useFetchIndustries } from "../../../hooks/resource";
+import {
+  useFetchCountries,
+  useFetchIndustries,
+  useFetchStatesById,
+  useFetchCitiesById,
+} from "../../../hooks/resource";
 import { useCreateTenant } from "../../../hooks/adminHooks/tenantHooks";
 import CreateAccount from "../../pages/tenantComps/createAccount";
 import BusinessInfo from "../../pages/tenantComps/businessInfo";
@@ -19,14 +25,14 @@ const AddPartner = ({ isOpen, onClose }) => {
     force_password_reset: true,
     status: "",
     domain: "",
-    firstName: "",
-    lastName: "",
+    first_name: "",
+    last_name: "",
     verified: false,
-
+    verification_token: "",
     business: {
       email: "",
       name: "",
-      type: "",
+      type: "CAC_BASIC",
       company_type: "",
       industry: "",
       address: "",
@@ -49,11 +55,24 @@ const AddPartner = ({ isOpen, onClose }) => {
     },
   });
   const [errors, setErrors] = useState({});
+
   const { mutate: createTenant, isPending } = useCreateTenant();
   const { data: industries, isFetching: isIndustriesFetching } =
     useFetchIndustries();
   const { data: countries, isFetching: isCountriesFetching } =
     useFetchCountries();
+  const { data: states, isFetching: isStatesFetching } = useFetchStatesById(
+    formData.business.country_id,
+    {
+      enabled: !!formData.business.country_id,
+    }
+  );
+  const { data: cities, isFetching: isCitiesFetching } = useFetchCitiesById(
+    formData.business.state,
+    {
+      enabled: !!formData.business.state,
+    }
+  );
 
   const steps = [
     {
@@ -67,6 +86,7 @@ const AddPartner = ({ isOpen, onClose }) => {
           {...props}
           industries={industries}
           isIndustriesFetching={isIndustriesFetching}
+          setErrors={setErrors} // Pass setErrors
         />
       ),
       label: "Business Info",
@@ -78,13 +98,23 @@ const AddPartner = ({ isOpen, onClose }) => {
           {...props}
           countries={countries}
           isCountriesFetching={isCountriesFetching}
+          states={states}
+          isStatesFetching={isStatesFetching}
+          cities={cities}
+          isCitiesFetching={isCitiesFetching}
+          setErrors={setErrors} // Pass setErrors to BusinessAddress if needed
         />
       ),
       label: "Business Address",
       validate: BusinessAddress.validate,
     },
     {
-      component: UploadFiles,
+      component: (props) => (
+        <UploadFiles
+          {...props}
+          setErrors={setErrors} // Pass setErrors to UploadFiles if needed
+        />
+      ),
       label: "Upload Document",
       validate: UploadFiles.validate,
     },
@@ -92,7 +122,6 @@ const AddPartner = ({ isOpen, onClose }) => {
 
   const validateStep = () => {
     const stepErrors = steps[currentStep].validate(formData);
-    // console.log("Validation errors:", stepErrors);
     setErrors(stepErrors);
     return Object.keys(stepErrors).length === 0;
   };
@@ -101,6 +130,8 @@ const AddPartner = ({ isOpen, onClose }) => {
     if (validateStep()) {
       setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
       setErrors({});
+    } else {
+      ToastUtils.error("Please correct the errors in the form.");
     }
   };
 
@@ -112,8 +143,8 @@ const AddPartner = ({ isOpen, onClose }) => {
   const handleSubmit = () => {
     if (validateStep()) {
       const payload = {
-        first_name: formData.firstName,
-        last_name: formData.lastName,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
         phone: formData.business.phone,
         email: formData.email,
         role: formData.role,
@@ -121,9 +152,9 @@ const AddPartner = ({ isOpen, onClose }) => {
         password_confirmation: formData.confirmPassword,
         force_password_reset: formData.force_password_reset,
         status: formData.status,
-        domain: `${formData.domain}.unicloudafrica.com`, // Append .unicloudafrica.com
-        verified: formData.business.verified,
-
+        domain: `${formData.domain}.unicloudafrica.com`,
+        verified: formData.verified,
+        verification_token: formData.verification_token,
         business: {
           name: formData.business.name,
           company_type: formData.business.company_type,
@@ -149,6 +180,7 @@ const AddPartner = ({ isOpen, onClose }) => {
           verified: formData.business.verified,
         },
       };
+
       createTenant(payload, {
         onSuccess: () => {
           setFormData({
@@ -159,14 +191,14 @@ const AddPartner = ({ isOpen, onClose }) => {
             force_password_reset: true,
             status: "",
             domain: "",
-            firstName: "",
-            lastName: "",
+            first_name: "",
+            last_name: "",
             verified: false,
-
+            verification_token: "",
             business: {
               email: "",
               name: "",
-              type: "",
+              type: "CAC_BASIC",
               company_type: "",
               industry: "",
               address: "",
@@ -189,11 +221,15 @@ const AddPartner = ({ isOpen, onClose }) => {
             },
           });
           setCurrentStep(0);
-          ToastUtils.success("Tenant added");
+          // ToastUtils.success("Tenant added");
           onClose();
         },
-        onError: (error) => console.log(`Error: ${error.message}`),
+        onError: (error) => {
+          // ToastUtils.error(error.message || "Failed to add tenant");
+        },
       });
+    } else {
+      ToastUtils.error("Please correct the errors in the form.");
     }
   };
 
@@ -209,6 +245,7 @@ const AddPartner = ({ isOpen, onClose }) => {
               <button
                 onClick={onClose}
                 className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
+                disabled={isPending}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -220,12 +257,18 @@ const AddPartner = ({ isOpen, onClose }) => {
                 setCurrentStep={setCurrentStep}
                 validateStep={validateStep}
               />
-              {steps[currentStep].component({ formData, setFormData, errors })}
+              {steps[currentStep].component({
+                formData,
+                setFormData,
+                errors,
+                setErrors,
+              })}
             </div>
-            <div className="grid grid-cols-2 gap-3 items-center px-6 py-4 rounded-b-[24px]">
+            <div className="flex items-center justify-between px-6 py-4 border-t rounded-b-[24px]">
               <button
                 onClick={currentStep > 0 ? handleBack : onClose}
                 className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
+                disabled={isPending}
               >
                 {currentStep > 0 ? "Back" : "Close"}
               </button>

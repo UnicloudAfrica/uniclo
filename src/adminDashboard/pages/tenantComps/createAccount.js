@@ -1,3 +1,6 @@
+// src/pages/tenantComps/createAccount.jsx
+import React from "react";
+
 const CreateAccount = ({ formData, setFormData, errors }) => {
   const validate = () => {
     const newErrors = {};
@@ -11,11 +14,59 @@ const CreateAccount = ({ formData, setFormData, errors }) => {
     if (!formData.domain) newErrors.domain = "Domain is required";
     else if (!/^[a-zA-Z0-9-]+$/.test(formData.domain))
       newErrors.domain = "Domain must be alphanumeric with hyphens only";
+    if (!formData.first_name) newErrors.first_name = "First Name is required";
+    if (!formData.last_name) newErrors.last_name = "Last Name is required";
     return newErrors;
   };
 
   return (
     <div className="space-y-4 font-Outfit">
+      <div>
+        <label
+          htmlFor="first_name"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          First Name *
+        </label>
+        <input
+          id="first_name"
+          type="text"
+          value={formData.first_name}
+          onChange={(e) =>
+            setFormData({ ...formData, first_name: e.target.value })
+          }
+          placeholder="Enter first name"
+          className={`w-full input-field ${
+            errors.first_name ? "border-red-500" : "border-gray-300"
+          } rounded px-3 py-2`}
+        />
+        {errors.first_name && (
+          <p className="text-red-500 text-xs mt-1">{errors.first_name}</p>
+        )}
+      </div>
+      <div>
+        <label
+          htmlFor="last_name"
+          className="block text-sm font-medium text-gray-700 mb-2"
+        >
+          Last Name *
+        </label>
+        <input
+          id="last_name"
+          type="text"
+          value={formData.last_name}
+          onChange={(e) =>
+            setFormData({ ...formData, last_name: e.target.value })
+          }
+          placeholder="Enter last name"
+          className={`w-full input-field ${
+            errors.last_name ? "border-red-500" : "border-gray-300"
+          } rounded px-3 py-2`}
+        />
+        {errors.last_name && (
+          <p className="text-red-500 text-xs mt-1">{errors.last_name}</p>
+        )}
+      </div>
       <div>
         <label
           htmlFor="email"
@@ -159,6 +210,8 @@ CreateAccount.validate = (formData) => {
   if (!formData.domain) newErrors.domain = "Domain is required";
   else if (!/^[a-zA-Z0-9-]+$/.test(formData.domain))
     newErrors.domain = "Domain must be alphanumeric with hyphens only";
+  if (!formData.first_name) newErrors.first_name = "First Name is required";
+  if (!formData.last_name) newErrors.last_name = "Last Name is required";
   return newErrors;
 };
 

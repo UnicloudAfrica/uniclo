@@ -4,7 +4,7 @@ import silentApi from "../index/silent";
 
 // POST: verify a buisness
 const verifyBusiness = async (businessData) => {
-  const res = await api("POST", "/verify-business", businessData);
+  const res = await api("POST", "/business-verifications", businessData);
   //   if (!res.data) {
   //     throw new Error("Failed to verify business");
   //   }

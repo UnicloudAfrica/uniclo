@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import silentApi from "../../index/silent";
-import api from "../../index/api";
-// import silentApi from "../../index/admin/silent";
-// import api from "../../index/admin/api";
+import adminSilentApiforUser from "../../index/admin/silentadminforuser";
+import apiAdminforUser from "../../index/admin/apiAdminforUser";
 
 const fetchKeyPairs = async ({ project_id, region }) => {
   const params = new URLSearchParams();
@@ -10,7 +8,7 @@ const fetchKeyPairs = async ({ project_id, region }) => {
   if (region) params.append("region", region);
 
   const queryString = params.toString();
-  const res = await silentApi(
+  const res = await adminSilentApiforUser(
     "GET",
     `/business/key-pairs${queryString ? `?${queryString}` : ""}`
   );
@@ -19,25 +17,29 @@ const fetchKeyPairs = async ({ project_id, region }) => {
 };
 
 const fetchKeyPairById = async (id) => {
-  const res = await silentApi("GET", `/business/key-pairs/${id}`);
+  const res = await adminSilentApiforUser("GET", `/business/key-pairs/${id}`);
   if (!res.data) throw new Error(`Failed to fetch key pair with ID ${id}`);
   return res.data;
 };
 
 const createKeyPair = async (keyPairData) => {
-  const res = await api("POST", "/business/key-pairs", keyPairData);
+  const res = await apiAdminforUser("POST", "/business/key-pairs", keyPairData);
   if (!res.data) throw new Error("Failed to create key pair");
   return res.data;
 };
 
 const updateKeyPair = async ({ id, keyPairData }) => {
-  const res = await api("PATCH", `/business/key-pairs/${id}`, keyPairData);
+  const res = await apiAdminforUser(
+    "PATCH",
+    `/business/key-pairs/${id}`,
+    keyPairData
+  );
   if (!res.data) throw new Error(`Failed to update key pair with ID ${id}`);
   return res.data;
 };
 
 const deleteKeyPair = async (id) => {
-  const res = await api("DELETE", `/business/key-pairs/${id}`);
+  const res = await apiAdminforUser("DELETE", `/business/key-pairs/${id}`);
   if (!res.data) throw new Error(`Failed to delete key pair with ID ${id}`);
   return res.data;
 };

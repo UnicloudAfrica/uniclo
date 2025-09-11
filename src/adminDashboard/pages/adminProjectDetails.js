@@ -498,7 +498,7 @@ export default function AdminProjectDetails() {
                 {activeInfraTab}
               </h2>
               {ActiveInfraComponent && (
-                <ActiveInfraComponent projectId={projectDetails.id} />
+                <ActiveInfraComponent projectId={projectDetails.identifier} />
               )}
             </div>
           </div>
@@ -522,5 +522,3 @@ export default function AdminProjectDetails() {
     </>
   );
 }
-
-

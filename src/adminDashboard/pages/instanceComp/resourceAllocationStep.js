@@ -20,6 +20,20 @@ export const ResourceAllocationStep = ({
   crossConnects,
   isCrossConnectsFetching,
 }) => {
+  const formatMemory = (memoryMb) => {
+    if (memoryMb >= 1024) {
+      const gb = (memoryMb / 1024).toFixed(1);
+      return `${gb} GB`;
+    }
+    return `${memoryMb} MB`;
+  };
+
+  const formatIops = (iops) => {
+    if (iops >= 1000) {
+      return `${(iops / 1000).toFixed(1)}K`;
+    }
+    return iops.toString();
+  };
   return (
     <div className="space-y-4 w-full">
       <div>
@@ -83,7 +97,7 @@ export const ResourceAllocationStep = ({
               {computerInstances.map((instance) => (
                 <option key={instance.id} value={instance.id}>
                   {instance.name} (CPU: {instance.vcpus}, RAM:{" "}
-                  {instance.memory_gib}GB)
+                  {formatMemory(instance.memory_mb)})
                 </option>
               ))}
             </select>
@@ -138,6 +152,9 @@ export const ResourceAllocationStep = ({
               {ebsVolumes.map((volume) => (
                 <option key={volume.id} value={volume.id}>
                   {volume.name}
+                  GiB, State: {volume.state}, Health: {volume.health}, R:{" "}
+                  {formatIops(volume.read_iops_limit)}/W:{" "}
+                  {formatIops(volume.write_iops_limit)} IOPS)
                 </option>
               ))}
             </select>

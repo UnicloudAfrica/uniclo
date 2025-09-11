@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { Loader2, X } from "lucide-react";
-import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
 import ToastUtils from "../../../utils/toastUtil";
 import { useCreateTenantKeyPair } from "../../../hooks/keyPairsHook";
+import { useFetchGeneralRegions } from "../../../hooks/resource";
 
 const AddTenantKeyPair = ({ isOpen, onClose, projectId = "" }) => {
-  const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
+  const { isFetching: isRegionsFetching, data: regions } =
+    useFetchGeneralRegions();
   const { mutate, isPending } = useCreateTenantKeyPair();
   const [formData, setFormData] = useState({
     name: "",
@@ -111,8 +112,8 @@ const AddTenantKeyPair = ({ isOpen, onClose, projectId = "" }) => {
                   {isRegionsFetching ? "Loading regions..." : "Select a region"}
                 </option>
                 {regions?.map((region) => (
-                  <option key={region.code} value={region.code}>
-                    {region.name}
+                  <option key={region.region} value={region.region}>
+                    {region.label}
                   </option>
                 ))}
               </select>

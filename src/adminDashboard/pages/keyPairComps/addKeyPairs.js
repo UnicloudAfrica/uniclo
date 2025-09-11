@@ -18,9 +18,9 @@ const AddKeyPair = ({ isOpen, onClose, projectId = "" }) => {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = "Name is required";
     if (!formData.region) newErrors.region = "Region is required";
-    if (!formData.public_key.trim())
-      newErrors.public_key = "Public Key is required";
-    setErrors(newErrors);
+    // if (!formData.public_key.trim())
+    //   newErrors.public_key = "Public Key is required";
+    // setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 

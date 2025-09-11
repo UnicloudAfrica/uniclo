@@ -67,6 +67,15 @@ const fetchInstanceRequestById = async (id) => {
   return res.data;
 };
 
+// GET: Fetch instance lifecycle by ID
+const fetchInstanceLifecycleById = async (id) => {
+  const res = await silentApi("GET", `/instances/${id}/console`);
+  if (!res.data) {
+    throw new Error(`Failed to fetch instance life cycle with ID ${id}`);
+  }
+  return res.data;
+};
+
 // POST: Create a new instance request
 const createInstanceRequest = async (instanceData) => {
   const res = await api("POST", "/instances", instanceData);
@@ -116,6 +125,17 @@ export const useFetchInstanceRequestById = (id, options = {}) => {
   return useQuery({
     queryKey: ["admin-instanceRequest", id],
     queryFn: () => fetchInstanceRequestById(id),
+    enabled: !!id, // Only fetch if ID is provided
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+// Hook to fetch instance request by ID
+export const useFetchInstanceLifeCycleById = (id, options = {}) => {
+  return useQuery({
+    queryKey: ["admin-instance-lifecycle", id],
+    queryFn: () => fetchInstanceLifecycleById(id),
     enabled: !!id, // Only fetch if ID is provided
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,

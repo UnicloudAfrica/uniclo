@@ -46,6 +46,11 @@ const fetchProductCharges = async () => {
   const res = await silentApi("GET", "/product-charge");
   return res.data;
 };
+// **GET**: fetch product charge
+const fetchGeneralRegions = async () => {
+  const res = await silentApi("GET", "/business/cloud-regions");
+  return res.data;
+};
 // **GET**: fetch computer instances
 const fetchComputerInstances = async (currency = "USD") => {
   const res = await silentApi(
@@ -61,7 +66,10 @@ const fetchOsImages = async (currency = "USD") => {
 };
 // **GET**: fetch ebs volumes
 const fetchEbsVolumes = async (currency = "USD") => {
-  const res = await silentApi("GET", `/product-ebs-volume?country=${currency}`);
+  const res = await silentApi(
+    "GET",
+    `/product-volume-type?country=${currency}`
+  );
   return res.data;
 };
 // **GET**: fetch bandwidth
@@ -225,6 +233,16 @@ export const useFetchFloatingIPs = (currency = "USD", options = {}) => {
   return useQuery({
     queryKey: ["floating-ips", currency],
     queryFn: () => fetchFloatingIPs(currency),
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+// Hook to fetchregions
+export const useFetchGeneralRegions = (options = {}) => {
+  return useQuery({
+    queryKey: ["general-regions"],
+    queryFn: fetchGeneralRegions,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,

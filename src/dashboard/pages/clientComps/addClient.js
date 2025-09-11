@@ -245,7 +245,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
       zip_code: formData.zip_code,
       force_password_reset: formData.force_password_reset,
       business: {
-        business_name: formData.business_name,
+        name: formData.business_name,
         company_type: formData.company_type,
         industry: formData.industry,
         registration_number: formData.registration_number,

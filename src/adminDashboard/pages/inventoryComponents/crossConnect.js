@@ -1,46 +1,43 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
-import { useFetchOsImages } from "../../../hooks/adminHooks/os-imageHooks"; // Ensure this path is correct
-import AddOSImageModal from "./osSubs/addOs";
-import DeleteOS from "./osSubs/deleteOS";
-import EditOS from "./osSubs/editOs";
+import { useFetchCrossConnects } from "../../../hooks/adminHooks/crossConnectHooks";
+import EditCrossConnect from "./crossConnectSubs/editCC";
+import DeleteCrossConnect from "./crossConnectSubs/deleteCC";
+import AddCrossConnect from "./crossConnectSubs/addCC";
 
-const OSImages = () => {
-  const { data: osImages, isFetching: isOSimagesFetching } = useFetchOsImages();
-  const [isAddOSImageModalOpen, setIsAddOSImageModalOpen] = useState(false);
-  const [isEditOSImageModalOpen, setIsEditOSImageModalOpen] = useState(false);
-  const [isDeleteOSImageModalOpen, setIsDeleteOSImageModalOpen] =
+const CrossConnect = ({ selectedRegion }) => {
+  const { data: crossConnects, isFetching: isCrossConnectsFetching } =
+    useFetchCrossConnects(selectedRegion);
+  const [isAddCrossConnectModalOpen, setIsAddCrossConnectModalOpen] =
     useState(false);
-  const [selectedOSImage, setSelectedOSImage] = useState(null); // To pass data to modals
+  const [isEditCrossConnectModalOpen, setIsEditCrossConnectModalOpen] =
+    useState(false);
+  const [isDeleteCrossConnectModalOpen, setIsDeleteCrossConnectModalOpen] =
+    useState(false);
+  const [selectedCrossConnect, setSelectedCrossConnect] = useState(null);
 
-  const handleAddOSImage = () => {
-    setIsAddOSImageModalOpen(true);
+  const handleAddCrossConnect = () => {
+    setIsAddCrossConnectModalOpen(true);
   };
 
-  const handleEditOSImage = (image) => {
-    setSelectedOSImage(image);
-    setIsEditOSImageModalOpen(true);
+  const handleEditCrossConnect = (crossConnect) => {
+    setSelectedCrossConnect(crossConnect);
+    setIsEditCrossConnectModalOpen(true);
   };
 
-  const handleDeleteOSImage = (image) => {
-    setSelectedOSImage(image);
-    setIsDeleteOSImageModalOpen(true);
+  const handleDeleteCrossConnect = (crossConnect) => {
+    setSelectedCrossConnect(crossConnect);
+    setIsDeleteCrossConnectModalOpen(true);
   };
 
-  // Updated formatCurrency to use "USD" and 2 decimal places for standard currency display
   const formatCurrency = (amount, currency = "USD") => {
     if (amount === null || amount === undefined) return "N/A";
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: currency,
-      minimumFractionDigits: 2, // Standard for USD
-      maximumFractionDigits: 2, // Standard for USD
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(parseFloat(amount));
-  };
-
-  const formatPercentage = (value) => {
-    if (value === null || value === undefined) return "N/A";
-    return `${parseFloat(value).toFixed(2)}%`;
   };
 
   const formatDate = (dateString) => {
@@ -61,23 +58,23 @@ const OSImages = () => {
     }
   };
 
-  if (isOSimagesFetching) {
+  if (isCrossConnectsFetching) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
         <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
-        <p className="ml-2 text-gray-700">Loading OS images...</p>
+        <p className="ml-2 text-gray-700">Loading Cross Connects...</p>
       </div>
     );
   }
 
   return (
     <>
-      <div className="flex justify-end mb-4 w-full">
+      <div className="flex justify-end mb-4">
         <button
-          onClick={handleAddOSImage}
+          onClick={handleAddCrossConnect}
           className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
         >
-          Add OS Image
+          Add Cross Connect
         </button>
       </div>
 
@@ -93,7 +90,10 @@ const OSImages = () => {
                 Identifier
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                License Fee (USD)
+                Price
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                Created At
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                 Action
@@ -101,32 +101,34 @@ const OSImages = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-[#E8E6EA]">
-            {osImages && osImages.length > 0 ? (
-              osImages.map((image) => (
-                <tr key={image.id} className="hover:bg-gray-50">
+            {crossConnects && crossConnects.length > 0 ? (
+              crossConnects.map((cc) => (
+                <tr key={cc.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {image.name || "N/A"}
+                    {cc.name || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {image.identifier || "N/A"}
+                    {cc.identifier || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {/* Assuming 'price' from the data corresponds to 'license_fee' */}
-                    {formatCurrency(image.price)}
+                    {formatCurrency(cc.price)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                    {formatDate(cc.created_at)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
                     <div className="flex items-center space-x-3">
                       <button
-                        onClick={() => handleEditOSImage(image)}
+                        onClick={() => handleEditCrossConnect(cc)}
                         className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                        title="Edit OS Image"
+                        title="Edit Cross Connect"
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDeleteOSImage(image)}
+                        onClick={() => handleDeleteCrossConnect(cc)}
                         className="text-red-500 hover:text-red-700 transition-colors"
-                        title="Delete OS Image"
+                        title="Delete Cross Connect"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -137,10 +139,10 @@ const OSImages = () => {
             ) : (
               <tr>
                 <td
-                  colSpan="7"
+                  colSpan="5"
                   className="px-6 py-4 text-center text-sm text-gray-500"
                 >
-                  No OS images found.
+                  No Cross Connects found.
                 </td>
               </tr>
             )}
@@ -150,28 +152,28 @@ const OSImages = () => {
 
       {/* Mobile Cards */}
       <div className="md:hidden mt-6 space-y-4">
-        {osImages && osImages.length > 0 ? (
-          osImages.map((image) => (
+        {crossConnects && crossConnects.length > 0 ? (
+          crossConnects.map((cc) => (
             <div
-              key={image.id}
+              key={cc.id}
               className="bg-white rounded-[12px] shadow-sm p-4 border border-gray-200"
             >
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-base font-semibold text-gray-900">
-                  {image.name || "N/A"}
+                  {cc.name || "N/A"}
                 </h3>
                 <div className="flex items-center space-x-3">
                   <button
-                    onClick={() => handleEditOSImage(image)}
+                    onClick={() => handleEditCrossConnect(cc)}
                     className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                    title="Edit OS Image"
+                    title="Edit Cross Connect"
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDeleteOSImage(image)}
+                    onClick={() => handleDeleteCrossConnect(cc)}
                     className="text-red-500 hover:text-red-700 transition-colors"
-                    title="Delete OS Image"
+                    title="Delete Cross Connect"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -180,42 +182,43 @@ const OSImages = () => {
               <div className="space-y-1 text-sm text-gray-600">
                 <div className="flex justify-between">
                   <span className="font-medium">Identifier:</span>
-                  <span>{image.identifier || "N/A"}</span>
+                  <span>{cc.identifier || "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium">License Fee (USD):</span>
-                  {/* Assuming 'price' from the data corresponds to 'license_fee' */}
-                  <span>{formatCurrency(image.price)}</span>
+                  <span className="font-medium">Price:</span>
+                  <span>{formatCurrency(cc.price)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">Created At:</span>
+                  <span>{formatDate(cc.created_at)}</span>
                 </div>
               </div>
             </div>
           ))
         ) : (
           <div className="bg-white rounded-[12px] shadow-sm p-4 text-center text-gray-500">
-            No OS images found.
+            No Cross Connects found.
           </div>
         )}
       </div>
 
-      {/* Modals (place your Add/Edit/Delete OS Image modals here) */}
-      <AddOSImageModal
-        isOpen={isAddOSImageModalOpen}
-        onClose={() => setIsAddOSImageModalOpen(false)}
+      {/* Modals */}
+      <AddCrossConnect
+        isOpen={isAddCrossConnectModalOpen}
+        onClose={() => setIsAddCrossConnectModalOpen(false)}
       />
-
-      <EditOS
-        isOpen={isEditOSImageModalOpen}
-        onClose={() => setIsEditOSImageModalOpen(false)}
-        osImage={selectedOSImage}
+      <EditCrossConnect
+        isOpen={isEditCrossConnectModalOpen}
+        onClose={() => setIsEditCrossConnectModalOpen(false)}
+        crossConnect={selectedCrossConnect}
       />
-
-      <DeleteOS
-        isOpen={isDeleteOSImageModalOpen}
-        onClose={() => setIsDeleteOSImageModalOpen(false)}
-        osImage={selectedOSImage}
+      <DeleteCrossConnect
+        isOpen={isDeleteCrossConnectModalOpen}
+        onClose={() => setIsDeleteCrossConnectModalOpen(false)}
+        crossConnect={selectedCrossConnect}
       />
     </>
   );
 };
 
-export default OSImages;
+export default CrossConnect;

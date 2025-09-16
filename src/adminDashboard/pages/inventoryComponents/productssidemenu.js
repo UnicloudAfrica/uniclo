@@ -7,14 +7,14 @@ const ProductSideMenu = ({ activeTab, onTabChange }) => {
     { id: "ebs-volumes", name: "EBS Volumes" },
     { id: "vms", name: "VMs" },
     { id: "bandwidth", name: "Bandwidth" },
-    { id: "colocation ", name: "Colocation " },
-    { id: "ips", name: "Floating IPs " },
+    { id: "colocation", name: "Colocation" },
+    { id: "ips", name: "Floating IPs" },
     { id: "cross-connect", name: "Cross Connects" },
   ];
 
   return (
     <div className="w-full lg:w-[20%] bg-white rounded-lg shadow-sm p-4 lg:p-6 flex flex-col space-y-2 mb-6 lg:mb-0 lg:mr-6">
-      <h3 className="text-lg font-semibold text-gray-800 mb-2">Products</h3>
+      <h3 className="text-lg font-semibold text-gray-800 mb-2">Inventory</h3>
       <nav className="flex flex-col space-y-1">
         {tabs.map((tab) => (
           <button

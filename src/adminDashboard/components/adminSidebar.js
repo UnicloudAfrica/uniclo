@@ -35,6 +35,8 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/admin-dashboard/tax-configuration": "Tax Configuration",
     "/admin-dashboard/country-pricing": "Country Pricing",
     "/admin-dashboard/key-pairs": "Key Pairs",
+    "/admin-dashboard/pricing": "Pricing",
+    "/admin-dashboard/inventory": "Inventory",
   };
 
   // Update activeItem based on the current path
@@ -99,6 +101,18 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       icon: modules,
       activeIcon: activemodules,
       path: "/admin-dashboard/products",
+    },
+    {
+      name: "Inventory",
+      icon: modules,
+      activeIcon: activemodules,
+      path: "/admin-dashboard/inventory",
+    },
+    {
+      name: "Pricing",
+      icon: modules,
+      activeIcon: activemodules,
+      path: "/admin-dashboard/pricing",
     },
     {
       name: "Infra",

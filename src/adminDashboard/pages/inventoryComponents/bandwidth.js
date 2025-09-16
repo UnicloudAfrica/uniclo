@@ -5,16 +5,15 @@ import AddBandwidthModal from "./bandwidthSubs/addBandWidth";
 import EditBandwidthModal from "./bandwidthSubs/editBandwidth";
 import DeleteBandwidthModal from "./bandwidthSubs/deleteBandWidth";
 
-const BandWidth = () => {
+const BandWidth = ({ selectedRegion }) => {
   const { data: bandwidths, isFetching: isBandWidthsFetching } =
-    useFetchBandwidthProducts();
-
+    useFetchBandwidthProducts(selectedRegion);
   const [isAddBandwidthModalOpen, setIsAddBandwidthModalOpen] = useState(false);
   const [isEditBandwidthModalOpen, setIsEditBandwidthModalOpen] =
     useState(false);
   const [isDeleteBandwidthModalOpen, setIsDeleteBandwidthModalOpen] =
     useState(false);
-  const [selectedBandwidth, setSelectedBandwidth] = useState(null); // To pass data to modals
+  const [selectedBandwidth, setSelectedBandwidth] = useState(null);
 
   const handleAddBandwidth = () => {
     setIsAddBandwidthModalOpen(true);
@@ -30,7 +29,6 @@ const BandWidth = () => {
     setIsDeleteBandwidthModalOpen(true);
   };
 
-  // Function to format currency to USD
   const formatCurrency = (amount, currency = "USD") => {
     if (amount === null || amount === undefined) return "N/A";
     return new Intl.NumberFormat("en-US", {
@@ -41,11 +39,15 @@ const BandWidth = () => {
     }).format(parseFloat(amount));
   };
 
-  if (isBandWidthsFetching) {
+  if (isBandWidthsFetching || !selectedRegion) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
         <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
-        <p className="ml-2 text-gray-700">Loading bandwidth products...</p>
+        <p className="ml-2 text-gray-700">
+          {!selectedRegion
+            ? "Waiting for region selection..."
+            : "Loading bandwidth products..."}
+        </p>
       </div>
     );
   }
@@ -61,7 +63,6 @@ const BandWidth = () => {
         </button>
       </div>
 
-      {/* Desktop Table */}
       <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px] border border-gray-200">
         <table className="w-full">
           <thead className="bg-[#F5F5F5]">
@@ -127,7 +128,6 @@ const BandWidth = () => {
         </table>
       </div>
 
-      {/* Mobile Cards */}
       <div className="md:hidden mt-6 space-y-4">
         {bandwidths && bandwidths.length > 0 ? (
           bandwidths.map((bandwidth) => (
@@ -175,7 +175,6 @@ const BandWidth = () => {
         )}
       </div>
 
-      {/* Modals (place your Add/Edit/Delete Bandwidth modals here) */}
       <AddBandwidthModal
         isOpen={isAddBandwidthModalOpen}
         onClose={() => setIsAddBandwidthModalOpen(false)}
@@ -185,7 +184,6 @@ const BandWidth = () => {
         onClose={() => setIsEditBandwidthModalOpen(false)}
         bandwidth={selectedBandwidth}
       />
-
       <DeleteBandwidthModal
         isOpen={isDeleteBandwidthModalOpen}
         onClose={() => setIsDeleteBandwidthModalOpen(false)}

@@ -30,7 +30,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
     zip_code: "",
     force_password_reset: false,
     tenant_id: "",
-    business_name: "", // Reverted to business_name
+    business_name: "",
     company_type: "",
     industry: "",
     registration_number: "",
@@ -75,7 +75,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
         zip_code: "",
         force_password_reset: false,
         tenant_id: "",
-        business_name: "", // Reverted to business_name
+        business_name: "",
         company_type: "",
         industry: "",
         registration_number: "",
@@ -143,7 +143,6 @@ const AddClientModal = ({ isOpen, onClose }) => {
       newErrors.password = "Password must be at least 6 characters long";
     if (formData.password !== formData.password_confirmation)
       newErrors.password_confirmation = "Passwords do not match";
-    if (!formData.tenant_id) newErrors.tenant_id = "Tenant is required";
     if (!formData.country_id) newErrors.country_id = "Country is required";
     if (!formData.state_id) newErrors.state_id = "State is required";
     if (!formData.city_id && !formData.city.trim())
@@ -151,7 +150,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
     if (!formData.address.trim()) newErrors.address = "Address is required";
     if (!formData.zip_code.trim()) newErrors.zip_code = "Zip Code is required";
     if (!formData.business_name.trim())
-      newErrors.business_name = "Business Name is required"; // Reverted to business_name
+      newErrors.business_name = "Business Name is required";
     if (!formData.company_type.trim())
       newErrors.company_type = "Business Type is required";
     if (!formData.registration_number.trim())
@@ -161,7 +160,6 @@ const AddClientModal = ({ isOpen, onClose }) => {
     if (formData.website.trim() && !/^https?:\/\/\S+/.test(formData.website))
       newErrors.website = "Invalid website URL";
 
-    // Log errors for debugging
     if (Object.keys(newErrors).length > 0) {
       console.log("Validation errors:", newErrors);
     }
@@ -238,7 +236,6 @@ const AddClientModal = ({ isOpen, onClose }) => {
       role: "client",
       password: formData.password,
       password_confirmation: formData.password_confirmation,
-      tenant_id: String(formData.tenant_id),
       verified: formData.verified,
       country_id: parseInt(formData.country_id),
       country: formData.country,
@@ -248,7 +245,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
       zip_code: formData.zip_code,
       force_password_reset: formData.force_password_reset,
       business: {
-        name: formData.business_name, // Map business_name to name in payload
+        name: formData.business_name,
         company_type: formData.company_type,
         industry: formData.industry,
         registration_number: formData.registration_number,
@@ -258,15 +255,22 @@ const AddClientModal = ({ isOpen, onClose }) => {
       verification_token: formData.verification_token,
     };
 
+    // Only include tenant_id in payload if it has a value
+    if (formData.tenant_id) {
+      payload.tenant_id = String(formData.tenant_id);
+    }
+
+    console.log("Submitting Client Payload:", payload);
+
     createClient(payload, {
       onSuccess: () => {
-        // ToastUtils.success("Client added successfully!");
+        ToastUtils.success("Client added successfully!");
         onClose();
       },
       onError: (err) => {
         const errorMsg =
           err.response?.data?.message || err.message || "Failed to add client.";
-        // ToastUtils.error(errorMsg);
+        ToastUtils.error(errorMsg);
         if (err.response?.data?.errors) {
           setErrors((prev) => ({ ...prev, ...err.response.data.errors }));
         }
@@ -299,7 +303,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
                   htmlFor="tenant_id"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Tenant<span className="text-red-500">*</span>
+                  Tenant (Optional)
                 </label>
                 <select
                   id="tenant_id"
@@ -315,7 +319,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
                   <option value="">
                     {isTenantsFetching
                       ? "Loading tenants..."
-                      : "Select a tenant"}
+                      : "Select a tenant (optional)"}
                   </option>
                   {tenants?.map((tenant) => (
                     <option key={tenant.id} value={tenant.id}>
@@ -738,7 +742,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
             <button
               onClick={handleSubmit}
               disabled={isPending || !formData.verification_token}
-              className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Add Client
               {isPending && (

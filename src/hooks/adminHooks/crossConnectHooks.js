@@ -2,8 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
 
-const fetchCrossConnects = async () => {
-  const res = await silentApi("GET", "/product-cross-connect");
+const fetchCrossConnects = async (region) => {
+  const res = await silentApi("GET", `/product-cross-connect?region=${region}`);
   if (!res.data) {
     throw new Error("Failed to fetch cross-connect products");
   }
@@ -42,12 +42,13 @@ const deleteCrossConnect = async (id) => {
   return res.data;
 };
 
-export const useFetchCrossConnects = (options = {}) => {
+export const useFetchCrossConnects = (region, options = {}) => {
   return useQuery({
-    queryKey: ["crossConnects"],
-    queryFn: fetchCrossConnects,
+    queryKey: ["crossConnects", region],
+    queryFn: () => fetchCrossConnects(region),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
+    enabled: !!region,
     ...options,
   });
 };

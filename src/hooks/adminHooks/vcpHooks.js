@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import silentApi from "../../index/admin/silent";
-import api from "../../index/admin/api";
+import adminSilentApiforUser from "../../index/admin/silentadminforuser";
+import apiAdminforUser from "../../index/admin/apiAdminforUser";
 
 const fetchVpcs = async ({ project_id, region }) => {
   const params = new URLSearchParams();
@@ -8,36 +8,36 @@ const fetchVpcs = async ({ project_id, region }) => {
   if (region) params.append("region", region);
 
   const queryString = params.toString();
-  const res = await silentApi(
+  const res = await adminSilentApiforUser(
     "GET",
-    `/vpcs${queryString ? `?${queryString}` : ""}`
+    `/business/vpcs${queryString ? `?${queryString}` : ""}`
   );
-  if (!res.data) throw new Error("Failed to fetch VPCs");
-  return res.data;
+  if (!res) throw new Error("Failed to fetch VPCs");
+  return res;
 };
 
 const fetchVpcById = async (id) => {
-  const res = await silentApi("GET", `/vpcs/${id}`);
+  const res = await adminSilentApiforUser("GET", `/business/vpcs/${id}`);
   if (!res.data) throw new Error(`Failed to fetch VPC with ID ${id}`);
   return res.data;
 };
 
 const createVpc = async (vpcData) => {
-  const res = await api("POST", "/vpcs", vpcData);
-  if (!res.data) throw new Error("Failed to create VPC");
-  return res.data;
+  const res = await apiAdminforUser("POST", "/business/vpcs", vpcData);
+  if (!res) throw new Error("Failed to create VPC");
+  return res;
 };
 
 const updateVpc = async ({ id, vpcData }) => {
-  const res = await api("PATCH", `/vpcs/${id}`, vpcData);
+  const res = await apiAdminforUser("PATCH", `/business/vpcs/${id}`, vpcData);
   if (!res.data) throw new Error(`Failed to update VPC with ID ${id}`);
   return res.data;
 };
 
 const deleteVpc = async (id) => {
-  const res = await api("DELETE", `/vpcs/${id}`);
-  if (!res.data) throw new Error(`Failed to delete VPC with ID ${id}`);
-  return res.data;
+  const res = await apiAdminforUser("DELETE", `/business/vpcs/${id}`);
+  if (!res) throw new Error(`Failed to delete VPC with ID ${id}`);
+  return res;
 };
 
 export const useFetchVpcs = (projectId, region, options = {}) => {

@@ -18,7 +18,7 @@ import useAuthRedirect from "../../utils/adminAuthRedirect";
 import { useFetchTenants } from "../../hooks/adminHooks/tenantHooks";
 import { useNavigate } from "react-router-dom";
 import DeleteTenantModal from "./tenantComps/deleteTenant";
-import ProductSideMenu from "./productsComponents/productssidemenu";
+import ProductSideMenu from "./inventoryComponents/productssidemenu";
 import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
 
 const encodeId = (id) => encodeURIComponent(btoa(id));

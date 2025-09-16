@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import silentApi from "../../index/admin/silent";
-import api from "../../index/admin/api";
+import adminSilentApiforUser from "../../index/admin/silentadminforuser";
+import apiAdminforUser from "../../index/admin/apiAdminforUser";
 
 const fetchSecurityGroups = async ({ project_id, region }) => {
   const params = new URLSearchParams();
@@ -8,36 +8,50 @@ const fetchSecurityGroups = async ({ project_id, region }) => {
   if (region) params.append("region", region);
 
   const queryString = params.toString();
-  const res = await silentApi(
+  const res = await adminSilentApiforUser(
     "GET",
-    `/security-groups${queryString ? `?${queryString}` : ""}`
+    `/business/security-groups${queryString ? `?${queryString}` : ""}`
   );
   if (!res.data) throw new Error("Failed to fetch security groups");
   return res.data;
 };
 
 const fetchSecurityGroupById = async (id) => {
-  const res = await silentApi("GET", `/security-groups/${id}`);
+  const res = await adminSilentApiforUser(
+    "GET",
+    `/business/security-groups/${id}`
+  );
   if (!res.data)
     throw new Error(`Failed to fetch security group with ID ${id}`);
   return res.data;
 };
 
 const createSecurityGroup = async (securityGroupData) => {
-  const res = await api("POST", "/security-groups", securityGroupData);
+  const res = await apiAdminforUser(
+    "POST",
+    "/business/security-groups",
+    securityGroupData
+  );
   if (!res.data) throw new Error("Failed to create security group");
   return res.data;
 };
 
 const updateSecurityGroup = async ({ id, securityGroupData }) => {
-  const res = await api("PATCH", `/security-groups/${id}`, securityGroupData);
+  const res = await apiAdminforUser(
+    "PATCH",
+    `/business/security-groups/${id}`,
+    securityGroupData
+  );
   if (!res.data)
     throw new Error(`Failed to update security group with ID ${id}`);
   return res.data;
 };
 
 const deleteSecurityGroup = async (id) => {
-  const res = await api("DELETE", `/security-groups/${id}`);
+  const res = await apiAdminforUser(
+    "DELETE",
+    `/business/security-groups/${id}`
+  );
   if (!res.data)
     throw new Error(`Failed to delete security group with ID ${id}`);
   return res.data;

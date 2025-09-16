@@ -35,10 +35,10 @@ const adminSilentApiforUser = async (method, uri, body = null) => {
       return res;
     } else {
       // Handle 401 silently by clearing the token
-      if (response.status === 401) {
-        clearToken(); // Clear token without redirecting or showing toasts
-        throw new Error("Unauthorized");
-      }
+      // if (response.status === 401) {
+      //   clearToken(); // Clear token without redirecting or showing toasts
+      //   throw new Error("Unauthorized");
+      // }
 
       const errorMessage =
         res?.data?.error || res?.error || res?.message || "An error occurred";

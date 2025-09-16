@@ -2,16 +2,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
 
-// GET: Fetch all OS images
-const fetchOsImages = async () => {
-  const res = await silentApi("GET", "/product-os-image");
+const fetchOsImages = async (region) => {
+  const res = await silentApi("GET", `/product-os-image?region=${region}`);
   if (!res.data) {
     throw new Error("Failed to fetch OS images");
   }
   return res.data;
 };
 
-// GET: Fetch OS image by ID
 const fetchOsImageById = async (id) => {
   const res = await silentApi("GET", `/product-os-image/${id}`);
   if (!res.data) {
@@ -20,7 +18,6 @@ const fetchOsImageById = async (id) => {
   return res.data;
 };
 
-// POST: Create a new OS image
 const createOsImage = async (imageData) => {
   const res = await api("POST", "/product-os-image", imageData);
   if (!res.data) {
@@ -29,7 +26,6 @@ const createOsImage = async (imageData) => {
   return res.data;
 };
 
-// PATCH: Update an OS image
 const updateOsImage = async ({ id, imageData }) => {
   const res = await api("PATCH", `/product-os-image/${id}`, imageData);
   if (!res.data) {
@@ -38,7 +34,6 @@ const updateOsImage = async ({ id, imageData }) => {
   return res.data;
 };
 
-// DELETE: Delete an OS image
 const deleteOsImage = async (id) => {
   const res = await api("DELETE", `/product-os-image/${id}`);
   if (!res.data) {
@@ -47,36 +42,33 @@ const deleteOsImage = async (id) => {
   return res.data;
 };
 
-// Hook to fetch all OS images
-export const useFetchOsImages = (options = {}) => {
+export const useFetchOsImages = (region, options = {}) => {
   return useQuery({
-    queryKey: ["osImages"],
-    queryFn: fetchOsImages,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    queryKey: ["osImages", region],
+    queryFn: () => fetchOsImages(region),
+    staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
+    enabled: !!region,
     ...options,
   });
 };
 
-// Hook to fetch OS image by ID
 export const useFetchOsImageById = (id, options = {}) => {
   return useQuery({
     queryKey: ["osImage", id],
     queryFn: () => fetchOsImageById(id),
-    enabled: !!id, // Only fetch if ID is provided
+    enabled: !!id,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
   });
 };
 
-// Hook to create an OS image
 export const useCreateOsImage = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createOsImage,
     onSuccess: () => {
-      // Invalidate osImages query to refresh the list
       queryClient.invalidateQueries(["osImages"]);
     },
     onError: (error) => {
@@ -85,13 +77,11 @@ export const useCreateOsImage = () => {
   });
 };
 
-// Hook to update an OS image
 export const useUpdateOsImage = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateOsImage,
     onSuccess: (data, variables) => {
-      // Invalidate both osImages list and specific osImage query
       queryClient.invalidateQueries(["osImages"]);
       queryClient.invalidateQueries(["osImage", variables.id]);
     },
@@ -101,13 +91,11 @@ export const useUpdateOsImage = () => {
   });
 };
 
-// Hook to delete an OS image
 export const useDeleteOsImage = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteOsImage,
     onSuccess: () => {
-      // Invalidate osImages query to refresh the list
       queryClient.invalidateQueries(["osImages"]);
     },
     onError: (error) => {

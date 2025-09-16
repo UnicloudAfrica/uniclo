@@ -1,40 +1,33 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Loader2, Pencil } from "lucide-react";
-
 import ToastUtils from "../../../utils/toastUtil";
 import {
   useFetchColocationSettings,
   useCreateColocationSettings,
 } from "../../../hooks/adminHooks/colocationHooks";
 
-const ColocationSetting = () => {
+const ColocationSetting = ({ selectedRegion }) => {
   const {
     data: fetchedSetting,
     isFetching: isSettingFetching,
     error: fetchError,
-  } = useFetchColocationSettings();
-  const {
-    mutate: updateSetting,
-    isPending: isUpdating,
-    isError: isUpdateError,
-    error: updateError,
-  } = useCreateColocationSettings();
+  } = useFetchColocationSettings(selectedRegion);
+  const { mutate: updateSetting, isPending: isUpdating } =
+    useCreateColocationSettings();
   const [percentage, setPercentage] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [errors, setErrors] = useState({});
 
-  // Initialize form data when fetchedSetting is available
   useEffect(() => {
     if (fetchedSetting) {
-      setPercentage(fetchedSetting.percentage.toString());
+      setPercentage(fetchedSetting.percentage?.toString());
     }
   }, [fetchedSetting]);
 
-  // Reset state when editing mode is toggled
   useEffect(() => {
     if (!isEditing && fetchedSetting) {
-      setPercentage(fetchedSetting.percentage.toString());
-      setErrors({}); // Clear errors
+      setPercentage(fetchedSetting.percentage?.toString());
+      setErrors({});
     }
   }, [isEditing, fetchedSetting]);
 
@@ -64,19 +57,10 @@ const ColocationSetting = () => {
         {
           onSuccess: () => {
             ToastUtils.success("Colocation percentage updated successfully!");
-            setIsEditing(false); // Exit editing mode
-          },
-          onError: (err) => {
-            // console.error("Failed to update colocation setting:", err);
-            // ToastUtils.error(
-            //   err.message ||
-            //     "Failed to update colocation percentage. Please try again."
-            // );
+            setIsEditing(false);
           },
         }
       );
-    } else {
-      //   ToastUtils.error("Cannot update: Colocation setting ID is missing.");
     }
   };
 
@@ -102,7 +86,7 @@ const ColocationSetting = () => {
   }
 
   return (
-    <div className=" mt-4 mb-8 font-Outfit">
+    <div className="mt-4 mb-8 font-Outfit">
       <h2 className="text-base font-medium text-[#575758] mb-4">
         Colocation Percentage
       </h2>
@@ -132,7 +116,6 @@ const ColocationSetting = () => {
               : "N/A"}
           </p>
         )}
-
         <div className="flex gap-2">
           {isEditing ? (
             <>

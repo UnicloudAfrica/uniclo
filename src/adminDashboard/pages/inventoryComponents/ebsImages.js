@@ -1,33 +1,30 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
-import { useFetchCrossConnects } from "../../../hooks/adminHooks/crossConnectHooks";
-import EditCrossConnect from "./crossConnectSubs/editCC";
-import DeleteCrossConnect from "./crossConnectSubs/deleteCC";
-import AddCrossConnect from "./crossConnectSubs/addCC";
+import { useFetchEbsVolumes } from "../../../hooks/adminHooks/ebsHooks";
+import AddEBSModal from "./ebsSubs/addEbs";
+import EditEBSModal from "./ebsSubs/editEbs";
+import DeleteEBSModal from "./ebsSubs/deleteEbs";
 
-const CrossConnect = () => {
-  const { data: crossConnects, isFetching: isCrossConnectsFetching } =
-    useFetchCrossConnects();
-  const [isAddCrossConnectModalOpen, setIsAddCrossConnectModalOpen] =
-    useState(false);
-  const [isEditCrossConnectModalOpen, setIsEditCrossConnectModalOpen] =
-    useState(false);
-  const [isDeleteCrossConnectModalOpen, setIsDeleteCrossConnectModalOpen] =
-    useState(false);
-  const [selectedCrossConnect, setSelectedCrossConnect] = useState(null);
+const EBSImages = ({ selectedRegion }) => {
+  const { data: ebsVolumes, isFetching: isEbsVolumesFetching } =
+    useFetchEbsVolumes(selectedRegion);
+  const [isAddEBSModalOpen, setIsAddEBSModalOpen] = useState(false);
+  const [isEditEBSModalOpen, setIsEditEBSModalOpen] = useState(false);
+  const [isDeleteEBSModalOpen, setIsDeleteEBSModalOpen] = useState(false);
+  const [selectedEBSVolume, setSelectedEBSVolume] = useState(null);
 
-  const handleAddCrossConnect = () => {
-    setIsAddCrossConnectModalOpen(true);
+  const handleAddEBSVolume = () => {
+    setIsAddEBSModalOpen(true);
   };
 
-  const handleEditCrossConnect = (crossConnect) => {
-    setSelectedCrossConnect(crossConnect);
-    setIsEditCrossConnectModalOpen(true);
+  const handleEditEBSVolume = (volume) => {
+    setSelectedEBSVolume(volume);
+    setIsEditEBSModalOpen(true);
   };
 
-  const handleDeleteCrossConnect = (crossConnect) => {
-    setSelectedCrossConnect(crossConnect);
-    setIsDeleteCrossConnectModalOpen(true);
+  const handleDeleteEBSVolume = (volume) => {
+    setSelectedEBSVolume(volume);
+    setIsDeleteEBSModalOpen(true);
   };
 
   const formatCurrency = (amount, currency = "USD") => {
@@ -58,11 +55,15 @@ const CrossConnect = () => {
     }
   };
 
-  if (isCrossConnectsFetching) {
+  if (isEbsVolumesFetching || !selectedRegion) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
         <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
-        <p className="ml-2 text-gray-700">Loading Cross Connects...</p>
+        <p className="ml-2 text-gray-700">
+          {!selectedRegion
+            ? "Waiting for region selection..."
+            : "Loading EBS volumes..."}
+        </p>
       </div>
     );
   }
@@ -71,14 +72,13 @@ const CrossConnect = () => {
     <>
       <div className="flex justify-end mb-4">
         <button
-          onClick={handleAddCrossConnect}
+          onClick={handleAddEBSVolume}
           className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
         >
-          Add Cross Connect
+          Add EBS Volume
         </button>
       </div>
 
-      {/* Desktop Table */}
       <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px] border border-gray-200">
         <table className="w-full">
           <thead className="bg-[#F5F5F5]">
@@ -90,7 +90,16 @@ const CrossConnect = () => {
                 Identifier
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                Media Type
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                 Price
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                IOPS Read
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                IOPS Write
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                 Created At
@@ -101,34 +110,43 @@ const CrossConnect = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-[#E8E6EA]">
-            {crossConnects && crossConnects.length > 0 ? (
-              crossConnects.map((cc) => (
-                <tr key={cc.id} className="hover:bg-gray-50">
+            {ebsVolumes && ebsVolumes.length > 0 ? (
+              ebsVolumes.map((volume) => (
+                <tr key={volume.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {cc.name || "N/A"}
+                    {volume.name || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {cc.identifier || "N/A"}
+                    {volume.identifier || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatCurrency(cc.price)}
+                    {volume.media_type || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatDate(cc.created_at)}
+                    {formatCurrency(volume.price)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                    {volume.iops_read || "N/A"}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                    {volume.iops_write || "N/A"}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                    {formatDate(volume.created_at)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
                     <div className="flex items-center space-x-3">
                       <button
-                        onClick={() => handleEditCrossConnect(cc)}
+                        onClick={() => handleEditEBSVolume(volume)}
                         className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                        title="Edit Cross Connect"
+                        title="Edit EBS Volume"
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDeleteCrossConnect(cc)}
+                        onClick={() => handleDeleteEBSVolume(volume)}
                         className="text-red-500 hover:text-red-700 transition-colors"
-                        title="Delete Cross Connect"
+                        title="Delete EBS Volume"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -139,10 +157,10 @@ const CrossConnect = () => {
             ) : (
               <tr>
                 <td
-                  colSpan="5"
+                  colSpan="8"
                   className="px-6 py-4 text-center text-sm text-gray-500"
                 >
-                  No Cross Connects found.
+                  No EBS volumes found.
                 </td>
               </tr>
             )}
@@ -150,30 +168,29 @@ const CrossConnect = () => {
         </table>
       </div>
 
-      {/* Mobile Cards */}
       <div className="md:hidden mt-6 space-y-4">
-        {crossConnects && crossConnects.length > 0 ? (
-          crossConnects.map((cc) => (
+        {ebsVolumes && ebsVolumes.length > 0 ? (
+          ebsVolumes.map((volume) => (
             <div
-              key={cc.id}
+              key={volume.id}
               className="bg-white rounded-[12px] shadow-sm p-4 border border-gray-200"
             >
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-base font-semibold text-gray-900">
-                  {cc.name || "N/A"}
+                  {volume.name || "N/A"}
                 </h3>
                 <div className="flex items-center space-x-3">
                   <button
-                    onClick={() => handleEditCrossConnect(cc)}
+                    onClick={() => handleEditEBSVolume(volume)}
                     className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                    title="Edit Cross Connect"
+                    title="Edit EBS Volume"
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDeleteCrossConnect(cc)}
+                    onClick={() => handleDeleteEBSVolume(volume)}
                     className="text-red-500 hover:text-red-700 transition-colors"
-                    title="Delete Cross Connect"
+                    title="Delete EBS Volume"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -182,43 +199,54 @@ const CrossConnect = () => {
               <div className="space-y-1 text-sm text-gray-600">
                 <div className="flex justify-between">
                   <span className="font-medium">Identifier:</span>
-                  <span>{cc.identifier || "N/A"}</span>
+                  <span>{volume.identifier || "N/A"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">Media Type:</span>
+                  <span>{volume.media_type || "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">Price:</span>
-                  <span>{formatCurrency(cc.price)}</span>
+                  <span>{formatCurrency(volume.price)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">IOPS Read:</span>
+                  <span>{volume.iops_read || "N/A"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">IOPS Write:</span>
+                  <span>{volume.iops_write || "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">Created At:</span>
-                  <span>{formatDate(cc.created_at)}</span>
+                  <span>{formatDate(volume.created_at)}</span>
                 </div>
               </div>
             </div>
           ))
         ) : (
           <div className="bg-white rounded-[12px] shadow-sm p-4 text-center text-gray-500">
-            No Cross Connects found.
+            No EBS volumes found.
           </div>
         )}
       </div>
 
-      {/* Modals */}
-      <AddCrossConnect
-        isOpen={isAddCrossConnectModalOpen}
-        onClose={() => setIsAddCrossConnectModalOpen(false)}
+      <AddEBSModal
+        isOpen={isAddEBSModalOpen}
+        onClose={() => setIsAddEBSModalOpen(false)}
       />
-      <EditCrossConnect
-        isOpen={isEditCrossConnectModalOpen}
-        onClose={() => setIsEditCrossConnectModalOpen(false)}
-        crossConnect={selectedCrossConnect}
+      <EditEBSModal
+        isOpen={isEditEBSModalOpen}
+        onClose={() => setIsEditEBSModalOpen(false)}
+        ebsVolume={selectedEBSVolume}
       />
-      <DeleteCrossConnect
-        isOpen={isDeleteCrossConnectModalOpen}
-        onClose={() => setIsDeleteCrossConnectModalOpen(false)}
-        crossConnect={selectedCrossConnect}
+      <DeleteEBSModal
+        isOpen={isDeleteEBSModalOpen}
+        onClose={() => setIsDeleteEBSModalOpen(false)}
+        ebsVolume={selectedEBSVolume}
       />
     </>
   );
 };
 
-export default CrossConnect;
+export default EBSImages;

@@ -1,29 +1,31 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
-import { useFetchFloatingIPs } from "../../../hooks/adminHooks/floatingIPHooks";
-import AddFloatingIP from "./ipSubs/addFloatingIP";
-import EditFloatingIP from "./ipSubs/editFloatingIP";
-import DeleteFloatingIP from "./ipSubs/deleteFloatingIP";
+import { useFetchOsImages } from "../../../hooks/adminHooks/os-imageHooks";
+import AddOSImageModal from "./osSubs/addOs";
+import DeleteOS from "./osSubs/deleteOS";
+import EditOS from "./osSubs/editOs";
 
-const FloatingIP = () => {
-  const { data: ips, isFetching: isIPsFetching } = useFetchFloatingIPs();
-  const [isAddIPsModalOpen, setIsAddIPsModalOpen] = useState(false);
-  const [isEditIPsModalOpen, setIsEditIPsModalOpen] = useState(false);
-  const [isDeleteIPsModalOpen, setIsDeleteIPsModalOpen] = useState(false);
-  const [selectedIPs, setSelectedIPs] = useState(null);
+const OSImages = ({ selectedRegion }) => {
+  const { data: osImages, isFetching: isOSimagesFetching } =
+    useFetchOsImages(selectedRegion);
+  const [isAddOSImageModalOpen, setIsAddOSImageModalOpen] = useState(false);
+  const [isEditOSImageModalOpen, setIsEditOSImageModalOpen] = useState(false);
+  const [isDeleteOSImageModalOpen, setIsDeleteOSImageModalOpen] =
+    useState(false);
+  const [selectedOSImage, setSelectedOSImage] = useState(null);
 
-  const handleAddIPs = () => {
-    setIsAddIPsModalOpen(true);
+  const handleAddOSImage = () => {
+    setIsAddOSImageModalOpen(true);
   };
 
-  const handleEditIPs = (ip) => {
-    setSelectedIPs(ip);
-    setIsEditIPsModalOpen(true);
+  const handleEditOSImage = (image) => {
+    setSelectedOSImage(image);
+    setIsEditOSImageModalOpen(true);
   };
 
-  const handleDeleteIPs = (ip) => {
-    setSelectedIPs(ip);
-    setIsDeleteIPsModalOpen(true);
+  const handleDeleteOSImage = (image) => {
+    setSelectedOSImage(image);
+    setIsDeleteOSImageModalOpen(true);
   };
 
   const formatCurrency = (amount, currency = "USD") => {
@@ -34,6 +36,11 @@ const FloatingIP = () => {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(parseFloat(amount));
+  };
+
+  const formatPercentage = (value) => {
+    if (value === null || value === undefined) return "N/A";
+    return `${parseFloat(value).toFixed(2)}%`;
   };
 
   const formatDate = (dateString) => {
@@ -54,27 +61,26 @@ const FloatingIP = () => {
     }
   };
 
-  if (isIPsFetching) {
+  if (isOSimagesFetching) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
         <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
-        <p className="ml-2 text-gray-700">Loading Floating IPs...</p>
+        <p className="ml-2 text-gray-700">Loading OS images...</p>
       </div>
     );
   }
 
   return (
     <>
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end mb-4 w-full">
         <button
-          onClick={handleAddIPs}
+          onClick={handleAddOSImage}
           className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
         >
-          Add Floating IP
+          Add OS Image
         </button>
       </div>
 
-      {/* Desktop Table */}
       <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px] border border-gray-200">
         <table className="w-full">
           <thead className="bg-[#F5F5F5]">
@@ -86,16 +92,7 @@ const FloatingIP = () => {
                 Identifier
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Price
-              </th>
-              {/* <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Local Price
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Local Currency
-              </th> */}
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Created At
+                License Fee (USD)
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                 Action
@@ -103,40 +100,31 @@ const FloatingIP = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-[#E8E6EA]">
-            {ips && ips.length > 0 ? (
-              ips.map((ip) => (
-                <tr key={ip.id} className="hover:bg-gray-50">
+            {osImages && osImages.length > 0 ? (
+              osImages.map((image) => (
+                <tr key={image.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {ip.name || "N/A"}
+                    {image.name || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {ip.identifier || "N/A"}
+                    {image.identifier || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatCurrency(ip.price)}
-                  </td>
-                  {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatCurrency(ip.local_price, ip.local_currency)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {ip.local_currency || "N/A"}
-                  </td> */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatDate(ip.created_at)}
+                    {formatCurrency(image.price)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
                     <div className="flex items-center space-x-3">
                       <button
-                        onClick={() => handleEditIPs(ip)}
+                        onClick={() => handleEditOSImage(image)}
                         className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                        title="Edit Floating IP"
+                        title="Edit OS Image"
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDeleteIPs(ip)}
+                        onClick={() => handleDeleteOSImage(image)}
                         className="text-red-500 hover:text-red-700 transition-colors"
-                        title="Delete Floating IP"
+                        title="Delete OS Image"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -150,7 +138,7 @@ const FloatingIP = () => {
                   colSpan="7"
                   className="px-6 py-4 text-center text-sm text-gray-500"
                 >
-                  No Floating IPs found.
+                  No OS images found.
                 </td>
               </tr>
             )}
@@ -158,30 +146,29 @@ const FloatingIP = () => {
         </table>
       </div>
 
-      {/* Mobile Cards */}
       <div className="md:hidden mt-6 space-y-4">
-        {ips && ips.length > 0 ? (
-          ips.map((ip) => (
+        {osImages && osImages.length > 0 ? (
+          osImages.map((image) => (
             <div
-              key={ip.id}
+              key={image.id}
               className="bg-white rounded-[12px] shadow-sm p-4 border border-gray-200"
             >
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-base font-semibold text-gray-900">
-                  {ip.name || "N/A"}
+                  {image.name || "N/A"}
                 </h3>
                 <div className="flex items-center space-x-3">
                   <button
-                    onClick={() => handleEditIPs(ip)}
+                    onClick={() => handleEditOSImage(image)}
                     className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                    title="Edit Floating IP"
+                    title="Edit OS Image"
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDeleteIPs(ip)}
+                    onClick={() => handleDeleteOSImage(image)}
                     className="text-red-500 hover:text-red-700 transition-colors"
-                    title="Delete Floating IP"
+                    title="Delete OS Image"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -190,53 +177,40 @@ const FloatingIP = () => {
               <div className="space-y-1 text-sm text-gray-600">
                 <div className="flex justify-between">
                   <span className="font-medium">Identifier:</span>
-                  <span>{ip.identifier || "N/A"}</span>
+                  <span>{image.identifier || "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium">Price:</span>
-                  <span>{formatCurrency(ip.price)}</span>
-                </div>
-                {/* <div className="flex justify-between">
-                  <span className="font-medium">Local Price:</span>
-                  <span>
-                    {formatCurrency(ip.local_price, ip.local_currency)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Local Currency:</span>
-                  <span>{ip.local_currency || "N/A"}</span>
-                </div> */}
-                <div className="flex justify-between">
-                  <span className="font-medium">Created At:</span>
-                  <span>{formatDate(ip.created_at)}</span>
+                  <span className="font-medium">License Fee (USD):</span>
+                  <span>{formatCurrency(image.price)}</span>
                 </div>
               </div>
             </div>
           ))
         ) : (
           <div className="bg-white rounded-[12px] shadow-sm p-4 text-center text-gray-500">
-            No Floating IPs found.
+            No OS images found.
           </div>
         )}
       </div>
 
-      {/* Modals */}
-      <AddFloatingIP
-        isOpen={isAddIPsModalOpen}
-        onClose={() => setIsAddIPsModalOpen(false)}
+      <AddOSImageModal
+        isOpen={isAddOSImageModalOpen}
+        onClose={() => setIsAddOSImageModalOpen(false)}
       />
-      <EditFloatingIP
-        isOpen={isEditIPsModalOpen}
-        onClose={() => setIsEditIPsModalOpen(false)}
-        floatingIP={selectedIPs}
+
+      <EditOS
+        isOpen={isEditOSImageModalOpen}
+        onClose={() => setIsEditOSImageModalOpen(false)}
+        osImage={selectedOSImage}
       />
-      <DeleteFloatingIP
-        isOpen={isDeleteIPsModalOpen}
-        onClose={() => setIsDeleteIPsModalOpen(false)}
-        floatingIP={selectedIPs}
+
+      <DeleteOS
+        isOpen={isDeleteOSImageModalOpen}
+        onClose={() => setIsDeleteOSImageModalOpen(false)}
+        osImage={selectedOSImage}
       />
     </>
   );
 };
 
-export default FloatingIP;
+export default OSImages;

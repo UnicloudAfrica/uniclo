@@ -55,7 +55,7 @@ import Project from "./dashboard/pages/projectmain";
 import Instances from "./dashboard/pages/instances";
 import ProjectDetails from "./dashboard/pages/projectDetails";
 import InstancesDetails from "./dashboard/pages/instancesDetails";
-import AdminProducts from "./adminDashboard/pages/adminProducts";
+import AdminInventory from "./adminDashboard/pages/adminInventory";
 import AdminTax from "./adminDashboard/pages/adminTax";
 import TenantHome from "./tenantDashboard/pages/tenantHome";
 import { getSubdomain } from "./utils/getSubdomaim";
@@ -82,6 +82,8 @@ import AdminSupportTicket from "./adminDashboard/pages/adminSupport";
 import AdminRegion from "./adminDashboard/pages/adminRegion";
 import AdminCountryPricing from "./adminDashboard/pages/adminCountryPricing";
 import AdminKeyPairs from "./adminDashboard/pages/adminKeyPairs";
+import AdminPricing from "./adminDashboard/pages/adminPricing";
+import AdminProducts from "./adminDashboard/pages/adminProducts";
 
 function App() {
   const location = useLocation();
@@ -198,6 +200,10 @@ function App() {
           />
           <Route path="/admin-dashboard/payment" element={<AdminPayment />} />
           <Route path="/admin-dashboard/products" element={<AdminProducts />} />
+          <Route
+            path="/admin-dashboard/inventory"
+            element={<AdminInventory />}
+          />
           <Route path="/admin-dashboard/projects" element={<AdminProjects />} />
           <Route path="/admin-dashboard/leads" element={<AdminLeads />} />
           <Route path="/admin-dashboard/regions" element={<AdminRegion />} />
@@ -221,6 +227,7 @@ function App() {
             path="/admin-dashboard/key-pairs"
             element={<AdminKeyPairs />}
           />
+          <Route path="/admin-dashboard/pricing" element={<AdminPricing />} />
           <Route
             path="/admin-dashboard/instances/details"
             element={<AdminInstancesDetails />}

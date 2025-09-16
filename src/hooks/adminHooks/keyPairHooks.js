@@ -24,8 +24,8 @@ const fetchKeyPairById = async (id) => {
 
 const createKeyPair = async (keyPairData) => {
   const res = await apiAdminforUser("POST", "/business/key-pairs", keyPairData);
-  if (!res.data) throw new Error("Failed to create key pair");
-  return res.data;
+  if (!res) throw new Error("Failed to create key pair");
+  return res;
 };
 
 const updateKeyPair = async ({ id, keyPairData }) => {
@@ -70,7 +70,7 @@ export const useCreateKeyPair = () => {
   return useMutation({
     mutationFn: createKeyPair,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["keyPairs"] });
+      // queryClient.invalidateQueries({ queryKey: ["keyPairs"] });
     },
     onError: (error) => {
       console.error("Error creating key pair:", error);

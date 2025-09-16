@@ -1,35 +1,32 @@
 import React, { useState } from "react";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
-import { useFetchEbsVolumes } from "../../../hooks/adminHooks/ebsHooks"; // Ensure this path is correct
-import AddEBSModal from "./ebsSubs/addEbs";
-import EditEBSModal from "./ebsSubs/editEbs";
-import DeleteEBSModal from "./ebsSubs/deleteEbs";
-// import EditEBSModal from "./ebsSubs/editEbs"; // Uncomment when created
-// import DeleteEBSModal from "./ebsSubs/deleteEbs"; // Uncomment when created
+import { useFetchVmInstances } from "../../../hooks/adminHooks/vmHooks";
+import AddVMModal from "./vmSubs/addVms";
+import EditVMModal from "./vmSubs/editVms";
+import DeleteVMModal from "./vmSubs/deleteVms";
 
-const EBSImages = () => {
-  const { data: ebsVolumes, isFetching: isEbsVolumesFetching } =
-    useFetchEbsVolumes();
-  const [isAddEBSModalOpen, setIsAddEBSModalOpen] = useState(false);
-  const [isEditEBSModalOpen, setIsEditEBSModalOpen] = useState(false);
-  const [isDeleteEBSModalOpen, setIsDeleteEBSModalOpen] = useState(false);
-  const [selectedEBSVolume, setSelectedEBSVolume] = useState(null); // To pass data to modals
+const Vms = ({ selectedRegion }) => {
+  const { data: vms, isFetching: isVmsFetching } =
+    useFetchVmInstances(selectedRegion);
+  const [isAddVMModalOpen, setIsAddVMModalOpen] = useState(false);
+  const [isEditVMModalOpen, setIsEditVMModalOpen] = useState(false);
+  const [isDeleteVMModalOpen, setIsDeleteVMModalOpen] = useState(false);
+  const [selectedVM, setSelectedVM] = useState(null);
 
-  const handleAddEBSVolume = () => {
-    setIsAddEBSModalOpen(true);
+  const handleAddVM = () => {
+    setIsAddVMModalOpen(true);
   };
 
-  const handleEditEBSVolume = (volume) => {
-    setSelectedEBSVolume(volume);
-    setIsEditEBSModalOpen(true);
+  const handleEditVM = (vm) => {
+    setSelectedVM(vm);
+    setIsEditVMModalOpen(true);
   };
 
-  const handleDeleteEBSVolume = (volume) => {
-    setSelectedEBSVolume(volume);
-    setIsDeleteEBSModalOpen(true);
+  const handleDeleteVM = (vm) => {
+    setSelectedVM(vm);
+    setIsDeleteVMModalOpen(true);
   };
 
-  // Updated formatCurrency to use "USD" and 2 decimal places
   const formatCurrency = (amount, currency = "USD") => {
     if (amount === null || amount === undefined) return "N/A";
     return new Intl.NumberFormat("en-US", {
@@ -38,6 +35,11 @@ const EBSImages = () => {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(parseFloat(amount));
+  };
+
+  const formatMemory = (memory_gib) => {
+    if (memory_gib === null || memory_gib === undefined) return "N/A";
+    return `${memory_gib} GiB`;
   };
 
   const formatDate = (dateString) => {
@@ -58,11 +60,15 @@ const EBSImages = () => {
     }
   };
 
-  if (isEbsVolumesFetching) {
+  if (isVmsFetching || !selectedRegion) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
         <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
-        <p className="ml-2 text-gray-700">Loading EBS volumes...</p>
+        <p className="ml-2 text-gray-700">
+          {!selectedRegion
+            ? "Waiting for region selection..."
+            : "Loading VM instances..."}
+        </p>
       </div>
     );
   }
@@ -71,14 +77,13 @@ const EBSImages = () => {
     <>
       <div className="flex justify-end mb-4">
         <button
-          onClick={handleAddEBSVolume}
+          onClick={handleAddVM}
           className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
         >
-          Add EBS Volume
+          Add VM
         </button>
       </div>
 
-      {/* Desktop Table */}
       <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px] border border-gray-200">
         <table className="w-full">
           <thead className="bg-[#F5F5F5]">
@@ -87,22 +92,13 @@ const EBSImages = () => {
                 Name
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Identifier
+                vCPUs
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Media Type
+                Memory (GiB)
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                 Price
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                IOPS Read
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                IOPS Write
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Created At
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                 Action
@@ -110,43 +106,34 @@ const EBSImages = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-[#E8E6EA]">
-            {ebsVolumes && ebsVolumes.length > 0 ? (
-              ebsVolumes.map((volume) => (
-                <tr key={volume.id} className="hover:bg-gray-50">
+            {vms && vms.length > 0 ? (
+              vms.map((vm) => (
+                <tr key={vm.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {volume.name || "N/A"}
+                    {vm.name || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {volume.identifier || "N/A"}
+                    {vm.vcpus || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {volume.media_type || "N/A"}
+                    {formatMemory(vm.memory_gib)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatCurrency(volume.price)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {volume.iops_read || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {volume.iops_write || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatDate(volume.created_at)}
+                    {formatCurrency(vm.price)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
                     <div className="flex items-center space-x-3">
                       <button
-                        onClick={() => handleEditEBSVolume(volume)}
+                        onClick={() => handleEditVM(vm)}
                         className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                        title="Edit EBS Volume"
+                        title="Edit VM"
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDeleteEBSVolume(volume)}
+                        onClick={() => handleDeleteVM(vm)}
                         className="text-red-500 hover:text-red-700 transition-colors"
-                        title="Delete EBS Volume"
+                        title="Delete VM"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -157,10 +144,10 @@ const EBSImages = () => {
             ) : (
               <tr>
                 <td
-                  colSpan="8"
+                  colSpan="5"
                   className="px-6 py-4 text-center text-sm text-gray-500"
                 >
-                  No EBS volumes found.
+                  No VM instances found.
                 </td>
               </tr>
             )}
@@ -168,30 +155,29 @@ const EBSImages = () => {
         </table>
       </div>
 
-      {/* Mobile Cards */}
       <div className="md:hidden mt-6 space-y-4">
-        {ebsVolumes && ebsVolumes.length > 0 ? (
-          ebsVolumes.map((volume) => (
+        {vms && vms.length > 0 ? (
+          vms.map((vm) => (
             <div
-              key={volume.id}
+              key={vm.id}
               className="bg-white rounded-[12px] shadow-sm p-4 border border-gray-200"
             >
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-base font-semibold text-gray-900">
-                  {volume.name || "N/A"}
+                  {vm.name || "N/A"}
                 </h3>
                 <div className="flex items-center space-x-3">
                   <button
-                    onClick={() => handleEditEBSVolume(volume)}
+                    onClick={() => handleEditVM(vm)}
                     className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                    title="Edit EBS Volume"
+                    title="Edit VM"
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDeleteEBSVolume(volume)}
+                    onClick={() => handleDeleteVM(vm)}
                     className="text-red-500 hover:text-red-700 transition-colors"
-                    title="Delete EBS Volume"
+                    title="Delete VM"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -199,57 +185,43 @@ const EBSImages = () => {
               </div>
               <div className="space-y-1 text-sm text-gray-600">
                 <div className="flex justify-between">
-                  <span className="font-medium">Identifier:</span>
-                  <span>{volume.identifier || "N/A"}</span>
+                  <span className="font-medium">vCPUs:</span>
+                  <span>{vm.vcpus || "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium">Media Type:</span>
-                  <span>{volume.media_type || "N/A"}</span>
+                  <span className="font-medium">Memory (GiB):</span>
+                  <span>{formatMemory(vm.memory_gib)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="font-medium">Price:</span>
-                  <span>{formatCurrency(volume.price)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">IOPS Read:</span>
-                  <span>{volume.iops_read || "N/A"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">IOPS Write:</span>
-                  <span>{volume.iops_write || "N/A"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Created At:</span>
-                  <span>{formatDate(volume.created_at)}</span>
+                  <span>{formatCurrency(vm.price)}</span>
                 </div>
               </div>
             </div>
           ))
         ) : (
           <div className="bg-white rounded-[12px] shadow-sm p-4 text-center text-gray-500">
-            No EBS volumes found.
+            No VM instances found.
           </div>
         )}
       </div>
 
-      {/* Modals (place your Add/Edit/Delete EBS Volume modals here) */}
-      <AddEBSModal
-        isOpen={isAddEBSModalOpen}
-        onClose={() => setIsAddEBSModalOpen(false)}
+      <AddVMModal
+        isOpen={isAddVMModalOpen}
+        onClose={() => setIsAddVMModalOpen(false)}
       />
-      <EditEBSModal
-        isOpen={isEditEBSModalOpen}
-        onClose={() => setIsEditEBSModalOpen(false)}
-        ebsVolume={selectedEBSVolume}
+      <EditVMModal
+        isOpen={isEditVMModalOpen}
+        onClose={() => setIsEditVMModalOpen(false)}
+        vm={selectedVM}
       />
-
-      <DeleteEBSModal
-        isOpen={isDeleteEBSModalOpen}
-        onClose={() => setIsDeleteEBSModalOpen(false)}
-        ebsVolume={selectedEBSVolume}
+      <DeleteVMModal
+        isOpen={isDeleteVMModalOpen}
+        onClose={() => setIsDeleteVMModalOpen(false)}
+        vm={selectedVM}
       />
     </>
   );
 };
 
-export default EBSImages;
+export default Vms;

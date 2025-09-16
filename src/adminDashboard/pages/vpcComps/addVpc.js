@@ -1,23 +1,43 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Loader2, X } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
 import ToastUtils from "../../../utils/toastUtil";
 import { useCreateVpc } from "../../../hooks/adminHooks/vcpHooks";
 
 const AddVpc = ({ isOpen, onClose, projectId = "" }) => {
+  const queryClient = useQueryClient();
   const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
   const { mutate, isPending } = useCreateVpc();
   const [formData, setFormData] = useState({
     name: "",
+    provider: "",
     region: "",
     cidr_block: "",
+    is_default: false,
   });
   const [errors, setErrors] = useState({});
+
+  // Update provider when region changes
+  useEffect(() => {
+    if (formData.region) {
+      const selectedRegion = regions?.find((r) => r.code === formData.region);
+      if (selectedRegion) {
+        setFormData((prev) => ({
+          ...prev,
+          provider: selectedRegion.provider || "",
+        }));
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, provider: "" }));
+    }
+  }, [formData.region, regions]);
 
   const validateForm = () => {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = "Name is required";
     if (!formData.region) newErrors.region = "Region is required";
+    if (!formData.provider) newErrors.provider = "Provider is required"; // Implicitly ensured by region
     if (!formData.cidr_block.trim()) {
       newErrors.cidr_block = "CIDR Block is required";
     } else if (!/^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/.test(formData.cidr_block)) {
@@ -39,18 +59,24 @@ const AddVpc = ({ isOpen, onClose, projectId = "" }) => {
 
     const vpcData = {
       project_id: projectId,
+      provider: formData.provider,
       region: formData.region,
       name: formData.name,
       cidr_block: formData.cidr_block,
+      is_default: formData.is_default,
     };
+
+    console.log("Submitting VPC Payload:", vpcData);
 
     mutate(vpcData, {
       onSuccess: () => {
-        ToastUtils.success("VPC added successfully");
+        // ToastUtils.success("VPC added successfully");
+        queryClient.invalidateQueries({ queryKey: ["vpcs", projectId] });
         onClose();
       },
       onError: (err) => {
         console.error("Failed to create VPC:", err);
+        // ToastUtils.error("Failed to add VPC. Please try again.");
       },
     });
   };
@@ -85,7 +111,7 @@ const AddVpc = ({ isOpen, onClose, projectId = "" }) => {
                 value={formData.name}
                 onChange={(e) => updateFormData("name", e.target.value)}
                 placeholder="e.g., MyVPC"
-                className={`w-full input-field ${
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
                   errors.name ? "border-red-500" : "border-gray-300"
                 }`}
               />
@@ -104,7 +130,7 @@ const AddVpc = ({ isOpen, onClose, projectId = "" }) => {
                 id="region"
                 value={formData.region}
                 onChange={(e) => updateFormData("region", e.target.value)}
-                className={`w-full input-field ${
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
                   errors.region ? "border-red-500" : "border-gray-300"
                 }`}
                 disabled={isRegionsFetching}
@@ -114,12 +140,17 @@ const AddVpc = ({ isOpen, onClose, projectId = "" }) => {
                 </option>
                 {regions?.map((region) => (
                   <option key={region.code} value={region.code}>
-                    {region.name}
+                    {region.name} ({region.provider.toUpperCase()})
                   </option>
                 ))}
               </select>
               {errors.region && (
                 <p className="text-red-500 text-xs mt-1">{errors.region}</p>
+              )}
+              {formData.provider && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Provider: {formData.provider.toUpperCase()}
+                </p>
               )}
             </div>
             <div>
@@ -135,13 +166,29 @@ const AddVpc = ({ isOpen, onClose, projectId = "" }) => {
                 value={formData.cidr_block}
                 onChange={(e) => updateFormData("cidr_block", e.target.value)}
                 placeholder="e.g., 10.0.0.0/16"
-                className={`w-full input-field ${
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
                   errors.cidr_block ? "border-red-500" : "border-gray-300"
                 }`}
               />
               {errors.cidr_block && (
                 <p className="text-red-500 text-xs mt-1">{errors.cidr_block}</p>
               )}
+            </div>
+            <div>
+              <label className="flex items-center space-x-2">
+                <input
+                  id="is_default"
+                  type="checkbox"
+                  checked={formData.is_default}
+                  onChange={(e) =>
+                    updateFormData("is_default", e.target.checked)
+                  }
+                  className="rounded border-gray-300 text-[#288DD1] focus:ring-[#288DD1]"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  Set as default VPC
+                </span>
+              </label>
             </div>
           </div>
         </div>
@@ -157,7 +204,7 @@ const AddVpc = ({ isOpen, onClose, projectId = "" }) => {
             <button
               onClick={handleSubmit}
               disabled={isPending || isRegionsFetching}
-              className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Create VPC
               {isPending && (

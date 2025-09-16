@@ -1,45 +1,40 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
-import { useFetchVmInstances } from "../../../hooks/adminHooks/vmHooks"; // Ensure this path is correct
-import AddVMModal from "./vmSubs/addVms";
-import EditVMModal from "./vmSubs/editVms";
-import DeleteVMModal from "./vmSubs/deleteVms";
+import { useFetchFloatingIPs } from "../../../hooks/adminHooks/floatingIPHooks";
+import AddFloatingIP from "./ipSubs/addFloatingIP";
+import EditFloatingIP from "./ipSubs/editFloatingIP";
+import DeleteFloatingIP from "./ipSubs/deleteFloatingIP";
 
-const Vms = () => {
-  const { data: vms, isFetching: isVmsFetching } = useFetchVmInstances();
-  const [isAddVMModalOpen, setIsAddVMModalOpen] = useState(false);
-  const [isEditVMModalOpen, setIsEditVMModalOpen] = useState(false);
-  const [isDeleteVMModalOpen, setIsDeleteVMModalOpen] = useState(false);
-  const [selectedVM, setSelectedVM] = useState(null); // To pass data to modals
+const FloatingIP = ({ selectedRegion }) => {
+  const { data: ips, isFetching: isIPsFetching } =
+    useFetchFloatingIPs(selectedRegion);
+  const [isAddIPsModalOpen, setIsAddIPsModalOpen] = useState(false);
+  const [isEditIPsModalOpen, setIsEditIPsModalOpen] = useState(false);
+  const [isDeleteIPsModalOpen, setIsDeleteIPsModalOpen] = useState(false);
+  const [selectedIPs, setSelectedIPs] = useState(null);
 
-  const handleAddVM = () => {
-    setIsAddVMModalOpen(true);
+  const handleAddIPs = () => {
+    setIsAddIPsModalOpen(true);
   };
 
-  const handleEditVM = (vm) => {
-    setSelectedVM(vm);
-    setIsEditVMModalOpen(true);
+  const handleEditIPs = (ip) => {
+    setSelectedIPs(ip);
+    setIsEditIPsModalOpen(true);
   };
 
-  const handleDeleteVM = (vm) => {
-    setSelectedVM(vm);
-    setIsDeleteVMModalOpen(true);
+  const handleDeleteIPs = (ip) => {
+    setSelectedIPs(ip);
+    setIsDeleteIPsModalOpen(true);
   };
 
-  // Updated formatCurrency to use "USD" as the default currency
   const formatCurrency = (amount, currency = "USD") => {
     if (amount === null || amount === undefined) return "N/A";
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: currency,
-      minimumFractionDigits: 2, // Changed to 2 for typical currency display
+      minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(parseFloat(amount));
-  };
-
-  const formatMemory = (memory_gib) => {
-    if (memory_gib === null || memory_gib === undefined) return "N/A";
-    return `${memory_gib} GiB`;
   };
 
   const formatDate = (dateString) => {
@@ -60,11 +55,11 @@ const Vms = () => {
     }
   };
 
-  if (isVmsFetching) {
+  if (isIPsFetching) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
         <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
-        <p className="ml-2 text-gray-700">Loading VM instances...</p>
+        <p className="ml-2 text-gray-700">Loading Floating IPs...</p>
       </div>
     );
   }
@@ -73,10 +68,10 @@ const Vms = () => {
     <>
       <div className="flex justify-end mb-4">
         <button
-          onClick={handleAddVM}
+          onClick={handleAddIPs}
           className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
         >
-          Add VM
+          Add Floating IP
         </button>
       </div>
 
@@ -89,49 +84,60 @@ const Vms = () => {
                 Name
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                vCPUs
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Memory (GiB)
+                Identifier
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                 Price
-              </th>{" "}
-              {/* Changed from Price/Hour */}
+              </th>
+              {/* <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                Local Price
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                Local Currency
+              </th> */}
+              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                Created At
+              </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                 Action
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-[#E8E6EA]">
-            {vms && vms.length > 0 ? (
-              vms.map((vm) => (
-                <tr key={vm.id} className="hover:bg-gray-50">
+            {ips && ips.length > 0 ? (
+              ips.map((ip) => (
+                <tr key={ip.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {vm.name || "N/A"}
+                    {ip.name || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {vm.vcpus || "N/A"}
+                    {ip.identifier || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatMemory(vm.memory_gib)}
+                    {formatCurrency(ip.price)}
+                  </td>
+                  {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                    {formatCurrency(ip.local_price, ip.local_currency)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatCurrency(vm.price)} {/* Using vm.price */}
+                    {ip.local_currency || "N/A"}
+                  </td> */}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                    {formatDate(ip.created_at)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
                     <div className="flex items-center space-x-3">
                       <button
-                        onClick={() => handleEditVM(vm)}
+                        onClick={() => handleEditIPs(ip)}
                         className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                        title="Edit VM"
+                        title="Edit Floating IP"
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDeleteVM(vm)}
+                        onClick={() => handleDeleteIPs(ip)}
                         className="text-red-500 hover:text-red-700 transition-colors"
-                        title="Delete VM"
+                        title="Delete Floating IP"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -142,10 +148,10 @@ const Vms = () => {
             ) : (
               <tr>
                 <td
-                  colSpan="5"
+                  colSpan="7"
                   className="px-6 py-4 text-center text-sm text-gray-500"
                 >
-                  No VM instances found.
+                  No Floating IPs found.
                 </td>
               </tr>
             )}
@@ -155,28 +161,28 @@ const Vms = () => {
 
       {/* Mobile Cards */}
       <div className="md:hidden mt-6 space-y-4">
-        {vms && vms.length > 0 ? (
-          vms.map((vm) => (
+        {ips && ips.length > 0 ? (
+          ips.map((ip) => (
             <div
-              key={vm.id}
+              key={ip.id}
               className="bg-white rounded-[12px] shadow-sm p-4 border border-gray-200"
             >
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-base font-semibold text-gray-900">
-                  {vm.name || "N/A"}
+                  {ip.name || "N/A"}
                 </h3>
                 <div className="flex items-center space-x-3">
                   <button
-                    onClick={() => handleEditVM(vm)}
+                    onClick={() => handleEditIPs(ip)}
                     className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                    title="Edit VM"
+                    title="Edit Floating IP"
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDeleteVM(vm)}
+                    onClick={() => handleDeleteIPs(ip)}
                     className="text-red-500 hover:text-red-700 transition-colors"
-                    title="Delete VM"
+                    title="Delete Floating IP"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -184,45 +190,54 @@ const Vms = () => {
               </div>
               <div className="space-y-1 text-sm text-gray-600">
                 <div className="flex justify-between">
-                  <span className="font-medium">vCPUs:</span>
-                  <span>{vm.vcpus || "N/A"}</span>
+                  <span className="font-medium">Identifier:</span>
+                  <span>{ip.identifier || "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium">Memory (GiB):</span>
-                  <span>{formatMemory(vm.memory_gib)}</span>
+                  <span className="font-medium">Price:</span>
+                  <span>{formatCurrency(ip.price)}</span>
+                </div>
+                {/* <div className="flex justify-between">
+                  <span className="font-medium">Local Price:</span>
+                  <span>
+                    {formatCurrency(ip.local_price, ip.local_currency)}
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium">Price:</span>{" "}
-                  {/* Changed from Price/Hour */}
-                  <span>{formatCurrency(vm.price)}</span> {/* Using vm.price */}
+                  <span className="font-medium">Local Currency:</span>
+                  <span>{ip.local_currency || "N/A"}</span>
+                </div> */}
+                <div className="flex justify-between">
+                  <span className="font-medium">Created At:</span>
+                  <span>{formatDate(ip.created_at)}</span>
                 </div>
               </div>
             </div>
           ))
         ) : (
           <div className="bg-white rounded-[12px] shadow-sm p-4 text-center text-gray-500">
-            No VM instances found.
+            No Floating IPs found.
           </div>
         )}
       </div>
 
-      {/* Modals (place your Add/Edit/Delete VM modals here) */}
-      <AddVMModal
-        isOpen={isAddVMModalOpen}
-        onClose={() => setIsAddVMModalOpen(false)}
+      {/* Modals */}
+      <AddFloatingIP
+        isOpen={isAddIPsModalOpen}
+        onClose={() => setIsAddIPsModalOpen(false)}
       />
-      <EditVMModal
-        isOpen={isEditVMModalOpen}
-        onClose={() => setIsEditVMModalOpen(false)}
-        vm={selectedVM}
+      <EditFloatingIP
+        isOpen={isEditIPsModalOpen}
+        onClose={() => setIsEditIPsModalOpen(false)}
+        floatingIP={selectedIPs}
       />
-      <DeleteVMModal
-        isOpen={isDeleteVMModalOpen}
-        onClose={() => setIsDeleteVMModalOpen(false)}
-        vm={selectedVM}
+      <DeleteFloatingIP
+        isOpen={isDeleteIPsModalOpen}
+        onClose={() => setIsDeleteIPsModalOpen(false)}
+        floatingIP={selectedIPs}
       />
     </>
   );
 };
 
-export default Vms;
+export default FloatingIP;

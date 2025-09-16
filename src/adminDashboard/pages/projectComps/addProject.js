@@ -1,10 +1,11 @@
-import React, { useState, useRef, useEffect } from "react";
-import { X, Loader2, ChevronDown } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { X, Loader2 } from "lucide-react";
 import { useCreateProject } from "../../../hooks/adminHooks/projectHooks";
 import ToastUtils from "../../../utils/toastUtil";
 import { useFetchTenants } from "../../../hooks/adminHooks/tenantHooks";
 import { useFetchClients } from "../../../hooks/adminHooks/clientHooks";
 import { DropdownSelect } from "./dropdownSelect"; // Ensure this path is correct
+import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
 
 const CreateProjectModal = ({ isOpen, onClose }) => {
   const { mutate: createProject, isPending } = useCreateProject();
@@ -12,27 +13,44 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
     name: "",
     description: "",
     type: "vpc", // Default to vpc
-    tenant_id: "", // Now compulsory
-    client_ids: [], // Changed to an array for multiple clients
+    tenant_id: "",
+    client_ids: [],
+    default_region: "",
+    provider: "",
   });
   const [errors, setErrors] = useState({});
-
+  const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
   const { data: tenants, isFetching: isTenantsFetching } = useFetchTenants();
   const { data: clients, isFetching: isClientsFetching } = useFetchClients();
 
+  // Update provider when default_region changes
+  useEffect(() => {
+    if (formData.default_region) {
+      const selectedRegion = regions?.find(
+        (r) => r.code === formData.default_region
+      );
+      if (selectedRegion) {
+        setFormData((prev) => ({
+          ...prev,
+          provider: selectedRegion.provider || "",
+        }));
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, provider: "" }));
+    }
+  }, [formData.default_region, regions]);
+
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.name) {
+    if (!formData.name.trim()) {
       newErrors.name = "Project Name is required";
     }
     if (!formData.type) {
       newErrors.type = "Type is required";
     }
-    // Make tenant_id compulsory
-    if (!formData.tenant_id) {
-      newErrors.tenant_id = "Partner is required";
+    if (!formData.default_region) {
+      newErrors.default_region = "Default Region is required";
     }
-    // client_ids is optional, but if it needs validation (e.g., min 1 if selected), add here
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -48,32 +66,31 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
         name: formData.name,
         description: formData.description,
         type: formData.type,
-        tenant_id: formData.tenant_id, // tenant_id is now always included
-        client_ids: formData.client_ids, // client_ids is an array
+        tenant_id: formData.tenant_id || null,
+        client_ids: formData.client_ids,
+        default_region: formData.default_region,
+        provider: formData.provider,
       };
+
+      console.log("Submitting Project Payload:", payload);
 
       createProject(payload, {
         onSuccess: () => {
-          ToastUtils.success("Project Created Successfully");
-          onClose(); // Close modal on success
-          // Reset form data after successful submission
+          // ToastUtils.success("Project Created Successfully");
+          onClose();
           setFormData({
             name: "",
             description: "",
             type: "vpc",
             tenant_id: "",
             client_ids: [],
+            default_region: "",
+            provider: "",
           });
         },
         onError: (error) => {
           console.error("Error creating project:", error.message);
-          // ToastUtils.error(
-          //   error?.message || "Failed to create project. Please try again."
-          // );
-          // setErrors((prev) => ({
-          //   ...prev,
-          //   general: error?.message || "Failed to create project.",
-          // }));
+          // ToastUtils.error("Failed to create project. Please try again.");
         },
       });
     }
@@ -83,7 +100,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
     <>
       {isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
-          <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full ">
+          <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full">
             {/* Header */}
             <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] w-full">
               <h2 className="text-lg font-semibold text-[#575758]">
@@ -114,7 +131,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                     value={formData.name}
                     onChange={(e) => updateFormData("name", e.target.value)}
                     placeholder="Enter project name"
-                    className={`input-field ${
+                    className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
                       errors.name ? "border-red-500" : "border-gray-300"
                     }`}
                   />
@@ -139,7 +156,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                     }
                     placeholder="Enter project description (optional)"
                     rows="3"
-                    className={`input-field ${
+                    className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
                       errors.description ? "border-red-500" : "border-gray-300"
                     }`}
                   ></textarea>
@@ -184,24 +201,68 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                   )}
                 </div>
 
-                {/* Partner (Tenant) Dropdown with Search - NOW COMPULSORY */}
+                {/* Default Region */}
+                <div>
+                  <label
+                    htmlFor="default_region"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Default Region<span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="default_region"
+                    value={formData.default_region}
+                    onChange={(e) =>
+                      updateFormData("default_region", e.target.value)
+                    }
+                    className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
+                      errors.default_region
+                        ? "border-red-500"
+                        : "border-gray-300"
+                    }`}
+                    disabled={isRegionsFetching}
+                  >
+                    <option value="" disabled>
+                      {isRegionsFetching
+                        ? "Loading regions..."
+                        : "Select a region"}
+                    </option>
+                    {regions?.map((region) => (
+                      <option key={region.code} value={region.code}>
+                        {region.name} ({region.provider.toUpperCase()})
+                      </option>
+                    ))}
+                  </select>
+                  {errors.default_region && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.default_region}
+                    </p>
+                  )}
+                  {formData.provider && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      Provider: {formData.provider.toUpperCase()}
+                    </p>
+                  )}
+                </div>
+
+                {/* Partner (Tenant) Dropdown */}
                 <div>
                   <label
                     htmlFor="tenant_id"
                     className="block text-sm font-medium text-gray-700 mb-2"
                   >
-                    Partner<span className="text-red-500">*</span>
+                    Partner (Optional)
                   </label>
                   <DropdownSelect
                     options={tenants || []}
                     value={formData.tenant_id}
                     onChange={(value) => updateFormData("tenant_id", value)}
-                    placeholder="Select a Partner"
+                    placeholder="Select a Partner (optional)"
                     isFetching={isTenantsFetching}
                     displayKey="name"
                     valueKey="id"
                     searchKeys={["name"]}
-                    error={errors.tenant_id} // Pass error prop
+                    error={errors.tenant_id}
                   />
                   {errors.tenant_id && (
                     <p className="text-red-500 text-xs mt-1">
@@ -210,7 +271,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                   )}
                 </div>
 
-                {/* Client Dropdown with Search - Now Multi-Select */}
+                {/* Client Dropdown */}
                 <div>
                   <label
                     htmlFor="client_ids"
@@ -220,15 +281,15 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                   </label>
                   <DropdownSelect
                     options={clients || []}
-                    value={formData.client_ids} // Now an array
-                    onChange={(value) => updateFormData("client_ids", value)} // Expects an array
+                    value={formData.client_ids}
+                    onChange={(value) => updateFormData("client_ids", value)}
                     placeholder="Select Client(s)"
                     isFetching={isClientsFetching}
-                    displayKey="first_name" // Assuming 'first_name' is a good display
+                    displayKey="first_name"
                     valueKey="id"
                     searchKeys={["first_name", "last_name", "email"]}
-                    isMultiSelect={true} // Enable multi-select
-                    error={errors.client_ids} // Pass error prop if you add validation for it
+                    isMultiSelect={true}
+                    error={errors.client_ids}
                   />
                   {errors.client_ids && (
                     <p className="text-red-500 text-xs mt-1">
@@ -236,10 +297,6 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                     </p>
                   )}
                 </div>
-
-                {/* {errors.general && (
-                  <p className="text-red-500 text-xs mt-1">{errors.general}</p>
-                )} */}
               </div>
             </div>
             {/* Footer */}
@@ -254,8 +311,13 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                 </button>
                 <button
                   onClick={handleSubmit}
-                  disabled={isPending}
-                  className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  disabled={
+                    isPending ||
+                    isRegionsFetching ||
+                    isTenantsFetching ||
+                    isClientsFetching
+                  }
+                  className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
                   Create Project
                   {isPending && (

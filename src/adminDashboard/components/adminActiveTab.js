@@ -28,6 +28,7 @@ const AdminActiveTab = () => {
     projects: "Admin Projects",
     "key-pairs": "Key Pairs",
     "country-pricing": "Country Pricing",
+    "colocation": "Colocation",
   };
 
   // Generate breadcrumb items from the current pathname

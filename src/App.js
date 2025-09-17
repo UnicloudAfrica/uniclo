@@ -84,6 +84,7 @@ import AdminCountryPricing from "./adminDashboard/pages/adminCountryPricing";
 import AdminKeyPairs from "./adminDashboard/pages/adminKeyPairs";
 import AdminPricing from "./adminDashboard/pages/adminPricing";
 import AdminProducts from "./adminDashboard/pages/adminProducts";
+import AdminColocation from "./adminDashboard/pages/adminColocation";
 
 function App() {
   const location = useLocation();
@@ -200,6 +201,10 @@ function App() {
           />
           <Route path="/admin-dashboard/payment" element={<AdminPayment />} />
           <Route path="/admin-dashboard/products" element={<AdminProducts />} />
+          <Route
+            path="/admin-dashboard/colocation"
+            element={<AdminColocation />}
+          />
           <Route
             path="/admin-dashboard/inventory"
             element={<AdminInventory />}

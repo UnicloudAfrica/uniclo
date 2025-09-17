@@ -8,11 +8,11 @@ const PricingSideMenu = () => {
       name: "Platform Pricing",
       path: "/admin-dashboard/pricing",
     },
-    {
-      id: "tenant-overrides",
-      name: "Tenant Overrides",
-      path: "/admin-dashboard/tenant-overrides",
-    },
+    // {
+    //   id: "tenant-overrides",
+    //   name: "Tenant Overrides",
+    //   path: "/admin-dashboard/tenant-overrides",
+    // },
     {
       id: "colocation",
       name: "Colocation",

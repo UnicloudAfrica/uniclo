@@ -27,37 +27,10 @@ const Vms = ({ selectedRegion }) => {
     setIsDeleteVMModalOpen(true);
   };
 
-  const formatCurrency = (amount, currency = "USD") => {
-    if (amount === null || amount === undefined) return "N/A";
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(parseFloat(amount));
-  };
-
-  const formatMemory = (memory_gib) => {
-    if (memory_gib === null || memory_gib === undefined) return "N/A";
+  const formatMemory = (memory_mb) => {
+    if (memory_mb === null || memory_mb === undefined) return "N/A";
+    const memory_gib = (memory_mb / 1024).toFixed(0); // Convert MB to GiB
     return `${memory_gib} GiB`;
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      });
-    } catch (e) {
-      console.error("Error formatting date:", e);
-      return "Invalid Date";
-    }
   };
 
   if (isVmsFetching || !selectedRegion) {
@@ -92,13 +65,22 @@ const Vms = ({ selectedRegion }) => {
                 Name
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                vCPUs
+                Region
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                 Memory (GiB)
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Price
+                vCPUs
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                Cores
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                Sockets
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                Threads
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                 Action
@@ -113,13 +95,22 @@ const Vms = ({ selectedRegion }) => {
                     {vm.name || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                    {vm.region || "N/A"}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                    {formatMemory(vm.memory_mb)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                     {vm.vcpus || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatMemory(vm.memory_gib)}
+                    {vm.cores || "0"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatCurrency(vm.price)}
+                    {vm.sockets || "N/A"}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
+                    {vm.threads || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
                     <div className="flex items-center space-x-3">
@@ -144,7 +135,7 @@ const Vms = ({ selectedRegion }) => {
             ) : (
               <tr>
                 <td
-                  colSpan="5"
+                  colSpan="8"
                   className="px-6 py-4 text-center text-sm text-gray-500"
                 >
                   No VM instances found.
@@ -185,16 +176,28 @@ const Vms = ({ selectedRegion }) => {
               </div>
               <div className="space-y-1 text-sm text-gray-600">
                 <div className="flex justify-between">
+                  <span className="font-medium">Region:</span>
+                  <span>{vm.region || "N/A"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">Memory (GiB):</span>
+                  <span>{formatMemory(vm.memory_mb)}</span>
+                </div>
+                <div className="flex justify-between">
                   <span className="font-medium">vCPUs:</span>
                   <span>{vm.vcpus || "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium">Memory (GiB):</span>
-                  <span>{formatMemory(vm.memory_gib)}</span>
+                  <span className="font-medium">Cores:</span>
+                  <span>{vm.cores || "0"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium">Price:</span>
-                  <span>{formatCurrency(vm.price)}</span>
+                  <span className="font-medium">Sockets:</span>
+                  <span>{vm.sockets || "N/A"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">Threads:</span>
+                  <span>{vm.threads || "N/A"}</span>
                 </div>
               </div>
             </div>

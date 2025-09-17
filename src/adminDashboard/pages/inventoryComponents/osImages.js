@@ -28,37 +28,8 @@ const OSImages = ({ selectedRegion }) => {
     setIsDeleteOSImageModalOpen(true);
   };
 
-  const formatCurrency = (amount, currency = "USD") => {
-    if (amount === null || amount === undefined) return "N/A";
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(parseFloat(amount));
-  };
-
-  const formatPercentage = (value) => {
-    if (value === null || value === undefined) return "N/A";
-    return `${parseFloat(value).toFixed(2)}%`;
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      });
-    } catch (e) {
-      console.error("Error formatting date:", e);
-      return "Invalid Date";
-    }
+  const formatLicenseStatus = (isLicensed) => {
+    return isLicensed ? "Licensed" : "Not Licensed";
   };
 
   if (isOSimagesFetching) {
@@ -89,10 +60,10 @@ const OSImages = ({ selectedRegion }) => {
                 Name
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Identifier
+                Region
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                License Fee (USD)
+                License Status
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                 Action
@@ -107,10 +78,10 @@ const OSImages = ({ selectedRegion }) => {
                     {image.name || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {image.identifier || "N/A"}
+                    {image.region || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatCurrency(image.price)}
+                    {formatLicenseStatus(image.is_licenced)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
                     <div className="flex items-center space-x-3">
@@ -135,7 +106,7 @@ const OSImages = ({ selectedRegion }) => {
             ) : (
               <tr>
                 <td
-                  colSpan="7"
+                  colSpan="4"
                   className="px-6 py-4 text-center text-sm text-gray-500"
                 >
                   No OS images found.
@@ -176,12 +147,12 @@ const OSImages = ({ selectedRegion }) => {
               </div>
               <div className="space-y-1 text-sm text-gray-600">
                 <div className="flex justify-between">
-                  <span className="font-medium">Identifier:</span>
-                  <span>{image.identifier || "N/A"}</span>
+                  <span className="font-medium">Region:</span>
+                  <span>{image.region || "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium">License Fee (USD):</span>
-                  <span>{formatCurrency(image.price)}</span>
+                  <span className="font-medium">License Status:</span>
+                  <span>{formatLicenseStatus(image.is_licenced)}</span>
                 </div>
               </div>
             </div>

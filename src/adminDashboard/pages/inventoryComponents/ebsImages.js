@@ -5,7 +5,7 @@ import AddEBSModal from "./ebsSubs/addEbs";
 import EditEBSModal from "./ebsSubs/editEbs";
 import DeleteEBSModal from "./ebsSubs/deleteEbs";
 
-const EBSImages = ({ selectedRegion }) => {
+const EBSVolumes = ({ selectedRegion }) => {
   const { data: ebsVolumes, isFetching: isEbsVolumesFetching } =
     useFetchEbsVolumes(selectedRegion);
   const [isAddEBSModalOpen, setIsAddEBSModalOpen] = useState(false);
@@ -27,32 +27,12 @@ const EBSImages = ({ selectedRegion }) => {
     setIsDeleteEBSModalOpen(true);
   };
 
-  const formatCurrency = (amount, currency = "USD") => {
-    if (amount === null || amount === undefined) return "N/A";
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(parseFloat(amount));
+  const formatIOPS = (value) => {
+    return value !== null && value !== undefined ? `${value} IOPS` : "N/A";
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      });
-    } catch (e) {
-      console.error("Error formatting date:", e);
-      return "Invalid Date";
-    }
+  const formatBandwidth = (value) => {
+    return value !== null && value !== undefined ? `${value} MB/s` : "N/A";
   };
 
   if (isEbsVolumesFetching || !selectedRegion) {
@@ -87,22 +67,19 @@ const EBSImages = ({ selectedRegion }) => {
                 Name
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Identifier
+                Region
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Media Type
+                Read IOPS Limit
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Price
+                Write IOPS Limit
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                IOPS Read
+                Read Bandwidth Limit
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                IOPS Write
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Created At
+                Write Bandwidth Limit
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                 Action
@@ -117,22 +94,19 @@ const EBSImages = ({ selectedRegion }) => {
                     {volume.name || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {volume.identifier || "N/A"}
+                    {volume.region || "N/A"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {volume.media_type || "N/A"}
+                    {formatIOPS(volume.read_iops_limit)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatCurrency(volume.price)}
+                    {formatIOPS(volume.write_iops_limit)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {volume.iops_read || "N/A"}
+                    {formatBandwidth(volume.read_bandwidth_limit)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {volume.iops_write || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatDate(volume.created_at)}
+                    {formatBandwidth(volume.write_bandwidth_limit)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
                     <div className="flex items-center space-x-3">
@@ -157,7 +131,7 @@ const EBSImages = ({ selectedRegion }) => {
             ) : (
               <tr>
                 <td
-                  colSpan="8"
+                  colSpan="7"
                   className="px-6 py-4 text-center text-sm text-gray-500"
                 >
                   No EBS volumes found.
@@ -198,28 +172,24 @@ const EBSImages = ({ selectedRegion }) => {
               </div>
               <div className="space-y-1 text-sm text-gray-600">
                 <div className="flex justify-between">
-                  <span className="font-medium">Identifier:</span>
-                  <span>{volume.identifier || "N/A"}</span>
+                  <span className="font-medium">Region:</span>
+                  <span>{volume.region || "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium">Media Type:</span>
-                  <span>{volume.media_type || "N/A"}</span>
+                  <span className="font-medium">Read IOPS Limit:</span>
+                  <span>{formatIOPS(volume.read_iops_limit)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium">Price:</span>
-                  <span>{formatCurrency(volume.price)}</span>
+                  <span className="font-medium">Write IOPS Limit:</span>
+                  <span>{formatIOPS(volume.write_iops_limit)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium">IOPS Read:</span>
-                  <span>{volume.iops_read || "N/A"}</span>
+                  <span className="font-medium">Read Bandwidth Limit:</span>
+                  <span>{formatBandwidth(volume.read_bandwidth_limit)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium">IOPS Write:</span>
-                  <span>{volume.iops_write || "N/A"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Created At:</span>
-                  <span>{formatDate(volume.created_at)}</span>
+                  <span className="font-medium">Write Bandwidth Limit:</span>
+                  <span>{formatBandwidth(volume.write_bandwidth_limit)}</span>
                 </div>
               </div>
             </div>
@@ -249,4 +219,4 @@ const EBSImages = ({ selectedRegion }) => {
   );
 };
 
-export default EBSImages;
+export default EBSVolumes;

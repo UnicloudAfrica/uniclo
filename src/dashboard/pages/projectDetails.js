@@ -54,7 +54,7 @@ export default function ProjectDetails() {
 
   // Separate state for top-level tabs and sub-tabs
   const [activeTopLevelTab, setActiveTopLevelTab] = useState("Instances");
-  const [activeInfraTab, setActiveInfraTab] = useState("Key Pairs");
+  const [activeInfraTab, setActiveInfraTab] = useState("VPCs");
 
   const {
     data: projectDetails,
@@ -129,9 +129,9 @@ export default function ProjectDetails() {
 
   // Array of menu items and their corresponding components
   const infraMenuItems = [
+    { name: "VPCs", component: VPCs },
     { name: "Key Pairs", component: KeyPairs },
     { name: "SGs", component: SecurityGroup },
-    { name: "VPCs", component: VPCs },
     // { name: "Subnets", component: Subnets },
     { name: "IGWs", component: IGWs },
     { name: "Route Tables", component: RouteTables },

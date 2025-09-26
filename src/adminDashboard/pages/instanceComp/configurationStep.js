@@ -15,64 +15,27 @@ export const ConfigurationStep = ({
   <div className="space-y-4 w-full">
     <div>
       <label
-        htmlFor="name"
-        className="block text-sm font-medium text-gray-700 mb-2"
-      >
-        Name<span className="text-red-500">*</span>
-      </label>
-      <input
-        id="name"
-        type="text"
-        value={formData.name}
-        onChange={(e) => updateFormData("name", e.target.value)}
-        placeholder="Enter instance name"
-        className={`w-full input-field ${
-          errors.name ? "border-red-500" : "border-gray-300"
-        }`}
-      />
-      {errors.name && (
-        <p className="text-red-500 text-xs mt-1">{errors.name}</p>
-      )}
-    </div>
-    <div>
-      <label
-        htmlFor="description"
-        className="block text-sm font-medium text-gray-700 mb-2"
-      >
-        Description<span className="text-red-500">*</span>
-      </label>
-      <textarea
-        id="description"
-        value={formData.description}
-        onChange={(e) => updateFormData("description", e.target.value)}
-        placeholder="Enter description"
-        rows="3"
-        className={`w-full input-field ${
-          errors.description ? "border-red-500" : "border-gray-300"
-        }`}
-      ></textarea>
-      {errors.description && (
-        <p className="text-red-500 text-xs mt-1">{errors.description}</p>
-      )}
-    </div>
-    <div>
-      <label
         htmlFor="project_id"
         className="block text-sm font-medium text-gray-700 mb-2"
       >
-        Project<span className="text-red-500">*</span>
+        Project<span className="text-red-500">*</span> (This will apply to all
+        configurations)
       </label>
       <span
         className={`w-full input-field block transition-all ${
-          errors.selectedProject ? "border-red-500 border" : ""
+          errors.topLevel_selectedProject ? "border-red-500 border" : ""
         }`}
       >
         {projects && projects.length > 0 ? (
           <select
             id="project_id"
-            value={formData.selectedProject?.id || ""}
+            value={formData.topLevel_selectedProject?.id || ""}
             onChange={(e) =>
-              handleSelectChange("selectedProject", e.target.value, projects)
+              handleSelectChange(
+                "topLevel_selectedProject",
+                e.target.value,
+                projects
+              )
             }
             className="w-full bg-transparent outline-none "
           >
@@ -89,21 +52,25 @@ export const ConfigurationStep = ({
           </div>
         )}
       </span>
-      {errors.selectedProject && (
-        <p className="text-red-500 text-xs mt-1">{errors.selectedProject}</p>
+      {errors.topLevel_selectedProject && (
+        <p className="text-red-500 text-xs mt-1">
+          {errors.topLevel_selectedProject}
+        </p>
       )}
     </div>
     <div className="space-y-2">
       <label className="block text-sm font-medium text-gray-700">
-        Assign To<span className="text-red-500">*</span>
+        Assign To
       </label>
       <div className="flex space-x-4">
         <label className="inline-flex items-center">
           <input
             type="radio"
             value="client"
-            checked={formData.assigned_to_type === "client"}
-            onChange={(e) => updateFormData("assigned_to_type", e.target.value)}
+            checked={formData.topLevel_assigned_to_type === "client"}
+            onChange={(e) =>
+              updateFormData("topLevel_assigned_to_type", e.target.value)
+            }
             className="form-radio text-[#288DD1]"
           />
           <span className="ml-2 text-gray-700">Client</span>
@@ -112,32 +79,36 @@ export const ConfigurationStep = ({
           <input
             type="radio"
             value="tenant"
-            checked={formData.assigned_to_type === "tenant"}
-            onChange={(e) => updateFormData("assigned_to_type", e.target.value)}
+            checked={formData.topLevel_assigned_to_type === "tenant"}
+            onChange={(e) =>
+              updateFormData("topLevel_assigned_to_type", e.target.value)
+            }
             className="form-radio text-[#288DD1]"
           />
           <span className="ml-2 text-gray-700">Partner</span>
         </label>
       </div>
     </div>
-    {formData.assigned_to_type === "client" && (
+    {formData.topLevel_assigned_to_type === "client" && (
       <div>
         <label
           htmlFor="selectedClient"
           className="block text-sm font-medium text-gray-700 mb-2"
         >
-          Client<span className="text-red-500">*</span>
+          Client
         </label>
         <span
           className={`w-full input-field block transition-all ${
-            errors.user_id ? "border-red-500 border" : ""
+            errors.topLevel_user_id ? "border-red-500 border" : ""
           }`}
         >
           {clients && clients.length > 0 ? (
             <select
               id="selectedClient"
-              value={formData.user_id || ""}
-              onChange={(e) => handleSelectChange("user_id", e.target.value)}
+              value={formData.topLevel_user_id || ""}
+              onChange={(e) =>
+                handleSelectChange("topLevel_user_id", e.target.value)
+              }
               className="w-full bg-transparent outline-none"
             >
               <option value="">Select a client</option>
@@ -153,29 +124,31 @@ export const ConfigurationStep = ({
             </div>
           )}
         </span>
-        {errors.user_id && (
-          <p className="text-red-500 text-xs mt-1">{errors.user_id}</p>
+        {errors.topLevel_user_id && (
+          <p className="text-red-500 text-xs mt-1">{errors.topLevel_user_id}</p>
         )}
       </div>
     )}
-    {formData.assigned_to_type === "tenant" && (
+    {formData.topLevel_assigned_to_type === "tenant" && (
       <div>
         <label
           htmlFor="selectedTenant"
           className="block text-sm font-medium text-gray-700 mb-2"
         >
-          Partner<span className="text-red-500">*</span>
+          Partner
         </label>
         <span
           className={`w-full input-field block transition-all ${
-            errors.tenant_id ? "border-red-500 border" : ""
+            errors.topLevel_tenant_id ? "border-red-500 border" : ""
           }`}
         >
           {tenants && tenants.length > 0 ? (
             <select
               id="selectedTenant"
-              value={formData.tenant_id || ""}
-              onChange={(e) => handleSelectChange("tenant_id", e.target.value)}
+              value={formData.topLevel_tenant_id || ""}
+              onChange={(e) =>
+                handleSelectChange("topLevel_tenant_id", e.target.value)
+              }
               className="w-full bg-transparent outline-none"
             >
               <option value="">Select a partner</option>
@@ -191,35 +164,13 @@ export const ConfigurationStep = ({
             </div>
           )}
         </span>
-        {errors.tenant_id && (
-          <p className="text-red-500 text-xs mt-1">{errors.tenant_id}</p>
+        {errors.topLevel_tenant_id && (
+          <p className="text-red-500 text-xs mt-1">
+            {errors.topLevel_tenant_id}
+          </p>
         )}
       </div>
     )}
-    <div>
-      <label
-        htmlFor="number_of_instances"
-        className="block text-sm font-medium text-gray-700 mb-2"
-      >
-        Number of Instances<span className="text-red-500">*</span>
-      </label>
-      <input
-        id="number_of_instances"
-        type="number"
-        value={formData.number_of_instances}
-        onChange={(e) => updateFormData("number_of_instances", e.target.value)}
-        min="1"
-        placeholder="Enter number of instances"
-        className={`w-full input-field ${
-          errors.number_of_instances ? "border-red-500" : "border-gray-300"
-        }`}
-      />
-      {errors.number_of_instances && (
-        <p className="text-red-500 text-xs mt-1">
-          {errors.number_of_instances}
-        </p>
-      )}
-    </div>
     <CheckboxGroup
       label="Tags"
       options={availableTags}

@@ -16,15 +16,17 @@ const CheckboxGroup = ({
     </label>
     <div className="space-y-2 border border-gray-300 rounded-lg p-3">
       {options.map((option) => (
-        <label key={option} className="flex items-center">
+        <label key={option.value || option} className="flex items-center">
           <input
             type="checkbox"
-            checked={selectedValues.includes(option)}
-            onChange={() => onChange(option)}
+            checked={selectedValues.includes(option.value || option)}
+            onChange={() => onChange(option.value || option)}
             className="h-4 w-4 text-[#288DD1] border-gray-300 rounded focus:ring-[#288DD1]"
             disabled={disabled}
           />
-          <span className="ml-2 text-sm text-gray-700">{option}</span>
+          <span className="ml-2 text-sm text-gray-700">
+            {option.label || option}
+          </span>
         </label>
       ))}
     </div>

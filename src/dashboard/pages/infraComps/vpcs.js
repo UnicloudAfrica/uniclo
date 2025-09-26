@@ -48,20 +48,17 @@ const VPCs = ({ projectId = "" }) => {
     if (!deleteModal) return;
 
     const { vpcId, vpcName } = deleteModal;
-    deleteVpc(
-      { projectId, vpcId },
-      {
-        onSuccess: () => {
-          ToastUtils.success(`VPC "${vpcName}" deleted successfully!`);
-          closeDeleteModal();
-        },
-        onError: (err) => {
-          console.error("Failed to delete VPC:", err);
-          ToastUtils.error("Failed to delete VPC. Please try again.");
-          closeDeleteModal();
-        },
-      }
-    );
+    deleteVpc(vpcId, {
+      onSuccess: () => {
+        // ToastUtils.success(`VPC "${vpcName}" deleted successfully!`);
+        closeDeleteModal();
+      },
+      onError: (err) => {
+        console.error("Failed to delete VPC:", err);
+        // ToastUtils.error("Failed to delete VPC. Please try again.");
+        closeDeleteModal();
+      },
+    });
   };
 
   if (isFetching) {

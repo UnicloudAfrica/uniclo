@@ -18,6 +18,8 @@ import KeyPairs from "./infraComps/keyPairs";
 import SecurityGroup from "./infraComps/securityGroup";
 import VPCs from "./infraComps/vpcs";
 import EIPs from "./infraComps/eips";
+import Subnets from "./infraComps/subNet";
+import IGWs from "./infraComps/igw";
 
 // Function to decode the ID from URL
 const decodeId = (encodedId) => {
@@ -29,16 +31,6 @@ const decodeId = (encodedId) => {
   }
 };
 
-const Subnets = ({ projectId }) => (
-  <div className="p-4 bg-gray-50 rounded-lg">
-    Subnets content for project: {projectId}.
-  </div>
-);
-const IGWs = ({ projectId }) => (
-  <div className="p-4 bg-gray-50 rounded-lg">
-    Internet Gateways content for project: {projectId}.
-  </div>
-);
 const RouteTables = ({ projectId }) => (
   <div className="p-4 bg-gray-50 rounded-lg">
     Route Tables content for project: {projectId}.

@@ -32,8 +32,8 @@ const createSecurityGroup = async (securityGroupData) => {
     "/business/security-groups",
     securityGroupData
   );
-  if (!res.data) throw new Error("Failed to create security group");
-  return res.data;
+  if (!res) throw new Error("Failed to create security group");
+  return res;
 };
 
 const updateSecurityGroup = async ({ id, securityGroupData }) => {

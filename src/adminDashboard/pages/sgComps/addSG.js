@@ -42,11 +42,11 @@ const AddSG = ({ isOpen, onClose, projectId = "" }) => {
 
     mutate(securityGroupData, {
       onSuccess: () => {
-        ToastUtils.success("Security Group added successfully");
+        // ToastUtils.success("Security Group added successfully");
         onClose();
       },
       onError: (err) => {
-        console.error("Failed to create security group:", err);
+        // console.error("Failed to create security group:", err);
       },
     });
   };

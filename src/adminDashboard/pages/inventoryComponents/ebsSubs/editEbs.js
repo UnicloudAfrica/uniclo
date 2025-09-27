@@ -7,7 +7,7 @@ const EditEBSModal = ({ isOpen, onClose, ebsVolume }) => {
   const [formData, setFormData] = useState({
     name: "",
     media_type: "",
-    price: "",
+    // price: "",
     description: "",
     icon: "",
     iops_read: "",
@@ -42,7 +42,7 @@ const EditEBSModal = ({ isOpen, onClose, ebsVolume }) => {
       setFormData({
         name: "",
         media_type: "",
-        price: "",
+        // price: "",
         description: "",
         icon: "",
         iops_read: "",
@@ -60,7 +60,11 @@ const EditEBSModal = ({ isOpen, onClose, ebsVolume }) => {
     if (!formData.name.trim()) newErrors.name = "Volume Name is required";
     // media_type is optional, so no required validation here
 
-    const numberFields = ["price", "iops_read", "iops_write"];
+    const numberFields = [
+      // "price",
+      "iops_read",
+      "iops_write",
+    ];
 
     numberFields.forEach((field) => {
       const value = parseFloat(formData[field]);
@@ -77,7 +81,7 @@ const EditEBSModal = ({ isOpen, onClose, ebsVolume }) => {
 
   const updateFormData = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: null })); // Clear error when input changes
+    setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
   const handleSubmit = (e) => {
@@ -89,7 +93,7 @@ const EditEBSModal = ({ isOpen, onClose, ebsVolume }) => {
       const updatedData = {
         name: formData.name,
         media_type: formData.media_type.trim() || null,
-        price: parseFloat(formData.price),
+        // price: parseFloat(formData.price),
         description: formData.description.trim() || null,
         icon: formData.icon.trim() || null,
         iops_read: parseInt(formData.iops_read),
@@ -181,7 +185,7 @@ const EditEBSModal = ({ isOpen, onClose, ebsVolume }) => {
                 <p className="text-red-500 text-xs mt-1">{errors.media_type}</p>
               )}
             </div>
-            <div>
+            {/* <div>
               <label
                 htmlFor="price"
                 className="block text-sm font-medium text-gray-700 mb-2"
@@ -202,7 +206,7 @@ const EditEBSModal = ({ isOpen, onClose, ebsVolume }) => {
               {errors.price && (
                 <p className="text-red-500 text-xs mt-1">{errors.price}</p>
               )}
-            </div>
+            </div> */}
             <div>
               <label
                 htmlFor="iops_read"

@@ -24,15 +24,42 @@ const AddProduct = ({ isOpen, onClose }) => {
   const [errors, setErrors] = useState({});
 
   const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
-  const { isFetching: isBandwidthsFetching, data: bandwidths } =
-    useFetchBandwidths();
-  const { isFetching: isVmsFetching, data: vms } = useFetchComputerInstances();
-  const { isFetching: isOsImagesFetching, data: osImages } = useFetchOsImages();
+
+  const enableProductFetch =
+    !!selectedRegionCode && !!formData.productable_type;
+
+  const { isFetching: isVmsFetching, data: vms } = useFetchComputerInstances(
+    "USD",
+    selectedRegionCode,
+    {
+      enabled:
+        enableProductFetch && formData.productable_type === "compute_instance",
+    }
+  );
+  const { isFetching: isOsImagesFetching, data: osImages } = useFetchOsImages(
+    "USD",
+    selectedRegionCode,
+    { enabled: enableProductFetch && formData.productable_type === "os_image" }
+  );
   const { isFetching: isEbsVolumesFetching, data: ebsVolumes } =
-    useFetchEbsVolumes();
-  const { isFetching: isIPsFetching, data: ips } = useFetchFloatingIPs();
+    useFetchEbsVolumes("USD", selectedRegionCode, {
+      enabled:
+        enableProductFetch && formData.productable_type === "volume_type",
+    });
+  const { isFetching: isBandwidthsFetching, data: bandwidths } =
+    useFetchBandwidths("USD", selectedRegionCode, {
+      enabled: enableProductFetch && formData.productable_type === "bandwidth",
+    });
+  const { isFetching: isIPsFetching, data: ips } = useFetchFloatingIPs(
+    "USD",
+    selectedRegionCode,
+    { enabled: enableProductFetch && formData.productable_type === "ip" }
+  );
   const { isFetching: isCrossConnectsFetching, data: crossConnects } =
-    useFetchCrossConnect();
+    useFetchCrossConnect("USD", selectedRegionCode, {
+      enabled:
+        enableProductFetch && formData.productable_type === "cross_connect",
+    });
   const { mutate: createProduct, isPending } = useCreateProducts();
 
   const productTypes = [
@@ -189,6 +216,7 @@ const AddProduct = ({ isOpen, onClose }) => {
         <div className="px-6 py-6 w-full overflow-y-auto max-h-[400px] flex-1">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Name Field */}
               <div>
                 <label
                   htmlFor="name"
@@ -209,6 +237,38 @@ const AddProduct = ({ isOpen, onClose }) => {
                 />
                 {errors.name && (
                   <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+                )}
+              </div>
+              {/* Region Field */}
+              <div>
+                <label
+                  htmlFor="region"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Region<span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="region"
+                  value={selectedRegionCode}
+                  onChange={(e) => handleSelectChange("region", e.target.value)}
+                  className={`w-full input-field ${
+                    errors.region ? "border-red-500" : "border-gray-300"
+                  }`}
+                  disabled={isPending || isRegionsFetching}
+                >
+                  <option value="">
+                    {isRegionsFetching
+                      ? "Loading regions..."
+                      : "Select a region"}
+                  </option>
+                  {regions?.map((region) => (
+                    <option key={region.code} value={region.code}>
+                      {region.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.region && (
+                  <p className="text-red-500 text-xs mt-1">{errors.region}</p>
                 )}
               </div>
               <div>
@@ -262,13 +322,14 @@ const AddProduct = ({ isOpen, onClose }) => {
                   }`}
                   disabled={
                     isPending ||
-                    isProductOptionsFetching() ||
-                    !formData.productable_type
+                    !selectedRegionCode ||
+                    !formData.productable_type ||
+                    isProductOptionsFetching()
                   }
                 >
                   <option value="">
-                    {!formData.productable_type
-                      ? "Select a product type first"
+                    {!selectedRegionCode || !formData.productable_type
+                      ? "Select region and type first"
                       : isProductOptionsFetching()
                       ? "Loading products..."
                       : "Select a product"}
@@ -283,37 +344,6 @@ const AddProduct = ({ isOpen, onClose }) => {
                   <p className="text-red-500 text-xs mt-1">
                     {errors.productable_id}
                   </p>
-                )}
-              </div>
-              <div>
-                <label
-                  htmlFor="region"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Region
-                </label>
-                <select
-                  id="region"
-                  value={selectedRegionCode}
-                  onChange={(e) => handleSelectChange("region", e.target.value)}
-                  className={`w-full input-field ${
-                    errors.region ? "border-red-500" : "border-gray-300"
-                  }`}
-                  disabled={isPending || isRegionsFetching}
-                >
-                  <option value="">
-                    {isRegionsFetching
-                      ? "Loading regions..."
-                      : "Select a region"}
-                  </option>
-                  {regions?.map((region) => (
-                    <option key={region.code} value={region.code}>
-                      {region.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.region && (
-                  <p className="text-red-500 text-xs mt-1">{errors.region}</p>
                 )}
               </div>
             </div>

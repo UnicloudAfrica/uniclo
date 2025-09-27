@@ -68,6 +68,7 @@ import AdminUsers from "./adminDashboard/pages/adminUsers";
 import AdminProjects from "./adminDashboard/pages/adminProjects";
 import AdminProjectDetails from "./adminDashboard/pages/adminProjectDetails";
 import AdminInstances from "./adminDashboard/pages/adminInstances";
+import AdminAddInstance from "./adminDashboard/pages/adminAddInstance";
 import Settings from "./dashboard/pages/settings";
 import DashboardTaxConfigurations from "./dashboard/pages/taxConfiguration";
 import Products from "./dashboard/pages/products";
@@ -227,6 +228,10 @@ function App() {
           <Route
             path="/admin-dashboard/instances"
             element={<AdminInstances />}
+          />
+          <Route
+            path="/admin-dashboard/add-instance"
+            element={<AdminAddInstance />}
           />
           <Route
             path="/admin-dashboard/key-pairs"

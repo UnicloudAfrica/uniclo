@@ -7,7 +7,7 @@ const AddEBSModal = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
     name: "",
     media_type: "",
-    price: "", // Consolidated price field
+    // price: "",
     description: "",
     icon: "",
     iops_read: "",
@@ -21,7 +21,7 @@ const AddEBSModal = ({ isOpen, onClose }) => {
       setFormData({
         name: "",
         media_type: "",
-        price: "", // Reset consolidated price
+        // price: "",
         description: "",
         icon: "",
         iops_read: "",
@@ -40,7 +40,7 @@ const AddEBSModal = ({ isOpen, onClose }) => {
     // media_type is optional, so no required validation here
 
     const numberFields = [
-      "price", // Validate the consolidated price field
+      // "price", // Validate the consolidated price field
       "iops_read",
       "iops_write",
     ];
@@ -71,7 +71,7 @@ const AddEBSModal = ({ isOpen, onClose }) => {
     const ebsData = {
       name: formData.name,
       media_type: formData.media_type.trim() || null, // Allow null for optional media_type
-      price: parseFloat(formData.price), // Use the consolidated price
+      // price: parseFloat(formData.price), // Use the consolidated price
       description: formData.description.trim() || null,
       icon: formData.icon.trim() || null,
       iops_read: parseInt(formData.iops_read),
@@ -156,31 +156,31 @@ const AddEBSModal = ({ isOpen, onClose }) => {
                 <p className="text-red-500 text-xs mt-1">{errors.media_type}</p>
               )}
             </div>
-            <div>
+            {/* <div>
               <label
-                htmlFor="price" // Changed to 'price'
+                htmlFor="price" 
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                Price (USD)<span className="text-red-500">*</span>{" "}
-                {/* Changed label text */}
+                Price (USD)<span className="text-red-500">*</span>
+              
               </label>
               <input
-                id="price" // Changed to 'price'
+                id="price" 
                 type="number"
                 step="0.01"
-                value={formData.price} // Changed to 'price'
-                onChange={(e) => updateFormData("price", e.target.value)} // Changed to 'price'
+                value={formData.price} 
+                onChange={(e) => updateFormData("price", e.target.value)} 
                 placeholder="e.g., 5.00" // Updated placeholder
                 className={`w-full input-field ${
-                  errors.price ? "border-red-500" : "border-gray-300" // Changed to 'price'
+                  errors.price ? "border-red-500" : "border-gray-300" 
                 }`}
               />
-              {errors.price && ( // Changed to 'price'
+              {errors.price && ( 
                 <p className="text-red-500 text-xs mt-1">
-                  {errors.price} {/* Changed to 'price' */}
+                  {errors.price} 
                 </p>
-              )}
-            </div>
+              )} 
+           </div> */}
             <div>
               <label
                 htmlFor="iops_read"

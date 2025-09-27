@@ -8,7 +8,7 @@ const AddOSImageModal = ({ isOpen, onClose }) => {
 
   const [formData, setFormData] = useState({
     name: "",
-    price: "", // Changed from license_fee to price
+    price: "",
   });
   const [errors, setErrors] = useState({});
 
@@ -17,13 +17,13 @@ const AddOSImageModal = ({ isOpen, onClose }) => {
     if (!formData.name.trim()) {
       newErrors.name = "OS Image Name is required";
     }
-    if (!formData.price || isNaN(parseFloat(formData.price))) {
-      // Changed from license_fee to price
-      newErrors.price = "Price must be a valid number"; // Changed label
-    } else if (parseFloat(formData.price) < 0) {
-      // Changed from license_fee to price
-      newErrors.price = "Price cannot be negative"; // Changed label
-    }
+    // if (!formData.price || isNaN(parseFloat(formData.price))) {
+    //
+    //   newErrors.price = "Price must be a valid number"; // Changed label
+    // } else if (parseFloat(formData.price) < 0) {
+    //
+    //   newErrors.price = "Price cannot be negative"; // Changed label
+    // }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -40,7 +40,7 @@ const AddOSImageModal = ({ isOpen, onClose }) => {
 
     const userData = {
       name: formData.name,
-      price: parseFloat(formData.price), // Changed from license_fee to price
+      // price: parseFloat(formData.price),
     };
 
     mutate(userData, {
@@ -96,31 +96,29 @@ const AddOSImageModal = ({ isOpen, onClose }) => {
                 <p className="text-red-500 text-xs mt-1">{errors.name}</p>
               )}
             </div>
-            <div>
+            {/* <div>
               <label
                 htmlFor="price"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
                 Price (USD)<span className="text-red-500">*</span>{" "}
-                {/* Changed label text */}
+        
               </label>
               <input
                 id="price"
                 type="number"
-                step="0.01" // Allow decimal values
-                value={formData.price} // Changed from license_fee to price
-                onChange={(e) => updateFormData("price", e.target.value)} // Changed from license_fee to price
+                step="0.01"
+                value={formData.price}
+                onChange={(e) => updateFormData("price", e.target.value)}
                 placeholder="e.g., 0.00 or 15.50"
                 className={`w-full input-field ${
-                  errors.price ? "border-red-500" : "border-gray-300" // Changed from license_fee to price
+                  errors.price ? "border-red-500" : "border-gray-300"
                 }`}
               />
-              {errors.price && ( // Changed from license_fee to price
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.price} {/* Changed from license_fee to price */}
-                </p>
+              {errors.price && (
+                <p className="text-red-500 text-xs mt-1">{errors.price}</p>
               )}
-            </div>
+            </div> */}
           </div>
         </div>
         {/* Footer */}

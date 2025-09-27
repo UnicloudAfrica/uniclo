@@ -8,7 +8,7 @@ const AddCrossConnect = ({ isOpen, onClose }) => {
 
   const [formData, setFormData] = useState({
     name: "",
-    price: "",
+    // price: "",
     description: "",
   });
 
@@ -19,11 +19,11 @@ const AddCrossConnect = ({ isOpen, onClose }) => {
     if (!formData.name.trim()) {
       newErrors.name = "Name is required";
     }
-    if (!formData.price || isNaN(parseFloat(formData.price))) {
-      newErrors.price = "Price must be a valid number";
-    } else if (parseFloat(formData.price) < 0) {
-      newErrors.price = "Price cannot be negative";
-    }
+    // if (!formData.price || isNaN(parseFloat(formData.price))) {
+    //   newErrors.price = "Price must be a valid number";
+    // } else if (parseFloat(formData.price) < 0) {
+    //   newErrors.price = "Price cannot be negative";
+    // }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -40,7 +40,7 @@ const AddCrossConnect = ({ isOpen, onClose }) => {
 
     const payload = {
       name: formData.name,
-      price: parseFloat(formData.price),
+      // price: parseFloat(formData.price),
       description: formData.description,
     };
 
@@ -51,7 +51,7 @@ const AddCrossConnect = ({ isOpen, onClose }) => {
         // Reset form fields after successful submission
         setFormData({
           name: "",
-          price: "",
+          // price: "",
           description: "",
         });
       },
@@ -101,7 +101,7 @@ const AddCrossConnect = ({ isOpen, onClose }) => {
                 <p className="text-red-500 text-xs mt-1">{errors.name}</p>
               )}
             </div>
-            <div>
+            {/* <div>
               <label
                 htmlFor="price"
                 className="block text-sm font-medium text-gray-700 mb-2"
@@ -122,7 +122,7 @@ const AddCrossConnect = ({ isOpen, onClose }) => {
               {errors.price && (
                 <p className="text-red-500 text-xs mt-1">{errors.price}</p>
               )}
-            </div>
+            </div> */}
             <div>
               <label
                 htmlFor="description"

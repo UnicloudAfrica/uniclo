@@ -1,10 +1,73 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, Copy } from "lucide-react";
 
 import { useFetchInstanceRequestById } from "../../hooks/adminHooks/instancesHook";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
+import ToastUtils from "../../utils/toastUtil";
+import { useFetchInstanceConsoleById } from "../../hooks/adminHooks/moreinstanceHooks";
+
+const formatDate = (dateString) => {
+  if (!dateString) return "N/A";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
+const Badge = ({ text }) => {
+  const badgeClasses = {
+    running: "bg-green-100 text-green-800",
+    active: "bg-green-100 text-green-800",
+    stopped: "bg-red-100 text-red-800",
+    spawning: "bg-blue-100 text-blue-800",
+    payment_pending: "bg-orange-100 text-orange-800",
+    pending: "bg-yellow-100 text-yellow-800",
+    success: "bg-green-100 text-green-800",
+    failed: "bg-red-100 text-red-800",
+    default: "bg-gray-100 text-gray-800",
+  };
+  const badgeClass =
+    badgeClasses[text?.toLowerCase().replace(/ /g, "_")] ||
+    badgeClasses.default;
+
+  return (
+    <span
+      className={`px-2.5 py-1 text-xs font-medium rounded-full capitalize ${badgeClass}`}
+    >
+      {text}
+    </span>
+  );
+};
+
+const DetailRow = ({ label, value, children, isCopyable = false }) => {
+  const handleCopy = () => {
+    navigator.clipboard.writeText(value);
+    ToastUtils.success("Copied to clipboard!");
+  };
+
+  return (
+    <div className="py-3 sm:grid sm:grid-cols-3 sm:gap-4">
+      <dt className="text-sm font-medium text-gray-600">{label}</dt>
+      <dd className="mt-1 flex items-center text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+        <span className="flex-grow break-words">
+          {value || children || "N/A"}
+        </span>
+        {isCopyable && value && (
+          <button
+            onClick={handleCopy}
+            className="ml-2 p-1 rounded-md hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <Copy className="w-4 h-4" />
+          </button>
+        )}
+      </dd>
+    </div>
+  );
+};
 
 export default function AdminInstancesDetails() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -42,6 +105,8 @@ export default function AdminInstancesDetails() {
     isError,
     error,
   } = useFetchInstanceRequestById(instanceId);
+  const { data: instanceConsoles, isFetching: isConsoleFetching } =
+    useFetchInstanceConsoleById(instanceId);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -134,7 +199,9 @@ export default function AdminInstancesDetails() {
       <AdminActiveTab />
       <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
         <h1 className="text-2xl font-bold text-[#1E1E1EB2] mb-6">
-          {instanceDetails.name || instanceNameFromUrl || "N/A"}
+          {instanceDetails.name ||
+            `Instance created on ${formatDate(instanceDetails.created_at)}` ||
+            "N/A"}
         </h1>
 
         {/* Instance Overview Section */}
@@ -143,147 +210,119 @@ export default function AdminInstancesDetails() {
             Overview
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-600">Instance Name:</span>
-              <span className="text-gray-900">
-                {instanceDetails.name || "N/A"}
-              </span>
+            {/* Column 1 */}
+            <div>
+              <DetailRow
+                label="Instance Name"
+                value={instanceDetails.name || "N/A"}
+              />
+              <DetailRow
+                label="Identifier"
+                value={instanceDetails.identifier}
+                isCopyable
+              />
+              <DetailRow
+                label="Status"
+                children={
+                  <Badge text={instanceDetails.status?.replace(/_/g, " ")} />
+                }
+              />
+              <DetailRow label="Provider" value={instanceDetails.provider} />
+              <DetailRow label="Region" value={instanceDetails.region} />
+              <DetailRow
+                label="Description"
+                value={instanceDetails.description}
+              />
             </div>
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-600">Identifier:</span>
-              <span className="text-gray-900">
-                {instanceDetails.identifier || "N/A"}
-              </span>
+            {/* Column 2 */}
+            <div>
+              <DetailRow
+                label="Created At"
+                value={new Date(instanceDetails.created_at).toLocaleString()}
+              />
+              <DetailRow
+                label="Expires At"
+                value={
+                  instanceDetails.expires_at
+                    ? new Date(instanceDetails.expires_at).toLocaleString()
+                    : "N/A"
+                }
+              />
+              <DetailRow
+                label="Term"
+                value={`${instanceDetails.months} month(s)`}
+              />
+              <DetailRow
+                label="Tags"
+                children={
+                  <div className="flex flex-wrap gap-2">
+                    {instanceDetails.tags && instanceDetails.tags.length > 0 ? (
+                      instanceDetails.tags.map((tag, index) => (
+                        <Badge key={index} text={tag} />
+                      ))
+                    ) : (
+                      <span>N/A</span>
+                    )}
+                  </div>
+                }
+              />
             </div>
-            {/* <div className="flex flex-col">
-              <span className="font-medium text-gray-600">Compute Type:</span>
-              <span className="text-gray-900">
-                {instanceDetails.compute?.name || "N/A"}
-              </span>
-            </div> */}
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-600">vCPUs:</span>
-              <span className="text-gray-900">
-                {instanceDetails.compute?.vcpus || "N/A"}
-              </span>
-            </div>
-            {/* <div className="flex flex-col">
-              <span className="font-medium text-gray-600">Memory:</span>
-              <span className="text-gray-900">
-                {instanceDetails.compute?.memory_gib
-                  ? `${instanceDetails.compute.memory_gib} GiB`
-                  : "N/A"}
-              </span>
-            </div> */}
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-600">Disk Size:</span>
-              <span className="text-gray-900">
-                {instanceDetails.storage_size_gb
+          </div>
+        </div>
+
+        {/* Configuration Section */}
+        <div className="bg-white rounded-[12px] p-6 shadow-sm mb-8">
+          <h2 className="text-xl font-semibold text-[#575758] mb-4">
+            Configuration
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 text-sm">
+            <DetailRow label="Compute" value={instanceDetails.compute?.name} />
+            <DetailRow label="vCPUs" value={instanceDetails.compute?.vcpus} />
+            <DetailRow
+              label="Memory"
+              value={
+                instanceDetails.compute?.memory_mb
+                  ? `${instanceDetails.compute.memory_mb / 1024} GiB`
+                  : "N/A"
+              }
+            />
+            <DetailRow
+              label="Disk Size"
+              value={
+                instanceDetails.storage_size_gb
                   ? `${instanceDetails.storage_size_gb} GiB`
-                  : "N/A"}
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-600">
-                EBS Volume Name:
-              </span>
-              <span className="text-gray-900">
-                {instanceDetails.ebs_volume?.name || "N/A"}
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-600">EBS Media Type:</span>
-              <span className="text-gray-900">
-                {instanceDetails.ebs_volume?.media_type || "N/A"}
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-600">EBS IOPS Read:</span>
-              <span className="text-gray-900">
-                {instanceDetails.ebs_volume?.iops_read || "N/A"}
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-600">EBS IOPS Write:</span>
-              <span className="text-gray-900">
-                {instanceDetails.ebs_volume?.iops_write || "N/A"}
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-600">
-                Operating System:
-              </span>
-              <span className="text-gray-900">
-                {instanceDetails.os_image?.name || "N/A"}
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-600">Bandwidth:</span>
-              <span className="text-gray-900">
-                {instanceDetails.bandwidth?.name || "N/A"}
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-600">Term (Months):</span>
-              <span className="text-gray-900">
-                {instanceDetails.months || "N/A"}
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-600">Creation Date:</span>
-              <span className="text-gray-900">
-                {instanceDetails.created_at
-                  ? new Date(instanceDetails.created_at).toLocaleString()
-                  : "N/A"}
-              </span>
-            </div>
-            <div className="flex flex-col md:col-span-2">
-              <span className="font-medium text-gray-600">Description:</span>
-              <span className="text-gray-900">
-                {instanceDetails.description || "N/A"}
-              </span>
-            </div>
-            <div className="flex flex-col md:col-span-2">
-              <span className="font-medium text-gray-600">Tags:</span>
-              <div className="flex flex-wrap gap-2 mt-1">
-                {instanceDetails.tags && instanceDetails.tags.length > 0 ? (
-                  instanceDetails.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded-full"
-                    >
-                      {tag}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-gray-500">N/A</span>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-col items-start">
-              <span className="font-medium text-gray-600">Status:</span>
-              <span
-                className={`inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium capitalize ${
-                  instanceDetails.status === "Running"
-                    ? "bg-green-100 text-green-800"
-                    : instanceDetails.status === "Stopped"
-                    ? "bg-red-100 text-red-800"
-                    : instanceDetails.status === "spawning"
-                    ? "bg-blue-100 text-blue-800"
-                    : "bg-orange-100 text-orange-800"
-                }`}
-              >
-                {instanceDetails.status?.replace(/_/g, " ") || "N/A"}
-              </span>
-            </div>
+                  : "N/A"
+              }
+            />
+            <DetailRow
+              label="Operating System"
+              value={instanceDetails.os_image?.name}
+            />
+            <DetailRow
+              label="Bandwidth"
+              value={instanceDetails.bandwidth?.name}
+            />
+          </div>
+        </div>
+
+        {/* Billing Section */}
+        <div className="bg-white rounded-[12px] p-6 shadow-sm mb-8">
+          <h2 className="text-xl font-semibold text-[#575758] mb-4">Billing</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 text-sm">
             {totalCost !== undefined && totalCost !== null && (
-              <div className="flex flex-col items-start">
-                <span className="font-medium text-gray-600">Total Cost:</span>
-                <span className="text-gray-900 font-semibold">
-                  {currency} {totalCost.toLocaleString()}
-                </span>
-              </div>
+              <DetailRow
+                label="Total Cost"
+                value={`${currency} ${totalCost.toLocaleString()}`}
+              />
             )}
+            <DetailRow
+              label="Next Billing Date"
+              value={
+                instanceDetails.next_billing_date
+                  ? new Date(instanceDetails.next_billing_date).toLocaleString()
+                  : "N/A"
+              }
+            />
           </div>
         </div>
 
@@ -334,17 +373,7 @@ export default function AdminInstancesDetails() {
                         {tx.currency} {tx.amount?.toLocaleString() || "N/A"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
-                            tx.status === "success"
-                              ? "bg-green-100 text-green-800"
-                              : tx.status === "pending"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {tx.status?.replace(/_/g, " ") || "N/A"}
-                        </span>
+                        <Badge text={tx.status?.replace(/_/g, " ")} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         {tx.payment_gateway || "N/A"}

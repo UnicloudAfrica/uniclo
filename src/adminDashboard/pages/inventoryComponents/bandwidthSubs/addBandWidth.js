@@ -6,7 +6,7 @@ import { useCreateBandwidthProduct } from "../../../../hooks/adminHooks/bandwidt
 const AddBandwidthModal = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
     name: "",
-    price: "",
+    // price: "",
   });
   const [errors, setErrors] = useState({});
 
@@ -15,7 +15,7 @@ const AddBandwidthModal = ({ isOpen, onClose }) => {
     if (!isOpen) {
       setFormData({
         name: "",
-        price: "",
+        // price: "",
       });
       setErrors({});
     }
@@ -29,19 +29,19 @@ const AddBandwidthModal = ({ isOpen, onClose }) => {
     if (!formData.name.trim()) {
       newErrors.name = "Bandwidth Name is required";
     }
-    const priceValue = parseFloat(formData.price);
-    if (isNaN(priceValue) || formData.price === "") {
-      newErrors.price = "Price must be a valid number";
-    } else if (priceValue < 0) {
-      newErrors.price = "Price cannot be negative";
-    }
+    // const priceValue = parseFloat(formData.price);
+    // if (isNaN(priceValue) || formData.price === "") {
+    //   newErrors.price = "Price must be a valid number";
+    // } else if (priceValue < 0) {
+    //   newErrors.price = "Price cannot be negative";
+    // };
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const updateFormData = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: null })); // Clear error when input changes
+    setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
   const handleSubmit = (e) => {
@@ -51,7 +51,7 @@ const AddBandwidthModal = ({ isOpen, onClose }) => {
 
     const bandwidthData = {
       name: formData.name,
-      price: parseFloat(formData.price),
+      // price: parseFloat(formData.price),
     };
 
     mutate(bandwidthData, {
@@ -107,7 +107,7 @@ const AddBandwidthModal = ({ isOpen, onClose }) => {
                 <p className="text-red-500 text-xs mt-1">{errors.name}</p>
               )}
             </div>
-            <div>
+            {/* <div>
               <label
                 htmlFor="price"
                 className="block text-sm font-medium text-gray-700 mb-2"
@@ -117,7 +117,7 @@ const AddBandwidthModal = ({ isOpen, onClose }) => {
               <input
                 id="price"
                 type="number"
-                step="0.01" // Allow decimal values
+                step="0.01" 
                 value={formData.price}
                 onChange={(e) => updateFormData("price", e.target.value)}
                 placeholder="e.g., 16000.00"
@@ -128,7 +128,7 @@ const AddBandwidthModal = ({ isOpen, onClose }) => {
               {errors.price && (
                 <p className="text-red-500 text-xs mt-1">{errors.price}</p>
               )}
-            </div>
+            </div> */}
           </div>
         </div>
         {/* Footer */}

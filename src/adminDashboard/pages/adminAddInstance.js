@@ -1,14 +1,8 @@
-// src/components/admin/AddAdminInstance.jsx
-import {
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  Plus,
-  Trash2,
-  X,
-} from "lucide-react";
-import { useState, useEffect, useRef } from "react";
-import { useFetchProjects } from "../../../hooks/adminHooks/projectHooks";
+import { useQueryClient } from "@tanstack/react-query";
+import { ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useFetchProjects } from "../../hooks/adminHooks/projectHooks";
 import {
   useFetchBandwidths,
   useFetchComputerInstances,
@@ -16,30 +10,38 @@ import {
   useFetchEbsVolumes,
   useFetchFloatingIPs,
   useFetchOsImages,
-} from "../../../hooks/resource";
-import {
-  useCreateInstanceRequest,
-  useInitiateMultiInstanceRequest,
-} from "../../../hooks/adminHooks/instancesHook";
-import { useFetchTenants } from "../../../hooks/adminHooks/tenantHooks";
-import { useFetchClients } from "../../../hooks/adminHooks/clientHooks";
-import StepProgress from "../../../dashboard/components/instancesubcomps/stepProgress";
-import ToastUtils from "../../../utils/toastUtil";
-import ConfigurationStep from "./configurationStep";
-import ResourceAllocationStep from "./resourceAllocationStep";
-import SummaryStep from "./summaryStep";
+  useFetchProductPricing,
+} from "../../hooks/resource";
+import { useInitiateMultiInstanceRequest } from "../../hooks/adminHooks/instancesHook";
+import { useFetchTenants } from "../../hooks/adminHooks/tenantHooks";
+import { useFetchClients } from "../../hooks/adminHooks/clientHooks";
+import StepProgress from "../../dashboard/components/instancesubcomps/stepProgress";
+import ToastUtils from "../../utils/toastUtil";
+import ConfigurationStep from "./instanceComp/configurationStep";
+import ResourceAllocationStep from "./instanceComp/resourceAllocationStep";
+import SummaryStep from "./instanceComp/summaryStep";
+import PricingBreakdownStep from "./instanceComp/pricingBreakdownStep";
+import { useFetchKeyPairs } from "../../hooks/adminHooks/keyPairHooks";
+import { useFetchSubnets } from "../../hooks/adminHooks/subnetHooks";
+import { useFetchSecurityGroups } from "../../hooks/adminHooks/securityGroupHooks";
+import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
+import AdminHeadbar from "../components/adminHeadbar";
+import AdminSidebar from "../components/adminSidebar";
+import AdminActiveTab from "../components/adminActiveTab";
 
-import PricingBreakdownStep from "./pricingBreakdownStep";
-import { useFetchKeyPairs } from "../../../hooks/adminHooks/keyPairHooks";
-import { useFetchSubnets } from "../../../hooks/adminHooks/subnetHooks";
-import { useFetchSecurityGroups } from "../../../hooks/adminHooks/securityGroupHooks";
-import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
-
-const AddAdminInstance = ({ isOpen, onClose }) => {
+const AdminAddInstance = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const formContentRef = useRef(null);
+  const preselectedProject = useMemo(
+    () => location.state?.project,
+    [location.state]
+  );
+
   const [formData, setFormData] = useState({
-    name: "",
     number_of_instances: 1,
     storage_size_gb: "",
     selectedComputeInstance: null,
@@ -59,23 +61,45 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
     fast_track: false,
     keypair_name: "",
     // Fields now part of Resource Allocation
-    selectedProject: null,
+    selectedProject: preselectedProject || null,
     assigned_to_type: "project",
     tenant_id: null,
     user_id: null,
   });
 
+  const selectedRegion = formData.selectedProject?.default_region || "";
+
   const { data: computerInstances, isFetching: isComputerInstancesFetching } =
-    useFetchComputerInstances();
-  const { data: osImages, isFetching: isOsImagesFetching } = useFetchOsImages();
+    useFetchProductPricing(selectedRegion, "compute_instance", {
+      // productable_type: "compute_instance"
+      enabled: !!selectedRegion,
+    });
+  const { data: osImages, isFetching: isOsImagesFetching } =
+    useFetchProductPricing(selectedRegion, "os_image", {
+      // productable_type: "os_image"
+      enabled: !!selectedRegion,
+    });
   const { data: bandwidths, isFetching: isBandwidthsFetching } =
-    useFetchBandwidths();
+    useFetchProductPricing(selectedRegion, "bandwidth", {
+      // productable_type: "bandwidth"
+      enabled: !!selectedRegion,
+    });
   const { data: ebsVolumes, isFetching: isEbsVolumesFetching } =
-    useFetchEbsVolumes();
+    useFetchProductPricing(selectedRegion, "volume_type", {
+      // productable_type: "volume_type"
+      enabled: !!selectedRegion,
+    });
   const { data: crossConnects, isFetching: isCrossConnectsFetching } =
-    useFetchCrossConnect();
+    useFetchProductPricing(selectedRegion, "cross_connect", {
+      // productable_type: "cross_connect"
+      enabled: !!selectedRegion,
+    });
   const { data: floatingIps, isFetching: isFloatingIpsFetching } =
-    useFetchFloatingIPs();
+    useFetchProductPricing(selectedRegion, "ip", {
+      // productable_type: "ip"
+      enabled: !!selectedRegion,
+    });
+
   const { data: projects, isFetching: isProjectsFetching } = useFetchProjects();
   const { data: tenants, isFetching: isTenantsFetching } = useFetchTenants();
   const { data: clients, isFetching: isClientsFetching } = useFetchClients();
@@ -85,8 +109,8 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
   const [pricingRequests, setPricingRequests] = useState([]);
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState(null);
-  const [apiResponse, setApiResponse] = useState(null); // The selectedRegion is now derived from the project selected within the resource step
-  const selectedRegion = formData.selectedProject?.default_region || "";
+  const [apiResponse, setApiResponse] = useState(null);
+
   const { data: keyPairs, isFetching: isKeyPairsFetching } = useFetchKeyPairs(
     selectedProjectId,
     selectedRegion,
@@ -142,9 +166,7 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
   }, [formData.selectedProject]);
 
   const scrollFormToTop = () => {
-    if (formContentRef.current) {
-      formContentRef.current.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const validateStep = (step = currentStep, action = "next") => {
@@ -152,17 +174,11 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
     if (step === 0) {
       if (!formData.name.trim()) newErrors.name = "Request Name is required";
       if (formData.tags.length === 0)
-        newErrors.tags = "At least one tag must be selected";
+        newErrors.tags = "At least one tag is required.";
     } else if (step === 1) {
-      // When moving to the next step, if no requests have been added, we
-      // can treat it as an attempt to add the current form state.
-      // Otherwise, if requests exist, we can proceed.
       const isSubmittingStep = pricingRequests.length === 0;
 
-      // Validation for adding a single pricing request, or for submitting the step
-      // with the current form state if no requests have been added yet.
       if (isSubmittingStep || action === "add") {
-        // Project selection is now part of this step's validation
         if (!formData.selectedProject)
           newErrors.selectedProject = "A project must be selected.";
         if (!formData.storage_size_gb)
@@ -216,11 +232,6 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
         newValue = value ? parseInt(value) : 0;
       }
       const updatedState = { ...prev, [field]: newValue };
-      if (field === "assigned_to_type") {
-        updatedState.user_id = null;
-        updatedState.selectedProject = null;
-        updatedState.tenant_id = null;
-      }
 
       return updatedState;
     });
@@ -246,8 +257,10 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
       updateFormData(field, null);
       return;
     }
-    const selectedOption = optionsList?.find(
-      (option) => String(option.id) === String(value)
+    const selectedOption = optionsList?.find((option) =>
+      option.product
+        ? String(option.product.id) === String(value)
+        : String(option.id) === String(value)
     );
     if (selectedOption) {
       updateFormData(field, selectedOption);
@@ -284,25 +297,23 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
       const newRequest = {
         project_id: formData.selectedProject.id,
         region: formData.selectedProject.default_region,
-        os_image_id: formData.selectedOsImage.id,
-        compute_instance_id: formData.selectedComputeInstance.id,
+        os_image_id: formData.selectedOsImage.product.productable_id,
+        compute_instance_id:
+          formData.selectedComputeInstance.product.productable_id,
         months: parseInt(formData.months),
         number_of_instances: parseInt(formData.number_of_instances),
         volume_types: [
           {
-            volume_type_id: formData.selectedEbsVolume.id,
+            volume_type_id: formData.selectedEbsVolume.product.productable_id,
             storage_size_gb: parseInt(formData.storage_size_gb),
           },
         ],
         keypair_name: formData.keypair_name,
-        // Conditionally add networking fields
         ...(formData.network_id && { network_id: formData.network_id }),
         ...(formData.subnet_id && { subnet_id: formData.subnet_id }),
         ...(formData.security_group_ids.length > 0 && {
           security_group_ids: formData.security_group_ids,
         }),
-
-        // Add optional fields if they exist
         ...(formData.bandwidth_id && {
           bandwidth_id: formData.bandwidth_id,
           bandwidth_count: parseInt(formData.bandwidth_count),
@@ -311,20 +322,14 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
           floating_ip_id: formData.floating_ip_id,
           floating_ip_count: parseInt(formData.floating_ip_count),
         }),
-        ...(formData.cross_connect_id && {
-          cross_connect_id: formData.cross_connect_id,
-          cross_connect_count: parseInt(formData.cross_connect_count),
-        }),
-        // For display in the summary list
         _display: {
-          compute: formData.selectedComputeInstance.name,
+          compute: formData.selectedComputeInstance.product.productable_name,
           project: formData.selectedProject.name,
-          os: formData.selectedOsImage.name,
+          os: formData.selectedOsImage.product.productable_name,
           storage: `${formData.storage_size_gb} GiB`,
         },
       };
       setPricingRequests([...pricingRequests, newRequest]);
-      // Optionally reset parts of the form for the next entry
       setFormData((prev) => ({
         ...prev,
         number_of_instances: 1,
@@ -337,12 +342,12 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
         security_group_ids: [],
         keypair_name: "",
         months: "",
-        // Also reset project-related fields for the next entry
-        selectedProject: null,
+        selectedProject: preselectedProject || null,
         assigned_to_type: "project",
         tenant_id: null,
         user_id: null,
       }));
+      setErrors((prev) => ({ ...prev, selectedProject: null }));
       ToastUtils.success("Instance configuration added to the list.");
     }
   };
@@ -360,11 +365,9 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
     }
 
     if (validateStep(2)) {
-      // Final validation for top-level fields
-      // Final validation for top-level fields
       const dataToSubmit = {
         pricing_requests: pricingRequests.map((req) => {
-          const { _display, ...rest } = req; // Exclude display data from payload
+          const { _display, ...rest } = req;
           return rest;
         }),
         name: formData.name,
@@ -374,15 +377,13 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
 
       initiateMultiInstanceRequest(dataToSubmit, {
         onSuccess: (res) => {
-          ToastUtils.success("Instance request initiated successfully!");
           setApiResponse(res.data);
-          setCurrentStep((prev) => prev + 1); // Move to confirmation step
+          setCurrentStep((prev) => prev + 1);
         },
         onError: (error) => {
           const errorMessage =
             error.response?.data?.message ||
             "Failed to initiate instance request.";
-          ToastUtils.error(errorMessage);
           setGeneralError(errorMessage);
         },
       });
@@ -394,14 +395,11 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
       return;
     }
 
-    // Special handling for step 2 (Resource Allocation)
     if (currentStep === 1) {
       if (pricingRequests.length === 0) {
-        // If no requests are added, try to add the current form as a request
-        // before proceeding, but don't advance the step automatically.
-        addPricingRequest(); // This already runs validation via `validateStep(1, 'add')`
+        addPricingRequest();
         ToastUtils.info("Configuration added. Click Next again to proceed.");
-        return; // Stop here to let the user review the added item.
+        return;
       }
     }
 
@@ -409,7 +407,6 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
       setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
       scrollFormToTop();
     } else {
-      // This case is now for the final "Finish" button on the Confirmation step
       handleClose();
     }
   };
@@ -444,7 +441,7 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
       tags: [],
       fast_track: false,
       keypair_name: "",
-      selectedProject: null,
+      selectedProject: preselectedProject || null,
       assigned_to_type: "project",
       tenant_id: null,
       user_id: null,
@@ -456,8 +453,16 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
   };
 
   const handleClose = () => {
-    onClose();
+    queryClient.invalidateQueries({ queryKey: ["admin-instanceRequests"] });
     resetForm();
+    if (preselectedProject) {
+      const encodedId = encodeURIComponent(btoa(preselectedProject.identifier));
+      navigate(
+        `/admin-dashboard/projects/details?id=${encodedId}&name=${preselectedProject.name}`
+      );
+    } else {
+      navigate("/admin-dashboard/instances");
+    }
   };
 
   const isAnyFetching =
@@ -476,14 +481,6 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
     isSecurityGroupsFetching;
 
   const renderStep = () => {
-    if (isAnyFetching) {
-      return (
-        <div className="flex justify-center items-center h-full min-h-[200px]">
-          <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
-          <p className="ml-2 text-gray-600">Loading resources...</p>
-        </div>
-      );
-    }
     switch (currentStep) {
       case 0:
         return (
@@ -508,9 +505,6 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
             handleSelectChange={handleSelectChange}
             handleCheckboxChange={handleCheckboxChange}
             computerInstances={computerInstances}
-            // Pass project-related data down
-            tenants={tenants}
-            clients={clients}
             projects={projects}
             regions={regions}
             ebsVolumes={ebsVolumes}
@@ -539,73 +533,83 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
 
   return (
     <>
-      {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
-          <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full">
-            <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] w-full">
-              <h2 className="text-lg font-semibold text-[#575758]">
-                Add New Instance
-              </h2>
-              <button
-                onClick={handleClose}
-                className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
-                disabled={isSubmissionPending}
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="px-6 py-3">
-              <StepProgress currentStep={currentStep} steps={steps} />
-            </div>
-            <div
-              ref={formContentRef}
-              className="px-6 pb-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start"
+      <AdminHeadbar
+        onMenuClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+      />
+      <AdminSidebar
+        isMobileMenuOpen={isMobileMenuOpen}
+        onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
+      />
+      <AdminActiveTab />
+      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex justify-between items-center pb-4 border-b">
+            <h2 className="text-lg font-semibold text-[#575758]">
+              Add New Instance
+            </h2>
+            <button
+              onClick={handleClose}
+              className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
+              disabled={isSubmissionPending}
             >
-              {renderStep()}
-              {generalError && (
-                <p className="text-red-500 text-sm mt-4 text-center">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="sticky top-0 z-10 bg-white pt-6 pb-4 border-b mb-6">
+            <StepProgress currentStep={currentStep} steps={steps} />
+          </div>
+          <div
+            ref={formContentRef}
+            className="w-full flex flex-col items-center justify-start"
+          >
+            {renderStep()}
+            {/* {generalError && (
+              <div className="w-full max-w-3xl mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-center">
+                <p className="text-red-600 text-sm font-medium">
                   {generalError}
                 </p>
+              </div>
+            )} */}
+          </div>
+          <div className="flex items-center justify-between mt-4 pt-4 border-t">
+            <div className="flex gap-3">
+              {currentStep > 0 && (
+                <button
+                  onClick={handleBack}
+                  className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
+                  disabled={isSubmissionPending}
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1 inline-block" /> Back
+                </button>
               )}
             </div>
-            <div className="flex items-center justify-between px-6 py-4 border-t">
-              <div className="flex gap-3">
-                {currentStep > 0 && (
-                  <button
-                    onClick={handleBack}
-                    className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
-                    disabled={isSubmissionPending}
-                  >
-                    <ChevronLeft className="w-4 h-4 mr-1 inline-block" /> Back
-                  </button>
-                )}
-              </div>
-              <button
-                onClick={
-                  currentStep === 2 // Summary step
-                    ? handleSubmit
-                    : currentStep === 3 // Confirmation step
-                    ? handleClose
-                    : handleNext
-                }
-                disabled={isSubmissionPending || isAnyFetching}
-                className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-              >
-                {currentStep === 3
-                  ? "Finish"
-                  : currentStep === 2
-                  ? "Submit Request"
-                  : "Next"}
-                {isSubmissionPending && (
-                  <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-                )}
-              </button>
-            </div>
+            <button
+              onClick={
+                currentStep === 2
+                  ? handleSubmit
+                  : currentStep === 3
+                  ? handleClose
+                  : handleNext
+              }
+              disabled={
+                isSubmissionPending || (isAnyFetching && currentStep !== 0)
+              }
+              className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            >
+              {currentStep === 3
+                ? "Finish"
+                : currentStep === 2
+                ? "Submit Request"
+                : "Next"}
+              {isSubmissionPending && (
+                <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
+              )}
+            </button>
           </div>
         </div>
-      )}
+      </main>
     </>
   );
 };
 
-export default AddAdminInstance;
+export default AdminAddInstance;

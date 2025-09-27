@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import EditProjectModal from "./projectComps/editProject";
 import ConfirmDeleteModal from "./projectComps/deleteProject";
-import AddAdminInstance from "./instanceComp/addInstance";
 import KeyPairs from "./infraComps/keyPairs";
 import SecurityGroup from "./infraComps/securityGroup";
 import VPCs from "./infraComps/vpcs";
@@ -50,7 +49,6 @@ export default function AdminProjectDetails() {
   const [instances, setInstances] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  const [isAddInstanceOpen, setAddInstanceOpen] = useState(false);
   const [isEditDescriptionModalOpen, setIsEditDescriptionModalOpen] =
     useState(false);
   const [isDeleteConfirmModalOpen, setIsDeleteConfirmModalOpen] =
@@ -95,8 +93,6 @@ export default function AdminProjectDetails() {
       .replace(/,([^,]*)$/, isDateOnly ? "$1" : " -$1");
   };
 
-  const openAddInstance = () => setAddInstanceOpen(true);
-  const closeAddInstance = () => setAddInstanceOpen(false);
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
@@ -279,7 +275,11 @@ export default function AdminProjectDetails() {
                 Instances
               </h2>
               <button
-                onClick={openAddInstance}
+                onClick={() =>
+                  navigate("/admin-dashboard/add-instance", {
+                    state: { project: projectDetails },
+                  })
+                }
                 className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
               >
                 Add Instance
@@ -498,7 +498,6 @@ export default function AdminProjectDetails() {
       </main>
 
       {/* Modals are unchanged */}
-      <AddAdminInstance isOpen={isAddInstanceOpen} onClose={closeAddInstance} />
       <EditProjectModal
         isOpen={isEditDescriptionModalOpen}
         onClose={() => setIsEditDescriptionModalOpen(false)}

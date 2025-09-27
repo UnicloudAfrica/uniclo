@@ -6,7 +6,7 @@ import { useUpdateBandwidthProduct } from "../../../../hooks/adminHooks/bandwidt
 const EditBandwidthModal = ({ isOpen, onClose, bandwidth }) => {
   const [formData, setFormData] = useState({
     name: "",
-    price: "",
+    // price: "",
   });
   const [errors, setErrors] = useState({});
 
@@ -14,17 +14,17 @@ const EditBandwidthModal = ({ isOpen, onClose, bandwidth }) => {
     if (isOpen && bandwidth) {
       setFormData({
         name: bandwidth.name || "",
-        price:
-          bandwidth.price !== undefined && bandwidth.price !== null
-            ? parseFloat(bandwidth.price).toFixed(2)
-            : "",
+        // price:
+        //   bandwidth.price !== undefined && bandwidth.price !== null
+        //     ? parseFloat(bandwidth.price).toFixed(2)
+        //     : "",
       });
       setErrors({}); // Clear any previous errors
     } else if (!isOpen) {
       // Reset form when modal closes
       setFormData({
         name: "",
-        price: "",
+        // price: "",
       });
       setErrors({});
     }
@@ -38,12 +38,12 @@ const EditBandwidthModal = ({ isOpen, onClose, bandwidth }) => {
     if (!formData.name.trim()) {
       newErrors.name = "Bandwidth Name is required";
     }
-    const priceValue = parseFloat(formData.price);
-    if (isNaN(priceValue) || formData.price === "") {
-      newErrors.price = "Price must be a valid number";
-    } else if (priceValue < 0) {
-      newErrors.price = "Price cannot be negative";
-    }
+    // const priceValue = parseFloat(formData.price);
+    // if (isNaN(priceValue) || formData.price === "") {
+    //   newErrors.price = "Price must be a valid number";
+    // } else if (priceValue < 0) {
+    //   newErrors.price = "Price cannot be negative";
+    // }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -62,7 +62,7 @@ const EditBandwidthModal = ({ isOpen, onClose, bandwidth }) => {
       // Ensure bandwidth.id exists for the update operation
       const updatedData = {
         name: formData.name,
-        price: parseFloat(formData.price),
+        // price: parseFloat(formData.price),
       };
 
       mutate(
@@ -127,7 +127,7 @@ const EditBandwidthModal = ({ isOpen, onClose, bandwidth }) => {
                 <p className="text-red-500 text-xs mt-1">{errors.name}</p>
               )}
             </div>
-            <div>
+            {/* <div>
               <label
                 htmlFor="price"
                 className="block text-sm font-medium text-gray-700 mb-2"
@@ -148,7 +148,7 @@ const EditBandwidthModal = ({ isOpen, onClose, bandwidth }) => {
               {errors.price && (
                 <p className="text-red-500 text-xs mt-1">{errors.price}</p>
               )}
-            </div>
+            </div> */}
           </div>
         </div>
         {/* Footer */}

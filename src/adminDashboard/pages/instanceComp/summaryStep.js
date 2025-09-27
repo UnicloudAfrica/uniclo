@@ -9,12 +9,20 @@ const DetailRow = ({ label, value }) => (
 
 export const SummaryStep = ({ formData, pricingRequests }) => (
   <div className="space-y-6 w-full">
+    <div className="text-center mb-6">
+      <h3 className="text-xl font-semibold text-gray-800">Request Summary</h3>
+      <p className="text-sm text-gray-500 mt-1">
+        Please review the details of your instance request below before
+        submitting.
+      </p>
+    </div>
     <div>
       <h3 className="text-lg font-semibold text-gray-800 mb-2">
         Request Details
       </h3>
       <div className="p-4 bg-gray-50 rounded-lg space-y-2">
         {/* Project is now per-configuration */}
+        <DetailRow label="Request Name" value={formData.name} />
         <DetailRow label="Tags" value={formData.tags.join(", ")} />
         <DetailRow
           label="Fast Track"

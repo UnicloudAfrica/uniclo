@@ -114,12 +114,12 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       activeIcon: activemodules,
       path: "/admin-dashboard/pricing",
     },
-    {
-      name: "Infra",
-      icon: modules,
-      activeIcon: activemodules,
-      path: "/admin-dashboard/key-pairs",
-    },
+    // {
+    //   name: "Infra",
+    //   icon: modules,
+    //   activeIcon: activemodules,
+    //   path: "/admin-dashboard/key-pairs",
+    // },
     {
       name: "Purchased Modules",
       icon: modules,

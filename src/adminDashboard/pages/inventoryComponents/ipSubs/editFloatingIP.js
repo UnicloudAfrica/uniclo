@@ -7,7 +7,7 @@ const EditFloatingIP = ({ isOpen, onClose, floatingIP }) => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    price: "",
+    // price: "",
   });
   const [errors, setErrors] = useState({});
 
@@ -16,10 +16,10 @@ const EditFloatingIP = ({ isOpen, onClose, floatingIP }) => {
       setFormData({
         name: floatingIP.name || "",
         description: floatingIP.description || "",
-        price:
-          floatingIP.price !== undefined && floatingIP.price !== null
-            ? parseFloat(floatingIP.price).toFixed(2)
-            : "",
+        // price:
+        //   floatingIP.price !== undefined && floatingIP.price !== null
+        //     ? parseFloat(floatingIP.price).toFixed(2)
+        //     : "",
       });
       setErrors({});
     }
@@ -35,11 +35,11 @@ const EditFloatingIP = ({ isOpen, onClose, floatingIP }) => {
     if (!formData.description.trim()) {
       newErrors.description = "Description is required";
     }
-    if (!formData.price || isNaN(parseFloat(formData.price))) {
-      newErrors.price = "Price must be a valid number";
-    } else if (parseFloat(formData.price) < 0) {
-      newErrors.price = "Price cannot be negative";
-    }
+    // if (!formData.price || isNaN(parseFloat(formData.price))) {
+    //   newErrors.price = "Price must be a valid number";
+    // } else if (parseFloat(formData.price) < 0) {
+    //   newErrors.price = "Price cannot be negative";
+    // }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -58,7 +58,7 @@ const EditFloatingIP = ({ isOpen, onClose, floatingIP }) => {
       const updatedData = {
         name: formData.name,
         description: formData.description,
-        price: parseFloat(formData.price),
+        // price: parseFloat(formData.price),
       };
 
       mutate(
@@ -145,7 +145,7 @@ const EditFloatingIP = ({ isOpen, onClose, floatingIP }) => {
                 </p>
               )}
             </div>
-            <div>
+            {/* <div>
               <label
                 htmlFor="floatingIPPrice"
                 className="block text-sm font-medium text-gray-700 mb-2"
@@ -166,7 +166,7 @@ const EditFloatingIP = ({ isOpen, onClose, floatingIP }) => {
               {errors.price && (
                 <p className="text-red-500 text-xs mt-1">{errors.price}</p>
               )}
-            </div>
+            </div> */}
           </div>
         </div>
 

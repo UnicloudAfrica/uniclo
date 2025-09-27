@@ -7,7 +7,7 @@ const EditCrossConnect = ({ isOpen, onClose, crossConnect }) => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    price: "",
+    // price: "",
   });
   const [errors, setErrors] = useState({});
 
@@ -16,10 +16,10 @@ const EditCrossConnect = ({ isOpen, onClose, crossConnect }) => {
       setFormData({
         name: crossConnect.name || "",
         description: crossConnect.description || "",
-        price:
-          crossConnect.price !== undefined && crossConnect.price !== null
-            ? parseFloat(crossConnect.price).toFixed(2)
-            : "",
+        // price:
+        //   crossConnect.price !== undefined && crossConnect.price !== null
+        //     ? parseFloat(crossConnect.price).toFixed(2)
+        //     : "",
       });
       setErrors({});
     }
@@ -35,11 +35,11 @@ const EditCrossConnect = ({ isOpen, onClose, crossConnect }) => {
     if (!formData.description.trim()) {
       newErrors.description = "Description is required";
     }
-    if (!formData.price || isNaN(parseFloat(formData.price))) {
-      newErrors.price = "Price must be a valid number";
-    } else if (parseFloat(formData.price) < 0) {
-      newErrors.price = "Price cannot be negative";
-    }
+    // if (!formData.price || isNaN(parseFloat(formData.price))) {
+    //   newErrors.price = "Price must be a valid number";
+    // } else if (parseFloat(formData.price) < 0) {
+    //   newErrors.price = "Price cannot be negative";
+    // }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -58,7 +58,7 @@ const EditCrossConnect = ({ isOpen, onClose, crossConnect }) => {
       const updatedData = {
         name: formData.name,
         description: formData.description,
-        price: parseFloat(formData.price),
+        // price: parseFloat(formData.price),
       };
 
       mutate(
@@ -146,7 +146,7 @@ const EditCrossConnect = ({ isOpen, onClose, crossConnect }) => {
                 </p>
               )}
             </div>
-            <div>
+            {/* <div>
               <label
                 htmlFor="crossConnectPrice"
                 className="block text-sm font-medium text-gray-700 mb-2"
@@ -167,7 +167,7 @@ const EditCrossConnect = ({ isOpen, onClose, crossConnect }) => {
               {errors.price && (
                 <p className="text-red-500 text-xs mt-1">{errors.price}</p>
               )}
-            </div>
+            </div> */}
           </div>
         </div>
 

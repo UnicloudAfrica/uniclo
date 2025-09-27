@@ -1,15 +1,24 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useFetchInstanceRequests } from "../../hooks/adminHooks/instancesHook";
-import AddAdminInstance from "./instanceComp/addInstance";
 
+const formatDate = (dateString) => {
+  if (!dateString) return "N/A";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
 export default function AdminInstances() {
+  const navigate = useNavigate();
   const [selectedItem, setSelectedItem] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isAddInstancesOpen, setAddInstances] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10; // This will be passed as per_page to the API
@@ -31,9 +40,6 @@ export default function AdminInstances() {
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
   };
-
-  const openAddInstances = () => setAddInstances(true);
-  const closeAddInstances = () => setAddInstances(false);
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -83,7 +89,7 @@ export default function AdminInstances() {
           </div>
 
           <button
-            onClick={openAddInstances}
+            onClick={() => navigate("/admin-dashboard/add-instance")}
             className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base mt-5 hover:bg-[#1976D2] transition-colors"
           >
             Add Instances
@@ -124,7 +130,8 @@ export default function AdminInstances() {
                       className="hover:bg-gray-50 cursor-pointer"
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                        {item.name}
+                        {item.name ||
+                          `Instance created on ${formatDate(item.created_at)}`}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                         {item.storage_size_gb
@@ -190,7 +197,8 @@ export default function AdminInstances() {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-base font-semibold text-gray-900">
-                      {item.name}
+                      {item.name ||
+                        `Instance created on ${formatDate(item.created_at)}`}
                     </h3>
                     <span
                       className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${
@@ -270,11 +278,6 @@ export default function AdminInstances() {
           )}
         </div>
       </main>
-
-      <AddAdminInstance
-        isOpen={isAddInstancesOpen}
-        onClose={closeAddInstances}
-      />
     </>
   );
 }

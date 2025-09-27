@@ -10,7 +10,7 @@ const EditVMModal = ({ isOpen, onClose, vm }) => {
     family: "",
     vcpus: "",
     memory_gib: "",
-    price: "", // Consolidated price field
+    // price: ""
   });
   const [errors, setErrors] = useState({});
 
@@ -29,7 +29,7 @@ const EditVMModal = ({ isOpen, onClose, vm }) => {
             ? vm.memory_gib.toString()
             : "",
         price:
-          vm.price !== undefined && vm.price !== null // Use vm.price for initialization
+          vm.price !== undefined && vm.price !== null
             ? parseFloat(vm.price).toFixed(2) // Format to 2 decimal places for display
             : "",
       });
@@ -41,7 +41,7 @@ const EditVMModal = ({ isOpen, onClose, vm }) => {
         family: "",
         vcpus: "",
         memory_gib: "",
-        price: "", // Reset consolidated price
+        // price: "",
       });
       setErrors({});
     }
@@ -58,7 +58,7 @@ const EditVMModal = ({ isOpen, onClose, vm }) => {
     const numberFields = [
       "vcpus",
       "memory_gib",
-      "price", // Validate the consolidated price field
+      // "price",
     ];
 
     numberFields.forEach((field) => {
@@ -96,7 +96,7 @@ const EditVMModal = ({ isOpen, onClose, vm }) => {
         family: formData.family,
         vcpus: parseInt(formData.vcpus),
         memory_gib: parseFloat(formData.memory_gib),
-        price: parseFloat(formData.price), // Use the consolidated price
+        // price: parseFloat(formData.price),
       };
 
       mutate(
@@ -223,31 +223,31 @@ const EditVMModal = ({ isOpen, onClose, vm }) => {
                 <p className="text-red-500 text-xs mt-1">{errors.memory_gib}</p>
               )}
             </div>
-            <div>
+            {/* <div>
               <label
-                htmlFor="price" // Changed to 'price'
+                htmlFor="price"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
                 Price (USD)<span className="text-red-500">*</span>{" "}
-                {/* Updated label */}
+             
               </label>
               <input
-                id="price" // Changed to 'price'
+                id="price"
                 type="number"
                 step="0.01"
-                value={formData.price} // Changed to 'price'
-                onChange={(e) => updateFormData("price", e.target.value)} // Changed to 'price'
-                placeholder="e.g., 36.00" // Updated placeholder
+                value={formData.price}
+                onChange={(e) => updateFormData("price", e.target.value)}
+                placeholder="e.g., 36.00"
                 className={`w-full input-field ${
-                  errors.price ? "border-red-500" : "border-gray-300" // Changed to 'price'
+                  errors.price ? "border-red-500" : "border-gray-300"
                 }`}
               />
-              {errors.price && ( // Changed to 'price'
+              {errors.price && (
                 <p className="text-red-500 text-xs mt-1">
-                  {errors.price} {/* Changed to 'price' */}
+                  {errors.price} 
                 </p>
               )}
-            </div>
+            </div> */}
           </div>
         </div>
         {/* Footer */}

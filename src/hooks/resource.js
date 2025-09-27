@@ -51,46 +51,63 @@ const fetchGeneralRegions = async () => {
   const res = await silentApi("GET", "/business/cloud-regions");
   return res.data;
 };
+const fetchProductPricing = async (region, productable_type) => {
+  const params = new URLSearchParams();
+  if (region) {
+    params.append("region", region);
+  }
+  if (productable_type) {
+    params.append("productable_type", productable_type);
+  }
+  const res = await silentApi("GET", `/product-pricing?${params.toString()}`);
+  return res.data;
+};
 // **GET**: fetch computer instances
-const fetchComputerInstances = async (currency = "USD") => {
-  const res = await silentApi(
-    "GET",
-    `/product-compute-instance?country=${currency}`
-  );
+const fetchComputerInstances = async (currency = "USD", region) => {
+  const params = new URLSearchParams();
+  params.append("country", currency);
+  if (region) params.append("region", region);
+  const res = await silentApi("GET", `/product-compute-instance?${params}`);
   return res.data;
 };
 // **GET**: fetch OS images
-const fetchOsImages = async (currency = "USD") => {
-  const res = await silentApi("GET", `/product-os-image?country=${currency}`);
+const fetchOsImages = async (currency = "USD", region) => {
+  const params = new URLSearchParams();
+  params.append("country", currency);
+  if (region) params.append("region", region);
+  const res = await silentApi("GET", `/product-os-image?${params}`);
   return res.data;
 };
 // **GET**: fetch ebs volumes
-const fetchEbsVolumes = async (currency = "USD") => {
-  const res = await silentApi(
-    "GET",
-    `/product-volume-type?country=${currency}`
-  );
+const fetchEbsVolumes = async (currency = "USD", region) => {
+  const params = new URLSearchParams();
+  params.append("country", currency);
+  if (region) params.append("region", region);
+  const res = await silentApi("GET", `/product-volume-type?${params}`);
   return res.data;
 };
 // **GET**: fetch bandwidth
-const fetchBandwidths = async (currency = "USD") => {
-  const res = await silentApi("GET", `/product-bandwidth?country=${currency}`);
+const fetchBandwidths = async (currency = "USD", region) => {
+  const params = new URLSearchParams();
+  params.append("country", currency);
+  if (region) params.append("region", region);
+  const res = await silentApi("GET", `/product-bandwidth?${params}`);
   return res.data;
 };
 // **GET**: fetch cross connects
-const fetchCrossConnects = async (currency = "USD") => {
-  const res = await silentApi(
-    "GET",
-    `/product-cross-connect?country=${currency}`
-  );
+const fetchCrossConnects = async (currency = "USD", region) => {
+  const params = new URLSearchParams();
+  params.append("country", currency);
+  if (region) params.append("region", region);
+  const res = await silentApi("GET", `/product-cross-connect?${params}`);
   return res.data;
 };
 // **GET**: fetch floating ips
-const fetchFloatingIPs = async (currency = "USD") => {
-  const res = await silentApi(
-    "GET",
-    `/product-floating-ip?country=${currency}`
-  );
+const fetchFloatingIPs = async (currency = "USD", region) => {
+  const params = new URLSearchParams();
+  params.append("country", currency);
+  if (region) params.append("region", region);
+  const res = await silentApi("GET", `/product-floating-ip?${params}`);
   return res.data;
 };
 
@@ -179,60 +196,68 @@ export const useFetchChargeOptions = (options = {}) => {
   });
 };
 // Hook to fetch computer instances
-export const useFetchComputerInstances = (currency = "USD", options = {}) => {
+export const useFetchComputerInstances = (
+  currency = "USD",
+  region,
+  options = {}
+) => {
   return useQuery({
-    queryKey: ["computer-instances", currency],
-    queryFn: () => fetchComputerInstances(currency),
+    queryKey: ["computer-instances", currency, region],
+    queryFn: () => fetchComputerInstances(currency, region),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
   });
 };
 // Hook to fetch OS images
-export const useFetchOsImages = (currency = "USD", options = {}) => {
+export const useFetchOsImages = (currency = "USD", region, options = {}) => {
   return useQuery({
-    queryKey: ["os-images", currency],
-    queryFn: () => fetchOsImages(currency),
+    queryKey: ["os-images", currency, region],
+    queryFn: () => fetchOsImages(currency, region),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
   });
 };
 // Hook to fetch ebs volumes
-export const useFetchEbsVolumes = (currency = "USD", options = {}) => {
+export const useFetchEbsVolumes = (currency = "USD", region, options = {}) => {
   return useQuery({
-    queryKey: ["ebs-volumes", currency],
-    queryFn: () => fetchEbsVolumes(currency),
+    queryKey: ["ebs-volumes", currency, region],
+    queryFn: () => fetchEbsVolumes(currency, region),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
   });
 };
 // Hook to fetch bandwidths
-export const useFetchBandwidths = (currency = "USD", options = {}) => {
+export const useFetchBandwidths = (currency = "USD", region, options = {}) => {
   return useQuery({
-    queryKey: ["bandwidths", currency],
-    queryFn: () => fetchBandwidths(currency),
+    queryKey: ["bandwidths", currency, region],
+    queryFn: () => fetchBandwidths(currency, region),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
   });
 };
 // Hook to fetch cross connects
-export const useFetchCrossConnect = (currency = "USD", options = {}) => {
+export const useFetchCrossConnect = (
+  currency = "USD",
+  region,
+  options = {}
+) => {
   return useQuery({
-    queryKey: ["cross-connects", currency],
-    queryFn: () => fetchCrossConnects(currency),
+    queryKey: ["cross-connects", currency, region],
+    queryFn: () => fetchCrossConnects(currency, region),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
   });
 };
 // Hook to fetch Floating IP
-export const useFetchFloatingIPs = (currency = "USD", options = {}) => {
+export const useFetchFloatingIPs = (currency = "USD", region, options = {}) => {
   return useQuery({
-    queryKey: ["floating-ips", currency],
-    queryFn: () => fetchFloatingIPs(currency),
+    queryKey: ["floating-ips", currency, region],
+    queryFn: () => fetchFloatingIPs(currency, region),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
@@ -243,6 +268,19 @@ export const useFetchGeneralRegions = (options = {}) => {
   return useQuery({
     queryKey: ["general-regions"],
     queryFn: fetchGeneralRegions,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+export const useFetchProductPricing = (
+  region,
+  productable_type,
+  options = {}
+) => {
+  return useQuery({
+    queryKey: ["product-pricing", region, productable_type],
+    queryFn: () => fetchProductPricing(region, productable_type),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,

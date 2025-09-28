@@ -8,6 +8,7 @@ import { useFetchProductPricing } from "../../hooks/adminHooks/adminproductPrici
 import { useFetchProducts } from "../../hooks/adminHooks/adminProductHooks";
 import { ChevronDown } from "lucide-react";
 import AddProductPricing from "./productPricingComps/addProductPricing";
+import UploadPricingFileModal from "./productPricingComps/uploadPricingFile";
 
 export default function AdminPricing() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -28,6 +29,10 @@ export default function AdminPricing() {
   const [isAddProductPricingOpen, setAddProductPricing] = useState(false);
   const openAddProductPricing = () => setAddProductPricing(true);
   const closeAddProductPricing = () => setAddProductPricing(false);
+
+  const [isUploadModalOpen, setUploadModalOpen] = useState(false);
+  const openUploadModal = () => setUploadModalOpen(true);
+  const closeUploadModal = () => setUploadModalOpen(false);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -100,13 +105,23 @@ export default function AdminPricing() {
           <PricingSideMenu />
           <div className="flex-1 bg-white rounded-lg shadow-sm p-4 lg:p-6 lg:w-[76%]">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">Pricing</h2>
-              <button
-                onClick={openAddProductPricing}
-                className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
-              >
-                Add Product Pricing
-              </button>
+              <h2 className="text-xl font-semibold text-gray-800">
+                Platform Pricing
+              </h2>
+              <div className="flex gap-4">
+                <button
+                  onClick={openUploadModal}
+                  className="rounded-[30px] py-3 px-6 bg-gray-100 text-gray-700 font-medium text-sm hover:bg-gray-200 transition-colors"
+                >
+                  Upload File
+                </button>
+                <button
+                  onClick={openAddProductPricing}
+                  className="rounded-[30px] py-3 px-6 bg-[#288DD1] text-white font-medium text-sm hover:bg-[#1976D2] transition-colors"
+                >
+                  Add Pricing Manually
+                </button>
+              </div>
             </div>
             <>
               {isRegionsFetching || isPricingFetching || isProductsFetching ? (
@@ -185,6 +200,10 @@ export default function AdminPricing() {
       <AddProductPricing
         isOpen={isAddProductPricingOpen}
         onClose={closeAddProductPricing}
+      />
+      <UploadPricingFileModal
+        isOpen={isUploadModalOpen}
+        onClose={closeUploadModal}
       />
     </>
   );

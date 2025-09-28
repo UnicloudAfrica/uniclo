@@ -9,6 +9,7 @@ export const FileInput = ({
   error,
   selectedFile,
   accept,
+  outputAs = "base64", // 'base64' or 'file'
 }) => {
   const [isDragging, setIsDragging] = useState(false);
 
@@ -30,24 +31,29 @@ export const FileInput = ({
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
     if (file) {
-      convertToBase64(file);
+      processFile(file);
     }
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      convertToBase64(file);
+      processFile(file);
     }
   };
 
-  const convertToBase64 = (file) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result; // Contains the base64 string
-      onChange({ target: { files: [base64String] } }); // Pass base64 string as the file
-    };
-    reader.readAsDataURL(file); // Converts file to base64
+  const processFile = (file) => {
+    if (outputAs === "base64") {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result;
+        onChange({ target: { files: [base64String] } });
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // For 'file' output, pass the File object directly
+      onChange(file);
+    }
   };
 
   const handleRemoveFile = () => {

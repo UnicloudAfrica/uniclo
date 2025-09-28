@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
 
+import multipartApi from "../../index/admin/multipartApi";
 const fetchProductPricing = async (country_code, provider) => {
   const params = [];
   if (country_code)
@@ -20,6 +21,17 @@ const createProductPricing = async (pricingData) => {
   if (!res) {
     throw new Error("Failed to create product pricing");
   }
+  return res;
+};
+
+const uploadProductPricingFile = async ({ file, dry_run }) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (dry_run) {
+    formData.append("dry_run", ""); // Append 'dry_run' key if it's a dry run
+  }
+
+  const res = await multipartApi("POST", "/product-pricing/import", formData);
   return res;
 };
 
@@ -46,6 +58,19 @@ export const useCreateProductPricing = () => {
     },
     onError: (error) => {
       console.error("Error creating product pricing:", error);
+    },
+  });
+};
+
+export const useUploadProductPricingFile = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: uploadProductPricingFile,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["productPricing"] });
+    },
+    onError: (error) => {
+      console.error("Error uploading product pricing file:", error);
     },
   });
 };

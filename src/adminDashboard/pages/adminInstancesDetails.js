@@ -6,7 +6,10 @@ import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import ToastUtils from "../../utils/toastUtil";
-import { useFetchInstanceConsoleById } from "../../hooks/adminHooks/moreinstanceHooks";
+import {
+  useFetchInstanceConsoleById,
+  useFetchInstanceConsoles,
+} from "../../hooks/adminHooks/moreinstanceHooks";
 
 const formatDate = (dateString) => {
   if (!dateString) return "N/A";
@@ -105,8 +108,10 @@ export default function AdminInstancesDetails() {
     isError,
     error,
   } = useFetchInstanceRequestById(instanceId);
-  const { data: instanceConsoles, isFetching: isConsoleFetching } =
+  const { data: instanceConsole, isFetching: isConsoleFetching } =
     useFetchInstanceConsoleById(instanceId);
+  const { data: instanceConsoles, isFetching: isConsolesFetching } =
+    useFetchInstanceConsoles();
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);

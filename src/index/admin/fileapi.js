@@ -26,9 +26,9 @@ const fileApi = async (method, uri, body = null) => {
     const response = await fetch(url, options);
 
     // Log raw response for debugging
-    console.log("Response status:", response.status);
-    console.log("Content-Type:", response.headers.get("Content-Type"));
-    console.log("Response OK:", response.ok);
+    // console.log("Response status:", response.status);
+    // console.log("Content-Type:", response.headers.get("Content-Type"));
+    // console.log("Response OK:", response.ok);
 
     if (response.ok || response.status === 201) {
       const contentType = response.headers.get("Content-Type") || "";
@@ -42,6 +42,9 @@ const fileApi = async (method, uri, body = null) => {
         res = await response.arrayBuffer(); // Use arrayBuffer for binary data
       } else if (contentType.includes("application/json")) {
         res = await response.json(); // Use json for JSON responses
+      } else if (contentType.includes("text/csv")) {
+        // Handle CSV as plain text without a warning
+        res = await response.text();
       } else {
         // Fallback for unexpected text data (e.g., base64 as text)
         res = await response.text();

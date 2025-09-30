@@ -13,30 +13,30 @@ const fetchVpcs = async ({ project_id, region }) => {
     "GET",
     `/admin/vpcs${queryString ? `?${queryString}` : ""}`
   );
-  if (!res.data) throw new Error("Failed to fetch VPCs");
-  return res.data;
+  if (!res) throw new Error("Failed to fetch VPCs");
+  return res;
 };
 
 const fetchVpcById = async (id) => {
-  const res = await silentTenantApi("GET", `/admin/vpcs/${id}`);
-  if (!res.data) throw new Error(`Failed to fetch VPC with ID ${id}`);
-  return res.data;
+  const res = await silentTenantApi("GET", `/business/vpcs/${id}`);
+  if (!res) throw new Error(`Failed to fetch VPC with ID ${id}`);
+  return res;
 };
 
 const createVpc = async (vpcData) => {
-  const res = await tenantApi("POST", "/admin/vpcs", vpcData);
+  const res = await tenantApi("POST", "/business/vpcs", vpcData);
   if (!res.data) throw new Error("Failed to create VPC");
   return res.data;
 };
 
 const updateVpc = async ({ id, vpcData }) => {
-  const res = await tenantApi("PATCH", `/admin/vpcs/${id}`, vpcData);
+  const res = await tenantApi("PATCH", `/business/vpcs/${id}`, vpcData);
   if (!res.data) throw new Error(`Failed to update VPC with ID ${id}`);
   return res.data;
 };
 
 const deleteVpc = async (id) => {
-  const res = await tenantApi("DELETE", `/admin/vpcs/${id}`);
+  const res = await tenantApi("DELETE", `/business/vpcs/${id}`);
   if (!res.data) throw new Error(`Failed to delete VPC with ID ${id}`);
   return res.data;
 };

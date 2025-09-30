@@ -1,16 +1,15 @@
 import { useState } from "react";
 import { Loader2, X } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
-import { useFetchTenantVpcs } from "../../../hooks/vpcHooks";
-import { useCreateTenantSubnet } from "../../../hooks/subnetHooks";
-import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
+import { useCreateSubnet } from "../../../hooks/adminHooks/subnetHooks";
+import { useFetchVpcs } from "../../../hooks/adminHooks/vcpHooks";
+import { useFetchGeneralRegions } from "../../../hooks/resource";
 
 const AddSubnet = ({ isOpen, onClose, projectId }) => {
-  const { data: vpcs, isFetching: isFetchingVpcs } =
-    useFetchTenantVpcs(projectId);
-  const { data: regions, isFetching: isFetchingRegions } = useFetchRegions();
-  const { mutate: createSubnet, isPending: isCreating } =
-    useCreateTenantSubnet();
+  const { data: vpcs, isFetching: isFetchingVpcs } = useFetchVpcs(projectId);
+  const { data: regions, isFetching: isFetchingRegions } =
+    useFetchGeneralRegions();
+  const { mutate: createSubnet, isPending: isCreating } = useCreateSubnet();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -161,6 +160,7 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
                 <p className="text-red-500 text-xs mt-1">{errors.vpc_id}</p>
               )}
             </div>
+
             <div>
               <label
                 htmlFor="region"
@@ -181,8 +181,8 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
                   {isFetchingRegions ? "Loading regions..." : "Select a region"}
                 </option>
                 {regions?.map((region) => (
-                  <option key={region.code} value={region.code}>
-                    {region.name}
+                  <option key={region.region} value={region.region}>
+                    {region.label}
                   </option>
                 ))}
               </select>

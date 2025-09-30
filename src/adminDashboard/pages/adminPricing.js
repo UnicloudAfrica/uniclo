@@ -4,27 +4,29 @@ import AdminHeadbar from "../components/adminHeadbar";
 import AdminActiveTab from "../components/adminActiveTab";
 import PricingSideMenu from "../components/pricingSideMenu";
 import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
-import { useFetchProductPricing } from "../../hooks/adminHooks/adminproductPricingHook";
+import {
+  useFetchProductPricing,
+  useExportProductPricingTemplate,
+} from "../../hooks/adminHooks/adminproductPricingHook";
 import { useFetchProducts } from "../../hooks/adminHooks/adminProductHooks";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 import AddProductPricing from "./productPricingComps/addProductPricing";
+import ToastUtils from "../../utils/toastUtil";
 import UploadPricingFileModal from "./productPricingComps/uploadPricingFile";
 
 export default function AdminPricing() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState("");
-  const [selectedCountryCode, setSelectedCountryCode] = useState("");
-  const [selectedProvider, setSelectedProvider] = useState("");
   const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
   const {
     isFetching: isPricingFetching,
     data: pricing,
     error,
     refetch,
-  } = useFetchProductPricing(selectedCountryCode, selectedProvider, {
-    enabled: !isRegionsFetching,
-  });
+  } = useFetchProductPricing(selectedRegion, { enabled: !isRegionsFetching });
   const { isFetching: isProductsFetching, data: products } = useFetchProducts();
+  const { mutate: exportTemplate, isPending: isExporting } =
+    useExportProductPricingTemplate();
 
   const [isAddProductPricingOpen, setAddProductPricing] = useState(false);
   const openAddProductPricing = () => setAddProductPricing(true);
@@ -44,14 +46,6 @@ export default function AdminPricing() {
 
   const handleRegionChange = (regionCode) => {
     setSelectedRegion(regionCode);
-    const region = regions?.find((r) => r.code === regionCode);
-    if (region) {
-      setSelectedCountryCode(region.country_code);
-      setSelectedProvider(region.provider);
-    } else {
-      setSelectedCountryCode("");
-      setSelectedProvider("");
-    }
   };
 
   // Refetch pricing when region changes
@@ -59,7 +53,17 @@ export default function AdminPricing() {
     if (!isRegionsFetching) {
       refetch();
     }
-  }, [selectedCountryCode, selectedProvider, isRegionsFetching, refetch]);
+  }, [selectedRegion, isRegionsFetching, refetch]);
+
+  const handleExport = () => {
+    if (!selectedRegion) {
+      ToastUtils.warning("Please select a region before exporting.");
+      return;
+    }
+    exportTemplate(selectedRegion, {
+      onSuccess: () => ToastUtils.success("Template exported successfully!"),
+    });
+  };
 
   // Map product names to pricing data
   const pricingWithNames = pricing?.map((item) => ({
@@ -109,6 +113,16 @@ export default function AdminPricing() {
                 Platform Pricing
               </h2>
               <div className="flex gap-4">
+                <button
+                  onClick={handleExport}
+                  disabled={isExporting || !selectedRegion}
+                  className="rounded-[30px] py-3 px-6 bg-green-100 text-green-700 font-medium text-sm hover:bg-green-200 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500"
+                >
+                  {isExporting ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : null}
+                  {isExporting ? "Exporting..." : "Export Template"}
+                </button>
                 <button
                   onClick={openUploadModal}
                   className="rounded-[30px] py-3 px-6 bg-gray-100 text-gray-700 font-medium text-sm hover:bg-gray-200 transition-colors"

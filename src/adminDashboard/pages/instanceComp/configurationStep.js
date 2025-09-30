@@ -22,27 +22,6 @@ export const ConfigurationStep = ({
         entire request.
       </p>
     </div>
-    <div>
-      <label
-        htmlFor="name"
-        className="block text-sm font-medium text-gray-700 mb-2"
-      >
-        Request Name<span className="text-red-500">*</span>
-      </label>
-      <input
-        id="name"
-        type="text"
-        value={formData.name}
-        onChange={(e) => updateFormData("name", e.target.value)}
-        placeholder="e.g., My Web Server Request"
-        className={`w-full input-field ${
-          errors.name ? "border-red-500" : "border-gray-300"
-        }`}
-      />
-      {errors.name && (
-        <p className="text-red-500 text-xs mt-1">{errors.name}</p>
-      )}
-    </div>
 
     <CheckboxGroup
       label="Tags"

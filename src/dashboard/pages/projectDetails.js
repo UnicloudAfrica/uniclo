@@ -23,6 +23,7 @@ import IGWs from "./infraComps/igws";
 import RouteTables from "./infraComps/routetable";
 import ENIs from "./infraComps/eni";
 import EIPs from "./infraComps/elasticIP";
+import Subnets from "./infraComps/subnet";
 
 // Function to decode the ID from URL
 const decodeId = (encodedId) => {
@@ -132,7 +133,7 @@ export default function ProjectDetails() {
     { name: "VPCs", component: VPCs },
     { name: "Key Pairs", component: KeyPairs },
     { name: "SGs", component: SecurityGroup },
-    // { name: "Subnets", component: Subnets },
+    { name: "Subnets", component: Subnets },
     { name: "IGWs", component: IGWs },
     { name: "Route Tables", component: RouteTables },
     { name: "ENIs", component: ENIs },
@@ -500,7 +501,7 @@ export default function ProjectDetails() {
                 {activeInfraTab}
               </h2>
               {ActiveInfraComponent && (
-                <ActiveInfraComponent projectId={projectDetails.id} />
+                <ActiveInfraComponent projectId={projectId} />
               )}
             </div>
           </div>

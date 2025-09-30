@@ -242,6 +242,10 @@ export default function AdminInstancesDetails() {
             {/* Column 2 */}
             <div>
               <DetailRow
+                label="Project"
+                value={instanceDetails.project?.name || "N/A"}
+              />
+              <DetailRow
                 label="Created At"
                 value={new Date(instanceDetails.created_at).toLocaleString()}
               />
@@ -300,6 +304,10 @@ export default function AdminInstancesDetails() {
               }
             />
             <DetailRow
+              label="Volume Type"
+              value={instanceDetails.volume_type?.name}
+            />
+            <DetailRow
               label="Operating System"
               value={instanceDetails.os_image?.name}
             />
@@ -307,6 +315,18 @@ export default function AdminInstancesDetails() {
               label="Bandwidth"
               value={instanceDetails.bandwidth?.name}
             />
+            <DetailRow
+              label="Key Pair"
+              value={instanceDetails.metadata?.key_name}
+            />
+            <DetailRow
+              label="Security Groups"
+              value={
+                instanceDetails.metadata?.security_groups?.join(", ") || "N/A"
+              }
+            />
+            <DetailRow label="Subnet ID" value={instanceDetails.subnet_id} />
+            <DetailRow label="Network ID" value={instanceDetails.network_id} />
           </div>
         </div>
 

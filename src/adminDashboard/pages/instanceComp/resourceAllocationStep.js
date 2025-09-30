@@ -1,6 +1,6 @@
 import React from "react";
 import { Loader2, Plus, Trash2 } from "lucide-react";
-import CheckboxGroup from "./checkGroup";
+import CheckGroup from "./checkGroup";
 
 export const ResourceAllocationStep = ({
   formData,
@@ -61,6 +61,29 @@ export const ResourceAllocationStep = ({
           <h4 className="text-lg font-semibold text-gray-700 border-b pb-2">
             Add a Configuration
           </h4>
+          <div>
+            <label
+              htmlFor="instance_name"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Instance Name<span className="text-red-500">*</span>
+            </label>
+            <input
+              id="instance_name"
+              type="text"
+              value={formData.instance_name}
+              onChange={(e) => updateFormData("instance_name", e.target.value)}
+              placeholder="e.g., web-server-prod-01"
+              className={`w-full input-field ${
+                errors.instance_name ? "border-red-500" : "border-gray-300"
+              }`}
+            />
+            {errors.instance_name && (
+              <p className="text-red-500 text-xs mt-1">
+                {errors.instance_name}
+              </p>
+            )}
+          </div>
           <div>
             <label
               htmlFor="project_id"
@@ -248,11 +271,12 @@ export const ResourceAllocationStep = ({
               onChange={(e) =>
                 updateFormData("storage_size_gb", e.target.value)
               }
-              placeholder="Min 30 GiB"
+              placeholder="Min 1 GiB"
               className={`w-full input-field ${
                 errors.storage_size_gb ? "border-red-500" : "border-gray-300"
               }`}
               disabled={isSubmissionPending}
+              min="1"
             />
             {errors.storage_size_gb && (
               <p className="text-red-500 text-xs mt-1">
@@ -561,7 +585,7 @@ export const ResourceAllocationStep = ({
                 </span>
               </div>
             ) : securityGroups && securityGroups.length > 0 ? (
-              <CheckboxGroup
+              <CheckGroup
                 label="Security Groups"
                 options={securityGroups.map((sg) => ({
                   label: sg.name,
@@ -916,8 +940,9 @@ export const ResourceAllocationStep = ({
                       className="flex items-center justify-between p-3 bg-white rounded-md text-sm border shadow-sm"
                     >
                       <span className="font-medium text-gray-700">
-                        {req.number_of_instances}x {req._display.compute} (
-                        {req._display.storage}, {req._display.os})
+                        {req.name} ({req.number_of_instances}x{" "}
+                        {req._display.compute}, {req._display.storage},{" "}
+                        {req._display.os})
                       </span>
                       <button
                         onClick={() => onRemoveRequest(index)}

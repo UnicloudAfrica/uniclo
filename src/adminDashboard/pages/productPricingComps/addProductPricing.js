@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { X, Loader2, Plus, Trash2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import ToastUtils from "../../../utils/toastUtil";
 import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
 import { useFetchCountries } from "../../../hooks/resource";
@@ -11,7 +12,7 @@ const AddProductPricing = ({ isOpen, onClose }) => {
     region: "",
     provider: "",
     country_code: "",
-    pricings: [{ product_id: "", price_usd: "" }],
+    pricings: [{ category: "", product_id: "", price_usd: "" }],
   });
   const [errors, setErrors] = useState({});
 
@@ -32,7 +33,7 @@ const AddProductPricing = ({ isOpen, onClose }) => {
         region: "",
         provider: "",
         country_code: "",
-        pricings: [{ product_id: "", price_usd: "" }],
+        pricings: [{ category: "", product_id: "", price_usd: "" }],
       });
       setErrors({});
     }
@@ -62,6 +63,9 @@ const AddProductPricing = ({ isOpen, onClose }) => {
     }
     formData.pricings.forEach((pricing, index) => {
       if (!pricing.product_id) {
+        newErrors[`pricing_category_${index}`] = "Please select a category.";
+      }
+      if (!pricing.product_id) {
         newErrors[`pricing_product_id_${index}`] = "Please select a product.";
       }
       if (!pricing.price_usd || pricing.price_usd <= 0) {
@@ -83,10 +87,16 @@ const AddProductPricing = ({ isOpen, onClose }) => {
   // Handle pricing entry changes
   const handlePricingChange = (index, field, value) => {
     const newPricings = [...formData.pricings];
-    newPricings[index] = {
-      ...newPricings[index],
-      [field]: field === "price_usd" ? parseFloat(value) || "" : value,
-    };
+    const updatedPricing = { ...newPricings[index] };
+
+    if (field === "category") {
+      updatedPricing.category = value;
+      updatedPricing.product_id = ""; // Reset product when category changes
+    } else {
+      updatedPricing[field] =
+        field === "price_usd" ? parseFloat(value) || "" : value;
+    }
+    newPricings[index] = updatedPricing;
     setFormData((prev) => ({ ...prev, pricings: newPricings }));
     setErrors((prev) => ({ ...prev, [`pricing_${field}_${index}`]: null }));
   };
@@ -95,7 +105,10 @@ const AddProductPricing = ({ isOpen, onClose }) => {
   const addPricingEntry = () => {
     setFormData((prev) => ({
       ...prev,
-      pricings: [...prev.pricings, { product_id: "", price_usd: "" }],
+      pricings: [
+        ...prev.pricings,
+        { category: "", product_id: "", price_usd: "" },
+      ],
     }));
   };
 
@@ -118,6 +131,24 @@ const AddProductPricing = ({ isOpen, onClose }) => {
     });
   };
 
+  // Memoize product categories
+  const productCategories = useMemo(() => {
+    if (!products) return [];
+    const categories = new Set(products.map((p) => p.productable_type));
+    return Array.from(categories);
+  }, [products]);
+
+  // Format category name for display
+  const formatCategoryName = (name) => {
+    if (!name) return "";
+    return name
+      .replace(/_/g, " ")
+      .replace(
+        /\w\S*/g,
+        (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+      );
+  };
+
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -136,7 +167,7 @@ const AddProductPricing = ({ isOpen, onClose }) => {
 
     addProductPricing(payload, {
       onSuccess: () => {
-        // ToastUtils.success("Product pricing added successfully!");
+        ToastUtils.success("Product pricing added successfully!");
         onClose();
       },
       onError: (error) => {
@@ -271,55 +302,96 @@ const AddProductPricing = ({ isOpen, onClose }) => {
                 Pricings<span className="text-red-500">*</span>
               </label>
               {formData.pricings.map((pricing, index) => (
-                <div key={index} className="flex items-center gap-4 mb-2">
-                  <select
-                    value={pricing.product_id}
-                    onChange={(e) =>
-                      handlePricingChange(index, "product_id", e.target.value)
-                    }
-                    className={`w-1/2 rounded-[10px] border px-3 py-2 text-sm input-field ${
-                      errors[`pricing_product_id_${index}`]
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
-                    disabled={isProductsFetching}
-                  >
-                    <option value="">Select Product</option>
-                    {isProductsFetching ? (
-                      <option value="" disabled>
-                        Loading products...
-                      </option>
-                    ) : (
-                      products?.map((product) => (
-                        <option key={product.id} value={product.id}>
-                          {product.name}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                  <input
-                    type="number"
-                    value={pricing.price_usd}
-                    onChange={(e) =>
-                      handlePricingChange(index, "price_usd", e.target.value)
-                    }
-                    placeholder="Price (USD)"
-                    className={`w-1/3 rounded-[10px] border px-3 py-2 text-sm input-field ${
-                      errors[`pricing_price_usd_${index}`]
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
-                    min="0"
-                    step="0.01"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removePricingEntry(index)}
-                    className="text-red-500 hover:text-red-700"
-                    disabled={formData.pricings.length === 1}
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
+                <div
+                  key={index}
+                  className="grid grid-cols-2 gap-4 mb-4 p-4 border rounded-lg bg-gray-50"
+                >
+                  {/* Row 1: Category and Product */}
+                  <div>
+                    <label className="text-xs text-gray-600">Category</label>
+                    <div className="w-full">
+                      <select
+                        value={pricing.category}
+                        onChange={(e) =>
+                          handlePricingChange(index, "category", e.target.value)
+                        }
+                        className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
+                          errors[`pricing_category_${index}`]
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
+                        disabled={isProductsFetching}
+                      >
+                        <option value="">Select Category</option>
+                        {productCategories.map((cat) => (
+                          <option key={cat} value={cat}>
+                            {formatCategoryName(cat)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-600">Product</label>
+                    <div className="w-full">
+                      <select
+                        value={pricing.product_id}
+                        onChange={(e) =>
+                          handlePricingChange(
+                            index,
+                            "product_id",
+                            e.target.value
+                          )
+                        }
+                        className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
+                          errors[`pricing_product_id_${index}`]
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
+                        disabled={isProductsFetching || !pricing.category}
+                      >
+                        <option value="">Select Product</option>
+                        {products
+                          ?.filter(
+                            (p) => p.productable_type === pricing.category
+                          )
+                          .map((product) => (
+                            <option key={product.id} value={product.id}>
+                              {product.name}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                  </div>
+                  {/* Row 2: Price and Delete Button */}
+                  <div>
+                    <label className="text-xs text-gray-600">Price (USD)</label>
+                    <input
+                      type="number"
+                      value={pricing.price_usd}
+                      onChange={(e) =>
+                        handlePricingChange(index, "price_usd", e.target.value)
+                      }
+                      placeholder="0.00"
+                      className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
+                        errors[`pricing_price_usd_${index}`]
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
+                      min="0"
+                      step="0.01"
+                    />
+                  </div>
+                  <div className="flex items-end justify-end">
+                    <button
+                      type="button"
+                      onClick={() => removePricingEntry(index)}
+                      className="text-red-500 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed p-2"
+                      disabled={formData.pricings.length === 1}
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
               ))}
               {errors.pricings && (
@@ -327,6 +399,11 @@ const AddProductPricing = ({ isOpen, onClose }) => {
               )}
               {formData.pricings.map((_, index) => (
                 <div key={index}>
+                  {errors[`pricing_category_${index}`] && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors[`pricing_category_${index}`]}
+                    </p>
+                  )}
                   {errors[`pricing_product_id_${index}`] && (
                     <p className="text-red-500 text-xs mt-1">
                       {errors[`pricing_product_id_${index}`]}

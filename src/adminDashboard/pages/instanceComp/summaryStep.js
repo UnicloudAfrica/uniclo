@@ -42,6 +42,7 @@ export const SummaryStep = ({ formData, pricingRequests }) => (
               <h4 className="font-semibold text-gray-700">
                 Configuration #{index + 1}
               </h4>
+              <DetailRow label="Instance Name" value={req.name} />
               <DetailRow label="Project" value={req._display.project} />
               <DetailRow
                 label="Compute"

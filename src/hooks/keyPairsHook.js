@@ -13,32 +13,32 @@ const fetchKeyPairs = async ({ project_id, region }) => {
     "GET",
     `/admin/key-pairs${queryString ? `?${queryString}` : ""}`
   );
-  if (!res.data) throw new Error("Failed to fetch key pairs");
-  return res.data;
+  if (!res?.data) throw new Error("Failed to fetch key pairs");
+  return res?.data;
 };
 
 const fetchKeyPairById = async (id) => {
   const res = await silentTenantApi("GET", `/admin/key-pairs/${id}`);
-  if (!res.data) throw new Error(`Failed to fetch key pair with ID ${id}`);
-  return res.data;
+  if (!res) throw new Error(`Failed to fetch key pair with ID ${id}`);
+  return res;
 };
 
 const createKeyPair = async (keyPairData) => {
   const res = await tenantApi("POST", "/admin/key-pairs", keyPairData);
-  if (!res.data) throw new Error("Failed to create key pair");
-  return res.data;
+  if (!res) throw new Error("Failed to create key pair");
+  return res;
 };
 
 const updateKeyPair = async ({ id, keyPairData }) => {
   const res = await tenantApi("PATCH", `/admin/key-pairs/${id}`, keyPairData);
-  if (!res.data) throw new Error(`Failed to update key pair with ID ${id}`);
-  return res.data;
+  if (!res) throw new Error(`Failed to update key pair with ID ${id}`);
+  return res;
 };
 
 const deleteKeyPair = async (id) => {
   const res = await tenantApi("DELETE", `/admin/key-pairs/${id}`);
-  if (!res.data) throw new Error(`Failed to delete key pair with ID ${id}`);
-  return res.data;
+  if (!res) throw new Error(`Failed to delete key pair with ID ${id}`);
+  return res;
 };
 
 export const useFetchTenantKeyPairs = (projectId, region, options = {}) => {
@@ -67,7 +67,7 @@ export const useCreateTenantKeyPair = () => {
   return useMutation({
     mutationFn: createKeyPair,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["keyPairs"] });
+      // queryClient.invalidateQueries({ queryKey: ["keyPairs"] });
     },
     onError: (error) => {
       console.error("Error creating key pair:", error);

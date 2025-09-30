@@ -3,13 +3,13 @@ import CartFloat from "../components/cartFloat";
 import Headbar from "../components/headbar";
 import ActiveTab from "../components/activeTab";
 import Sidebar from "../components/sidebar";
-import AddInstanceModal from "../components/addInstanace";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useFetchInstanceRequests } from "../../hooks/instancesHook";
+import { useNavigate } from "react-router-dom";
 
 export default function Instances() {
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isAddInstancesOpen, setAddInstances] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [instanceCount, setInstanceCount] = useState(0);
   const itemsPerPage = 10;
@@ -28,8 +28,6 @@ export default function Instances() {
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
-  const openAddInstances = () => setAddInstances(true);
-  const closeAddInstances = () => setAddInstances(false);
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -71,7 +69,7 @@ export default function Instances() {
       <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
         <div className="flex items-center justify-between">
           <button
-            onClick={openAddInstances}
+            onClick={() => navigate("/dashboard/add-instance")}
             disabled={instanceCount >= maxInstances}
             className={`rounded-[30px] py-3 px-9 text-white font-normal text-base mt-5 transition-colors ${
               instanceCount >= maxInstances
@@ -262,11 +260,6 @@ export default function Instances() {
           </div>
         )}
       </main>
-
-      <AddInstanceModal
-        isOpen={isAddInstancesOpen}
-        onClose={closeAddInstances}
-      />
     </>
   );
 }

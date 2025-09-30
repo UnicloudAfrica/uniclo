@@ -78,6 +78,15 @@ const createInstanceRequest = async (instanceData) => {
   return res.data;
 };
 
+// POST: multi initiate request
+const initiateMultiInstanceRequest = async (instanceData) => {
+  const res = await tenantApi("POST", "/admin/multi-initiations", instanceData);
+  if (!res) {
+    throw new Error("Failed to inotiate instance request");
+  }
+  return res;
+};
+
 // PATCH: Update an instance request
 const updateInstanceRequest = async ({ id, instanceData }) => {
   const res = await tenantApi("PATCH", `/admin/instances/${id}`, instanceData);
@@ -133,6 +142,19 @@ export const useCreateInstanceRequest = () => {
     onSuccess: () => {
       // Invalidate instanceRequests query to refresh the list
       //   queryClient.invalidateQueries(["instanceRequests"]);
+    },
+    onError: (error) => {
+      console.error("Error creating instance request:", error);
+    },
+  });
+};
+
+export const useInitiateMultiInstanceRequest = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: initiateMultiInstanceRequest,
+    onSuccess: () => {
+      // queryClient.invalidateQueries({ queryKey: ["instanceRequests"] });
     },
     onError: (error) => {
       console.error("Error creating instance request:", error);

@@ -86,6 +86,7 @@ import AdminKeyPairs from "./adminDashboard/pages/adminKeyPairs";
 import AdminPricing from "./adminDashboard/pages/adminPricing";
 import AdminProducts from "./adminDashboard/pages/adminProducts";
 import AdminColocation from "./adminDashboard/pages/adminColocation";
+import AddInstancePage from "./dashboard/pages/addInstance";
 
 function App() {
   const location = useLocation();
@@ -160,6 +161,7 @@ function App() {
             element={<ProjectDetails />}
           />
           <Route path="/dashboard/instances" element={<Instances />} />
+          <Route path="/dashboard/add-instance" element={<AddInstancePage />} />
           <Route path="/dashboard/account-settings" element={<Settings />} />
           <Route
             path="/dashboard/tax-configurations"

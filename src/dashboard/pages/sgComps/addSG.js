@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { Loader2, X } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
+
 import { useCreateTenantSecurityGroup } from "../../../hooks/securityGroupHooks";
 import { useFetchGeneralRegions } from "../../../hooks/resource";
 
-const AddTenantSG = ({ isOpen, onClose, projectId = "" }) => {
+const AddSG = ({ isOpen, onClose, projectId = "" }) => {
   const { isFetching: isRegionsFetching, data: regions } =
     useFetchGeneralRegions();
   const { mutate, isPending } = useCreateTenantSecurityGroup();
@@ -43,11 +43,11 @@ const AddTenantSG = ({ isOpen, onClose, projectId = "" }) => {
 
     mutate(securityGroupData, {
       onSuccess: () => {
-        ToastUtils.success("Security Group added successfully");
+        // ToastUtils.success("Security Group added successfully");
         onClose();
       },
       onError: (err) => {
-        console.error("Failed to create security group:", err);
+        // console.error("Failed to create security group:", err);
       },
     });
   };
@@ -171,4 +171,4 @@ const AddTenantSG = ({ isOpen, onClose, projectId = "" }) => {
   );
 };
 
-export default AddTenantSG;
+export default AddSG;

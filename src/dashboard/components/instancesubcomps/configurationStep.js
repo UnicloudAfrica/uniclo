@@ -4,6 +4,7 @@ import CheckboxGroup from "./checkboxGroup";
 const ConfigurationStep = ({
   formData,
   errors,
+  updateFormData,
   handleCheckboxChange,
   availableTags,
 }) => {

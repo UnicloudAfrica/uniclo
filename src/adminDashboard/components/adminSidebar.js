@@ -37,6 +37,9 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/admin-dashboard/key-pairs": "Key Pairs",
     "/admin-dashboard/pricing": "Pricing",
     "/admin-dashboard/inventory": "Inventory",
+    "/admin-dashboard/calculator": "Calculator",
+    "/admin-dashboard/calculator-new": "Calculator",
+    "/admin-dashboard/quote": "Quote",
   };
 
   // Update activeItem based on the current path
@@ -149,6 +152,18 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       icon: modules,
       activeIcon: activemodules,
       path: "/admin-dashboard/calculator",
+    },
+    {
+      name: "Calculator-new",
+      icon: modules,
+      activeIcon: activemodules,
+      path: "/admin-dashboard/calculator-new",
+    },
+    {
+      name: "Quote",
+      icon: modules,
+      activeIcon: activemodules,
+      path: "/admin-dashboard/quote",
     },
     {
       name: "Country Pricing",

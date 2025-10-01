@@ -4,12 +4,12 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useFetchProjects } from "../../hooks/adminHooks/projectHooks";
 import {
-  useFetchBandwidths,
-  useFetchComputerInstances,
-  useFetchCrossConnect,
-  useFetchEbsVolumes,
-  useFetchFloatingIPs,
-  useFetchOsImages,
+  // useFetchBandwidths,
+  // useFetchComputerInstances,
+  // useFetchCrossConnect,
+  // useFetchEbsVolumes,
+  // useFetchFloatingIPs,
+  // useFetchOsImages,
   useFetchProductPricing,
 } from "../../hooks/resource";
 import { useInitiateMultiInstanceRequest } from "../../hooks/adminHooks/instancesHook";

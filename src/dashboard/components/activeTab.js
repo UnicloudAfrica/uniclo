@@ -20,6 +20,7 @@ const ActiveTab = () => {
     instances: "Instances",
     products: "Products",
     calculator: "Calculator",
+    quotes: "Quotes",
     "admin-users": "Admin Users",
     "account-settings": "Account Settings",
     "tax-configurations": "Tax Configurations",

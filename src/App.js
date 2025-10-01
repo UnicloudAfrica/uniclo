@@ -87,6 +87,9 @@ import AdminPricing from "./adminDashboard/pages/adminPricing";
 import AdminProducts from "./adminDashboard/pages/adminProducts";
 import AdminColocation from "./adminDashboard/pages/adminColocation";
 import AddInstancePage from "./dashboard/pages/addInstance";
+import AdminCalculatorOptions from "./adminDashboard/pages/adminCalculatorOptions";
+import AdminMultiQuote from "./adminDashboard/pages/adminMultiQuote";
+import TenantQuotes from "./dashboard/pages/quotes";
 
 function App() {
   const location = useLocation();
@@ -161,6 +164,7 @@ function App() {
             element={<ProjectDetails />}
           />
           <Route path="/dashboard/instances" element={<Instances />} />
+          <Route path="/dashboard/quotes" element={<TenantQuotes />} />
           <Route path="/dashboard/add-instance" element={<AddInstancePage />} />
           <Route path="/dashboard/account-settings" element={<Settings />} />
           <Route
@@ -249,6 +253,11 @@ function App() {
             path="/admin-dashboard/calculator"
             element={<Admincalculator />}
           />
+          <Route
+            path="/admin-dashboard/calculator-new"
+            element={<AdminCalculatorOptions />}
+          />
+          <Route path="/admin-dashboard/quote" element={<AdminMultiQuote />} />
           <Route
             path="/admin-dashboard/tax-configuration"
             element={<AdminTax />}

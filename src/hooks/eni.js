@@ -17,12 +17,16 @@ const fetchNetworkInterfaces = async ({ project_id, region }) => {
   return res.data;
 };
 
-const attachSecurityGroup = async (securityGroupData) => {
-  // Shared endpoint: POST /business/network-interface-security-groups
+const attachSecurityGroup = async (params) => {
+  // Backward compatibility: support old signature ({ id, securityGroupData })
+  let payload = params;
+  if (params && typeof params === 'object' && 'id' in params && 'securityGroupData' in params) {
+    payload = { network_interface_id: params.id, ...(params.securityGroupData || {}) };
+  }
   const res = await api(
     "POST",
     "/business/network-interface-security-groups",
-    securityGroupData
+    payload
   );
   if (!res.data)
     throw new Error(
@@ -31,12 +35,16 @@ const attachSecurityGroup = async (securityGroupData) => {
   return res.data;
 };
 
-const detachSecurityGroup = async (securityGroupData) => {
-  // Shared endpoint: DELETE /business/network-interface-security-groups with body
+const detachSecurityGroup = async (params) => {
+  // Backward compatibility: support old signature ({ id, securityGroupData })
+  let payload = params;
+  if (params && typeof params === 'object' && 'id' in params && 'securityGroupData' in params) {
+    payload = { network_interface_id: params.id, ...(params.securityGroupData || {}) };
+  }
   const res = await api(
     "DELETE",
     "/business/network-interface-security-groups",
-    securityGroupData
+    payload
   );
   if (!res.data)
     throw new Error(

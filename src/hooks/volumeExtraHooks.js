@@ -1,7 +1,7 @@
-// src/hooks/adminHooks/volumeExtrasHooks.js
+// src/hooks/volumeExtraHooks.js (tenant dashboard)
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import silentTenantApi from "../index/tenant/silentTenant";
-import tenantApi from "../index/tenant/tenantApi";
+import silentApi from "../index/silent";
+import api from "../index/api";
 
 const fetchVolumeTypes = async ({ project_id, region }) => {
   const params = new URLSearchParams();
@@ -9,9 +9,9 @@ const fetchVolumeTypes = async ({ project_id, region }) => {
   if (region) params.append("region", region);
 
   const queryString = params.toString();
-  const res = await silentTenantApi(
+  const res = await silentApi(
     "GET",
-    `/admin/volume-types${queryString ? `?${queryString}` : ""}`
+    `/business/volume-types${queryString ? `?${queryString}` : ""}`
   );
   if (!res.data) throw new Error("Failed to fetch volume types");
   return res.data;
@@ -24,18 +24,18 @@ const fetchVolumeAttachments = async ({ project_id, region, volume_id }) => {
   if (volume_id) params.append("volume_id", volume_id);
 
   const queryString = params.toString();
-  const res = await silentTenantApi(
+  const res = await silentApi(
     "GET",
-    `/admin/volume-attachments${queryString ? `?${queryString}` : ""}`
+    `/business/volume-attachments${queryString ? `?${queryString}` : ""}`
   );
   if (!res.data) throw new Error("Failed to fetch volume attachments");
   return res.data;
 };
 
 const createVolumeAttachment = async (attachmentData) => {
-  const res = await tenantApi(
+  const res = await api(
     "POST",
-    "/admin/volume-attachments",
+    "/business/volume-attachments",
     attachmentData
   );
   if (!res.data) throw new Error("Failed to create volume attachment");
@@ -43,17 +43,19 @@ const createVolumeAttachment = async (attachmentData) => {
 };
 
 const deleteVolumeAttachment = async (id) => {
-  const res = await tenantApi("DELETE", `/admin/volume-attachments/${id}`);
+  const res = await api("DELETE", `/business/volume-attachments/${id}`);
   if (!res.data)
     throw new Error(`Failed to delete volume attachment with ID ${id}`);
   return res.data;
 };
 
 const extendVolume = async ({ id, extendData }) => {
-  const res = await tenantApi(
+  // Shared API: POST /business/volume-resizes with { volume_id, ...extendData }
+  const payload = { volume_id: id, ...(extendData || {}) };
+  const res = await api(
     "POST",
-    `/admin/volumes/${id}/extend`,
-    extendData
+    "/business/volume-resizes",
+    payload
   );
   if (!res.data) throw new Error(`Failed to extend volume with ID ${id}`);
   return res.data;

@@ -1,7 +1,7 @@
-// src/hooks/adminHooks/routeTableHooks.js
+// src/hooks/routeTable.js (tenant dashboard)
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import silentTenantApi from "../index/tenant/silentTenant";
-import tenantApi from "../index/tenant/tenantApi";
+import silentApi from "../index/silent";
+import api from "../index/api";
 
 const fetchRouteTables = async ({ project_id, region }) => {
   const params = new URLSearchParams();
@@ -9,34 +9,31 @@ const fetchRouteTables = async ({ project_id, region }) => {
   if (region) params.append("region", region);
 
   const queryString = params.toString();
-  const res = await silentTenantApi(
+  const res = await silentApi(
     "GET",
-    `/admin/route-tables${queryString ? `?${queryString}` : ""}`
+    `/business/route-tables${queryString ? `?${queryString}` : ""}`
   );
   if (!res.data) throw new Error("Failed to fetch route tables");
   return res.data;
 };
 
 const createRoute = async (routeData) => {
-  const res = await tenantApi("POST", "/admin/route-tables/routes", routeData);
+  const res = await api("POST", "/business/routes", routeData);
   if (!res.data) throw new Error("Failed to create route");
   return res.data;
 };
 
 const deleteRoute = async (deleteRouteData) => {
-  const res = await tenantApi(
-    "DELETE",
-    "/admin/route-tables/routes",
-    deleteRouteData
-  );
+  // Backend supports id-less delete with body on /business/routes (destroy optional $id)
+  const res = await api("DELETE", "/business/routes", deleteRouteData);
   if (!res.data) throw new Error("Failed to delete route");
   return res.data;
 };
 
 const associateRouteTable = async (associationData) => {
-  const res = await tenantApi(
+  const res = await api(
     "POST",
-    "/admin/route-tables/associate",
+    "/business/route-table-associations",
     associationData
   );
   if (!res.data) throw new Error("Failed to associate route table");

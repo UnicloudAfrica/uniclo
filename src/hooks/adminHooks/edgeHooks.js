@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import tenantApiAdmin from "../../index/admin/tenantApiAdmin";
+import adminSilentApiforUser from "../../index/admin/silentadminforuser";
+import apiAdminforUser from "../../index/admin/apiAdminforUser";
 
 // Admin: fetch project edge configuration
 const fetchProjectEdgeConfigAdmin = async (projectId, region) => {
@@ -9,9 +10,9 @@ const fetchProjectEdgeConfigAdmin = async (projectId, region) => {
     const params = new URLSearchParams();
     params.append("project_id", projectId);
     params.append("region", region);
-    const res = await tenantApiAdmin(
+    const res = await adminSilentApiforUser(
       "GET",
-      `/admin/edge-config?${params.toString()}`
+      `/business/edge-config?${params.toString()}`
     );
     return res?.data ?? res;
   } catch (e) {
@@ -24,9 +25,9 @@ const fetchEdgeNetworks = async ({ project_id, region }) => {
   const params = new URLSearchParams();
   if (project_id) params.append("project_id", project_id);
   if (region) params.append("region", region);
-  const res = await tenantApiAdmin(
+  const res = await adminSilentApiforUser(
     "GET",
-    `/admin/edge-networks${params.toString() ? `?${params}` : ""}`
+    `/business/edge-networks${params.toString() ? `?${params}` : ""}`
   );
   return res?.data ?? res;
 };
@@ -37,18 +38,18 @@ const fetchIpPools = async ({ project_id, region, edge_network_id }) => {
   if (project_id) params.append("project_id", project_id);
   if (region) params.append("region", region);
   if (edge_network_id) params.append("edge_network_id", edge_network_id);
-  const res = await tenantApiAdmin(
+  const res = await adminSilentApiforUser(
     "GET",
-    `/admin/edge-ip-pools${params.toString() ? `?${params}` : ""}`
+    `/business/edge-ip-pools${params.toString() ? `?${params}` : ""}`
   );
   return res?.data ?? res;
 };
 
 // Admin: assign or update edge config for a project
 const assignProjectEdge = async ({ payload }) => {
-  const res = await tenantApiAdmin(
+  const res = await apiAdminforUser(
     "POST",
-    `/admin/edge-config/assign`,
+    `/business/edge-config/assign`,
     payload
   );
   return res?.data ?? res;

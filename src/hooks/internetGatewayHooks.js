@@ -1,7 +1,7 @@
-// src/hooks/adminHooks/internetGatewayHooks.js
+// src/hooks/internetGatewayHooks.js (tenant dashboard)
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import silentTenantApi from "../index/tenant/silentTenant";
-import tenantApi from "../index/tenant/tenantApi";
+import silentApi from "../index/silent";
+import api from "../index/api";
 
 const fetchInternetGateways = async ({ project_id, region }) => {
   const params = new URLSearchParams();
@@ -9,34 +9,35 @@ const fetchInternetGateways = async ({ project_id, region }) => {
   if (region) params.append("region", region);
 
   const queryString = params.toString();
-  const res = await silentTenantApi(
+  const res = await silentApi(
     "GET",
-    `/admin/internet-gateways${queryString ? `?${queryString}` : ""}`
+    `/business/internet-gateways${queryString ? `?${queryString}` : ""}`
   );
   if (!res.data) throw new Error("Failed to fetch internet gateways");
   return res.data;
 };
 
 const createInternetGateway = async (internetGatewayData) => {
-  const res = await tenantApi(
+  const res = await api(
     "POST",
-    "/admin/internet-gateways",
+    "/business/internet-gateways",
     internetGatewayData
   );
   if (!res.data) throw new Error("Failed to create internet gateway");
   return res.data;
 };
 
-const deleteInternetGateway = async (deleteData) => {
-  const res = await tenantApi("DELETE", "/admin/internet-gateways", deleteData);
+const deleteInternetGateway = async ({ id, payload }) => {
+  const res = await api("DELETE", `/business/internet-gateways/${id}`, payload);
   if (!res.data) throw new Error("Failed to delete internet gateway");
   return res.data;
 };
 
 const attachInternetGateway = async (attachData) => {
-  const res = await tenantApi(
+  // Use shared attachment endpoint
+  const res = await api(
     "POST",
-    "/admin/internet-gateways/attach",
+    "/business/internet-gateway-attachments",
     attachData
   );
   if (!res.data) throw new Error("Failed to attach internet gateway");
@@ -44,9 +45,10 @@ const attachInternetGateway = async (attachData) => {
 };
 
 const detachInternetGateway = async (detachData) => {
-  const res = await tenantApi(
-    "POST",
-    "/admin/internet-gateways/detach",
+  // Shared API supports id-less DELETE with body
+  const res = await api(
+    "DELETE",
+    "/business/internet-gateway-attachments",
     detachData
   );
   if (!res.data) throw new Error("Failed to detach internet gateway");

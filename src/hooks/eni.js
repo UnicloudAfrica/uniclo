@@ -1,7 +1,7 @@
-// src/hooks/adminHooks/networkInterfaceHooks.js
+// src/hooks/eni.js (tenant dashboard)
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import silentTenantApi from "../index/tenant/silentTenant";
-import tenantApi from "../index/tenant/tenantApi";
+import silentApi from "../index/silent";
+import api from "../index/api";
 
 const fetchNetworkInterfaces = async ({ project_id, region }) => {
   const params = new URLSearchParams();
@@ -9,36 +9,38 @@ const fetchNetworkInterfaces = async ({ project_id, region }) => {
   if (region) params.append("region", region);
 
   const queryString = params.toString();
-  const res = await silentTenantApi(
+  const res = await silentApi(
     "GET",
-    `/admin/network-interfaces${queryString ? `?${queryString}` : ""}`
+    `/business/network-interfaces${queryString ? `?${queryString}` : ""}`
   );
   if (!res.data) throw new Error("Failed to fetch network interfaces");
   return res.data;
 };
 
-const attachSecurityGroup = async ({ id, securityGroupData }) => {
-  const res = await tenantApi(
+const attachSecurityGroup = async (securityGroupData) => {
+  // Shared endpoint: POST /business/network-interface-security-groups
+  const res = await api(
     "POST",
-    `/admin/network-interfaces/${id}/attach-security-group`,
+    "/business/network-interface-security-groups",
     securityGroupData
   );
   if (!res.data)
     throw new Error(
-      `Failed to attach security group to network interface ${id}`
+      `Failed to attach security group to network interface`
     );
   return res.data;
 };
 
-const detachSecurityGroup = async ({ id, securityGroupData }) => {
-  const res = await tenantApi(
-    "POST",
-    `/admin/network-interfaces/${id}/detach-security-group`,
+const detachSecurityGroup = async (securityGroupData) => {
+  // Shared endpoint: DELETE /business/network-interface-security-groups with body
+  const res = await api(
+    "DELETE",
+    "/business/network-interface-security-groups",
     securityGroupData
   );
   if (!res.data)
     throw new Error(
-      `Failed to detach security group from network interface ${id}`
+      `Failed to detach security group from network interface`
     );
   return res.data;
 };

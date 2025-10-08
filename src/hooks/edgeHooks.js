@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import silentTenantApi from "../index/tenant/silentTenant";
+import silentApi from "../index/silent";
 
 // Fetch the tenant-visible edge configuration for a project
-// GET /tenant/v1/admin/edge-config?project_id={identifier}&region={code}
+// GET /api/v1/business/edge-config?project_id={identifier}&region={code}
 const fetchProjectEdgeConfigTenant = async (projectId, region) => {
   if (!projectId) throw new Error("projectId is required");
   if (!region) throw new Error("region is required");
@@ -10,9 +10,9 @@ const fetchProjectEdgeConfigTenant = async (projectId, region) => {
     const params = new URLSearchParams();
     params.append("project_id", projectId);
     params.append("region", region);
-    const res = await silentTenantApi(
+    const res = await silentApi(
       "GET",
-      `/admin/edge-config?${params.toString()}`
+      `/business/edge-config?${params.toString()}`
     );
     return res?.data ?? res;
   } catch (e) {

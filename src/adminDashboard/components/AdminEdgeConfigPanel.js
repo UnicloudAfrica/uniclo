@@ -10,14 +10,22 @@ const Field = ({ label, value }) => (
 );
 
 export default function AdminEdgeConfigPanel({ projectId, region }) {
-  const { data: edgeConfig, isFetching, error } =
+  const { data: edgeConfig, isFetching, error, refetch } =
     useFetchProjectEdgeConfigAdmin(projectId, region, { enabled: !!projectId && !!region });
 
   return (
     <div className="bg-white rounded-[12px] p-6 shadow-sm mb-8">
-      <h2 className="text-xl font-semibold text-[#575758] mb-4">
-        Edge Configuration
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold text-[#575758]">Edge Configuration</h2>
+        <button
+          onClick={() => refetch()}
+          disabled={isFetching || !projectId || !region}
+          className="text-sm text-[#288DD1] hover:text-[#1976D2] disabled:opacity-50"
+          title="Refresh from provider"
+        >
+          {isFetching ? "Refreshing..." : "Refresh"}
+        </button>
+      </div>
 
       {isFetching ? (
         <p className="text-sm text-gray-600">Loading edge configuration...</p>

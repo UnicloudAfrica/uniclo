@@ -24,6 +24,7 @@ import RouteTables from "./infraComps/routetable";
 import ENIs from "./infraComps/eni";
 import EIPs from "./infraComps/elasticIP";
 import Subnets from "./infraComps/subnet";
+import EdgeConfigPanel from "../components/EdgeConfigPanel";
 
 // Function to decode the ID from URL
 const decodeId = (encodedId) => {
@@ -253,6 +254,9 @@ export default function ProjectDetails() {
             {/* Owner field is not in the provided project object, so it's removed */}
           </div>
         </div>
+
+        {/* Edge Config Panel */}
+        <EdgeConfigPanel projectId={projectId} />
 
         {/* Top-Level Tab Navigation: Instances and Infrastructure */}
         <div className="w-full flex justify-start items-center border-b border-gray-300 mb-6 bg-white rounded-t-xl overflow-x-auto">

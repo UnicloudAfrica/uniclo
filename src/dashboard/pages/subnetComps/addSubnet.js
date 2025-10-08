@@ -4,12 +4,15 @@ import ToastUtils from "../../../utils/toastUtil";
 import { useCreateSubnet } from "../../../hooks/adminHooks/subnetHooks";
 import { useFetchVpcs } from "../../../hooks/adminHooks/vcpHooks";
 import { useFetchGeneralRegions } from "../../../hooks/resource";
+import { useFetchProjectEdgeConfigTenant } from "../../../hooks/edgeHooks";
 
 const AddSubnet = ({ isOpen, onClose, projectId }) => {
   const { data: vpcs, isFetching: isFetchingVpcs } = useFetchVpcs(projectId);
   const { data: regions, isFetching: isFetchingRegions } =
     useFetchGeneralRegions();
   const { mutate: createSubnet, isPending: isCreating } = useCreateSubnet();
+  const { data: edgeConfig, isFetching: isFetchingEdgeConfig } =
+    useFetchProjectEdgeConfigTenant(projectId);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -34,6 +37,19 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
     ) {
       newErrors.cidr_block = "Invalid CIDR Block format (e.g., 192.168.1.0/24)";
     }
+
+    // Additional validations
+    const selectedVpc = vpcs?.find((v) => String(v.id) === String(formData.vpc_id));
+    if (selectedVpc && selectedVpc.cidr_block === formData.cidr_block) {
+      newErrors.cidr_block =
+        "Subnet CIDR cannot be the same as the selected VPC CIDR";
+    }
+
+    if (!edgeConfig || (!edgeConfig.edge_network_id || !edgeConfig.ip_pool_id)) {
+      newErrors.general =
+        "Edge configuration is missing. Please contact an admin to assign an edge network and IP pool before creating subnets.";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -63,9 +79,18 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
       },
       onError: (error) => {
         console.error("Failed to create subnet:", error);
-        // ToastUtils.error(
-        //   error.response?.data?.message || "Failed to create subnet."
-        // );
+        const message = error?.message || "Failed to create subnet.";
+        try {
+          // Fallback if backend attaches message differently
+          const apiMsg = error?.response?.data?.message;
+          if (apiMsg) {
+            ToastUtils.error(apiMsg);
+          } else {
+            ToastUtils.error(message);
+          }
+        } catch (e) {
+          ToastUtils.error(message);
+        }
       },
     });
   };
@@ -87,6 +112,12 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
           </button>
         </div>
         <div className="px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start">
+          {/* Edge config warning */}
+          {(!edgeConfig || (!edgeConfig.edge_network_id || !edgeConfig.ip_pool_id)) && (
+            <div className="w-full mb-4 p-3 rounded-lg bg-yellow-50 border border-yellow-200 text-sm text-yellow-800">
+              Edge configuration is missing for this project. Subnet creation is disabled until an edge network and IP pool are assigned.
+            </div>
+          )}
           <div className="space-y-4 w-full">
             <div>
               <label
@@ -218,7 +249,15 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
             </button>
             <button
               onClick={handleSubmit}
-              disabled={isCreating || isFetchingVpcs || isFetchingRegions}
+              disabled={
+                isCreating ||
+                isFetchingVpcs ||
+                isFetchingRegions ||
+                isFetchingEdgeConfig ||
+                !edgeConfig ||
+                !edgeConfig.edge_network_id ||
+                !edgeConfig.ip_pool_id
+              }
               className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Create Subnet

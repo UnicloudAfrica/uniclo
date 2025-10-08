@@ -14,9 +14,10 @@ const AssignEdgeConfigModal = ({ isOpen, onClose, projectId, region }) => {
   const { data: regions, isFetching: isFetchingRegions } = useFetchGeneralRegions();
 
   const { data: currentConfig } = useFetchProjectEdgeConfigAdmin(projectId, selectedRegion, { enabled: isOpen && !!selectedRegion });
-  const { data: edgeNetworks, isFetching: isFetchingNetworks } = useFetchEdgeNetworks(projectId, selectedRegion, { enabled: isOpen && !!selectedRegion });
-  const { data: ipPools, isFetching: isFetchingPools } = useFetchIpPools(projectId, selectedRegion, formData.edge_network_id, { enabled: isOpen && !!selectedRegion && !!formData.edge_network_id });
+  const { data: edgeNetworks, isFetching: isFetchingNetworks, error: networksError } = useFetchEdgeNetworks(projectId, selectedRegion, { enabled: isOpen && !!selectedRegion });
+  const { data: ipPools, isFetching: isFetchingPools, error: poolsError } = useFetchIpPools(projectId, selectedRegion, formData.edge_network_id, { enabled: isOpen && !!selectedRegion && !!formData.edge_network_id });
   const { mutate: assignEdge, isPending } = useAssignProjectEdge();
+  const [manualMode, setManualMode] = useState(false);
 
   const updateForm = (field, value) => setFormData((p) => ({ ...p, [field]: value }));
 
@@ -83,42 +84,84 @@ const AssignEdgeConfigModal = ({ isOpen, onClose, projectId, region }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Edge Network<span className="text-red-500">*</span></label>
-              <select
-                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${isFetchingNetworks ? "opacity-60" : ""}`}
-                disabled={isFetchingNetworks || !selectedRegion}
-                value={formData.edge_network_id}
-                onChange={(e) => updateForm("edge_network_id", e.target.value)}
-              >
-                <option value="">{isFetchingNetworks ? "Loading networks..." : "Select an edge network"}</option>
-                {(edgeNetworks || []).map((n) => (
-                  <option key={n.id || n.uuid || n.identifier} value={n.id || n.uuid || n.identifier}>
-                    {n.name || n.label || n.id}
-                  </option>
-                ))}
-              </select>
-              {!isFetchingNetworks && selectedRegion && (edgeNetworks || []).length === 0 && (
-                <p className="text-xs text-yellow-700 mt-1">No edge networks found for this region. Ensure provider credentials are configured and networks exist.</p>
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Edge Network<span className="text-red-500">*</span></label>
+                {!isFetchingNetworks && selectedRegion && (edgeNetworks || []).length === 0 && (
+                  <button
+                    type="button"
+                    className="text-xs text-blue-600 hover:underline"
+                    onClick={() => setManualMode((v) => !v)}
+                  >
+                    {manualMode ? "Use list" : "Enter IDs manually"}
+                  </button>
+                )}
+              </div>
+
+              {!manualMode ? (
+                <>
+                  <select
+                    className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${isFetchingNetworks ? "opacity-60" : ""}`}
+                    disabled={isFetchingNetworks || !selectedRegion}
+                    value={formData.edge_network_id}
+                    onChange={(e) => updateForm("edge_network_id", e.target.value)}
+                  >
+                    <option value="">{isFetchingNetworks ? "Loading networks..." : "Select an edge network"}</option>
+                    {(edgeNetworks || []).map((n) => (
+                      <option key={n.id || n.uuid || n.identifier} value={n.id || n.uuid || n.identifier}>
+                        {n.name || n.label || n.id}
+                      </option>
+                    ))}
+                  </select>
+                  {networksError && (
+                    <p className="text-xs text-red-600 mt-1">{networksError.message || "Failed to load edge networks."}</p>
+                  )}
+                  {!isFetchingNetworks && selectedRegion && (edgeNetworks || []).length === 0 && !networksError && (
+                    <p className="text-xs text-yellow-700 mt-1">No edge networks found for this region. Ensure provider credentials are configured and networks exist.</p>
+                  )}
+                </>
+              ) : (
+                <input
+                  type="text"
+                  placeholder="Enter edge network ID"
+                  className="w-full rounded-[10px] border px-3 py-2 text-sm input-field"
+                  value={formData.edge_network_id}
+                  onChange={(e) => updateForm("edge_network_id", e.target.value)}
+                />
               )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">IP Pool<span className="text-red-500">*</span></label>
-              <select
-                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${isFetchingPools ? "opacity-60" : ""}`}
-                disabled={isFetchingPools || !formData.edge_network_id}
-                value={formData.ip_pool_id}
-                onChange={(e) => updateForm("ip_pool_id", e.target.value)}
-              >
-                <option value="">{isFetchingPools ? "Loading IP pools..." : "Select an IP pool"}</option>
-                {(ipPools || []).map((p) => (
-                  <option key={p.id || p.uuid || p.identifier} value={p.id || p.uuid || p.identifier}>
-                    {p.name || p.label || p.id}
-                  </option>
-                ))}
-              </select>
-              {!isFetchingPools && formData.edge_network_id && (ipPools || []).length === 0 && (
-                <p className="text-xs text-yellow-700 mt-1">No IP pools found for the selected edge network.</p>
+              {!manualMode ? (
+                <>
+                  <select
+                    className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${isFetchingPools ? "opacity-60" : ""}`}
+                    disabled={isFetchingPools || !formData.edge_network_id}
+                    value={formData.ip_pool_id}
+                    onChange={(e) => updateForm("ip_pool_id", e.target.value)}
+                  >
+                    <option value="">{isFetchingPools ? "Loading IP pools..." : "Select an IP pool"}</option>
+                    {(ipPools || []).map((p) => (
+                      <option key={p.id || p.uuid || p.identifier} value={p.id || p.uuid || p.identifier}>
+                        {p.name || p.label || p.id}
+                      </option>
+                    ))}
+                  </select>
+                  {poolsError && (
+                    <p className="text-xs text-red-600 mt-1">{poolsError.message || "Failed to load IP pools."}</p>
+                  )}
+                  {!isFetchingPools && formData.edge_network_id && (ipPools || []).length === 0 && !poolsError && (
+                    <p className="text-xs text-yellow-700 mt-1">No IP pools found for the selected edge network.</p>
+                  )}
+                </>
+              ) : (
+                <input
+                  type="text"
+                  placeholder="Enter IP pool ID"
+                  className="w-full rounded-[10px] border px-3 py-2 text-sm input-field"
+                  value={formData.ip_pool_id}
+                  onChange={(e) => updateForm("ip_pool_id", e.target.value)}
+                />
               )}
             </div>
 

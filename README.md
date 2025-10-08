@@ -68,3 +68,49 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+---
+
+## Edge Configuration (Admin + Tenant)
+
+This app includes Edge configuration features for projects.
+
+- Tenant view: shows the project's current edge configuration and warns when missing.
+  - Component: `src/dashboard/components/EdgeConfigPanel.js`
+  - Hook: `src/hooks/edgeHooks.js` (GET `/admin/projects/{id}/edge-config`)
+
+- Admin view: shows the edge configuration, lists edge networks/IP pools, and assigns them.
+  - Components:
+    - Panel: `src/adminDashboard/components/AdminEdgeConfigPanel.js`
+    - Modal: `src/adminDashboard/pages/projectComps/assignEdgeConfig.js`
+  - Hooks: `src/hooks/adminHooks/edgeHooks.js`
+    - GET `/business/projects/{id}/edge-config`
+    - GET `/business/edge-networks?project_id={id}`
+    - GET `/business/ip-pools?project_id={id}`
+    - POST `/business/projects/{id}/edge-config`
+
+### Where to find it
+
+- Tenant Project Details: `src/dashboard/pages/projectDetails.js`
+  - Displays tenant Edge panel.
+  - If an admin is logged in (admin token present), also displays the admin panel and a "Configure Edge" button that jumps to Admin Project Details.
+
+- Admin Project Details: `src/adminDashboard/pages/adminProjectDetails.js`
+  - Header and Overview card have a "Configure Edge" button.
+  - Shows the Admin Edge panel.
+  - Supports `?openEdge=1` to auto-open the modal (used by the Projects list quick action).
+
+- Admin Projects list: `src/adminDashboard/pages/adminProjects.js`
+  - New "Edge" column with a "Configure" action; navigates with `openEdge=1`.
+
+### Aligning API routes
+
+If your backend routes differ, update only these files:
+
+- Tenant: `src/hooks/edgeHooks.js`
+- Admin: `src/hooks/adminHooks/edgeHooks.js`
+
+### Dev notes
+
+- Admin detection is based on the presence of an admin token in `useAdminAuthStore`.
+- Subnet creation is disabled when edge config is missing and validates subnet CIDR against the VPC CIDR.

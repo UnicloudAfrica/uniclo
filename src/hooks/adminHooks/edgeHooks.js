@@ -5,11 +5,16 @@ import apiAdminforUser from "../../index/admin/apiAdminforUser";
 // Admin: fetch project edge configuration
 const fetchProjectEdgeConfigAdmin = async (projectId) => {
   if (!projectId) throw new Error("projectId is required");
-  const res = await adminSilentApiforUser(
-    "GET",
-    `/business/projects/${projectId}/edge-config`
-  );
-  return res?.data ?? res;
+  try {
+    const res = await adminSilentApiforUser(
+      "GET",
+      `/business/projects/${projectId}/edge-config`
+    );
+    return res?.data ?? res;
+  } catch (e) {
+    // If not found or not yet assigned, return null so UI can show a friendly warning
+    return null;
+  }
 };
 
 // Admin: list available edge networks (optionally scoped by project)

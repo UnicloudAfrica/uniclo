@@ -5,9 +5,17 @@ import silentTenantApi from "../index/tenant/silentTenant";
 // GET /admin/projects/{id}/edge-config
 const fetchProjectEdgeConfigTenant = async (projectId) => {
   if (!projectId) throw new Error("projectId is required");
-  const res = await silentTenantApi("GET", `/admin/projects/${projectId}/edge-config`);
-  // Some backends wrap the payload under data; tolerate both
-  return res?.data ?? res;
+  try {
+    const res = await silentTenantApi(
+      "GET",
+      `/admin/projects/${projectId}/edge-config`
+    );
+    // Some backends wrap the payload under data; tolerate both
+    return res?.data ?? res;
+  } catch (e) {
+    // Treat missing config (404 or similar) as null to show a friendly warning instead of an error
+    return null;
+  }
 };
 
 export const useFetchProjectEdgeConfigTenant = (projectId, options = {}) => {

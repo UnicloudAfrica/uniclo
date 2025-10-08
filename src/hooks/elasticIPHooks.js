@@ -32,9 +32,10 @@ const deleteElasticIp = async (id) => {
 };
 
 const associateElasticIp = async (associationData) => {
+  // Shared endpoint: POST /business/elastic-ip-associations
   const res = await api(
     "POST",
-    "/business/elastic-ips/associate",
+    "/business/elastic-ip-associations",
     associationData
   );
   if (!res.data) throw new Error("Failed to associate elastic IP");
@@ -42,9 +43,10 @@ const associateElasticIp = async (associationData) => {
 };
 
 const disassociateElasticIp = async (disassociationData) => {
+  // Shared endpoint: DELETE /business/elastic-ip-associations with body
   const res = await api(
-    "POST",
-    "/business/elastic-ips/disassociate",
+    "DELETE",
+    "/business/elastic-ip-associations",
     disassociationData
   );
   if (!res.data) throw new Error("Failed to disassociate elastic IP");

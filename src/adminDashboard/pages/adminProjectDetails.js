@@ -21,6 +21,7 @@ import Subnets from "./infraComps/subNet";
 import IGWs from "./infraComps/igw";
 import ENIs from "./infraComps/enis";
 import RouteTables from "./infraComps/routetable";
+import AssignEdgeConfigModal from "./projectComps/assignEdgeConfig";
 
 // Function to decode the ID from URL
 const decodeId = (encodedId) => {
@@ -44,6 +45,7 @@ export default function AdminProjectDetails() {
     useState(false);
   const [isDeleteConfirmModalOpen, setIsDeleteConfirmModalOpen] =
     useState(false);
+  const [isAssignEdgeOpen, setIsAssignEdgeOpen] = useState(false);
 
   // Separate state for top-level tabs and sub-tabs
   const [activeTopLevelTab, setActiveTopLevelTab] = useState("Instances");
@@ -178,16 +180,25 @@ export default function AdminProjectDetails() {
           <h1 className="text-2xl font-bold text-[#1E1E1EB2]">
             Project Details
           </h1>
-          {canDeleteProject && (
+          <div className="flex items-center gap-3">
             <button
-              onClick={() => setIsDeleteConfirmModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm"
-              title="Delete Project"
+              onClick={() => setIsAssignEdgeOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-[#288DD1] text-white rounded-lg hover:bg-[#1976D2] transition-colors text-sm"
+              title="Configure Edge"
             >
-              <Trash2 className="w-4 h-4" />
-              Delete Project
+              Configure Edge
             </button>
-          )}
+            {canDeleteProject && (
+              <button
+                onClick={() => setIsDeleteConfirmModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm"
+                title="Delete Project"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete Project
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Project Details Section */}
@@ -503,6 +514,11 @@ export default function AdminProjectDetails() {
         onClose={() => setIsDeleteConfirmModalOpen(false)}
         projectId={projectId}
         projectName={projectDetails?.name || "this project"}
+      />
+      <AssignEdgeConfigModal
+        isOpen={isAssignEdgeOpen}
+        onClose={() => setIsAssignEdgeOpen(false)}
+        projectId={projectId}
       />
     </>
   );

@@ -14,10 +14,21 @@ const AssignEdgeConfigModal = ({ isOpen, onClose, projectId, region }) => {
   const { data: regions, isFetching: isFetchingRegions } = useFetchGeneralRegions();
 
   const { data: currentConfig } = useFetchProjectEdgeConfigAdmin(projectId, selectedRegion, { enabled: isOpen && !!selectedRegion });
-  const { data: edgeNetworks, isFetching: isFetchingNetworks, error: networksError } = useFetchEdgeNetworks(projectId, selectedRegion, { enabled: isOpen && !!selectedRegion });
-  const { data: ipPools, isFetching: isFetchingPools, error: poolsError } = useFetchIpPools(projectId, selectedRegion, formData.edge_network_id, { enabled: isOpen && !!selectedRegion && !!formData.edge_network_id });
+  const { data: edgeNetworks, isFetching: isFetchingNetworks, error: networksError, refetch: refetchNetworks } = useFetchEdgeNetworks(projectId, selectedRegion, { enabled: isOpen && !!selectedRegion });
+  const { data: ipPools, isFetching: isFetchingPools, error: poolsError, refetch: refetchPools } = useFetchIpPools(projectId, selectedRegion, formData.edge_network_id, { enabled: isOpen && !!selectedRegion && !!formData.edge_network_id });
   const { mutate: assignEdge, isPending } = useAssignProjectEdge();
   const [manualMode, setManualMode] = useState(false);
+
+  const handleRefreshFromProvider = async () => {
+    try {
+      await refetchNetworks();
+      if (formData.edge_network_id) {
+        await refetchPools();
+      }
+    } catch (e) {
+      // ignore; errors surface via networksError/poolsError
+    }
+  };
 
   const updateForm = (field, value) => setFormData((p) => ({ ...p, [field]: value }));
 
@@ -86,15 +97,26 @@ const AssignEdgeConfigModal = ({ isOpen, onClose, projectId, region }) => {
             <div>
               <div className="flex items-center justify-between">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Edge Network<span className="text-red-500">*</span></label>
-                {!isFetchingNetworks && selectedRegion && (edgeNetworks || []).length === 0 && (
+                <div className="flex items-center gap-3">
+                  {!isFetchingNetworks && selectedRegion && (edgeNetworks || []).length === 0 && (
+                    <button
+                      type="button"
+                      className="text-xs text-blue-600 hover:underline"
+                      onClick={() => setManualMode((v) => !v)}
+                    >
+                      {manualMode ? "Use list" : "Enter IDs manually"}
+                    </button>
+                  )}
                   <button
                     type="button"
-                    className="text-xs text-blue-600 hover:underline"
-                    onClick={() => setManualMode((v) => !v)}
+                    className="text-xs text-blue-600 hover:underline disabled:opacity-50"
+                    onClick={handleRefreshFromProvider}
+                    disabled={isFetchingNetworks || isFetchingPools || !selectedRegion}
+                    title="Refresh from provider"
                   >
-                    {manualMode ? "Use list" : "Enter IDs manually"}
+                    {isFetchingNetworks || isFetchingPools ? "Refreshing..." : "Refresh from provider"}
                   </button>
-                )}
+                </div>
               </div>
 
               {!manualMode ? (

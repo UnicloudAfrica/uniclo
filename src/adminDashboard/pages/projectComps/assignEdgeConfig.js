@@ -2,29 +2,31 @@ import React, { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useFetchEdgeNetworks, useFetchIpPools, useAssignProjectEdge, useFetchProjectEdgeConfigAdmin } from "../../../hooks/adminHooks/edgeHooks";
 
-const AssignEdgeConfigModal = ({ isOpen, onClose, projectId }) => {
-  const { data: currentConfig } = useFetchProjectEdgeConfigAdmin(projectId, { enabled: isOpen });
-  const { data: edgeNetworks, isFetching: isFetchingNetworks } = useFetchEdgeNetworks(projectId, { enabled: isOpen });
-  const { data: ipPools, isFetching: isFetchingPools } = useFetchIpPools(projectId, { enabled: isOpen });
-  const { mutate: assignEdge, isPending } = useAssignProjectEdge();
-
+const AssignEdgeConfigModal = ({ isOpen, onClose, projectId, region }) => {
   const [formData, setFormData] = useState({
     edge_network_id: "",
     ip_pool_id: "",
     flowlogs_enabled: false,
   });
 
+  const { data: currentConfig } = useFetchProjectEdgeConfigAdmin(projectId, region, { enabled: isOpen });
+  const { data: edgeNetworks, isFetching: isFetchingNetworks } = useFetchEdgeNetworks(projectId, region, { enabled: isOpen });
+  const { data: ipPools, isFetching: isFetchingPools } = useFetchIpPools(projectId, region, formData.edge_network_id, { enabled: isOpen && !!formData.edge_network_id });
+  const { mutate: assignEdge, isPending } = useAssignProjectEdge();
+
   const updateForm = (field, value) => setFormData((p) => ({ ...p, [field]: value }));
 
   const handleAssign = () => {
     const payload = {
+      project_id: projectId,
+      region,
       edge_network_id: formData.edge_network_id,
-      ip_pool_id: formData.ip_pool_id,
+      edge_ip_pool_id: formData.ip_pool_id,
       flowlogs_enabled: !!formData.flowlogs_enabled,
     };
 
     assignEdge(
-      { projectId, payload },
+      { payload },
       {
         onSuccess: () => onClose(),
       }

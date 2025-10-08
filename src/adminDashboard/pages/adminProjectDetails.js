@@ -259,7 +259,7 @@ export default function AdminProjectDetails() {
         </div>
 
         {/* Admin Edge Config Panel */}
-        <AdminEdgeConfigPanel projectId={projectId} />
+        <AdminEdgeConfigPanel projectId={projectId} region={projectDetails.default_region} />
 
         {/* Top-Level Tab Navigation: Instances and Infrastructure */}
         <div className="w-full flex justify-start items-center border-b border-gray-300 mb-6 bg-white rounded-t-xl overflow-x-auto">
@@ -539,6 +539,7 @@ export default function AdminProjectDetails() {
         isOpen={isAssignEdgeOpen}
         onClose={() => setIsAssignEdgeOpen(false)}
         projectId={projectId}
+        region={projectDetails?.default_region}
       />
     </>
   );

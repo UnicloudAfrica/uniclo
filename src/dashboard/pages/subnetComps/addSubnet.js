@@ -12,7 +12,7 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
     useFetchGeneralRegions();
   const { mutate: createSubnet, isPending: isCreating } = useCreateSubnet();
   const { data: edgeConfig, isFetching: isFetchingEdgeConfig } =
-    useFetchProjectEdgeConfigTenant(projectId);
+    useFetchProjectEdgeConfigTenant(projectId, formData.region, { enabled: !!projectId && !!formData.region });
 
   const [formData, setFormData] = useState({
     name: "",
@@ -45,7 +45,9 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
         "Subnet CIDR cannot be the same as the selected VPC CIDR";
     }
 
-    if (!edgeConfig || (!edgeConfig.edge_network_id || !edgeConfig.ip_pool_id)) {
+    if (
+      formData.region && (!edgeConfig || (!edgeConfig.edge_network_id || !edgeConfig.ip_pool_id))
+    ) {
       newErrors.general =
         "Edge configuration is missing. Please contact an admin to assign an edge network and IP pool before creating subnets.";
     }
@@ -113,7 +115,7 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
         </div>
         <div className="px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start">
           {/* Edge config warning */}
-          {(!edgeConfig || (!edgeConfig.edge_network_id || !edgeConfig.ip_pool_id)) && (
+          {formData.region && (!edgeConfig || (!edgeConfig.edge_network_id || !edgeConfig.ip_pool_id)) && (
             <div className="w-full mb-4 p-3 rounded-lg bg-yellow-50 border border-yellow-200 text-sm text-yellow-800">
               Edge configuration is missing for this project. Subnet creation is disabled until an edge network and IP pool are assigned.
             </div>

@@ -9,9 +9,9 @@ const Field = ({ label, value }) => (
   </div>
 );
 
-export default function AdminEdgeConfigPanel({ projectId }) {
+export default function AdminEdgeConfigPanel({ projectId, region }) {
   const { data: edgeConfig, isFetching, error } =
-    useFetchProjectEdgeConfigAdmin(projectId);
+    useFetchProjectEdgeConfigAdmin(projectId, region, { enabled: !!projectId && !!region });
 
   return (
     <div className="bg-white rounded-[12px] p-6 shadow-sm mb-8">

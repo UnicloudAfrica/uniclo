@@ -278,10 +278,12 @@ export default function ProjectDetails() {
         </div>
 
         {/* Edge Config Panel (Tenant view) */}
-        <EdgeConfigPanel projectId={projectId} />
+        <EdgeConfigPanel projectId={projectId} region={projectDetails.default_region} />
 
         {/* Edge Config Panel (Admin view) */}
-        {isAdmin && <AdminEdgeConfigPanel projectId={projectId} />}
+        {isAdmin && (
+          <AdminEdgeConfigPanel projectId={projectId} region={projectDetails.default_region} />
+        )}
 
         {/* Top-Level Tab Navigation: Instances and Infrastructure */}
         <div className="w-full flex justify-start items-center border-b border-gray-300 mb-6 bg-white rounded-t-xl overflow-x-auto">

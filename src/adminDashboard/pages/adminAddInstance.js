@@ -28,6 +28,7 @@ import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
+import { useFetchNetworkInterfaces } from "../../hooks/adminHooks/networkHooks";
 
 const AdminAddInstance = () => {
   const location = useLocation();
@@ -128,6 +129,10 @@ const AdminAddInstance = () => {
   );
   const { data: securityGroups, isFetching: isSecurityGroupsFetching } =
     useFetchSecurityGroups(selectedProjectId, selectedRegion, {
+      enabled: !!selectedProjectId && !!selectedRegion,
+    });
+  const { data: networkInterfaces, isFetching: isNetworkInterfacesFetching } =
+    useFetchNetworkInterfaces(selectedProjectId, selectedRegion, {
       enabled: !!selectedProjectId && !!selectedRegion,
     });
 

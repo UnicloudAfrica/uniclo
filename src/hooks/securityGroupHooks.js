@@ -1,7 +1,8 @@
-// src/hooks/adminHooks/securityGroupHooks.js
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import silentTenantApi from "../index/tenant/silentTenant";
-import tenantApi from "../index/tenant/tenantApi";
+import silentApi from "../index/silent";
+import api from "../index/api";
+// import silentTenantApi from "../index/tenant/silentTenant";
+// import tenantApi from "../index/tenant/tenantApi";
 
 const fetchSecurityGroups = async ({ project_id, region }) => {
   const params = new URLSearchParams();
@@ -9,35 +10,31 @@ const fetchSecurityGroups = async ({ project_id, region }) => {
   if (region) params.append("region", region);
 
   const queryString = params.toString();
-  const res = await silentTenantApi(
+  const res = await silentApi(
     "GET",
-    `/admin/security-groups${queryString ? `?${queryString}` : ""}`
+    `/business/security-groups${queryString ? `?${queryString}` : ""}`
   );
   if (!res.data) throw new Error("Failed to fetch security groups");
   return res.data;
 };
 
 const fetchSecurityGroupById = async (id) => {
-  const res = await silentTenantApi("GET", `/admin/security-groups/${id}`);
+  const res = await silentApi("GET", `/business/security-groups/${id}`);
   if (!res.data)
     throw new Error(`Failed to fetch security group with ID ${id}`);
   return res.data;
 };
 
 const createSecurityGroup = async (securityGroupData) => {
-  const res = await tenantApi(
-    "POST",
-    "/admin/security-groups",
-    securityGroupData
-  );
+  const res = await api("POST", "/business/security-groups", securityGroupData);
   if (!res.data) throw new Error("Failed to create security group");
   return res.data;
 };
 
 const updateSecurityGroup = async ({ id, securityGroupData }) => {
-  const res = await tenantApi(
+  const res = await api(
     "PATCH",
-    `/admin/security-groups/${id}`,
+    `/business/security-groups/${id}`,
     securityGroupData
   );
   if (!res.data)
@@ -46,7 +43,7 @@ const updateSecurityGroup = async ({ id, securityGroupData }) => {
 };
 
 const deleteSecurityGroup = async (id) => {
-  const res = await tenantApi("DELETE", `/admin/security-groups/${id}`);
+  const res = await api("DELETE", `/business/security-groups/${id}`);
   if (!res.data)
     throw new Error(`Failed to delete security group with ID ${id}`);
   return res.data;

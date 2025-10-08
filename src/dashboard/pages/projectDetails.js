@@ -501,7 +501,10 @@ export default function ProjectDetails() {
                 {activeInfraTab}
               </h2>
               {ActiveInfraComponent && (
-                <ActiveInfraComponent projectId={projectId} />
+                <ActiveInfraComponent
+                  projectId={projectId}
+                  region={projectDetails.default_region}
+                />
               )}
             </div>
           </div>

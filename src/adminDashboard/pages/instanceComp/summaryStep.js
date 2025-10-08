@@ -52,10 +52,15 @@ export const SummaryStep = ({ formData, pricingRequests }) => (
               <DetailRow label="OS Image" value={req._display.os} />
               <DetailRow label="Key Pair" value={req.keypair_name} />
               <DetailRow label="Subnet ID" value={req.subnet_id} />
-              <DetailRow
-                label="Security Groups"
-                value={req.security_group_ids.join(", ")}
-              />
+              {req.security_group_ids &&
+                Array.isArray(req.security_group_ids) &&
+                req.security_group_ids.length > 0 && (
+                  <DetailRow
+                    label="Security Groups"
+                    value={req.security_group_ids.join(", ")}
+                  />
+                )}
+
               <DetailRow label="Term" value={`${req.months} months`} />
               {req.bandwidth_id && (
                 <DetailRow

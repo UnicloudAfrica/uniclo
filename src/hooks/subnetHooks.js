@@ -1,7 +1,9 @@
 // src/hooks/adminHooks/subnetHooks.js
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import silentTenantApi from "../index/tenant/silentTenant";
-import tenantApi from "../index/tenant/tenantApi";
+import silentApi from "../index/silent";
+import api from "../index/api";
+// import silentTenantApi from "../index/tenant/silentTenant";
+// import tenantApi from "../index/tenant/tenantApi";
 
 const fetchSubnets = async ({ project_id, region }) => {
   const params = new URLSearchParams();
@@ -9,34 +11,34 @@ const fetchSubnets = async ({ project_id, region }) => {
   if (region) params.append("region", region);
 
   const queryString = params.toString();
-  const res = await silentTenantApi(
+  const res = await silentApi(
     "GET",
-    `/admin/subnets${queryString ? `?${queryString}` : ""}`
+    `/business/subnets${queryString ? `?${queryString}` : ""}`
   );
   if (!res.data) throw new Error("Failed to fetch subnets");
   return res.data;
 };
 
 const fetchSubnetById = async (id) => {
-  const res = await silentTenantApi("GET", `/admin/subnets/${id}`);
+  const res = await silentApi("GET", `/business/subnets/${id}`);
   if (!res.data) throw new Error(`Failed to fetch subnet with ID ${id}`);
   return res.data;
 };
 
 const createSubnet = async (subnetData) => {
-  const res = await tenantApi("POST", "/admin/subnets", subnetData);
+  const res = await api("POST", "/business/subnets", subnetData);
   if (!res.data) throw new Error("Failed to create subnet");
   return res.data;
 };
 
 const updateSubnet = async ({ id, subnetData }) => {
-  const res = await tenantApi("PATCH", `/admin/subnets/${id}`, subnetData);
+  const res = await api("PATCH", `/business/subnets/${id}`, subnetData);
   if (!res.data) throw new Error(`Failed to update subnet with ID ${id}`);
   return res.data;
 };
 
 const deleteSubnet = async (id) => {
-  const res = await tenantApi("DELETE", `/admin/subnets/${id}`);
+  const res = await api("DELETE", `/business/subnets/${id}`);
   if (!res.data) throw new Error(`Failed to delete subnet with ID ${id}`);
   return res.data;
 };

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import silentApi from "../../index/admin/silent";
-import api from "../../index/admin/api";
+import adminSilentApiforUser from "../../index/admin/silentadminforuser";
+import apiAdminforUser from "../../index/admin/apiAdminforUser";
 
 const fetchElasticIps = async ({ project_id, region }) => {
   const params = new URLSearchParams();
@@ -8,34 +8,46 @@ const fetchElasticIps = async ({ project_id, region }) => {
   if (region) params.append("region", region);
 
   const queryString = params.toString();
-  const res = await silentApi(
+  const res = await adminSilentApiforUser(
     "GET",
-    `/elastic-ips${queryString ? `?${queryString}` : ""}`
+    `/business/elastic-ips${queryString ? `?${queryString}` : ""}`
   );
   if (!res.data) throw new Error("Failed to fetch elastic IPs");
   return res.data;
 };
 
 const fetchElasticIpById = async (id) => {
-  const res = await silentApi("GET", `/elastic-ips/${id}`);
+  const res = await adminSilentApiforUser("GET", `/business/elastic-ips/${id}`);
   if (!res.data) throw new Error(`Failed to fetch elastic IP with ID ${id}`);
   return res.data;
 };
 
 const createElasticIp = async (elasticIpData) => {
-  const res = await api("POST", "/elastic-ips", elasticIpData);
+  const res = await apiAdminforUser(
+    "POST",
+    "/business/elastic-ips",
+    elasticIpData
+  );
   if (!res.data) throw new Error("Failed to create elastic IP");
   return res.data;
 };
 
 const updateElasticIp = async ({ id, elasticIpData }) => {
-  const res = await api("PATCH", `/elastic-ips/${id}`, elasticIpData);
+  const res = await apiAdminforUser(
+    "PATCH",
+    `/business/elastic-ips/${id}`,
+    elasticIpData
+  );
   if (!res.data) throw new Error(`Failed to update elastic IP with ID ${id}`);
   return res.data;
 };
 
-const deleteElasticIp = async (id) => {
-  const res = await api("DELETE", `/elastic-ips/${id}`);
+const deleteElasticIp = async ({ id, payload }) => {
+  const res = await apiAdminforUser(
+    "DELETE",
+    `/business/elastic-ips/${id}`,
+    payload
+  );
   if (!res.data) throw new Error(`Failed to delete elastic IP with ID ${id}`);
   return res.data;
 };
@@ -92,8 +104,10 @@ export const useDeleteElasticIp = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteElasticIp,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["elasticIps"] });
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["elasticIps", { projectId: variables.payload.project_id }],
+      });
     },
     onError: (error) => {
       console.error("Error deleting elastic IP:", error);

@@ -1,7 +1,9 @@
 // src/hooks/adminHooks/elasticIpHooks.js
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import silentTenantApi from "../index/tenant/silentTenant";
-import tenantApi from "../index/tenant/tenantApi";
+import silentApi from "../index/silent";
+import api from "../index/api";
+// import silentTenantApi from "../index/tenant/silentTenant";
+// import tenantApi from "../index/tenant/tenantApi";
 
 const fetchElasticIps = async ({ project_id, region }) => {
   const params = new URLSearchParams();
@@ -9,30 +11,30 @@ const fetchElasticIps = async ({ project_id, region }) => {
   if (region) params.append("region", region);
 
   const queryString = params.toString();
-  const res = await silentTenantApi(
+  const res = await silentApi(
     "GET",
-    `/admin/elastic-ips${queryString ? `?${queryString}` : ""}`
+    `/business/elastic-ips${queryString ? `?${queryString}` : ""}`
   );
   if (!res.data) throw new Error("Failed to fetch elastic IPs");
   return res.data;
 };
 
 const createElasticIp = async (elasticIpData) => {
-  const res = await tenantApi("POST", "/admin/elastic-ips", elasticIpData);
+  const res = await api("POST", "/business/elastic-ips", elasticIpData);
   if (!res.data) throw new Error("Failed to create elastic IP");
   return res.data;
 };
 
 const deleteElasticIp = async (id) => {
-  const res = await tenantApi("DELETE", `/admin/elastic-ips/${id}`);
+  const res = await api("DELETE", `/business/elastic-ips/${id}`);
   if (!res.data) throw new Error(`Failed to delete elastic IP with ID ${id}`);
   return res.data;
 };
 
 const associateElasticIp = async (associationData) => {
-  const res = await tenantApi(
+  const res = await api(
     "POST",
-    "/admin/elastic-ips/associate",
+    "/business/elastic-ips/associate",
     associationData
   );
   if (!res.data) throw new Error("Failed to associate elastic IP");
@@ -40,9 +42,9 @@ const associateElasticIp = async (associationData) => {
 };
 
 const disassociateElasticIp = async (disassociationData) => {
-  const res = await tenantApi(
+  const res = await api(
     "POST",
-    "/admin/elastic-ips/disassociate",
+    "/business/elastic-ips/disassociate",
     disassociationData
   );
   if (!res.data) throw new Error("Failed to disassociate elastic IP");

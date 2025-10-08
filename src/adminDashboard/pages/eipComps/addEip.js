@@ -1,24 +1,20 @@
 import React, { useState } from "react";
 import { Loader2, X } from "lucide-react";
-import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
 import ToastUtils from "../../../utils/toastUtil";
 import { useCreateElasticIp } from "../../../hooks/adminHooks/eipHooks";
 
-const AddEip = ({ isOpen, onClose, projectId = "" }) => {
-  const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
-
+const AddEip = ({ isOpen, onClose, projectId = "", region = "" }) => {
   const { mutate, isPending } = useCreateElasticIp();
   const [formData, setFormData] = useState({
-    name: "",
-    region: "",
-    description: "",
+    address: "",
+    pool_id: "",
   });
   const [errors, setErrors] = useState({});
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = "Name is required";
-    if (!formData.region) newErrors.region = "Region is required";
+    if (!formData.address.trim()) newErrors.address = "Address is required";
+    if (!formData.pool_id.trim()) newErrors.pool_id = "Pool ID is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -34,9 +30,9 @@ const AddEip = ({ isOpen, onClose, projectId = "" }) => {
 
     const elasticIpData = {
       project_id: projectId,
-      region: formData.region,
-      name: formData.name,
-      description: formData.description,
+      region: region,
+      address: formData.address,
+      pool_id: formData.pool_id,
     };
 
     mutate(elasticIpData, {
@@ -71,74 +67,45 @@ const AddEip = ({ isOpen, onClose, projectId = "" }) => {
           <div className="space-y-4 w-full">
             <div>
               <label
-                htmlFor="name"
+                htmlFor="address"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                Name<span className="text-red-500">*</span>
+                Address<span className="text-red-500">*</span>
               </label>
               <input
-                id="name"
+                id="address"
                 type="text"
-                value={formData.name}
-                onChange={(e) => updateFormData("name", e.target.value)}
-                placeholder="e.g., MyElasticIP"
+                value={formData.address}
+                onChange={(e) => updateFormData("address", e.target.value)}
+                placeholder="e.g., my-eip-address"
                 className={`w-full input-field ${
-                  errors.name ? "border-red-500" : "border-gray-300"
+                  errors.address ? "border-red-500" : "border-gray-300"
                 }`}
               />
-              {errors.name && (
-                <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+              {errors.address && (
+                <p className="text-red-500 text-xs mt-1">{errors.address}</p>
               )}
             </div>
+
             <div>
               <label
-                htmlFor="region"
+                htmlFor="pool_id"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                Region<span className="text-red-500">*</span>
+                Pool ID<span className="text-red-500">*</span>
               </label>
-              <select
-                id="region"
-                value={formData.region}
-                onChange={(e) => updateFormData("region", e.target.value)}
+              <input
+                id="pool_id"
+                type="text"
+                value={formData.pool_id}
+                onChange={(e) => updateFormData("pool_id", e.target.value)}
+                placeholder="Enter Pool ID"
                 className={`w-full input-field ${
-                  errors.region ? "border-red-500" : "border-gray-300"
-                }`}
-                disabled={isRegionsFetching}
-              >
-                <option value="" disabled>
-                  {isRegionsFetching ? "Loading regions..." : "Select a region"}
-                </option>
-                {regions?.map((region) => (
-                  <option key={region.code} value={region.code}>
-                    {region.name}
-                  </option>
-                ))}
-              </select>
-              {errors.region && (
-                <p className="text-red-500 text-xs mt-1">{errors.region}</p>
-              )}
-            </div>
-            <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Description
-              </label>
-              <textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => updateFormData("description", e.target.value)}
-                placeholder="e.g., Elastic IP for application load balancer"
-                className={`w-full input-field min-h-[100px] resize-y ${
-                  errors.description ? "border-red-500" : "border-gray-300"
+                  errors.pool_id ? "border-red-500" : "border-gray-300"
                 }`}
               />
-              {errors.description && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.description}
-                </p>
+              {errors.pool_id && (
+                <p className="text-red-500 text-xs mt-1">{errors.pool_id}</p>
               )}
             </div>
           </div>
@@ -154,7 +121,7 @@ const AddEip = ({ isOpen, onClose, projectId = "" }) => {
             </button>
             <button
               onClick={handleSubmit}
-              disabled={isPending || isRegionsFetching}
+              disabled={isPending}
               className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Create Elastic IP

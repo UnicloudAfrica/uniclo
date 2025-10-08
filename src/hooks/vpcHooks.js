@@ -1,7 +1,9 @@
 // src/hooks/adminHooks/adminHooks.js
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import silentTenantApi from "../index/tenant/silentTenant";
-import tenantApi from "../index/tenant/tenantApi";
+import silentApi from "../index/silent";
+import api from "../index/api";
+// import silentTenantApi from "../index/tenant/silentTenant";
+// import tenantApi from "../index/tenant/tenantApi";
 
 const fetchVpcs = async ({ project_id, region }) => {
   const params = new URLSearchParams();
@@ -9,34 +11,34 @@ const fetchVpcs = async ({ project_id, region }) => {
   if (region) params.append("region", region);
 
   const queryString = params.toString();
-  const res = await silentTenantApi(
+  const res = await silentApi(
     "GET",
-    `/admin/vpcs${queryString ? `?${queryString}` : ""}`
+    `/business/vpcs${queryString ? `?${queryString}` : ""}`
   );
   if (!res) throw new Error("Failed to fetch VPCs");
   return res;
 };
 
 const fetchVpcById = async (id) => {
-  const res = await silentTenantApi("GET", `/business/vpcs/${id}`);
+  const res = await silentApi("GET", `/business/vpcs/${id}`);
   if (!res) throw new Error(`Failed to fetch VPC with ID ${id}`);
   return res;
 };
 
 const createVpc = async (vpcData) => {
-  const res = await tenantApi("POST", "/business/vpcs", vpcData);
+  const res = await api("POST", "/business/vpcs", vpcData);
   if (!res.data) throw new Error("Failed to create VPC");
   return res.data;
 };
 
 const updateVpc = async ({ id, vpcData }) => {
-  const res = await tenantApi("PATCH", `/business/vpcs/${id}`, vpcData);
+  const res = await api("PATCH", `/business/vpcs/${id}`, vpcData);
   if (!res.data) throw new Error(`Failed to update VPC with ID ${id}`);
   return res.data;
 };
 
 const deleteVpc = async (id) => {
-  const res = await tenantApi("DELETE", `/business/vpcs/${id}`);
+  const res = await api("DELETE", `/business/vpcs/${id}`);
   if (!res.data) throw new Error(`Failed to delete VPC with ID ${id}`);
   return res.data;
 };

@@ -19,6 +19,8 @@ import VPCs from "./infraComps/vpcs";
 import EIPs from "./infraComps/eips";
 import Subnets from "./infraComps/subNet";
 import IGWs from "./infraComps/igw";
+import ENIs from "./infraComps/enis";
+import RouteTables from "./infraComps/routetable";
 
 // Function to decode the ID from URL
 const decodeId = (encodedId) => {
@@ -29,17 +31,6 @@ const decodeId = (encodedId) => {
     return null; // Handle invalid encoded ID
   }
 };
-
-const RouteTables = ({ projectId }) => (
-  <div className="p-4 bg-gray-50 rounded-lg">
-    Route Tables content for project: {projectId}.
-  </div>
-);
-const ENIs = ({ projectId }) => (
-  <div className="p-4 bg-gray-50 rounded-lg">
-    Elastic Network Interfaces content for project: {projectId}.
-  </div>
-);
 
 export default function AdminProjectDetails() {
   const location = useLocation();
@@ -490,7 +481,10 @@ export default function AdminProjectDetails() {
                 {activeInfraTab}
               </h2>
               {ActiveInfraComponent && (
-                <ActiveInfraComponent projectId={projectDetails.identifier} />
+                <ActiveInfraComponent
+                  projectId={projectDetails.identifier}
+                  region={projectDetails.default_region}
+                />
               )}
             </div>
           </div>

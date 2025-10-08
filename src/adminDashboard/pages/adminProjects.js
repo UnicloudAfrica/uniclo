@@ -108,6 +108,9 @@ export default function AdminProjects() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
                   Action
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
+                  Edge
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-[#E8E6EA]">
@@ -137,6 +140,20 @@ export default function AdminProjects() {
                         title="View Details"
                       >
                         <Eye className="w-4 h-4" />
+                      </button>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const encodedId = encodeId(item.identifier);
+                          const encodedName = encodeURIComponent(item.name);
+                          navigate(`/admin-dashboard/projects/details?id=${encodedId}&name=${encodedName}&openEdge=1`);
+                        }}
+                        className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
+                        title="Configure Edge"
+                      >
+                        Configure
                       </button>
                     </td>
                   </tr>

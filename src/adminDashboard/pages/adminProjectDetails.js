@@ -22,6 +22,7 @@ import IGWs from "./infraComps/igw";
 import ENIs from "./infraComps/enis";
 import RouteTables from "./infraComps/routetable";
 import AssignEdgeConfigModal from "./projectComps/assignEdgeConfig";
+import AdminEdgeConfigPanel from "../components/AdminEdgeConfigPanel";
 
 // Function to decode the ID from URL
 const decodeId = (encodedId) => {
@@ -54,6 +55,7 @@ export default function AdminProjectDetails() {
   const queryParams = new URLSearchParams(location.search);
   const encodedProjectId = queryParams.get("id");
   const projectId = decodeId(encodedProjectId);
+  const openEdgeFromQuery = queryParams.get("openEdge") === "1";
 
   const {
     data: projectDetails,
@@ -120,6 +122,14 @@ export default function AdminProjectDetails() {
     { name: "ENIs", component: ENIs },
     { name: "EIPs", component: EIPs },
   ];
+
+  // Open edge modal automatically if requested via query param
+  useEffect(() => {
+    if (openEdgeFromQuery) {
+      setIsAssignEdgeOpen(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (isProjectFetching) {
     return (
@@ -202,10 +212,17 @@ export default function AdminProjectDetails() {
         </div>
 
         {/* Project Details Section */}
-        <div className="bg-white rounded-[12px] p-6 shadow-sm mb-8">
-          <h2 className="text-xl font-semibold text-[#575758] mb-4">
-            Overview
-          </h2>
+        <div className="bg-white rounded-[12px] p-6 shadow-sm mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-[#575758]">Overview</h2>
+            <button
+              onClick={() => setIsAssignEdgeOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-[#288DD1] text-white rounded-lg hover:bg-[#1976D2] transition-colors text-sm"
+              title="Configure Edge"
+            >
+              Configure Edge
+            </button>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div className="flex flex-col">
               <span className="font-medium text-gray-600">Project Name:</span>
@@ -240,6 +257,9 @@ export default function AdminProjectDetails() {
             </div>
           </div>
         </div>
+
+        {/* Admin Edge Config Panel */}
+        <AdminEdgeConfigPanel projectId={projectId} />
 
         {/* Top-Level Tab Navigation: Instances and Infrastructure */}
         <div className="w-full flex justify-start items-center border-b border-gray-300 mb-6 bg-white rounded-t-xl overflow-x-auto">

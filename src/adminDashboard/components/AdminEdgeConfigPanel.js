@@ -1,6 +1,7 @@
 import React from "react";
 import { AlertTriangle } from "lucide-react";
 import { useFetchProjectEdgeConfigAdmin } from "../../hooks/adminHooks/edgeHooks";
+import ToastUtils from "../../utils/toastUtil";
 
 const Field = ({ label, value }) => (
   <div className="flex flex-col">
@@ -18,7 +19,14 @@ export default function AdminEdgeConfigPanel({ projectId, region }) {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold text-[#575758]">Edge Configuration</h2>
         <button
-          onClick={() => refetch()}
+          onClick={async () => {
+            const r = await refetch();
+            if (r?.error) {
+              ToastUtils.error(r.error.message || "Failed to refresh edge configuration");
+            } else {
+              ToastUtils.success("Edge configuration refreshed");
+            }
+          }}
           disabled={isFetching || !projectId || !region}
           className="text-sm text-[#288DD1] hover:text-[#1976D2] disabled:opacity-50"
           title="Refresh from provider"

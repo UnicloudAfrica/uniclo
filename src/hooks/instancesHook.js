@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import silentTenantApi from "../index/tenant/silentTenant";
+import silentApi from "../index/silent";
+import api from "../index/api";
 import tenantApi from "../index/tenant/tenantApi";
 
 // GET: Fetch all instance requests
@@ -21,9 +22,9 @@ const fetchInstanceRequests = async (params = {}) => {
     .join("&");
 
   // Construct the URI with the query string
-  const uri = `/admin/instances${queryString ? `?${queryString}` : ""}`;
+  const uri = `/business/instances${queryString ? `?${queryString}` : ""}`;
 
-  const res = await silentTenantApi("GET", uri);
+  const res = await silentApi("GET", uri);
   if (!res.data) {
     throw new Error("Failed to fetch instance requests");
   }
@@ -49,20 +50,20 @@ const fetchPurchasedInstances = async (params = {}) => {
     .join("&");
 
   // Construct the URI with the query string
-  const uri = `/admin/purchased-instances${
-    queryString ? `?${queryString}` : ""
-  }`;
+  const uri = `/business/instances${queryString ? `?${queryString}` : ""}`;
 
-  const res = await silentTenantApi("GET", uri);
+  const res = await silentApi("GET", uri);
   if (!res.data) {
     throw new Error("Failed to fetch instance requests");
   }
-  return res;
+  // Emulate purchased-instances behavior by filtering out pending_payment
+  const filtered = { ...res, data: (res.data || []).filter((it) => it.status !== "pending_payment") };
+  return filtered;
 };
 
 // GET: Fetch instance request by ID
 const fetchInstanceRequestById = async (id) => {
-  const res = await silentTenantApi("GET", `/admin/instances/${id}`);
+  const res = await silentApi("GET", `/business/instances/${id}`);
   if (!res.data) {
     throw new Error(`Failed to fetch instance request with ID ${id}`);
   }
@@ -71,7 +72,7 @@ const fetchInstanceRequestById = async (id) => {
 
 // POST: Create a new instance request
 const createInstanceRequest = async (instanceData) => {
-  const res = await tenantApi("POST", "/admin/instances", instanceData);
+  const res = await api("POST", "/business/instances", instanceData);
   if (!res.data) {
     throw new Error("Failed to create instance request");
   }
@@ -80,7 +81,7 @@ const createInstanceRequest = async (instanceData) => {
 
 // POST: multi initiate request
 const initiateMultiInstanceRequest = async (instanceData) => {
-  const res = await tenantApi("POST", "/admin/multi-initiations", instanceData);
+  const res = await api("POST", "/business/multi-initiations", instanceData);
   if (!res) {
     throw new Error("Failed to inotiate instance request");
   }

@@ -27,7 +27,23 @@ const createInternetGateway = async (internetGatewayData) => {
   return res.data;
 };
 
-const deleteInternetGateway = async ({ id, payload }) => {
+const deleteInternetGateway = async (arg) => {
+  // Support multiple call shapes:
+  // - deleteInternetGateway({ id, payload })
+  // - deleteInternetGateway(id)
+  // - deleteInternetGateway({ internet_gateway_id, ...payload })
+  let id = arg;
+  let payload;
+  if (typeof arg === "object" && arg !== null) {
+    if ("id" in arg) {
+      id = arg.id;
+      payload = arg.payload || undefined;
+    } else if ("internet_gateway_id" in arg) {
+      id = arg.internet_gateway_id;
+      const { internet_gateway_id, ...rest } = arg;
+      payload = rest;
+    }
+  }
   const res = await api("DELETE", `/business/internet-gateways/${id}`, payload);
   if (!res.data) throw new Error("Failed to delete internet gateway");
   return res.data;

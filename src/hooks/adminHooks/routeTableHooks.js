@@ -36,6 +36,26 @@ const createRouteTableAssociation = async (associationData) => {
   return res;
 };
 
+const createRoute = async (payload) => {
+  const res = await apiAdminforUser(
+    "POST",
+    "/business/routes",
+    payload
+  );
+  if (!res) throw new Error("Failed to create route");
+  return res;
+};
+
+const deleteRoute = async (payload) => {
+  const res = await apiAdminforUser(
+    "DELETE",
+    "/business/routes",
+    payload
+  );
+  if (!res) throw new Error("Failed to delete route");
+  return res;
+};
+
 export const useFetchRouteTables = (projectId, region, options = {}) => {
   return useQuery({
     queryKey: ["routeTables", { projectId, region }],
@@ -72,6 +92,26 @@ export const useCreateRouteTableAssociation = () => {
     },
     onError: (error) => {
       console.error("Error creating route table association:", error);
+    },
+  });
+};
+
+export const useCreateRoute = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createRoute,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["routeTables", { projectId: variables.project_id }] });
+    },
+  });
+};
+
+export const useDeleteRoute = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteRoute,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["routeTables", { projectId: variables.project_id }] });
     },
   });
 };

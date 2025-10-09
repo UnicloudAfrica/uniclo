@@ -98,6 +98,7 @@ import AdminAdvancedCalculator from "./adminDashboard/pages/adminAdvancedCalcula
 import EnhancedInstanceManagement from "./adminDashboard/pages/enhancedInstanceManagement";
 import EnhancedInstanceDetails from "./adminDashboard/pages/enhancedInstanceDetails";
 import EnhancedProfileSettings from "./adminDashboard/pages/enhancedProfileSettings";
+import MultiInstanceCreation from "./adminDashboard/pages/multiInstanceCreation";
 
 function App() {
   const location = useLocation();
@@ -270,6 +271,7 @@ function App() {
           <Route path="/admin-dashboard/enhanced-instance-management" element={<EnhancedInstanceManagement />} />
           <Route path="/admin-dashboard/enhanced-instance-details" element={<EnhancedInstanceDetails />} />
           <Route path="/admin-dashboard/enhanced-profile-settings" element={<EnhancedProfileSettings />} />
+          <Route path="/admin-dashboard/multi-instance-creation" element={<MultiInstanceCreation />} />
           {/* <Route
             path="/admin-dashboard/quote-calculator"
             element={<AdminQuoteCalculator />}

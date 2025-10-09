@@ -31,6 +31,7 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/admin-dashboard/enhanced-instance-management": "Enhanced Instances",
     "/admin-dashboard/enhanced-instance-details": "Instance Details",
     "/admin-dashboard/enhanced-profile-settings": "Profile Settings",
+    "/admin-dashboard/multi-instance-creation": "Multi-Instance Creation",
     "/admin-dashboard/products": "Products",
     "/admin-dashboard/leads": "Leads",
     "/admin-dashboard/support-ticket": "Support Ticket",
@@ -150,6 +151,12 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       icon: modules,
       activeIcon: activemodules,
       path: "/admin-dashboard/enhanced-instance-management",
+    },
+    {
+      name: "Multi-Instance Creation",
+      icon: modules,
+      activeIcon: activemodules,
+      path: "/admin-dashboard/multi-instance-creation",
     },
     {
       name: "Regions",

@@ -8,7 +8,9 @@ import {
   Users,
   Activity,
   TrendingUp,
-  Database
+  Database,
+  Copy,
+  Plus
 } from "lucide-react";
 
 const QuickAccessNav = () => {
@@ -22,6 +24,14 @@ const QuickAccessNav = () => {
       path: "/admin-dashboard/enhanced-instance-management",
       color: "bg-blue-50 text-blue-600",
       bgColor: "hover:bg-blue-100"
+    },
+    {
+      title: "Multi-Instance Creation",
+      description: "Create multiple instances in bulk",
+      icon: Copy,
+      path: "/admin-dashboard/multi-instance-creation",
+      color: "bg-orange-50 text-orange-600",
+      bgColor: "hover:bg-orange-100"
     },
     {
       title: "Profile Settings",
@@ -38,14 +48,6 @@ const QuickAccessNav = () => {
       path: "/admin-dashboard/enhanced-instance-management",
       color: "bg-green-50 text-green-600",
       bgColor: "hover:bg-green-100"
-    },
-    {
-      title: "Legacy Instances",
-      description: "Original instance management page",
-      icon: Database,
-      path: "/admin-dashboard/instances",
-      color: "bg-gray-50 text-gray-600",
-      bgColor: "hover:bg-gray-100"
     }
   ];
 

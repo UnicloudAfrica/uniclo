@@ -3,11 +3,14 @@ import adminSilentApiforUser from "../../../index/admin/silentadminforuser";
 import { useQueryClient } from "@tanstack/react-query";
 import { RotateCw } from "lucide-react";
 import AddEni from "../eniComps/addEni";
+import { AttachSgModal, DetachSgModal } from "../eniComps/sgModals";
 
 const ENIs = ({ projectId = "", region = "" }) => {
   const { data: networkInterfaces, isFetching } = useFetchNetworkInterfaces(projectId, region);
   const queryClient = useQueryClient();
   const [isCreateModalOpen, setCreateModal] = useState(false);
+  const [attachModal, setAttachModal] = useState({ open: false, eniId: "" });
+  const [detachModal, setDetachModal] = useState({ open: false, eniId: "" });
 
   return (
     <div className="space-y-4">
@@ -76,7 +79,23 @@ const ENIs = ({ projectId = "", region = "" }) => {
 
             {/* Security Groups */}
             <div className="mt-3">
-              <h4 className="text-sm font-semibold">Security Groups</h4>
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold">Security Groups</h4>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setAttachModal({ open: true, eniId: eni.id || eni.network_interface?.id })}
+                    className="rounded-[14px] px-3 py-1 bg-[#288DD1] text-white text-xs"
+                  >
+                    Attach SG
+                  </button>
+                  <button
+                    onClick={() => setDetachModal({ open: true, eniId: eni.id || eni.network_interface?.id })}
+                    className="rounded-[14px] px-3 py-1 bg-white border text-xs"
+                  >
+                    Detach SG
+                  </button>
+                </div>
+              </div>
               <ul className="text-sm list-disc ml-5">
                 {((eni.security_groups || eni.network_interface?.security_groups) || []).length === 0 && (
                   <li className="text-gray-500">None</li>
@@ -94,6 +113,8 @@ const ENIs = ({ projectId = "", region = "" }) => {
         )}
       </div>
       <AddEni isOpen={isCreateModalOpen} onClose={() => setCreateModal(false)} projectId={projectId} region={region} />
+      <AttachSgModal isOpen={attachModal.open} onClose={() => setAttachModal({ open: false, eniId: "" })} projectId={projectId} region={region} networkInterfaceId={attachModal.eniId} />
+      <DetachSgModal isOpen={detachModal.open} onClose={() => setDetachModal({ open: false, eniId: "" })} projectId={projectId} region={region} networkInterfaceId={detachModal.eniId} />
     </div>
   );
 };

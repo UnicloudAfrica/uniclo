@@ -16,6 +16,16 @@ const fetchNetworkInterfgace = async ({ project_id, region }) => {
   return res.data;
 };
 
+const createNetworkInterface = async (payload) => {
+  const res = await apiAdminforUser(
+    "POST",
+    "/business/network-interfaces",
+    payload
+  );
+  if (!res) throw new Error("Failed to create network interface");
+  return res;
+};
+
 export const useFetchNetworkInterfaces = (projectId, region, options = {}) => {
   return useQuery({
     queryKey: ["networkInterfaces", { projectId, region }],
@@ -23,5 +33,20 @@ export const useFetchNetworkInterfaces = (projectId, region, options = {}) => {
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
+  });
+};
+
+export const useCreateNetworkInterface = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createNetworkInterface,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["networkInterfaces", { projectId: variables.project_id }],
+      });
+    },
+    onError: (error) => {
+      console.error("Error creating network interface:", error);
+    },
   });
 };

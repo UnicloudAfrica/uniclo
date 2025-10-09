@@ -16,6 +16,16 @@ const fetchRouteTables = async ({ project_id, region }) => {
   return res.data;
 };
 
+const createRouteTable = async (payload) => {
+  const res = await apiAdminforUser(
+    "POST",
+    "/business/route-tables",
+    payload
+  );
+  if (!res) throw new Error("Failed to create route table");
+  return res;
+};
+
 const createRouteTableAssociation = async (associationData) => {
   const res = await apiAdminforUser(
     "POST",
@@ -33,6 +43,21 @@ export const useFetchRouteTables = (projectId, region, options = {}) => {
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
+  });
+};
+
+export const useCreateRouteTable = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createRouteTable,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["routeTables", { projectId: variables.project_id }],
+      });
+    },
+    onError: (error) => {
+      console.error("Error creating route table:", error);
+    },
   });
 };
 

@@ -2,10 +2,12 @@ import { useFetchNetworkInterfaces } from "../../../hooks/adminHooks/networkHook
 import adminSilentApiforUser from "../../../index/admin/silentadminforuser";
 import { useQueryClient } from "@tanstack/react-query";
 import { RotateCw } from "lucide-react";
+import AddEni from "../eniComps/addEni";
 
 const ENIs = ({ projectId = "", region = "" }) => {
   const { data: networkInterfaces, isFetching } = useFetchNetworkInterfaces(projectId, region);
   const queryClient = useQueryClient();
+  const [isCreateModalOpen, setCreateModal] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -33,6 +35,12 @@ const ENIs = ({ projectId = "", region = "" }) => {
             title="Refresh from provider"
           >
             <RotateCw className="w-4 h-4" /> Refresh
+          </button>
+          <button
+            onClick={() => setCreateModal(true)}
+            className="rounded-[20px] px-4 py-2 bg-[#288DD1] text-white text-sm"
+          >
+            Create ENI
           </button>
         </div>
       </div>
@@ -85,6 +93,7 @@ const ENIs = ({ projectId = "", region = "" }) => {
           <p className="text-sm text-gray-500">No Network Interfaces found for this project.</p>
         )}
       </div>
+      <AddEni isOpen={isCreateModalOpen} onClose={() => setCreateModal(false)} projectId={projectId} region={region} />
     </div>
   );
 };

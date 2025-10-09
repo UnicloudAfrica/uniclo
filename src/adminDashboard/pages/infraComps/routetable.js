@@ -3,12 +3,14 @@ import { useFetchRouteTables, useCreateRouteTableAssociation } from "../../../ho
 import adminSilentApiforUser from "../../../index/admin/silentadminforuser";
 import { useQueryClient } from "@tanstack/react-query";
 import { RotateCw } from "lucide-react";
+import AddRouteTable from "../routeTableComps/addRouteTable";
 
 const RouteTables = ({ projectId = "", region = "" }) => {
   const { data: routeTables, isFetching } = useFetchRouteTables(projectId, region);
   const queryClient = useQueryClient();
   const { mutate: associateRouteTable, isPending: associating } = useCreateRouteTableAssociation();
   const [assocForm, setAssocForm] = useState({ route_table_id: "", subnet_id: "" });
+  const [isCreateModalOpen, setCreateModal] = useState(false);
 
   const handleAssociate = (e) => {
     e.preventDefault();
@@ -52,28 +54,39 @@ const RouteTables = ({ projectId = "", region = "" }) => {
       </div>
 
       {/* Associate form */}
-      <form onSubmit={handleAssociate} className="p-4 bg-white rounded-lg border grid grid-cols-1 md:grid-cols-4 gap-3">
-        <input
-          className="border rounded px-3 py-2"
-          placeholder="Route Table ID"
-          value={assocForm.route_table_id}
-          onChange={(e) => setAssocForm({ ...assocForm, route_table_id: e.target.value })}
-        />
-        <input
-          className="border rounded px-3 py-2"
-          placeholder="Subnet ID"
-          value={assocForm.subnet_id}
-          onChange={(e) => setAssocForm({ ...assocForm, subnet_id: e.target.value })}
-        />
-        <button
-          type="submit"
-          disabled={associating}
-          className="bg-blue-600 text-white rounded px-4 py-2 disabled:opacity-50"
-          title="Associate this route table to the subnet"
-        >
-          {associating ? "Associating..." : "Associate"}
-        </button>
-      </form>
+      <div className="p-4 bg-white rounded-lg border flex flex-col gap-3">
+        <div className="flex justify-between items-center">
+          <h3 className="text-sm font-semibold text-gray-700">Associate Route Table to Subnet</h3>
+          <button
+            onClick={() => setCreateModal(true)}
+            className="rounded-[20px] px-4 py-2 bg-[#288DD1] text-white text-sm"
+          >
+            Add Route Table
+          </button>
+        </div>
+        <form onSubmit={handleAssociate} className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <input
+            className="border rounded px-3 py-2"
+            placeholder="Route Table ID"
+            value={assocForm.route_table_id}
+            onChange={(e) => setAssocForm({ ...assocForm, route_table_id: e.target.value })}
+          />
+          <input
+            className="border rounded px-3 py-2"
+            placeholder="Subnet ID"
+            value={assocForm.subnet_id}
+            onChange={(e) => setAssocForm({ ...assocForm, subnet_id: e.target.value })}
+          />
+          <button
+            type="submit"
+            disabled={associating}
+            className="bg-blue-600 text-white rounded px-4 py-2 disabled:opacity-50"
+            title="Associate this route table to the subnet"
+          >
+            {associating ? "Associating..." : "Associate"}
+          </button>
+        </form>
+      </div>
 
       <div className="grid gap-4">
         {(routeTables || []).map((rt) => (
@@ -125,6 +138,7 @@ const RouteTables = ({ projectId = "", region = "" }) => {
           <p className="text-sm text-gray-500">No Route Tables found for this project.</p>
         )}
       </div>
+      <AddRouteTable isOpen={isCreateModalOpen} onClose={() => setCreateModal(false)} projectId={projectId} region={region} />
     </div>
   );
 };

@@ -1,29 +1,28 @@
 import { useState, useEffect } from "react";
 import { Loader2, X } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
-import { useFetchTenantVpcs, useFetchAvailableCidrs } from "../../../hooks/vpcHooks";
-import { useCreateTenantSubnet, useFetchTenantSubnets } from "../../../hooks/subnetHooks";
+import { useFetchVpcs, useFetchAvailableCidrs } from "../../../hooks/adminHooks/vcpHooks";
+import { useCreateSubnet, useFetchSubnets } from "../../../hooks/adminHooks/subnetHooks";
 import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
 
-const AddSubnet = ({ isOpen, onClose, projectId }) => {
-  const { data: vpcs, isFetching: isFetchingVpcs } =
-    useFetchTenantVpcs(projectId);
-  const { data: regions, isFetching: isFetchingRegions } = useFetchRegions();
-  const { mutate: createSubnet, isPending: isCreating } =
-    useCreateTenantSubnet();
-  const { data: existingSubnets, isFetching: isFetchingSubnets } = useFetchTenantSubnets(projectId, formData.region, { enabled: !!projectId && !!formData.region });
-  const [suggestions, setSuggestions] = useState([]);
-  const [suggestPrefix, setSuggestPrefix] = useState(24);
-  const { data: availableCidrs, isFetching: isFetchingAvailableCidrs } = useFetchAvailableCidrs(projectId, formData.region, formData.vpc_id, suggestPrefix, 8, { enabled: !!projectId && !!formData.region && !!formData.vpc_id });
-
+const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) => {
+  // Form state first so hooks can safely reference it
   const [formData, setFormData] = useState({
     name: "",
     cidr_block: "",
     vpc_id: "",
-    region: "",
+    region: defaultRegion || "",
     description: "",
   });
   const [errors, setErrors] = useState({});
+
+  const { data: vpcs, isFetching: isFetchingVpcs } = useFetchVpcs(projectId, formData.region, { enabled: !!projectId && !!formData.region });
+  const { data: regions, isFetching: isFetchingRegions } = useFetchRegions();
+  const { mutate: createSubnet, isPending: isCreating } = useCreateSubnet();
+  const { data: existingSubnets, isFetching: isFetchingSubnets } = useFetchSubnets(projectId, formData.region, { enabled: !!projectId && !!formData.region });
+  const [suggestions, setSuggestions] = useState([]);
+  const [suggestPrefix, setSuggestPrefix] = useState(24);
+  const { data: availableCidrs, isFetching: isFetchingAvailableCidrs } = useFetchAvailableCidrs(projectId, formData.region, formData.vpc_id, suggestPrefix, 8, { enabled: !!projectId && !!formData.region && !!formData.vpc_id });
 
   const validateForm = () => {
     const newErrors = {};
@@ -98,6 +97,13 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
       setSuggestions([]);
     }
   }, [formData.vpc_id, formData.region, suggestPrefix, isFetchingSubnets, existingSubnets, availableCidrs]);
+
+  // If a default region was provided, ensure it's set on first open
+  useEffect(() => {
+    if (defaultRegion && !formData.region) {
+      setFormData((prev) => ({ ...prev, region: defaultRegion }));
+    }
+  }, [defaultRegion]);
 
   const handleSubmit = (e) => {
     if (e) e.preventDefault();

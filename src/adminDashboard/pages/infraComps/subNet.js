@@ -28,8 +28,8 @@ const Badge = ({ text }) => {
   );
 };
 
-const Subnets = ({ projectId = "" }) => {
-  const { data: subnets, isFetching } = useFetchSubnets(projectId);
+const Subnets = ({ projectId = "", region = "" }) => {
+  const { data: subnets, isFetching } = useFetchSubnets(projectId, region);
   const { mutate: deleteSubnet, isPending: isDeleting } = useDeleteSubnet();
 
   const [isCreateModalOpen, setCreateModal] = useState(false);
@@ -181,6 +181,7 @@ const Subnets = ({ projectId = "" }) => {
         isOpen={isCreateModalOpen}
         onClose={closeCreateModal}
         projectId={projectId}
+        region={region}
       />
 
       {/* Placeholder for DeleteSubnetModal */}

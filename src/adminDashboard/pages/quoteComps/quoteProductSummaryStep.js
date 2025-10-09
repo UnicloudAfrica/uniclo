@@ -1,5 +1,4 @@
 import React from "react";
-import { Package, HardDrive, Network, Globe, Link } from "lucide-react";
 
 const ProductSummaryStep = ({ pricingRequests, formData }) => {
   // Group items by product type
@@ -70,13 +69,13 @@ const ProductSummaryStep = ({ pricingRequests, formData }) => {
 
   const groupedItems = groupItemsByType();
 
-  const ProductTypeSection = ({ title, items, bgColor = "bg-gray-50", icon }) => {
+  const ProductTypeSection = ({ title, items, bgColor = "bg-gray-50", emoji }) => {
     if (items.length === 0) return null;
 
     return (
       <div className={`${bgColor} p-4 rounded-lg mb-4`}>
         <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
-          {icon && React.createElement(icon, { className: "w-5 h-5 mr-2" })}
+          {emoji && <span className="mr-2 text-lg">{emoji}</span>}
           {title} ({items.length} item{items.length !== 1 ? 's' : ''})
         </h4>
         <div className="space-y-2">
@@ -129,28 +128,28 @@ const ProductSummaryStep = ({ pricingRequests, formData }) => {
         title="Compute Resources"
         items={groupedItems.compute}
         bgColor="bg-blue-50"
-        icon={Package}
+        emoji="🖥️"
       />
       
       <ProductTypeSection
         title="Storage Resources"
         items={groupedItems.storage}
         bgColor="bg-green-50"
-        icon={HardDrive}
+        emoji="💾"
       />
       
       <ProductTypeSection
         title="Network Resources"
         items={groupedItems.network}
         bgColor="bg-purple-50"
-        icon={Network}
+        emoji="🌐"
       />
       
       <ProductTypeSection
         title="Other Resources"
         items={groupedItems.other}
         bgColor="bg-orange-50"
-        icon={Link}
+        emoji="🔗"
       />
 
       <div className="mt-6 p-4 bg-gray-100 rounded-lg">

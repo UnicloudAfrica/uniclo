@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import PersonalInfoStep from "./personalInfoStep";
-import PartnerBusinessStep from "./partnerBuisnessStep";
-import ClientForm from "./clientForm";
+import BusinessInfoStep from "./partnerBuisnessStep"; // Renamed for clarity
 
 export default function SignUpForm({
   activeTab,
@@ -22,55 +21,31 @@ export default function SignUpForm({
 
   return (
     <form onSubmit={handleSubmit}>
-      {activeTab === "partner" ? (
-        <>
-          {step === 1 && (
-            <PersonalInfoStep
-              formData={formData}
-              errors={errors}
-              updateFormData={updateFormData}
-              onNext={handleNext}
-            />
-          )}
-          {step === 2 && (
-            <PartnerBusinessStep
-              formData={formData}
-              errors={errors}
-              industries={industries}
-              isIndustriesFetching={isIndustriesFetching}
-              updateFormData={updateFormData}
-              onBack={handleBack}
-              isPending={isPending}
-            />
-          )}
-        </>
-      ) : (
-        <ClientForm
+      {step === 1 && (
+        <PersonalInfoStep
           formData={formData}
           errors={errors}
           updateFormData={updateFormData}
-          isPending={isPending}
+          onNext={handleNext}
         />
       )}
-      {errors.general && (
+      {step === 2 && (
+        <BusinessInfoStep
+          formData={formData}
+          errors={errors}
+          industries={industries}
+          isIndustriesFetching={isIndustriesFetching}
+          updateFormData={updateFormData}
+          onBack={handleBack}
+          isPending={isPending}
+          isClient={activeTab === "client"} // Pass a prop to conditionally render fields
+        />
+      )}
+      {/* {errors.general && (
         <p className="text-red-500 text-xs mt-1 text-center">
           {errors.general}
         </p>
-      )}
-      {activeTab === "client" && (
-        <div className="flex gap-4 mt-8">
-          <button
-            type="submit"
-            disabled={isPending}
-            className="flex-1 bg-[#288DD1] hover:bg-[#6db1df] text-white font-semibold py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-1 focus:ring-[#288DD1] focus:ring-offset-2 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Sign Up
-            {isPending && (
-              <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-            )}
-          </button>
-        </div>
-      )}
+      )} */}
       <div className="text-center mt-6">
         <span className="text-sm text-[#1E1E1E99]">
           Already have an account?{" "}

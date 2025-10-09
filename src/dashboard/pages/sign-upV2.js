@@ -57,27 +57,23 @@ export default function DashboardSignUpV2() {
     if (!formData.contactPersonLastName)
       newErrors.contactPersonLastName = "Last name is required";
 
+    // Common business fields for both partner and client
+    if (!formData.business_name)
+      newErrors.business_name = "Business name is required";
+    if (!formData.company_type)
+      newErrors.company_type = "Business type is required";
+    if (!formData.industry) newErrors.industry = "Industry is required";
+    if (!formData.businessPhone)
+      newErrors.businessPhone = "Business phone is required";
+    else if (!/^\+?\d{10,15}$/.test(formData.businessPhone))
+      newErrors.businessPhone =
+        "Invalid phone number format (e.g., +1234567890)";
+
     if (activeTab === "partner") {
-      if (!formData.companyName)
-        newErrors.companyName = "Company name is required";
       if (!formData.subdomain) newErrors.subdomain = "Subdomain is required";
       else if (!/^[a-zA-Z0-9-]+$/.test(formData.subdomain))
         newErrors.subdomain =
           "Subdomain can only contain letters, numbers, and hyphens";
-      if (!formData.businessPhone)
-        newErrors.businessPhone = "Business phone is required";
-      else if (!/^\+?\d{10,15}$/.test(formData.businessPhone))
-        newErrors.businessPhone =
-          "Invalid phone number format (e.g., +1234567890)";
-      if (!formData.business_name)
-        newErrors.business_name = "Business name is required";
-      if (!formData.company_type)
-        newErrors.company_type = "Business type is required";
-      if (!formData.industry) newErrors.industry = "Industry is required";
-    } else {
-      if (!formData.phone) newErrors.phone = "Phone number is required";
-      else if (!/^\+?\d{10,15}$/.test(formData.phone))
-        newErrors.phone = "Invalid phone number format (e.g., +1234567890)";
     }
 
     setErrors(newErrors);
@@ -99,26 +95,28 @@ export default function DashboardSignUpV2() {
         password: formData.password,
         password_confirmation: formData.confirmPassword,
         role: activeTab === "partner" ? "tenant" : "client",
-        phone:
-          activeTab === "partner" ? formData.businessPhone : formData.phone,
-        ...(activeTab === "partner" && {
-          domain: `${formData.subdomain}.unicloudafrica.com`,
-          business: {
-            phone: formData.businessPhone,
-            name: formData.business_name,
-            registration_number: formData.registration_number,
-            company_type: formData.company_type,
-            tin_number: formData.tin_number,
-          },
-          verification_token: formData.verification_token,
-        }),
+        phone: formData.businessPhone,
+        domain:
+          activeTab === "partner"
+            ? `${formData.subdomain}.unicloudafrica.com`
+            : `${formData.business_name
+                .toLowerCase()
+                .replace(/\s+/g, "-")}.unicloudafrica.com`,
+        business: {
+          phone: formData.businessPhone,
+          name: formData.business_name,
+          registration_number: formData.registration_number,
+          company_type: formData.company_type,
+          tin_number: formData.tin_number,
+        },
+        verification_token: formData.verification_token,
       };
 
       mutate(userData, {
         onSuccess: () => {
-          ToastUtils.success(
-            "Account created successfully! Please verify your email."
-          );
+          // ToastUtils.success(
+          //   "Account created successfully! Please verify your email."
+          // );
           setUserEmail(formData.email);
           navigate("/verify-mail");
         },
@@ -128,7 +126,7 @@ export default function DashboardSignUpV2() {
             err.message ||
             "Failed to create account. Please try again.";
           setErrors({ general: errorMessage });
-          ToastUtils.error(errorMessage);
+          // ToastUtils.error(errorMessage);
         },
       });
     }

@@ -63,7 +63,6 @@ import DashboardSignUpV2 from "./dashboard/pages/sign-upV2";
 import DashboardLoginV2 from "./dashboard/pages/loginV2";
 import TenantRegister from "./tenantDashboard/pages/tenant-signup";
 import TenantLogin from "./tenantDashboard/pages/tenant-signin";
-import ClientDashboard from "./tenantDashboard/pages/client-dashboard";
 import AdminUsers from "./adminDashboard/pages/adminUsers";
 import AdminProjects from "./adminDashboard/pages/adminProjects";
 import AdminProjectDetails from "./adminDashboard/pages/adminProjectDetails";
@@ -93,6 +92,11 @@ import TenantQuotes from "./dashboard/pages/quotes";
 import QuoteCalculatorWizard from "./dashboard/pages/QuoteCalculatorWizard";
 import TenantQuoteCalculator from "./dashboard/pages/TenantQuoteCalculator";
 import AdminQuoteCalculator from "./adminDashboard/pages/AdminQuoteCalculator";
+import ClientDashboard from "./clientDashboard/pages/clientDashboard";
+import ClientProject from "./clientDashboard/pages/clientProjects";
+import ClientProjectDetails from "./clientDashboard/pages/clientProjectDetails";
+import ClientInstances from "./clientDashboard/pages/clientInstances";
+import ClientAddInstancePage from "./clientDashboard/pages/clientAddInstances";
 
 function App() {
   const location = useLocation();
@@ -126,8 +130,11 @@ function App() {
           <Route path="/solutions" element={<Solutions />} />
           <Route path="/events" element={<Events />} />
           <Route path="/blog" element={<Blog />} />
-<Route path="/calculator" element={<Calculator />} />
-<Route path="/dashboard/quote-calculator" element={<TenantQuoteCalculator />} />
+          <Route path="/calculator" element={<Calculator />} />
+          <Route
+            path="/dashboard/quote-calculator"
+            element={<TenantQuoteCalculator />}
+          />
           <Route
             path="/Africa-Data-Centres-and-Onix-Data-Centre-announce-partnership"
             element={<ExtResouce />}
@@ -262,7 +269,10 @@ function App() {
             element={<AdminCalculatorOptions />}
           />
           <Route path="/admin-dashboard/quote" element={<AdminMultiQuote />} />
-          <Route path="/admin-dashboard/quote-calculator" element={<AdminQuoteCalculator />} />
+          <Route
+            path="/admin-dashboard/quote-calculator"
+            element={<AdminQuoteCalculator />}
+          />
           <Route
             path="/admin-dashboard/tax-configuration"
             element={<AdminTax />}
@@ -278,7 +288,24 @@ function App() {
           <Route path="/tenant-home" element={<TenantHome />} />
           <Route path="/tenant-sign-up" element={<TenantRegister />} />
           <Route path="/tenant-sign-in" element={<TenantLogin />} />
+          {/* client pages */}
           <Route path="/client-dashboard" element={<ClientDashboard />} />
+          <Route
+            path="/client-dashboard/projects"
+            element={<ClientProject />}
+          />
+          <Route
+            path="/client-dashboard/projects/details"
+            element={<ClientProjectDetails />}
+          />
+          <Route
+            path="/client-dashboard/instances"
+            element={<ClientInstances />}
+          />
+          <Route
+            path="/client-dashboard/add-instance"
+            element={<ClientAddInstancePage />}
+          />
         </Routes>
       </AnimatePresence>
     </>

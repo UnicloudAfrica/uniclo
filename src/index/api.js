@@ -1,4 +1,5 @@
 import config from "../config";
+import useClientAuthStore from "../stores/clientAuthStore";
 import useAuthStore from "../stores/userAuthStore";
 import ToastUtils from "../utils/toastUtil";
 
@@ -7,7 +8,10 @@ let isRedirecting = false;
 
 const api = async (method, uri, body = null) => {
   const url = config.baseURL + uri;
-  const { token, setToken, clearToken } = useAuthStore.getState();
+  // Attempt to get token from either store, prioritizing the main auth store
+  const partnerToken = useAuthStore.getState().token;
+  const clientToken = useClientAuthStore.getState().token;
+  const token = partnerToken || clientToken;
 
   const headers = {
     "Content-Type": "application/json",
@@ -29,10 +33,16 @@ const api = async (method, uri, body = null) => {
     const res = await response.json();
 
     if (response.ok || response.status === 201) {
-      if (res.access_token) {
-        setToken(res.access_token); // Handle old case
-      } else if (res.data?.message?.token) {
-        setToken(res.data.message.token); // Handle new structure
+      const tokenToSet = res.access_token || res.data?.message?.token;
+      if (tokenToSet) {
+        const role = res.data?.role;
+        if (role === "client") {
+          const { setToken: setClientToken } = useClientAuthStore.getState();
+          setClientToken(tokenToSet);
+        } else {
+          const { setToken: setPartnerToken } = useAuthStore.getState();
+          setPartnerToken(tokenToSet);
+        }
       }
 
       // Handle success message for Toast
@@ -56,7 +66,9 @@ const api = async (method, uri, body = null) => {
       if (response.status === 401) {
         if (!isRedirecting) {
           isRedirecting = true; // Prevent multiple redirects
-          clearToken(); // Clear Zustand token
+          // Clear tokens from both stores to be safe
+          useAuthStore.getState().clearToken();
+          useClientAuthStore.getState().clearToken();
 
           if (window.location.pathname === "/sign-in") {
             ToastUtils.error("Please check your account details.");

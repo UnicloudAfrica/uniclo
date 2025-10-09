@@ -39,7 +39,8 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/admin-dashboard/inventory": "Inventory",
     "/admin-dashboard/calculator": "Calculator",
     "/admin-dashboard/calculator-new": "Calculator",
-    "/admin-dashboard/quote": "Quote",
+    "/admin-dashboard/advanced-calculator": "Calculator",
+    "/admin-dashboard/quote": "Generate Invoice",
   };
 
   // Update activeItem based on the current path
@@ -148,7 +149,13 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       path: "/admin-dashboard/regions",
     },
     {
-      name: "Quote",
+      name: "Calculator",
+      icon: modules,
+      activeIcon: activemodules,
+      path: "/admin-dashboard/advanced-calculator",
+    },
+    {
+      name: "Generate Invoice",
       icon: modules,
       activeIcon: activemodules,
       path: "/admin-dashboard/quote",

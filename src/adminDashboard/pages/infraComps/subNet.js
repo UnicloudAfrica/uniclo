@@ -10,6 +10,7 @@ import adminSilentApiforUser from "../../../index/admin/silentadminforuser";
 import { useQueryClient } from "@tanstack/react-query";
 import DeleteSubnetModal from "../subnetComps/deleteSubnet";
 import ViewSubnetModal from "../subnetComps/viewSubnet";
+import ToastUtils from "../../../utils/toastUtil";
 
 const Badge = ({ text }) => {
   const badgeClasses = {
@@ -73,11 +74,8 @@ const Subnets = ({ projectId = "", region = "" }) => {
     deleteSubnet(
       { id: subnet.id, payload },
       {
-        onSuccess: () => closeDeleteModal(),
-        onError: (err) => {
-          console.error("Failed to delete subnet:", err);
-          closeDeleteModal();
-        },
+        onSuccess: () => { ToastUtils.success("Subnet deleted"); closeDeleteModal(); },
+        onError: (err) => { ToastUtils.error(err?.message || "Failed to delete subnet"); closeDeleteModal(); },
       }
     );
   };

@@ -14,6 +14,8 @@ import {
   useFetchProductPricing,
 } from "../../hooks/resource";
 import { useFetchProfile } from "../../hooks/resource";
+import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
+import { useFetchTenants, useFetchSubTenantByTenantID } from "../../hooks/adminHooks/tenantHooks";
 
 const Stepper = ({ current, steps }) => (
   <div className="flex items-center justify-between mb-8 w-full max-w-3xl mx-auto">
@@ -226,6 +228,18 @@ export default function QuoteCalculatorWizard({ embedded = false } = {}) {
   const { mutate: createQuotes, isPending: creating, data: createResp } =
     useCreatehTenantMultiQuotes();
 
+  // Admin-only optional tenants list
+  const { data: tenants = [], isFetching: isTenantsFetching } = useFetchTenants({ enabled: !!embedded });
+  // When a tenant is selected, load its clients (optional)
+  const { data: tenantClients = [], isFetching: isTenantClientsFetching } = useFetchSubTenantByTenantID(
+    (quoteInfo.tenant_id || ""),
+    { enabled: !!embedded && !!quoteInfo.tenant_id }
+  );
+  // Reset client when tenant changes
+  useEffect(() => {
+    setQuoteInfo((prev) => ({ ...prev, client_id: "" }));
+  }, [quoteInfo.tenant_id]);
+
   const toMultiQuotesPayload = useMemo(() => {
     const emailsArray = (quoteInfo.emails || "")
       .split(",")
@@ -234,6 +248,7 @@ export default function QuoteCalculatorWizard({ embedded = false } = {}) {
 
     return {
       subject: quoteInfo.subject || undefined,
+      tenant_id: quoteInfo.tenant_id ? String(quoteInfo.tenant_id) : undefined,
       client_id: quoteInfo.client_id ? Number(quoteInfo.client_id) : undefined,
       email: quoteInfo.email || undefined,
       emails: emailsArray,
@@ -303,11 +318,14 @@ export default function QuoteCalculatorWizard({ embedded = false } = {}) {
   };
 
   // Fetch selectable data based on region
-  const { data: regions = [], isFetching: isRegionsFetching } = useFetchGeneralRegions();
+  // Regions: use admin regions when embedded, otherwise general regions
+  const { data: regions = [], isFetching: isRegionsFetching } = embedded
+    ? useFetchRegions()
+    : useFetchGeneralRegions();
 
   // Use product-pricing for all catalogs, gated on region selection
   const { data: computerInstances = [], isFetching: isComputerInstancesFetching } =
-    useFetchProductPricing(itemForm.region, "instance_type", { enabled: !!itemForm.region });
+    useFetchProductPricing(itemForm.region, "compute_instance", { enabled: !!itemForm.region });
   const { data: osImages = [], isFetching: isOsImagesFetching } =
     useFetchProductPricing(itemForm.region, "os_image", { enabled: !!itemForm.region });
   const { data: ebsVolumes = [], isFetching: isEbsVolumesFetching } =
@@ -315,7 +333,7 @@ export default function QuoteCalculatorWizard({ embedded = false } = {}) {
   const { data: bandwidths = [], isFetching: isBandwidthsFetching } =
     useFetchProductPricing(itemForm.region, "bandwidth", { enabled: !!itemForm.region });
   const { data: floatingIps = [], isFetching: isFloatingIpsFetching } =
-    useFetchProductPricing(itemForm.region, "floating_ip", { enabled: !!itemForm.region });
+    useFetchProductPricing(itemForm.region, "ip", { enabled: !!itemForm.region });
   const { data: crossConnects = [], isFetching: isCrossConnectsFetching } =
     useFetchProductPricing(itemForm.region, "cross_connect", { enabled: !!itemForm.region });
 
@@ -466,8 +484,10 @@ export default function QuoteCalculatorWizard({ embedded = false } = {}) {
                 formData={quoteInfo}
                 errors={errors}
                 updateFormData={(field, value) => setQuoteInfo((p) => ({ ...p, [field]: value }))}
-                clients={[]}
-                isClientsFetching={false}
+                clients={embedded ? tenantClients : []}
+                isClientsFetching={embedded ? isTenantClientsFetching : false}
+                tenants={embedded ? tenants : []}
+                isTenantsFetching={embedded ? isTenantsFetching : false}
               />
               <div className="flex justify-between">
                 <button onClick={() => setStep(1)} className="px-6 py-3 rounded-full bg-white border text-[#288DD1] border-[#288DD1] hover:bg-[#f0fbff]">

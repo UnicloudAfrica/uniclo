@@ -7,6 +7,8 @@ const QuoteInfoStep = ({
   updateFormData,
   clients,
   isClientsFetching,
+  tenants = [],
+  isTenantsFetching = false,
 }) => {
   const inputClass =
     "block w-full rounded-md border-gray-300 focus:border-[#288DD1] focus:ring-[#288DD1] sm:text-sm input-field";
@@ -46,12 +48,45 @@ const QuoteInfoStep = ({
           )}
         </div>
 
+        {/* Optional: Tenant selection (admin use). Not compulsory */}
+        <div>
+          <label
+            htmlFor="tenant_id"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Tenant (optional)
+          </label>
+          <span className={`w-full input-field block transition-all`}>
+            {isTenantsFetching ? (
+              <div className="flex items-center">
+                <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
+                <span className="text-gray-500 text-sm">Loading tenants...</span>
+              </div>
+            ) : (
+              <select
+                id="tenant_id"
+                value={formData.tenant_id || ""}
+                onChange={(e) => updateFormData("tenant_id", e.target.value)}
+                className="w-full bg-transparent outline-none"
+              >
+                <option value="">Select a Tenant</option>
+                {tenants?.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} ({t.domain})
+                  </option>
+                ))}
+              </select>
+            )}
+          </span>
+        </div>
+
+        {/* Optional: Client selection. Not compulsory */}
         <div>
           <label
             htmlFor="client_id"
             className="block text-sm font-medium text-gray-700"
           >
-            Client<span className="text-red-500">*</span>
+            Client (optional)
           </label>
           <span
             className={`w-full input-field block transition-all ${

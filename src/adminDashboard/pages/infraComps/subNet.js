@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { Eye, Trash2 } from "lucide-react";
+import { Eye, Trash2, RotateCw } from "lucide-react";
 import {
   useFetchSubnets,
   useDeleteSubnet,
   // useCreateSubnet, // Already imported indirectly by AddSubnet
 } from "../../../hooks/adminHooks/subnetHooks";
 import AddSubnet from "../subnetComps/addSubnet";
-// import DeleteSubnetModal from "../subnetComps/deleteSubnet";
-// import ViewSubnetModal from "../subnetComps/viewSubnet";
+import adminSilentApiforUser from "../../../index/admin/silentadminforuser";
+import { useQueryClient } from "@tanstack/react-query";
+import DeleteSubnetModal from "../subnetComps/deleteSubnet";
+import ViewSubnetModal from "../subnetComps/viewSubnet";
 
 const Badge = ({ text }) => {
   const badgeClasses = {
@@ -33,6 +35,7 @@ const Subnets = ({ projectId = "", region = "" }) => {
   const { mutate: deleteSubnet, isPending: isDeleting } = useDeleteSubnet();
 
   const [isCreateModalOpen, setCreateModal] = useState(false);
+  const queryClient = useQueryClient();
   const [deleteModal, setDeleteModal] = useState(null); // { subnet, subnetName }
   const [viewModal, setViewModal] = useState(null); // subnet object
   const [currentPage, setCurrentPage] = useState(1);
@@ -89,7 +92,25 @@ const Subnets = ({ projectId = "", region = "" }) => {
 
   return (
     <div className="bg-gray-50 rounded-[10px] font-Outfit">
-      <div className="flex justify-end items-center mb-6">
+      <div className="flex justify-between items-center mb-6">
+        <button
+          onClick={async () => {
+            try {
+              if (!projectId) return;
+              const params = new URLSearchParams();
+              params.append("project_id", projectId);
+              if (region) params.append("region", region);
+              params.append("refresh", "1");
+              await adminSilentApiforUser("GET", `/business/subnets?${params.toString()}`);
+            } finally {
+              queryClient.invalidateQueries({ queryKey: ["subnets"] });
+            }
+          }}
+          className="flex items-center gap-2 rounded-[30px] py-2 px-4 bg-white border text-gray-700 text-sm hover:bg-gray-50"
+          title="Refresh from provider"
+        >
+          <RotateCw className="w-4 h-4" /> Refresh
+        </button>
         <button
           onClick={openCreateModal}
           className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
@@ -185,10 +206,9 @@ const Subnets = ({ projectId = "", region = "" }) => {
       />
 
       {/* Placeholder for DeleteSubnetModal */}
-      {/* <DeleteSubnetModal isOpen={!!deleteModal} onClose={closeDeleteModal} subnetName={deleteModal?.subnetName || ""} onConfirm={handleDelete} isDeleting={isDeleting} /> */}
+      <DeleteSubnetModal isOpen={!!deleteModal} onClose={closeDeleteModal} subnetName={deleteModal?.subnetName || ""} onConfirm={handleDelete} isDeleting={isDeleting} />
 
-      {/* Placeholder for ViewSubnetModal */}
-      {/* <ViewSubnetModal isOpen={!!viewModal} onClose={closeViewModal} subnet={viewModal} /> */}
+      <ViewSubnetModal isOpen={!!viewModal} onClose={closeViewModal} subnet={viewModal} />
     </div>
   );
 };

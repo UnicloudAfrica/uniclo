@@ -1,7 +1,11 @@
 import { useFetchNetworkInterfaces } from "../../../hooks/adminHooks/networkHooks";
+import adminSilentApiforUser from "../../../index/admin/silentadminforuser";
+import { useQueryClient } from "@tanstack/react-query";
+import { RotateCw } from "lucide-react";
 
 const ENIs = ({ projectId = "", region = "" }) => {
   const { data: networkInterfaces, isFetching } = useFetchNetworkInterfaces(projectId, region);
+  const queryClient = useQueryClient();
 
   return (
     <div className="space-y-4">
@@ -10,7 +14,27 @@ const ENIs = ({ projectId = "", region = "" }) => {
           <h2 className="text-lg font-semibold">Elastic Network Interfaces</h2>
           <p className="text-sm text-gray-500">Project: {projectId || "(select)"} {region && `• Region: ${region}`}</p>
         </div>
-        {isFetching && <p className="text-sm text-gray-500">Loading ENIs...</p>}
+        <div className="flex items-center gap-2">
+          {isFetching && <p className="text-sm text-gray-500">Loading ENIs...</p>}
+          <button
+            onClick={async () => {
+              try {
+                if (!projectId || !region) return;
+                const params = new URLSearchParams();
+                params.append("project_id", projectId);
+                params.append("region", region);
+                params.append("refresh", "1");
+                await adminSilentApiforUser("GET", `/business/network-interfaces?${params.toString()}`);
+              } finally {
+                queryClient.invalidateQueries({ queryKey: ["networkInterfaces"] });
+              }
+            }}
+            className="flex items-center gap-2 rounded-[30px] py-1.5 px-3 bg-white border text-gray-700 text-xs hover:bg-gray-50"
+            title="Refresh from provider"
+          >
+            <RotateCw className="w-4 h-4" /> Refresh
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-4">

@@ -4,13 +4,16 @@ import {
   useDeleteElasticIp,
 } from "../../../hooks/adminHooks/eipHooks";
 import AddEip from "../eipComps/addEip";
-import { Trash2 } from "lucide-react";
+import { Trash2, RotateCw } from "lucide-react";
+import adminSilentApiforUser from "../../../index/admin/silentadminforuser";
+import { useQueryClient } from "@tanstack/react-query";
 import DeleteEipModal from "../eipComps/deleteEip";
 
 const EIPs = ({ projectId = "", region = "" }) => {
   const { data: eips, isFetching } = useFetchElasticIps(projectId, region);
   const { mutate: deleteElasticIp, isPending: isDeleting } =
     useDeleteElasticIp();
+  const queryClient = useQueryClient();
   const [isCreateModalOpen, setCreateModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(null); // { id, name }
   const openCreateModal = () => setCreateModal(true);
@@ -70,7 +73,25 @@ const EIPs = ({ projectId = "", region = "" }) => {
   return (
     <>
       <div className="bg-gray-50 rounded-[10px] font-Outfit">
-        <div className="flex justify-end items-center mb-6">
+        <div className="flex justify-between items-center mb-6">
+          <button
+            onClick={async () => {
+              try {
+                if (!projectId || !region) return;
+                const params = new URLSearchParams();
+                params.append("project_id", projectId);
+                params.append("region", region);
+                params.append("refresh", "1");
+                await adminSilentApiforUser("GET", `/business/elastic-ips?${params.toString()}`);
+              } finally {
+                queryClient.invalidateQueries({ queryKey: ["elasticIps"] });
+              }
+            }}
+            className="flex items-center gap-2 rounded-[30px] py-2 px-4 bg-white border text-gray-700 text-sm hover:bg-gray-50"
+            title="Refresh from provider"
+          >
+            <RotateCw className="w-4 h-4" /> Refresh
+          </button>
           <button
             onClick={openCreateModal}
             className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"

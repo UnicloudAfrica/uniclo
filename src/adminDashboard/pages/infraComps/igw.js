@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
-import { Eye, Trash2, ChevronDown } from "lucide-react";
+import { Eye, Trash2, ChevronDown, RotateCw } from "lucide-react";
 import { useFetchIgws, useDeleteIgw } from "../../../hooks/adminHooks/igwHooks";
 import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
-// import AddIgw from "../igwComps/addIgw";
-// import DeleteIgwModal from "../igwComps/deleteIgw";
-// import ViewIgwModal from "../igwComps/viewIgw";
+import AddIgw from "../igwComps/addIGW";
+import DeleteIgwModal from "../igwComps/deleteIGW";
+import ViewIgwModal from "../igwComps/viewIGW";
+import adminSilentApiforUser from "../../../index/admin/silentadminforuser";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Badge = ({ text }) => {
   const badgeClasses = {
@@ -38,6 +40,7 @@ const IGWs = ({ projectId = "" }) => {
   const { mutate: deleteIgw, isPending: isDeleting } = useDeleteIgw();
 
   const [isCreateModalOpen, setCreateModal] = useState(false);
+  const queryClient = useQueryClient();
   const [deleteModal, setDeleteModal] = useState(null); // { igw }
   const [viewModal, setViewModal] = useState(null); // igw object
   const [currentPage, setCurrentPage] = useState(1);
@@ -120,12 +123,32 @@ const IGWs = ({ projectId = "" }) => {
           </select>
           <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
         </div>
-        <button
-          onClick={openCreateModal}
-          className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
-        >
-          Add IGW
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={async () => {
+              try {
+                if (!projectId || !selectedRegion) return;
+                const params = new URLSearchParams();
+                params.append("project_id", projectId);
+                params.append("region", selectedRegion);
+                params.append("refresh", "1");
+                await adminSilentApiforUser("GET", `/business/internet-gateways?${params.toString()}`);
+              } finally {
+                queryClient.invalidateQueries({ queryKey: ["igws"] });
+              }
+            }}
+            className="flex items-center gap-2 rounded-[30px] py-2 px-4 bg-white border text-gray-700 text-sm hover:bg-gray-50"
+            title="Refresh from provider"
+          >
+            <RotateCw className="w-4 h-4" /> Refresh
+          </button>
+          <button
+            onClick={openCreateModal}
+            className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
+          >
+            Add IGW
+          </button>
+        </div>
       </div>
 
       {currentIgws && currentIgws.length > 0 ? (
@@ -205,9 +228,9 @@ const IGWs = ({ projectId = "" }) => {
         </p>
       )}
 
-      {/* <AddIgw isOpen={isCreateModalOpen} onClose={closeCreateModal} projectId={projectId} /> */}
-      {/* <DeleteIgwModal isOpen={!!deleteModal} onClose={closeDeleteModal} igwName={deleteModal?.igw?.name || `igw-${deleteModal?.igw?.id}`} onConfirm={handleDelete} isDeleting={isDeleting} /> */}
-      {/* <ViewIgwModal isOpen={!!viewModal} onClose={closeViewModal} igw={viewModal} /> */}
+      <AddIgw isOpen={isCreateModalOpen} onClose={closeCreateModal} projectId={projectId} region={selectedRegion} />
+      <DeleteIgwModal isOpen={!!deleteModal} onClose={closeDeleteModal} igwName={deleteModal?.igw?.name || `igw-${deleteModal?.igw?.id}`} onConfirm={handleDelete} isDeleting={isDeleting} />
+      <ViewIgwModal isOpen={!!viewModal} onClose={closeViewModal} igw={viewModal} />
     </div>
   );
 };

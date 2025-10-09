@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { useFetchRouteTables, useCreateRouteTableAssociation } from "../../../hooks/adminHooks/routeTableHooks";
+import adminSilentApiforUser from "../../../index/admin/silentadminforuser";
+import { useQueryClient } from "@tanstack/react-query";
+import { RotateCw } from "lucide-react";
 
 const RouteTables = ({ projectId = "", region = "" }) => {
   const { data: routeTables, isFetching } = useFetchRouteTables(projectId, region);
+  const queryClient = useQueryClient();
   const { mutate: associateRouteTable, isPending: associating } = useCreateRouteTableAssociation();
   const [assocForm, setAssocForm] = useState({ route_table_id: "", subnet_id: "" });
 
@@ -24,7 +28,27 @@ const RouteTables = ({ projectId = "", region = "" }) => {
           <h2 className="text-lg font-semibold">Route Tables</h2>
           <p className="text-sm text-gray-500">Project: {projectId || "(select)"} {region && `• Region: ${region}`}</p>
         </div>
-        {isFetching && <p className="text-sm text-gray-500">Loading route tables...</p>}
+        <div className="flex items-center gap-2">
+          {isFetching && <p className="text-sm text-gray-500">Loading route tables...</p>}
+          <button
+            onClick={async () => {
+              try {
+                if (!projectId || !region) return;
+                const params = new URLSearchParams();
+                params.append("project_id", projectId);
+                params.append("region", region);
+                params.append("refresh", "1");
+                await adminSilentApiforUser("GET", `/business/route-tables?${params.toString()}`);
+              } finally {
+                queryClient.invalidateQueries({ queryKey: ["routeTables"] });
+              }
+            }}
+            className="flex items-center gap-2 rounded-[30px] py-1.5 px-3 bg-white border text-gray-700 text-xs hover:bg-gray-50"
+            title="Refresh from provider"
+          >
+            <RotateCw className="w-4 h-4" /> Refresh
+          </button>
+        </div>
       </div>
 
       {/* Associate form */}

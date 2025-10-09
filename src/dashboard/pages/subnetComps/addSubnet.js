@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, X } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useCreateSubnet, useFetchSubnets } from "../../../hooks/adminHooks/subnetHooks";
@@ -147,7 +147,7 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
   };
 
   // Recompute suggestions when inputs change
-  React.useEffect(() => {
+useEffect(() => {
     if (formData.vpc_id && formData.region && !isFetchingSubnets) {
       computeSuggestions();
     } else {

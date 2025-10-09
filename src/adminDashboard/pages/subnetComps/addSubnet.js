@@ -261,35 +261,8 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) =
                 <p className="text-red-500 text-xs mt-1">{errors.vpc_id}</p>
               )}
             </div>
-            <div>
-              <label
-                htmlFor="region"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Region<span className="text-red-500">*</span>
-              </label>
-              <select
-                id="region"
-                value={formData.region}
-                onChange={(e) => updateFormData("region", e.target.value)}
-                className={`w-full input-field ${
-                  errors.region ? "border-red-500" : "border-gray-300"
-                }`}
-                disabled={isFetchingRegions}
-              >
-                <option value="" disabled>
-                  {isFetchingRegions ? "Loading regions..." : "Select a region"}
-                </option>
-                {regions?.map((region) => (
-                  <option key={region.code} value={region.code}>
-                    {region.name}
-                  </option>
-                ))}
-              </select>
-              {errors.region && (
-                <p className="text-red-500 text-xs mt-1">{errors.region}</p>
-              )}
-            </div>
+            {/* Region is derived from the project; no manual selection */}
+            <div className="text-sm text-gray-500">Region: {formData.region}</div>
 
             <div>
               <label
@@ -318,7 +291,7 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) =
             </button>
             <button
               onClick={handleSubmit}
-              disabled={isCreating || isFetchingVpcs || isFetchingRegions}
+              disabled={isCreating || isFetchingVpcs}
               className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Create Subnet

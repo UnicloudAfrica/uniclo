@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { useAttachNetworkInterfaceSecurityGroup, useDetachNetworkInterfaceSecurityGroup } from "../../../hooks/adminHooks/networkHooks";
+import { useFetchSecurityGroups } from "../../../hooks/adminHooks/securityGroupHooks";
 
 export const AttachSgModal = ({ isOpen, onClose, projectId, region = "", networkInterfaceId = "" }) => {
   const [form, setForm] = useState({ security_group_id: "", region, network_interface_id: networkInterfaceId });
   const [errors, setErrors] = useState({});
   const { mutate: attach, isPending } = useAttachNetworkInterfaceSecurityGroup();
+  const { data: securityGroups } = useFetchSecurityGroups(projectId, form.region, { enabled: !!projectId && !!form.region });
 
   useEffect(() => {
     setForm((p) => ({ ...p, region, network_interface_id: networkInterfaceId }));
@@ -43,8 +45,17 @@ export const AttachSgModal = ({ isOpen, onClose, projectId, region = "", network
             {errors.network_interface_id && <p className="text-xs text-red-500 mt-1">{errors.network_interface_id}</p>}
           </div>
           <div>
-            <label className="block text-sm text-gray-700 mb-1">Security Group ID</label>
-            <input value={form.security_group_id} onChange={(e) => setForm((p) => ({ ...p, security_group_id: e.target.value }))} className={`w-full border rounded px-3 py-2 text-sm ${errors.security_group_id ? 'border-red-500' : 'border-gray-300'}`} placeholder="sg-..." />
+            <label className="block text-sm text-gray-700 mb-1">Security Group</label>
+            <select
+              value={form.security_group_id}
+              onChange={(e) => setForm((p) => ({ ...p, security_group_id: e.target.value }))}
+              className={`w-full border rounded px-3 py-2 text-sm ${errors.security_group_id ? 'border-red-500' : 'border-gray-300'}`}
+            >
+              <option value="">Select Security Group</option>
+              {(securityGroups || []).map((sg) => (
+                <option key={sg.id} value={sg.id}>{sg.name || sg.id}</option>
+              ))}
+            </select>
             {errors.security_group_id && <p className="text-xs text-red-500 mt-1">{errors.security_group_id}</p>}
           </div>
           <div className="flex items-center justify-end gap-2">
@@ -61,6 +72,7 @@ export const DetachSgModal = ({ isOpen, onClose, projectId, region = "", network
   const [form, setForm] = useState({ security_group_id: "", region, network_interface_id: networkInterfaceId });
   const [errors, setErrors] = useState({});
   const { mutate: detach, isPending } = useDetachNetworkInterfaceSecurityGroup();
+  const { data: securityGroups } = useFetchSecurityGroups(projectId, form.region, { enabled: !!projectId && !!form.region });
 
   useEffect(() => {
     setForm((p) => ({ ...p, region, network_interface_id: networkInterfaceId }));
@@ -98,8 +110,17 @@ export const DetachSgModal = ({ isOpen, onClose, projectId, region = "", network
             {errors.network_interface_id && <p className="text-xs text-red-500 mt-1">{errors.network_interface_id}</p>}
           </div>
           <div>
-            <label className="block text-sm text-gray-700 mb-1">Security Group ID</label>
-            <input value={form.security_group_id} onChange={(e) => setForm((p) => ({ ...p, security_group_id: e.target.value }))} className={`w-full border rounded px-3 py-2 text-sm ${errors.security_group_id ? 'border-red-500' : 'border-gray-300'}`} placeholder="sg-..." />
+            <label className="block text-sm text-gray-700 mb-1">Security Group</label>
+            <select
+              value={form.security_group_id}
+              onChange={(e) => setForm((p) => ({ ...p, security_group_id: e.target.value }))}
+              className={`w-full border rounded px-3 py-2 text-sm ${errors.security_group_id ? 'border-red-500' : 'border-gray-300'}`}
+            >
+              <option value="">Select Security Group</option>
+              {(securityGroups || []).map((sg) => (
+                <option key={sg.id} value={sg.id}>{sg.name || sg.id}</option>
+              ))}
+            </select>
             {errors.security_group_id && <p className="text-xs text-red-500 mt-1">{errors.security_group_id}</p>}
           </div>
           <div className="flex items-center justify-end gap-2">

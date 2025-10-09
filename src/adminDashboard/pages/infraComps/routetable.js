@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useFetchRouteTables, useCreateRouteTableAssociation, useDeleteRoute } from "../../../hooks/adminHooks/routeTableHooks";
+import { useFetchSubnets } from "../../../hooks/adminHooks/subnetHooks";
 import adminSilentApiforUser from "../../../index/admin/silentadminforuser";
 import { useQueryClient } from "@tanstack/react-query";
 import { RotateCw } from "lucide-react";
@@ -15,6 +16,7 @@ const RouteTables = ({ projectId = "", region = "" }) => {
   const [isCreateModalOpen, setCreateModal] = useState(false);
   const [isAddRouteOpen, setAddRouteOpen] = useState(false);
   const [selectedRtId, setSelectedRtId] = useState("");
+  const { data: subnets } = useFetchSubnets(projectId, region, { enabled: !!projectId && !!region });
 
   const handleAssociate = (e) => {
     e.preventDefault();
@@ -69,18 +71,30 @@ const RouteTables = ({ projectId = "", region = "" }) => {
           </button>
         </div>
         <form onSubmit={handleAssociate} className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <input
+          <select
             className="border rounded px-3 py-2"
-            placeholder="Route Table ID"
             value={assocForm.route_table_id}
             onChange={(e) => setAssocForm({ ...assocForm, route_table_id: e.target.value })}
-          />
-          <input
+          >
+            <option value="">Select Route Table</option>
+            {(routeTables || []).map((rt) => (
+              <option key={rt.id || rt.route_table?.id} value={rt.id || rt.route_table?.id}>
+                {rt.name || rt.route_table?.name || (rt.id || rt.route_table?.id)}
+              </option>
+            ))}
+          </select>
+          <select
             className="border rounded px-3 py-2"
-            placeholder="Subnet ID"
             value={assocForm.subnet_id}
             onChange={(e) => setAssocForm({ ...assocForm, subnet_id: e.target.value })}
-          />
+          >
+            <option value="">Select Subnet</option>
+            {(subnets || []).map((sn) => (
+              <option key={sn.id} value={sn.id}>
+                {sn.name || sn.id} ({sn.cidr || sn.cidr_block})
+              </option>
+            ))}
+          </select>
           <button
             type="submit"
             disabled={associating}

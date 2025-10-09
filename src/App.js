@@ -89,7 +89,6 @@ import AdminQuoteCalculator from "./adminDashboard/pages/AdminQuoteCalculator";
 import TenantQuotes from "./dashboard/pages/quotes";
 import QuoteCalculatorWizard from "./dashboard/pages/QuoteCalculatorWizard";
 import TenantQuoteCalculator from "./dashboard/pages/TenantQuoteCalculator";
-import AdminQuoteCalculator from "./adminDashboard/pages/AdminQuoteCalculator";
 
 function App() {
   const location = useLocation();
@@ -123,8 +122,8 @@ function App() {
           <Route path="/solutions" element={<Solutions />} />
           <Route path="/events" element={<Events />} />
           <Route path="/blog" element={<Blog />} />
-<Route path="/calculator" element={<Calculator />} />
-<Route path="/dashboard/quote-calculator" element={<TenantQuoteCalculator />} />
+          <Route path="/calculator" element={<Calculator />} />
+          <Route path="/dashboard/quote-calculator" element={<TenantQuoteCalculator />} />
           <Route
             path="/Africa-Data-Centres-and-Onix-Data-Centre-announce-partnership"
             element={<ExtResouce />}
@@ -251,7 +250,7 @@ function App() {
             path="/admin-dashboard/tax-configuration"
             element={<AdminTax />}
           />
-          />
+
           <Route
             path="/admin-dashboard/support-ticket"
             element={<AdminSupportTicket />}

@@ -11,12 +11,7 @@ import { useCreateLeads } from "../../hooks/leadsHook";
 import { useCreatehTenantMultiQuotes } from "../../hooks/calculatorOptionHooks";
 import {
   useFetchGeneralRegions,
-  useFetchComputerInstances,
-  useFetchOsImages,
-  useFetchEbsVolumes,
-  useFetchBandwidths,
-  useFetchFloatingIPs,
-  useFetchCrossConnect,
+  useFetchProductPricing,
 } from "../../hooks/resource";
 import { useFetchProfile } from "../../hooks/resource";
 
@@ -309,12 +304,20 @@ export default function QuoteCalculatorWizard({ embedded = false } = {}) {
 
   // Fetch selectable data based on region
   const { data: regions = [], isFetching: isRegionsFetching } = useFetchGeneralRegions();
-  const { data: computerInstances = [], isFetching: isComputerInstancesFetching } = useFetchComputerInstances("USD", itemForm.region);
-  const { data: osImages = [], isFetching: isOsImagesFetching } = useFetchOsImages("USD", itemForm.region);
-  const { data: ebsVolumes = [], isFetching: isEbsVolumesFetching } = useFetchEbsVolumes("USD", itemForm.region);
-  const { data: bandwidths = [], isFetching: isBandwidthsFetching } = useFetchBandwidths("USD", itemForm.region);
-  const { data: floatingIps = [], isFetching: isFloatingIpsFetching } = useFetchFloatingIPs("USD", itemForm.region);
-  const { data: crossConnects = [], isFetching: isCrossConnectsFetching } = useFetchCrossConnect("USD", itemForm.region);
+
+  // Use product-pricing for all catalogs, gated on region selection
+  const { data: computerInstances = [], isFetching: isComputerInstancesFetching } =
+    useFetchProductPricing(itemForm.region, "instance_type", { enabled: !!itemForm.region });
+  const { data: osImages = [], isFetching: isOsImagesFetching } =
+    useFetchProductPricing(itemForm.region, "os_image", { enabled: !!itemForm.region });
+  const { data: ebsVolumes = [], isFetching: isEbsVolumesFetching } =
+    useFetchProductPricing(itemForm.region, "volume_type", { enabled: !!itemForm.region });
+  const { data: bandwidths = [], isFetching: isBandwidthsFetching } =
+    useFetchProductPricing(itemForm.region, "bandwidth", { enabled: !!itemForm.region });
+  const { data: floatingIps = [], isFetching: isFloatingIpsFetching } =
+    useFetchProductPricing(itemForm.region, "floating_ip", { enabled: !!itemForm.region });
+  const { data: crossConnects = [], isFetching: isCrossConnectsFetching } =
+    useFetchProductPricing(itemForm.region, "cross_connect", { enabled: !!itemForm.region });
 
   return (
     <>

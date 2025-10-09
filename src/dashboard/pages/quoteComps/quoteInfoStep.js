@@ -80,44 +80,70 @@ const QuoteInfoStep = ({
           </span>
         </div>
 
-        {/* Optional: Client selection. Not compulsory */}
-        <div>
-          <label
-            htmlFor="client_id"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Client (optional)
-          </label>
-          <span
-            className={`w-full input-field block transition-all ${
-              errors.client_id ? "border-red-500 border" : ""
-            }`}
-          >
-            {isClientsFetching ? (
-              <div className="flex items-center">
-                <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
-                <span className="text-gray-500 text-sm">
-                  Loading clients...
-                </span>
-              </div>
-            ) : (
-              <select
-                id="client_id"
-                value={formData.client_id || ""}
-                onChange={(e) => updateFormData("client_id", e.target.value)}
-                className="w-full bg-transparent outline-none"
-              >
-                <option value="">Select a Client</option>
-                {clients?.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.first_name} {client.last_name} ({client.email})
-                  </option>
-                ))}
-              </select>
+        {/* Optional: Client selection (only when a tenant is selected). Not compulsory */}
+        {formData.tenant_id && (
+          <div>
+            <label
+              htmlFor="client_id"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Client (optional)
+            </label>
+            <span
+              className={`w-full input-field block transition-all ${
+                errors.client_id ? "border-red-500 border" : ""
+              }`}
+            >
+              {isClientsFetching ? (
+                <div className="flex items-center">
+                  <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
+                  <span className="text-gray-500 text-sm">
+                    Loading clients...
+                  </span>
+                </div>
+              ) : (
+                <select
+                  id="client_id"
+                  value={formData.client_id || ""}
+                  onChange={(e) => updateFormData("client_id", e.target.value)}
+                  className="w-full bg-transparent outline-none"
+                >
+                  <option value="">Select a Client</option>
+                  {clients?.map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {client.first_name} {client.last_name} ({client.email})
+                    </option>
+                  ))}
+                </select>
+              )}
+            </span>
+            {errors.client_id && (
+              <p className="text-red-500 text-xs mt-1">{errors.client_id}</p>
             )}
-          </span>
-          {errors.client_id && (
-            <p className="text-red-500 text-xs mt-1">{errors.client_id}</p>
+          </div>
+        )}
+
+        {/* Send options (optional) */}
+        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {formData.tenant_id && (
+            <label className="inline-flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={!!formData.send_to_tenant}
+                onChange={(e) => updateFormData("send_to_tenant", e.target.checked)}
+              />
+              <span className="text-sm text-gray-700">Send invoice to selected Tenant</span>
+            </label>
+          )}
+          {formData.client_id && (
+            <label className="inline-flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={!!formData.send_to_client}
+                onChange={(e) => updateFormData("send_to_client", e.target.checked)}
+              />
+              <span className="text-sm text-gray-700">Send invoice to selected Client</span>
+            </label>
           )}
         </div>
 

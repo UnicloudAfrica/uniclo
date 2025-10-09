@@ -250,6 +250,8 @@ export default function QuoteCalculatorWizard({ embedded = false } = {}) {
       subject: quoteInfo.subject || undefined,
       tenant_id: quoteInfo.tenant_id ? String(quoteInfo.tenant_id) : undefined,
       client_id: quoteInfo.client_id ? Number(quoteInfo.client_id) : undefined,
+      send_to_tenant: !!quoteInfo.send_to_tenant,
+      send_to_client: !!quoteInfo.send_to_client,
       email: quoteInfo.email || undefined,
       emails: emailsArray,
       notes: quoteInfo.notes || undefined,

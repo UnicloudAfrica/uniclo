@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { useCreateRoute } from "../../../hooks/adminHooks/routeTableHooks";
+import { useFetchIgws } from "../../../hooks/adminHooks/igwHooks";
+import { useFetchNetworkInterfaces } from "../../../hooks/adminHooks/networkHooks";
 
 const AddRoute = ({ isOpen, onClose, projectId, region: defaultRegion = "", routeTableId = "" }) => {
   const [form, setForm] = useState({
@@ -12,6 +14,8 @@ const AddRoute = ({ isOpen, onClose, projectId, region: defaultRegion = "", rout
   });
   const [errors, setErrors] = useState({});
   const { mutate: createRoute, isPending } = useCreateRoute();
+  const { data: igws } = useFetchIgws(projectId, form.region, { enabled: !!projectId && !!form.region });
+  const { data: enis } = useFetchNetworkInterfaces(projectId, form.region, { enabled: !!projectId && !!form.region });
 
   useEffect(() => {
     if (defaultRegion && !form.region) setForm((p) => ({ ...p, region: defaultRegion }));
@@ -92,7 +96,7 @@ const AddRoute = ({ isOpen, onClose, projectId, region: defaultRegion = "", rout
               <label className="block text-sm text-gray-700 mb-1">Target Type</label>
               <select
                 value={form.target_type}
-                onChange={(e) => setForm((p) => ({ ...p, target_type: e.target.value }))}
+                onChange={(e) => setForm((p) => ({ ...p, target_type: e.target.value, target_id: "" }))}
                 className="w-full border rounded px-3 py-2 text-sm border-gray-300"
               >
                 <option value="gateway_id">Internet Gateway</option>
@@ -103,13 +107,39 @@ const AddRoute = ({ isOpen, onClose, projectId, region: defaultRegion = "", rout
             </div>
             <div>
               <label className="block text-sm text-gray-700 mb-1">Target ID</label>
-              <input
-                type="text"
-                value={form.target_id}
-                onChange={(e) => setForm((p) => ({ ...p, target_id: e.target.value }))}
-                className={`w-full border rounded px-3 py-2 text-sm ${errors.target_id ? "border-red-500" : "border-gray-300"}`}
-                placeholder="igw-..., eni-..., i-..., nat-..."
-              />
+              {form.target_type === "gateway_id" ? (
+                <select
+                  value={form.target_id}
+                  onChange={(e) => setForm((p) => ({ ...p, target_id: e.target.value }))}
+                  className={`w-full border rounded px-3 py-2 text-sm ${errors.target_id ? "border-red-500" : "border-gray-300"}`}
+                >
+                  <option value="">Select Internet Gateway</option>
+                  {(igws || []).map((g) => (
+                    <option key={g.id} value={g.id}>{g.name || g.id}</option>
+                  ))}
+                </select>
+              ) : form.target_type === "network_interface_id" ? (
+                <select
+                  value={form.target_id}
+                  onChange={(e) => setForm((p) => ({ ...p, target_id: e.target.value }))}
+                  className={`w-full border rounded px-3 py-2 text-sm ${errors.target_id ? "border-red-500" : "border-gray-300"}`}
+                >
+                  <option value="">Select ENI</option>
+                  {(enis || []).map((n) => (
+                    <option key={n.id || n.network_interface?.id} value={n.id || n.network_interface?.id}>
+                      {n.id || n.network_interface?.id}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={form.target_id}
+                  onChange={(e) => setForm((p) => ({ ...p, target_id: e.target.value }))}
+                  className={`w-full border rounded px-3 py-2 text-sm ${errors.target_id ? "border-red-500" : "border-gray-300"}`}
+                  placeholder={form.target_type === 'instance_id' ? 'i-...' : 'nat-...'}
+                />
+              )}
               {errors.target_id && <p className="text-xs text-red-500 mt-1">{errors.target_id}</p>}
             </div>
           </div>

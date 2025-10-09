@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useFetchRouteTables, useCreateRouteTableAssociation } from "../../../hooks/adminHooks/routeTableHooks";
+import { useFetchRouteTables, useCreateRouteTableAssociation, useDeleteRoute } from "../../../hooks/adminHooks/routeTableHooks";
 import adminSilentApiforUser from "../../../index/admin/silentadminforuser";
 import { useQueryClient } from "@tanstack/react-query";
 import { RotateCw } from "lucide-react";
@@ -10,6 +10,7 @@ const RouteTables = ({ projectId = "", region = "" }) => {
   const { data: routeTables, isFetching } = useFetchRouteTables(projectId, region);
   const queryClient = useQueryClient();
   const { mutate: associateRouteTable, isPending: associating } = useCreateRouteTableAssociation();
+  const { mutate: deleteRoute } = useDeleteRoute();
   const [assocForm, setAssocForm] = useState({ route_table_id: "", subnet_id: "" });
   const [isCreateModalOpen, setCreateModal] = useState(false);
   const [isAddRouteOpen, setAddRouteOpen] = useState(false);
@@ -135,11 +136,35 @@ const RouteTables = ({ projectId = "", region = "" }) => {
                 {((rt.routes || rt.route_table?.routes) || []).length === 0 && (
                   <li className="text-gray-500">No routes</li>
                 )}
-                {((rt.routes || rt.route_table?.routes) || []).map((r, i) => (
-                  <li key={i}>
-                    {r.destination_cidr_block || r.destination || r.cidr} → {r.gateway_id || r.target || r.nat_gateway_id || r.instance_id || r.network_interface_id || '—'}
-                  </li>
-                ))}
+                {((rt.routes || rt.route_table?.routes) || []).map((r, i) => {
+                  const dest = r.destination_cidr_block || r.destination || r.cidr;
+                  const rtId = rt.id || rt.route_table?.id;
+                  const target = r.gateway_id || r.nat_gateway_id || r.instance_id || r.network_interface_id || null;
+                  const payload = {
+                    project_id: projectId,
+                    region,
+                    route_table_id: rtId,
+                    destination_cidr_block: dest,
+                  };
+                  if (r.gateway_id) payload.gateway_id = r.gateway_id;
+                  if (r.network_interface_id) payload.network_interface_id = r.network_interface_id;
+                  if (r.instance_id) payload.instance_id = r.instance_id;
+                  if (r.nat_gateway_id) payload.nat_gateway_id = r.nat_gateway_id;
+                  return (
+                    <li key={i} className="flex items-center justify-between">
+                      <span>
+                        {dest} → {target || '—'}
+                      </span>
+                      <button
+                        onClick={() => deleteRoute(payload)}
+                        className="text-red-600 text-xs hover:underline"
+                        title="Delete route"
+                      >
+                        Delete
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           </div>

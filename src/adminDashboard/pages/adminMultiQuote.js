@@ -17,6 +17,8 @@ import QuoteInfoStep from "./quoteComps/quoteInfoStep";
 import QuoteResourceStep from "./quoteComps/quoteResourceStep";
 import QuoteSummaryStep from "./quoteComps/quoteSummaryStep";
 import QuoteBreakdownStep from "./quoteComps/quoteBreakdownStep";
+import ProductSummaryStep from "./quoteComps/quoteProductSummaryStep";
+import QuoteFinalReviewStep from "./quoteComps/quoteFinalReviewStep";
 import ToastUtils from "../../utils/toastUtil";
 
 const AdminMultiQuote = () => {
@@ -34,6 +36,19 @@ const AdminMultiQuote = () => {
     emails: "",
     notes: "",
     bill_to_name: "",
+    // Total discount fields
+    apply_total_discount: false,
+    total_discount_type: "percent",
+    total_discount_value: "",
+    total_discount_label: "",
+    // Lead tracking fields
+    create_lead: false,
+    lead_first_name: "",
+    lead_last_name: "",
+    lead_email: "",
+    lead_phone: "",
+    lead_company: "",
+    lead_country: "",
     // Step 2 (form part)
     region: "",
     compute_instance_id: null,
@@ -83,7 +98,7 @@ const AdminMultiQuote = () => {
       enabled: !!formData.region,
     });
 
-  const steps = ["Quote Info", "Add Items", "Summary", "Confirmation"];
+  const steps = ["Quote Info", "Add Items", "Product Summary", "Final Review", "Confirmation"];
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -109,6 +124,18 @@ const AdminMultiQuote = () => {
     } else if (step === 1) {
       if (pricingRequests.length === 0) {
         newErrors.general = "Please add at least one item to the quote.";
+      }
+    } else if (step === 3) { // Final review step
+      if (formData.create_lead) {
+        if (!formData.lead_first_name) {
+          newErrors.lead_first_name = "First name is required for lead creation.";
+        }
+        if (!formData.lead_last_name) {
+          newErrors.lead_last_name = "Last name is required for lead creation.";
+        }
+        if (!formData.lead_email) {
+          newErrors.lead_email = "Email is required for lead creation.";
+        }
       }
     }
     setErrors(newErrors);
@@ -198,7 +225,7 @@ const AdminMultiQuote = () => {
   };
 
   const handleSubmit = () => {
-    if (!validateStep(0) || !validateStep(1)) {
+    if (!validateStep(0) || !validateStep(1) || !validateStep(3)) {
       ToastUtils.error("Please complete all required fields in all steps.");
       return;
     }
@@ -220,6 +247,28 @@ const AdminMultiQuote = () => {
         return rest;
       }),
     };
+
+    // Add total discount if applied
+    if (formData.apply_total_discount && formData.total_discount_value) {
+      payload.total_discount = {
+        type: formData.total_discount_type,
+        value: parseFloat(formData.total_discount_value),
+        label: formData.total_discount_label || null,
+      };
+    }
+
+    // Add lead creation flag and info (we'll add this in step 4)
+    if (formData.create_lead) {
+      payload.create_lead = true;
+      payload.lead_info = {
+        first_name: formData.lead_first_name || '',
+        last_name: formData.lead_last_name || '',
+        email: formData.lead_email || formData.email,
+        phone: formData.lead_phone || null,
+        company: formData.lead_company || null,
+        country: formData.lead_country || null,
+      };
+    }
 
     createMultiQuotes(payload, {
       onSuccess: (res) => {
@@ -279,13 +328,22 @@ const AdminMultiQuote = () => {
         );
       case 2:
         return (
-          <QuoteSummaryStep
-            formData={formData}
+          <ProductSummaryStep
             pricingRequests={pricingRequests}
-            tenants={tenants}
+            formData={formData}
           />
         );
       case 3:
+        return (
+          <QuoteFinalReviewStep
+            formData={formData}
+            pricingRequests={pricingRequests}
+            tenants={tenants}
+            updateFormData={updateFormData}
+            errors={errors}
+          />
+        );
+      case 4:
         return <QuoteBreakdownStep apiResponse={apiResponse} />;
       default:
         return null;
@@ -336,18 +394,18 @@ const AdminMultiQuote = () => {
             </div>
             <button
               onClick={
-                currentStep === 2
+                currentStep === 3
                   ? handleSubmit
-                  : currentStep === 3
+                  : currentStep === 4
                   ? () => navigate("/admin-dashboard/quote")
                   : handleNext
               }
               disabled={isSubmissionPending}
               className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
-              {currentStep === 3
+              {currentStep === 4
                 ? "Finish"
-                : currentStep === 2
+                : currentStep === 3
                 ? "Submit Quote"
                 : "Next"}
               {isSubmissionPending && (

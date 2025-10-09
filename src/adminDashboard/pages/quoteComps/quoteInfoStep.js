@@ -133,7 +133,7 @@ const QuoteInfoStep = ({
           )}
         </div>
 
-        <div className="md:col-span-2">
+        <div>
           <label
             htmlFor="emails"
             className="block text-sm font-medium text-gray-700"
@@ -151,6 +151,60 @@ const QuoteInfoStep = ({
           <p className="text-xs text-gray-500 mt-1">
             Separate multiple emails with a comma.
           </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Total Order Discount
+          </label>
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="apply_total_discount"
+                checked={formData.apply_total_discount}
+                onChange={(e) => updateFormData("apply_total_discount", e.target.checked)}
+                className="rounded border-gray-300 text-[#288DD1] focus:ring-[#288DD1]"
+              />
+              <label htmlFor="apply_total_discount" className="text-sm text-gray-700">
+                Apply discount to entire order
+              </label>
+            </div>
+            {formData.apply_total_discount && (
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <select
+                    value={formData.total_discount_type}
+                    onChange={(e) => updateFormData("total_discount_type", e.target.value)}
+                    className={inputClass}
+                  >
+                    <option value="percent">Percentage (%)</option>
+                    <option value="fixed">Fixed Amount</option>
+                  </select>
+                </div>
+                <div>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.total_discount_value}
+                    onChange={(e) => updateFormData("total_discount_value", e.target.value)}
+                    className={inputClass}
+                    placeholder={formData.total_discount_type === 'percent' ? '10' : '100.00'}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <input
+                    type="text"
+                    value={formData.total_discount_label}
+                    onChange={(e) => updateFormData("total_discount_label", e.target.value)}
+                    className={inputClass}
+                    placeholder="Discount label (optional)"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="md:col-span-2">

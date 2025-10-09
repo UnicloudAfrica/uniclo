@@ -1,5 +1,5 @@
-import React from "react";
-import { Download, CheckCircle } from "lucide-react";
+import React, { useState } from "react";
+import { Download, FileText, Check, Mail, CheckCircle } from "lucide-react";
 
 const DetailRow = ({ label, value }) => (
   <div className="flex justify-between items-start py-2 border-b border-gray-100 last:border-b-0">
@@ -56,7 +56,9 @@ const QuoteBreakdownStep = ({ apiResponse }) => {
         </p>
       </div>
 
-      {apiResponse.invoices.map((invoice, index) => (
+      {apiResponse.invoices.map((invoiceData, index) => {
+        const invoice = invoiceData.payload;
+        return (
         <div
           key={invoice.invoice_number}
           className="bg-white border border-gray-200 rounded-lg shadow-sm p-6"
@@ -64,20 +66,22 @@ const QuoteBreakdownStep = ({ apiResponse }) => {
           <div className="flex flex-col md:flex-row gap-4 justify-between items-start mb-4">
             <div>
               <h4 className="text-xl font-semibold text-gray-800">
-                {invoice.subject}
+                {invoice.subject || 'Multi-Quote'}
               </h4>
               <p className="text-sm text-gray-500">
                 Invoice #: {invoice.invoice_number}
               </p>
             </div>
-            <button
-              onClick={() =>
-                downloadPdf(invoice.pdf_base64, invoice.pdf_filename)
-              }
-              className="flex items-center gap-2 px-4 py-2 bg-[#288DD1] text-white font-medium rounded-md hover:bg-[#1976D2] transition-colors"
-            >
-              <Download className="w-4 h-4" /> Download PDF
-            </button>
+            {invoiceData.pdf && (
+              <button
+                onClick={() =>
+                  downloadPdf(invoiceData.pdf, invoiceData.filename || 'quote.pdf')
+                }
+                className="flex items-center gap-2 px-4 py-2 bg-[#288DD1] text-white font-medium rounded-md hover:bg-[#1976D2] transition-colors"
+              >
+                <Download className="w-4 h-4" /> Download PDF
+              </button>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -135,6 +139,27 @@ const QuoteBreakdownStep = ({ apiResponse }) => {
 
           <div className="mt-6 flex justify-end">
             <div className="w-full max-w-xs space-y-2">
+              {invoice.amounts.pre_discount_subtotal && 
+                invoice.amounts.pre_discount_subtotal !== invoice.amounts.subtotal && (
+                <DetailRow
+                  label="Subtotal (before discount)"
+                  value={formatCurrency(
+                    invoice.amounts.pre_discount_subtotal,
+                    invoice.amounts.currency
+                  )}
+                />
+              )}
+              
+              {invoice.amounts.discount && invoice.amounts.discount > 0 && (
+                <DetailRow
+                  label={invoice.amounts.discount_label || "Discount"}
+                  value={`-${formatCurrency(
+                    invoice.amounts.discount,
+                    invoice.amounts.currency
+                  )}`}
+                />
+              )}
+              
               <DetailRow
                 label="Subtotal"
                 value={formatCurrency(
@@ -142,6 +167,7 @@ const QuoteBreakdownStep = ({ apiResponse }) => {
                   invoice.amounts.currency
                 )}
               />
+              
               <DetailRow
                 label="Tax"
                 value={formatCurrency(
@@ -149,6 +175,7 @@ const QuoteBreakdownStep = ({ apiResponse }) => {
                   invoice.amounts.currency
                 )}
               />
+              
               <div className="border-t pt-2">
                 <DetailRow
                   label="Total"
@@ -161,7 +188,8 @@ const QuoteBreakdownStep = ({ apiResponse }) => {
             </div>
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

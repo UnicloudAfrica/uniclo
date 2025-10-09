@@ -32,6 +32,23 @@ const QuoteResourceStep = ({
     }).format(amount);
   };
 
+  const metaFromEntry = (entry) => {
+    const product = entry?.product ?? entry ?? {};
+    const pricing = entry?.pricing ?? {};
+    const effective = pricing?.effective ?? pricing ?? {};
+    return {
+      id:
+        product?.productable_id ??
+        product?.id ??
+        entry?.productable_id ??
+        entry?.id ??
+        "",
+      name: product?.name ?? entry?.name ?? "",
+      price: effective?.price_local ?? effective?.unit_amount ?? null,
+      currency: effective?.currency ?? "USD",
+    };
+  };
+
   return (
     <div className="w-full">
       <div className="t mb-8">
@@ -99,15 +116,14 @@ const QuoteResourceStep = ({
               {isComputerInstancesFetching ? (
                 <option disabled>Loading...</option>
               ) : computerInstances && computerInstances.length > 0 ? (
-                computerInstances.map(({ product, pricing }) => (
-                  <option key={product.id} value={product.productable_id}>
-                    {product.name} -{" "}
-                    {formatCurrency(
-                      pricing.effective.price_local,
-                      pricing.effective.currency
-                    )}
-                  </option>
-                ))
+                computerInstances.map((entry) => {
+                  const meta = metaFromEntry(entry);
+                  return (
+                    <option key={meta.id} value={meta.id}>
+                      {meta.name} - {formatCurrency(meta.price, meta.currency)}
+                    </option>
+                  );
+                })
               ) : (
                 <option disabled>No compute instances available</option>
               )}
@@ -139,15 +155,14 @@ const QuoteResourceStep = ({
               {isOsImagesFetching ? (
                 <option disabled>Loading...</option>
               ) : osImages && osImages.length > 0 ? (
-                osImages.map(({ product, pricing }) => (
-                  <option key={product.id} value={product.productable_id}>
-                    {product.name} -{" "}
-                    {formatCurrency(
-                      pricing.effective.price_local,
-                      pricing.effective.currency
-                    )}
-                  </option>
-                ))
+                osImages.map((entry) => {
+                  const meta = metaFromEntry(entry);
+                  return (
+                    <option key={meta.id} value={meta.id}>
+                      {meta.name} - {formatCurrency(meta.price, meta.currency)}
+                    </option>
+                  );
+                })
               ) : (
                 <option disabled>No OS images available</option>
               )}
@@ -232,15 +247,14 @@ const QuoteResourceStep = ({
                 {isEbsVolumesFetching ? (
                   <option disabled>Loading...</option>
                 ) : ebsVolumes && ebsVolumes.length > 0 ? (
-                  ebsVolumes.map(({ product, pricing }) => (
-                    <option key={product.id} value={product.productable_id}>
-                      {product.name} -{" "}
-                      {formatCurrency(
-                        pricing.effective.price_local,
-                        pricing.effective.currency
-                      )}
-                    </option>
-                  ))
+                  ebsVolumes.map((entry) => {
+                    const meta = metaFromEntry(entry);
+                    return (
+                      <option key={meta.id} value={meta.id}>
+                        {meta.name} - {formatCurrency(meta.price, meta.currency)}
+                      </option>
+                    );
+                  })
                 ) : (
                   <option disabled>No volume types available</option>
                 )}
@@ -295,15 +309,14 @@ const QuoteResourceStep = ({
                 {isBandwidthsFetching ? (
                   <option disabled>Loading...</option>
                 ) : bandwidths && bandwidths.length > 0 ? (
-                  bandwidths.map(({ product, pricing }) => (
-                    <option key={product.id} value={product.productable_id}>
-                      {product.name} -{" "}
-                      {formatCurrency(
-                        pricing.effective.price_local,
-                        pricing.effective.currency
-                      )}
-                    </option>
-                  ))
+                  bandwidths.map((entry) => {
+                    const meta = metaFromEntry(entry);
+                    return (
+                      <option key={meta.id} value={meta.id}>
+                        {meta.name} - {formatCurrency(meta.price, meta.currency)}
+                      </option>
+                    );
+                  })
                 ) : (
                   <option disabled>No bandwidth options available</option>
                 )}
@@ -358,15 +371,14 @@ const QuoteResourceStep = ({
                 {isFloatingIpsFetching ? (
                   <option disabled>Loading...</option>
                 ) : floatingIps && floatingIps.length > 0 ? (
-                  floatingIps.map(({ product, pricing }) => (
-                    <option key={product.id} value={product.productable_id}>
-                      {product.name} -{" "}
-                      {formatCurrency(
-                        pricing.effective.price_local,
-                        pricing.effective.currency
-                      )}
-                    </option>
-                  ))
+                  floatingIps.map((entry) => {
+                    const meta = metaFromEntry(entry);
+                    return (
+                      <option key={meta.id} value={meta.id}>
+                        {meta.name} - {formatCurrency(meta.price, meta.currency)}
+                      </option>
+                    );
+                  })
                 ) : (
                   <option disabled>No floating IPs available</option>
                 )}
@@ -421,15 +433,14 @@ const QuoteResourceStep = ({
                 {isCrossConnectsFetching ? (
                   <option disabled>Loading...</option>
                 ) : crossConnects && crossConnects.length > 0 ? (
-                  crossConnects.map(({ product, pricing }) => (
-                    <option key={product.id} value={product.productable_id}>
-                      {product.name} -{" "}
-                      {formatCurrency(
-                        pricing.effective.price_local,
-                        pricing.effective.currency
-                      )}
-                    </option>
-                  ))
+                  crossConnects.map((entry) => {
+                    const meta = metaFromEntry(entry);
+                    return (
+                      <option key={meta.id} value={meta.id}>
+                        {meta.name} - {formatCurrency(meta.price, meta.currency)}
+                      </option>
+                    );
+                  })
                 ) : (
                   <option disabled>No cross connects available</option>
                 )}

@@ -130,22 +130,27 @@ export default function QuoteCalculatorWizard({ embedded = false } = {}) {
     if (!validateItemForm()) return;
 
     // Resolve display names from fetched catalogs
-    const ci = computerInstances.find(
-      ({ product }) => String(product.productable_id) === String(itemForm.compute_instance_id)
-    );
-    const os = osImages.find(
-      ({ product }) => String(product.productable_id) === String(itemForm.os_image_id)
-    );
-    const vol = ebsVolumes.find(
-      ({ product }) => String(product.productable_id) === String(itemForm.volume_type_id)
-    );
+    const findById = (list, id) =>
+      (list || []).find((entry) => {
+        const p = entry?.product ?? entry;
+        return (
+          String(p?.productable_id) === String(id) ||
+          String(p?.id) === String(id) ||
+          String(entry?.productable_id) === String(id) ||
+          String(entry?.id) === String(id)
+        );
+      });
+
+    const ci = findById(computerInstances, itemForm.compute_instance_id);
+    const os = findById(osImages, itemForm.os_image_id);
+    const vol = findById(ebsVolumes, itemForm.volume_type_id);
+
+    const getName = (entry, fallback) => (entry?.product?.name ?? entry?.name ?? fallback);
 
     const _display = {
-      compute: ci?.product?.name || `Compute ${itemForm.compute_instance_id}`,
-      os: os?.product?.name || `OS ${itemForm.os_image_id}`,
-      storage: vol?.product?.name
-        ? `${vol.product.name} - ${itemForm.storage_size_gb} GB`
-        : `${itemForm.volume_type_id} - ${itemForm.storage_size_gb} GB`,
+      compute: getName(ci, `Compute ${itemForm.compute_instance_id}`),
+      os: getName(os, `OS ${itemForm.os_image_id}`),
+      storage: getName(vol, `${itemForm.volume_type_id}`) + ` - ${itemForm.storage_size_gb} GB`,
     };
 
     const newItem = {

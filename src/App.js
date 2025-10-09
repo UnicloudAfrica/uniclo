@@ -95,6 +95,9 @@ import ClientInstances from "./clientDashboard/pages/clientInstances";
 import ClientAddInstancePage from "./clientDashboard/pages/clientAddInstances";
 import AdminMultiQuote from "./adminDashboard/pages/adminMultiQuote";
 import AdminAdvancedCalculator from "./adminDashboard/pages/adminAdvancedCalculator";
+import EnhancedInstanceManagement from "./adminDashboard/pages/enhancedInstanceManagement";
+import EnhancedInstanceDetails from "./adminDashboard/pages/enhancedInstanceDetails";
+import EnhancedProfileSettings from "./adminDashboard/pages/enhancedProfileSettings";
 
 function App() {
   const location = useLocation();
@@ -264,6 +267,9 @@ function App() {
           /> */}
           <Route path="/admin-dashboard/quote" element={<AdminMultiQuote />} />
           <Route path="/admin-dashboard/advanced-calculator" element={<AdminAdvancedCalculator />} />
+          <Route path="/admin-dashboard/enhanced-instance-management" element={<EnhancedInstanceManagement />} />
+          <Route path="/admin-dashboard/enhanced-instance-details" element={<EnhancedInstanceDetails />} />
+          <Route path="/admin-dashboard/enhanced-profile-settings" element={<EnhancedProfileSettings />} />
           {/* <Route
             path="/admin-dashboard/quote-calculator"
             element={<AdminQuoteCalculator />}

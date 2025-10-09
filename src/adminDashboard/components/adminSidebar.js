@@ -28,6 +28,9 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/admin-dashboard/payment": "Payment",
     "/admin-dashboard/projects": "Projects",
     "/admin-dashboard/instances": "Instances",
+    "/admin-dashboard/enhanced-instance-management": "Enhanced Instances",
+    "/admin-dashboard/enhanced-instance-details": "Instance Details",
+    "/admin-dashboard/enhanced-profile-settings": "Profile Settings",
     "/admin-dashboard/products": "Products",
     "/admin-dashboard/leads": "Leads",
     "/admin-dashboard/support-ticket": "Support Ticket",
@@ -143,6 +146,12 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       path: "/admin-dashboard/instances",
     },
     {
+      name: "Enhanced Instances",
+      icon: modules,
+      activeIcon: activemodules,
+      path: "/admin-dashboard/enhanced-instance-management",
+    },
+    {
       name: "Regions",
       icon: modules,
       activeIcon: activemodules,
@@ -171,6 +180,12 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       icon: supportTicket,
       activeIcon: activeSupportTicket,
       path: "/admin-dashboard/support-ticket",
+    },
+    {
+      name: "Profile Settings",
+      icon: modules,
+      activeIcon: activemodules,
+      path: "/admin-dashboard/enhanced-profile-settings",
     },
   ];
 

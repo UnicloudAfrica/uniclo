@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
+import QuickAccessNav from "../components/quickAccessNav";
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -179,6 +180,11 @@ export default function AdminDashboard() {
               No metrics available.
             </div>
           )}
+        </div>
+
+        {/* Quick Access Navigation */}
+        <div className="mb-8">
+          <QuickAccessNav />
         </div>
 
         {/* Recent Partners Table/Card */}

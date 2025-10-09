@@ -289,6 +289,15 @@ export default function AdminProjectDetails() {
 
         {/* --- */}
 
+        {/* Region badge for Infrastructure */}
+        {activeTopLevelTab === "Infrastructure" && (
+          <div className="mb-3">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-700">
+              Region: {projectDetails.default_region}
+            </span>
+          </div>
+        )}
+
         {/* Conditionally Render Content based on Top-Level Tab */}
         {activeTopLevelTab === "Instances" ? (
           <>

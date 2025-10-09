@@ -100,3 +100,30 @@ export const useDeleteVpc = () => {
     },
   });
 };
+
+// --- Available CIDR suggestions for a VPC ---
+const fetchAvailableCidrs = async ({ project_id, region, vpc_id, prefix_length = 24, limit = 8 }) => {
+  const params = new URLSearchParams();
+  params.append("project_id", project_id);
+  params.append("region", region);
+  params.append("vpc_id", vpc_id);
+  if (prefix_length) params.append("prefix_length", String(prefix_length));
+  if (limit) params.append("limit", String(limit));
+  const res = await adminSilentApiforUser(
+    "GET",
+    `/business/vpcs/available-cidrs?${params.toString()}`
+  );
+  const suggestions = res?.data?.suggestions ?? res?.suggestions ?? [];
+  return Array.isArray(suggestions) ? suggestions : [];
+};
+
+export const useFetchAvailableCidrs = (projectId, region, vpcId, prefixLength = 24, limit = 8, options = {}) => {
+  return useQuery({
+    queryKey: ["available-cidrs", { projectId, region, vpcId, prefixLength, limit }],
+    queryFn: () => fetchAvailableCidrs({ project_id: projectId, region, vpc_id: vpcId, prefix_length: prefixLength, limit }),
+    enabled: !!projectId && !!region && !!vpcId,
+    staleTime: 1000 * 60,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};

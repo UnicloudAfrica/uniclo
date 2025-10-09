@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Loader2, X } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useCreateSubnet, useFetchSubnets } from "../../../hooks/adminHooks/subnetHooks";
-import { useFetchVpcs } from "../../../hooks/adminHooks/vcpHooks";
+import { useFetchVpcs, useFetchAvailableCidrs } from "../../../hooks/adminHooks/vcpHooks";
 import { useFetchGeneralRegions } from "../../../hooks/resource";
 import { useFetchProjectEdgeConfigTenant } from "../../../hooks/edgeHooks";
 
@@ -14,6 +14,7 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
   const { data: edgeConfig, isFetching: isFetchingEdgeConfig } =
     useFetchProjectEdgeConfigTenant(projectId, formData.region, { enabled: !!projectId && !!formData.region });
   const { data: existingSubnets, isFetching: isFetchingSubnets } = useFetchSubnets(projectId, formData.region, { enabled: !!projectId && !!formData.region });
+  const { data: availableCidrs, isFetching: isFetchingAvailableCidrs } = useFetchAvailableCidrs(projectId, formData.region, formData.vpc_id, suggestPrefix, 8, { enabled: !!projectId && !!formData.region && !!formData.vpc_id });
 
   const [formData, setFormData] = useState({
     name: "",
@@ -90,7 +91,7 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
       const blockSize = Math.pow(2, 32 - suggestPrefix);
       if (suggestPrefix < v.prefix) return; // cannot suggest blocks larger than VPC
       const alignedStart = (v.start + ((blockSize - (v.start % blockSize)) % blockSize)) >>> 0;
-      const out = [];
+      let out = [];
       for (let cur = alignedStart; cur + blockSize - 1 <= v.end; cur += blockSize) {
         const curEnd = (cur + blockSize - 1) >>> 0;
         // check overlap with any used range
@@ -100,7 +101,10 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
           if (out.length >= 8) break;
         }
       }
-      setSuggestions(out);
+      // Merge backend-provided suggestions (if any), preferring locally computed first
+      const back = Array.isArray(availableCidrs) ? availableCidrs : [];
+      const merged = [...out, ...back.filter((s) => !out.includes(s))];
+      setSuggestions(merged);
     } catch (e) {
       // swallow; suggestions optional
     }
@@ -150,7 +154,7 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
       setSuggestions([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.vpc_id, formData.region, suggestPrefix, isFetchingSubnets, existingSubnets]);
+  }, [formData.vpc_id, formData.region, suggestPrefix, isFetchingSubnets, existingSubnets, availableCidrs]);
 
   if (!isOpen) return null;
 
@@ -234,6 +238,9 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
                   >
                     Suggest
                   </button>
+                  {isFetchingAvailableCidrs && (
+                    <span className="ml-2 text-gray-500">checking provider…</span>
+                  )}
                 </div>
               </div>
               {errors.cidr_block && (

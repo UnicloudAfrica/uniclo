@@ -41,35 +41,23 @@ export const QuoteSummaryStep = ({ formData, pricingRequests, clients }) => {
 
       <div>
         <h3 className="text-lg font-semibold text-gray-800 mb-2">
-          Quoted Items ({pricingRequests.length})
+          Quote Items ({pricingRequests.length})
         </h3>
-        <div className="space-y-4">
+        <div className="space-y-2">
           {pricingRequests.length > 0 ? (
-            pricingRequests.map((req, index) => (
-              <div key={index} className="p-4 bg-gray-50 rounded-lg space-y-2">
-                <h4 className="font-semibold text-gray-700">
-                  Item #{index + 1}
-                </h4>
-                <DetailRow
-                  label="Configuration"
-                  value={`${req.number_of_instances}x ${req._display.compute}`}
-                />
-                <DetailRow label="Region" value={req.region} />
-                <DetailRow label="OS Image" value={req._display.os} />
-                <DetailRow label="Storage" value={req._display.storage} />
-                <DetailRow label="Term" value={`${req.months} months`} />
-                {req.bandwidth_id && (
-                  <DetailRow
-                    label="Bandwidth"
-                    value={`${req.bandwidth_count} units`}
-                  />
-                )}
-              </div>
-            ))
+            pricingRequests.map((req, index) => {
+              const qty = req.number_of_instances || 1;
+              const compute = req._display?.compute || "Compute";
+              const storage = req._display?.storage || (req.storage_size_gb ? `${req.storage_size_gb} GB` : "Storage");
+              const os = req._display?.os || "OS";
+              return (
+                <div key={index} className="text-sm text-gray-800">
+                  {`${qty}x ${compute} (${storage}, ${os})`}
+                </div>
+              );
+            })
           ) : (
-            <p className="text-sm text-gray-500">
-              No items have been added to this quote.
-            </p>
+            <p className="text-sm text-gray-500">No items have been added to this quote.</p>
           )}
         </div>
       </div>

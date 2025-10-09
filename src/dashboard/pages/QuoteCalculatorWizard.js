@@ -183,14 +183,21 @@ export default function QuoteCalculatorWizard({ embedded = false } = {}) {
       return;
     }
 
-    // Build one combined request for estimation (using first item for simplicity)
-    // For multi-item estimate UIs, you can loop and show multiple blocks.
     const first = items[0];
+
+    // Build a unique, valid email to satisfy uniqueness constraint (leads & users)
+    const baseEmail = quoteInfo.email || profile?.email || "quote@local.test";
+    const uniqueEmail = (() => {
+      const [local, domain] = baseEmail.split("@");
+      if (!domain) return `quote+${Date.now()}@local.test`;
+      return `${local}+q${Date.now()}@${domain}`;
+    })();
+
     const leadPayload = {
       user: {
-        first_name: "",
-        last_name: "",
-        email: quoteInfo.email || "",
+        first_name: profile?.first_name || "Quote",
+        last_name: profile?.last_name || "Request",
+        email: uniqueEmail,
         phone: "",
         company: "",
         country: "",
@@ -200,24 +207,28 @@ export default function QuoteCalculatorWizard({ embedded = false } = {}) {
       },
       pricing_request: {
         compute_instance_id: first.compute_instance_id,
-        ebs_volumes: (first.volume_types || []).map((v) => ({
-          ebs_volume_id: v.volume_type_id,
+        volume_types: (first.volume_types || []).map((v) => ({
+          volume_type_id: v.volume_type_id,
           storage_size_gb: v.storage_size_gb,
         })),
         os_image_id: first.os_image_id,
         months: first.months,
         number_of_instances: first.number_of_instances,
-        bandwidth_id: first.bandwidth_id,
+        bandwidth_id: first.bandwidth_id || undefined,
         package_id: null,
-        bandwidth_count: first.bandwidth_count,
-        floating_ip_count: first.floating_ip_count,
-        cross_connect_id: first.cross_connect_id,
+        bandwidth_count: first.bandwidth_id ? (first.bandwidth_count || 1) : undefined,
+        floating_ip_count: first.floating_ip_id ? (first.floating_ip_count || 1) : undefined,
+        cross_connect_id: first.cross_connect_id || undefined,
         currency: "USD",
       },
     };
 
     estimate(leadPayload, {
       onSuccess: () => setStep(1),
+      onError: (err) => {
+        // Surface server message for easier debugging
+        setErrors({ form: err?.message || "Failed to calculate pricing." });
+      },
     });
   };
 

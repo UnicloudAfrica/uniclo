@@ -4,7 +4,7 @@ import { useCreateRoute } from "../../../hooks/adminHooks/routeTableHooks";
 import { useFetchIgws } from "../../../hooks/adminHooks/igwHooks";
 import { useFetchNetworkInterfaces } from "../../../hooks/adminHooks/networkHooks";
 
-const AddRoute = ({ isOpen, onClose, projectId, region: defaultRegion = "", routeTableId = "" }) => {
+const AddRoute = ({ isOpen, onClose, projectId, region: defaultRegion = "", routeTableId = "", routeTables = [] }) => {
   const [form, setForm] = useState({
     region: defaultRegion || "",
     route_table_id: routeTableId || "",
@@ -70,14 +70,19 @@ const AddRoute = ({ isOpen, onClose, projectId, region: defaultRegion = "", rout
             {errors.region && <p className="text-xs text-red-500 mt-1">{errors.region}</p>}
           </div>
           <div>
-            <label className="block text-sm text-gray-700 mb-1">Route Table ID</label>
-            <input
-              type="text"
+            <label className="block text-sm text-gray-700 mb-1">Route Table</label>
+            <select
               value={form.route_table_id}
               onChange={(e) => setForm((p) => ({ ...p, route_table_id: e.target.value }))}
               className={`w-full border rounded px-3 py-2 text-sm ${errors.route_table_id ? "border-red-500" : "border-gray-300"}`}
-              placeholder="rtb-..."
-            />
+            >
+              <option value="">Select Route Table</option>
+              {Array.isArray(routeTables) && routeTables.map((rt) => (
+                <option key={rt.id || rt.route_table?.id} value={rt.id || rt.route_table?.id}>
+                  {rt.name || rt.route_table?.name || (rt.id || rt.route_table?.id)}
+                </option>
+              ))}
+            </select>
             {errors.route_table_id && <p className="text-xs text-red-500 mt-1">{errors.route_table_id}</p>}
           </div>
           <div>

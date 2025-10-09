@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useFetchRouteTables, useCreateRouteTableAssociation, useDeleteRoute } from "../../../hooks/adminHooks/routeTableHooks";
+import { useFetchRouteTables, useCreateRouteTableAssociation, useDeleteRoute, useCreateRoute } from "../../../hooks/adminHooks/routeTableHooks";
 import { useFetchSubnets } from "../../../hooks/adminHooks/subnetHooks";
+import { useFetchIgws } from "../../../hooks/adminHooks/igwHooks";
 import adminSilentApiforUser from "../../../index/admin/silentadminforuser";
 import { useQueryClient } from "@tanstack/react-query";
 import { RotateCw } from "lucide-react";
@@ -12,11 +13,13 @@ const RouteTables = ({ projectId = "", region = "" }) => {
   const queryClient = useQueryClient();
   const { mutate: associateRouteTable, isPending: associating } = useCreateRouteTableAssociation();
   const { mutate: deleteRoute } = useDeleteRoute();
+  const { mutate: createRoute } = useCreateRoute();
   const [assocForm, setAssocForm] = useState({ route_table_id: "", subnet_id: "" });
   const [isCreateModalOpen, setCreateModal] = useState(false);
   const [isAddRouteOpen, setAddRouteOpen] = useState(false);
   const [selectedRtId, setSelectedRtId] = useState("");
   const { data: subnets } = useFetchSubnets(projectId, region, { enabled: !!projectId && !!region });
+  const { data: igws } = useFetchIgws(projectId, region, { enabled: !!projectId && !!region });
 
   const handleAssociate = (e) => {
     e.preventDefault();
@@ -139,12 +142,40 @@ const RouteTables = ({ projectId = "", region = "" }) => {
             <div className="mt-3">
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-semibold">Routes</h4>
-                <button
-                  onClick={() => { setSelectedRtId(rt.id || rt.route_table?.id); setAddRouteOpen(true); }}
-                  className="rounded-[16px] px-3 py-1.5 bg-[#288DD1] text-white text-xs"
-                >
-                  Add Route
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => { setSelectedRtId(rt.id || rt.route_table?.id); setAddRouteOpen(true); }}
+                    className="rounded-[16px] px-3 py-1.5 bg-[#288DD1] text-white text-xs"
+                  >
+                    Add Route
+                  </button>
+                  <button
+                    onClick={() => {
+                      const rtId = rt.id || rt.route_table?.id;
+                      const vpcId = rt.vpc_id || rt.route_table?.vpc_id;
+                      let chosenIgw = null;
+                      if (Array.isArray(igws) && igws.length > 0) {
+                        chosenIgw = igws.find((g) => (g.attachments?.[0]?.vpc_id || g.vpc_id || g.network_id) === vpcId) || igws[0];
+                      }
+                      if (!chosenIgw) {
+                        console.warn("No Internet Gateway available to create default route");
+                        return;
+                      }
+                      createRoute({
+                        project_id: projectId,
+                        region,
+                        route_table_id: rtId,
+                        destination_cidr_block: "0.0.0.0/0",
+                        gateway_id: chosenIgw.id,
+                      });
+                    }}
+                    disabled={!igws || igws.length === 0}
+                    className="rounded-[16px] px-3 py-1.5 bg-white border text-xs disabled:opacity-50"
+                    title="Create default route 0.0.0.0/0 to an Internet Gateway"
+                  >
+                    Default to IGW
+                  </button>
+                </div>
               </div>
               <ul className="text-sm list-disc ml-5">
                 {((rt.routes || rt.route_table?.routes) || []).length === 0 && (
@@ -189,7 +220,7 @@ const RouteTables = ({ projectId = "", region = "" }) => {
         )}
       </div>
       <AddRouteTable isOpen={isCreateModalOpen} onClose={() => setCreateModal(false)} projectId={projectId} region={region} />
-      <AddRoute isOpen={isAddRouteOpen} onClose={() => setAddRouteOpen(false)} projectId={projectId} region={region} routeTableId={selectedRtId} />
+      <AddRoute isOpen={isAddRouteOpen} onClose={() => setAddRouteOpen(false)} projectId={projectId} region={region} routeTableId={selectedRtId} routeTables={routeTables || []} />
     </div>
   );
 };

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useFetchRouteTables, useCreateRouteTableAssociation, useDeleteRoute, useCreateRoute } from "../../../hooks/adminHooks/routeTableHooks";
 import { useFetchSubnets } from "../../../hooks/adminHooks/subnetHooks";
 import { useFetchIgws } from "../../../hooks/adminHooks/igwHooks";
+import ToastUtils from "../../../utils/toastUtil";
 import adminSilentApiforUser from "../../../index/admin/silentadminforuser";
 import { useQueryClient } from "@tanstack/react-query";
 import { RotateCw } from "lucide-react";
@@ -18,6 +19,7 @@ const RouteTables = ({ projectId = "", region = "" }) => {
   const [isCreateModalOpen, setCreateModal] = useState(false);
   const [isAddRouteOpen, setAddRouteOpen] = useState(false);
   const [selectedRtId, setSelectedRtId] = useState("");
+  const [igwChoice, setIgwChoice] = useState({}); // map of routeTableId -> igwId
   const { data: subnets } = useFetchSubnets(projectId, region, { enabled: !!projectId && !!region });
   const { data: igws } = useFetchIgws(projectId, region, { enabled: !!projectId && !!region });
 
@@ -149,16 +151,32 @@ const RouteTables = ({ projectId = "", region = "" }) => {
                   >
                     Add Route
                   </button>
+                  {/* IGW picker (optional) */}
+                  <select
+                    value={(igwChoice[(rt.id || rt.route_table?.id) || ""] || "")}
+                    onChange={(e) => setIgwChoice((prev) => ({ ...prev, [(rt.id || rt.route_table?.id) || ""]: e.target.value }))}
+                    className="border rounded px-2 py-1 text-xs"
+                    title="Pick an IGW or leave Auto"
+                  >
+                    <option value="">Auto</option>
+                    {(igws || []).map((g) => (
+                      <option key={g.id} value={g.id}>{g.name || g.id}</option>
+                    ))}
+                  </select>
                   <button
                     onClick={() => {
                       const rtId = rt.id || rt.route_table?.id;
                       const vpcId = rt.vpc_id || rt.route_table?.vpc_id;
-                      let chosenIgw = null;
-                      if (Array.isArray(igws) && igws.length > 0) {
-                        chosenIgw = igws.find((g) => (g.attachments?.[0]?.vpc_id || g.vpc_id || g.network_id) === vpcId) || igws[0];
+                      let chosenIgwObj = null;
+                      const chosenId = igwChoice[rtId || ""];
+                      if (chosenId && Array.isArray(igws)) {
+                        chosenIgwObj = igws.find((g) => g.id === chosenId) || null;
                       }
-                      if (!chosenIgw) {
-                        console.warn("No Internet Gateway available to create default route");
+                      if (!chosenIgwObj && Array.isArray(igws) && igws.length > 0) {
+                        chosenIgwObj = igws.find((g) => (g.attachments?.[0]?.vpc_id || g.vpc_id || g.network_id) === vpcId) || igws[0];
+                      }
+                      if (!chosenIgwObj) {
+                        ToastUtils.error("No Internet Gateway available in this project/region");
                         return;
                       }
                       createRoute({
@@ -166,7 +184,10 @@ const RouteTables = ({ projectId = "", region = "" }) => {
                         region,
                         route_table_id: rtId,
                         destination_cidr_block: "0.0.0.0/0",
-                        gateway_id: chosenIgw.id,
+                        gateway_id: chosenIgwObj.id,
+                      }, {
+                        onSuccess: () => ToastUtils.success("Default route created"),
+                        onError: (err) => ToastUtils.error(err?.message || "Failed to create route"),
                       });
                     }}
                     disabled={!igws || igws.length === 0}
@@ -201,7 +222,7 @@ const RouteTables = ({ projectId = "", region = "" }) => {
                         {dest} → {target || '—'}
                       </span>
                       <button
-                        onClick={() => deleteRoute(payload)}
+                        onClick={() => deleteRoute(payload, { onSuccess: () => ToastUtils.success("Route deleted"), onError: (err) => ToastUtils.error(err?.message || "Failed to delete route") })}
                         className="text-red-600 text-xs hover:underline"
                         title="Delete route"
                       >

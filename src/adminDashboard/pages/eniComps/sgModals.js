@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { useAttachNetworkInterfaceSecurityGroup, useDetachNetworkInterfaceSecurityGroup } from "../../../hooks/adminHooks/networkHooks";
 import { useFetchSecurityGroups } from "../../../hooks/adminHooks/securityGroupHooks";
+import ToastUtils from "../../../utils/toastUtil";
 
 export const AttachSgModal = ({ isOpen, onClose, projectId, region = "", networkInterfaceId = "" }) => {
   const [form, setForm] = useState({ security_group_id: "", region, network_interface_id: networkInterfaceId });
@@ -23,7 +24,13 @@ export const AttachSgModal = ({ isOpen, onClose, projectId, region = "", network
     if (!form.network_interface_id) eobj.network_interface_id = "ENI ID is required";
     setErrors(eobj);
     if (Object.keys(eobj).length) return;
-    attach({ project_id: projectId, region: form.region, network_interface_id: form.network_interface_id, security_group_id: form.security_group_id }, { onSuccess: onClose });
+    attach(
+      { project_id: projectId, region: form.region, network_interface_id: form.network_interface_id, security_group_id: form.security_group_id },
+      {
+        onSuccess: () => { ToastUtils.success("Security group attached"); onClose(); },
+        onError: (err) => ToastUtils.error(err?.message || "Failed to attach security group"),
+      }
+    );
   };
 
   return (
@@ -88,7 +95,13 @@ export const DetachSgModal = ({ isOpen, onClose, projectId, region = "", network
     if (!form.network_interface_id) eobj.network_interface_id = "ENI ID is required";
     setErrors(eobj);
     if (Object.keys(eobj).length) return;
-    detach({ project_id: projectId, region: form.region, network_interface_id: form.network_interface_id, security_group_id: form.security_group_id }, { onSuccess: onClose });
+    detach(
+      { project_id: projectId, region: form.region, network_interface_id: form.network_interface_id, security_group_id: form.security_group_id },
+      {
+        onSuccess: () => { ToastUtils.success("Security group detached"); onClose(); },
+        onError: (err) => ToastUtils.error(err?.message || "Failed to detach security group"),
+      }
+    );
   };
 
   return (

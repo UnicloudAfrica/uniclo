@@ -77,21 +77,17 @@ import Calculator from "./pages/calculator";
 import AdminLeads from "./adminDashboard/pages/adminLeads";
 import AdminLeadDetails from "./adminDashboard/pages/adminLeadDetails";
 import TenantCalculator from "./dashboard/pages/calculator";
-import Admincalculator from "./adminDashboard/pages/admincalculator";
 import AdminSupportTicket from "./adminDashboard/pages/adminSupport";
 import AdminRegion from "./adminDashboard/pages/adminRegion";
-import AdminCountryPricing from "./adminDashboard/pages/adminCountryPricing";
 import AdminKeyPairs from "./adminDashboard/pages/adminKeyPairs";
 import AdminPricing from "./adminDashboard/pages/adminPricing";
 import AdminProducts from "./adminDashboard/pages/adminProducts";
 import AdminColocation from "./adminDashboard/pages/adminColocation";
 import AddInstancePage from "./dashboard/pages/addInstance";
-import AdminCalculatorOptions from "./adminDashboard/pages/adminCalculatorOptions";
-import AdminMultiQuote from "./adminDashboard/pages/adminMultiQuote";
+import AdminQuoteCalculator from "./adminDashboard/pages/AdminQuoteCalculator";
 import TenantQuotes from "./dashboard/pages/quotes";
 import QuoteCalculatorWizard from "./dashboard/pages/QuoteCalculatorWizard";
 import TenantQuoteCalculator from "./dashboard/pages/TenantQuoteCalculator";
-import AdminQuoteCalculator from "./adminDashboard/pages/AdminQuoteCalculator";
 import ClientDashboard from "./clientDashboard/pages/clientDashboard";
 import ClientProject from "./clientDashboard/pages/clientProjects";
 import ClientProjectDetails from "./clientDashboard/pages/clientProjectDetails";
@@ -231,10 +227,6 @@ function App() {
           <Route path="/admin-dashboard/leads" element={<AdminLeads />} />
           <Route path="/admin-dashboard/regions" element={<AdminRegion />} />
           <Route
-            path="/admin-dashboard/country-pricing"
-            element={<AdminCountryPricing />}
-          />
-          <Route
             path="/admin-dashboard/leads/details"
             element={<AdminLeadDetails />}
           />
@@ -277,6 +269,7 @@ function App() {
             path="/admin-dashboard/tax-configuration"
             element={<AdminTax />}
           />
+
           <Route
             path="/admin-dashboard/support-ticket"
             element={<AdminSupportTicket />}

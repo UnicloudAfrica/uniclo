@@ -9,6 +9,7 @@ const QuoteInfoStep = ({
   isClientsFetching,
   tenants = [],
   isTenantsFetching = false,
+  showEstimateContact = false,
 }) => {
   const inputClass =
     "block w-full rounded-md border-gray-300 focus:border-[#288DD1] focus:ring-[#288DD1] sm:text-sm input-field";
@@ -169,6 +170,44 @@ const QuoteInfoStep = ({
             <p className="text-red-500 text-xs mt-1">{errors.bill_to_name}</p>
           )}
         </div>
+
+        {showEstimateContact && (
+          <>
+            <div>
+              <label htmlFor="estimate_first_name" className="block text-sm font-medium text-gray-700">First Name (for Estimate)</label>
+              <input
+                type="text"
+                id="estimate_first_name"
+                value={formData.estimate_first_name || ""}
+                onChange={(e) => updateFormData("estimate_first_name", e.target.value)}
+                className={inputClass}
+                placeholder="Jane"
+              />
+            </div>
+            <div>
+              <label htmlFor="estimate_last_name" className="block text-sm font-medium text-gray-700">Last Name (for Estimate)</label>
+              <input
+                type="text"
+                id="estimate_last_name"
+                value={formData.estimate_last_name || ""}
+                onChange={(e) => updateFormData("estimate_last_name", e.target.value)}
+                className={inputClass}
+                placeholder="Doe"
+              />
+            </div>
+            <div>
+              <label htmlFor="estimate_email" className="block text-sm font-medium text-gray-700">Email for Estimate</label>
+              <input
+                type="email"
+                id="estimate_email"
+                value={formData.estimate_email || ""}
+                onChange={(e) => updateFormData("estimate_email", e.target.value)}
+                className={inputClass}
+                placeholder="you@example.com"
+              />
+            </div>
+          </>
+        )}
 
         <div className="md:col-span-2">
           <label

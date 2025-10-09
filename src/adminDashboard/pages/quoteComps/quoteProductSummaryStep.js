@@ -29,7 +29,6 @@ const ProductSummaryStep = ({ pricingRequests, formData }) => {
         ...item,
         type: 'Compute Instance',
         details: `${item.instances}x ${item.compute} (${item.os}) - ${item.months} month(s)`,
-        icon: Package
       });
 
       // Storage
@@ -37,7 +36,6 @@ const ProductSummaryStep = ({ pricingRequests, formData }) => {
         ...item,
         type: 'Storage',
         details: `${item.instances}x ${item.storage} - ${item.months} month(s)`,
-        icon: HardDrive
       });
 
       // Network resources
@@ -46,7 +44,6 @@ const ProductSummaryStep = ({ pricingRequests, formData }) => {
           ...item,
           type: 'Bandwidth',
           details: `${item.bandwidth} - ${item.months} month(s)`,
-          icon: Network
         });
       }
 
@@ -55,7 +52,6 @@ const ProductSummaryStep = ({ pricingRequests, formData }) => {
           ...item,
           type: 'Floating IPs',
           details: `${item.floatingIps} - ${item.months} month(s)`,
-          icon: Globe
         });
       }
 
@@ -65,7 +61,6 @@ const ProductSummaryStep = ({ pricingRequests, formData }) => {
           ...item,
           type: 'Cross Connect',
           details: `Cross Connect - ${item.months} month(s)`,
-          icon: Link
         });
       }
     });
@@ -75,13 +70,13 @@ const ProductSummaryStep = ({ pricingRequests, formData }) => {
 
   const groupedItems = groupItemsByType();
 
-  const ProductTypeSection = ({ title, items, bgColor = "bg-gray-50" }) => {
+  const ProductTypeSection = ({ title, items, bgColor = "bg-gray-50", icon }) => {
     if (items.length === 0) return null;
 
     return (
       <div className={`${bgColor} p-4 rounded-lg mb-4`}>
         <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
-          {items[0]?.icon && <items[0].icon className="w-5 h-5 mr-2" />}
+          {icon && React.createElement(icon, { className: "w-5 h-5 mr-2" })}
           {title} ({items.length} item{items.length !== 1 ? 's' : ''})
         </h4>
         <div className="space-y-2">
@@ -134,24 +129,28 @@ const ProductSummaryStep = ({ pricingRequests, formData }) => {
         title="Compute Resources"
         items={groupedItems.compute}
         bgColor="bg-blue-50"
+        icon={Package}
       />
       
       <ProductTypeSection
         title="Storage Resources"
         items={groupedItems.storage}
         bgColor="bg-green-50"
+        icon={HardDrive}
       />
       
       <ProductTypeSection
         title="Network Resources"
         items={groupedItems.network}
         bgColor="bg-purple-50"
+        icon={Network}
       />
       
       <ProductTypeSection
         title="Other Resources"
         items={groupedItems.other}
         bgColor="bg-orange-50"
+        icon={Link}
       />
 
       <div className="mt-6 p-4 bg-gray-100 rounded-lg">

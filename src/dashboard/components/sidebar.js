@@ -36,6 +36,7 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/dashboard/projects": "Projects",
     "/dashboard/instances": "Instances",
     "/dashboard/quotes": "Quotes",
+    "/dashboard/quote-calculator": "Quote Calculator",
     "/dashboard/payment-history": "Payment History",
     "/dashboard/support-ticket": "Support Ticket",
     "/dashboard/app-settings": "App Settings",
@@ -100,6 +101,12 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       icon: modules,
       activeIcon: activemodules,
       path: "/dashboard/calculator",
+    },
+    {
+      name: "Quote Calculator",
+      icon: modules,
+      activeIcon: activemodules,
+      path: "/dashboard/quote-calculator",
     },
     {
       name: "Quotes",

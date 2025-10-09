@@ -91,6 +91,7 @@ import AdminCalculatorOptions from "./adminDashboard/pages/adminCalculatorOption
 import AdminMultiQuote from "./adminDashboard/pages/adminMultiQuote";
 import TenantQuotes from "./dashboard/pages/quotes";
 import QuoteCalculatorWizard from "./dashboard/pages/QuoteCalculatorWizard";
+import TenantQuoteCalculator from "./dashboard/pages/TenantQuoteCalculator";
 import AdminQuoteCalculator from "./adminDashboard/pages/AdminQuoteCalculator";
 
 function App() {
@@ -126,7 +127,7 @@ function App() {
           <Route path="/events" element={<Events />} />
           <Route path="/blog" element={<Blog />} />
 <Route path="/calculator" element={<Calculator />} />
-<Route path="/dashboard/quote-calculator" element={<QuoteCalculatorWizard />} />
+<Route path="/dashboard/quote-calculator" element={<TenantQuoteCalculator />} />
           <Route
             path="/Africa-Data-Centres-and-Onix-Data-Centre-announce-partnership"
             element={<ExtResouce />}

@@ -6,6 +6,7 @@ import DeleteIgwModal from "../igwComps/deleteIGW";
 import ViewIgwModal from "../igwComps/viewIGW";
 import adminSilentApiforUser from "../../../index/admin/silentadminforuser";
 import { useQueryClient } from "@tanstack/react-query";
+import ToastUtils from "../../../utils/toastUtil";
 
 const Badge = ({ text }) => {
   const badgeClasses = {
@@ -78,16 +79,13 @@ const IGWs = ({ projectId = "", region = "" }) => {
     deleteIgw(
       { id: igw.id, payload },
       {
-        onSuccess: () => closeDeleteModal(),
-        onError: (err) => {
-          console.error("Failed to delete IGW:", err);
-          closeDeleteModal();
-        },
+        onSuccess: () => { ToastUtils.success("Internet Gateway deleted"); closeDeleteModal(); },
+        onError: (err) => { ToastUtils.error(err?.message || "Failed to delete Internet Gateway"); closeDeleteModal(); },
       }
     );
   };
 
-  if (isFetchingRegions || (selectedRegion && isFetchingIgws)) {
+  if (selectedRegion && isFetchingIgws) {
     return (
       <div className="flex items-center justify-center p-6 bg-gray-50 rounded-[10px] font-Outfit">
         <p className="text-gray-500 text-sm">Loading Internet Gateways...</p>
@@ -100,7 +98,6 @@ const IGWs = ({ projectId = "", region = "" }) => {
       <div className="flex justify-between items-center mb-6">
         <div />
         <button
-          <button
             onClick={async () => {
               try {
                 if (!projectId || !selectedRegion) return;

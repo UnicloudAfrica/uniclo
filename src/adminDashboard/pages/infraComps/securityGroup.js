@@ -115,7 +115,6 @@ const SecurityGroup = ({ projectId = "" }) => {
                       >
                         Description: {securityGroup.description || "N/A"}
                       </p>
-                      <p>Provider: {securityGroup.provider.toUpperCase()}</p>
                       <p>Region: {securityGroup.region}</p>
                       <p
                         className="truncate"

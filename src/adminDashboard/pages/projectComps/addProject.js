@@ -16,29 +16,13 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
     tenant_id: "",
     client_ids: [],
     default_region: "",
-    provider: "",
   });
   const [errors, setErrors] = useState({});
   const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
   const { data: tenants, isFetching: isTenantsFetching } = useFetchTenants();
   const { data: clients, isFetching: isClientsFetching } = useFetchClients();
 
-  // Update provider when default_region changes
-  useEffect(() => {
-    if (formData.default_region) {
-      const selectedRegion = regions?.find(
-        (r) => r.code === formData.default_region
-      );
-      if (selectedRegion) {
-        setFormData((prev) => ({
-          ...prev,
-          provider: selectedRegion.provider || "",
-        }));
-      }
-    } else {
-      setFormData((prev) => ({ ...prev, provider: "" }));
-    }
-  }, [formData.default_region, regions]);
+  // Provider derived server-side; no UI binding
 
   const validateForm = () => {
     const newErrors = {};
@@ -69,7 +53,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
         tenant_id: formData.tenant_id || null,
         client_ids: formData.client_ids,
         default_region: formData.default_region,
-        provider: formData.provider,
+        // provider omitted; derived server-side
       };
 
       console.log("Submitting Project Payload:", payload);
@@ -229,7 +213,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                     </option>
                     {regions?.map((region) => (
                       <option key={region.code} value={region.code}>
-                        {region.name} ({region.provider.toUpperCase()})
+                        {region.name}
                       </option>
                     ))}
                   </select>

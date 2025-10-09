@@ -11,33 +11,19 @@ const AddVpc = ({ isOpen, onClose, projectId = "" }) => {
   const { mutate, isPending } = useCreateVpc();
   const [formData, setFormData] = useState({
     name: "",
-    provider: "",
     region: "",
     cidr_block: "",
     is_default: false,
   });
   const [errors, setErrors] = useState({});
 
-  // Update provider when region changes
-  useEffect(() => {
-    if (formData.region) {
-      const selectedRegion = regions?.find((r) => r.code === formData.region);
-      if (selectedRegion) {
-        setFormData((prev) => ({
-          ...prev,
-          provider: selectedRegion.provider || "",
-        }));
-      }
-    } else {
-      setFormData((prev) => ({ ...prev, provider: "" }));
-    }
-  }, [formData.region, regions]);
+  // Provider derived server-side; do nothing here
 
   const validateForm = () => {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = "Name is required";
     if (!formData.region) newErrors.region = "Region is required";
-    if (!formData.provider) newErrors.provider = "Provider is required"; // Implicitly ensured by region
+    // Provider derived from region/project server-side
     if (!formData.cidr_block.trim()) {
       newErrors.cidr_block = "CIDR Block is required";
     } else if (!/^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/.test(formData.cidr_block)) {
@@ -59,7 +45,7 @@ const AddVpc = ({ isOpen, onClose, projectId = "" }) => {
 
     const vpcData = {
       project_id: projectId,
-      provider: formData.provider,
+      // provider omitted; derived server-side
       region: formData.region,
       name: formData.name,
       cidr_block: formData.cidr_block,
@@ -140,17 +126,12 @@ const AddVpc = ({ isOpen, onClose, projectId = "" }) => {
                 </option>
                 {regions?.map((region) => (
                   <option key={region.code} value={region.code}>
-                    {region.name} ({region.provider.toUpperCase()})
+                    {region.name}
                   </option>
                 ))}
               </select>
               {errors.region && (
                 <p className="text-red-500 text-xs mt-1">{errors.region}</p>
-              )}
-              {formData.provider && (
-                <p className="text-sm text-gray-500 mt-1">
-                  Provider: {formData.provider.toUpperCase()}
-                </p>
               )}
             </div>
             <div>

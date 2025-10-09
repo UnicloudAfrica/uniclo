@@ -84,9 +84,9 @@ import AdminPricing from "./adminDashboard/pages/adminPricing";
 import AdminProducts from "./adminDashboard/pages/adminProducts";
 import AdminColocation from "./adminDashboard/pages/adminColocation";
 import AddInstancePage from "./dashboard/pages/addInstance";
-import AdminQuoteCalculator from "./adminDashboard/pages/AdminQuoteCalculator";
+// import AdminQuoteCalculator from "./adminDashboard/pages/AdminQuoteCalculator";
 import TenantQuotes from "./dashboard/pages/quotes";
-import QuoteCalculatorWizard from "./dashboard/pages/QuoteCalculatorWizard";
+// import QuoteCalculatorWizard from "./dashboard/pages/QuoteCalculatorWizard";
 import TenantQuoteCalculator from "./dashboard/pages/TenantQuoteCalculator";
 import ClientDashboard from "./clientDashboard/pages/clientDashboard";
 import ClientProject from "./clientDashboard/pages/clientProjects";
@@ -252,19 +252,19 @@ function App() {
             element={<AdminInstancesDetails />}
           />
 
-          <Route
+          {/* <Route
             path="/admin-dashboard/calculator"
             element={<Admincalculator />}
           />
           <Route
             path="/admin-dashboard/calculator-new"
             element={<AdminCalculatorOptions />}
-          />
-          <Route path="/admin-dashboard/quote" element={<AdminMultiQuote />} />
-          <Route
+          /> */}
+          {/* <Route path="/admin-dashboard/quote" element={<AdminMultiQuote />} /> */}
+          {/* <Route
             path="/admin-dashboard/quote-calculator"
             element={<AdminQuoteCalculator />}
-          />
+          /> */}
           <Route
             path="/admin-dashboard/tax-configuration"
             element={<AdminTax />}

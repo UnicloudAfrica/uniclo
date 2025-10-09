@@ -93,6 +93,7 @@ import ClientProject from "./clientDashboard/pages/clientProjects";
 import ClientProjectDetails from "./clientDashboard/pages/clientProjectDetails";
 import ClientInstances from "./clientDashboard/pages/clientInstances";
 import ClientAddInstancePage from "./clientDashboard/pages/clientAddInstances";
+import AdminMultiQuote from "./adminDashboard/pages/adminMultiQuote";
 
 function App() {
   const location = useLocation();
@@ -260,7 +261,7 @@ function App() {
             path="/admin-dashboard/calculator-new"
             element={<AdminCalculatorOptions />}
           /> */}
-          {/* <Route path="/admin-dashboard/quote" element={<AdminMultiQuote />} /> */}
+          <Route path="/admin-dashboard/quote" element={<AdminMultiQuote />} />
           {/* <Route
             path="/admin-dashboard/quote-calculator"
             element={<AdminQuoteCalculator />}

@@ -350,10 +350,11 @@ export default function QuoteCalculatorWizard({ embedded = false } = {}) {
   };
 
   // Fetch selectable data based on region
-  // Regions: use admin regions when embedded, otherwise general regions
-  const { data: regions = [], isFetching: isRegionsFetching } = embedded
-    ? useFetchRegions()
-    : useFetchGeneralRegions();
+  // Regions: call both hooks and gate via enabled to satisfy rules-of-hooks
+  const regionsAdminQuery = useFetchRegions({ enabled: !!embedded });
+  const regionsGeneralQuery = useFetchGeneralRegions({ enabled: !embedded });
+  const regions = (embedded ? regionsAdminQuery.data : regionsGeneralQuery.data) || [];
+  const isRegionsFetching = embedded ? !!regionsAdminQuery.isFetching : !!regionsGeneralQuery.isFetching;
 
   // Use product-pricing for all catalogs, gated on region selection
   const { data: computerInstances = [], isFetching: isComputerInstancesFetching } =

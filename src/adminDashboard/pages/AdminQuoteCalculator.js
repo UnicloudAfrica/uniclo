@@ -3,11 +3,22 @@ import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import QuoteCalculatorWizard from "../../dashboard/pages/QuoteCalculatorWizard";
+import useAdminAuthStore from "../../stores/adminAuthStore";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function AdminQuoteCalculator() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const toggleMobileMenu = () => setIsMobileMenuOpen((v) => !v);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
+  const navigate = useNavigate();
+  const { token } = useAdminAuthStore();
+
+  useEffect(() => {
+    if (!token) {
+      navigate("/admin-signin");
+    }
+  }, [token, navigate]);
 
   return (
     <>

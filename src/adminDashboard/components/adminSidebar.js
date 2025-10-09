@@ -40,7 +40,7 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/admin-dashboard/calculator": "Calculator",
     "/admin-dashboard/calculator-new": "Calculator",
     "/admin-dashboard/quote": "Quote",
-    "/quote-calculator": "Quote Calculator",
+    "/admin-dashboard/quote-calculator": "Quote Calculator",
   };
 
   // Update activeItem based on the current path
@@ -170,7 +170,7 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       name: "Quote Calculator",
       icon: modules,
       activeIcon: activemodules,
-      path: "/quote-calculator",
+      path: "/admin-dashboard/quote-calculator",
     },
     {
       name: "Country Pricing",

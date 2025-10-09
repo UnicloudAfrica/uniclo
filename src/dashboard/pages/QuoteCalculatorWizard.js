@@ -60,7 +60,7 @@ const steps = [
   "Confirmation",
 ];
 
-export default function QuoteCalculatorWizard() {
+export default function QuoteCalculatorWizard({ embedded = false } = {}) {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialStep = (() => {
     const p = Number(searchParams.get("wstep"));
@@ -313,8 +313,8 @@ export default function QuoteCalculatorWizard() {
 
   return (
     <>
-      <Navbar />
-      <div className="mt-[8em] px-4 md:px-8 lg:px-16 w-full text-[#121212] font-Outfit flex flex-col items-center min-h-screen">
+      {!embedded && <Navbar />}
+      <div className={`${embedded ? "mt-0" : "mt-[8em]"} px-4 md:px-8 lg:px-16 w-full text-[#121212] font-Outfit flex flex-col items-center min-h-screen">
         <div className="flex flex-col items-center">
           <p className="font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">
             Quote + Calculator
@@ -497,8 +497,8 @@ export default function QuoteCalculatorWizard() {
           )}
         </div>
       </div>
-      <Ads />
-      <Footer />
+      {!embedded && <Ads />}
+      {!embedded && <Footer />}
     </>
   );
 }

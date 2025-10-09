@@ -2,13 +2,11 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { useFetchVpcs } from "../../../hooks/adminHooks/vcpHooks";
 import { useCreateRouteTable } from "../../../hooks/adminHooks/routeTableHooks";
-import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
 
 const AddRouteTable = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) => {
   const [form, setForm] = useState({ name: "", vpc_id: "", region: defaultRegion || "", tags: "" });
   const [errors, setErrors] = useState({});
 
-  const { data: regions } = useFetchRegions();
   const { data: vpcs } = useFetchVpcs(projectId, form.region, { enabled: !!projectId && !!form.region });
   const { mutate: createRouteTable, isPending } = useCreateRouteTable();
 
@@ -70,20 +68,7 @@ const AddRouteTable = ({ isOpen, onClose, projectId, region: defaultRegion = "" 
             {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
           </div>
 
-          <div>
-            <label className="block text-sm text-gray-700 mb-1">Region</label>
-            <select
-              value={form.region}
-              onChange={(e) => setForm((p) => ({ ...p, region: e.target.value, vpc_id: "" }))}
-              className={`w-full border rounded px-3 py-2 text-sm ${errors.region ? "border-red-500" : "border-gray-300"}`}
-            >
-              <option value="" disabled>Select a region</option>
-              {(regions || []).map((r) => (
-                <option key={r.code} value={r.code}>{r.name}</option>
-              ))}
-            </select>
-            {errors.region && <p className="text-xs text-red-500 mt-1">{errors.region}</p>}
-          </div>
+          <div className="text-sm text-gray-500">Region: {form.region}</div>
 
           <div>
             <label className="block text-sm text-gray-700 mb-1">VPC</label>

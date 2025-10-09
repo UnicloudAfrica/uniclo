@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { Eye, Trash2, ChevronDown, RotateCw } from "lucide-react";
+import { Eye, Trash2, RotateCw } from "lucide-react";
 import { useFetchIgws, useDeleteIgw } from "../../../hooks/adminHooks/igwHooks";
-import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
 import AddIgw from "../igwComps/addIGW";
 import DeleteIgwModal from "../igwComps/deleteIGW";
 import ViewIgwModal from "../igwComps/viewIGW";
@@ -27,14 +26,13 @@ const Badge = ({ text }) => {
   );
 };
 
-const IGWs = ({ projectId = "" }) => {
-  const [selectedRegion, setSelectedRegion] = useState("");
-  const { data: regions, isFetching: isFetchingRegions } = useFetchRegions();
+const IGWs = ({ projectId = "", region = "" }) => {
+  const selectedRegion = region;
   const { data: igws, isFetching: isFetchingIgws } = useFetchIgws(
     projectId,
     selectedRegion,
     {
-      enabled: !!selectedRegion, // Only fetch if a region is selected
+      enabled: !!selectedRegion,
     }
   );
   const { mutate: deleteIgw, isPending: isDeleting } = useDeleteIgw();
@@ -46,11 +44,7 @@ const IGWs = ({ projectId = "" }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  useEffect(() => {
-    if (regions && regions.length > 0 && !selectedRegion) {
-      setSelectedRegion(regions[0].code);
-    }
-  }, [regions, selectedRegion]);
+  useEffect(() => {}, []);
 
   const openCreateModal = () => setCreateModal(true);
   const closeCreateModal = () => setCreateModal(false);
@@ -104,26 +98,8 @@ const IGWs = ({ projectId = "" }) => {
   return (
     <div className="bg-gray-50 rounded-[10px] font-Outfit">
       <div className="flex justify-between items-center mb-6">
-        <div className="relative w-full max-w-[200px]">
-          <select
-            value={selectedRegion}
-            onChange={(e) => setSelectedRegion(e.target.value)}
-            className="appearance-none w-full bg-white border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded-md focus:outline-none focus:ring-2 focus:ring-[#288DD1] focus:border-[#288DD1] text-sm"
-            disabled={isFetchingRegions}
-          >
-            {isFetchingRegions ? (
-              <option>Loading regions...</option>
-            ) : (
-              regions?.map((region) => (
-                <option key={region.code} value={region.code}>
-                  {region.name}
-                </option>
-              ))
-            )}
-          </select>
-          <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-        </div>
-        <div className="flex items-center gap-2">
+        <div />
+        <button
           <button
             onClick={async () => {
               try {

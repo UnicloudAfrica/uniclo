@@ -58,17 +58,7 @@ const AddRoute = ({ isOpen, onClose, projectId, region: defaultRegion = "", rout
           <button onClick={onClose} className="text-gray-500 hover:text-gray-800"><X className="w-5 h-5" /></button>
         </div>
         <form onSubmit={submit} className="p-4 space-y-4">
-          <div>
-            <label className="block text-sm text-gray-700 mb-1">Region</label>
-            <input
-              type="text"
-              value={form.region}
-              onChange={(e) => setForm((p) => ({ ...p, region: e.target.value }))}
-              className={`w-full border rounded px-3 py-2 text-sm ${errors.region ? "border-red-500" : "border-gray-300"}`}
-              placeholder="e.g., lagos-1"
-            />
-            {errors.region && <p className="text-xs text-red-500 mt-1">{errors.region}</p>}
-          </div>
+          <div className="text-sm text-gray-500">Region: {form.region}</div>
           <div>
             <label className="block text-sm text-gray-700 mb-1">Route Table</label>
             <select

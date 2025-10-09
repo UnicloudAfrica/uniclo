@@ -3,7 +3,6 @@ import { Loader2, X } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useFetchVpcs, useFetchAvailableCidrs } from "../../../hooks/adminHooks/vcpHooks";
 import { useCreateSubnet, useFetchSubnets } from "../../../hooks/adminHooks/subnetHooks";
-import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
 
 const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) => {
   // Form state first so hooks can safely reference it
@@ -17,7 +16,6 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) =
   const [errors, setErrors] = useState({});
 
   const { data: vpcs, isFetching: isFetchingVpcs } = useFetchVpcs(projectId, formData.region, { enabled: !!projectId && !!formData.region });
-  const { data: regions, isFetching: isFetchingRegions } = useFetchRegions();
   const { mutate: createSubnet, isPending: isCreating } = useCreateSubnet();
   const { data: existingSubnets, isFetching: isFetchingSubnets } = useFetchSubnets(projectId, formData.region, { enabled: !!projectId && !!formData.region });
   const [suggestions, setSuggestions] = useState([]);
@@ -171,6 +169,7 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) =
               )}
             </div>
 
+            <div className="text-sm text-gray-500">Region: {formData.region}</div>
             <div>
               <label
                 htmlFor="cidr_block"

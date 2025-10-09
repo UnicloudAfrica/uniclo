@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Navbar from "../../components/navbar";
+import { useSearchParams } from "react-router-dom";
 import Footer from "../../components/footer";
 import Ads from "../../components/ad";
 import { Loader2 } from "lucide-react";
@@ -17,6 +18,7 @@ import {
   useFetchFloatingIPs,
   useFetchCrossConnect,
 } from "../../hooks/resource";
+import { useFetchProfile } from "../../hooks/resource";
 
 const Stepper = ({ current, steps }) => (
   <div className="flex items-center justify-between mb-8 w-full max-w-3xl mx-auto">
@@ -59,7 +61,12 @@ const steps = [
 ];
 
 export default function QuoteCalculatorWizard() {
-  const [step, setStep] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialStep = (() => {
+    const p = Number(searchParams.get("wstep"));
+    return Number.isFinite(p) && p >= 0 && p <= 4 ? p : 0;
+  })();
+  const [step, setStep] = useState(initialStep);
 
   // Single item scratch form (for QuoteResourceStep input controls)
   const [itemForm, setItemForm] = useState({
@@ -89,6 +96,17 @@ export default function QuoteCalculatorWizard() {
     bill_to_name: "",
     notes: "",
   });
+
+  // Prefill email from profile if available
+  const { data: profile } = useFetchProfile({
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (profile?.email && !quoteInfo.email) {
+      setQuoteInfo((prev) => ({ ...prev, email: profile.email }));
+    }
+  }, [profile]);
 
   const updateItemForm = (field, value) =>
     setItemForm((prev) => ({ ...prev, [field]: value }));
@@ -254,6 +272,14 @@ export default function QuoteCalculatorWizard() {
     });
   };
 
+  // Persist current step in URL for deep linking
+  useEffect(() => {
+    const currentUrlStep = Number(searchParams.get("wstep"));
+    if (!Number.isFinite(currentUrlStep) || currentUrlStep !== step) {
+      setSearchParams({ wstep: String(step) }, { replace: true });
+    }
+  }, [step]);
+
   const resetAll = () => {
     setStep(0);
     setItems([]);
@@ -355,6 +381,45 @@ export default function QuoteCalculatorWizard() {
           {step === 1 && (
             <div className="space-y-6">
               <QuoteSummaryStep formData={quoteInfo} pricingRequests={items} clients={[]} />
+
+              {/* Pricing Estimate (from /pricing-calculator-leads) */}
+              {estimateData?.pricing && (
+                <div className="bg-white rounded-lg p-4 border">
+                  <h4 className="text-lg font-semibold text-gray-800 mb-2">Pricing Estimate</h4>
+                  <div className="space-y-2 text-sm">
+                    {estimateData.pricing.lines?.map((line, idx) => (
+                      <div key={idx} className="flex justify-between">
+                        <span className="text-gray-700">{line.name}</span>
+                        <span className="text-gray-900">
+                          {line.quantity} x {new Intl.NumberFormat("en-US", { style: "currency", currency: line.currency || estimateData.pricing.currency || "USD" }).format(line.unit_local ?? line.unit_amount ?? 0)}
+                        </span>
+                      </div>
+                    ))}
+                    <div className="border-t pt-2">
+                      <div className="flex justify-between">
+                        <span className="font-medium text-gray-700">Subtotal</span>
+                        <span className="text-gray-900">
+                          {new Intl.NumberFormat("en-US", { style: "currency", currency: estimateData.pricing.currency || "USD" }).format(estimateData.pricing.subtotal ?? estimateData.pricing.pre_discount_subtotal ?? 0)}
+                        </span>
+                      </div>
+                      {typeof estimateData.pricing.tax !== "undefined" && (
+                        <div className="flex justify-between">
+                          <span className="font-medium text-gray-700">Tax</span>
+                          <span className="text-gray-900">
+                            {new Intl.NumberFormat("en-US", { style: "currency", currency: estimateData.pricing.currency || "USD" }).format(estimateData.pricing.tax ?? 0)}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-lg font-semibold text-gray-800">Estimated Total</span>
+                        <span className="text-lg font-semibold text-[#288DD1]">
+                          {new Intl.NumberFormat("en-US", { style: "currency", currency: estimateData.pricing.currency || "USD" }).format(estimateData.pricing.total ?? 0)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="flex justify-between">
                 <button onClick={() => setStep(0)} className="px-6 py-3 rounded-full bg-white border text-[#288DD1] border-[#288DD1] hover:bg-[#f0fbff]">
                   Back

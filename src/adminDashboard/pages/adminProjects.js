@@ -17,7 +17,6 @@ export default function AdminProjects() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAddProjectOpen, setAddProject] = useState(false);
-  const { data: projects, isFetching: isProjectsFetching } = useFetchProjects();
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -30,21 +29,28 @@ export default function AdminProjects() {
   const openAddProject = () => setAddProject(true);
   const closeAddProject = () => setAddProject(false);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const totalPages = Math.ceil((projects?.length || 0) / itemsPerPage);
+  // Fetch projects with backend pagination
+  const { data: projectsResponse, isFetching: isProjectsFetching } =
+    useFetchProjects({ page: currentPage, per_page: itemsPerPage });
 
-  const currentData =
-    projects?.slice(
-      (currentPage - 1) * itemsPerPage,
-      currentPage * itemsPerPage
-    ) || []; // Ensure currentData is an array even if projects is null/undefined
+  // Extract list and pagination meta
+  const currentData = projectsResponse?.data || [];
+  const totalPages = projectsResponse?.meta?.last_page || 1;
+  const totalProjects = projectsResponse?.meta?.total || 0;
 
-  const handlePageChange = (page) => {
+const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
+  };
+
+  const handlePerPageChange = (e) => {
+    const value = Number(e.target.value);
+    setItemsPerPage(value);
+    setCurrentPage(1); // Reset to first page when page size changes
   };
 
   const handleRowClick = (item) => {
@@ -83,13 +89,31 @@ export default function AdminProjects() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
-        <button
-          onClick={openAddProject}
-          className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base mt-5 hover:bg-[#1976D2] transition-colors"
-        >
-          Add Project
-        </button>
+<main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
+        <div className="flex items-center justify-between mt-5">
+          <button
+            onClick={openAddProject}
+            className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
+          >
+            Add Project
+          </button>
+
+          <div className="flex items-center space-x-2">
+            <label htmlFor="per-page" className="text-sm text-gray-700">
+              Per page:
+            </label>
+            <select
+              id="per-page"
+              value={itemsPerPage}
+              onChange={handlePerPageChange}
+              className="border border-gray-300 rounded-md px-2 py-1 text-sm bg-white"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={30}>30</option>
+            </select>
+          </div>
+        </div>
 
         {/* Desktop Table */}
         <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px] border border-gray-200">
@@ -160,8 +184,8 @@ export default function AdminProjects() {
                 ))
               ) : (
                 <tr>
-                  <td
-                    colSpan="4"
+<td
+                    colSpan="5"
                     className="px-6 py-4 text-center text-sm text-gray-500"
                   >
                     No projects found.
@@ -215,9 +239,9 @@ export default function AdminProjects() {
           )}
         </div>
 
-        {/* Pagination */}
-        {projects?.length > 0 && (
-          <div className="flex items-center justify-center px-4 py-3 -t border-gray-200 bg rounded-b-[12px] mt-6">
+{/* Pagination */}
+        {totalProjects > 0 && (
+          <div className="flex items-center justify-center px-4 py-3 border-t border-gray-200 bg-white rounded-b-[12px] mt-6">
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}

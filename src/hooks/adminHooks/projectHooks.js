@@ -2,13 +2,29 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
 
-// GET: Fetch all projects
-const fetchProjects = async () => {
-  const res = await silentApi("GET", "/projects");
+// GET: Fetch all projects (supports pagination)
+const fetchProjects = async (params = {}) => {
+  // Default to 10 items per page if not provided
+  const defaultParams = {
+    per_page: 10,
+  };
+
+  const queryParams = { ...defaultParams, ...params };
+
+  // Build query string from parameters
+  const queryString = Object.keys(queryParams)
+    .filter((key) => queryParams[key] !== undefined && queryParams[key] !== null)
+    .map((key) => `${key}=${encodeURIComponent(queryParams[key])}`)
+    .join("&");
+
+  const uri = `/projects${queryString ? `?${queryString}` : ""}`;
+
+  const res = await silentApi("GET", uri);
   if (!res.data) {
     throw new Error("Failed to fetch projects");
   }
-  return res.data;
+  // Return the full response to include pagination metadata (meta)
+  return res;
 };
 
 // GET: Fetch project by ID
@@ -47,11 +63,12 @@ const deleteProject = async (id) => {
   return res.data;
 };
 
-// Hook to fetch all projects
-export const useFetchProjects = (options = {}) => {
+// Hook to fetch all projects (supports pagination)
+export const useFetchProjects = (params = {}, options = {}) => {
   return useQuery({
-    queryKey: ["admin-projects"],
-    queryFn: fetchProjects,
+    // Include params in the key so different pages/page sizes cache separately
+    queryKey: ["admin-projects", params],
+    queryFn: () => fetchProjects(params),
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     refetchOnWindowFocus: false,
     ...options,

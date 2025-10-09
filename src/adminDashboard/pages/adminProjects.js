@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import { useFetchProjects } from "../../hooks/adminHooks/projectHooks";
 import { ChevronLeft, ChevronRight, Eye, Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import CreateProjectModal from "./projectComps/addProject";
 
 // Function to encode the ID for URL
@@ -14,6 +14,7 @@ const encodeId = (id) => {
 
 export default function AdminProjects() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedItem, setSelectedItem] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAddProjectOpen, setAddProject] = useState(false);
@@ -29,11 +30,17 @@ export default function AdminProjects() {
   const openAddProject = () => setAddProject(true);
   const closeAddProject = () => setAddProject(false);
 
-const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+const [currentPage, setCurrentPage] = useState(() => {
+    const p = Number(searchParams.get("page"));
+    return Number.isFinite(p) && p > 0 ? p : 1;
+  });
+  const [itemsPerPage, setItemsPerPage] = useState(() => {
+    const pp = Number(searchParams.get("per_page"));
+    return [10, 20, 30].includes(pp) ? pp : 10;
+  });
 
-  // Fetch projects with backend pagination
-  const { data: projectsResponse, isFetching: isProjectsFetching } =
+// Fetch projects with backend pagination
+  const { data: projectsResponse, isFetching: isProjectsFetching, isError: isProjectsError, error: projectsError, refetch: refetchProjects } =
     useFetchProjects({ page: currentPage, per_page: itemsPerPage });
 
   // Extract list and pagination meta
@@ -53,6 +60,25 @@ const handlePageChange = (page) => {
     setCurrentPage(1); // Reset to first page when page size changes
   };
 
+  // Keep URL in sync when state changes
+  useEffect(() => {
+    const currentParamsPage = Number(searchParams.get("page")) || 1;
+    const currentParamsPerPage = Number(searchParams.get("per_page")) || 10;
+    if (currentParamsPage !== currentPage || currentParamsPerPage !== itemsPerPage) {
+      setSearchParams({ page: String(currentPage), per_page: String(itemsPerPage) }, { replace: true });
+    }
+  }, [currentPage, itemsPerPage, searchParams, setSearchParams]);
+
+  // Update state if URL is changed externally (back/forward or deep link)
+  useEffect(() => {
+    const sp = Number(searchParams.get("page"));
+    const spp = Number(searchParams.get("per_page"));
+    const pageFromUrl = Number.isFinite(sp) && sp > 0 ? sp : 1;
+    const perPageFromUrl = [10, 20, 30].includes(spp) ? spp : 10;
+    if (pageFromUrl !== currentPage) setCurrentPage(pageFromUrl);
+    if (perPageFromUrl !== itemsPerPage) setItemsPerPage(perPageFromUrl);
+  }, [searchParams]);
+
   const handleRowClick = (item) => {
     setSelectedItem(item);
     // Encode the ID and name for URL safety
@@ -64,7 +90,7 @@ const handlePageChange = (page) => {
     );
   };
 
-  if (isProjectsFetching) {
+if (isProjectsFetching) {
     return (
       <>
         <AdminHeadbar onMenuClick={toggleMobileMenu} />
@@ -77,6 +103,40 @@ const handlePageChange = (page) => {
           <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
           <p className="ml-2 text-gray-700">Loading projects...</p>
         </main>
+      </>
+    );
+  }
+
+  if (isProjectsError) {
+    return (
+      <>
+        <AdminHeadbar onMenuClick={toggleMobileMenu} />
+        <AdminSidebar
+          isMobileMenuOpen={isMobileMenuOpen}
+          onCloseMobileMenu={closeMobileMenu}
+        />
+        <AdminActiveTab />
+        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center">
+          <div className="max-w-xl w-full bg-white border border-red-200 rounded-md p-4">
+            <div className="text-red-700 font-medium">Failed to load projects</div>
+            <div className="text-sm text-red-600 mt-1">{projectsError?.message || "An unexpected error occurred."}</div>
+            <div className="mt-3 flex items-center space-x-2">
+              <button
+                onClick={() => refetchProjects()}
+                className="px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700"
+              >
+                Retry
+              </button>
+              <button
+                onClick={openAddProject}
+                className="px-4 py-2 bg-[#288DD1] text-white rounded-md text-sm hover:bg-[#1976D2]"
+              >
+                Add Project
+              </button>
+            </div>
+          </div>
+        </main>
+        <CreateProjectModal isOpen={isAddProjectOpen} onClose={closeAddProject} />
       </>
     );
   }
@@ -114,6 +174,13 @@ const handlePageChange = (page) => {
             </select>
           </div>
         </div>
+
+        {totalProjects > 0 && (
+          <div className="mt-2 text-sm text-gray-600">
+            Showing {Math.min((currentPage - 1) * itemsPerPage + (currentData.length ? 1 : 0), totalProjects)}–
+            {Math.min((currentPage - 1) * itemsPerPage + currentData.length, totalProjects)} of {totalProjects}
+          </div>
+        )}
 
         {/* Desktop Table */}
         <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px] border border-gray-200">
@@ -186,9 +253,17 @@ const handlePageChange = (page) => {
                 <tr>
 <td
                     colSpan="5"
-                    className="px-6 py-4 text-center text-sm text-gray-500"
+                    className="px-6 py-6 text-center text-sm text-gray-700"
                   >
-                    No projects found.
+                    <div className="flex flex-col items-center space-y-3">
+                      <div>No projects found.</div>
+                      <button
+                        onClick={openAddProject}
+                        className="rounded-[30px] py-2 px-6 bg-[#288DD1] text-white font-normal text-sm hover:bg-[#1976D2] transition-colors"
+                      >
+                        Create your first project
+                      </button>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -233,8 +308,14 @@ const handlePageChange = (page) => {
               </div>
             ))
           ) : (
-            <div className="bg-white rounded-[12px] shadow-sm p-4 text-center text-gray-500">
-              No projects found.
+            <div className="bg-white rounded-[12px] shadow-sm p-6 text-center text-gray-700">
+              <div>No projects found.</div>
+              <button
+                onClick={openAddProject}
+                className="mt-3 rounded-[30px] py-2 px-6 bg-[#288DD1] text-white font-normal text-sm hover:bg-[#1976D2] transition-colors"
+              >
+                Create your first project
+              </button>
             </div>
           )}
         </div>

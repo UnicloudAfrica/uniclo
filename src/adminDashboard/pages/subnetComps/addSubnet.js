@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, X } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
-import { useFetchTenantVpcs } from "../../../hooks/vpcHooks";
-import { useCreateTenantSubnet } from "../../../hooks/subnetHooks";
+import { useFetchTenantVpcs, useFetchAvailableCidrs } from "../../../hooks/vpcHooks";
+import { useCreateTenantSubnet, useFetchTenantSubnets } from "../../../hooks/subnetHooks";
 import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
 
 const AddSubnet = ({ isOpen, onClose, projectId }) => {
@@ -11,6 +11,10 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
   const { data: regions, isFetching: isFetchingRegions } = useFetchRegions();
   const { mutate: createSubnet, isPending: isCreating } =
     useCreateTenantSubnet();
+  const { data: existingSubnets, isFetching: isFetchingSubnets } = useFetchTenantSubnets(projectId, formData.region, { enabled: !!projectId && !!formData.region });
+  const [suggestions, setSuggestions] = useState([]);
+  const [suggestPrefix, setSuggestPrefix] = useState(24);
+  const { data: availableCidrs, isFetching: isFetchingAvailableCidrs } = useFetchAvailableCidrs(projectId, formData.region, formData.vpc_id, suggestPrefix, 8, { enabled: !!projectId && !!formData.region && !!formData.vpc_id });
 
   const [formData, setFormData] = useState({
     name: "",
@@ -43,6 +47,57 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
+
+  // --- IPv4 helpers & suggestions ---
+  const ipToInt = (ip) => ip.split(".").reduce((acc, o) => (acc << 8) + (parseInt(o, 10) & 255), 0) >>> 0;
+  const intToIp = (n) => [24, 16, 8, 0].map((s) => ((n >>> s) & 255)).join(".");
+  const parseCidr = (cidr) => {
+    const [ip, prefix] = cidr.split("/");
+    const p = parseInt(prefix, 10);
+    const base = ipToInt(ip) & (p === 0 ? 0 : (~0 << (32 - p)) >>> 0);
+    const start = base >>> 0;
+    const end = (base + Math.pow(2, 32 - p) - 1) >>> 0;
+    return { start, end, prefix: p, base };
+  };
+  const overlaps = (aStart, aEnd, bStart, bEnd) => !(aEnd < bStart || bEnd < aStart);
+
+  const computeSuggestions = () => {
+    setSuggestions([]);
+    try {
+      const selectedVpc = vpcs?.find((v) => String(v.id) === String(formData.vpc_id));
+      if (!selectedVpc?.cidr_block) return;
+      const v = parseCidr(selectedVpc.cidr_block);
+      const used = (existingSubnets || [])
+        .filter((s) => String(s.vpc_id || s.network_id || s.vpc?.id) === String(formData.vpc_id))
+        .map((s) => parseCidr(s.cidr || s.cidr_block))
+        .sort((a, b) => a.start - b.start);
+      const blockSize = Math.pow(2, 32 - suggestPrefix);
+      if (suggestPrefix < v.prefix) return; // cannot suggest blocks larger than VPC
+      const alignedStart = (v.start + ((blockSize - (v.start % blockSize)) % blockSize)) >>> 0;
+      let out = [];
+      for (let cur = alignedStart; cur + blockSize - 1 <= v.end; cur += blockSize) {
+        const curEnd = (cur + blockSize - 1) >>> 0;
+        const hasOverlap = used.some((r) => overlaps(cur, curEnd, r.start, r.end));
+        if (!hasOverlap) {
+          out.push(`${intToIp(cur)}/${suggestPrefix}`);
+          if (out.length >= 8) break;
+        }
+      }
+      const back = Array.isArray(availableCidrs) ? availableCidrs : [];
+      const merged = [...out, ...back.filter((s) => !out.includes(s))];
+      setSuggestions(merged);
+    } catch (e) {
+      // noop
+    }
+  };
+
+  useEffect(() => {
+    if (formData.vpc_id && formData.region && !isFetchingSubnets) {
+      computeSuggestions();
+    } else {
+      setSuggestions([]);
+    }
+  }, [formData.vpc_id, formData.region, suggestPrefix, isFetchingSubnets, existingSubnets, availableCidrs]);
 
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
@@ -117,18 +172,58 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
               >
                 CIDR Block<span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                id="cidr_block"
-                value={formData.cidr_block}
-                onChange={(e) => updateFormData("cidr_block", e.target.value)}
-                placeholder="e.g., 10.0.0.0/24"
-                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
-                  errors.cidr_block ? "border-red-500" : "border-gray-300"
-                }`}
-              />
+              <div className="flex gap-2 items-center">
+                <input
+                  type="text"
+                  id="cidr_block"
+                  value={formData.cidr_block}
+                  onChange={(e) => updateFormData("cidr_block", e.target.value)}
+                  placeholder="e.g., 10.0.0.0/24"
+                  className={`flex-1 rounded-[10px] border px-3 py-2 text-sm input-field ${
+                    errors.cidr_block ? "border-red-500" : "border-gray-300"
+                  }`}
+                />
+                <div className="flex items-center gap-1 text-xs">
+                  <span>Prefix</span>
+                  <select
+                    value={suggestPrefix}
+                    onChange={(e) => setSuggestPrefix(parseInt(e.target.value, 10))}
+                    className="border rounded px-2 py-1"
+                  >
+                    {[20, 21, 22, 23, 24, 25, 26, 27, 28].map((p) => (
+                      <option key={p} value={p}>/{p}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={computeSuggestions}
+                    className="text-[#288DD1] hover:text-[#1976D2]"
+                    title="Compute suggestions"
+                  >
+                    Suggest
+                  </button>
+                  {isFetchingAvailableCidrs && (
+                    <span className="ml-2 text-gray-500">checking provider…</span>
+                  )}
+                </div>
+              </div>
               {errors.cidr_block && (
                 <p className="text-red-500 text-xs mt-1">{errors.cidr_block}</p>
+              )}
+              {suggestions.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                  {suggestions.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => updateFormData("cidr_block", s)}
+                      className="px-2 py-1 rounded-full border border-[#288DD1] text-[#288DD1] hover:bg-[#E6F2FA]"
+                      title="Use this CIDR"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
 

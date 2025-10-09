@@ -57,7 +57,7 @@ const RouteTables = ({ projectId = "", region = "" }) => {
               }
             }}
             className="flex items-center gap-2 rounded-[30px] py-1.5 px-3 bg-white border text-gray-700 text-xs hover:bg-gray-50"
-            title="Refresh from provider"
+title="Refresh"
           >
             <RotateCw className="w-4 h-4" /> Refresh
           </button>

@@ -105,7 +105,7 @@ const Subnets = ({ projectId = "", region = "" }) => {
             }
           }}
           className="flex items-center gap-2 rounded-[30px] py-2 px-4 bg-white border text-gray-700 text-sm hover:bg-gray-50"
-          title="Refresh from provider"
+title="Refresh"
         >
           <RotateCw className="w-4 h-4" /> Refresh
         </button>

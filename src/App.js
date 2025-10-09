@@ -94,6 +94,7 @@ import ClientProjectDetails from "./clientDashboard/pages/clientProjectDetails";
 import ClientInstances from "./clientDashboard/pages/clientInstances";
 import ClientAddInstancePage from "./clientDashboard/pages/clientAddInstances";
 import AdminMultiQuote from "./adminDashboard/pages/adminMultiQuote";
+import AdminAdvancedCalculator from "./adminDashboard/pages/adminAdvancedCalculator";
 
 function App() {
   const location = useLocation();
@@ -262,6 +263,7 @@ function App() {
             element={<AdminCalculatorOptions />}
           /> */}
           <Route path="/admin-dashboard/quote" element={<AdminMultiQuote />} />
+          <Route path="/admin-dashboard/advanced-calculator" element={<AdminAdvancedCalculator />} />
           {/* <Route
             path="/admin-dashboard/quote-calculator"
             element={<AdminQuoteCalculator />}

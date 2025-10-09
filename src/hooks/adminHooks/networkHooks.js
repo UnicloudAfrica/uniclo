@@ -26,6 +26,26 @@ const createNetworkInterface = async (payload) => {
   return res;
 };
 
+const attachNetworkInterfaceSecurityGroup = async (payload) => {
+  const res = await apiAdminforUser(
+    "POST",
+    "/business/network-interface-security-groups",
+    payload
+  );
+  if (!res) throw new Error("Failed to attach security group");
+  return res;
+};
+
+const detachNetworkInterfaceSecurityGroup = async (payload) => {
+  const res = await apiAdminforUser(
+    "DELETE",
+    "/business/network-interface-security-groups",
+    payload
+  );
+  if (!res) throw new Error("Failed to detach security group");
+  return res;
+};
+
 export const useFetchNetworkInterfaces = (projectId, region, options = {}) => {
   return useQuery({
     queryKey: ["networkInterfaces", { projectId, region }],
@@ -47,6 +67,26 @@ export const useCreateNetworkInterface = () => {
     },
     onError: (error) => {
       console.error("Error creating network interface:", error);
+    },
+  });
+};
+
+export const useAttachNetworkInterfaceSecurityGroup = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: attachNetworkInterfaceSecurityGroup,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["networkInterfaces", { projectId: variables.project_id }] });
+    },
+  });
+};
+
+export const useDetachNetworkInterfaceSecurityGroup = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: detachNetworkInterfaceSecurityGroup,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["networkInterfaces", { projectId: variables.project_id }] });
     },
   });
 };

@@ -4,6 +4,7 @@ import adminSilentApiforUser from "../../../index/admin/silentadminforuser";
 import { useQueryClient } from "@tanstack/react-query";
 import { RotateCw } from "lucide-react";
 import AddRouteTable from "../routeTableComps/addRouteTable";
+import AddRoute from "../routeTableComps/addRoute";
 
 const RouteTables = ({ projectId = "", region = "" }) => {
   const { data: routeTables, isFetching } = useFetchRouteTables(projectId, region);
@@ -11,6 +12,8 @@ const RouteTables = ({ projectId = "", region = "" }) => {
   const { mutate: associateRouteTable, isPending: associating } = useCreateRouteTableAssociation();
   const [assocForm, setAssocForm] = useState({ route_table_id: "", subnet_id: "" });
   const [isCreateModalOpen, setCreateModal] = useState(false);
+  const [isAddRouteOpen, setAddRouteOpen] = useState(false);
+  const [selectedRtId, setSelectedRtId] = useState("");
 
   const handleAssociate = (e) => {
     e.preventDefault();
@@ -119,7 +122,15 @@ const RouteTables = ({ projectId = "", region = "" }) => {
 
             {/* Routes */}
             <div className="mt-3">
-              <h4 className="text-sm font-semibold">Routes</h4>
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold">Routes</h4>
+                <button
+                  onClick={() => { setSelectedRtId(rt.id || rt.route_table?.id); setAddRouteOpen(true); }}
+                  className="rounded-[16px] px-3 py-1.5 bg-[#288DD1] text-white text-xs"
+                >
+                  Add Route
+                </button>
+              </div>
               <ul className="text-sm list-disc ml-5">
                 {((rt.routes || rt.route_table?.routes) || []).length === 0 && (
                   <li className="text-gray-500">No routes</li>
@@ -139,6 +150,7 @@ const RouteTables = ({ projectId = "", region = "" }) => {
         )}
       </div>
       <AddRouteTable isOpen={isCreateModalOpen} onClose={() => setCreateModal(false)} projectId={projectId} region={region} />
+      <AddRoute isOpen={isAddRouteOpen} onClose={() => setAddRouteOpen(false)} projectId={projectId} region={region} routeTableId={selectedRtId} />
     </div>
   );
 };

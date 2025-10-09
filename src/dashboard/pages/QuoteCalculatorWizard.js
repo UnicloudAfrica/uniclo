@@ -314,7 +314,7 @@ export default function QuoteCalculatorWizard({ embedded = false } = {}) {
   return (
     <>
       {!embedded && <Navbar />}
-      <div className={`${embedded ? "mt-0" : "mt-[8em]"} px-4 md:px-8 lg:px-16 w-full text-[#121212] font-Outfit flex flex-col items-center min-h-screen">
+      <div className={(embedded ? "mt-0 " : "mt-[8em] ") + "px-4 md:px-8 lg:px-16 w-full text-[#121212] font-Outfit flex flex-col items-center min-h-screen"}>
         <div className="flex flex-col items-center">
           <p className="font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">
             Quote + Calculator

@@ -90,6 +90,7 @@ import AddInstancePage from "./dashboard/pages/addInstance";
 import AdminCalculatorOptions from "./adminDashboard/pages/adminCalculatorOptions";
 import AdminMultiQuote from "./adminDashboard/pages/adminMultiQuote";
 import TenantQuotes from "./dashboard/pages/quotes";
+import QuoteCalculatorWizard from "./dashboard/pages/QuoteCalculatorWizard";
 
 function App() {
   const location = useLocation();
@@ -123,7 +124,8 @@ function App() {
           <Route path="/solutions" element={<Solutions />} />
           <Route path="/events" element={<Events />} />
           <Route path="/blog" element={<Blog />} />
-          <Route path="/calculator" element={<Calculator />} />
+<Route path="/calculator" element={<Calculator />} />
+          <Route path="/quote-calculator" element={<QuoteCalculatorWizard />} />
           <Route
             path="/Africa-Data-Centres-and-Onix-Data-Centre-announce-partnership"
             element={<ExtResouce />}

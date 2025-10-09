@@ -59,6 +59,14 @@ const createMultiQuotes = async (quoteData) => {
   return res;
 };
 
+const createQuotePreview = async (payload) => {
+  const res = await api("POST", "/quote-previews", payload);
+  if (!res) {
+    throw new Error("Failed to preview quote");
+  }
+  return res;
+};
+
 export const useCreatehTenantMultiQuotes = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -69,5 +77,11 @@ export const useCreatehTenantMultiQuotes = () => {
     onError: (error) => {
       console.error("Error creating multi-quotes:", error);
     },
+  });
+};
+
+export const useCreateQuotePreview = () => {
+  return useMutation({
+    mutationFn: createQuotePreview,
   });
 };

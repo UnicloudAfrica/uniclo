@@ -8,7 +8,7 @@ import QuoteResourceStep from "./quoteComps/quoteResourceStep";
 import QuoteInfoStep from "./quoteComps/quoteInfoStep";
 import QuoteSummaryStep from "./quoteComps/quoteSummaryStep";
 import { useCreateLeads } from "../../hooks/leadsHook";
-import { useCreatehTenantMultiQuotes } from "../../hooks/calculatorOptionHooks";
+import { useCreatehTenantMultiQuotes, useCreateQuotePreview } from "../../hooks/calculatorOptionHooks";
 import {
   useFetchGeneralRegions,
   useFetchProductPricing,
@@ -94,6 +94,13 @@ export default function QuoteCalculatorWizard({ embedded = false } = {}) {
     notes: "",
   });
 
+  // Optional contact for estimate (to avoid generating duplicates unexpectedly)
+  const [estimateContact, setEstimateContact] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+  });
+
   // Prefill email from profile if available
   const { data: profile } = useFetchProfile({
     retry: false,
@@ -175,7 +182,10 @@ export default function QuoteCalculatorWizard({ embedded = false } = {}) {
   const removeItemAt = (idx) => setItems((prev) => prev.filter((_, i) => i !== idx));
 
   // Estimate (Summary) using leads endpoint
-  const { mutate: estimate, isPending: estimating, data: estimateData } = useCreateLeads();
+  const { mutate: estimateLead, isPending: estimatingLead, data: estimateLeadData } = useCreateLeads();
+  const { mutate: previewQuote, isPending: estimatingPreview, data: previewData } = useCreateQuotePreview();
+  const estimating = embedded ? estimatingPreview : estimatingLead;
+  const estimateData = embedded ? previewData?.data : estimateLeadData;
 
   const handleEstimate = () => {
     if (items.length === 0) {
@@ -186,17 +196,27 @@ export default function QuoteCalculatorWizard({ embedded = false } = {}) {
     const first = items[0];
 
     // Build a unique, valid email to satisfy uniqueness constraint (leads & users)
-    const baseEmail = quoteInfo.email || profile?.email || "quote@local.test";
+    const baseEmail = estimateContact.email || quoteInfo.email || profile?.email || "quote@local.test";
     const uniqueEmail = (() => {
       const [local, domain] = baseEmail.split("@");
       if (!domain) return `quote+${Date.now()}@local.test`;
       return `${local}+q${Date.now()}@${domain}`;
     })();
 
+    // Admin embedded: preview via /quote-previews using multi-quotes payload
+    if (embedded) {
+      const payload = toMultiQuotesPayload; // reuse mapping below after this block
+      previewQuote(payload, {
+        onSuccess: () => setStep(1),
+        onError: (err) => setErrors({ form: err?.message || "Failed to preview quote." }),
+      });
+      return;
+    }
+
     const leadPayload = {
       user: {
-        first_name: profile?.first_name || "Quote",
-        last_name: profile?.last_name || "Request",
+        first_name: (estimateContact.first_name || profile?.first_name || "Quote").slice(0, 100),
+        last_name: (estimateContact.last_name || profile?.last_name || "Request").slice(0, 100),
         email: uniqueEmail,
         phone: "",
         company: "",
@@ -223,10 +243,9 @@ export default function QuoteCalculatorWizard({ embedded = false } = {}) {
       },
     };
 
-    estimate(leadPayload, {
+    estimateLead(leadPayload, {
       onSuccess: () => setStep(1),
       onError: (err) => {
-        // Surface server message for easier debugging
         setErrors({ form: err?.message || "Failed to calculate pricing." });
       },
     });
@@ -394,6 +413,43 @@ export default function QuoteCalculatorWizard({ embedded = false } = {}) {
                 pricingRequests={items}
                 onRemoveRequest={removeItemAt}
               />
+
+              {/* Estimate Contact (optional) */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label htmlFor="est_first_name" className="block text-xs text-gray-600 mb-1">First Name (optional)</label>
+                  <input
+                    id="est_first_name"
+                    type="text"
+                    value={estimateContact.first_name}
+                    onChange={(e) => setEstimateContact((p) => ({ ...p, first_name: e.target.value }))}
+                    className="w-full input-field"
+                    placeholder="Jane"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="est_last_name" className="block text-xs text-gray-600 mb-1">Last Name (optional)</label>
+                  <input
+                    id="est_last_name"
+                    type="text"
+                    value={estimateContact.last_name}
+                    onChange={(e) => setEstimateContact((p) => ({ ...p, last_name: e.target.value }))}
+                    className="w-full input-field"
+                    placeholder="Doe"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="est_email" className="block text-xs text-gray-600 mb-1">Email for Estimate (optional)</label>
+                  <input
+                    id="est_email"
+                    type="email"
+                    value={estimateContact.email}
+                    onChange={(e) => setEstimateContact((p) => ({ ...p, email: e.target.value }))}
+                    className="w-full input-field"
+                    placeholder="you@example.com"
+                  />
+                </div>
+              </div>
 
               <div className="flex justify-between">
                 <button

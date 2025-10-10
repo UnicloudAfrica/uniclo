@@ -679,11 +679,13 @@ export default function MultiInstanceCreation() {
 
   // Add new configuration
   const addConfiguration = () => {
+    const first = regions && regions.length > 0 ? regions[0] : null;
+    const defaultRegionCode = typeof first === 'string' ? first : (first?.code || first?.region || first?.slug || first?.id || '');
     const newConfig = {
       name: '',
       description: '',
       count: 1,
-      region: regions.length > 0 ? regions[0].code : '', // Use first available region
+      region: defaultRegionCode || '',
       project_id: '',
       product_id: '',
       os_image_id: '',
@@ -794,6 +796,8 @@ export default function MultiInstanceCreation() {
   const getPricingPreview = async () => {
     // Local validation before calling API
     if (!validateForPricing()) return;
+    // Auto-fill region for any config missing it
+    setConfigurations(prev => prev.map(c => ({ ...c, region: c.region || selectedRegion || firstRegionCode || c.region })));
 
     setPricingLoading(true);
     
@@ -808,8 +812,8 @@ export default function MultiInstanceCreation() {
         },
         body: JSON.stringify({
           pricing_requests: configurations.map(c => ({
-            region: c.region || undefined,
-            project_id: c.project_id || undefined,
+          region: c.region || selectedRegion || firstRegionCode || undefined,
+          project_id: c.project_id || undefined,
             compute_instance_id: c.compute_instance_id ? Number(c.compute_instance_id) : undefined,
             os_image_id: c.os_image_id ? Number(c.os_image_id) : undefined,
             months: Number(c.months),
@@ -863,7 +867,7 @@ export default function MultiInstanceCreation() {
       const { token } = useAdminAuthStore.getState();
       const payload = {
         pricing_requests: configurations.map(c => ({
-          region: c.region || undefined,
+          region: c.region || selectedRegion || firstRegionCode || undefined,
           project_id: c.project_id || undefined,
           compute_instance_id: c.compute_instance_id ? Number(c.compute_instance_id) : undefined,
           os_image_id: c.os_image_id ? Number(c.os_image_id) : undefined,

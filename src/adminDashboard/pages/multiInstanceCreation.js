@@ -281,7 +281,7 @@ const InstanceConfigCard = ({
                 </label>
                 <select
                   value={localConfig.project_id || ''}
-                  onChange={(e) => updateConfig('project_id', e.target.value)}
+                  onChange={(e) => updateConfig('project_id', parseInt(e.target.value))}
                   disabled={!selectedRegion}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     getErrorForField('project_id') ? 'border-red-300' : 'border-gray-300'
@@ -320,23 +320,19 @@ const InstanceConfigCard = ({
                   Instance Type *
                 </label>
                 <select
-                  value={localConfig.product_id || ''}
-                  onChange={(e) => updateConfig('product_id', e.target.value)}
+                  value={localConfig.compute_instance_id || ''}
+                  onChange={(e) => updateConfig('compute_instance_id', e.target.value)}
                   disabled={!selectedRegion}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    getErrorForField('product_id') ? 'border-red-300' : 'border-gray-300'
+                    getErrorForField('compute_instance_id') ? 'border-red-300' : 'border-gray-300'
                   } ${!selectedRegion ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                 >
                   <option value="">Select Instance Type</option>
-                  {(computeInstancesByRegion || resources?.compute_instances || []).map(instance => {
-                    const value = instance?.id ?? instance?.product?.id ?? instance?.product_id ?? '';
-                    const label = (instance?.name || instance?.product?.name || 'Compute');
-                    const vcpus = instance?.vcpus;
-                    const memGb = instance?.memory_mb ? Math.round((instance.memory_mb || 0) / 1024) : null;
+                  {(computeInstancesByRegion || []).map(item => {
+                    const value = item?.product?.productable_id || '';
+                    const label = item?.product?.name || 'Compute';
                     return (
-                      <option key={value || label} value={value}>
-                        {label}{vcpus ? ` (${vcpus} vCPUs${memGb ? `, ${memGb} GB RAM` : ''})` : ''}
-                      </option>
+                      <option key={value || label} value={value}>{label}</option>
                     );
                   })}
                 </select>
@@ -358,11 +354,13 @@ const InstanceConfigCard = ({
                   } ${!selectedRegion ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                 >
                   <option value="">Select OS Image</option>
-                  {(osImagesByRegion || resources?.os_images || []).map(image => (
-                    <option key={image.id || image.product?.id} value={image.id || image.product?.productable_id}>
-                      {(image.name || image.product?.name)}{image.family ? ` (${image.family})` : ''}
-                    </option>
-                  ))}
+                  {(osImagesByRegion || []).map(item => {
+                    const value = item?.product?.productable_id || '';
+                    const label = item?.product?.name || 'OS Image';
+                    return (
+                      <option key={value || label} value={value}>{label}</option>
+                    );
+                  })}
                 </select>
                 {getErrorForField('os_image_id') && (
                   <p className="text-sm text-red-600 mt-1">{getErrorForField('os_image_id')}</p>
@@ -406,11 +404,13 @@ const InstanceConfigCard = ({
                       className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!selectedRegion ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                     >
                       <option value="">Select Volume Type</option>
-                      {(volumeTypesByRegion || resources?.volume_types || []).map(vt => (
-                        <option key={vt.id || vt.product?.id} value={vt.id || vt.product?.productable_id}>
-                          {(vt.name || vt.product?.name)}{vt.description ? ` (${vt.description})` : ''}
-                        </option>
-                      ))}
+                      {(volumeTypesByRegion || []).map(item => {
+                        const value = item?.product?.productable_id || '';
+                        const label = item?.product?.name || 'Volume Type';
+                        return (
+                          <option key={value || label} value={value}>{label}</option>
+                        );
+                      })}
                     </select>
                   </div>
 
@@ -536,14 +536,14 @@ const InstanceConfigCard = ({
                   Key Pair
                 </label>
                 <select
-                  value={localConfig.key_pair_id || ''}
-                  onChange={(e) => updateConfig('key_pair_id', e.target.value)}
+                  value={localConfig.keypair_name || ''}
+                  onChange={(e) => updateConfig('keypair_name', e.target.value)}
                   disabled={!projectIdentifier || !selectedRegion}
                   className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${(!projectIdentifier || !selectedRegion) ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                 >
                   <option value="">Select Key Pair</option>
                   {(keyPairs || []).map(kp => (
-                    <option key={kp.id} value={kp.id}>
+                    <option key={kp.id} value={kp.name}>
                       {kp.name}
                     </option>
                   ))}
@@ -745,15 +745,24 @@ export default function MultiInstanceCreation() {
           'Accept': 'application/json',
         },
         body: JSON.stringify({
-          instances: configurations.map(config => ({
-            count: config.count,
-            region: config.region,
-            product_id: config.product_id,
-            months: config.months,
-            volume_types: config.volume_types.filter(vt => vt.volume_type_id),
-            bandwidth_id: config.bandwidth_id || null,
-            bandwidth_count: config.bandwidth_count || null,
-            floating_ip_count: config.floating_ip_count || 0,
+          pricing_requests: configurations.map(c => ({
+            region: c.project_id ? undefined : c.region,
+            project_id: c.project_id || undefined,
+            compute_instance_id: c.compute_instance_id,
+            os_image_id: c.os_image_id,
+            months: c.months,
+            number_of_instances: c.count || 1,
+            volume_types: (c.volume_types || []).filter(v => v.volume_type_id).map(v => ({
+              volume_type_id: v.volume_type_id,
+              storage_size_gb: v.storage_size_gb,
+            })),
+            bandwidth_id: c.bandwidth_id || undefined,
+            bandwidth_count: c.bandwidth_id ? (c.bandwidth_count || 1) : undefined,
+            floating_ip_count: c.floating_ip_count || 0,
+            network_id: c.network_id || undefined,
+            subnet_id: c.subnet_id || undefined,
+            security_group_ids: (c.security_group_ids || []).length ? c.security_group_ids : undefined,
+            keypair_name: c.keypair_name || undefined,
           }))
         }),
       });
@@ -781,6 +790,31 @@ export default function MultiInstanceCreation() {
 
     try {
       const { token } = useAdminAuthStore.getState();
+      const payload = {
+        pricing_requests: configurations.map(c => ({
+          region: c.project_id ? undefined : c.region,
+          project_id: c.project_id || undefined,
+          compute_instance_id: c.compute_instance_id,
+          os_image_id: c.os_image_id,
+          months: c.months,
+          number_of_instances: c.count || 1,
+          volume_types: (c.volume_types || []).filter(v => v.volume_type_id).map(v => ({
+            volume_type_id: v.volume_type_id,
+            storage_size_gb: v.storage_size_gb,
+          })),
+          bandwidth_id: c.bandwidth_id || undefined,
+          bandwidth_count: c.bandwidth_id ? (c.bandwidth_count || 1) : undefined,
+          floating_ip_count: c.floating_ip_count || 0,
+          cross_connect_id: c.cross_connect_id || undefined,
+          cross_connect_count: c.cross_connect_id ? (c.cross_connect_count || 1) : undefined,
+          network_id: c.network_id || undefined,
+          subnet_id: c.subnet_id || undefined,
+          security_group_ids: (c.security_group_ids || []).length ? c.security_group_ids : undefined,
+          keypair_name: c.keypair_name || undefined,
+        })),
+        fast_track: false,
+        tags: Array.from(new Set((configurations.flatMap(c => c.tags || []))))
+      };
       const response = await fetch(`${config.baseURL}/business/multi-instances`, {
         method: 'POST',
         headers: {
@@ -788,10 +822,7 @@ export default function MultiInstanceCreation() {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        body: JSON.stringify({
-          instances: configurations,
-          fast_track: false
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();

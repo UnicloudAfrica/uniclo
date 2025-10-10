@@ -40,6 +40,7 @@ import { useFetchSubnets } from "../../hooks/adminHooks/subnetHooks";
 import { useFetchNetworkInterfaces } from "../../hooks/adminHooks/networkHooks";
 import useAdminAuthStore from "../../stores/adminAuthStore";
 import config from "../../config";
+import { useLocation } from "react-router-dom";
 
 // Configuration Card Component
 const InstanceConfigCard = ({ 
@@ -54,6 +55,11 @@ const InstanceConfigCard = ({
   onToggleExpand
 }) => {
   const [localConfig, setLocalConfig] = useState(config);
+
+  // Keep local state in sync with parent updates
+  useEffect(() => {
+    setLocalConfig(config);
+  }, [config]);
 
   const updateConfig = (field, value) => {
     const updated = { ...localConfig, [field]: value };
@@ -92,6 +98,38 @@ const InstanceConfigCard = ({
   const { data: keyPairs } = useFetchKeyPairs(projectIdentifier, selectedRegion, { enabled: !!projectIdentifier && !!selectedRegion });
   const { data: subnets } = useFetchSubnets(projectIdentifier, selectedRegion, { enabled: !!projectIdentifier && !!selectedRegion });
   const { data: networkInterfaces } = useFetchNetworkInterfaces(projectIdentifier, selectedRegion, { enabled: !!projectIdentifier && !!selectedRegion });
+
+  // Fetch region-scoped products for this specific configuration
+  const { data: computeInstancesByRegion } = useFetchProductPricing(selectedRegion, "compute_instance", { enabled: !!selectedRegion });
+  const { data: osImagesByRegion } = useFetchProductPricing(selectedRegion, "os_image", { enabled: !!selectedRegion });
+  const { data: volumeTypesByRegion } = useFetchProductPricing(selectedRegion, "volume_type", { enabled: !!selectedRegion });
+
+  // Fetch projects filtered by selected region
+  const { data: projectsRespForRegion } = useFetchProjects({ per_page: 100, region: selectedRegion }, { enabled: !!selectedRegion });
+  const projectsForRegion = projectsRespForRegion?.data || resources?.projects || [];
+
+  // Reset dependent selections when region or project changes
+  useEffect(() => {
+    // Clear project and infra when region changes
+    if (selectedRegion) {
+      updateConfig('project_id', '');
+      updateConfig('network_id', '');
+      updateConfig('subnet_id', '');
+      updateConfig('security_group_ids', []);
+      updateConfig('key_pair_id', '');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRegion]);
+
+  useEffect(() => {
+    if (projectIdentifier) {
+      updateConfig('network_id', '');
+      updateConfig('subnet_id', '');
+      updateConfig('security_group_ids', []);
+      updateConfig('key_pair_id', '');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectIdentifier]);
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
@@ -235,7 +273,7 @@ const InstanceConfigCard = ({
                   }`}
                 >
                   <option value="">Select Project</option>
-                  {resources?.projects?.map(project => (
+                  {projectsForRegion?.map(project => (
                     <option key={project.identifier} value={project.identifier}>
                       {project.name}
                     </option>
@@ -274,9 +312,9 @@ const InstanceConfigCard = ({
                   }`}
                 >
                   <option value="">Select Instance Type</option>
-                  {resources?.compute_instances?.map(instance => (
-                    <option key={instance.id} value={instance.id}>
-                      {instance.name} ({instance.vcpus} vCPUs, {Math.round(instance.memory_mb / 1024)} GB RAM) - ${instance.hourly_rate}/hr
+                  {(computeInstancesByRegion || resources?.compute_instances || []).map(instance => (
+                    <option key={instance.id || instance.product?.id} value={instance.id || instance.product?.productable_id}>
+                      {instance.name || instance.product?.name} {instance.vcpus ? `(${instance.vcpus} vCPUs, ${Math.round((instance.memory_mb || 0) / 1024)} GB RAM)` : ''}
                     </option>
                   ))}
                 </select>
@@ -297,9 +335,9 @@ const InstanceConfigCard = ({
                   }`}
                 >
                   <option value="">Select OS Image</option>
-                  {resources?.os_images?.map(image => (
-                    <option key={image.id} value={image.id}>
-                      {image.name} ({image.family})
+                  {(osImagesByRegion || resources?.os_images || []).map(image => (
+                    <option key={image.id || image.product?.id} value={image.id || image.product?.productable_id}>
+                      {(image.name || image.product?.name)}{image.family ? ` (${image.family})` : ''}
                     </option>
                   ))}
                 </select>
@@ -344,9 +382,9 @@ const InstanceConfigCard = ({
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">Select Volume Type</option>
-                      {resources?.volume_types?.map(vt => (
-                        <option key={vt.id} value={vt.id}>
-                          {vt.name} ({vt.description})
+                      {(volumeTypesByRegion || resources?.volume_types || []).map(vt => (
+                        <option key={vt.id || vt.product?.id} value={vt.id || vt.product?.productable_id}>
+                          {(vt.name || vt.product?.name)}{vt.description ? ` (${vt.description})` : ''}
                         </option>
                       ))}
                     </select>
@@ -540,10 +578,25 @@ export default function MultiInstanceCreation() {
   // Fetch regions from API
   const { data: regions = [] } = useFetchGeneralRegions();
 
-  // Get the region from the first configuration to fetch resources dynamically
+  // Read region/project from query params (from quote context)
+  const location = useLocation();
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const regionParam = params.get('region');
+    const projectParam = params.get('project') || params.get('project_id');
+    if (regionParam) {
+      setConfigurations(prev => {
+        const updated = [...prev];
+        updated[0] = { ...updated[0], region: regionParam, project_id: projectParam || '' };
+        return updated;
+      });
+    }
+  }, [location.search]);
+
+  // For top-level loading indicator only; per-card fetches will handle region variations
   const selectedRegion = configurations[0]?.region || (regions.length > 0 ? regions[0].code : '');
 
-  // Use product-pricing API to fetch resources based on region
+  // Use product-pricing API to fetch resources based on region (for first config as baseline)
   const { data: computeInstances, isFetching: isComputeInstancesFetching } =
     useFetchProductPricing(selectedRegion, "compute_instance", {
       enabled: !!selectedRegion,
@@ -556,8 +609,8 @@ export default function MultiInstanceCreation() {
     useFetchProductPricing(selectedRegion, "volume_type", {
       enabled: !!selectedRegion,
     });
-  // Fetch projects for admin (use .data array)
-  const { data: projectsResponse, isFetching: isProjectsFetching } = useFetchProjects({ per_page: 100 });
+  // Fetch projects for admin filtered by region (used as baseline; cards fetch per-region too)
+  const { data: projectsResponse, isFetching: isProjectsFetching } = useFetchProjects({ per_page: 100, region: selectedRegion });
   const projects = projectsResponse?.data || [];
 
   const loading = isProjectsFetching || isComputeInstancesFetching || isOsImagesFetching || isVolumeTypesFetching;

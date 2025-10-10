@@ -547,7 +547,7 @@ const fetchInstanceDetails = async (id, identifier) => {
                     </div>
                     <div className="grid grid-cols-3 gap-4">
                       <dt className="text-sm font-medium text-gray-500">OS Image</dt>
-                      <dd className="text-sm text-gray-900 col-span-2">{instance?.storage_size_gb || 'N/A'} GB</dd>
+                      <dd className="text-sm text-gray-900 col-span-2">{instance.os_image?.name || 'N/A'}</dd>
                     </div>
                     <div className="grid grid-cols-3 gap-4">
                       <dt className="text-sm font-medium text-gray-500">Key Pair</dt>

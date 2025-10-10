@@ -66,13 +66,11 @@ import TenantLogin from "./tenantDashboard/pages/tenant-signin";
 import AdminUsers from "./adminDashboard/pages/adminUsers";
 import AdminProjects from "./adminDashboard/pages/adminProjects";
 import AdminProjectDetails from "./adminDashboard/pages/adminProjectDetails";
-import AdminInstances from "./adminDashboard/pages/adminInstances";
 import AdminAddInstance from "./adminDashboard/pages/adminAddInstance";
 import Settings from "./dashboard/pages/settings";
 import DashboardTaxConfigurations from "./dashboard/pages/taxConfiguration";
 import Products from "./dashboard/pages/products";
 import TenantAdmin from "./dashboard/pages/tenantAdmin";
-import AdminInstancesDetails from "./adminDashboard/pages/adminInstancesDetails";
 import Calculator from "./pages/calculator";
 import AdminLeads from "./adminDashboard/pages/adminLeads";
 import AdminLeadDetails from "./adminDashboard/pages/adminLeadDetails";
@@ -95,8 +93,8 @@ import ClientInstances from "./clientDashboard/pages/clientInstances";
 import ClientAddInstancePage from "./clientDashboard/pages/clientAddInstances";
 import AdminMultiQuote from "./adminDashboard/pages/adminMultiQuote";
 import AdminAdvancedCalculator from "./adminDashboard/pages/adminAdvancedCalculator";
-import EnhancedInstanceManagement from "./adminDashboard/pages/enhancedInstanceManagement";
-import EnhancedInstanceDetails from "./adminDashboard/pages/enhancedInstanceDetails";
+import InstanceManagement from "./adminDashboard/pages/instanceManagement";
+import InstanceDetails from "./adminDashboard/pages/instanceDetails";
 import EnhancedProfileSettings from "./adminDashboard/pages/enhancedProfileSettings";
 import MultiInstanceCreation from "./adminDashboard/pages/multiInstanceCreation";
 
@@ -262,8 +260,8 @@ function App() {
           /> */}
           <Route path="/admin-dashboard/quote" element={<AdminMultiQuote />} />
           <Route path="/admin-dashboard/advanced-calculator" element={<AdminAdvancedCalculator />} />
-          <Route path="/admin-dashboard/instance-management" element={<EnhancedInstanceManagement />} />
-          <Route path="/admin-dashboard/instance-management/details" element={<EnhancedInstanceDetails />} />
+<Route path="/admin-dashboard/instance-management" element={<InstanceManagement />} />
+<Route path="/admin-dashboard/instance-management/details" element={<InstanceDetails />} />
           <Route path="/admin-dashboard/enhanced-profile-settings" element={<EnhancedProfileSettings />} />
           <Route path="/admin-dashboard/multi-instance-creation" element={<MultiInstanceCreation />} />
           {/* <Route

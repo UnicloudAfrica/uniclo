@@ -38,6 +38,8 @@ import { useFetchSecurityGroups } from "../../hooks/adminHooks/securityGroupHook
 import { useFetchKeyPairs } from "../../hooks/adminHooks/keyPairHooks";
 import { useFetchSubnets } from "../../hooks/adminHooks/subnetHooks";
 import { useFetchNetworkInterfaces } from "../../hooks/adminHooks/networkHooks";
+import { useFetchTenants, useFetchSubTenantByTenantID } from "../../hooks/adminHooks/tenantHooks";
+import { useFetchClients } from "../../hooks/adminHooks/clientHooks";
 import useAdminAuthStore from "../../stores/adminAuthStore";
 import config from "../../config";
 import { useLocation } from "react-router-dom";
@@ -235,8 +237,66 @@ const InstanceConfigCard = ({
             />
           </div>
 
-          {/* Infrastructure Configuration */}
+          {/* Admin Assignment (optional) */}
           <div className="space-y-4">
+            <h4 className="text-md font-semibold text-gray-900">Assignment (Admin only)</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Assign To</label>
+                <select
+                  value={assignType}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setAssignType(v);
+                    // Clear ids when type changes
+                    setSelectedTenantId('');
+                    setSelectedUserId('');
+                  }}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300"
+                >
+                  <option value="">None</option>
+                  <option value="tenant">Tenant</option>
+                  <option value="user">User (Client)</option>
+                </select>
+              </div>
+
+              {assignType === 'tenant' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Tenant</label>
+                  <select
+                    value={selectedTenantId}
+                    onChange={(e) => {
+                      setSelectedTenantId(e.target.value);
+                      setSelectedUserId('');
+                    }}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300"
+                  >
+                    <option value="">Select Tenant</option>
+                    {tenants?.map(t => (
+                      <option key={t.id} value={t.id}>{t.name || t.company_name || `Tenant ${t.id}`}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {assignType === 'user' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">User</label>
+                  <select
+                    value={selectedUserId}
+                    onChange={(e) => setSelectedUserId(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300"
+                  >
+                    <option value="">Select User</option>
+                    {(selectedTenantId ? subTenantClients : clients)?.map(u => (
+                      <option key={u.id} value={u.id}>{u.name || `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || `User ${u.id}`}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {/* Infrastructure Configuration */}
             <h4 className="text-md font-semibold text-gray-900 flex items-center">
               <Server className="w-5 h-5 mr-2" />
               Infrastructure Configuration
@@ -277,7 +337,7 @@ const InstanceConfigCard = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Project *
+                  Project (Optional)
                 </label>
                 <select
                   value={localConfig.project_id || ''}
@@ -450,7 +510,7 @@ const InstanceConfigCard = ({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Network *
+                  Network (Optional)
                 </label>
                 <select
                   value={localConfig.network_id || ''}
@@ -460,7 +520,7 @@ const InstanceConfigCard = ({
                     getErrorForField('network_id') ? 'border-red-300' : 'border-gray-300'
                   } ${(!projectIdentifier || !selectedRegion) ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                 >
-                  <option value="">Select Network</option>
+                  <option value="">None (use default)</option>
                   {(networkInterfaces || []).map(network => (
                     <option key={network.id} value={network.id}>
                       {network.name}
@@ -471,7 +531,7 @@ const InstanceConfigCard = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Subnet *
+                  Subnet (Optional)
                 </label>
                 <select
                   value={localConfig.subnet_id || ''}
@@ -481,7 +541,7 @@ const InstanceConfigCard = ({
                     getErrorForField('subnet_id') ? 'border-red-300' : 'border-gray-300'
                   } ${(!projectIdentifier || !selectedRegion) ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                 >
-                  <option value="">Select Subnet</option>
+                  <option value="">None (use default)</option>
                   {(subnets || []).map(subnet => (
                     <option key={subnet.id} value={subnet.id}>
                       {subnet.name || subnet.cidr}
@@ -508,7 +568,7 @@ const InstanceConfigCard = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Security Groups *
+                  Security Groups (Optional)
                 </label>
                 <select
                   multiple
@@ -603,6 +663,10 @@ export default function MultiInstanceCreation() {
   const [expandedConfigs, setExpandedConfigs] = useState(new Set([0]));
   const [activeStep, setActiveStep] = useState(0);
   const [fastTrack, setFastTrack] = useState(false);
+  // Admin assignment (optional)
+  const [assignType, setAssignType] = useState(''); // '', 'tenant', 'user'
+  const [selectedTenantId, setSelectedTenantId] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState('');
 
   // Fetch regions from API
   const { data: regions = [] } = useFetchGeneralRegions();
@@ -621,6 +685,12 @@ export default function MultiInstanceCreation() {
       });
     }
   }, [location.search]);
+
+  // Admin lists for assignment (tenants and users)
+  const { data: tenants = [] } = useFetchTenants();
+  const { data: clients = [] } = useFetchClients();
+  const { data: subTenantClientsResp } = useFetchSubTenantByTenantID(selectedTenantId || null, { enabled: !!selectedTenantId });
+  const subTenantClients = subTenantClientsResp || [];
 
   // For top-level loading indicator only; per-card fetches will handle region variations
   const firstRegion = regions && regions.length > 0 ? regions[0] : null;
@@ -766,6 +836,8 @@ export default function MultiInstanceCreation() {
             keypair_name: c.keypair_name || undefined,
           })),
           fast_track: fastTrack,
+          ...(assignType === 'tenant' && selectedTenantId ? { tenant_id: selectedTenantId } : {}),
+          ...(assignType === 'user' && selectedUserId ? { user_id: selectedUserId } : {}),
         }),
       });
 
@@ -815,6 +887,8 @@ export default function MultiInstanceCreation() {
           keypair_name: c.keypair_name || undefined,
         })),
         fast_track: fastTrack,
+        ...(assignType === 'tenant' && selectedTenantId ? { tenant_id: selectedTenantId } : {}),
+        ...(assignType === 'user' && selectedUserId ? { user_id: selectedUserId } : {}),
         ...(configurations.some(c => (c.tags || []).length) ? { tags: Array.from(new Set((configurations.flatMap(c => c.tags || [])))) } : {})
       };
       const response = await fetch(`${config.baseURL}/business/multi-instances`, {

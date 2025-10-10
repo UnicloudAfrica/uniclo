@@ -281,7 +281,7 @@ const InstanceConfigCard = ({
                 </label>
                 <select
                   value={localConfig.project_id || ''}
-                  onChange={(e) => updateConfig('project_id', parseInt(e.target.value))}
+                  onChange={(e) => updateConfig('project_id', e.target.value)}
                   disabled={!selectedRegion}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     getErrorForField('project_id') ? 'border-red-300' : 'border-gray-300'
@@ -289,7 +289,7 @@ const InstanceConfigCard = ({
                 >
                   <option value="">{selectedRegion ? 'Select Project' : 'Select region first'}</option>
                   {projectsForRegion?.map(project => (
-                    <option key={project.identifier || project.id} value={project.identifier || project.id}>
+                    <option key={project.identifier} value={project.identifier}>
                       {project.name}
                     </option>
                   ))}

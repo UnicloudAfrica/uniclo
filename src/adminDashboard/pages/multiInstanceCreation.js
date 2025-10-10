@@ -33,6 +33,11 @@ import AdminActiveTab from "../components/adminActiveTab";
 import ToastUtils from "../../utils/toastUtil";
 import { useFetchProductPricing, useFetchGeneralRegions } from "../../hooks/resource";
 import { useFetchInstanceRequests } from "../../hooks/adminHooks/instancesHook";
+import { useFetchProjects } from "../../hooks/adminHooks/projectHooks";
+import { useFetchSecurityGroups } from "../../hooks/adminHooks/securityGroupHooks";
+import { useFetchKeyPairs } from "../../hooks/adminHooks/keyPairHooks";
+import { useFetchSubnets } from "../../hooks/adminHooks/subnetHooks";
+import { useFetchNetworkInterfaces } from "../../hooks/adminHooks/networkHooks";
 import useAdminAuthStore from "../../stores/adminAuthStore";
 import config from "../../config";
 
@@ -79,6 +84,14 @@ const InstanceConfigCard = ({
   };
 
   const selectedProduct = resources?.compute_instances?.find(p => p.id === localConfig.product_id);
+
+  // Fetch infra resources based on selected project and region
+  const projectIdentifier = localConfig.project_id;
+  const selectedRegion = localConfig.region;
+  const { data: securityGroups } = useFetchSecurityGroups(projectIdentifier, selectedRegion, { enabled: !!projectIdentifier && !!selectedRegion });
+  const { data: keyPairs } = useFetchKeyPairs(projectIdentifier, selectedRegion, { enabled: !!projectIdentifier && !!selectedRegion });
+  const { data: subnets } = useFetchSubnets(projectIdentifier, selectedRegion, { enabled: !!projectIdentifier && !!selectedRegion });
+  const { data: networkInterfaces } = useFetchNetworkInterfaces(projectIdentifier, selectedRegion, { enabled: !!projectIdentifier && !!selectedRegion });
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
@@ -223,7 +236,7 @@ const InstanceConfigCard = ({
                 >
                   <option value="">Select Project</option>
                   {resources?.projects?.map(project => (
-                    <option key={project.id} value={project.identifier}>
+                    <option key={project.identifier} value={project.identifier}>
                       {project.name}
                     </option>
                   ))}
@@ -385,7 +398,7 @@ const InstanceConfigCard = ({
                   }`}
                 >
                   <option value="">Select Network</option>
-                  {resources?.networks?.map(network => (
+                  {(networkInterfaces || []).map(network => (
                     <option key={network.id} value={network.id}>
                       {network.name}
                     </option>
@@ -395,17 +408,22 @@ const InstanceConfigCard = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Subnet ID *
+                  Subnet *
                 </label>
-                <input
-                  type="text"
+                <select
                   value={localConfig.subnet_id || ''}
                   onChange={(e) => updateConfig('subnet_id', e.target.value)}
-                  placeholder="Enter subnet ID"
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     getErrorForField('subnet_id') ? 'border-red-300' : 'border-gray-300'
                   }`}
-                />
+                >
+                  <option value="">Select Subnet</option>
+                  {(subnets || []).map(subnet => (
+                    <option key={subnet.id} value={subnet.id}>
+                      {subnet.name || subnet.cidr}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -439,7 +457,7 @@ const InstanceConfigCard = ({
                     getErrorForField('security_group_ids') ? 'border-red-300' : 'border-gray-300'
                   }`}
                 >
-                  {resources?.security_groups?.map(sg => (
+                  {(securityGroups || []).map(sg => (
                     <option key={sg.id} value={sg.id}>
                       {sg.name}
                     </option>
@@ -458,7 +476,7 @@ const InstanceConfigCard = ({
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">Select Key Pair</option>
-                  {resources?.key_pairs?.map(kp => (
+                  {(keyPairs || []).map(kp => (
                     <option key={kp.id} value={kp.id}>
                       {kp.name}
                     </option>
@@ -538,12 +556,11 @@ export default function MultiInstanceCreation() {
     useFetchProductPricing(selectedRegion, "volume_type", {
       enabled: !!selectedRegion,
     });
-  
-  const projects = [
-    { id: 1, identifier: "ED4E3B", name: "CRM LW2O", description: null, default_region: "lagos-1", default_provider: "zadara" }
-  ];
+  // Fetch projects for admin (use .data array)
+  const { data: projectsResponse, isFetching: isProjectsFetching } = useFetchProjects({ per_page: 100 });
+  const projects = projectsResponse?.data || [];
 
-  const loading = isComputeInstancesFetching || isOsImagesFetching || isVolumeTypesFetching;
+  const loading = isProjectsFetching || isComputeInstancesFetching || isOsImagesFetching || isVolumeTypesFetching;
 
   // Set default region when regions are loaded and no region is set
   useEffect(() => {
@@ -802,11 +819,7 @@ export default function MultiInstanceCreation() {
                   os_images: osImages || [],
                   volume_types: volumeTypes || [],
                   regions: regions,
-                  projects: projects,
-                  networks: [], // TODO: Replace with actual API call
-                  subnets: [], // TODO: Replace with actual API call
-                  security_groups: [], // TODO: Replace with actual API call
-                  key_pairs: [] // TODO: Replace with actual API call
+                  projects: projects
                 }}
                 errors={errors}
                 isExpanded={expandedConfigs.has(index)}

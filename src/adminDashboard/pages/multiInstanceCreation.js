@@ -93,8 +93,24 @@ const InstanceConfigCard = ({
 
   const selectedProduct = resources?.compute_instances?.find(p => p.id === localConfig.product_id);
 
-  // Fetch infra resources based on selected project and region
-  const projectIdentifier = localConfig.project_id;
+  // Determine selected project object by id or identifier
+  const selectedProjectObj = (projectsForRegion || []).find(p => String(p.id) === String(localConfig.project_id)) ||
+    (projectsForRegion || []).find(p => p.identifier === localConfig.project_identifier);
+
+  // Ensure we keep both id and identifier in sync when a project object is identified
+  useEffect(() => {
+    if (selectedProjectObj) {
+      const nextId = selectedProjectObj.id;
+      const nextIdent = selectedProjectObj.identifier;
+      if (String(localConfig.project_id) !== String(nextId) || localConfig.project_identifier !== nextIdent) {
+        onUpdate(index, { ...localConfig, project_id: nextId, project_identifier: nextIdent });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedProjectObj?.id, selectedProjectObj?.identifier]);
+
+  // Fetch infra resources based on selected project (identifier) and region
+  const projectIdentifier = selectedProjectObj?.identifier;
   const selectedRegion = localConfig.region;
   const { data: securityGroups } = useFetchSecurityGroups(projectIdentifier, selectedRegion, { enabled: !!projectIdentifier && !!selectedRegion });
   const { data: keyPairs } = useFetchKeyPairs(projectIdentifier, selectedRegion, { enabled: !!projectIdentifier && !!selectedRegion });
@@ -120,6 +136,7 @@ const InstanceConfigCard = ({
     // If region changes and there is no project yet, clear infra-dependent fields
     if (selectedRegion && !projectIdentifier) {
       updateConfig('project_id', '');
+      updateConfig('project_identifier', '');
       updateConfig('network_id', '');
       updateConfig('subnet_id', '');
       updateConfig('security_group_ids', []);
@@ -283,7 +300,12 @@ const InstanceConfigCard = ({
                 </label>
                 <select
                   value={localConfig.project_id || ''}
-                  onChange={(e) => updateConfig('project_id', e.target.value)}
+                  onChange={(e) => {
+                    const pid = e.target.value;
+                    const proj = (projectsForRegion || []).find(p => String(p.id) === String(pid));
+                    updateConfig('project_id', pid ? parseInt(pid) : '');
+                    updateConfig('project_identifier', proj?.identifier || '');
+                  }}
                   disabled={!selectedRegion}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     getErrorForField('project_id') ? 'border-red-300' : 'border-gray-300'
@@ -291,7 +313,7 @@ const InstanceConfigCard = ({
                 >
                   <option value="">{selectedRegion ? 'Select Project' : 'Select region first'}</option>
                   {projectsForRegion?.map(project => (
-                    <option key={project.identifier} value={project.identifier}>
+                    <option key={project.id} value={project.id}>
                       {project.name}
                     </option>
                   ))}
@@ -760,23 +782,23 @@ export default function MultiInstanceCreation() {
         body: JSON.stringify({
           pricing_requests: configurations.map(c => ({
             region: c.project_id ? undefined : c.region,
-            project_id: c.project_id || undefined,
-            compute_instance_id: c.compute_instance_id,
-            os_image_id: c.os_image_id,
-            months: c.months,
-            number_of_instances: c.count || 1,
+            project_id: c.project_id ? Number(c.project_id) : undefined,
+            compute_instance_id: c.compute_instance_id ? Number(c.compute_instance_id) : undefined,
+            os_image_id: c.os_image_id ? Number(c.os_image_id) : undefined,
+            months: Number(c.months),
+            number_of_instances: Number(c.count || 1),
             volume_types: (c.volume_types || []).filter(v => v.volume_type_id).map(v => ({
-              volume_type_id: v.volume_type_id,
-              storage_size_gb: v.storage_size_gb,
+              volume_type_id: Number(v.volume_type_id),
+              storage_size_gb: Number(v.storage_size_gb),
             })),
-            bandwidth_id: c.bandwidth_id || undefined,
-            bandwidth_count: c.bandwidth_id ? (c.bandwidth_count || 1) : undefined,
-            ...(c.floating_ip_count > 0 ? { floating_ip_count: c.floating_ip_count } : {}),
-            network_id: c.network_id || undefined,
-            subnet_id: c.subnet_id || undefined,
-            security_group_ids: (c.security_group_ids || []).length ? c.security_group_ids : undefined,
+            bandwidth_id: c.bandwidth_id ? Number(c.bandwidth_id) : undefined,
+            bandwidth_count: c.bandwidth_id ? Number(c.bandwidth_count || 1) : undefined,
+            ...(c.floating_ip_count > 0 ? { floating_ip_count: Number(c.floating_ip_count) } : {}),
+            network_id: c.network_id ? Number(c.network_id) : undefined,
+            subnet_id: c.subnet_id ? Number(c.subnet_id) : undefined,
+            security_group_ids: (c.security_group_ids || []).length ? c.security_group_ids.map(Number) : undefined,
             keypair_name: c.keypair_name || undefined,
-          })),
+          }))
           fast_track: fastTrack,
           ...(assignType === 'tenant' && selectedTenantId ? { tenant_id: selectedTenantId } : {}),
           ...(assignType === 'user' && selectedUserId ? { user_id: selectedUserId } : {}),
@@ -809,25 +831,25 @@ export default function MultiInstanceCreation() {
       const payload = {
         pricing_requests: configurations.map(c => ({
           region: c.project_id ? undefined : c.region,
-          project_id: c.project_id || undefined,
-          compute_instance_id: c.compute_instance_id,
-          os_image_id: c.os_image_id,
-          months: c.months,
-          number_of_instances: c.count || 1,
+          project_id: c.project_id ? Number(c.project_id) : undefined,
+          compute_instance_id: c.compute_instance_id ? Number(c.compute_instance_id) : undefined,
+          os_image_id: c.os_image_id ? Number(c.os_image_id) : undefined,
+          months: Number(c.months),
+          number_of_instances: Number(c.count || 1),
           volume_types: (c.volume_types || []).filter(v => v.volume_type_id).map(v => ({
-            volume_type_id: v.volume_type_id,
-            storage_size_gb: v.storage_size_gb,
+            volume_type_id: Number(v.volume_type_id),
+            storage_size_gb: Number(v.storage_size_gb),
           })),
-          bandwidth_id: c.bandwidth_id || undefined,
-          bandwidth_count: c.bandwidth_id ? (c.bandwidth_count || 1) : undefined,
-          ...(c.floating_ip_count > 0 ? { floating_ip_count: c.floating_ip_count } : {}),
-          cross_connect_id: c.cross_connect_id || undefined,
-          cross_connect_count: c.cross_connect_id ? (c.cross_connect_count || 1) : undefined,
-          network_id: c.network_id || undefined,
-          subnet_id: c.subnet_id || undefined,
-          security_group_ids: (c.security_group_ids || []).length ? c.security_group_ids : undefined,
+          bandwidth_id: c.bandwidth_id ? Number(c.bandwidth_id) : undefined,
+          bandwidth_count: c.bandwidth_id ? Number(c.bandwidth_count || 1) : undefined,
+          ...(c.floating_ip_count > 0 ? { floating_ip_count: Number(c.floating_ip_count) } : {}),
+          cross_connect_id: c.cross_connect_id ? Number(c.cross_connect_id) : undefined,
+          cross_connect_count: c.cross_connect_id ? Number(c.cross_connect_count || 1) : undefined,
+          network_id: c.network_id ? Number(c.network_id) : undefined,
+          subnet_id: c.subnet_id ? Number(c.subnet_id) : undefined,
+          security_group_ids: (c.security_group_ids || []).length ? c.security_group_ids.map(Number) : undefined,
           keypair_name: c.keypair_name || undefined,
-        })),
+        }))
         fast_track: fastTrack,
         ...(assignType === 'tenant' && selectedTenantId ? { tenant_id: selectedTenantId } : {}),
         ...(assignType === 'user' && selectedUserId ? { user_id: selectedUserId } : {}),

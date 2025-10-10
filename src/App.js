@@ -93,6 +93,7 @@ import ClientProject from "./clientDashboard/pages/clientProjects";
 import ClientProjectDetails from "./clientDashboard/pages/clientProjectDetails";
 import ClientInstances from "./clientDashboard/pages/clientInstances";
 import ClientAddInstancePage from "./clientDashboard/pages/clientAddInstances";
+import ClientMultiInstanceCreation from "./clientDashboard/pages/clientMultiInstanceCreation";
 import AdminMultiQuote from "./adminDashboard/pages/adminMultiQuote";
 import AdminAdvancedCalculator from "./adminDashboard/pages/adminAdvancedCalculator";
 import EnhancedInstanceManagement from "./adminDashboard/pages/enhancedInstanceManagement";
@@ -309,6 +310,10 @@ function App() {
           <Route
             path="/client-dashboard/add-instance"
             element={<ClientAddInstancePage />}
+          />
+          <Route
+            path="/client-dashboard/multi-instance-creation"
+            element={<ClientMultiInstanceCreation />}
           />
         </Routes>
       </AnimatePresence>

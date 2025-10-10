@@ -68,7 +68,7 @@ export default function ClientInstances() {
       <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
         <div className="flex items-center justify-between">
           <button
-            onClick={() => navigate("/client-dashboard/add-instance")}
+            onClick={() => navigate("/client-dashboard/multi-instance-creation")}
             disabled={instanceCount >= maxInstances}
             className={`rounded-[30px] py-3 px-9 text-white font-normal text-base mt-5 transition-colors ${
               instanceCount >= maxInstances
@@ -76,7 +76,7 @@ export default function ClientInstances() {
                 : "bg-[#288DD1] hover:bg-[#1976D2]"
             }`}
           >
-            Add Instances
+            Create Instance
           </button>
           <div className="text-base font-normal text-[#288DD1]">
             Instances Used: {instanceCount} / {maxInstances}

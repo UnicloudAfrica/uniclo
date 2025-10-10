@@ -171,7 +171,7 @@ const MetricCard = ({ title, value, unit, trend, icon: Icon, color = 'blue' }) =
 };
 
 // Enhanced Instance Details Component
-export default function EnhancedInstanceDetails() {
+export default function InstanceDetails() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [instanceId, setInstanceId] = useState(null);
   const [instanceIdentifier, setInstanceIdentifier] = useState(null);
@@ -358,7 +358,7 @@ const fetchInstanceDetails = async (id, identifier) => {
             {error || "Instance couldn't be found"}
           </p>
           <button
-            onClick={() => window.location.href = "/admin-dashboard/instances"}
+            onClick={() => window.location.href = "/admin-dashboard/instance-management"}
             className="px-6 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors"
           >
             Go back to instances
@@ -368,8 +368,8 @@ const fetchInstanceDetails = async (id, identifier) => {
     );
   }
 
-  const { instance, provider_details, available_actions, network_info, monitoring_metrics } = instanceDetails;
-  const actions = available_actions || {};
+  const { instance = {}, provider_details = {}, available_actions = {}, network_info = {}, monitoring_metrics = {} } = instanceDetails || {};
+  const actions = available_actions;
 
   return (
     <>
@@ -387,14 +387,14 @@ const fetchInstanceDetails = async (id, identifier) => {
             <div className="flex items-center space-x-4">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  {instance.name || `Instance ${instance.identifier}`}
+                  {instance?.name || `Instance ${instance?.identifier || instanceId || instanceIdentifier}`}
                 </h1>
                 <p className="text-sm text-gray-500 mt-1">
-                  {instance.identifier} • {instance.provider} • {instance.region}
+                  {(instance?.identifier || instanceId || instanceIdentifier)} • {(instance?.provider || 'N/A')} • {(instance?.region || 'N/A')}
                 </p>
               </div>
               <StatusBadge 
-                status={instance.status} 
+                status={instance?.status} 
                 providerStatus={provider_details?.provider_status}
                 taskState={provider_details?.task_state}
               />
@@ -509,8 +509,8 @@ const fetchInstanceDetails = async (id, identifier) => {
                 />
                 <MetricCard
                   title="Storage"
-                  value={instance.storage_size_gb || 'N/A'}
-                  unit={instance.storage_size_gb ? 'GB' : ''}
+                  value={instance?.storage_size_gb || 'N/A'}
+                  unit={instance?.storage_size_gb ? 'GB' : ''}
                   icon={HardDrive}
                   color="yellow"
                 />
@@ -547,7 +547,7 @@ const fetchInstanceDetails = async (id, identifier) => {
                     </div>
                     <div className="grid grid-cols-3 gap-4">
                       <dt className="text-sm font-medium text-gray-500">OS Image</dt>
-                      <dd className="text-sm text-gray-900 col-span-2">{instance.os_image?.name || 'N/A'}</dd>
+                      <dd className="text-sm text-gray-900 col-span-2">{instance?.storage_size_gb || 'N/A'} GB</dd>
                     </div>
                     <div className="grid grid-cols-3 gap-4">
                       <dt className="text-sm font-medium text-gray-500">Key Pair</dt>

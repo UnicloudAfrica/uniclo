@@ -347,7 +347,7 @@ const InstanceRow = ({
 };
 
 // Main Component
-export default function EnhancedInstanceManagement() {
+export default function InstanceManagement() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [instances, setInstances] = useState([]);
   const [filteredInstances, setFilteredInstances] = useState([]);
@@ -596,7 +596,7 @@ export default function EnhancedInstanceManagement() {
               </button>
               
               <button
-                onClick={() => window.location.href = '/admin-dashboard/create-instance'}
+                onClick={() => window.location.href = '/admin-dashboard/multi-instance-creation'}
                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
               >
                 <Plus className="w-4 h-4 mr-2" />

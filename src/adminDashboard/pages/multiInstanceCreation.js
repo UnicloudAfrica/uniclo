@@ -744,8 +744,57 @@ export default function MultiInstanceCreation() {
     setExpandedConfigs(newExpanded);
   };
 
+  // Validate configurations before preview/create
+  const validateForPricing = () => {
+    const newErrors = {};
+    configurations.forEach((c, i) => {
+      // region or project_id (identifier) must exist
+      if (!c.region && !c.project_id) {
+        newErrors[`instances.${i}.region`] = ["Region or Project is required."];
+      }
+      if (!c.compute_instance_id) {
+        newErrors[`instances.${i}.compute_instance_id`] = ["Instance Type is required."];
+      }
+      if (!c.os_image_id) {
+        newErrors[`instances.${i}.os_image_id`] = ["OS Image is required."];
+      }
+      if (!c.months || Number(c.months) < 1) {
+        newErrors[`instances.${i}.months`] = ["Months must be at least 1."];
+      }
+      if (!c.count || Number(c.count) < 1) {
+        newErrors[`instances.${i}.count`] = ["Number of instances must be at least 1."];
+      }
+      if (Array.isArray(c.volume_types) && c.volume_types.length > 0) {
+        c.volume_types.forEach((v, vi) => {
+          if (!v.volume_type_id) {
+            newErrors[`instances.${i}.volume_types.${vi}.volume_type_id`] = ["Volume Type is required."];
+          }
+          if (!v.storage_size_gb || Number(v.storage_size_gb) < 1) {
+            newErrors[`instances.${i}.volume_types.${vi}.storage_size_gb`] = ["Size must be at least 1 GiB."];
+          }
+        });
+      }
+      if (c.bandwidth_id && (!c.bandwidth_count || Number(c.bandwidth_count) < 1)) {
+        newErrors[`instances.${i}.bandwidth_count`] = ["Bandwidth count must be at least 1 when bandwidth is selected."];
+      }
+      if (c.cross_connect_id && (!c.cross_connect_count || Number(c.cross_connect_count) < 1)) {
+        newErrors[`instances.${i}.cross_connect_count`] = ["Cross connect count must be at least 1 when cross connect is selected."];
+      }
+    });
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      ToastUtils.warning("Please fill the required fields before calculating pricing.");
+      return false;
+    }
+    return true;
+  };
+
   // Get pricing preview
   const getPricingPreview = async () => {
+    // Local validation before calling API
+    if (!validateForPricing()) return;
+
     setPricingLoading(true);
     
     try {

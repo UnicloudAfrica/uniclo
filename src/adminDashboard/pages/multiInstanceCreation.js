@@ -33,7 +33,7 @@ import AdminActiveTab from "../components/adminActiveTab";
 import ToastUtils from "../../utils/toastUtil";
 import { useFetchProductPricing } from "../../hooks/resource";
 import { useFetchInstanceRequests } from "../../hooks/adminHooks/instancesHook";
-import { useAdminAuthStore } from "../../stores/adminAuthStore";
+import useAdminAuthStore from "../../stores/adminAuthStore";
 import config from "../../config";
 
 // Configuration Card Component

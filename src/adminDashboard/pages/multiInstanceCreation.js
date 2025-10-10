@@ -106,12 +106,17 @@ const InstanceConfigCard = ({
 
   // Fetch projects filtered by selected region
   const { data: projectsRespForRegion } = useFetchProjects({ per_page: 100, region: selectedRegion }, { enabled: !!selectedRegion });
-  const projectsForRegion = projectsRespForRegion?.data || resources?.projects || [];
+  const unfilteredProjects = projectsRespForRegion?.data || resources?.projects || [];
+  const projectsForRegion = (unfilteredProjects || []).filter(p => {
+    if (!selectedRegion) return true;
+    const projRegion = p?.default_region || p?.region;
+    return !projRegion || String(projRegion) === String(selectedRegion);
+  });
 
   // Reset dependent selections when region or project changes
   useEffect(() => {
-    // Clear project and infra when region changes
-    if (selectedRegion) {
+    // If region changes and there is no project yet, clear infra-dependent fields
+    if (selectedRegion && !projectIdentifier) {
       updateConfig('project_id', '');
       updateConfig('network_id', '');
       updateConfig('subnet_id', '');
@@ -250,11 +255,20 @@ const InstanceConfigCard = ({
                   }`}
                 >
                   <option value="">Select Region</option>
-                  {resources?.regions?.map(region => (
-                    <option key={region.id} value={region.code}>
-                      {region.name} ({region.code})
-                    </option>
-                  ))}
+                  {(resources?.regions || []).map((region) => {
+                    const code = typeof region === 'string'
+                      ? region
+                      : (region.code || region.region || region.slug || region.id || '');
+                    const name = typeof region === 'string'
+                      ? region
+                      : (region.name || region.display_name || code || 'Region');
+                    if (!code) return null;
+                    return (
+                      <option key={code} value={code}>
+                        {name} ({code})
+                      </option>
+                    );
+                  })}
                 </select>
                 {getErrorForField('region') && (
                   <p className="text-sm text-red-600 mt-1">{getErrorForField('region')}</p>
@@ -312,11 +326,17 @@ const InstanceConfigCard = ({
                   }`}
                 >
                   <option value="">Select Instance Type</option>
-                  {(computeInstancesByRegion || resources?.compute_instances || []).map(instance => (
-                    <option key={instance.id || instance.product?.id} value={instance.id || instance.product?.productable_id}>
-                      {instance.name || instance.product?.name} {instance.vcpus ? `(${instance.vcpus} vCPUs, ${Math.round((instance.memory_mb || 0) / 1024)} GB RAM)` : ''}
-                    </option>
-                  ))}
+                  {(computeInstancesByRegion || resources?.compute_instances || []).map(instance => {
+                    const value = instance?.id ?? instance?.product?.id ?? instance?.product_id ?? '';
+                    const label = (instance?.name || instance?.product?.name || 'Compute');
+                    const vcpus = instance?.vcpus;
+                    const memGb = instance?.memory_mb ? Math.round((instance.memory_mb || 0) / 1024) : null;
+                    return (
+                      <option key={value || label} value={value}>
+                        {label}{vcpus ? ` (${vcpus} vCPUs${memGb ? `, ${memGb} GB RAM` : ''})` : ''}
+                      </option>
+                    );
+                  })}
                 </select>
                 {getErrorForField('product_id') && (
                   <p className="text-sm text-red-600 mt-1">{getErrorForField('product_id')}</p>
@@ -594,7 +614,9 @@ export default function MultiInstanceCreation() {
   }, [location.search]);
 
   // For top-level loading indicator only; per-card fetches will handle region variations
-  const selectedRegion = configurations[0]?.region || (regions.length > 0 ? regions[0].code : '');
+  const firstRegion = regions && regions.length > 0 ? regions[0] : null;
+  const firstRegionCode = typeof firstRegion === 'string' ? firstRegion : (firstRegion?.code || firstRegion?.region || firstRegion?.slug || firstRegion?.id || '');
+  const selectedRegion = configurations[0]?.region || firstRegionCode;
 
   // Use product-pricing API to fetch resources based on region (for first config as baseline)
   const { data: computeInstances, isFetching: isComputeInstancesFetching } =

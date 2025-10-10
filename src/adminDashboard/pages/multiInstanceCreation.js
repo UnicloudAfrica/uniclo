@@ -718,7 +718,7 @@ export default function MultiInstanceCreation() {
         
         // Redirect to instances management or show success page
         setTimeout(() => {
-          window.location.href = '/admin-dashboard/enhanced-instance-management';
+window.location.href = '/admin-dashboard/instance-management';
         }, 2000);
       } else {
         if (data.errors) {
@@ -911,7 +911,7 @@ export default function MultiInstanceCreation() {
 
             <div className="flex items-center space-x-3">
               <button
-                onClick={() => window.location.href = '/admin-dashboard/enhanced-instance-management'}
+onClick={() => window.location.href = '/admin-dashboard/instance-management'}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800"
               >
                 Cancel

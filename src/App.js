@@ -240,10 +240,7 @@ function App() {
             path="/admin-dashboard/projects/details"
             element={<AdminProjectDetails />}
           />
-          <Route
-            path="/admin-dashboard/instances"
-            element={<AdminInstances />}
-          />
+          {/* Instances route removed in favor of Instance Management */}
           <Route
             path="/admin-dashboard/add-instance"
             element={<AdminAddInstance />}
@@ -253,10 +250,7 @@ function App() {
             element={<AdminKeyPairs />}
           />
           <Route path="/admin-dashboard/pricing" element={<AdminPricing />} />
-          <Route
-            path="/admin-dashboard/instances/details"
-            element={<AdminInstancesDetails />}
-          />
+          {/* Instances details route removed in favor of Instance Management details */}
 
           {/* <Route
             path="/admin-dashboard/calculator"
@@ -268,8 +262,8 @@ function App() {
           /> */}
           <Route path="/admin-dashboard/quote" element={<AdminMultiQuote />} />
           <Route path="/admin-dashboard/advanced-calculator" element={<AdminAdvancedCalculator />} />
-          <Route path="/admin-dashboard/enhanced-instance-management" element={<EnhancedInstanceManagement />} />
-          <Route path="/admin-dashboard/enhanced-instance-details" element={<EnhancedInstanceDetails />} />
+          <Route path="/admin-dashboard/instance-management" element={<EnhancedInstanceManagement />} />
+          <Route path="/admin-dashboard/instance-management/details" element={<EnhancedInstanceDetails />} />
           <Route path="/admin-dashboard/enhanced-profile-settings" element={<EnhancedProfileSettings />} />
           <Route path="/admin-dashboard/multi-instance-creation" element={<MultiInstanceCreation />} />
           {/* <Route

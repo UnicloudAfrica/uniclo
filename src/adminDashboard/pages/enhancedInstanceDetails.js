@@ -174,6 +174,7 @@ const MetricCard = ({ title, value, unit, trend, icon: Icon, color = 'blue' }) =
 export default function EnhancedInstanceDetails() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [instanceId, setInstanceId] = useState(null);
+  const [instanceIdentifier, setInstanceIdentifier] = useState(null);
   const [instanceDetails, setInstanceDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
@@ -186,7 +187,14 @@ export default function EnhancedInstanceDetails() {
   // Fetch instance details
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const identifier = params.get("identifier");
     const encodedId = params.get("id");
+
+    if (identifier) {
+      setInstanceIdentifier(identifier);
+      fetchInstanceDetails(undefined, identifier);
+      return;
+    }
 
     if (encodedId) {
       try {
@@ -196,18 +204,33 @@ export default function EnhancedInstanceDetails() {
       } catch (error) {
         console.error("Failed to decode instance ID:", error);
         setIsError(true);
-        setError("Invalid instance ID");
+        setError("Invalid instance reference");
       }
     }
   }, []);
 
-  const fetchInstanceDetails = async (id) => {
+const fetchInstanceDetails = async (id, identifier) => {
     setIsLoading(true);
     setIsError(false);
     
     try {
       const { token } = useAdminAuthStore.getState();
-      const response = await fetch(`${config.baseURL}/business/instances/${id}`, {
+      let response;
+      if (identifier) {
+        response = await fetch(`${config.baseURL}/business/instances?identifier=${encodeURIComponent(identifier)}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+          },
+        });
+      } else {
+        response = await fetch(`${config.baseURL}/business/instances/${id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+          },
+        });
+      }
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
@@ -217,7 +240,9 @@ export default function EnhancedInstanceDetails() {
       const data = await response.json();
       
       if (data.success) {
-        setInstanceDetails(data.data);
+        const detail = Array.isArray(data.data) ? data.data[0] : data.data;
+        setInstanceDetails(detail);
+        if (detail?.id) setInstanceId(detail.id);
       } else {
         throw new Error(data.error || 'Failed to fetch instance details');
       }

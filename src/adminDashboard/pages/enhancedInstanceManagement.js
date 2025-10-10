@@ -545,8 +545,9 @@ export default function EnhancedInstanceManagement() {
 
   // Navigate to instance details
   const navigateToInstanceDetails = (instanceId) => {
-    const encodedId = btoa(instanceId);
-    window.location.href = `/admin-dashboard/instances/details?id=${encodeURIComponent(encodedId)}`;
+    const identifier = instanceId; // instanceId variable here holds the id passed; prefer using instance.identifier below.
+    // Navigate by identifier for details
+    window.location.href = `/admin-dashboard/instance-management/details?identifier=${encodeURIComponent(instanceId)}`;
   };
 
   // Handle console access
@@ -768,7 +769,7 @@ export default function EnhancedInstanceManagement() {
                       onSelect={handleInstanceSelect}
                       onAction={executeInstanceAction}
                       onConsoleAccess={handleConsoleAccess}
-                      onNavigateToDetails={navigateToInstanceDetails}
+onNavigateToDetails={(idOrIdentifier) => navigateToInstanceDetails(idOrIdentifier)}
                       actionLoading={actionLoading}
                     />
                   ))}

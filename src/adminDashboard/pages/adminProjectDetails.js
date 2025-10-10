@@ -104,8 +104,8 @@ export default function AdminProjectDetails() {
   const handleRowClick = (item) => {
     const encodedId = encodeURIComponent(btoa(item.identifier));
     const instanceName = item.name;
-    navigate(
-      `/admin-dashboard/instances/details?id=${encodedId}&name=${instanceName}`
+navigate(
+      `/admin-dashboard/instance-management/details?identifier=${encodeURIComponent(item.identifier)}&name=${encodeURIComponent(instanceName)}`
     );
   };
 

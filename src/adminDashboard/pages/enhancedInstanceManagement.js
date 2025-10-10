@@ -514,10 +514,11 @@ export default function EnhancedInstanceManagement() {
     if (!confirmed) return;
 
     try {
-      const response = await fetch('/api/v1/business/instance-management/bulk-actions', {
+      const { token } = useAdminAuthStore.getState();
+      const response = await fetch(`${config.baseURL}/business/instance-management/bulk-actions`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
@@ -545,7 +546,7 @@ export default function EnhancedInstanceManagement() {
   // Navigate to instance details
   const navigateToInstanceDetails = (instanceId) => {
     const encodedId = btoa(instanceId);
-    window.location.href = `/admin-dashboard/enhanced-instance-details?id=${encodeURIComponent(encodedId)}`;
+    window.location.href = `/admin-dashboard/instances/details?id=${encodeURIComponent(encodedId)}`;
   };
 
   // Handle console access

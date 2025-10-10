@@ -759,7 +759,7 @@ export default function MultiInstanceCreation() {
         },
         body: JSON.stringify({
           pricing_requests: configurations.map(c => ({
-            region: c.project_id ? undefined : c.region,
+            region: c.region || undefined,
             project_id: c.project_id || undefined,
             compute_instance_id: c.compute_instance_id ? Number(c.compute_instance_id) : undefined,
             os_image_id: c.os_image_id ? Number(c.os_image_id) : undefined,
@@ -789,7 +789,13 @@ export default function MultiInstanceCreation() {
         setPricing(data.data);
         ToastUtils.success('Pricing calculated successfully');
       } else {
-        throw new Error(data.message);
+        if (data.errors) {
+          setErrors(data.errors);
+          const first = Object.values(data.errors)[0];
+          const msg = Array.isArray(first) ? first[0] : (data.message || 'Validation failed');
+          throw new Error(msg);
+        }
+        throw new Error(data.message || 'Validation failed');
       }
     } catch (err) {
       ToastUtils.error('Failed to calculate pricing: ' + err.message);
@@ -808,7 +814,7 @@ export default function MultiInstanceCreation() {
       const { token } = useAdminAuthStore.getState();
       const payload = {
         pricing_requests: configurations.map(c => ({
-          region: c.project_id ? undefined : c.region,
+          region: c.region || undefined,
           project_id: c.project_id || undefined,
           compute_instance_id: c.compute_instance_id ? Number(c.compute_instance_id) : undefined,
           os_image_id: c.os_image_id ? Number(c.os_image_id) : undefined,

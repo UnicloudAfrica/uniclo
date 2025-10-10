@@ -237,66 +237,8 @@ const InstanceConfigCard = ({
             />
           </div>
 
-          {/* Admin Assignment (optional) */}
+          {/* Infrastructure Configuration */}
           <div className="space-y-4">
-            <h4 className="text-md font-semibold text-gray-900">Assignment (Admin only)</h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Assign To</label>
-                <select
-                  value={assignType}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setAssignType(v);
-                    // Clear ids when type changes
-                    setSelectedTenantId('');
-                    setSelectedUserId('');
-                  }}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300"
-                >
-                  <option value="">None</option>
-                  <option value="tenant">Tenant</option>
-                  <option value="user">User (Client)</option>
-                </select>
-              </div>
-
-              {assignType === 'tenant' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Tenant</label>
-                  <select
-                    value={selectedTenantId}
-                    onChange={(e) => {
-                      setSelectedTenantId(e.target.value);
-                      setSelectedUserId('');
-                    }}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300"
-                  >
-                    <option value="">Select Tenant</option>
-                    {tenants?.map(t => (
-                      <option key={t.id} value={t.id}>{t.name || t.company_name || `Tenant ${t.id}`}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {assignType === 'user' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">User</label>
-                  <select
-                    value={selectedUserId}
-                    onChange={(e) => setSelectedUserId(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300"
-                  >
-                    <option value="">Select User</option>
-                    {(selectedTenantId ? subTenantClients : clients)?.map(u => (
-                      <option key={u.id} value={u.id}>{u.name || `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || `User ${u.id}`}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-
-            {/* Infrastructure Configuration */}
             <h4 className="text-md font-semibold text-gray-900 flex items-center">
               <Server className="w-5 h-5 mr-2" />
               Infrastructure Configuration
@@ -994,6 +936,63 @@ window.location.href = '/admin-dashboard/instance-management';
 
         {/* Main Content */}
         <div className="p-6 md:p-8">
+          {/* Assignment (Admin only) */}
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 mb-8">
+            <h3 className="text-md font-semibold text-gray-900 mb-4">Assignment (Admin only)</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Assign To</label>
+                <select
+                  value={assignType}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setAssignType(v);
+                    setSelectedTenantId('');
+                    setSelectedUserId('');
+                  }}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300"
+                >
+                  <option value="">None</option>
+                  <option value="tenant">Tenant</option>
+                  <option value="user">User (Client)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Tenant</label>
+                <select
+                  value={selectedTenantId}
+                  onChange={(e) => {
+                    setSelectedTenantId(e.target.value);
+                    setSelectedUserId('');
+                  }}
+                  disabled={assignType !== 'tenant' && assignType !== 'user'}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${assignType ? 'border-gray-300' : 'bg-gray-50 cursor-not-allowed'}`}
+                >
+                  <option value="">{assignType ? 'Select Tenant' : 'Select assign type first'}</option>
+                  {tenants?.map(t => (
+                    <option key={t.id} value={t.id}>{t.name || t.company_name || `Tenant ${t.id}`}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">User</label>
+                <select
+                  value={selectedUserId}
+                  onChange={(e) => setSelectedUserId(e.target.value)}
+                  disabled={assignType !== 'user'}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${assignType === 'user' ? '' : 'bg-gray-50 cursor-not-allowed'}`}
+                >
+                  <option value="">{assignType === 'user' ? 'Select User' : 'Select assign type user'}</option>
+                  {(selectedTenantId ? subTenantClients : clients)?.map(u => (
+                    <option key={u.id} value={u.id}>{u.name || `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || `User ${u.id}`}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
           {/* Configuration Cards */}
           <div className="space-y-6 mb-8">
             {configurations.map((config, index) => (

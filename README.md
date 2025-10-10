@@ -2,6 +2,12 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Backend Integration Rules
+
+For exact API payload/response contracts and wiring conventions, see:
+- docs/INTEGRATION_RULES.md (preferred)
+- INTEGRATION_RULES.md (root copy, if docs is not present)
+
 ## Available Scripts
 
 In the project directory, you can run:

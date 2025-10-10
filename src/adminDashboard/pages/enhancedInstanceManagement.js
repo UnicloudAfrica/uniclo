@@ -37,6 +37,8 @@ import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import EmbeddedConsole, { useConsoleManager } from "../../components/Console/EmbeddedConsole";
 import ToastUtils from "../../utils/toastUtil";
+import useAdminAuthStore from "../../stores/adminAuthStore";
+import config from "../../config";
 
 // Enhanced Status Badge Component
 const StatusBadge = ({ status, size = 'sm' }) => {
@@ -368,9 +370,10 @@ export default function EnhancedInstanceManagement() {
     else setRefreshing(true);
 
     try {
-      const response = await fetch('/api/v1/business/instances', {
+      const { token } = useAdminAuthStore.getState();
+      const response = await fetch(`${config.baseURL}/business/instances`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
         },
       });
@@ -467,10 +470,11 @@ export default function EnhancedInstanceManagement() {
     }));
 
     try {
-      const response = await fetch(`/api/v1/business/instance-management/${instanceId}/actions`, {
+      const { token } = useAdminAuthStore.getState();
+      const response = await fetch(`${config.baseURL}/business/instance-management/${instanceId}/actions`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },

@@ -89,10 +89,10 @@ export default function AdminInstances() {
           </div>
 
           <button
-            onClick={() => navigate("/admin-dashboard/add-instance")}
+            onClick={() => navigate("/admin-dashboard/multi-instance-creation")}
             className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base mt-5 hover:bg-[#1976D2] transition-colors"
           >
-            Add Instances
+            Create Instances
           </button>
 
           {/* Desktop Table */}

@@ -93,24 +93,8 @@ const InstanceConfigCard = ({
 
   const selectedProduct = resources?.compute_instances?.find(p => p.id === localConfig.product_id);
 
-  // Determine selected project object by id or identifier
-  const selectedProjectObj = (projectsForRegion || []).find(p => String(p.id) === String(localConfig.project_id)) ||
-    (projectsForRegion || []).find(p => p.identifier === localConfig.project_identifier);
-
-  // Ensure we keep both id and identifier in sync when a project object is identified
-  useEffect(() => {
-    if (selectedProjectObj) {
-      const nextId = selectedProjectObj.id;
-      const nextIdent = selectedProjectObj.identifier;
-      if (String(localConfig.project_id) !== String(nextId) || localConfig.project_identifier !== nextIdent) {
-        onUpdate(index, { ...localConfig, project_id: nextId, project_identifier: nextIdent });
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedProjectObj?.id, selectedProjectObj?.identifier]);
-
-  // Fetch infra resources based on selected project (identifier) and region
-  const projectIdentifier = selectedProjectObj?.identifier;
+  // Use the project identifier string directly (stored in project_id)
+  const projectIdentifier = localConfig.project_id || '';
   const selectedRegion = localConfig.region;
   const { data: securityGroups } = useFetchSecurityGroups(projectIdentifier, selectedRegion, { enabled: !!projectIdentifier && !!selectedRegion });
   const { data: keyPairs } = useFetchKeyPairs(projectIdentifier, selectedRegion, { enabled: !!projectIdentifier && !!selectedRegion });
@@ -136,7 +120,6 @@ const InstanceConfigCard = ({
     // If region changes and there is no project yet, clear infra-dependent fields
     if (selectedRegion && !projectIdentifier) {
       updateConfig('project_id', '');
-      updateConfig('project_identifier', '');
       updateConfig('network_id', '');
       updateConfig('subnet_id', '');
       updateConfig('security_group_ids', []);

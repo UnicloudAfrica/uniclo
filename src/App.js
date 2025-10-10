@@ -157,7 +157,7 @@ function App() {
           <Route path="/sign-up" element={<DashboardSignUp />} /> */}
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/verify-mail" element={<VerifyMail />} />
+<Route path="/verify-mail" element={<VerifyMail />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/modules" element={<Modules />} />
           <Route
@@ -199,7 +199,7 @@ function App() {
           {/* admin pages */}
           <Route path="/admin-signin" element={<AdminLogin />} />
           {/* <Route path="/admin-signup" element={<AdminSignup />} /> */}
-          <Route path="/verify-admin-mail" element={<VerifyAdminMail />} />
+<Route path="/verify-admin-mail" element={<VerifyAdminMail />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/admin-dashboard/admin-users" element={<AdminUsers />} />
           <Route path="/admin-dashboard/partners" element={<AdminPartners />} />
@@ -247,7 +247,7 @@ function App() {
             path="/admin-dashboard/key-pairs"
             element={<AdminKeyPairs />}
           />
-          <Route path="/admin-dashboard/pricing" element={<AdminPricing />} />
+<Route path="/admin-dashboard/pricing" element={<AdminPricing />} />
           {/* Instances details route removed in favor of Instance Management details */}
 
           {/* <Route
@@ -258,10 +258,10 @@ function App() {
             path="/admin-dashboard/calculator-new"
             element={<AdminCalculatorOptions />}
           /> */}
-          <Route path="/admin-dashboard/quote" element={<AdminMultiQuote />} />
+<Route path="/admin-dashboard/quote" element={<AdminMultiQuote />} />
           <Route path="/admin-dashboard/advanced-calculator" element={<AdminAdvancedCalculator />} />
-<Route path="/admin-dashboard/instance-management" element={<InstanceManagement />} />
-<Route path="/admin-dashboard/instance-management/details" element={<InstanceDetails />} />
+          <Route path="/admin-dashboard/instance-management" element={<InstanceManagement />} />
+          <Route path="/admin-dashboard/instance-management/details" element={<InstanceDetails />} />
           <Route path="/admin-dashboard/enhanced-profile-settings" element={<EnhancedProfileSettings />} />
           <Route path="/admin-dashboard/multi-instance-creation" element={<MultiInstanceCreation />} />
           {/* <Route

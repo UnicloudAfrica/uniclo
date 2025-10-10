@@ -39,6 +39,38 @@
     "extends": [
       "react-app",
       "react-app/jest"
+    ],
+    "overrides": [
+      {
+        "files": ["src/adminDashboard/**/*.*"],
+        "rules": {
+          "no-restricted-imports": [
+            "error",
+            {
+              "patterns": [
+                "src/index/tenant/*",
+                "src/index/tenant/**",
+                "src/stores/userAuthStore"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "files": ["src/dashboard/**/*.*", "src/clientDashboard/**/*.*", "src/tenantDashboard/**/*.*"],
+        "rules": {
+          "no-restricted-imports": [
+            "error",
+            {
+              "patterns": [
+                "src/index/admin/*",
+                "src/index/admin/**",
+                "src/stores/adminAuthStore"
+              ]
+            }
+          ]
+        }
+      }
     ]
   },
   "browserslist": {

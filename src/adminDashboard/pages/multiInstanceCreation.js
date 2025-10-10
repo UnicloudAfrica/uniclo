@@ -31,6 +31,8 @@ import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import ToastUtils from "../../utils/toastUtil";
+import { useFetchProductPricing } from "../../hooks/resource";
+import { useFetchInstanceRequests } from "../../hooks/adminHooks/instancesHook";
 
 // Configuration Card Component
 const InstanceConfigCard = ({ 
@@ -74,7 +76,7 @@ const InstanceConfigCard = ({
     return errors[`instances.${index}.${field}`]?.[0] || errors[field]?.[0];
   };
 
-  const selectedProduct = resources?.products?.find(p => p.id === localConfig.product_id);
+  const selectedProduct = resources?.compute_instances?.find(p => p.id === localConfig.product_id);
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
@@ -96,7 +98,7 @@ const InstanceConfigCard = ({
                 Configuration #{index + 1}: {localConfig.name || 'Untitled'}
               </h3>
               <p className="text-sm text-gray-500">
-                {localConfig.count || 1} instance(s) • {selectedProduct?.productable?.name || 'No product selected'}
+                {localConfig.count || 1} instance(s) • {selectedProduct?.name || 'No product selected'}
               </p>
             </div>
           </div>
@@ -257,9 +259,9 @@ const InstanceConfigCard = ({
                   }`}
                 >
                   <option value="">Select Instance Type</option>
-                  {resources?.products?.map(product => (
-                    <option key={product.id} value={product.id}>
-                      {product.productable?.name} ({product.productable?.vcpus} vCPUs, {Math.round(product.productable?.memory_mb / 1024)} GB RAM)
+                  {resources?.compute_instances?.map(instance => (
+                    <option key={instance.id} value={instance.id}>
+                      {instance.name} ({instance.vcpus} vCPUs, {Math.round(instance.memory_mb / 1024)} GB RAM) - ${instance.hourly_rate}/hr
                     </option>
                   ))}
                 </select>
@@ -508,8 +510,6 @@ export default function MultiInstanceCreation() {
     tags: []
   }]);
 
-  const [resources, setResources] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [pricing, setPricing] = useState(null);
   const [pricingLoading, setPricingLoading] = useState(false);
@@ -517,32 +517,33 @@ export default function MultiInstanceCreation() {
   const [expandedConfigs, setExpandedConfigs] = useState(new Set([0]));
   const [activeStep, setActiveStep] = useState(0);
 
-  // Load resources on mount
-  useEffect(() => {
-    fetchResources();
-  }, []);
+  // Get the region from the first configuration to fetch resources dynamically
+  const selectedRegion = configurations[0]?.region || '';
 
-  const fetchResources = async () => {
-    try {
-      const response = await fetch('/api/v1/business/multi-instances/resources', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Accept': 'application/json',
-        },
-      });
+  // Use product-pricing API to fetch resources based on region
+  const { data: computeInstances, isFetching: isComputeInstancesFetching } =
+    useFetchProductPricing(selectedRegion, "compute_instance", {
+      enabled: !!selectedRegion,
+    });
+  const { data: osImages, isFetching: isOsImagesFetching } =
+    useFetchProductPricing(selectedRegion, "os_image", {
+      enabled: !!selectedRegion,
+    });
+  const { data: volumeTypes, isFetching: isVolumeTypesFetching } =
+    useFetchProductPricing(selectedRegion, "volume_type", {
+      enabled: !!selectedRegion,
+    });
 
-      const data = await response.json();
-      if (data.success) {
-        setResources(data.data);
-      } else {
-        throw new Error(data.message);
-      }
-    } catch (err) {
-      ToastUtils.error('Failed to load resources: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Mock regions and projects (you can replace with actual API calls)
+  const regions = [
+    { id: 1, code: "lagos-1", name: "Lagos 1", provider: "zadara", country_code: "NG" }
+  ];
+  
+  const projects = [
+    { id: 1, identifier: "ED4E3B", name: "CRM LW2O", description: null, default_region: "lagos-1", default_provider: "zadara" }
+  ];
+
+  const loading = isComputeInstancesFetching || isOsImagesFetching || isVolumeTypesFetching;
 
   // Update configuration
   const updateConfiguration = (index, updatedConfig) => {
@@ -624,10 +625,11 @@ export default function MultiInstanceCreation() {
     setPricingLoading(true);
     
     try {
-      const response = await fetch('/api/v1/business/multi-instances/preview-pricing', {
+      const { token } = useAdminAuthStore.getState();
+      const response = await fetch(`${config.baseURL}/business/multi-instances/preview-pricing`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
@@ -667,10 +669,11 @@ export default function MultiInstanceCreation() {
     setErrors({});
 
     try {
-      const response = await fetch('/api/v1/business/multi-instances/', {
+      const { token } = useAdminAuthStore.getState();
+      const response = await fetch(`${config.baseURL}/business/multi-instances`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
@@ -783,7 +786,17 @@ export default function MultiInstanceCreation() {
                 onUpdate={updateConfiguration}
                 onDelete={deleteConfiguration}
                 onDuplicate={duplicateConfiguration}
-                resources={resources}
+                resources={{
+                  compute_instances: computeInstances || [],
+                  os_images: osImages || [],
+                  volume_types: volumeTypes || [],
+                  regions: regions,
+                  projects: projects,
+                  networks: [], // TODO: Replace with actual API call
+                  subnets: [], // TODO: Replace with actual API call
+                  security_groups: [], // TODO: Replace with actual API call
+                  key_pairs: [] // TODO: Replace with actual API call
+                }}
                 errors={errors}
                 isExpanded={expandedConfigs.has(index)}
                 onToggleExpand={toggleConfigExpansion}

@@ -231,11 +231,6 @@ const fetchInstanceDetails = async (id, identifier) => {
           },
         });
       }
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-        },
-      });
       
       const data = await response.json();
       
@@ -298,10 +293,11 @@ const fetchInstanceDetails = async (id, identifier) => {
     if (!instanceId) return;
     
     try {
-      await fetch(`/api/v1/business/instance-management/${instanceId}/refresh`, {
+      const { token } = useAdminAuthStore.getState();
+      await fetch(`${config.baseURL}/business/instance-management/${instanceId}/refresh`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
         },
       });

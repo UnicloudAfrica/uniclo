@@ -31,7 +31,7 @@ import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import ToastUtils from "../../utils/toastUtil";
-import { useFetchProductPricing } from "../../hooks/resource";
+import { useFetchProductPricing, useFetchGeneralRegions } from "../../hooks/resource";
 import { useFetchInstanceRequests } from "../../hooks/adminHooks/instancesHook";
 import useAdminAuthStore from "../../stores/adminAuthStore";
 import config from "../../config";
@@ -498,7 +498,7 @@ export default function MultiInstanceCreation() {
     name: '',
     description: '',
     count: 1,
-    region: '',
+    region: '', // Will be set by useEffect when regions are loaded
     project_id: '',
     product_id: '',
     os_image_id: '',
@@ -519,8 +519,11 @@ export default function MultiInstanceCreation() {
   const [expandedConfigs, setExpandedConfigs] = useState(new Set([0]));
   const [activeStep, setActiveStep] = useState(0);
 
+  // Fetch regions from API
+  const { data: regions = [] } = useFetchGeneralRegions();
+
   // Get the region from the first configuration to fetch resources dynamically
-  const selectedRegion = configurations[0]?.region || '';
+  const selectedRegion = configurations[0]?.region || (regions.length > 0 ? regions[0].code : '');
 
   // Use product-pricing API to fetch resources based on region
   const { data: computeInstances, isFetching: isComputeInstancesFetching } =
@@ -535,17 +538,23 @@ export default function MultiInstanceCreation() {
     useFetchProductPricing(selectedRegion, "volume_type", {
       enabled: !!selectedRegion,
     });
-
-  // Mock regions and projects (you can replace with actual API calls)
-  const regions = [
-    { id: 1, code: "lagos-1", name: "Lagos 1", provider: "zadara", country_code: "NG" }
-  ];
   
   const projects = [
     { id: 1, identifier: "ED4E3B", name: "CRM LW2O", description: null, default_region: "lagos-1", default_provider: "zadara" }
   ];
 
   const loading = isComputeInstancesFetching || isOsImagesFetching || isVolumeTypesFetching;
+
+  // Set default region when regions are loaded and no region is set
+  useEffect(() => {
+    if (regions.length > 0 && !configurations[0]?.region) {
+      const defaultRegion = regions[0].code;
+      setConfigurations(prev => [
+        { ...prev[0], region: defaultRegion },
+        ...prev.slice(1)
+      ]);
+    }
+  }, [regions, configurations]);
 
   // Update configuration
   const updateConfiguration = (index, updatedConfig) => {
@@ -561,7 +570,7 @@ export default function MultiInstanceCreation() {
       name: '',
       description: '',
       count: 1,
-      region: '',
+      region: regions.length > 0 ? regions[0].code : '', // Use first available region
       project_id: '',
       product_id: '',
       os_image_id: '',

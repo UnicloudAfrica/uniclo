@@ -602,6 +602,7 @@ export default function MultiInstanceCreation() {
   const [errors, setErrors] = useState({});
   const [expandedConfigs, setExpandedConfigs] = useState(new Set([0]));
   const [activeStep, setActiveStep] = useState(0);
+  const [fastTrack, setFastTrack] = useState(false);
 
   // Fetch regions from API
   const { data: regions = [] } = useFetchGeneralRegions();
@@ -758,12 +759,13 @@ export default function MultiInstanceCreation() {
             })),
             bandwidth_id: c.bandwidth_id || undefined,
             bandwidth_count: c.bandwidth_id ? (c.bandwidth_count || 1) : undefined,
-            floating_ip_count: c.floating_ip_count || 0,
+            ...(c.floating_ip_count > 0 ? { floating_ip_count: c.floating_ip_count } : {}),
             network_id: c.network_id || undefined,
             subnet_id: c.subnet_id || undefined,
             security_group_ids: (c.security_group_ids || []).length ? c.security_group_ids : undefined,
             keypair_name: c.keypair_name || undefined,
-          }))
+          })),
+          fast_track: fastTrack,
         }),
       });
 
@@ -804,7 +806,7 @@ export default function MultiInstanceCreation() {
           })),
           bandwidth_id: c.bandwidth_id || undefined,
           bandwidth_count: c.bandwidth_id ? (c.bandwidth_count || 1) : undefined,
-          floating_ip_count: c.floating_ip_count || 0,
+          ...(c.floating_ip_count > 0 ? { floating_ip_count: c.floating_ip_count } : {}),
           cross_connect_id: c.cross_connect_id || undefined,
           cross_connect_count: c.cross_connect_id ? (c.cross_connect_count || 1) : undefined,
           network_id: c.network_id || undefined,
@@ -812,8 +814,8 @@ export default function MultiInstanceCreation() {
           security_group_ids: (c.security_group_ids || []).length ? c.security_group_ids : undefined,
           keypair_name: c.keypair_name || undefined,
         })),
-        fast_track: false,
-        tags: Array.from(new Set((configurations.flatMap(c => c.tags || []))))
+        fast_track: fastTrack,
+        ...(configurations.some(c => (c.tags || []).length) ? { tags: Array.from(new Set((configurations.flatMap(c => c.tags || [])))) } : {})
       };
       const response = await fetch(`${config.baseURL}/business/multi-instances`, {
         method: 'POST',
@@ -999,9 +1001,13 @@ window.location.href = '/admin-dashboard/instance-management';
             </div>
           )}
 
-          {/* Action Buttons */}
+          {/* Action Bar */}
           <div className="flex items-center justify-between bg-white rounded-lg border border-gray-200 shadow-sm p-6">
             <div className="flex items-center space-x-4">
+              <label className="inline-flex items-center space-x-2 text-sm text-gray-700 mr-4">
+                <input type="checkbox" checked={fastTrack} onChange={(e) => setFastTrack(e.target.checked)} className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                <span>Fast track</span>
+              </label>
               <button
                 onClick={getPricingPreview}
                 disabled={pricingLoading || totalInstances === 0}

@@ -300,12 +300,7 @@ const InstanceConfigCard = ({
                 </label>
                 <select
                   value={localConfig.project_id || ''}
-                  onChange={(e) => {
-                    const pid = e.target.value;
-                    const proj = (projectsForRegion || []).find(p => String(p.id) === String(pid));
-                    updateConfig('project_id', pid ? parseInt(pid) : '');
-                    updateConfig('project_identifier', proj?.identifier || '');
-                  }}
+                  onChange={(e) => updateConfig('project_id', e.target.value)}
                   disabled={!selectedRegion}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     getErrorForField('project_id') ? 'border-red-300' : 'border-gray-300'
@@ -313,7 +308,7 @@ const InstanceConfigCard = ({
                 >
                   <option value="">{selectedRegion ? 'Select Project' : 'Select region first'}</option>
                   {projectsForRegion?.map(project => (
-                    <option key={project.id} value={project.id}>
+                    <option key={project.identifier} value={project.identifier}>
                       {project.name}
                     </option>
                   ))}
@@ -782,7 +777,7 @@ export default function MultiInstanceCreation() {
         body: JSON.stringify({
           pricing_requests: configurations.map(c => ({
             region: c.project_id ? undefined : c.region,
-            project_id: c.project_id ? Number(c.project_id) : undefined,
+            project_id: c.project_id || undefined,
             compute_instance_id: c.compute_instance_id ? Number(c.compute_instance_id) : undefined,
             os_image_id: c.os_image_id ? Number(c.os_image_id) : undefined,
             months: Number(c.months),
@@ -798,10 +793,10 @@ export default function MultiInstanceCreation() {
             subnet_id: c.subnet_id ? Number(c.subnet_id) : undefined,
             security_group_ids: (c.security_group_ids || []).length ? c.security_group_ids.map(Number) : undefined,
             keypair_name: c.keypair_name || undefined,
-          }))
+          })),
           fast_track: fastTrack,
-          ...(assignType === 'tenant' && selectedTenantId ? { tenant_id: selectedTenantId } : {}),
-          ...(assignType === 'user' && selectedUserId ? { user_id: selectedUserId } : {}),
+          ...(assignType === 'tenant' && selectedTenantId ? { tenant_id: Number(selectedTenantId) } : {}),
+          ...(assignType === 'user' && selectedUserId ? { user_id: Number(selectedUserId) } : {}),
         }),
       });
 
@@ -831,7 +826,7 @@ export default function MultiInstanceCreation() {
       const payload = {
         pricing_requests: configurations.map(c => ({
           region: c.project_id ? undefined : c.region,
-          project_id: c.project_id ? Number(c.project_id) : undefined,
+          project_id: c.project_id || undefined,
           compute_instance_id: c.compute_instance_id ? Number(c.compute_instance_id) : undefined,
           os_image_id: c.os_image_id ? Number(c.os_image_id) : undefined,
           months: Number(c.months),
@@ -849,10 +844,10 @@ export default function MultiInstanceCreation() {
           subnet_id: c.subnet_id ? Number(c.subnet_id) : undefined,
           security_group_ids: (c.security_group_ids || []).length ? c.security_group_ids.map(Number) : undefined,
           keypair_name: c.keypair_name || undefined,
-        }))
+        })),
         fast_track: fastTrack,
-        ...(assignType === 'tenant' && selectedTenantId ? { tenant_id: selectedTenantId } : {}),
-        ...(assignType === 'user' && selectedUserId ? { user_id: selectedUserId } : {}),
+        ...(assignType === 'tenant' && selectedTenantId ? { tenant_id: Number(selectedTenantId) } : {}),
+        ...(assignType === 'user' && selectedUserId ? { user_id: Number(selectedUserId) } : {}),
         ...(configurations.some(c => (c.tags || []).length) ? { tags: Array.from(new Set((configurations.flatMap(c => c.tags || [])))) } : {})
       };
       const response = await fetch(`${config.baseURL}/business/multi-instances`, {

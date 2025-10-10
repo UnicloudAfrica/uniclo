@@ -282,13 +282,14 @@ const InstanceConfigCard = ({
                 <select
                   value={localConfig.project_id || ''}
                   onChange={(e) => updateConfig('project_id', e.target.value)}
+                  disabled={!selectedRegion}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     getErrorForField('project_id') ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  } ${!selectedRegion ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                 >
-                  <option value="">Select Project</option>
+                  <option value="">{selectedRegion ? 'Select Project' : 'Select region first'}</option>
                   {projectsForRegion?.map(project => (
-                    <option key={project.identifier} value={project.identifier}>
+                    <option key={project.identifier || project.id} value={project.identifier || project.id}>
                       {project.name}
                     </option>
                   ))}
@@ -321,9 +322,10 @@ const InstanceConfigCard = ({
                 <select
                   value={localConfig.product_id || ''}
                   onChange={(e) => updateConfig('product_id', e.target.value)}
+                  disabled={!selectedRegion}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     getErrorForField('product_id') ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  } ${!selectedRegion ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                 >
                   <option value="">Select Instance Type</option>
                   {(computeInstancesByRegion || resources?.compute_instances || []).map(instance => {
@@ -350,9 +352,10 @@ const InstanceConfigCard = ({
                 <select
                   value={localConfig.os_image_id || ''}
                   onChange={(e) => updateConfig('os_image_id', e.target.value)}
+                  disabled={!selectedRegion}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     getErrorForField('os_image_id') ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  } ${!selectedRegion ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                 >
                   <option value="">Select OS Image</option>
                   {(osImagesByRegion || resources?.os_images || []).map(image => (
@@ -399,7 +402,8 @@ const InstanceConfigCard = ({
                     <select
                       value={volume.volume_type_id || ''}
                       onChange={(e) => updateVolumeType(volumeIndex, 'volume_type_id', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      disabled={!selectedRegion}
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!selectedRegion ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                     >
                       <option value="">Select Volume Type</option>
                       {(volumeTypesByRegion || resources?.volume_types || []).map(vt => (
@@ -451,9 +455,10 @@ const InstanceConfigCard = ({
                 <select
                   value={localConfig.network_id || ''}
                   onChange={(e) => updateConfig('network_id', e.target.value)}
+                  disabled={!projectIdentifier || !selectedRegion}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     getErrorForField('network_id') ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  } ${(!projectIdentifier || !selectedRegion) ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                 >
                   <option value="">Select Network</option>
                   {(networkInterfaces || []).map(network => (
@@ -471,9 +476,10 @@ const InstanceConfigCard = ({
                 <select
                   value={localConfig.subnet_id || ''}
                   onChange={(e) => updateConfig('subnet_id', e.target.value)}
+                  disabled={!projectIdentifier || !selectedRegion}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     getErrorForField('subnet_id') ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  } ${(!projectIdentifier || !selectedRegion) ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                 >
                   <option value="">Select Subnet</option>
                   {(subnets || []).map(subnet => (
@@ -511,9 +517,10 @@ const InstanceConfigCard = ({
                     const values = Array.from(e.target.selectedOptions, option => option.value);
                     updateConfig('security_group_ids', values);
                   }}
+                  disabled={!projectIdentifier || !selectedRegion}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-24 ${
                     getErrorForField('security_group_ids') ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  } ${(!projectIdentifier || !selectedRegion) ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                 >
                   {(securityGroups || []).map(sg => (
                     <option key={sg.id} value={sg.id}>
@@ -531,7 +538,8 @@ const InstanceConfigCard = ({
                 <select
                   value={localConfig.key_pair_id || ''}
                   onChange={(e) => updateConfig('key_pair_id', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  disabled={!projectIdentifier || !selectedRegion}
+                  className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${(!projectIdentifier || !selectedRegion) ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                 >
                   <option value="">Select Key Pair</option>
                   {(keyPairs || []).map(kp => (

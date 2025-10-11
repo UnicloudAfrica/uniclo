@@ -154,7 +154,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                     value="vpc"
                     checked={formData.type === "vpc"}
                     onChange={(e) => updateFormData("type", e.target.value)}
-                    className="h-4 w-4 text-[#288DD1] border-gray-300 focus:ring-[#288DD1]"
+                    className="h-4 w-4 text-[--theme-color] border-gray-300 focus:ring-[--theme-color]"
                   />
                   <span className="ml-2 text-sm text-gray-700">VPC</span>
                 </label>
@@ -165,7 +165,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                     value="dvs"
                     checked={formData.type === "dvs"}
                     onChange={(e) => updateFormData("type", e.target.value)}
-                    className="h-4 w-4 text-[#288DD1] border-gray-300 focus:ring-[#288DD1]"
+                    className="h-4 w-4 text-[--theme-color] border-gray-300 focus:ring-[--theme-color]"
                   />
                   <span className="ml-2 text-sm text-gray-700">DVS</span>
                 </label>
@@ -190,7 +190,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
             <button
               onClick={handleSubmit}
               disabled={isPending}
-              className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="px-8 py-3 bg-[--theme-color] text-white font-medium rounded-full hover:bg-[--secondary-color] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Create Project
               {isPending && (

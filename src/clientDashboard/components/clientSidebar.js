@@ -1,22 +1,20 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import home from "./assets/home.png";
-import activeHome from "./assets/activeHome.png";
-import modules from "./assets/module.png";
-import activemodules from "./assets/activeModule.png";
-import purchasedModules from "./assets/purchased_modules.png";
-import activePurchasedModules from "./assets/activePurchased.png";
-import clients from "./assets/clients.png";
-import activeClients from "./assets/activeClients.png";
-import paymentHistory from "./assets/history.png";
-import activePaymentHistory from "./assets/activeHistory.png";
-import supportTicket from "./assets/support.png";
-import activeSupportTicket from "./assets/activeSupport.png";
-import appSettings from "./assets/settings.png";
-import { LogOut, X } from "lucide-react";
+import {
+  LogOut,
+  X,
+  LayoutDashboard,
+  Briefcase,
+  Server,
+  Calculator,
+  CreditCard,
+  LifeBuoy,
+  Settings,
+} from "lucide-react";
 import { useFetchClientProfile } from "../../hooks/clientHooks/resources";
 import useClientAuthStore from "../../stores/clientAuthStore";
 import { useFetchClientProjects } from "../../hooks/clientHooks/projectHooks";
+import useClientTheme from "../../hooks/clientHooks/useClientTheme";
 
 const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   const [activeItem, setActiveItem] = useState("Home");
@@ -27,6 +25,7 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     useFetchClientProfile();
   const { data: projects = [], isFetching: isProjectsFetching } =
     useFetchClientProjects();
+  const { data: theme } = useClientTheme();
 
   // Map of paths to menu item names
   const pathToItemMap = {
@@ -37,7 +36,7 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/client-dashboard/add-instance": "Instances",
     "/client-dashboard/calculator": "Calculator",
     "/client-dashboard/orders-payments": "Orders & Payments",
-    "/client-dashboard/security": "Security",
+    // "/client-dashboard/security": "Security",
     "/client-dashboard/support": "Support",
     "/client-dashboard/account-settings": "Account Settings",
   };
@@ -53,15 +52,13 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   const menuItems = [
     {
       name: "Home",
-      icon: home,
-      activeIcon: activeHome,
+      Icon: LayoutDashboard,
       path: "/client-dashboard",
     },
 
     {
       name: "Projects",
-      icon: appSettings,
-      activeIcon: appSettings,
+      Icon: Briefcase,
       path: "/client-dashboard/projects",
     },
 
@@ -69,8 +66,7 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       ? [
           {
             name: "Instances",
-            icon: clients,
-            activeIcon: activeClients,
+            Icon: Server,
             path: "/client-dashboard/instances",
           },
         ]
@@ -78,45 +74,27 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
 
     {
       name: "Calculator",
-      icon: modules,
-      activeIcon: activemodules,
+      Icon: Calculator,
       path: "/client-dashboard/calculator",
     },
     {
       name: "Orders & Payments",
-      icon: modules,
-      activeIcon: activemodules,
+      Icon: CreditCard,
       path: "/client-dashboard/orders-payments",
     },
 
     {
-      name: "Security",
-      icon: modules,
-      activeIcon: activemodules,
-      path: "/client-dashboard/security",
-    },
-
-    {
       name: "Support",
-      icon: supportTicket,
-      activeIcon: activeSupportTicket,
+      Icon: LifeBuoy,
       path: "/client-dashboard/support",
     },
 
     {
       name: "Account Settings",
-      icon: appSettings,
-      activeIcon: appSettings,
+      Icon: Settings,
       path: "/client-dashboard/account-settings",
     },
   ];
-
-  const settingsItem = {
-    name: "App Settings",
-    icon: appSettings,
-    activeIcon: appSettings,
-    path: "/client-dashboard/app-settings",
-  };
 
   const handleItemClick = (itemName, path) => {
     setActiveItem(itemName);
@@ -139,6 +117,7 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
 
   const renderMenuItem = (item, isBottom = false) => {
     const isActive = activeItem === item.name;
+    const Icon = item.Icon;
 
     return (
       <li key={item.name} className={isBottom ? "mt-auto" : ""}>
@@ -150,13 +129,9 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
         >
           <div className="relative flex items-center justify-center w-5 h-5 flex-shrink-0">
             {isActive && (
-              <div className="absolute left-[-14px] w-1 h-4 bg-black rounded-[3px]" />
+              <div className="absolute left-[-14px] w-1 h-4 bg-[--theme-color] rounded-[3px]" />
             )}
-            <img
-              src={isActive ? item.activeIcon : item.icon}
-              className="w-4 h-4"
-              alt={item.name}
-            />
+            <Icon className="w-4 h-4" />
           </div>
           <span className="text-sm font-normal md:hidden lg:block font-Outfit">
             {item.name}
@@ -168,6 +143,7 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
 
   const renderMobileMenuItem = (item) => {
     const isActive = activeItem === item.name;
+    const Icon = item.Icon;
 
     return (
       <li key={item.name}>
@@ -180,11 +156,7 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
           }`}
         >
           <div className="flex items-center justify-center w-4 h-4 flex-shrink-0">
-            <img
-              src={isActive ? item.activeIcon : item.icon}
-              className="w-4 h-4 brightness-0 invert"
-              alt={item.name}
-            />
+            <Icon className="w-4 h-4" />
           </div>
           <span className="text-xs font-medium">{item.name}</span>
         </button>
@@ -222,7 +194,7 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       </div>
 
       {/* Mobile Overlay Sidebar */}
-      <div className="md:hidden">
+      <div className="md:hidden font-Outfit">
         {/* Overlay Background */}
         <div
           className={`fixed inset-0 bg-black z-[999] transition-all duration-300 ease-in-out ${
@@ -234,9 +206,10 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
         >
           {/* Sidebar Panel */}
           <div
-            className={`fixed top-0 left-0 h-full w-[280px] bg-[#14547F] text-white flex flex-col transform transition-transform duration-300 ease-in-out ${
+            className={`fixed top-0 left-0 h-full w-[280px] text-white flex flex-col transform transition-transform duration-300 ease-in-out ${
               isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
             }`}
+            style={{ backgroundColor: theme?.themeColor || "#14547F" }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header with User Info */}

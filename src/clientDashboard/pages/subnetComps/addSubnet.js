@@ -13,6 +13,17 @@ import {
 } from "../../../hooks/clientHooks/vpcHooks";
 
 const AddSubnet = ({ isOpen, onClose, projectId }) => {
+  const [formData, setFormData] = useState({
+    name: "",
+    cidr_block: "",
+    vpc_id: "",
+    region: "",
+    description: "",
+  });
+  const [errors, setErrors] = useState({});
+  const [suggestions, setSuggestions] = useState([]);
+  const [suggestPrefix, setSuggestPrefix] = useState(24);
+
   const { data: vpcs, isFetching: isFetchingVpcs } =
     useFetchClientVpcs(projectId);
   const { data: regions, isFetching: isFetchingRegions } =
@@ -36,17 +47,6 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
       8,
       { enabled: !!projectId && !!formData.region && !!formData.vpc_id }
     );
-
-  const [formData, setFormData] = useState({
-    name: "",
-    cidr_block: "",
-    vpc_id: "",
-    region: "",
-    description: "",
-  });
-  const [errors, setErrors] = useState({});
-  const [suggestions, setSuggestions] = useState([]);
-  const [suggestPrefix, setSuggestPrefix] = useState(24);
 
   const validateForm = () => {
     const newErrors = {};
@@ -289,7 +289,7 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
                   <button
                     type="button"
                     onClick={computeSuggestions}
-                    className="text-[#288DD1] hover:text-[#1976D2]"
+                    className="text-[--theme-color] hover:text-[--secondary-color]"
                     title="Compute suggestions"
                   >
                     Suggest
@@ -311,7 +311,7 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
                       key={s}
                       type="button"
                       onClick={() => updateFormData("cidr_block", s)}
-                      className="px-2 py-1 rounded-full border border-[#288DD1] text-[#288DD1] hover:bg-[#E6F2FA]"
+                      className="px-2 py-1 rounded-full border border-[--theme-color] text-[--theme-color] hover:bg-[--theme-color-10]"
                       title="Use this CIDR"
                     >
                       {s}
@@ -417,7 +417,7 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
                 !edgeConfig.edge_network_id ||
                 !edgeConfig.ip_pool_id
               }
-              className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="px-8 py-3 bg-[--theme-color] text-white font-medium rounded-[30px] hover:bg-[--secondary-color] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Create Subnet
               {isCreating && (

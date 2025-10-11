@@ -19,7 +19,7 @@ const DetailRow = ({ label, value, children, isCopyable = false }) => {
         {isCopyable && value && (
           <button
             onClick={handleCopy}
-            className="ml-2 p-1 rounded-md hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors"
+            className="ml-2 p-1 rounded-md hover:bg-gray-200 text-gray-400 hover:text-[--theme-color] transition-colors"
           >
             <Copy className="w-4 h-4" />
           </button>

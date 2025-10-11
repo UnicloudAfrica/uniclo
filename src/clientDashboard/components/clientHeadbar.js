@@ -1,16 +1,17 @@
 import { BellRing, CircleHelp, Menu } from "lucide-react";
-import logo from "./assets/logo.png";
 import { useLocation } from "react-router-dom";
 import { useFetchClientProfile } from "../../hooks/clientHooks/resources";
+import useClientTheme from "../../hooks/clientHooks/useClientTheme";
 
 const Headbar = ({ onMenuClick }) => {
   const location = useLocation();
   const { data: profile, isFetching: isProfileFetching } =
     useFetchClientProfile();
+  const { data: theme, isFetching: isThemeFetching } = useClientTheme();
 
   // Map URL path segments to human-readable names
   const pathMap = {
-    dashboard: "Home",
+    "client-dashboard": "Home",
     projects: "Projects",
     instances: "Instances",
     "orders-payments": "Orders & Payments",
@@ -46,8 +47,15 @@ const Headbar = ({ onMenuClick }) => {
     <>
       {/* Desktop View */}
       <div className="w-full fixed top-0 left-0 h-[74px] px-6 md:px-8 py-3 z-[999] border-b bg-[#fff] border-[#C8CBD9] hidden md:flex justify-between items-center font-Outfit">
-        {/* Logo */}
-        <img src={logo} className="w-[71px] h-[54px]" alt="Logo" />
+        {isThemeFetching ? (
+          <div className="w-[71px] h-[54px] bg-gray-200 rounded animate-pulse" />
+        ) : (
+          <img
+            src={theme?.businessLogoHref}
+            className="w-auto h-[54px] max-w-[150px] object-contain"
+            alt="Business Logo"
+          />
+        )}
         {/* Centered Free Trial Button */}
         {/* <div className="absolute left-1/2 transform -translate-x-1/2">
           <button className="bg-[#288DD11A] rounded-[10px] py-3 px-9 text-center font-normal text-base text-[#288DD1]">

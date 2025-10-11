@@ -26,7 +26,7 @@ const CheckboxGroup = ({
               type="checkbox"
               checked={selectedValues.includes(value)}
               onChange={() => onChange(value)}
-              className="h-4 w-4 text-[#288DD1] border-gray-300 rounded focus:ring-[#288DD1]"
+              className="h-4 w-4 text-[--theme-color] border-gray-300 rounded focus:ring-[--theme-color]"
               disabled={disabled}
             />
             <span className="ml-2 text-sm text-gray-700">{displayLabel}</span>

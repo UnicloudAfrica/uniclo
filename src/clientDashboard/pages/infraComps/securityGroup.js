@@ -73,7 +73,7 @@ const SecurityGroup = ({ projectId = "", region = "" }) => {
         <div className="flex justify-end items-center mb-6">
           <button
             onClick={openCreateModal}
-            className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
+            className="rounded-[30px] py-3 px-9 bg-[--theme-color] text-white font-normal text-base hover:bg-[--secondary-color] transition-colors"
           >
             Add SG
           </button>
@@ -96,7 +96,7 @@ const SecurityGroup = ({ projectId = "", region = "" }) => {
                     <div className="flex-shrink-0 flex items-center space-x-2">
                       <button
                         onClick={() => setViewModal(sg)}
-                        className="text-gray-400 hover:text-[#288DD1] transition-colors"
+                        className="text-gray-400 hover:text-[--theme-color] transition-colors"
                         title="View Security Group Details"
                       >
                         <Eye className="w-5 h-5" />

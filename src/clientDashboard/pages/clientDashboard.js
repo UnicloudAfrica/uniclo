@@ -1,22 +1,20 @@
 import React, { useEffect, useMemo, useState } from "react";
-import Headbar from "../components/clientHeadbar";
-import Sidebar from "../components/clientSidebar";
-import cloudCheck from "./assets/cloucCheck.svg";
 import {
   ChevronRight,
   Loader2,
   ArrowUpRight,
   ArrowDownRight,
+  Cloud,
 } from "lucide-react";
 import mobile from "./assets/mobile.svg";
 import cloud from "./assets/cloud-connection.svg";
 import monitor from "./assets/monitor.svg";
 import { Link } from "react-router-dom";
-import useClientAuthRedirect from "../../utils/clientAuthRedirect";
 import { useFetchClientProfile } from "../../hooks/clientHooks/resources";
 import VerifyAccountPromptModal from "../components/verifyAccountPrompt";
 import ClientActiveTab from "../components/clientActiveTab";
 import { useFetchClientProductOffers } from "../../hooks/clientHooks/productsHook";
+import useClientTheme from "../../hooks/clientHooks/useClientTheme";
 
 // Placeholder hook for dashboard data
 const useFetchTenantDashboard = () => {
@@ -42,8 +40,6 @@ const MetricCardSkeleton = () => (
 );
 
 export default function ClientDashboard() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { isLoading } = useClientAuthRedirect();
   const { data: profile, isFetching: isProfileFetching } =
     useFetchClientProfile();
   const { data: dashboard, isFetching: isDashboardFetching } =
@@ -52,26 +48,18 @@ export default function ClientDashboard() {
     data: offers = { trial: [], discount: [] },
     isFetching: isOffersFetching,
   } = useFetchClientProductOffers();
+
   const [showVerifyModal, setShowVerifyModal] = useState(false);
 
   useEffect(() => {
     if (
-      !isLoading &&
       !isProfileFetching &&
       profile &&
       (profile.verified === 0 || profile.verified === false)
     ) {
       setShowVerifyModal(true);
     }
-  }, [isLoading, isProfileFetching, profile]);
-
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-  };
+  }, [isProfileFetching, profile]);
 
   const handleCloseVerifyModal = () => {
     setShowVerifyModal(false);
@@ -121,31 +109,18 @@ export default function ClientDashboard() {
     </div>
   );
 
-  if (isLoading || isProfileFetching) {
-    return (
-      <div className="w-full h-svh flex items-center justify-center">
-        <Loader2 className="w-12 text-[#288DD1] animate-spin" />
-      </div>
-    );
-  }
-
   return (
     <>
-      <Headbar onMenuClick={toggleMobileMenu} />
-      <Sidebar
-        isMobileMenuOpen={isMobileMenuOpen}
-        onCloseMobileMenu={closeMobileMenu}
-      />
       <ClientActiveTab />
       <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
         <p className="text-[#7e7e7e] font-Outfit text-sm font-normal">
           Welcome, {profile?.first_name} 👋🏽
         </p>
 
-        <div className="w-full md:w-[352px] mt-4 bg-[#288DD10D] py-6 px-5 rounded-[10px]">
+        <div className="w-full md:w-[352px] mt-4 bg-[--theme-color-10] py-6 px-5 rounded-[10px]">
           <div className="flex items-center space-x-1">
-            <img src={cloudCheck} className="" alt="" />
-            <p className="font-medium text-base text-[#288DD1]">
+            <Cloud className="text-[--theme-color]" />
+            <p className="font-medium text-base text-[--theme-color]">
               Current Module
             </p>
           </div>
@@ -156,10 +131,10 @@ export default function ClientDashboard() {
             to="/dashboard/purchased-modules"
             className="mt-2 space-x-2 flex items-center"
           >
-            <p className="font-Outfit font-normal text-xs text-[#288DD1]">
+            <p className="font-Outfit font-normal text-xs text-[--theme-color]">
               SEE PURCHASED MODULES
             </p>
-            <ChevronRight className="w-4 text-[#288DD1]" />
+            <ChevronRight className="w-4 text-[--theme-color]" />
           </Link>
         </div>
 
@@ -177,13 +152,13 @@ export default function ClientDashboard() {
             metrics.map((metric, index) => (
               <div
                 key={index}
-                className={`flex-1 p-4 w-full rounded-[12px] bg-[#288DD10D] border border-[#288dd12d]`}
+                className="flex-1 p-4 w-full rounded-[12px] border bg-[--theme-color-10] border-[--theme-color-20]"
               >
                 <p className="text-xs text-[#676767] capitalize">
                   {metric.label}
                 </p>
                 <div className="flex items-center mt-4 space-x-1.5">
-                  <p className="text-lg md:text-2xl font-medium text-[#3272CA]">
+                  <p className="text-lg md:text-2xl font-medium text-[--secondary-color]">
                     {metric.value}
                   </p>
                   {/* Removed upward/downward conditional rendering as per request */}
@@ -224,14 +199,14 @@ export default function ClientDashboard() {
                         </p>
                       </div>
                     </div>
-                    <p className="text-[#288DD1] mt-4 text-2xl font-semibold">
+                    <p className="mt-4 text-2xl font-semibold text-[--theme-color]">
                       ₦{formatAmount(offer.fixed_price)}/{offer.period_days}{" "}
                       days
                     </p>
                     <p className="mt-4 text-[#676767] font-normal text-sm">
                       {offer.productable.description}
                     </p>
-                    <button className="bg-[#288DD11A] rounded-[30px] py-3 px-8 mt-4 text-[#288DD1] font-normal text-base">
+                    <button className="rounded-[30px] py-3 px-8 mt-4 font-normal text-base bg-[--theme-color-10] text-[--theme-color]">
                       Use Now
                     </button>
                   </div>
@@ -274,7 +249,7 @@ export default function ClientDashboard() {
                         </p>
                       </div>
                     </div>
-                    <p className="text-[#288DD1] mt-4 text-2xl font-semibold">
+                    <p className="mt-4 text-2xl font-semibold text-[--theme-color]">
                       ₦
                       {formatAmount(
                         offer.productable.price_per_month *
@@ -285,7 +260,7 @@ export default function ClientDashboard() {
                     <p className="mt-4 text-[#676767] font-normal text-sm">
                       {offer.productable.description}
                     </p>
-                    <button className="bg-[#288DD11A] rounded-[30px] py-3 px-8 mt-4 text-[#288DD1] font-normal text-base">
+                    <button className="rounded-[30px] py-3 px-8 mt-4 font-normal text-base bg-[--theme-color-10] text-[--theme-color]">
                       Purchase
                     </button>
                   </div>

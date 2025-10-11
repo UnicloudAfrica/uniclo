@@ -49,8 +49,8 @@ const ClientActiveTab = () => {
           <button
             className={`font-Outfit text-sm ${
               index === breadcrumbItems.length - 1
-                ? "text-[#288DD1] font-medium"
-                : "text-[#288DD1]/50 font-normal"
+                ? "text-[--theme-color] font-medium"
+                : "text-[--theme-color]/50 font-normal"
             }`}
             onClick={() => (window.location.href = item.path)} // Basic navigation (replace with useNavigate if needed)
           >

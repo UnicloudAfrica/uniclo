@@ -38,7 +38,7 @@ export default function EdgeConfigPanel({ projectId, region }) {
             }
           }}
           disabled={isFetching || !projectId || !region}
-          className="text-sm text-[#288DD1] hover:text-[#1976D2] disabled:opacity-50"
+          className="text-sm text-[--theme-color] hover:text-[--secondary-color] disabled:opacity-50"
           title="Refresh edge configuration"
         >
           {isFetching ? "Refreshing..." : "Refresh"}

@@ -97,7 +97,12 @@ import InstanceManagement from "./adminDashboard/pages/instanceManagement";
 import InstanceDetails from "./adminDashboard/pages/instanceDetails";
 import EnhancedProfileSettings from "./adminDashboard/pages/enhancedProfileSettings";
 import MultiInstanceCreation from "./adminDashboard/pages/multiInstanceCreation";
+import ClientCalculator from "./clientDashboard/pages/clientCalculator";
+import ClientPaymentHistory from "./clientDashboard/pages/clientTransaction";
+import ClientSettings from "./clientDashboard/pages/clientAccountSettings";
+import ClientSupport from "./clientDashboard/pages/clientSupport";
 
+import ClientDashboardLayout from "./clientDashboard/components/ClientDashboardLayout";
 function App() {
   const location = useLocation();
   const subdomain = getSubdomain();
@@ -157,7 +162,7 @@ function App() {
           <Route path="/sign-up" element={<DashboardSignUp />} /> */}
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-<Route path="/verify-mail" element={<VerifyMail />} />
+          <Route path="/verify-mail" element={<VerifyMail />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/modules" element={<Modules />} />
           <Route
@@ -199,7 +204,7 @@ function App() {
           {/* admin pages */}
           <Route path="/admin-signin" element={<AdminLogin />} />
           {/* <Route path="/admin-signup" element={<AdminSignup />} /> */}
-<Route path="/verify-admin-mail" element={<VerifyAdminMail />} />
+          <Route path="/verify-admin-mail" element={<VerifyAdminMail />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/admin-dashboard/admin-users" element={<AdminUsers />} />
           <Route path="/admin-dashboard/partners" element={<AdminPartners />} />
@@ -247,7 +252,7 @@ function App() {
             path="/admin-dashboard/key-pairs"
             element={<AdminKeyPairs />}
           />
-<Route path="/admin-dashboard/pricing" element={<AdminPricing />} />
+          <Route path="/admin-dashboard/pricing" element={<AdminPricing />} />
           {/* Instances details route removed in favor of Instance Management details */}
 
           {/* <Route
@@ -258,12 +263,27 @@ function App() {
             path="/admin-dashboard/calculator-new"
             element={<AdminCalculatorOptions />}
           /> */}
-<Route path="/admin-dashboard/quote" element={<AdminMultiQuote />} />
-          <Route path="/admin-dashboard/advanced-calculator" element={<AdminAdvancedCalculator />} />
-          <Route path="/admin-dashboard/instance-management" element={<InstanceManagement />} />
-          <Route path="/admin-dashboard/instance-management/details" element={<InstanceDetails />} />
-          <Route path="/admin-dashboard/enhanced-profile-settings" element={<EnhancedProfileSettings />} />
-          <Route path="/admin-dashboard/multi-instance-creation" element={<MultiInstanceCreation />} />
+          <Route path="/admin-dashboard/quote" element={<AdminMultiQuote />} />
+          <Route
+            path="/admin-dashboard/advanced-calculator"
+            element={<AdminAdvancedCalculator />}
+          />
+          <Route
+            path="/admin-dashboard/instance-management"
+            element={<InstanceManagement />}
+          />
+          <Route
+            path="/admin-dashboard/instance-management/details"
+            element={<InstanceDetails />}
+          />
+          <Route
+            path="/admin-dashboard/enhanced-profile-settings"
+            element={<EnhancedProfileSettings />}
+          />
+          <Route
+            path="/admin-dashboard/multi-instance-creation"
+            element={<MultiInstanceCreation />}
+          />
           {/* <Route
             path="/admin-dashboard/quote-calculator"
             element={<AdminQuoteCalculator />}
@@ -285,23 +305,41 @@ function App() {
           <Route path="/tenant-sign-up" element={<TenantRegister />} />
           <Route path="/tenant-sign-in" element={<TenantLogin />} />
           {/* client pages */}
-          <Route path="/client-dashboard" element={<ClientDashboard />} />
-          <Route
-            path="/client-dashboard/projects"
-            element={<ClientProject />}
-          />
-          <Route
-            path="/client-dashboard/projects/details"
-            element={<ClientProjectDetails />}
-          />
-          <Route
-            path="/client-dashboard/instances"
-            element={<ClientInstances />}
-          />
-          <Route
-            path="/client-dashboard/add-instance"
-            element={<ClientAddInstancePage />}
-          />
+          <Route element={<ClientDashboardLayout />}>
+            <Route path="/client-dashboard" element={<ClientDashboard />} />
+            <Route
+              path="/client-dashboard/projects"
+              element={<ClientProject />}
+            />
+            <Route
+              path="/client-dashboard/projects/details"
+              element={<ClientProjectDetails />}
+            />
+            <Route
+              path="/client-dashboard/instances"
+              element={<ClientInstances />}
+            />
+            <Route
+              path="/client-dashboard/add-instance"
+              element={<ClientAddInstancePage />}
+            />
+            <Route
+              path="/client-dashboard/calculator"
+              element={<ClientCalculator />}
+            />
+            <Route
+              path="/client-dashboard/orders-payments"
+              element={<ClientPaymentHistory />}
+            />
+            <Route
+              path="/client-dashboard/account-settings"
+              element={<ClientSettings />}
+            />
+            <Route
+              path="/client-dashboard/support"
+              element={<ClientSupport />}
+            />
+          </Route>
         </Routes>
       </AnimatePresence>
     </>

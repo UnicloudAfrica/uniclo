@@ -13,6 +13,7 @@ const ResourceAllocationStep = ({
   projects,
   isComputerInstancesFetching,
   ebsVolumes,
+
   isEbsVolumesFetching,
   bandwidths,
   isBandwidthsFetching,
@@ -704,7 +705,7 @@ const ResourceAllocationStep = ({
             <button
               type="button"
               onClick={onAddRequest}
-              className="flex items-center gap-2 px-6 py-2 bg-[#288DD1] text-white font-medium rounded-md hover:bg-[#1976D2] transition-colors"
+              className="flex items-center gap-2 px-6 py-2 bg-[--theme-color] text-white font-medium rounded-md hover:bg-[--secondary-color] transition-colors"
             >
               <Plus className="w-4 h-4" /> Add to Request
             </button>

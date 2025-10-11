@@ -26,6 +26,7 @@ const AddTenantVpc = ({ isOpen, onClose, projectId = "", region = "" }) => {
         "CIDR Block must be a valid CIDR notation (e.g., 10.0.0.0/16)";
     }
     setErrors(newErrors);
+
     return Object.keys(newErrors).length === 0;
   };
 
@@ -162,7 +163,7 @@ const AddTenantVpc = ({ isOpen, onClose, projectId = "", region = "" }) => {
             <button
               onClick={handleSubmit}
               disabled={isPending || isRegionsFetching}
-              className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="px-8 py-3 bg-[--theme-color] text-white font-medium rounded-full hover:bg-[--secondary-color] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Create VPC
               {isPending && (

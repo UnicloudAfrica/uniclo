@@ -6,7 +6,7 @@ import { formatPrice, getCurrencySymbol } from "../../../utils/resource";
 const PaymentStep = ({
   isSubmissionPending,
   isSubmissionError,
-  generalError,
+    generalError,
   instanceRequestResponse,
   selectedPaymentOption,
   handlePaymentOptionChange,
@@ -21,10 +21,10 @@ const PaymentStep = ({
 
   return (
     <div className="text-center space-y-6 py-10 w-full">
-      <h3 className="text-2xl font-bold text-[#288DD1]">Payment Details</h3>
+      <h3 className="text-2xl font-bold text-[--theme-color]">Payment Details</h3>
       {isSubmissionPending ? (
         <div className="flex items-center justify-center flex-col">
-          <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[--theme-color]" />
           <p className="ml-2 text-gray-700 mt-2">Processing your request...</p>
         </div>
       ) : isSubmissionError ? (
@@ -72,7 +72,7 @@ const PaymentStep = ({
                 id="saveCard"
                 checked={saveCard}
                 onChange={(e) => setSaveCard(e.target.checked)}
-                className="mr-2 h-4 w-4 text-[#288DD1] border-gray-300 rounded focus:ring-[#288DD1]"
+                className="mr-2 h-4 w-4 text-[--theme-color] border-gray-300 rounded focus:ring-[--theme-color]"
                 disabled={isPaying}
               />
               <label htmlFor="saveCard" className="text-sm text-[#676767]">

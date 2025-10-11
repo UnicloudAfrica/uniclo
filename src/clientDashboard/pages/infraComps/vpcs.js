@@ -99,7 +99,7 @@ const VPCs = ({ projectId = "", region = "" }) => {
       <div className="flex justify-end items-center mb-6">
         <button
           onClick={openCreateModal}
-          className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
+          className="rounded-[30px] py-3 px-9 bg-[--theme-color] text-white font-normal text-base hover:bg-[--secondary-color] transition-colors"
         >
           Add VPC
         </button>
@@ -124,7 +124,7 @@ const VPCs = ({ projectId = "", region = "" }) => {
                     <div className="flex-shrink-0 flex items-center space-x-2">
                       <button
                         onClick={() => openViewModal(vpc)}
-                        className="text-gray-400 hover:text-[#288DD1] transition-colors"
+                        className="text-gray-400 hover:text-[--theme-color] transition-colors"
                         title="View VPC Details"
                       >
                         <Eye className="w-5 h-5" />
@@ -164,7 +164,7 @@ const VPCs = ({ projectId = "", region = "" }) => {
               <button
                 onClick={handlePreviousPage}
                 disabled={currentPage === 1}
-                className="px-4 py-2 bg-[#288DD1] text-white rounded-[30px] font-medium text-sm hover:bg-[#1976D2] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-[--theme-color] text-white rounded-[30px] font-medium text-sm hover:bg-[--secondary-color] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Previous
               </button>
@@ -174,7 +174,7 @@ const VPCs = ({ projectId = "", region = "" }) => {
               <button
                 onClick={handleNextPage}
                 disabled={currentPage === totalPages}
-                className="px-4 py-2 bg-[#288DD1] text-white rounded-[30px] font-medium text-sm hover:bg-[#1976D2] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-[--theme-color] text-white rounded-[30px] font-medium text-sm hover:bg-[--secondary-color] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next
               </button>

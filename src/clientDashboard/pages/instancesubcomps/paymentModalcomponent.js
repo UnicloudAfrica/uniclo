@@ -168,7 +168,7 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }) => {
                   id="saveCard"
                   checked={saveCard}
                   onChange={(e) => setSaveCard(e.target.checked)}
-                  className="mr-2 h-4 w-4 text-[#288DD1] border-gray-300 rounded focus:ring-[#288DD1]"
+                  className="mr-2 h-4 w-4 text-[--theme-color] border-gray-300 rounded focus:ring-[--theme-color]"
                   disabled={isPaying}
                 />
                 <label htmlFor="saveCard" className="text-sm text-[#676767]">
@@ -280,7 +280,7 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }) => {
               <button
                 onClick={handlePaystackCardPayment}
                 disabled={isPaying || isProfileFetching}
-                className="ml-3 px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                className="ml-3 px-8 py-3 bg-[--theme-color] text-white font-medium rounded-full hover:bg-[--secondary-color] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 Pay with Card
                 {(isPaying || isProfileFetching) && (
@@ -294,7 +294,7 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }) => {
               <button
                 onClick={handleBankTransferPaid}
                 disabled={isPaying}
-                className="ml-3 px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                className="ml-3 px-8 py-3 bg-[--theme-color] text-white font-medium rounded-full hover:bg-[--secondary-color] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 I have paid
                 {isPaying && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}

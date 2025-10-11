@@ -50,8 +50,8 @@ export default function ClientInstances() {
         />
         <ClientActiveTab />
         <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
-          <p className="ml-2 text-[#288DD1] mt-2">Loading instances...</p>
+          <Loader2 className="w-8 h-8 animate-spin text-[--theme-color]" />
+          <p className="ml-2 text-[--theme-color] mt-2">Loading instances...</p>
         </main>
       </>
     );
@@ -73,12 +73,12 @@ export default function ClientInstances() {
             className={`rounded-[30px] py-3 px-9 text-white font-normal text-base mt-5 transition-colors ${
               instanceCount >= maxInstances
                 ? "bg-gray-400 cursor-not-allowed"
-                : "bg-[#288DD1] hover:bg-[#1976D2]"
+                : "bg-[--theme-color] hover:bg-[--secondary-color]"
             }`}
           >
             Add Instances
           </button>
-          <div className="text-base font-normal text-[#288DD1]">
+          <div className="text-base font-normal text-[--theme-color]">
             Instances Used: {instanceCount} / {maxInstances}
           </div>
         </div>
@@ -150,7 +150,7 @@ export default function ClientInstances() {
                           e.stopPropagation();
                           handleRowClick(item);
                         }}
-                        className="text-[#288DD1] hover:underline text-sm font-medium"
+                        className="text-[--theme-color] hover:underline text-sm font-medium"
                       >
                         View Details
                       </button>
@@ -221,7 +221,7 @@ export default function ClientInstances() {
                       e.stopPropagation();
                       handleRowClick(item);
                     }}
-                    className="text-[#288DD1] hover:underline text-sm font-medium"
+                    className="text-[--theme-color] hover:underline text-sm font-medium"
                   >
                     View Details
                   </button>

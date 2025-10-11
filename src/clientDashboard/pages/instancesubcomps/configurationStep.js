@@ -33,7 +33,7 @@ const ConfigurationStep = ({
           type="checkbox"
           checked={formData.fast_track}
           onChange={(e) => updateFormData("fast_track", e.target.checked)}
-          className="h-4 w-4 text-[#288DD1] focus:ring-[#288DD1] border-gray-300 rounded"
+          className="h-4 w-4 text-[--theme-color] focus:ring-[--theme-color] border-gray-300 rounded"
         />
         <label
           htmlFor="fast_track"

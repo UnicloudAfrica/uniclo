@@ -639,7 +639,7 @@ const ClientAddInstancePage = () => {
                 (isAnyFetching && currentStep !== 0) ||
                 (currentStep === 3 && isPaymentButtonDisabled)
               }
-              className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="px-8 py-3 bg-[--theme-color] text-white font-medium rounded-full hover:bg-[--secondary-color] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {currentStep === 3
                 ? "Finish"

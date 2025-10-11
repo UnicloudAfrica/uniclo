@@ -152,7 +152,7 @@ export default function ClientProjectDetails() {
         />
         <ClientActiveTab />
         <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center flex-col">
-          <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[--theme-color]" />
           <p className="ml-2 text-gray-700 mt-2">Loading project details...</p>
         </main>
       </>
@@ -174,8 +174,8 @@ export default function ClientProjectDetails() {
             This project could not be found.
           </p>
           <button
-            onClick={() => navigate("/dashboard/projects")}
-            className="px-6 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors"
+            onClick={() => navigate("/client-dashboard/projects")}
+            className="px-6 py-3 bg-[--theme-color] text-white font-medium rounded-full hover:bg-[--secondary-color] transition-colors"
           >
             Go to Projects Page
           </button>
@@ -235,7 +235,7 @@ export default function ClientProjectDetails() {
                 Description:
                 <button
                   onClick={() => setIsEditDescriptionModalOpen(true)}
-                  className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
+                  className="text-[--theme-color] hover:text-[--secondary-color] transition-colors"
                   title="Edit Description"
                 >
                   <Pencil className="w-3" />
@@ -268,7 +268,7 @@ export default function ClientProjectDetails() {
             className={`px-8 py-4 text-sm font-medium transition-colors border-b-2
                     ${
                       activeTopLevelTab === "Instances"
-                        ? "text-[#288DD1] border-[#288DD1]"
+                        ? "text-[--theme-color] border-[--theme-color]"
                         : "text-gray-600 border-transparent hover:text-gray-900 hover:border-gray-400"
                     }`}
           >
@@ -279,7 +279,7 @@ export default function ClientProjectDetails() {
             className={`px-8 py-4 text-sm font-medium transition-colors border-b-2
                     ${
                       activeTopLevelTab === "Infrastructure"
-                        ? "text-[#288DD1] border-[#288DD1]"
+                        ? "text-[--theme-color] border-[--theme-color]"
                         : "text-gray-600 border-transparent hover:text-gray-900 hover:border-gray-400"
                     }`}
           >
@@ -295,7 +295,7 @@ export default function ClientProjectDetails() {
               </h2>
               <button
                 onClick={openAddInstance}
-                className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
+                className="rounded-[30px] py-3 px-9 bg-[--theme-color] text-white font-normal text-base hover:bg-[--secondary-color] transition-colors"
               >
                 Add Instance
               </button>
@@ -371,7 +371,7 @@ export default function ClientProjectDetails() {
                               e.stopPropagation(); // Prevent row click from firing
                               handleRowClick(item);
                             }}
-                            className="text-[#288DD1] hover:underline text-sm font-medium"
+                            className="text-[--theme-color] hover:underline text-sm font-medium"
                           >
                             View Details
                           </button>
@@ -445,7 +445,7 @@ export default function ClientProjectDetails() {
                           e.stopPropagation(); // Prevent row click from firing
                           handleRowClick(item);
                         }}
-                        className="text-[#288DD1] hover:underline text-sm font-medium"
+                        className="text-[--theme-color] hover:underline text-sm font-medium"
                       >
                         View Details
                       </button>
@@ -495,7 +495,7 @@ export default function ClientProjectDetails() {
                   className={`px-4 py-3 text-sm font-medium transition-colors border-b-2
                     ${
                       activeInfraTab === item.name
-                        ? "text-[#288DD1] border-[#288DD1]"
+                        ? "text-[--theme-color] border-[--theme-color]"
                         : "text-gray-600 border-transparent hover:text-gray-900 hover:border-gray-400"
                     }`}
                 >

@@ -70,7 +70,7 @@ export default function ClientProject() {
         />
         <ClientActiveTab />
         <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[--theme-color]" />
           <p className="ml-2 text-gray-700">Loading projects...</p>
         </main>
       </>
@@ -93,7 +93,7 @@ export default function ClientProject() {
 
         <button
           onClick={openAddProject}
-          className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base mt-5 hover:bg-[#1976D2] transition-colors"
+          className="rounded-[30px] py-3 px-9 bg-[--theme-color] text-white font-normal text-base mt-5 hover:bg-[--secondary-color] transition-colors"
         >
           Add Project
         </button>
@@ -134,13 +134,13 @@ export default function ClientProject() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal uppercase">
                       {item.type}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#288DD1]">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[--theme-color]">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleRowClick(item);
                         }}
-                        className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
+                        className="text-[--theme-color] hover:text-[--secondary-color] transition-colors"
                         title="View Details"
                       >
                         <Eye className="w-4 h-4" />
@@ -180,7 +180,7 @@ export default function ClientProject() {
                       e.stopPropagation();
                       handleRowClick(item);
                     }}
-                    className="text-[#288DD1] hover:text-[#1976D2] transition-colors p-1"
+                    className="text-[--theme-color] hover:text-[--secondary-color] transition-colors p-1"
                     title="View Details"
                   >
                     <Eye className="w-4 h-4" />

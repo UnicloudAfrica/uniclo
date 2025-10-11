@@ -132,7 +132,7 @@ const SuccessModal = ({
               </p>
               <button
                 onClick={handleRetry}
-                className="px-6 py-3 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors"
+                className="px-6 py-3 bg-[--theme-color] text-white font-medium rounded-[30px] hover:bg-[--secondary-color] transition-colors"
               >
                 Retry Verification
               </button>
@@ -145,7 +145,7 @@ const SuccessModal = ({
           <div className="px-6 pb-6">
             <button
               onClick={onClose}
-              className="w-full py-3.5 bg-[#288DD1] text-white font-semibold text-base rounded-[30px] hover:bg-[#1976D2] transition-colors"
+              className="w-full py-3.5 bg-[--theme-color] text-white font-semibold text-base rounded-[30px] hover:bg-[--secondary-color] transition-colors"
             >
               Go back home
             </button>

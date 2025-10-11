@@ -146,14 +146,14 @@ const AddKeyTenantPair = ({ isOpen, onClose, projectId = "", region = "" }) => {
                 <div className="flex gap-3 mt-4">
                   <button
                     onClick={handleCopy}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-[--theme-color] text-white font-medium rounded-[30px] hover:bg-[--secondary-color] transition-colors"
                   >
                     <Clipboard className="w-4 h-4" />
                     Copy
                   </button>
                   <button
                     onClick={handleDownload}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-[--theme-color] text-white font-medium rounded-[30px] hover:bg-[--secondary-color] transition-colors"
                   >
                     <Download className="w-4 h-4" />
                     Download
@@ -259,7 +259,7 @@ const AddKeyTenantPair = ({ isOpen, onClose, projectId = "", region = "" }) => {
             <button
               onClick={handleSubmit}
               disabled={isPending || isRegionsFetching}
-              className="ml-3 px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="ml-3 px-8 py-3 bg-[--theme-color] text-white font-medium rounded-full hover:bg-[--secondary-color] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Create Key Pair
               {isPending && (

@@ -892,12 +892,14 @@ export default function MultiInstanceCreation() {
         ...(assignType === 'user' && selectedUserId ? { user_id: Number(selectedUserId) } : {}),
         ...(configurations.some(c => (c.tags || []).length) ? { tags: Array.from(new Set((configurations.flatMap(c => c.tags || [])))) } : {})
       };
+      const idempotencyKey = `multi-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const response = await fetch(`${config.baseURL}/business/multi-instances`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'Idempotency-Key': idempotencyKey,
         },
         body: JSON.stringify(payload),
       });

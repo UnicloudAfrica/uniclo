@@ -194,3 +194,76 @@ Frontend must:
 ## 15) Change log
 
 - v1.0: Initial rules added to prevent field mismatches in instance creation and management flows.
+
+---
+
+## 16) Backend Endpoints Quick Reference (Frontend)
+
+Public (/api/v1)
+- Calculator and catalogs
+  - GET /api/v1/calculator-options — Options for calculators (accepts region; optional tenant_id)
+  - GET /api/v1/product-pricing — Product pricing catalog (region, productable_type)
+  - GET /api/v1/product-bandwidth | /api/v1/product-os-image | /api/v1/product-compute-instance | /api/v1/product-volume-type | /api/v1/product-cross-connect
+  - GET /api/v1/product-floating-ip (index, show)
+  - POST /api/v1/calculator/pricing — Real-time pricing calculation
+- Quotes
+  - POST /api/v1/quote-previews — Quote preview (requires auth)
+  - POST /api/v1/multi-quotes — Create quote invoices
+
+Shared Business Infra (auth) (/api/v1/business)
+- Notes
+  - Requires Authorization: Bearer {token}
+  - Most endpoints require region and/or project_id (string project identifier)
+- Key pairs
+  - /api/v1/business/key-pairs (index, store, show, update, destroy)
+- Security groups & rules
+  - /api/v1/business/security-groups (index, store, show, update, destroy)
+  - /api/v1/business/security-group-ingress-rules (store, destroy)
+  - /api/v1/business/security-group-egress-rules (store, destroy)
+- VPC and networking
+  - /api/v1/business/vpcs (full REST)
+  - /api/v1/business/vpcs/available-cidrs
+  - /api/v1/business/nat-gateways (full REST) + attach/detach
+  - /api/v1/business/network-acls (full REST) + entries + associate/disassociate subnets
+  - /api/v1/business/vpc-security-postures (full REST) + refresh/assess/remediate
+  - /api/v1/business/vpc-policies (full REST) + attach/detach/simulate
+  - /api/v1/business/vpc-compliances (full REST) + refresh/assess/remediate/generate-report
+  - /api/v1/business/vpc-peering-connections (full REST) + accept/reject
+  - /api/v1/business/vpc-endpoints (full REST) | /api/v1/business/vpc-flow-logs (full REST)
+- Subnets
+  - /api/v1/business/subnets (index, store, show, update, destroy)
+- Volumes & attachments
+  - /api/v1/business/volumes (index, store, show, destroy)
+  - PATCH /api/v1/business/volumes/{id}/meta
+  - POST /api/v1/business/volume-resizes
+  - /api/v1/business/volume-attachments (index, store, destroy)
+  - GET /api/v1/business/volume-types
+- Elastic IPs
+  - /api/v1/business/elastic-ips (index, store, update, destroy)
+  - /api/v1/business/elastic-ip-associations (store, destroy)
+- Internet gateways
+  - /api/v1/business/internet-gateways (index, store, update, destroy)
+  - /api/v1/business/internet-gateway-attachments (store, destroy)
+- Routing
+  - GET /api/v1/business/route-tables
+  - POST /api/v1/business/route-table-associations
+  - POST /api/v1/business/routes; DELETE /api/v1/business/routes; DELETE /api/v1/business/routes/{id}
+- Network interfaces
+  - /api/v1/business/network-interfaces (index, store, update, destroy)
+  - /api/v1/business/network-interface-security-groups (store, destroy)
+- Edge configuration
+  - GET /api/v1/business/edge-config | edge-networks | edge-ip-pools
+  - POST /api/v1/business/edge-config/assign
+
+Admin (auth) (/admin/v1)
+- Quotes & previews: POST /admin/v1/multi-initiation-previews; resource /admin/v1/multi-quote
+- Other: /admin/v1/instances, /admin/v1/product-pricing, /admin/v1/products, /admin/v1/regions, /admin/v1/tax-configurations
+
+Tenant (auth) (/tenant/v1/admin)
+- Quotes & previews: POST /tenant/v1/admin/multi-initiation-previews; POST /tenant/v1/admin/multi-quotes
+- Projects & instances: /tenant/v1/admin/projects; /tenant/v1/admin/instances
+
+Parameters & prerequisites (infra)
+- region: region code (required for region-scoped queries)
+- project_id: string project identifier (not numeric id)
+- Omit optional fields when not set (avoid null/empty keys)

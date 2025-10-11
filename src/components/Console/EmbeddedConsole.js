@@ -13,6 +13,8 @@ import {
   Power,
   Monitor
 } from 'lucide-react';
+import config from '../../config';
+import useAdminAuthStore from '../../stores/adminAuthStore';
 
 const EmbeddedConsole = ({ 
   instanceId, 
@@ -44,20 +46,21 @@ const EmbeddedConsole = ({
     setError(null);
     
     try {
-      const response = await fetch(`/api/v1/business/instance-management/${instanceId}/console?type=${type}`, {
+      const { token } = useAdminAuthStore.getState();
+      const response = await fetch(`${config.baseURL}/business/instance-management/${instanceId}/console?type=${encodeURIComponent(type)}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': token ? `Bearer ${token}` : '',
           'Accept': 'application/json',
         },
       });
       
       const data = await response.json();
       
-      if (data.success) {
+      if (response.ok && data.success) {
         setConsoleUrl(data.data.url);
         setConnectionStatus('connected');
       } else {
-        throw new Error(data.error || 'Failed to get console URL');
+        throw new Error(data.error || data.message || 'Failed to get console URL');
       }
     } catch (err) {
       setError(err.message);

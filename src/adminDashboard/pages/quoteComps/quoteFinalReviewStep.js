@@ -1,5 +1,6 @@
 import React from "react";
-import { FileText, Download, User, Building, Phone, Mail, MapPin } from "lucide-react";
+import { FileText, Download, User, Building, Phone, Mail, MapPin, Loader2 } from "lucide-react";
+import { useFetchCountries } from "../../../hooks/adminHooks/countriesHooks";
 
 const QuoteFinalReviewStep = ({ 
   formData, 
@@ -8,6 +9,8 @@ const QuoteFinalReviewStep = ({
   updateFormData,
   errors = {}
 }) => {
+  const { data: countries, isLoading: isCountriesLoading } = useFetchCountries();
+  
   const selectedTenant = tenants?.find(
     (t) => tenants && String(t.id) === String(formData.tenant_id)
   );
@@ -187,18 +190,41 @@ const QuoteFinalReviewStep = ({
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <MapPin className="w-4 h-4 inline mr-1" />
-                  Country Code
+                  Country*
                 </label>
-                <input
-                  type="text"
-                  maxLength="3"
-                  value={formData.lead_country || ""}
-                  onChange={(e) => updateFormData("lead_country", e.target.value.toUpperCase())}
-                  className={inputClass}
-                  placeholder="USA"
-                />
+                <span
+                  className={`w-full input-field block transition-all ${
+                    errors.lead_country ? "border-red-500 border" : ""
+                  }`}
+                >
+                  {isCountriesLoading ? (
+                    <div className="flex items-center">
+                      <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
+                      <span className="text-gray-500 text-sm">
+                        Loading countries...
+                      </span>
+                    </div>
+                  ) : (
+                    <select
+                      value={formData.lead_country || ""}
+                      onChange={(e) => updateFormData("lead_country", e.target.value)}
+                      className="w-full bg-transparent outline-none"
+                      required
+                    >
+                      <option value="">Select a country</option>
+                      {countries?.map((country) => (
+                        <option key={country.id} value={country.name}>
+                          {country.emoji} {country.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </span>
+                {errors.lead_country && (
+                  <p className="text-red-500 text-xs mt-1">{errors.lead_country}</p>
+                )}
                 <p className="text-xs text-gray-500 mt-1">
-                  3-letter country code (e.g., USA, GBR, DEU)
+                  Select the lead's country for proper tax calculation
                 </p>
               </div>
             </div>

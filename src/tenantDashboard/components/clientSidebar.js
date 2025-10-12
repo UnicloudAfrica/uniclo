@@ -13,7 +13,7 @@ import activePaymentHistory from "./assets/activeHistory.png";
 import supportTicket from "./assets/support.png";
 import activeSupportTicket from "./assets/activeSupport.png";
 import appSettings from "./assets/settings.png";
-import { LogOut, X } from "lucide-react";
+import { LogOut, X, Users } from "lucide-react";
 import useAuthStore from "../../stores/userAuthStore";
 
 const Sidebar = ({ tenantData, activeTab, setActiveTab }) => {
@@ -28,6 +28,7 @@ const Sidebar = ({ tenantData, activeTab, setActiveTab }) => {
     "/dashboard/modules": "Modules",
     "/dashboard/purchased-modules": "Purchased Modules",
     "/dashboard/instances-request": "Instances Request",
+    "/tenant-dashboard/leads": "Leads",
     "/dashboard/payment-history": "Payment History",
     "/dashboard/support-ticket": "Support Ticket",
     "/dashboard/app-settings": "App Settings",
@@ -59,6 +60,12 @@ const Sidebar = ({ tenantData, activeTab, setActiveTab }) => {
       icon: clients,
       activeIcon: activeClients,
       path: "/dashboard/instances-request",
+    },
+    {
+      name: "Leads",
+      icon: clients, // Using clients icon temporarily - you can add a specific leads icon
+      activeIcon: activeClients,
+      path: "/tenant-dashboard/leads",
     },
     {
       name: "Payment History",

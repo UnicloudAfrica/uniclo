@@ -51,20 +51,6 @@ const ModernTable = ({
   const [tableLoaded, setTableLoaded] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [hoveredRow, setHoveredRow] = useState(null);
-  
-  // Effect for table load animation
-  useEffect(() => {
-    if (!loading && paginatedData.length > 0) {
-      const timer = setTimeout(() => setTableLoaded(true), 100);
-      return () => clearTimeout(timer);
-    }
-    setTableLoaded(false);
-  }, [loading, paginatedData.length]);
-  
-  // Reset row hover on page change
-  useEffect(() => {
-    setHoveredRow(null);
-  }, [currentPage]);
 
   // Filter and search data
   const filteredData = useMemo(() => {
@@ -105,6 +91,20 @@ const ModernTable = ({
   }, [sortedData, currentPage, pageSize, paginated]);
 
   const totalPages = Math.ceil(sortedData.length / pageSize);
+  
+  // Effect for table load animation
+  useEffect(() => {
+    if (!loading && paginatedData.length > 0) {
+      const timer = setTimeout(() => setTableLoaded(true), 100);
+      return () => clearTimeout(timer);
+    }
+    setTableLoaded(false);
+  }, [loading, paginatedData.length]);
+  
+  // Reset row hover on page change
+  useEffect(() => {
+    setHoveredRow(null);
+  }, [currentPage]);
 
   const handleSort = (key) => {
     if (!sortable) return;

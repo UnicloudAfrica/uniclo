@@ -80,6 +80,10 @@ export * from './clientHooks/subnetHooks';
 export * from './clientHooks/instanceHooks';
 export * from './clientHooks/transactionHooks';
 export * from './clientHooks/profileHooks';
+export * from './clientHooks/settingsHooks';
+export * from './clientHooks/edgeHooks';
+export * from './clientHooks/productsHook';
+export * from './clientHooks/calculatorHook';
 
 // Utility hooks
 export * from './businessHooks';

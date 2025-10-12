@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "../index/api";
-import silentApi from "../index/silent";
+import clientApi from "../index/client/api";
+import clientSilentApi from "../index/client/silent";
 import adminApi from "../index/admin/api";
 import silentAdminApi from "../index/admin/silent";
 import tenantApi from "../index/tenant/tenantApi";
@@ -18,31 +18,31 @@ import silentTenantApi from "../index/tenant/silentTenant";
 // Multi-Instance Operations (Shared across all contexts)
 // ================================
 
-const createMultiInstance = async (instanceData, apiClient = api) => {
+const createMultiInstance = async (instanceData, apiClient = clientApi) => {
   const res = await apiClient("POST", "/instances/create", instanceData);
   if (!res.data) throw new Error("Failed to create multi instance");
   return res.data;
 };
 
-const previewMultiInstancePricing = async (pricingData, apiClient = api) => {
+const previewMultiInstancePricing = async (pricingData, apiClient = clientApi) => {
   const res = await apiClient("POST", "/instances/preview-pricing", pricingData);
   if (!res.data) throw new Error("Failed to preview multi instance pricing");
   return res.data;
 };
 
-const getMultiInstanceResources = async (silentApiClient = silentApi) => {
+const getMultiInstanceResources = async (silentApiClient = clientSilentApi) => {
   const res = await silentApiClient("GET", "/instances/resources");
   if (!res.data) throw new Error("Failed to get multi instance resources");
   return res;
 };
 
-const validateMultiInstanceConfiguration = async (configData, apiClient = api) => {
+const validateMultiInstanceConfiguration = async (configData, apiClient = clientApi) => {
   const res = await apiClient("POST", "/instances/validate-configuration", configData);
   if (!res.data) throw new Error("Failed to validate multi instance configuration");
   return res.data;
 };
 
-const createMultiInstancePreview = async (previewData, apiClient = api) => {
+const createMultiInstancePreview = async (previewData, apiClient = clientApi) => {
   const res = await apiClient("POST", "/instances/preview", previewData);
   if (!res.data) throw new Error("Failed to create multi instance preview");
   return res.data;
@@ -52,19 +52,19 @@ const createMultiInstancePreview = async (previewData, apiClient = api) => {
 // Instance Lifecycle Operations (Shared across all contexts)
 // ================================
 
-const fetchInstanceLifecycleById = async (identifier, silentApiClient = silentApi) => {
+const fetchInstanceLifecycleById = async (identifier, silentApiClient = clientSilentApi) => {
   const res = await silentApiClient("GET", `/instance-lifecycles/${identifier}`);
   if (!res.data) throw new Error(`Failed to fetch instance lifecycle with identifier ${identifier}`);
   return res.data;
 };
 
-const createInstanceLifecycle = async (identifier, lifecycleData, apiClient = api) => {
+const createInstanceLifecycle = async (identifier, lifecycleData, apiClient = clientApi) => {
   const res = await apiClient("POST", `/instance-lifecycles/${identifier}`, lifecycleData);
   if (!res.data) throw new Error(`Failed to create instance lifecycle for ${identifier}`);
   return res.data;
 };
 
-const deleteInstanceLifecycle = async (identifier, apiClient = api) => {
+const deleteInstanceLifecycle = async (identifier, apiClient = clientApi) => {
   const res = await apiClient("DELETE", `/instance-lifecycles/${identifier}`);
   if (!res.data) throw new Error(`Failed to delete instance lifecycle for ${identifier}`);
   return res.data;
@@ -74,7 +74,7 @@ const deleteInstanceLifecycle = async (identifier, apiClient = api) => {
 // Instance Console Operations (Shared across all contexts)
 // ================================
 
-const fetchInstanceConsoleById = async (id, silentApiClient = silentApi) => {
+const fetchInstanceConsoleById = async (id, silentApiClient = clientSilentApi) => {
   const res = await silentApiClient("GET", `/instance-consoles/${id}`);
   if (!res.data) throw new Error(`Failed to fetch instance console with ID ${id}`);
   return res.data;
@@ -87,7 +87,7 @@ const fetchInstanceConsoleById = async (id, silentApiClient = silentApi) => {
 // Multi-Instance Hooks for Business/Client
 export const useCreateMultiInstance = () => {
   return useMutation({
-    mutationFn: (instanceData) => createMultiInstance(instanceData, api),
+    mutationFn: (instanceData) => createMultiInstance(instanceData, clientApi),
     onError: (error) => {
       console.error("Error creating multi instance:", error);
     },
@@ -96,7 +96,7 @@ export const useCreateMultiInstance = () => {
 
 export const usePreviewMultiInstancePricing = () => {
   return useMutation({
-    mutationFn: (pricingData) => previewMultiInstancePricing(pricingData, api),
+    mutationFn: (pricingData) => previewMultiInstancePricing(pricingData, clientApi),
     onError: (error) => {
       console.error("Error previewing multi instance pricing:", error);
     },
@@ -106,7 +106,7 @@ export const usePreviewMultiInstancePricing = () => {
 export const useFetchMultiInstanceResources = (options = {}) => {
   return useQuery({
     queryKey: ["multi-instance-resources"],
-    queryFn: () => getMultiInstanceResources(silentApi),
+    queryFn: () => getMultiInstanceResources(clientSilentApi),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
@@ -115,7 +115,7 @@ export const useFetchMultiInstanceResources = (options = {}) => {
 
 export const useValidateMultiInstanceConfiguration = () => {
   return useMutation({
-    mutationFn: (configData) => validateMultiInstanceConfiguration(configData, api),
+    mutationFn: (configData) => validateMultiInstanceConfiguration(configData, clientApi),
     onError: (error) => {
       console.error("Error validating multi instance configuration:", error);
     },
@@ -124,7 +124,7 @@ export const useValidateMultiInstanceConfiguration = () => {
 
 export const useCreateMultiInstancePreview = () => {
   return useMutation({
-    mutationFn: (previewData) => createMultiInstancePreview(previewData, api),
+    mutationFn: (previewData) => createMultiInstancePreview(previewData, clientApi),
     onError: (error) => {
       console.error("Error creating multi instance preview:", error);
     },
@@ -135,7 +135,7 @@ export const useCreateMultiInstancePreview = () => {
 export const useFetchInstanceLifecycleById = (identifier, options = {}) => {
   return useQuery({
     queryKey: ["instance-lifecycle", identifier],
-    queryFn: () => fetchInstanceLifecycleById(identifier, silentApi),
+    queryFn: () => fetchInstanceLifecycleById(identifier, clientSilentApi),
     enabled: !!identifier,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
@@ -146,7 +146,7 @@ export const useFetchInstanceLifecycleById = (identifier, options = {}) => {
 export const useCreateInstanceLifecycle = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ identifier, lifecycleData }) => createInstanceLifecycle(identifier, lifecycleData, api),
+    mutationFn: ({ identifier, lifecycleData }) => createInstanceLifecycle(identifier, lifecycleData, clientApi),
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["instance-lifecycle", variables.identifier] });
     },
@@ -159,7 +159,7 @@ export const useCreateInstanceLifecycle = () => {
 export const useDeleteInstanceLifecycle = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (identifier) => deleteInstanceLifecycle(identifier, api),
+    mutationFn: (identifier) => deleteInstanceLifecycle(identifier, clientApi),
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["instance-lifecycle", variables] });
     },
@@ -173,7 +173,7 @@ export const useDeleteInstanceLifecycle = () => {
 export const useFetchInstanceConsoleById = (id, options = {}) => {
   return useQuery({
     queryKey: ["instance-console", id],
-    queryFn: () => fetchInstanceConsoleById(id, silentApi),
+    queryFn: () => fetchInstanceConsoleById(id, clientSilentApi),
     enabled: !!id,
     staleTime: 1000 * 60,
     refetchOnWindowFocus: false,

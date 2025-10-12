@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "../index/api";
-import silentApi from "../index/silent";
+import clientApi from "../index/client/api";
+import clientSilentApi from "../index/client/silent";
+import api from "../index/api"; // Keep for public endpoints
+import silentApi from "../index/silent"; // Keep for public endpoints
 
 /**
  * Business/Client API Hooks
@@ -29,7 +31,7 @@ const fetchProductPricing = async () => {
 
 // Multi Quotes
 const createMultiQuote = async (quoteData) => {
-  const res = await api("POST", "/multi-quotes", quoteData);
+  const res = await clientApi("POST", "/multi-quotes", quoteData);
   if (!res.data) throw new Error("Failed to create multi quote");
   return res.data;
 };
@@ -131,21 +133,21 @@ const fetchProductFloatingIpById = async (id) => {
 
 // Pricing Calculator Leads
 const createPricingCalculatorLead = async (leadData) => {
-  const res = await api("POST", "/pricing-calculator-leads", leadData);
+  const res = await clientApi("POST", "/pricing-calculator-leads", leadData);
   if (!res.data) throw new Error("Failed to create pricing calculator lead");
   return res.data;
 };
 
 // Business Verifications
 const createBusinessVerification = async (verificationData) => {
-  const res = await api("POST", "/business-verifications", verificationData);
+  const res = await clientApi("POST", "/business-verifications", verificationData);
   if (!res.data) throw new Error("Failed to create business verification");
   return res.data;
 };
 
 // Calculator Pricing
 const calculatePricing = async (pricingData) => {
-  const res = await api("POST", "/calculator/pricing", pricingData);
+  const res = await clientApi("POST", "/calculator/pricing", pricingData);
   if (!res.data) throw new Error("Failed to calculate pricing");
   return res.data;
 };
@@ -156,42 +158,42 @@ const calculatePricing = async (pricingData) => {
 
 // Login
 const businessLogin = async (loginData) => {
-  const res = await api("POST", "/business/auth/login", loginData);
+  const res = await clientApi("POST", "/business/auth/login", loginData);
   if (!res.data) throw new Error("Failed to login");
   return res.data;
 };
 
 // Register
 const businessRegister = async (registerData) => {
-  const res = await api("POST", "/business/auth/register", registerData);
+  const res = await clientApi("POST", "/business/auth/register", registerData);
   if (!res.data) throw new Error("Failed to register");
   return res.data;
 };
 
 // Forgot Password
 const businessForgotPassword = async (forgotData) => {
-  const res = await api("POST", "/business/auth/forgot-password", forgotData);
+  const res = await clientApi("POST", "/business/auth/forgot-password", forgotData);
   if (!res.data) throw new Error("Failed to process forgot password");
   return res.data;
 };
 
 // Send Email
 const businessSendEmail = async (emailData) => {
-  const res = await api("POST", "/business/auth/send-email", emailData);
+  const res = await clientApi("POST", "/business/auth/send-email", emailData);
   if (!res.data) throw new Error("Failed to send email");
   return res.data;
 };
 
 // Verify Email
 const businessVerifyEmail = async (verifyData) => {
-  const res = await api("POST", "/business/auth/verify-email", verifyData);
+  const res = await clientApi("POST", "/business/auth/verify-email", verifyData);
   if (!res.data) throw new Error("Failed to verify email");
   return res.data;
 };
 
 // Reset Password OTP
 const businessResetPasswordOtp = async (resetData) => {
-  const res = await api("POST", "/business/auth/reset-password-otp", resetData);
+  const res = await clientApi("POST", "/business/auth/reset-password-otp", resetData);
   if (!res.data) throw new Error("Failed to reset password");
   return res.data;
 };
@@ -202,21 +204,21 @@ const businessResetPasswordOtp = async (resetData) => {
 
 // Setup 2FA
 const setup2FA = async (setupData) => {
-  const res = await api("POST", "/business/2fa-setup", setupData);
+  const res = await clientApi("POST", "/business/2fa-setup", setupData);
   if (!res.data) throw new Error("Failed to setup 2FA");
   return res.data;
 };
 
 // Disable 2FA
 const disable2FA = async (disableData) => {
-  const res = await api("POST", "/business/2fa-disable", disableData);
+  const res = await clientApi("POST", "/business/2fa-disable", disableData);
   if (!res.data) throw new Error("Failed to disable 2FA");
   return res.data;
 };
 
 // Enable 2FA
 const enable2FA = async (enableData) => {
-  const res = await api("POST", "/business/2fa-enable", enableData);
+  const res = await clientApi("POST", "/business/2fa-enable", enableData);
   if (!res.data) throw new Error("Failed to enable 2FA");
   return res.data;
 };
@@ -226,25 +228,25 @@ const enable2FA = async (enableData) => {
 // ================================
 
 const fetchProfile = async () => {
-  const res = await silentApi("GET", "/business/profile");
+  const res = await clientSilentApi("GET", "/business/profile");
   if (!res.data) throw new Error("Failed to fetch profile");
   return res;
 };
 
 const createProfile = async (profileData) => {
-  const res = await api("POST", "/business/profile", profileData);
+  const res = await clientApi("POST", "/business/profile", profileData);
   if (!res.data) throw new Error("Failed to create profile");
   return res.data;
 };
 
 const fetchProfileById = async (id) => {
-  const res = await silentApi("GET", `/business/profile/${id}`);
+  const res = await clientSilentApi("GET", `/business/profile/${id}`);
   if (!res.data) throw new Error(`Failed to fetch profile with ID ${id}`);
   return res.data;
 };
 
 const deleteProfile = async (id) => {
-  const res = await api("DELETE", `/business/profile/${id}`);
+  const res = await clientApi("DELETE", `/business/profile/${id}`);
   if (!res.data) throw new Error(`Failed to delete profile with ID ${id}`);
   return res.data;
 };
@@ -256,20 +258,20 @@ const deleteProfile = async (id) => {
 
 const fetchTransactions = async (params = {}) => {
   const queryString = new URLSearchParams(params).toString();
-  const res = await silentApi("GET", `/business/transaction${queryString ? `?${queryString}` : ""}`);
+  const res = await clientSilentApi("GET", `/business/transaction${queryString ? `?${queryString}` : ""}`);
   if (!res.data) throw new Error("Failed to fetch transactions");
   return res;
 };
 
 const fetchTransactionById = async (id) => {
-  const res = await silentApi("GET", `/business/transaction/${id}`);
+  const res = await clientSilentApi("GET", `/business/transaction/${id}`);
   if (!res.data) throw new Error(`Failed to fetch transaction with ID ${id}`);
   return res.data;
 };
 
 // Transaction Reverifications
 const createTransactionReverification = async (reverificationData) => {
-  const res = await api("POST", "/business/transaction-reverifications", reverificationData);
+  const res = await clientApi("POST", "/business/transaction-reverifications", reverificationData);
   if (!res.data) throw new Error("Failed to create transaction reverification");
   return res.data;
 };
@@ -281,7 +283,7 @@ const createTransactionReverification = async (reverificationData) => {
 // ================================
 
 const previewQuote = async (quoteData) => {
-  const res = await api("POST", "/quote-previews", quoteData);
+  const res = await clientApi("POST", "/quote-previews", quoteData);
   if (!res.data) throw new Error("Failed to preview quote");
   return res.data;
 };
@@ -586,7 +588,7 @@ export const useEnable2FA = () => {
 
 export const useFetchProfile = (options = {}) => {
   return useQuery({
-    queryKey: ["business-profile"],
+    queryKey: ["profile"],
     queryFn: fetchProfile,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
@@ -599,7 +601,7 @@ export const useCreateProfile = () => {
   return useMutation({
     mutationFn: createProfile,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["business-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
     onError: (error) => {
       console.error("Error creating profile:", error);
@@ -609,7 +611,7 @@ export const useCreateProfile = () => {
 
 export const useFetchProfileById = (id, options = {}) => {
   return useQuery({
-    queryKey: ["business-profile", id],
+    queryKey: ["profile", id],
     queryFn: () => fetchProfileById(id),
     enabled: !!id,
     staleTime: 1000 * 60 * 5,
@@ -623,7 +625,7 @@ export const useDeleteProfile = () => {
   return useMutation({
     mutationFn: deleteProfile,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["business-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
     onError: (error) => {
       console.error("Error deleting profile:", error);

@@ -13,10 +13,18 @@ import {
   X,
   Download,
   ExternalLink,
+  Mail,
+  Phone,
+  Calendar,
+  Building,
+  MapPin,
+  UserCheck
 } from "lucide-react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
+import ModernCard from "../components/ModernCard";
+import ModernButton from "../components/ModernButton";
 import {
   useFetchLeadById,
   useConvertLeadToUser,

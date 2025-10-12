@@ -189,222 +189,83 @@ export default function AdminLeads() {
             Create New Lead
           </ModernButton>
 
-          {isLeadsFetching ? (
-            <div className="flex justify-center items-center h-48">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-            </div>
-          ) : (
-            <>
-              <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px]">
-                {currentLeads && currentLeads.length > 0 ? (
-                  <table className="min-w-full bg-white">
-                    <thead className="bg-[#F5F5F5]">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                          ID
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                          Name
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                          Email
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                          Lead Type
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                          Source
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                          Created At
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                          Action
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#E8E6EA]">
-                      {currentLeads.map((lead, index) => (
-                        <tr key={lead.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                            {(currentPage - 1) * itemsPerPage + index + 1}.
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                            {lead.first_name} {lead.last_name}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                            {lead.email}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal capitalize">
-                            {lead.lead_type}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal capitalize">
-                            <span
-                              className={`py-1 px-3 rounded-full text-xs font-medium ${getStatusColorClass(
-                                lead.status
-                              )}`}
-                            >
-                              {formatStatusForDisplay(lead.status)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal capitalize">
-                            {lead.source}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                            {formatCreatedAt(lead.created_at)}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-left">
-                            <Link
-                              to={`/admin-dashboard/leads/details?name=${encodeURIComponent(
-                                `${lead.first_name} ${lead.last_name}`
-                              )}&id=${encodeId(lead.id)}`}
-                              className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                              title="View Details"
-                            >
-                              <Eye className="w-5 h-5" />
-                            </Link>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <p className="text-center text-gray-500 py-10">
-                    No leads found.
-                  </p>
-                )}
-              </div>
-
-              <div className="md:hidden mt-6 space-y-4">
-                {currentLeads && currentLeads.length > 0 ? (
-                  currentLeads.map((lead, index) => (
-                    <div
-                      key={lead.id}
-                      className="border-b border-gray-200 py-4"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-medium text-[#1C1C1C]">
-                          {lead.first_name} {lead.last_name}
-                        </h3>
-                        <span
-                          className={`py-1 px-3 rounded-full text-xs font-medium capitalize ${getStatusColorClass(
-                            lead.status
-                          )}`}
-                        >
-                          {formatStatusForDisplay(lead.status)}
-                        </span>
-                      </div>
-                      <p className="text-sm text-[#575758]">
-                        Index: {(currentPage - 1) * itemsPerPage + index + 1}.
-                      </p>
-                      <p className="text-sm text-[#575758]">
-                        Email: {lead.email}
-                      </p>
-                      <p className="text-sm text-[#575758]">
-                        Lead Type:{" "}
-                        <span className="capitalize">{lead.lead_type}</span>
-                      </p>
-                      <p className="text-sm text-[#575758]">
-                        Source:{" "}
-                        <span className="capitalize">{lead.source}</span>
-                      </p>
-                      <p className="text-sm text-[#575758]">
-                        Created: {formatCreatedAt(lead.created_at)}
-                      </p>
-                      <div className="mt-4 text-right">
-                        <Link
-                          to={`/admin-dashboard/leads/details?name=${encodeURIComponent(
-                            `${lead.first_name} ${lead.last_name}`
-                          )}&id=${encodeId(lead.id)}`}
-                          className="px-4 py-2 bg-[#288DD1] text-white rounded-[30px] text-sm font-medium hover:bg-[#1976D2] transition-colors"
-                        >
-                          View More
-                        </Link>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-center text-gray-500 py-10">
-                    No leads found.
-                  </p>
-                )}
-              </div>
-
-              {totalPages > 1 && (
-                <div className="flex items-center justify-center px-4 mt-6">
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-[#333333] rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
-
-                    <div className="flex items-center space-x-1">
-                      {Array.from(
-                        { length: Math.min(5, totalPages) },
-                        (_, i) => {
-                          let pageNumber;
-                          if (totalPages <= 5) {
-                            pageNumber = i + 1;
-                          } else if (currentPage <= 3) {
-                            pageNumber = i + 1;
-                          } else if (currentPage >= totalPages - 2) {
-                            pageNumber = totalPages - 4 + i;
-                          } else {
-                            pageNumber = currentPage - 2 + i;
-                          }
-
-                          return (
-                            <button
-                              key={pageNumber}
-                              onClick={() => handlePageChange(pageNumber)}
-                              className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                                currentPage === pageNumber
-                                  ? "bg-[#288DD1] text-white"
-                                  : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
-                              }`}
-                            >
-                              {pageNumber}
-                            </button>
-                          );
-                        }
-                      )}
-                    </div>
-
-                    {totalPages > 5 && (
-                      <span className="text-sm text-gray-700">of</span>
-                    )}
-
-                    {totalPages > 5 && (
-                      <button
-                        onClick={() => handlePageChange(totalPages)}
-                        className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                          currentPage === totalPages
-                            ? "bg-[#288DD1] text-white"
-                            : "text-gray-700 bg-white border border-[#333333] hover:bg-gray-50"
-                        }`}
-                      >
-                        {totalPages}
-                      </button>
-                    )}
-
-                    <button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-[#333333] rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
+          <ModernTable
+            title="Leads Management"
+            data={leads || []}
+            loading={isLeadsFetching}
+            columns={[
+              {
+                key: 'id',
+                header: 'ID',
+                render: (value, row, index) => index + 1
+              },
+              {
+                key: 'name',
+                header: 'Name',
+                render: (_, row) => `${row.first_name} ${row.last_name}`
+              },
+              {
+                key: 'email',
+                header: 'Email'
+              },
+              {
+                key: 'lead_type',
+                header: 'Lead Type',
+                render: (value) => (
+                  <span className="capitalize">{value}</span>
+                )
+              },
+              {
+                key: 'status',
+                header: 'Status',
+                render: (value) => (
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColorClass(value)}`}
+                  >
+                    {formatStatusForDisplay(value)}
+                  </span>
+                )
+              },
+              {
+                key: 'source',
+                header: 'Source',
+                render: (value) => (
+                  <span className="capitalize">{value}</span>
+                )
+              },
+              {
+                key: 'created_at',
+                header: 'Created At',
+                render: (value) => formatCreatedAt(value)
+              }
+            ]}
+            actions={[
+              {
+                label: 'View Details',
+                icon: <Eye size={16} />,
+                onClick: (lead) => {
+                  window.location.href = `/admin-dashboard/leads/details?name=${encodeURIComponent(
+                    `${lead.first_name} ${lead.last_name}`
+                  )}&id=${encodeId(lead.id)}`;
+                }
+              }
+            ]}
+            searchable={true}
+            exportable={true}
+            filterable={true}
+            paginated={true}
+            pageSize={itemsPerPage}
+            emptyMessage="No leads found."
+          />
+        </div>
+      </main>
+      <CreateLead
+        isOpen={isCreateLeadsModalVisible}
+        onClose={closeCreateLead}
+      />
+    </>
+  );
+}
         </div>
       </main>
       <CreateLead

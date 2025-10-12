@@ -18,7 +18,8 @@ import {
   FileText,
   Settings,
   HelpCircle,
-  User
+  User,
+  UserCog
 } from "lucide-react";
 
 const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
@@ -30,6 +31,7 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   const pathToItemMap = {
     "/admin-dashboard": "Home",
     "/admin-dashboard/partners": "Partners",
+    "/admin-dashboard/admins": "Admins",
     "/admin-dashboard/modules": "Modules",
     "/admin-dashboard/clients": "Clients",
     "/admin-dashboard/payment": "Payment",
@@ -73,6 +75,12 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       icon: Users,
       isLucide: true,
       path: "/admin-dashboard/partners",
+    },
+    {
+      name: "Admins",
+      icon: UserCog,
+      isLucide: true,
+      path: "/admin-dashboard/admins",
     },
     {
       name: "Leads",

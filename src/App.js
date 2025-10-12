@@ -214,6 +214,7 @@ function App() {
           <Route path="/verify-admin-mail" element={<VerifyAdminMail />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/admin-dashboard/admin-users" element={<AdminUsers />} />
+          <Route path="/admin-dashboard/admins" element={<AdminUsers />} />
           <Route path="/admin-dashboard/partners" element={<AdminPartners />} />
           <Route
             path="/admin-dashboard/partners/details"

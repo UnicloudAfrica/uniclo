@@ -13,6 +13,21 @@ module.exports = {
       fontFamily: {
         Outfit: ['Outfit', 'sans'],
       },
+      colors: {
+        primary: {
+          DEFAULT: '#288DD1',
+          50: '#E8F4FD',
+          100: '#D1E9FB',
+          200: '#A3D3F7',
+          300: '#75BDF3',
+          400: '#47A7EF',
+          500: '#288DD1',
+          600: '#206FA7',
+          700: '#18517D',
+          800: '#103453',
+          900: '#081629',
+        },
+      },
     },
   },
   plugins: [

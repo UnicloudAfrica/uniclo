@@ -102,6 +102,8 @@ import ClientCalculator from "./clientDashboard/pages/clientCalculator";
 import ClientPaymentHistory from "./clientDashboard/pages/clientTransaction";
 import ClientSettings from "./clientDashboard/pages/clientAccountSettings";
 import ClientSupport from "./clientDashboard/pages/clientSupport";
+import TenantLeads from "./tenantDashboard/pages/tenant-leads";
+import TenantLeadDetails from "./tenantDashboard/pages/tenant-lead-details";
 
 import ClientDashboardLayout from "./clientDashboard/components/ClientDashboardLayout";
 function App() {
@@ -183,6 +185,10 @@ function App() {
           <Route path="/dashboard/instances" element={<Instances />} />
           <Route path="/dashboard/quotes" element={<TenantQuotes />} />
           <Route path="/dashboard/add-instance" element={<AddInstancePage />} />
+          
+          {/* Tenant Leads Routes */}
+          <Route path="/tenant-dashboard/leads" element={<TenantLeads />} />
+          <Route path="/tenant-dashboard/leads/details" element={<TenantLeadDetails />} />
           <Route path="/dashboard/account-settings" element={<Settings />} />
           <Route
             path="/dashboard/tax-configurations"

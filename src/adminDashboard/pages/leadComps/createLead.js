@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, User, Mail, Phone, Building } from "lucide-react";
-import { useFetchAdmins } from "../../../hooks/adminHooks/adminHooks";
+// import { useFetchAdmins } from "../../../hooks/adminHooks/adminHooks"; // Disabled to prevent unnecessary API call
 import { useCreateNewLead } from "../../../hooks/adminHooks/leadsHook";
 import ToastUtils from "../../../utils/toastUtil";
 import { useFetchCountries } from "../../../hooks/resource";
@@ -57,7 +57,9 @@ const CreateLead = ({ isOpen, onClose }) => {
   const [errors, setErrors] = useState({});
 
   const { mutate, isPending } = useCreateNewLead();
-  const { data: admins, isLoading: adminsLoading } = useFetchAdmins();
+  // const { data: admins, isLoading: adminsLoading } = useFetchAdmins(); // Disabled to prevent unnecessary API call
+  const admins = [];
+  const adminsLoading = false;
   const {
     data: countries,
     isLoading: countriesLoading,
@@ -101,7 +103,7 @@ const CreateLead = ({ isOpen, onClose }) => {
       newErrors.last_name = "Last name is required.";
     if (!formData.email.trim()) newErrors.email = "Email is required.";
     if (!formData.status) newErrors.status = "Status is required.";
-    if (!formData.assigned_to) newErrors.assigned_to = "Assignee is required.";
+    // if (!formData.assigned_to) newErrors.assigned_to = "Assignee is required."; // Made optional since admin loading is disabled
 
     if (
       formData.lead_stage.stage_name ||
@@ -113,8 +115,8 @@ const CreateLead = ({ isOpen, onClose }) => {
         newErrors.stage_name = "Stage name is required if providing a stage.";
       if (!formData.lead_stage.description)
         newErrors.stage_description = "Stage description is required.";
-      if (!formData.lead_stage.assigned_to)
-        newErrors.stage_assigned_to = "Stage assignee is required.";
+      // if (!formData.lead_stage.assigned_to)
+      //   newErrors.stage_assigned_to = "Stage assignee is required."; // Made optional since admin loading is disabled
       if (!formData.lead_stage.status)
         newErrors.stage_status = "Stage status is required.";
     }
@@ -318,7 +320,7 @@ const CreateLead = ({ isOpen, onClose }) => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Assigned To<span className="text-red-500">*</span>
+                      Assigned To (Optional)
                     </label>
                     <select
                       value={formData.assigned_to}
@@ -329,15 +331,9 @@ const CreateLead = ({ isOpen, onClose }) => {
                       className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${errors.assigned_to ? "border-red-500" : "border-gray-300"
                         }`}
                     >
-                      <option value="" disabled>
-                        {adminsLoading ? "Loading admins..." : "Select an admin"}
+                      <option value="">
+                        No admin assignment (admin loading disabled)
                       </option>
-                      {admins &&
-                        admins.map((admin) => (
-                          <option key={admin.id} value={admin.id}>
-                            {admin.first_name} {admin.last_name}
-                          </option>
-                        ))}
                     </select>
                     {errors.assigned_to && (
                       <p className="text-red-500 text-xs mt-1">
@@ -431,14 +427,8 @@ const CreateLead = ({ isOpen, onClose }) => {
                           }`}
                       >
                         <option value="">
-                          {adminsLoading ? "Loading admins..." : "Select an admin"}
+                          No admin assignment (admin loading disabled)
                         </option>
-                        {admins &&
-                          admins.map((admin) => (
-                            <option key={admin.id} value={admin.id}>
-                              {admin.first_name} {admin.last_name}
-                            </option>
-                          ))}
                       </select>
                       {errors.stage_assigned_to && (
                         <p className="text-red-500 text-xs mt-1">

@@ -5,7 +5,7 @@ import api from "../../index/admin/api";
 
 // GET: Fetch all admins
 const fetchAdmins = async () => {
-  const res = await silentApi("GET", "/admin");
+  const res = await silentApi("GET", "/admins");
   if (!res.data) {
     throw new Error("Failed to fetch admins");
   }
@@ -14,7 +14,7 @@ const fetchAdmins = async () => {
 
 // GET: Fetch admin by ID
 const fetchAdminById = async (id) => {
-  const res = await silentApi("GET", `/admin/${id}`);
+  const res = await silentApi("GET", `/admins/${id}`);
   if (!res) {
     throw new Error(`Failed to fetch admin with ID ${id}`);
   }
@@ -22,12 +22,12 @@ const fetchAdminById = async (id) => {
 };
 
 const createAdmin = async (adminData) => {
-  return await api("POST", "/admin", adminData);
+  return await api("POST", "/admins", adminData);
 };
 
 // PATCH: Update an admin
 const updateAdmin = async ({ id, adminData }) => {
-  const res = await api("PATCH", `/admin/${id}`, adminData);
+  const res = await api("PATCH", `/admins/${id}`, adminData);
   if (!res.data) {
     throw new Error(`Failed to update admin with ID ${id}`);
   }
@@ -36,7 +36,7 @@ const updateAdmin = async ({ id, adminData }) => {
 
 // DELETE: Delete an admin
 const deleteAdmin = async (id) => {
-  const res = await api("DELETE", `/admin/${id}`);
+  const res = await api("DELETE", `/admins/${id}`);
   if (!res.data) {
     throw new Error(`Failed to delete admin with ID ${id}`);
   }

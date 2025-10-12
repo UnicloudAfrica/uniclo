@@ -201,19 +201,32 @@ class InstanceApiService {
   }
 
   /**
-   * DISABLED: Get console access URL
-   * Console access has been temporarily disabled due to removal of instance-management endpoints
-   * 
-   * @deprecated Console access is temporarily unavailable
+   * Get console access URL for an instance
+   * Uses the available instance-consoles endpoint
    */
   async getConsoleUrl(instanceId, consoleType = 'novnc') {
-    console.warn('Console access is temporarily disabled.');
-    ToastUtils.warning('Console access is currently unavailable and will be restored in a future update.');
-    
-    return Promise.resolve({
-      success: false,
-      message: 'Console access is temporarily unavailable'
-    });
+    try {
+      const response = await fetch(`${config.baseURL}/business/instance-consoles/${instanceId}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(),
+      });
+
+      const data = await response.json();
+
+      if (data.success || response.ok) {
+        return {
+          success: true,
+          data: data.data,
+          consoleUrl: data.data?.console_url || data.data?.url
+        };
+      } else {
+        throw new Error(data.error || data.message || 'Failed to get console URL');
+      }
+    } catch (error) {
+      console.error(`Error getting console URL for instance ${instanceId}:`, error);
+      ToastUtils.error('Failed to get console access');
+      throw error;
+    }
   }
 
   /**

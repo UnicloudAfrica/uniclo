@@ -1,9 +1,15 @@
-// src/hooks/adminHooks/adminHooks.js
+/**
+ * Enhanced VPC Management Hooks
+ * 
+ * Provides comprehensive VPC operations including:
+ * - VPC CRUD operations
+ * - Available CIDR suggestions
+ * - VPC Flow Logs management
+ * - Enhanced error handling and caching
+ */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../index/silent";
 import api from "../index/api";
-// import silentTenantApi from "../index/tenant/silentTenant";
-// import tenantApi from "../index/tenant/tenantApi";
 
 const fetchVpcs = async ({ project_id, region }) => {
   const params = new URLSearchParams();
@@ -152,4 +158,151 @@ export const useFetchAvailableCidrs = (
     refetchOnWindowFocus: false,
     ...options,
   });
+};
+
+// ================================
+// VPC Flow Logs Operations
+// ================================
+
+const fetchVpcFlowLogs = async (params = {}) => {
+  const queryString = new URLSearchParams(params).toString();
+  const res = await silentApi("GET", `/business/vpc-flow-logs${queryString ? `?${queryString}` : ""}`);
+  if (!res.data) throw new Error("Failed to fetch VPC flow logs");
+  return res;
+};
+
+const fetchVpcFlowLogById = async (id) => {
+  const res = await silentApi("GET", `/business/vpc-flow-logs/${id}`);
+  if (!res.data) throw new Error(`Failed to fetch VPC flow log with ID ${id}`);
+  return res.data;
+};
+
+const createVpcFlowLog = async (flowLogData) => {
+  const res = await api("POST", "/business/vpc-flow-logs", flowLogData);
+  if (!res.data) throw new Error("Failed to create VPC flow log");
+  return res.data;
+};
+
+const updateVpcFlowLog = async ({ id, flowLogData }) => {
+  const res = await api("PATCH", `/business/vpc-flow-logs/${id}`, flowLogData);
+  if (!res.data) throw new Error(`Failed to update VPC flow log with ID ${id}`);
+  return res.data;
+};
+
+const deleteVpcFlowLog = async (id) => {
+  const res = await api("DELETE", `/business/vpc-flow-logs/${id}`);
+  if (!res.data) throw new Error(`Failed to delete VPC flow log with ID ${id}`);
+  return res.data;
+};
+
+// ================================
+// VPC Flow Logs Hooks
+// ================================
+
+export const useFetchVpcFlowLogs = (params = {}, options = {}) => {
+  return useQuery({
+    queryKey: ["vpc-flow-logs", params],
+    queryFn: () => fetchVpcFlowLogs(params),
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+
+export const useFetchVpcFlowLogById = (id, options = {}) => {
+  return useQuery({
+    queryKey: ["vpc-flow-log", id],
+    queryFn: () => fetchVpcFlowLogById(id),
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+
+export const useCreateVpcFlowLog = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createVpcFlowLog,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vpc-flow-logs"] });
+    },
+    onError: (error) => {
+      console.error("Error creating VPC flow log:", error);
+    },
+  });
+};
+
+export const useUpdateVpcFlowLog = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateVpcFlowLog,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["vpc-flow-logs"] });
+      queryClient.invalidateQueries({ queryKey: ["vpc-flow-log", variables.id] });
+    },
+    onError: (error) => {
+      console.error("Error updating VPC flow log:", error);
+    },
+  });
+};
+
+export const useDeleteVpcFlowLog = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteVpcFlowLog,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vpc-flow-logs"] });
+    },
+    onError: (error) => {
+      console.error("Error deleting VPC flow log:", error);
+    },
+  });
+};
+
+// ================================
+// Combined VPC Operations Hook
+// ================================
+
+// Hook that provides access to all VPC operations
+export const useVpcOperations = () => {
+  const queryClient = useQueryClient();
+  
+  const invalidateVpcData = (vpcId) => {
+    queryClient.invalidateQueries({ queryKey: ["vpcs"] });
+    queryClient.invalidateQueries({ queryKey: ["vpc-flow-logs"] });
+    if (vpcId) {
+      queryClient.invalidateQueries({ queryKey: ["vpc", vpcId] });
+    }
+  };
+
+  return {
+    // VPC operations
+    createVpc: useCreateTenantVpc(),
+    updateVpc: useUpdateTenantVpc(),
+    deleteVpc: useDeleteTenantVpc(),
+    
+    // Flow logs operations
+    createFlowLog: useCreateVpcFlowLog(),
+    updateFlowLog: useUpdateVpcFlowLog(),
+    deleteFlowLog: useDeleteVpcFlowLog(),
+    
+    // Utility functions
+    invalidateVpcData,
+  };
+};
+
+// Export individual functions for direct use if needed
+export {
+  fetchVpcs,
+  fetchVpcById,
+  createVpc,
+  updateVpc,
+  deleteVpc,
+  fetchAvailableCidrs,
+  fetchVpcFlowLogs,
+  fetchVpcFlowLogById,
+  createVpcFlowLog,
+  updateVpcFlowLog,
+  deleteVpcFlowLog
 };

@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, User, Mail, Phone, Building } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useFetchAdmins } from "../../../hooks/adminHooks/adminHooks";
 import { useCreateNewLead } from "../../../hooks/adminHooks/leadsHook";
 import ToastUtils from "../../../utils/toastUtil";
 import { useFetchCountries } from "../../../hooks/resource";
+import ModernModal from "../../components/ModernModal";
+import ModernInput from "../../components/ModernInput";
+import ModernButton from "../../components/ModernButton";
 
 const leadStatusOptions = [
   "new",
@@ -168,102 +171,73 @@ const CreateLead = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
-      <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full">
-        <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] w-full">
-          <h2 className="text-lg font-semibold text-[#575758]">
+      <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full max-h-[90vh] overflow-hidden">
+        <div className="flex justify-between items-center px-6 py-4 border-b bg-gradient-to-r from-gray-50 to-gray-100 rounded-t-[24px] w-full">
+          <h2 className="text-lg font-semibold text-gray-800">
             Create New Lead
           </h2>
-          <button
+          <ModernButton
+            variant="ghost"
+            size="sm"
             onClick={onClose}
-            className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
             disabled={isPending}
           >
             <X className="w-5 h-5" />
-          </button>
+          </ModernButton>
         </div>
 
-        <div className="px-6 py-6 w-full overflow-y-auto flex flex-col max-h-[400px]">
-          <form className="space-y-4 w-full" onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  First Name<span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.first_name}
-                  onChange={(e) => updateFormData("first_name", e.target.value)}
-                  placeholder="e.g., John"
-                  className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
-                    errors.first_name ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.first_name && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.first_name}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Last Name<span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.last_name}
-                  onChange={(e) => updateFormData("last_name", e.target.value)}
-                  placeholder="e.g., Doe"
-                  className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
-                    errors.last_name ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.last_name && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.last_name}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email<span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => updateFormData("email", e.target.value)}
-                  placeholder="e.g., john.doe@example.com"
-                  className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
-                    errors.email ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.email && (
-                  <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone
-                </label>
-                <input
-                  type="text"
-                  value={formData.phone}
-                  onChange={(e) => updateFormData("phone", e.target.value)}
-                  placeholder="e.g., +1234567890"
-                  className="w-full rounded-[10px] border border-gray-300 px-3 py-2 text-sm input-field"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Company
-                </label>
-                <input
-                  type="text"
-                  value={formData.company}
-                  onChange={(e) => updateFormData("company", e.target.value)}
-                  placeholder="e.g., Acme Corp"
-                  className="w-full rounded-[10px] border border-gray-300 px-3 py-2 text-sm input-field"
-                />
-              </div>
+        <div className="px-6 py-6 w-full overflow-y-auto max-h-[60vh]">
+          <form className="space-y-6" onSubmit={handleSubmit}>
+        {/* Personal Information Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Personal Information</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <ModernInput
+              label="First Name"
+              type="text"
+              value={formData.first_name}
+              onChange={(e) => updateFormData("first_name", e.target.value)}
+              placeholder="e.g., John"
+              required
+              error={errors.first_name}
+              icon={<User />}
+            />
+            <ModernInput
+              label="Last Name"
+              type="text"
+              value={formData.last_name}
+              onChange={(e) => updateFormData("last_name", e.target.value)}
+              placeholder="e.g., Doe"
+              required
+              error={errors.last_name}
+              icon={<User />}
+            />
+            <ModernInput
+              label="Email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => updateFormData("email", e.target.value)}
+              placeholder="e.g., john.doe@example.com"
+              required
+              error={errors.email}
+              icon={<Mail />}
+            />
+            <ModernInput
+              label="Phone"
+              type="text"
+              value={formData.phone}
+              onChange={(e) => updateFormData("phone", e.target.value)}
+              placeholder="e.g., +1234567890"
+              icon={<Phone />}
+            />
+            <ModernInput
+              label="Company"
+              type="text"
+              value={formData.company}
+              onChange={(e) => updateFormData("company", e.target.value)}
+              placeholder="e.g., Acme Corp"
+              icon={<Building />}
+            />
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Country
@@ -507,25 +481,26 @@ const CreateLead = ({ isOpen, onClose }) => {
           </form>
         </div>
 
-        <div className="flex items-center justify-end px-6 py-4 border-t rounded-b-[24px]">
+          </form>
+        </div>
+
+        <div className="flex items-center justify-end px-6 py-4 border-t bg-gray-50 rounded-b-[24px]">
           <div className="flex gap-3">
-            <button
+            <ModernButton
+              variant="outline"
               onClick={onClose}
-              className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
               disabled={isPending}
             >
               Cancel
-            </button>
-            <button
+            </ModernButton>
+            <ModernButton
+              variant="primary"
               onClick={handleSubmit}
               disabled={isPending}
-              className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              isLoading={isPending}
             >
               Create Lead
-              {isPending && (
-                <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-              )}
-            </button>
+            </ModernButton>
           </div>
         </div>
       </div>

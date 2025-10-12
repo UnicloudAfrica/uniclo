@@ -144,134 +144,170 @@ export default function AdminPricing() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
-        <div className="flex justify-end mb-4">
-          <div className="relative w-full max-w-[200px]">
-            <select
-              value={selectedRegion}
-              onChange={(e) => handleRegionChange(e.target.value)}
-              className="appearance-none w-full bg-white border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded-md focus:outline-none focus:ring-2 focus:ring-[#288DD1] focus:border-[#288DD1] text-sm"
-              disabled={isRegionsFetching}
-            >
-              <option value="">All Regions</option>
-              {isRegionsFetching ? (
-                <option value="" disabled>
-                  Loading regions...
-                </option>
-              ) : (
-                regions?.map((region) => (
-                  <option key={region.code} value={region.code}>
-                    {region.name}
-                  </option>
-                ))
-              )}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          </div>
-        </div>
-        <div className="w-full flex flex-col lg:flex-row">
-          <PricingSideMenu />
-          <div className="flex-1 bg-white rounded-lg shadow-sm p-4 lg:p-6 lg:w-[76%]">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">
-                Platform Pricing
-              </h2>
-              <div className="flex gap-4">
-                <button
-                  onClick={handleExport}
-                  disabled={isExporting || !selectedRegion}
-                  className="rounded-[30px] py-3 px-6 bg-green-100 text-green-700 font-medium text-sm hover:bg-green-200 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500"
+      <main 
+        className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8"
+        style={{ backgroundColor: designTokens.colors.neutral[25] }}
+      >
+        <div className="space-y-6">
+          {/* Page Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 
+                className="text-2xl font-bold"
+                style={{ color: designTokens.colors.neutral[900] }}
+              >
+                Pricing Management
+              </h1>
+              <p 
+                className="mt-1 text-sm"
+                style={{ color: designTokens.colors.neutral[600] }}
+              >
+                Configure and manage product pricing across regions
+              </p>
+            </div>
+            
+            {/* Region Selector */}
+            <div className="relative w-full max-w-[200px]">
+              <label 
+                className="block text-sm font-medium mb-2"
+                style={{ color: designTokens.colors.neutral[700] }}
+              >
+                Select Region
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedRegion}
+                  onChange={(e) => handleRegionChange(e.target.value)}
+                  className="appearance-none w-full px-4 py-2 pr-8 rounded-lg border"
+                  style={{
+                    backgroundColor: designTokens.colors.neutral[0],
+                    borderColor: designTokens.colors.neutral[300],
+                    color: designTokens.colors.neutral[900]
+                  }}
+                  disabled={isRegionsFetching}
                 >
-                  {isExporting ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : null}
-                  {isExporting ? "Exporting..." : "Export Template"}
-                </button>
-                <button
-                  onClick={openUploadModal}
-                  className="rounded-[30px] py-3 px-6 bg-gray-100 text-gray-700 font-medium text-sm hover:bg-gray-200 transition-colors"
-                >
-                  Upload File
-                </button>
-                <button
-                  onClick={openAddProductPricing}
-                  className="rounded-[30px] py-3 px-6 bg-[#288DD1] text-white font-medium text-sm hover:bg-[#1976D2] transition-colors"
-                >
-                  Add Pricing Manually
-                </button>
+                  <option value="">All Regions</option>
+                  {isRegionsFetching ? (
+                    <option value="" disabled>
+                      Loading regions...
+                    </option>
+                  ) : (
+                    regions?.map((region) => (
+                      <option key={region.code} value={region.code}>
+                        {region.name}
+                      </option>
+                    ))
+                  )}
+                </select>
+                <ChevronDown 
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4"
+                  style={{ color: designTokens.colors.neutral[400] }}
+                />
               </div>
             </div>
-            <>
-              {isRegionsFetching || isPricingFetching || isProductsFetching ? (
-                <div className="text-center text-gray-500 py-10">
-                  <p>Loading pricing...</p>
-                </div>
-              ) : error ? (
-                <div className="text-center text-red-500 py-10">
-                  <p>Error loading pricing</p>
-                </div>
-              ) : pricingWithNames && pricingWithNames.length > 0 ? (
-                <>
-                  {/* Desktop Table */}
-                  <div className="hidden lg:block overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="bg-[#F2F2F2] text-gray-700">
-                          <th className="text-left p-4 font-medium">
-                            Product Name
-                          </th>
-                          <th className="text-left p-4 font-medium">
-                            Price (USD)
-                          </th>
-                          <th className="text-left p-4 font-medium">Region</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {pricingWithNames.map((item) => (
-                          <tr
-                            key={item.id}
-                            className="border-b border-gray-200 hover:bg-gray-50"
-                          >
-                            <td className="p-4 text-gray-700">
-                              {item.product_name}
-                            </td>
-                            <td className="p-4 text-gray-700">
-                              ${parseFloat(item.price_usd).toFixed(2) || "N/A"}
-                            </td>
-                            <td className="p-4 text-gray-700">{item.region}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  {/* Mobile Cards */}
-                  <div className="lg:hidden space-y-4">
-                    {pricingWithNames.map((item) => (
-                      <div
-                        key={item.id}
-                        className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
-                      >
-                        <h3 className="text-lg font-medium text-gray-800">
-                          {item.product_name}
-                        </h3>
-                        <p className="text-gray-600">
-                          Price: $
-                          {parseFloat(item.price_usd).toFixed(2) || "N/A"}
-                        </p>
-                        <p className="text-gray-600">Region: {item.region}</p>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <div className="text-center text-gray-500 py-10">
-                  <p>
-                    No pricing data found
-                    {selectedRegion ? " for this region" : ""}.
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <ModernStatsCard
+              title="Total Products"
+              value={pricingStats.totalProducts}
+              icon={<Package size={24} />}
+              color="primary"
+              description="Products with pricing"
+            />
+            <ModernStatsCard
+              title="Average Price"
+              value={`$${pricingStats.averagePrice}`}
+              icon={<DollarSign size={24} />}
+              color="success"
+              description="Average USD price"
+            />
+            <ModernStatsCard
+              title="Highest Price"
+              value={`$${pricingStats.highestPrice}`}
+              icon={<TrendingUp size={24} />}
+              color="warning"
+              description="Maximum product price"
+            />
+            <ModernStatsCard
+              title="Regions"
+              value={pricingStats.uniqueRegions}
+              icon={<Globe size={24} />}
+              color="info"
+              description="Regions covered"
+            />
+          </div>
+
+          {/* Pricing Management Interface */}
+          <div className="w-full flex flex-col lg:flex-row gap-6">
+            <PricingSideMenu />
+            <ModernCard className="flex-1 lg:w-[76%]">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                <div>
+                  <h2 
+                    className="text-xl font-semibold"
+                    style={{ color: designTokens.colors.neutral[900] }}
+                  >
+                    Platform Pricing
+                  </h2>
+                  <p 
+                    className="text-sm mt-1"
+                    style={{ color: designTokens.colors.neutral[600] }}
+                  >
+                    Manage product pricing configurations
                   </p>
                 </div>
-              )}
-            </>
+                <div className="flex flex-wrap gap-2">
+                  <ModernButton
+                    onClick={handleExport}
+                    disabled={isExporting || !selectedRegion}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    {isExporting ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <Download size={16} />
+                    )}
+                    {isExporting ? "Exporting..." : "Export"}
+                  </ModernButton>
+                  <ModernButton
+                    onClick={openUploadModal}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <Upload size={16} />
+                    Upload
+                  </ModernButton>
+                  <ModernButton
+                    onClick={openAddProductPricing}
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    <Plus size={16} />
+                    Add Pricing
+                  </ModernButton>
+                </div>
+              </div>
+              <ModernTable
+                title="Pricing Configuration"
+                data={pricingWithNames || []}
+                columns={columns}
+                searchable={true}
+                filterable={true}
+                exportable={true}
+                sortable={true}
+                loading={isRegionsFetching || isPricingFetching || isProductsFetching}
+                emptyMessage={
+                  error 
+                    ? "Error loading pricing data. Please try again."
+                    : `No pricing data found${selectedRegion ? " for this region" : ""}. Add pricing configurations to get started.`
+                }
+              />
+            </ModernCard>
           </div>
         </div>
       </main>

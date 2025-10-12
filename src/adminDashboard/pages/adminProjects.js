@@ -2,10 +2,25 @@ import React, { useEffect, useState } from "react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
+import ModernTable from "../components/ModernTable";
+import ModernCard from "../components/ModernCard";
+import ModernStatsCard from "../components/ModernStatsCard";
+import ModernButton from "../components/ModernButton";
 import { useFetchProjects } from "../../hooks/adminHooks/projectHooks";
-import { ChevronLeft, ChevronRight, Eye, Loader2 } from "lucide-react";
+import { 
+  Eye, 
+  Loader2, 
+  Plus, 
+  FolderOpen, 
+  Calendar, 
+  Users, 
+  Activity,
+  FileText,
+  Settings
+} from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import CreateProjectModal from "./projectComps/addProject";
+import { designTokens } from "../../styles/designTokens";
 
 // Function to encode the ID for URL
 const encodeId = (id) => {
@@ -30,7 +45,7 @@ export default function AdminProjects() {
   const openAddProject = () => setAddProject(true);
   const closeAddProject = () => setAddProject(false);
 
-const [currentPage, setCurrentPage] = useState(() => {
+  const [currentPage, setCurrentPage] = useState(() => {
     const p = Number(searchParams.get("page"));
     return Number.isFinite(p) && p > 0 ? p : 1;
   });
@@ -39,16 +54,88 @@ const [currentPage, setCurrentPage] = useState(() => {
     return [10, 20, 30].includes(pp) ? pp : 10;
   });
 
-// Fetch projects with backend pagination
-  const { data: projectsResponse, isFetching: isProjectsFetching, isError: isProjectsError, error: projectsError, refetch: refetchProjects } =
-    useFetchProjects({ page: currentPage, per_page: itemsPerPage });
+  // Fetch projects with backend pagination
+  const { 
+    data: projectsResponse, 
+    isFetching: isProjectsFetching, 
+    isError: isProjectsError, 
+    error: projectsError, 
+    refetch: refetchProjects 
+  } = useFetchProjects({ page: currentPage, per_page: itemsPerPage });
 
   // Extract list and pagination meta
   const currentData = projectsResponse?.data || [];
   const totalPages = projectsResponse?.meta?.last_page || 1;
   const totalProjects = projectsResponse?.meta?.total || 0;
 
-const handlePageChange = (page) => {
+  // Calculate project statistics
+  const projectStats = {
+    totalProjects: totalProjects,
+    activeProjects: currentData.filter(p => p.status === 'active').length,
+    completedProjects: currentData.filter(p => p.status === 'completed').length,
+    projectTypes: [...new Set(currentData.map(p => p.type))].length
+  };
+
+  // Define columns for ModernTable
+  const columns = [
+    {
+      key: 'name',
+      header: 'Project Name',
+      render: (value) => (
+        <div className="flex items-center gap-2">
+          <FolderOpen size={16} style={{ color: designTokens.colors.primary[500] }} />
+          <span className="font-medium">{value}</span>
+        </div>
+      )
+    },
+    {
+      key: 'description',
+      header: 'Description',
+      render: (value) => (
+        <div className="max-w-xs truncate">
+          <span title={value}>{value || 'No description'}</span>
+        </div>
+      )
+    },
+    {
+      key: 'type',
+      header: 'Type',
+      render: (value) => (
+        <span 
+          className="px-2 py-1 rounded-full text-xs font-medium"
+          style={{
+            backgroundColor: designTokens.colors.success[50],
+            color: designTokens.colors.success[700]
+          }}
+        >
+          {value || 'Standard'}
+        </span>
+      )
+    },
+    {
+      key: 'created_at',
+      header: 'Created',
+      render: (value) => (
+        <div className="flex items-center gap-2">
+          <Calendar size={14} style={{ color: designTokens.colors.neutral[500] }} />
+          <span className="text-sm">
+            {value ? new Date(value).toLocaleDateString() : 'N/A'}
+          </span>
+        </div>
+      )
+    }
+  ];
+
+  // Define actions for ModernTable
+  const actions = [
+    {
+      icon: <Eye size={16} />,
+      label: '',
+      onClick: (item) => handleRowClick(item)
+    }
+  ];
+
+  const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
@@ -57,7 +144,7 @@ const handlePageChange = (page) => {
   const handlePerPageChange = (e) => {
     const value = Number(e.target.value);
     setItemsPerPage(value);
-    setCurrentPage(1); // Reset to first page when page size changes
+    setCurrentPage(1);
   };
 
   // Keep URL in sync when state changes
@@ -69,7 +156,7 @@ const handlePageChange = (page) => {
     }
   }, [currentPage, itemsPerPage, searchParams, setSearchParams]);
 
-  // Update state if URL is changed externally (back/forward or deep link)
+  // Update state if URL is changed externally
   useEffect(() => {
     const sp = Number(searchParams.get("page"));
     const spp = Number(searchParams.get("per_page"));
@@ -81,16 +168,14 @@ const handlePageChange = (page) => {
 
   const handleRowClick = (item) => {
     setSelectedItem(item);
-    // Encode the ID and name for URL safety
-    const encodedId = encodeId(item.identifier); // Using the new encodeId function
+    const encodedId = encodeId(item.identifier);
     const encodedName = encodeURIComponent(item.name);
-    // Navigate to the project details page with encoded ID and name
     navigate(
       `/admin-dashboard/projects/details?id=${encodedId}&name=${encodedName}`
     );
   };
 
-if (isProjectsFetching) {
+  if (isProjectsFetching) {
     return (
       <>
         <AdminHeadbar onMenuClick={toggleMobileMenu} />
@@ -99,9 +184,14 @@ if (isProjectsFetching) {
           onCloseMobileMenu={closeMobileMenu}
         />
         <AdminActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
-          <p className="ml-2 text-gray-700">Loading projects...</p>
+        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8 flex items-center justify-center">
+          <Loader2 
+            className="w-8 h-8 animate-spin" 
+            style={{ color: designTokens.colors.primary[500] }}
+          />
+          <p className="ml-2" style={{ color: designTokens.colors.neutral[700] }}>
+            Loading projects...
+          </p>
         </main>
       </>
     );
@@ -116,25 +206,37 @@ if (isProjectsFetching) {
           onCloseMobileMenu={closeMobileMenu}
         />
         <AdminActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center">
-          <div className="max-w-xl w-full bg-white border border-red-200 rounded-md p-4">
-            <div className="text-red-700 font-medium">Failed to load projects</div>
-            <div className="text-sm text-red-600 mt-1">{projectsError?.message || "An unexpected error occurred."}</div>
-            <div className="mt-3 flex items-center space-x-2">
-              <button
-                onClick={() => refetchProjects()}
-                className="px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700"
+        <main 
+          className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8 flex items-center justify-center"
+          style={{ backgroundColor: designTokens.colors.neutral[25] }}
+        >
+          <ModernCard className="max-w-xl w-full">
+            <div className="text-center">
+              <div 
+                className="text-lg font-medium mb-2"
+                style={{ color: designTokens.colors.error[700] }}
               >
-                Retry
-              </button>
-              <button
-                onClick={openAddProject}
-                className="px-4 py-2 bg-[#288DD1] text-white rounded-md text-sm hover:bg-[#1976D2]"
+                Failed to load projects
+              </div>
+              <div 
+                className="text-sm mb-4"
+                style={{ color: designTokens.colors.error[600] }}
               >
-                Add Project
-              </button>
+                {projectsError?.message || "An unexpected error occurred."}
+              </div>
+              <div className="flex items-center justify-center space-x-2">
+                <ModernButton
+                  onClick={() => refetchProjects()}
+                  variant="outline"
+                >
+                  Retry
+                </ModernButton>
+                <ModernButton onClick={openAddProject}>
+                  Add Project
+                </ModernButton>
+              </div>
             </div>
-          </div>
+          </ModernCard>
         </main>
         <CreateProjectModal isOpen={isAddProjectOpen} onClose={closeAddProject} />
       </>
@@ -149,203 +251,88 @@ if (isProjectsFetching) {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-<main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
-        <div className="flex items-center justify-between mt-5">
-          <button
-            onClick={openAddProject}
-            className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
-          >
-            Add Project
-          </button>
-
-          <div className="flex items-center space-x-2">
-            <label htmlFor="per-page" className="text-sm text-gray-700">
-              Per page:
-            </label>
-            <select
-              id="per-page"
-              value={itemsPerPage}
-              onChange={handlePerPageChange}
-              className="border border-gray-300 rounded-md px-2 py-1 text-sm bg-white"
+      <main 
+        className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8"
+        style={{ backgroundColor: designTokens.colors.neutral[25] }}
+      >
+        <div className="space-y-6">
+          {/* Page Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 
+                className="text-2xl font-bold"
+                style={{ color: designTokens.colors.neutral[900] }}
+              >
+                Project Management
+              </h1>
+              <p 
+                className="mt-1 text-sm"
+                style={{ color: designTokens.colors.neutral[600] }}
+              >
+                Manage and track your infrastructure projects
+              </p>
+            </div>
+            <ModernButton
+              onClick={openAddProject}
+              className="flex items-center gap-2"
             >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={30}>30</option>
-            </select>
+              <Plus size={18} />
+              Add Project
+            </ModernButton>
           </div>
-        </div>
 
-        {totalProjects > 0 && (
-          <div className="mt-2 text-sm text-gray-600">
-            Showing {Math.min((currentPage - 1) * itemsPerPage + (currentData.length ? 1 : 0), totalProjects)}–
-            {Math.min((currentPage - 1) * itemsPerPage + currentData.length, totalProjects)} of {totalProjects}
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <ModernStatsCard
+              title="Total Projects"
+              value={projectStats.totalProjects}
+              icon={<FolderOpen size={24} />}
+              change={3}
+              trend="up"
+              color="primary"
+              description="All projects"
+            />
+            <ModernStatsCard
+              title="Active Projects"
+              value={projectStats.activeProjects}
+              icon={<Activity size={24} />}
+              color="success"
+              description="Currently active"
+            />
+            <ModernStatsCard
+              title="Completed"
+              value={projectStats.completedProjects}
+              icon={<FileText size={24} />}
+              color="info"
+              description="Finished projects"
+            />
+            <ModernStatsCard
+              title="Project Types"
+              value={projectStats.projectTypes}
+              icon={<Settings size={24} />}
+              color="warning"
+              description="Different types"
+            />
           </div>
-        )}
 
-        {/* Desktop Table */}
-        <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px] border border-gray-200">
-          <table className="w-full">
-            <thead className="bg-[#F5F5F5]">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  Project Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  Description
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  Action
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  Edge
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-[#E8E6EA]">
-              {currentData.length > 0 ? (
-                currentData.map((item) => (
-                  <tr
-                    key={item.id}
-                    onClick={() => handleRowClick(item)}
-                    className="hover:bg-gray-50 cursor-pointer"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.description}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal uppercase">
-                      {item.type}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#288DD1]">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRowClick(item);
-                        }}
-                        className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                        title="View Details"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const encodedId = encodeId(item.identifier);
-                          const encodedName = encodeURIComponent(item.name);
-                          navigate(`/admin-dashboard/projects/details?id=${encodedId}&name=${encodedName}&openEdge=1`);
-                        }}
-                        className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                        title="Configure Edge"
-                      >
-                        Configure
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-<td
-                    colSpan="5"
-                    className="px-6 py-6 text-center text-sm text-gray-700"
-                  >
-                    <div className="flex flex-col items-center space-y-3">
-                      <div>No projects found.</div>
-                      <button
-                        onClick={openAddProject}
-                        className="rounded-[30px] py-2 px-6 bg-[#288DD1] text-white font-normal text-sm hover:bg-[#1976D2] transition-colors"
-                      >
-                        Create your first project
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          {/* Projects Table */}
+          <ModernCard>
+            <ModernTable
+              title={`Projects (${totalProjects} total)`}
+              data={currentData}
+              columns={columns}
+              actions={actions}
+              searchable={true}
+              filterable={true}
+              exportable={true}
+              sortable={true}
+              loading={isProjectsFetching}
+              onRowClick={handleRowClick}
+              emptyMessage="No projects found. Create your first project to get started."
+            />
+          </ModernCard>
         </div>
-
-        {/* Mobile Cards */}
-        <div className="md:hidden mt-6 space-y-4">
-          {currentData.length > 0 ? (
-            currentData.map((item) => (
-              <div
-                key={item.id}
-                onClick={() => handleRowClick(item)}
-                className="bg-white rounded-[12px] shadow-sm p-4 cursor-pointer border border-gray-200"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-base font-semibold text-gray-900">
-                    {item.name}
-                  </h3>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRowClick(item);
-                    }}
-                    className="text-[#288DD1] hover:text-[#1976D2] transition-colors p-1"
-                    title="View Details"
-                  >
-                    <Eye className="w-4 h-4" />
-                  </button>
-                </div>
-                <div className="space-y-1 text-sm text-gray-600">
-                  <div className="flex justify-between">
-                    <span className="font-medium">Description:</span>
-                    <span>{item.description}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Type:</span>
-                    <span className=" uppercase">{item.type}</span>
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="bg-white rounded-[12px] shadow-sm p-6 text-center text-gray-700">
-              <div>No projects found.</div>
-              <button
-                onClick={openAddProject}
-                className="mt-3 rounded-[30px] py-2 px-6 bg-[#288DD1] text-white font-normal text-sm hover:bg-[#1976D2] transition-colors"
-              >
-                Create your first project
-              </button>
-            </div>
-          )}
-        </div>
-
-{/* Pagination */}
-        {totalProjects > 0 && (
-          <div className="flex items-center justify-center px-4 py-3 border-t border-gray-200 bg-white rounded-b-[12px] mt-6">
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <span className="text-sm text-gray-700">{currentPage}</span>
-              <span className="text-sm text-gray-700">of</span>
-              <span className="text-sm text-gray-700">{totalPages}</span>
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
       </main>
-
       <CreateProjectModal isOpen={isAddProjectOpen} onClose={closeAddProject} />
     </>
   );

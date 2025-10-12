@@ -338,6 +338,267 @@
   }
 }
 
+/* Enhanced button hover effects with UniCloud branding */
+.btn-unicloud-hover {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(0);
+}
+
+.btn-unicloud-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(6, 182, 212, 0.4);
+}
+
+.btn-unicloud-hover:active {
+  transform: translateY(0);
+  transition-duration: 0.1s;
+}
+
+/* Stats card enhanced animations */
+.stats-card-hover {
+  transition: all 0.2s ease-out;
+  transform: translateY(0);
+}
+
+.stats-card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Table row enhanced hover with UniCloud accent */
+.table-row-modern {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.table-row-modern:hover {
+  background-color: rgba(6, 182, 212, 0.05);
+  transform: translateX(2px);
+}
+
+.table-row-modern:hover::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: #06b6d4;
+  animation: slideInLeft 0.2s ease-out;
+}
+
+/* Modern input with floating label effect */
+.input-floating {
+  position: relative;
+  transition: all 0.2s ease-out;
+}
+
+.input-floating:focus-within label {
+  transform: translateY(-20px) scale(0.85);
+  color: #06b6d4;
+}
+
+.input-floating label {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: left top;
+}
+
+/* Loading state with UniCloud colors */
+.loading-unicloud {
+  position: relative;
+  overflow: hidden;
+}
+
+.loading-unicloud::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(6, 182, 212, 0.2),
+    transparent
+  );
+  animation: shimmerUnicloud 1.5s infinite;
+}
+
+@keyframes shimmerUnicloud {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+/* Search input expand animation */
+.search-expand {
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 200px;
+}
+
+.search-expand:focus {
+  width: 320px;
+}
+
+/* Badge/chip animations */
+.badge-bounce-in {
+  animation: badgeBounceIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes badgeBounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Status indicator pulse */
+.status-pulse {
+  position: relative;
+}
+
+.status-pulse::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: currentColor;
+  opacity: 0.6;
+  transform: translate(-50%, -50%);
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 0.2;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.6;
+  }
+}
+
+/* Dropdown menu with stagger effect */
+.dropdown-stagger {
+  animation: dropdownSlideIn 0.2s ease-out;
+}
+
+.dropdown-stagger .dropdown-item {
+  opacity: 0;
+  animation: dropdownItemIn 0.2s ease-out forwards;
+}
+
+.dropdown-stagger .dropdown-item:nth-child(1) { animation-delay: 0.05s; }
+.dropdown-stagger .dropdown-item:nth-child(2) { animation-delay: 0.1s; }
+.dropdown-stagger .dropdown-item:nth-child(3) { animation-delay: 0.15s; }
+.dropdown-stagger .dropdown-item:nth-child(4) { animation-delay: 0.2s; }
+.dropdown-stagger .dropdown-item:nth-child(5) { animation-delay: 0.25s; }
+
+@keyframes dropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes dropdownItemIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Page transition stagger for stats cards */
+.page-stagger .stats-card:nth-child(1) { animation: pageStaggerIn 0.4s ease-out 0.1s both; }
+.page-stagger .stats-card:nth-child(2) { animation: pageStaggerIn 0.4s ease-out 0.2s both; }
+.page-stagger .stats-card:nth-child(3) { animation: pageStaggerIn 0.4s ease-out 0.3s both; }
+.page-stagger .stats-card:nth-child(4) { animation: pageStaggerIn 0.4s ease-out 0.4s both; }
+
+@keyframes pageStaggerIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Enhanced focus ring with UniCloud colors */
+.focus-ring-unicloud {
+  transition: all 0.2s ease;
+  outline: 2px solid transparent;
+}
+
+.focus-ring-unicloud:focus {
+  outline-color: rgba(6, 182, 212, 0.5);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+}
+
+/* Sidebar navigation item active animation */
+.nav-item-active {
+  position: relative;
+  background-color: rgba(6, 182, 212, 0.1);
+  animation: navItemActivate 0.3s ease-out;
+}
+
+.nav-item-active::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: #06b6d4;
+  animation: slideInRight 0.2s ease-out;
+}
+
+@keyframes navItemActivate {
+  from {
+    background-color: transparent;
+  }
+  to {
+    background-color: rgba(6, 182, 212, 0.1);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
 /* Utilities for reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,

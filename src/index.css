@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import modern animations and micro-interactions */
+@import './styles/animations.css';
+
 @media only screen and (max-width: 767px) {
   .centered {
     position: absolute;

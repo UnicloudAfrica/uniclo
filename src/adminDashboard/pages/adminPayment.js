@@ -333,7 +333,7 @@ export default function AdminPayment() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 stats-cards-stagger">
             <ModernStatsCard
               title="Total Revenue"
               value={`₦${totalRevenue.toLocaleString()}`}
@@ -342,6 +342,8 @@ export default function AdminPayment() {
               trend="up"
               color="success"
               description="This month"
+              animateOnMount={true}
+              staggerDelay={0}
             />
             <ModernStatsCard
               title="Completed Payments"
@@ -351,6 +353,8 @@ export default function AdminPayment() {
               trend="up"
               color="primary"
               description="Successfully processed"
+              animateOnMount={true}
+              staggerDelay={150}
             />
             <ModernStatsCard
               title="Processing"
@@ -358,6 +362,8 @@ export default function AdminPayment() {
               icon={<TrendingUp size={24} />}
               color="warning"
               description="Pending transactions"
+              animateOnMount={true}
+              staggerDelay={300}
             />
             <ModernStatsCard
               title="Failed Payments"
@@ -365,6 +371,8 @@ export default function AdminPayment() {
               icon={<FileText size={24} />}
               color="error"
               description="Requires attention"
+              animateOnMount={true}
+              staggerDelay={450}
             />
           </div>
 
@@ -381,6 +389,7 @@ export default function AdminPayment() {
               sortable={true}
               loading={false}
               emptyMessage="No payment transactions found"
+              enableAnimations={true}
             />
           </ModernCard>
         </div>

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { designTokens } from '../../styles/designTokens';
+import { useAnimations, animationUtils, useReducedMotion } from '../../hooks/useAnimations';
 
 const ModernStatsCard = ({
   title = '',
@@ -17,8 +18,48 @@ const ModernStatsCard = ({
   className = '',
   prefix = '',
   suffix = '',
-  description = ''
+  description = '',
+  animateOnMount = true,
+  staggerDelay = 0
 }) => {
+  // Animation hooks
+  const { useInView, useLoadingAnimation, useFlashAnimation, useHoverAnimation } = useAnimations();
+  const [inViewRef, isInView] = useInView(0.1);
+  const showLoadingAnimation = useLoadingAnimation(loading);
+  const { flashState, triggerSuccess, triggerError } = useFlashAnimation();
+  const { isHovered, hoverProps } = useHoverAnimation();
+  const prefersReducedMotion = useReducedMotion();
+  
+  // State for mount animations
+  const [isMounted, setIsMounted] = useState(false);
+  const [prevValue, setPrevValue] = useState(value);
+  
+  // Effect for mount animation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, staggerDelay);
+    
+    return () => clearTimeout(timer);
+  }, [staggerDelay]);
+  
+  // Effect for value change animation
+  useEffect(() => {
+    if (prevValue !== value && prevValue !== '' && !loading) {
+      // Trigger success flash when value increases, error when decreases
+      const prevNum = parseFloat(prevValue.toString().replace(/[^0-9.-]/g, ''));
+      const currentNum = parseFloat(value.toString().replace(/[^0-9.-]/g, ''));
+      
+      if (!isNaN(prevNum) && !isNaN(currentNum)) {
+        if (currentNum > prevNum) {
+          triggerSuccess();
+        } else if (currentNum < prevNum) {
+          triggerError();
+        }
+      }
+    }
+    setPrevValue(value);
+  }, [value, prevValue, loading, triggerSuccess, triggerError]);
   const colors = {
     primary: {
       bg: designTokens.colors.primary[50],
@@ -131,17 +172,56 @@ const ModernStatsCard = ({
     }
   };
 
+  // Generate animation classes
+  const getAnimationClasses = () => {
+    const classes = [];
+    
+    if (animateOnMount && isMounted && !prefersReducedMotion) {
+      classes.push('stats-card-entrance');
+    }
+    
+    if (isInView && !prefersReducedMotion) {
+      classes.push('fade-in-up');
+    }
+    
+    if (onClick) {
+      classes.push('stats-card-interactive');
+    }
+    
+    if (isHovered && onClick && !loading) {
+      classes.push('stats-card-hover');
+    }
+    
+    if (flashState === 'success') {
+      classes.push('success-flash');
+    } else if (flashState === 'error') {
+      classes.push('error-flash');
+    }
+    
+    if (showLoadingAnimation) {
+      classes.push('stats-card-loading');
+    }
+    
+    return classes.join(' ');
+  };
+
   const cardStyles = {
     backgroundColor: designTokens.colors.neutral[0],
     border: `1px solid ${designTokens.colors.neutral[200]}`,
     borderRadius: designTokens.borderRadius.xl,
     padding: sizes[size].padding,
-    boxShadow: designTokens.shadows.sm,
-    transition: 'all 0.2s ease',
+    boxShadow: isHovered && onClick ? designTokens.shadows.lg : designTokens.shadows.sm,
+    transition: prefersReducedMotion ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     cursor: onClick ? 'pointer' : 'default',
     position: 'relative',
     overflow: 'hidden',
-    fontFamily: designTokens.typography.fontFamily.sans.join(', ')
+    fontFamily: designTokens.typography.fontFamily.sans.join(', '),
+    transform: isHovered && onClick && !loading ? 'translateY(-2px)' : 'translateY(0)',
+    opacity: !animateOnMount || isMounted ? 1 : 0,
+    // Add subtle border glow on hover
+    ...(isHovered && onClick && {
+      borderColor: designTokens.colors.primary[300]
+    })
   };
 
   const headerStyles = {
@@ -182,7 +262,18 @@ const ModernStatsCard = ({
     fontWeight: designTokens.typography.fontWeight.bold,
     color: designTokens.colors.neutral[900],
     margin: 0,
-    lineHeight: '1'
+    lineHeight: '1',
+    transition: prefersReducedMotion ? 'none' : 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+    position: 'relative'
+  };
+  
+  const loadingSkeletonStyles = {
+    width: '80%',
+    height: sizes[size].valueSize,
+    backgroundColor: designTokens.colors.neutral[200],
+    borderRadius: designTokens.borderRadius.md,
+    position: 'relative',
+    overflow: 'hidden'
   };
 
   const prefixSuffixStyles = {
@@ -227,34 +318,26 @@ const ModernStatsCard = ({
     }
   };
 
-  const handleMouseEnter = (event) => {
-    if (onClick && !loading) {
-      event.target.closest('[data-stats-card]').style.transform = 'translateY(-2px)';
-      event.target.closest('[data-stats-card]').style.boxShadow = designTokens.shadows.md;
-    }
-  };
-
-  const handleMouseLeave = (event) => {
-    if (onClick && !loading) {
-      event.target.closest('[data-stats-card]').style.transform = 'translateY(0)';
-      event.target.closest('[data-stats-card]').style.boxShadow = designTokens.shadows.sm;
-    }
-  };
-
   return (
     <div
+      ref={inViewRef}
       data-stats-card
       style={cardStyles}
-      className={className}
+      className={`${className} ${getAnimationClasses()}`}
       onClick={handleClick}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      {...hoverProps}
     >
-      {loading && (
+      {showLoadingAnimation && (
         <div style={loadingOverlayStyles}>
           <div 
-            className="animate-spin rounded-full h-6 w-6 border-2 border-t-transparent"
-            style={{ borderColor: designTokens.colors.primary[500] }}
+            className={`spinner-ring ${prefersReducedMotion ? '' : 'animate-spin'}`}
+            style={{ 
+              width: '24px',
+              height: '24px',
+              border: '2px solid transparent',
+              borderTop: `2px solid ${designTokens.colors.primary[500]}`,
+              borderRadius: '50%'
+            }}
           />
         </div>
       )}
@@ -263,7 +346,14 @@ const ModernStatsCard = ({
       <div style={headerStyles}>
         <h3 style={titleStyles}>{title}</h3>
         {icon && (
-          <div style={iconContainerStyles}>
+          <div 
+            style={{
+              ...iconContainerStyles,
+              transform: isHovered && onClick ? 'scale(1.05)' : 'scale(1)',
+              transition: prefersReducedMotion ? 'none' : 'transform 0.2s ease'
+            }}
+            className={loading ? 'pulse' : ''}
+          >
             {React.cloneElement(icon, { 
               size: sizes[size].iconSize, 
               color: colors[color].icon 
@@ -274,16 +364,48 @@ const ModernStatsCard = ({
 
       {/* Value */}
       <div style={valueContainerStyles}>
-        {prefix && <span style={prefixSuffixStyles}>{prefix}</span>}
-        <div style={valueStyles}>{loading ? '---' : value}</div>
-        {suffix && <span style={prefixSuffixStyles}>{suffix}</span>}
+        {prefix && !loading && <span style={prefixSuffixStyles}>{prefix}</span>}
+        {loading ? (
+          <div style={loadingSkeletonStyles} className="shimmer" />
+        ) : (
+          <div 
+            style={{
+              ...valueStyles,
+              transform: flashState ? 'scale(1.02)' : 'scale(1)'
+            }}
+            className={`value-display ${flashState ? `flash-${flashState}` : ''}`}
+          >
+            {value}
+          </div>
+        )}
+        {suffix && !loading && <span style={prefixSuffixStyles}>{suffix}</span>}
       </div>
 
       {/* Change Indicator */}
       {changeValue !== null && !loading && (
-        <div style={changeContainerStyles}>
-          {getTrendIcon()}
-          <span style={changeTextStyles}>
+        <div 
+          style={{
+            ...changeContainerStyles,
+            opacity: isMounted ? 1 : 0,
+            transform: isMounted ? 'translateY(0)' : 'translateY(10px)',
+            transition: prefersReducedMotion ? 'none' : 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.1s'
+          }}
+          className={`change-indicator ${trend}-trend`}
+        >
+          <span 
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+              transition: prefersReducedMotion ? 'none' : 'transform 0.2s ease'
+            }}
+          >
+            {getTrendIcon()}
+          </span>
+          <span style={{
+            ...changeTextStyles,
+            transition: prefersReducedMotion ? 'none' : 'color 0.2s ease'
+          }}>
             {formatChangeValue()} {trend !== 'neutral' ? (isPositive ? 'increase' : 'decrease') : 'change'}
           </span>
         </div>
@@ -291,7 +413,15 @@ const ModernStatsCard = ({
 
       {/* Description */}
       {description && (
-        <div style={descriptionStyles}>
+        <div 
+          style={{
+            ...descriptionStyles,
+            opacity: isMounted ? 1 : 0,
+            transform: isMounted ? 'translateY(0)' : 'translateY(5px)',
+            transition: prefersReducedMotion ? 'none' : 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.2s'
+          }}
+          className="description-text"
+        >
           {description}
         </div>
       )}

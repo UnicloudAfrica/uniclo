@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   ChevronUp, 
   ChevronDown, 
@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { designTokens } from '../../styles/designTokens';
 import ModernButton from './ModernButton';
+import { useAnimations, animationUtils, useReducedMotion } from '../../hooks/useAnimations';
 
 const ModernTable = ({
   data = [],
@@ -27,12 +28,38 @@ const ModernTable = ({
   loading = false,
   onRowClick = null,
   emptyMessage = "No data available",
-  actions = []
+  actions = [],
+  enableAnimations = true
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  
+  // Animation hooks
+  const { useInView, useStaggeredAnimation, useLoadingAnimation } = useAnimations();
+  const [tableRef, isInView] = useInView(0.1);
+  const showLoadingAnimation = useLoadingAnimation(loading);
+  const prefersReducedMotion = useReducedMotion();
+  
+  // State for animations
+  const [tableLoaded, setTableLoaded] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [hoveredRow, setHoveredRow] = useState(null);
+  
+  // Effect for table load animation
+  useEffect(() => {
+    if (!loading && paginatedData.length > 0) {
+      const timer = setTimeout(() => setTableLoaded(true), 100);
+      return () => clearTimeout(timer);
+    }
+    setTableLoaded(false);
+  }, [loading, paginatedData.length]);
+  
+  // Reset row hover on page change
+  useEffect(() => {
+    setHoveredRow(null);
+  }, [currentPage]);
 
   // Filter and search data
   const filteredData = useMemo(() => {
@@ -107,7 +134,10 @@ const ModernTable = ({
       borderRadius: designTokens.borderRadius.xl,
       border: `1px solid ${designTokens.colors.neutral[200]}`,
       boxShadow: designTokens.shadows.sm,
-      overflow: 'hidden'
+      overflow: 'hidden',
+      opacity: !enableAnimations || tableLoaded || isInView ? 1 : 0,
+      transform: !enableAnimations || tableLoaded || isInView ? 'translateY(0)' : 'translateY(20px)',
+      transition: prefersReducedMotion ? 'none' : 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
     },
     header: {
       padding: '20px 24px',
@@ -134,13 +164,15 @@ const ModernTable = ({
       height: '40px',
       paddingLeft: '40px',
       paddingRight: '16px',
-      border: `1px solid ${designTokens.colors.neutral[300]}`,
+      border: `1px solid ${searchFocused ? designTokens.colors.primary[300] : designTokens.colors.neutral[300]}`,
       borderRadius: designTokens.borderRadius.lg,
-      backgroundColor: designTokens.colors.neutral[50],
+      backgroundColor: searchFocused ? designTokens.colors.neutral[0] : designTokens.colors.neutral[50],
       fontSize: designTokens.typography.fontSize.sm[0],
       outline: 'none',
-      transition: 'all 0.2s ease',
-      fontFamily: designTokens.typography.fontFamily.sans.join(', ')
+      transition: prefersReducedMotion ? 'none' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      fontFamily: designTokens.typography.fontFamily.sans.join(', '),
+      boxShadow: searchFocused ? `0 0 0 3px ${designTokens.colors.primary[100]}` : 'none',
+      transform: searchFocused ? 'translateY(-1px)' : 'translateY(0)'
     },
     table: {
       width: '100%',
@@ -158,13 +190,18 @@ const ModernTable = ({
       textTransform: 'uppercase',
       letterSpacing: '0.05em',
       borderBottom: `1px solid ${designTokens.colors.neutral[200]}`,
-      cursor: sortable ? 'pointer' : 'default'
+      cursor: sortable ? 'pointer' : 'default',
+      transition: prefersReducedMotion ? 'none' : 'all 0.2s ease',
+      '&:hover': {
+        backgroundColor: sortable ? designTokens.colors.neutral[100] : 'transparent'
+      }
     },
     td: {
       padding: '16px',
       fontSize: designTokens.typography.fontSize.sm[0],
       color: designTokens.colors.neutral[900],
-      borderBottom: `1px solid ${designTokens.colors.neutral[100]}`
+      borderBottom: `1px solid ${designTokens.colors.neutral[100]}`,
+      transition: prefersReducedMotion ? 'none' : 'all 0.2s ease'
     },
     emptyState: {
       padding: '48px 24px',
@@ -205,7 +242,7 @@ const ModernTable = ({
   }
 
   return (
-    <div style={tableStyles.container}>
+    <div ref={tableRef} style={tableStyles.container} className={enableAnimations && !prefersReducedMotion ? 'fade-in-up' : ''}>
       {/* Header */}
       {(title || searchable || filterable || exportable) && (
         <div style={tableStyles.header}>
@@ -229,7 +266,10 @@ const ModernTable = ({
                   placeholder="Search..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setSearchFocused(false)}
                   style={tableStyles.searchInput}
+                  className={enableAnimations && !prefersReducedMotion ? 'modern-input focus-ring' : ''}
                 />
               </div>
             )}
@@ -296,21 +336,27 @@ const ModernTable = ({
           </thead>
           <tbody>
             {paginatedData.length > 0 ? (
-              paginatedData.map((row, index) => (
-                <tr
-                  key={index}
-                  style={{
-                    cursor: onRowClick ? 'pointer' : 'default',
-                    transition: 'background-color 0.2s ease'
-                  }}
-                  onClick={() => onRowClick && onRowClick(row)}
-                  onMouseEnter={(e) => {
-                    e.target.closest('tr').style.backgroundColor = designTokens.colors.neutral[50];
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.closest('tr').style.backgroundColor = 'transparent';
-                  }}
-                >
+              paginatedData.map((row, index) => {
+                const isHovered = hoveredRow === index;
+                const animationDelay = enableAnimations && !prefersReducedMotion ? index * 50 : 0;
+                
+                return (
+                  <tr
+                    key={index}
+                    style={{
+                      cursor: onRowClick ? 'pointer' : 'default',
+                      backgroundColor: isHovered ? designTokens.colors.neutral[50] : 'transparent',
+                      transform: isHovered && onRowClick ? 'translateX(4px)' : 'translateX(0)',
+                      transition: prefersReducedMotion ? 'background-color 0.2s ease' : 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      opacity: !enableAnimations || tableLoaded ? 1 : 0,
+                      animationDelay: enableAnimations && !prefersReducedMotion ? `${animationDelay}ms` : '0ms',
+                      borderLeft: isHovered && onRowClick ? `3px solid ${designTokens.colors.primary[400]}` : '3px solid transparent'
+                    }}
+                    className={enableAnimations && !prefersReducedMotion && tableLoaded ? 'table-row stagger-item' : ''}
+                    onClick={() => onRowClick && onRowClick(row)}
+                    onMouseEnter={() => setHoveredRow(index)}
+                    onMouseLeave={() => setHoveredRow(null)}
+                  >
                   {columns.map((column) => (
                     <td key={column.key} style={tableStyles.td}>
                       {column.render ? column.render(row[column.key], row) : row[column.key]}
@@ -333,13 +379,21 @@ const ModernTable = ({
                               backgroundColor: 'transparent',
                               color: designTokens.colors.neutral[600],
                               cursor: 'pointer',
-                              transition: 'all 0.2s ease'
+                              transition: prefersReducedMotion ? 'color 0.2s ease' : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                              transform: 'scale(1)'
                             }}
+                            className={enableAnimations && !prefersReducedMotion ? 'modern-button-action' : ''}
                             onMouseEnter={(e) => {
-                              e.target.style.backgroundColor = designTokens.colors.neutral[100];
+                              if (!prefersReducedMotion) {
+                                e.target.style.backgroundColor = designTokens.colors.neutral[100];
+                                e.target.style.transform = 'scale(1.05)';
+                              }
                             }}
                             onMouseLeave={(e) => {
-                              e.target.style.backgroundColor = 'transparent';
+                              if (!prefersReducedMotion) {
+                                e.target.style.backgroundColor = 'transparent';
+                                e.target.style.transform = 'scale(1)';
+                              }
                             }}
                           >
                             {action.icon && action.icon}
@@ -350,7 +404,8 @@ const ModernTable = ({
                     </td>
                   )}
                 </tr>
-              ))
+                );
+              })
             ) : (
               <tr>
                 <td 

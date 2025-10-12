@@ -179,12 +179,15 @@ export default function AdminLeads() {
             </div>
           )}
 
-          <button
+          <ModernButton
             onClick={openCreateLead}
-            className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base mb-6"
+            variant="primary"
+            size="lg"
+            className="mb-6"
           >
+            <UserPlus className="w-5 h-5" />
             Create New Lead
-          </button>
+          </ModernButton>
 
           {isLeadsFetching ? (
             <div className="flex justify-center items-center h-48">

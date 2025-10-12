@@ -30,7 +30,11 @@ import {
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
+import ModernCard from "../components/ModernCard";
+import ModernButton from "../components/ModernButton";
+import ModernInput from "../components/ModernInput";
 import ToastUtils from "../../utils/toastUtil";
+import { designTokens } from "../../styles/designTokens";
 import { useFetchProductPricing, useFetchGeneralRegions } from "../../hooks/resource";
 import { useFetchInstanceRequests } from "../../hooks/adminHooks/instancesHook";
 import { useFetchProjects } from "../../hooks/adminHooks/projectHooks";
@@ -139,25 +143,31 @@ const InstanceConfigCard = ({
   }, [projectIdentifier]);
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-      <div className="p-6 border-b border-gray-200">
+    <ModernCard className="transition-all duration-200 hover:shadow-md">
+      <div className="p-6 border-b" style={{ borderColor: designTokens.colors.neutral[200] }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <button
               onClick={() => onToggleExpand(index)}
-              className="p-1 hover:bg-gray-100 rounded"
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
             >
               {isExpanded ? (
-                <ChevronDown className="w-4 h-4" />
+                <ChevronDown className="w-4 h-4" style={{ color: designTokens.colors.neutral[600] }} />
               ) : (
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4" style={{ color: designTokens.colors.neutral[600] }} />
               )}
             </button>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 
+                className="text-lg font-semibold"
+                style={{ color: designTokens.colors.neutral[900] }}
+              >
                 Configuration #{index + 1}: {localConfig.name || 'Untitled'}
               </h3>
-              <p className="text-sm text-gray-500">
+              <p 
+                className="text-sm"
+                style={{ color: designTokens.colors.neutral[500] }}
+              >
                 {localConfig.count || 1} instance(s) • {selectedProduct?.name || 'No product selected'}
               </p>
             </div>
@@ -166,14 +176,36 @@ const InstanceConfigCard = ({
           <div className="flex items-center space-x-2">
             <button
               onClick={() => onDuplicate(index)}
-              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded"
+              className="p-2 rounded transition-colors"
+              style={{
+                color: designTokens.colors.neutral[400],
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.color = designTokens.colors.primary[600];
+                e.target.style.backgroundColor = designTokens.colors.primary[50];
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = designTokens.colors.neutral[400];
+                e.target.style.backgroundColor = 'transparent';
+              }}
               title="Duplicate Configuration"
             >
               <Copy className="w-4 h-4" />
             </button>
             <button
               onClick={() => onDelete(index)}
-              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+              className="p-2 rounded transition-colors"
+              style={{
+                color: designTokens.colors.neutral[400],
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.color = designTokens.colors.error[600];
+                e.target.style.backgroundColor = designTokens.colors.error[50];
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = designTokens.colors.neutral[400];
+                e.target.style.backgroundColor = 'transparent';
+              }}
               title="Delete Configuration"
             >
               <Trash2 className="w-4 h-4" />
@@ -239,8 +271,8 @@ const InstanceConfigCard = ({
 
           {/* Infrastructure Configuration */}
           <div className="space-y-4">
-            <h4 className="text-md font-semibold text-gray-900 flex items-center">
-              <Server className="w-5 h-5 mr-2" />
+            <h4 className="text-md font-semibold flex items-center" style={{ color: designTokens.colors.neutral[900] }}>
+              <Server className="w-5 h-5 mr-2" style={{ color: designTokens.colors.primary[500] }} />
               Infrastructure Configuration
             </h4>
 
@@ -373,8 +405,8 @@ const InstanceConfigCard = ({
 
           {/* Storage Configuration */}
           <div className="space-y-4">
-            <h4 className="text-md font-semibold text-gray-900 flex items-center">
-              <HardDrive className="w-5 h-5 mr-2" />
+            <h4 className="text-md font-semibold flex items-center" style={{ color: designTokens.colors.neutral[900] }}>
+              <HardDrive className="w-5 h-5 mr-2" style={{ color: designTokens.colors.primary[500] }} />
               Storage Configuration
             </h4>
 
@@ -573,7 +605,7 @@ const InstanceConfigCard = ({
           </div>
         </div>
       )}
-    </div>
+    </ModernCard>
   );
 };
 
@@ -947,10 +979,16 @@ export default function MultiInstanceCreation() {
           onCloseMobileMenu={closeMobileMenu}
         />
         <AdminActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center">
+        <main 
+          className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8 flex items-center justify-center"
+          style={{ backgroundColor: designTokens.colors.neutral[25] }}
+        >
           <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-2" />
-            <p className="text-gray-700">Loading resources...</p>
+            <Loader2 
+              className="w-8 h-8 animate-spin mx-auto mb-2" 
+              style={{ color: designTokens.colors.primary[500] }}
+            />
+            <p style={{ color: designTokens.colors.neutral[700] }}>Loading resources...</p>
           </div>
         </main>
       </>
@@ -966,29 +1004,64 @@ export default function MultiInstanceCreation() {
       />
       <AdminActiveTab />
 
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full">
+      <main 
+        className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full"
+        style={{ backgroundColor: designTokens.colors.neutral[25] }}
+      >
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 md:px-8 py-6">
+        <div 
+          className="bg-white px-6 md:px-8 py-6"
+          style={{ borderBottom: `1px solid ${designTokens.colors.neutral[200]}` }}
+        >
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Multi-Instance Creation</h1>
-              <p className="text-sm text-gray-500 mt-1">
+              <h1 
+                className="text-2xl font-bold"
+                style={{ color: designTokens.colors.neutral[900] }}
+              >
+                Multi-Instance Creation
+              </h1>
+              <p 
+                className="text-sm mt-1"
+                style={{ color: designTokens.colors.neutral[500] }}
+              >
                 Create multiple instances with different configurations in a single request
               </p>
             </div>
             
             <div className="flex items-center space-x-3">
               <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{totalInstances} Total Instances</p>
-                <p className="text-xs text-gray-500">{configurations.length} Configurations</p>
+                <p 
+                  className="text-sm font-medium"
+                  style={{ color: designTokens.colors.neutral[900] }}
+                >
+                  {totalInstances} Total Instances
+                </p>
+                <p 
+                  className="text-xs"
+                  style={{ color: designTokens.colors.neutral[500] }}
+                >
+                  {configurations.length} Configurations
+                </p>
               </div>
               
               {pricing && (
-                <div className="text-right bg-green-50 px-3 py-2 rounded-lg">
-                  <p className="text-sm font-semibold text-green-900">
+                <div 
+                  className="text-right px-3 py-2 rounded-lg"
+                  style={{ backgroundColor: designTokens.colors.success[50] }}
+                >
+                  <p 
+                    className="text-sm font-semibold"
+                    style={{ color: designTokens.colors.success[900] }}
+                  >
                     {pricing.currency} {pricing.grand_total}
                   </p>
-                  <p className="text-xs text-green-600">Total Cost</p>
+                  <p 
+                    className="text-xs"
+                    style={{ color: designTokens.colors.success[600] }}
+                  >
+                    Total Cost
+                  </p>
                 </div>
               )}
             </div>
@@ -998,8 +1071,13 @@ export default function MultiInstanceCreation() {
         {/* Main Content */}
         <div className="p-6 md:p-8">
           {/* Assignment (Admin only) */}
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 mb-8">
-            <h3 className="text-md font-semibold text-gray-900 mb-4">Assignment (Admin only)</h3>
+          <ModernCard className="p-6 mb-8">
+            <h3 
+              className="text-md font-semibold mb-4"
+              style={{ color: designTokens.colors.neutral[900] }}
+            >
+              Assignment (Admin only)
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Assign To</label>
@@ -1052,7 +1130,7 @@ export default function MultiInstanceCreation() {
                 </select>
               </div>
             </div>
-          </div>
+          </ModernCard>
 
           {/* Configuration Cards */}
           <div className="space-y-6 mb-8">
@@ -1080,72 +1158,118 @@ export default function MultiInstanceCreation() {
 
           {/* Add Configuration Button */}
           <div className="mb-8">
-            <button
+            <ModernButton
               onClick={addConfiguration}
-              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
+              className="inline-flex items-center"
             >
               <Plus className="w-5 h-5 mr-2" />
               Add Another Configuration
-            </button>
+            </ModernButton>
           </div>
 
           {/* Pricing Section */}
           {pricing && (
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 mb-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Pricing Breakdown</h3>
+            <ModernCard className="p-6 mb-8">
+              <h3 
+                className="text-lg font-semibold mb-4"
+                style={{ color: designTokens.colors.neutral[900] }}
+              >
+                Pricing Breakdown
+              </h3>
               
               <div className="space-y-4">
                 {pricing.previews.map((preview, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div 
+                    key={index} 
+                    className="flex items-center justify-between p-4 rounded-lg"
+                    style={{ backgroundColor: designTokens.colors.neutral[50] }}
+                  >
                     <div>
-                      <h4 className="font-medium text-gray-900">
+                      <h4 
+                        className="font-medium"
+                        style={{ color: designTokens.colors.neutral[900] }}
+                      >
                         Configuration #{preview.index + 1}
                       </h4>
-                      <p className="text-sm text-gray-500">
+                      <p 
+                        className="text-sm"
+                        style={{ color: designTokens.colors.neutral[500] }}
+                      >
                         {preview.count} × {preview.product_name}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-semibold text-gray-900">
+                      <p 
+                        className="font-semibold"
+                        style={{ color: designTokens.colors.neutral[900] }}
+                      >
                         {preview.currency} {preview.total_price}
                       </p>
-                      <p className="text-sm text-gray-500">
+                      <p 
+                        className="text-sm"
+                        style={{ color: designTokens.colors.neutral[500] }}
+                      >
                         {preview.currency} {preview.unit_price} per instance
                       </p>
                     </div>
                   </div>
                 ))}
                 
-                <div className="border-t pt-4">
+                <div className="pt-4" style={{ borderTop: `1px solid ${designTokens.colors.neutral[200]}` }}>
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-lg font-bold text-gray-900">Grand Total</h4>
-                      <p className="text-sm text-gray-500">
+                      <h4 
+                        className="text-lg font-bold"
+                        style={{ color: designTokens.colors.neutral[900] }}
+                      >
+                        Grand Total
+                      </h4>
+                      <p 
+                        className="text-sm"
+                        style={{ color: designTokens.colors.neutral[500] }}
+                      >
                         {pricing.total_instances} instances across {pricing.total_configurations} configurations
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-green-600">
+                      <p 
+                        className="text-2xl font-bold"
+                        style={{ color: designTokens.colors.success[600] }}
+                      >
                         {pricing.currency} {pricing.grand_total}
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
+            </ModernCard>
           )}
 
           {/* Action Bar */}
-          <div className="flex items-center justify-between bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+          <ModernCard className="flex items-center justify-between p-6">
             <div className="flex items-center space-x-4">
-              <label className="inline-flex items-center space-x-2 text-sm text-gray-700 mr-4">
-                <input type="checkbox" checked={fastTrack} onChange={(e) => setFastTrack(e.target.checked)} className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+              <label 
+                className="inline-flex items-center space-x-2 text-sm mr-4"
+                style={{ color: designTokens.colors.neutral[700] }}
+              >
+                <input 
+                  type="checkbox" 
+                  checked={fastTrack} 
+                  onChange={(e) => setFastTrack(e.target.checked)} 
+                  className="rounded" 
+                  style={{
+                    borderColor: designTokens.colors.neutral[300],
+                    color: designTokens.colors.primary[600]
+                  }}
+                />
                 <span>Fast track</span>
               </label>
-              <button
+              
+              <ModernButton
                 onClick={getPricingPreview}
                 disabled={pricingLoading || totalInstances === 0}
-                className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50"
+                variant="outline"
+                className="inline-flex items-center"
               >
                 {pricingLoading ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -1153,9 +1277,9 @@ export default function MultiInstanceCreation() {
                   <Calculator className="w-4 h-4 mr-2" />
                 )}
                 Calculate Pricing
-              </button>
+              </ModernButton>
 
-              <div className="text-sm text-gray-600">
+              <div className="text-sm" style={{ color: designTokens.colors.neutral[600] }}>
                 <span className="flex items-center">
                   <Info className="w-4 h-4 mr-1" />
                   {totalInstances > 0 ? `Ready to create ${totalInstances} instances` : 'Configure at least one instance'}
@@ -1164,17 +1288,21 @@ export default function MultiInstanceCreation() {
             </div>
 
             <div className="flex items-center space-x-3">
-              <button
+              <ModernButton
                 onClick={() => window.location.href = '/admin-dashboard/projects'}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                variant="ghost"
               >
                 Cancel
-              </button>
+              </ModernButton>
               
-              <button
+              <ModernButton
                 onClick={createInstances}
                 disabled={creating || totalInstances === 0 || !pricing}
-                className="inline-flex items-center px-6 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50"
+                className="inline-flex items-center"
+                style={{
+                  backgroundColor: designTokens.colors.success[600],
+                  borderColor: designTokens.colors.success[600]
+                }}
               >
                 {creating ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -1182,9 +1310,9 @@ export default function MultiInstanceCreation() {
                   <Play className="w-4 h-4 mr-2" />
                 )}
                 Create {totalInstances} Instance{totalInstances !== 1 ? 's' : ''}
-              </button>
+              </ModernButton>
             </div>
-          </div>
+          </ModernCard>
         </div>
       </main>
     </>

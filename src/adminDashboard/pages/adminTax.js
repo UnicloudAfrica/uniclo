@@ -2,8 +2,21 @@ import React, { useState } from "react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
-import { Loader2, Pencil, PlusCircle } from "lucide-react"; // Removed Trash2 as it's handled in EditTaxTypeModal
+import ModernTable from "../components/ModernTable";
+import ModernCard from "../components/ModernCard";
+import ModernStatsCard from "../components/ModernStatsCard";
+import ModernButton from "../components/ModernButton";
+import { 
+  Loader2, 
+  Pencil, 
+  PlusCircle, 
+  Calculator,
+  Globe,
+  Percent,
+  Settings
+} from "lucide-react";
 import ToastUtils from "../../utils/toastUtil";
+import { designTokens } from "../../styles/designTokens";
 import AddTaxTypeModal from "./taxComponents/addTax";
 import EditTaxTypeModal from "./taxComponents/editTax";
 import { useFetchTaxConfigurations } from "../../hooks/adminHooks/taxConfigurationHooks";
@@ -52,6 +65,106 @@ export default function AdminTax() {
     return `${(parseFloat(rate) * 100).toFixed(2)}%`;
   };
 
+  // Calculate tax statistics
+  const taxStats = {
+    totalTaxTypes: taxConfigurations?.length || 0,
+    totalCountryRates: taxConfigurations?.reduce((sum, taxType) => 
+      sum + (taxType.country_rates?.length || 0), 0
+    ) || 0,
+    averageRate: taxConfigurations?.length > 0 ? (
+      taxConfigurations.reduce((sum, taxType) => {
+        const rates = taxType.country_rates || [];
+        const typeAvg = rates.length > 0 ? 
+          rates.reduce((rateSum, rate) => rateSum + (parseFloat(rate.rate) || 0), 0) / rates.length : 0;
+        return sum + typeAvg;
+      }, 0) / taxConfigurations.length
+    ) : 0,
+    countriesWithTax: [...new Set(
+      taxConfigurations?.flatMap(taxType => 
+        (taxType.country_rates || []).map(rate => rate.country?.name).filter(Boolean)
+      ) || []
+    )].length
+  };
+
+  // Prepare data for ModernTable
+  const tableData = [];
+  taxConfigurations?.forEach(taxType => {
+    if (taxType.country_rates && taxType.country_rates.length > 0) {
+      taxType.country_rates.forEach(rate => {
+        tableData.push({
+          id: `${taxType.id}-${rate.id}`,
+          taxType: taxType.name || 'N/A',
+          country: rate.country?.name || 'N/A',
+          rate: rate.rate,
+          formattedRate: formatRate(rate.rate),
+          taxTypeId: taxType.id,
+          taxTypeObj: taxType
+        });
+      });
+    } else {
+      tableData.push({
+        id: taxType.id,
+        taxType: taxType.name || 'N/A',
+        country: 'No rates configured',
+        rate: null,
+        formattedRate: 'N/A',
+        taxTypeId: taxType.id,
+        taxTypeObj: taxType
+      });
+    }
+  });
+
+  // Define columns for ModernTable
+  const columns = [
+    {
+      key: 'taxType',
+      header: 'Tax Type',
+      render: (value) => (
+        <div className="flex items-center gap-2">
+          <Calculator size={16} style={{ color: designTokens.colors.primary[500] }} />
+          <span className="font-medium">{value}</span>
+        </div>
+      )
+    },
+    {
+      key: 'country',
+      header: 'Country',
+      render: (value) => (
+        <div className="flex items-center gap-2">
+          <Globe size={16} style={{ color: designTokens.colors.info[500] }} />
+          <span>{value}</span>
+        </div>
+      )
+    },
+    {
+      key: 'formattedRate',
+      header: 'Rate',
+      render: (value, item) => (
+        <div className="flex items-center gap-1">
+          <Percent size={14} style={{ color: designTokens.colors.success[500] }} />
+          <span 
+            className="font-medium px-2 py-1 rounded-full text-xs"
+            style={{
+              backgroundColor: item.rate > 0 ? designTokens.colors.success[50] : designTokens.colors.neutral[50],
+              color: item.rate > 0 ? designTokens.colors.success[700] : designTokens.colors.neutral[500]
+            }}
+          >
+            {value}
+          </span>
+        </div>
+      )
+    }
+  ];
+
+  // Define actions for ModernTable
+  const actions = [
+    {
+      icon: <Pencil size={16} />,
+      label: 'Edit Tax Type',
+      onClick: (item) => handleEditTaxType(item.taxTypeObj)
+    }
+  ];
+
   return (
     <>
       <AdminHeadbar onMenuClick={toggleMobileMenu} />
@@ -60,177 +173,99 @@ export default function AdminTax() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={handleAddTaxType}
-            className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors flex items-center gap-2"
-          >
-            <PlusCircle className="w-5 h-5" /> Add Tax Type
-          </button>
-        </div>
-
-        {isTaxFetching ? (
-          <div className="flex items-center justify-center min-h-[200px]">
-            <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
-            <p className="ml-2 text-gray-700">Loading tax configurations...</p>
+      <main 
+        className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8"
+        style={{ backgroundColor: designTokens.colors.neutral[25] }}
+      >
+        <div className="space-y-6">
+          {/* Page Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 
+                className="text-2xl font-bold"
+                style={{ color: designTokens.colors.neutral[900] }}
+              >
+                Tax Configuration
+              </h1>
+              <p 
+                className="mt-1 text-sm"
+                style={{ color: designTokens.colors.neutral[600] }}
+              >
+                Manage tax types and rates for different countries
+              </p>
+            </div>
+            <ModernButton
+              onClick={handleAddTaxType}
+              className="flex items-center gap-2"
+            >
+              <PlusCircle className="w-5 h-5" />
+              Add Tax Type
+            </ModernButton>
           </div>
-        ) : (
-          <>
-            {/* Desktop Table */}
-            <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px] border border-gray-200">
-              <table className="w-full">
-                <thead className="bg-[#F5F5F5]">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                      Tax Type
-                    </th>
-                    {/* Removed Slug column */}
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                      Country
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                      Rate
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-[#E8E6EA]">
-                  {taxConfigurations && taxConfigurations.length > 0 ? (
-                    taxConfigurations.map((taxType) =>
-                      taxType.country_rates &&
-                      taxType.country_rates.length > 0 ? (
-                        taxType.country_rates.map((rate, index) => (
-                          <tr
-                            key={`${taxType.id}-${rate.id}`}
-                            className="hover:bg-gray-50"
-                          >
-                            {index === 0 && ( // Only render tax type name once per group of rates
-                              <td
-                                rowSpan={taxType.country_rates.length}
-                                className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal align-top"
-                              >
-                                {taxType.name || "N/A"}
-                              </td>
-                            )}
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                              {rate.country?.name || "N/A"}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                              {formatRate(rate.rate)}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
-                              <div className="flex items-center space-x-3">
-                                {/* Edit Tax Type button for the entire tax type */}
-                                {index === 0 && ( // Show only once per tax type
-                                  <button
-                                    onClick={() => handleEditTaxType(taxType)}
-                                    className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                                    title="Edit Tax Type"
-                                  >
-                                    <Pencil className="w-4 h-4" />
-                                  </button>
-                                )}
-                                {/* Removed individual rate delete button, as it's now handled in EditTaxTypeModal */}
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        // Case where a tax type exists but has no country rates
-                        <tr key={taxType.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                            {taxType.name || "N/A"}
-                          </td>
-                          <td
-                            colSpan="2"
-                            className="px-6 py-4 text-center text-sm text-gray-500"
-                          >
-                            {" "}
-                            {/* Adjusted colspan */}
-                            No rates configured for this tax type.
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
-                            <button
-                              onClick={() => handleEditTaxType(taxType)}
-                              className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                              title="Edit Tax Type"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </button>
-                          </td>
-                        </tr>
-                      )
-                    )
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan="4" // Adjusted colspan for no data
-                        className="px-6 py-4 text-center text-sm text-gray-500"
-                      >
-                        No tax configurations found.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
 
-            {/* Mobile Cards */}
-            <div className="md:hidden mt-6 space-y-4">
-              {taxConfigurations && taxConfigurations.length > 0 ? (
-                taxConfigurations.map((taxType) => (
-                  <div
-                    key={taxType.id}
-                    className="bg-white rounded-[12px] shadow-sm p-4 border border-gray-200"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-base font-semibold text-gray-900">
-                        {taxType.name || "N/A"}
-                      </h3>
-                      <button
-                        onClick={() => handleEditTaxType(taxType)}
-                        className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                        title="Edit Tax Type"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                    </div>
-                    {taxType.country_rates &&
-                    taxType.country_rates.length > 0 ? (
-                      taxType.country_rates.map((rate) => (
-                        <div
-                          key={rate.id}
-                          className="border-t border-gray-100 pt-2 mt-2"
-                        >
-                          <div className="flex justify-between text-sm text-gray-600">
-                            <span className="font-medium">Country:</span>
-                            <span>{rate.country?.name || "N/A"}</span>
-                          </div>
-                          <div className="flex justify-between text-sm text-gray-600">
-                            <span className="font-medium">Rate:</span>
-                            <span>{formatRate(rate.rate)}</span>
-                          </div>
-                          {/* Removed individual rate delete button from mobile card */}
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-sm text-gray-500 mt-2">
-                        No rates configured for this tax type.
-                      </p>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <div className="bg-white rounded-[12px] shadow-sm p-4 text-center text-gray-500">
-                  No tax configurations found.
-                </div>
-              )}
-            </div>
-          </>
-        )}
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <ModernStatsCard
+              title="Total Tax Types"
+              value={taxStats.totalTaxTypes}
+              icon={<Calculator size={24} />}
+              color="primary"
+              description="Different tax categories"
+            />
+            <ModernStatsCard
+              title="Country Rates"
+              value={taxStats.totalCountryRates}
+              icon={<Globe size={24} />}
+              color="info"
+              description="Total configured rates"
+            />
+            <ModernStatsCard
+              title="Average Rate"
+              value={`${(taxStats.averageRate * 100).toFixed(1)}%`}
+              icon={<Percent size={24} />}
+              color="success"
+              description="Across all countries"
+            />
+            <ModernStatsCard
+              title="Countries"
+              value={taxStats.countriesWithTax}
+              icon={<Settings size={24} />}
+              color="warning"
+              description="With tax configured"
+            />
+          </div>
+
+          {/* Tax Configuration Table */}
+          {isTaxFetching ? (
+            <ModernCard className="flex items-center justify-center min-h-[200px]">
+              <Loader2 
+                className="w-8 h-8 animate-spin" 
+                style={{ color: designTokens.colors.primary[500] }}
+              />
+              <p 
+                className="ml-2" 
+                style={{ color: designTokens.colors.neutral[700] }}
+              >
+                Loading tax configurations...
+              </p>
+            </ModernCard>
+          ) : (
+            <ModernCard>
+              <ModernTable
+                title={`Tax Configurations (${taxStats.totalTaxTypes} tax types)`}
+                data={tableData}
+                columns={columns}
+                actions={actions}
+                searchable={true}
+                filterable={true}
+                exportable={true}
+                sortable={true}
+                loading={isTaxFetching}
+                emptyMessage="No tax configurations found. Add your first tax type to get started."
+              />
+            </ModernCard>
+          )}
+        </div>
       </main>
 
       <AddTaxTypeModal

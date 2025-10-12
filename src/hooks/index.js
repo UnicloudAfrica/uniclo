@@ -1,9 +1,37 @@
 /**
- * Enhanced UCA Frontend Hooks Index
+ * Comprehensive UCA Frontend Hooks Index
  * 
- * This file exports all the enhanced and new hooks created to complement
- * the backend API endpoints. Import from here for better organization.
+ * This file exports ALL frontend hooks that align with backend API endpoints
+ * from api.php, tenant.php, and admin.php routes. Import from here for better organization.
  */
+
+// ================================
+// SHARED RESOURCE HOOKS
+// ================================
+
+// Shared hooks that work across all contexts (business/client, tenant, admin)
+export * from './sharedResourceHooks';
+
+// ================================
+// CONTEXT-SPECIFIC API HOOKS
+// ================================
+
+// Business/Client API Hooks (api.php - /api/v1/business/*)
+// Note: Multi-instances, instance lifecycles, and instance consoles are now in sharedResourceHooks
+export * from './businessClientHooks';
+
+// Tenant Admin Hooks (tenant.php - /tenant/v1/admin/*)
+// Note: Multi-instances, instance lifecycles, and instance consoles are now in sharedResourceHooks
+export * from './tenantAdminHooks';
+
+// Admin Hooks (admin.php - /admin/v1/*)
+// Note: Multi-instances, instance lifecycles, and instance consoles are now in sharedResourceHooks
+// Cloud endpoints (providers, regions, project-regions) are admin-only and remain here
+export * from './adminHooks';
+
+// ================================
+// ENHANCED FEATURE HOOKS
+// ================================
 
 // Console Access Hooks
 export * from './consoleHooks';

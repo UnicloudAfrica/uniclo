@@ -278,12 +278,14 @@ export default function AdminLeadDetails() {
           <p className="text-lg font-semibold text-gray-700 mb-4">
             This lead couldn't be found.
           </p>
-          <button
+          <ModernButton
             onClick={handleGoBack}
-            className="px-6 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors"
+            variant="primary"
+            size="lg"
           >
+            <ArrowLeft className="w-4 h-4" />
             Go back
-          </button>
+          </ModernButton>
         </main>
       </>
     );
@@ -337,31 +339,36 @@ export default function AdminLeadDetails() {
         )}
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center">
-            <button
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <ModernButton
               onClick={handleGoBack}
-              className="p-2 mr-2 rounded-full hover:bg-gray-200 transition-colors"
+              variant="outline"
+              size="sm"
             >
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
-            </button>
-            <h1 className="text-2xl font-bold text-[#1E1E1E]">
-              {first_name} {last_name || dataState.leadNameFromUrl || "N/A"}
-            </h1>
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </ModernButton>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {first_name} {last_name || dataState.leadNameFromUrl || "N/A"}
+              </h1>
+              <p className="text-sm text-gray-600 mt-1">Lead Details</p>
+            </div>
           </div>
 
           {/* Actions Dropdown */}
           <div className="relative" ref={dropdownRef}>
-            <button
+            <ModernButton
               onClick={() =>
                 updateUiState({
                   isActionsDropdownOpen: !uiState.isActionsDropdownOpen,
                 })
               }
-              className="flex items-center px-4 py-2 bg-[#288DD1] text-white font-medium rounded-lg hover:bg-[#1976D2] transition-colors"
+              variant="primary"
             >
               Actions <ChevronDown className="w-4 h-4 ml-2" />
-            </button>
+            </ModernButton>
             {uiState.isActionsDropdownOpen && (
               <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
                 <div className="py-1">
@@ -407,41 +414,102 @@ export default function AdminLeadDetails() {
         </div>
 
         {/* Lead Overview */}
-        <div className="bg-white rounded-[12px] p-3 md:p-6 shadow-sm mb-8">
-          <h2 className="text-xl font-semibold text-[#575758] mb-4">
-            Lead Overview
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-            <DetailItem
-              label="Full Name"
-              value={`${first_name} ${last_name}`}
-            />
-            <DetailItem label="Email" value={email} />
-            <DetailItem label="Phone" value={phone} />
-            <DetailItem label="Source" value={source} />
-            <DetailItem label="Country" value={country} />
-            <DetailItem label="Lead Type" value={lead_type} />
-            <DetailItem label="Created At" value={formatDate(created_at)} />
-            <DetailItem
-              label="Last Contacted At"
-              value={formatDate(last_contacted_at)}
-            />
-            <DetailItem
-              label="Follow Up Date"
-              value={
-                follow_up_date
-                  ? new Date(follow_up_date).toLocaleDateString()
-                  : "N/A"
-              }
-            />
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-600">Status:</span>
-              <div className="mt-1">
-                <StatusBadge status={status} />
+        <ModernCard title="Lead Overview" className="mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Contact Information */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">Contact Information</h3>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <User className="w-4 h-4 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-500">Full Name</p>
+                    <p className="font-medium">{first_name} {last_name}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Mail className="w-4 h-4 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-500">Email</p>
+                    <p className="font-medium">{email || "N/A"}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Phone className="w-4 h-4 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-500">Phone</p>
+                    <p className="font-medium">{phone || "N/A"}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <MapPin className="w-4 h-4 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-500">Country</p>
+                    <p className="font-medium capitalize">{country || "N/A"}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Lead Information */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">Lead Information</h3>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Building className="w-4 h-4 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-500">Lead Type</p>
+                    <p className="font-medium capitalize">{lead_type || "N/A"}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <ExternalLink className="w-4 h-4 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-500">Source</p>
+                    <p className="font-medium capitalize">{source || "N/A"}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-4 h-4" />
+                  <div>
+                    <p className="text-sm text-gray-500">Status</p>
+                    <StatusBadge status={status} />
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Timeline Information */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">Timeline</h3>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-4 h-4 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-500">Created At</p>
+                    <p className="font-medium">{formatDate(created_at)}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-4 h-4 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-500">Last Contacted</p>
+                    <p className="font-medium">{formatDate(last_contacted_at)}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-4 h-4 text-gray-400" />
+                  <div>
+                    <p className="text-sm text-gray-500">Follow Up Date</p>
+                    <p className="font-medium">
+                      {follow_up_date ? new Date(follow_up_date).toLocaleDateString() : "N/A"}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </ModernCard>
 
         {/* Assigned Admin & Pricing */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">

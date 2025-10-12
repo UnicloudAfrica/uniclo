@@ -266,12 +266,3 @@ export default function AdminLeads() {
     </>
   );
 }
-        </div>
-      </main>
-      <CreateLead
-        isOpen={isCreateLeadsModalVisible}
-        onClose={closeCreateLead}
-      />
-    </>
-  );
-}

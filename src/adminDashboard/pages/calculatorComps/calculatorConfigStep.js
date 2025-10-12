@@ -4,6 +4,7 @@ import {
   useFetchProductPricing 
 } from "../../../hooks/resource";
 import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
+import { useFormattedRegions } from "../../../utils/regionUtils";
 import { useFetchTenants } from "../../../hooks/adminHooks/tenantHooks";
 
 const CalculatorConfigStep = ({
@@ -31,7 +32,8 @@ const CalculatorConfigStep = ({
   const [itemErrors, setItemErrors] = useState({});
 
   // Hooks
-  const { data: regions, isFetching: isRegionsFetching } = useFetchRegions();
+  const { data: rawRegions, isFetching: isRegionsFetching } = useFetchRegions();
+  const regions = useFormattedRegions(rawRegions);
   const { data: tenants, isFetching: isTenantsFetching } = useFetchTenants();
 
   const { data: computerInstances, isFetching: isComputerInstancesFetching } =
@@ -253,7 +255,7 @@ const CalculatorConfigStep = ({
                 <option value="">Select Region</option>
                 {regions?.map((region) => (
                   <option key={region.code} value={region.code}>
-                    {region.name}
+                    {region.displayName || region.name}
                   </option>
                 ))}
               </select>

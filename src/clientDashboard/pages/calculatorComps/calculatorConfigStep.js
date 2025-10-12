@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { Plus, Trash2, Loader2 } from "lucide-react";
-import { useFetchGeneralRegions } from "../../../hooks/resource";
-import { useFetchProductPricing } from "../../../hooks/clientHooks/resources";
-
+import { 
+  useFetchProductPricing,
+  useFetchGeneralRegions 
+} from "../../../hooks/resource";
+import { formatRegionName } from "../../../utils/regionUtils";
 const CalculatorConfigStep = ({
   calculatorData,
   errors,
@@ -191,7 +193,7 @@ const CalculatorConfigStep = ({
                 <option value="">Select Region</option>
                 {regions?.map((region) => (
                   <option key={region.region} value={region.region}>
-                    {region.label}
+                    {formatRegionName(region.label)}
                   </option>
                 ))}
               </select>

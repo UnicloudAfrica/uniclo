@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useSharedMultiQuotes } from "../../../hooks/sharedCalculatorHooks";
+import { formatRegionName } from "../../../utils/regionUtils";
 
 const CalculatorSummaryStep = ({
   calculatorData,
@@ -238,7 +239,7 @@ const CalculatorSummaryStep = ({
                     <div>{line.name}</div>
                     {line.region && (
                       <div className="text-xs text-gray-500">
-                        Region: {line.region}
+                        Region: {formatRegionName(line.region)}
                       </div>
                     )}
                   </td>

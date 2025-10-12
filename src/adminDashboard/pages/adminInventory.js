@@ -2,18 +2,19 @@ import React, { useState, useEffect } from "react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
+import ModernCard from "../components/ModernCard";
+import ModernStatsCard from "../components/ModernStatsCard";
 import ProductSideMenu from "./inventoryComponents/productssidemenu";
 import BandWidth from "./inventoryComponents/bandwidth";
 import OSImages from "./inventoryComponents/osImages";
 import EBSImages from "./inventoryComponents/ebsImages";
 import Vms from "./inventoryComponents/vms";
-// import ColocationSetting from "./productsComponents/colocation";
 import FloatingIP from "./inventoryComponents/floatingIP";
 import CrossConnect from "./inventoryComponents/crossConnect";
-import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
-import { ChevronDown } from "lucide-react";
 import ColocationSetting from "./inventoryComponents/colocation";
-// import ColocationSetting from "./productsComponents/colocation";
+import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
+import { ChevronDown, Server, HardDrive, Globe, Cpu, Database, Wifi } from "lucide-react";
+import { designTokens } from "../../styles/designTokens";
 
 export default function AdminInventory() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -33,22 +34,66 @@ export default function AdminInventory() {
   }, [isRegionsFetching, regions, selectedRegion]);
 
   const productComponents = [
-    { id: "bandwidth", name: "Bandwidth Management", Component: BandWidth },
-    { id: "os-image", name: "OS Images Management", Component: OSImages },
-    { id: "ebs-volumes", name: "EBS Volumes Management", Component: EBSImages },
-    { id: "vms", name: "VMs Management", Component: Vms },
+    { 
+      id: "bandwidth", 
+      name: "Bandwidth Management", 
+      Component: BandWidth,
+      icon: Wifi,
+      description: "Manage network bandwidth allocations"
+    },
+    { 
+      id: "os-image", 
+      name: "OS Images Management", 
+      Component: OSImages,
+      icon: HardDrive,
+      description: "Manage operating system images"
+    },
+    { 
+      id: "ebs-volumes", 
+      name: "EBS Volumes Management", 
+      Component: EBSImages,
+      icon: Database,
+      description: "Manage elastic block storage volumes"
+    },
+    { 
+      id: "vms", 
+      name: "VMs Management", 
+      Component: Vms,
+      icon: Server,
+      description: "Manage virtual machine instances"
+    },
     {
       id: "colocation",
       name: "Colocation Management",
       Component: ColocationSetting,
+      icon: Cpu,
+      description: "Manage colocation services"
     },
-    { id: "ips", name: "Floating IP Management", Component: FloatingIP },
+    { 
+      id: "ips", 
+      name: "Floating IP Management", 
+      Component: FloatingIP,
+      icon: Globe,
+      description: "Manage floating IP addresses"
+    },
     {
       id: "cross-connect",
       name: "Cross Connect Management",
       Component: CrossConnect,
+      icon: Globe,
+      description: "Manage network cross connections"
     },
   ];
+
+  // Mock inventory statistics (in a real app, these would come from APIs)
+  const inventoryStats = {
+    totalVMs: 142,
+    activeIPs: 89,
+    storageVolumes: 67,
+    totalBandwidth: "2.5TB",
+    osImages: 24,
+    crossConnections: 15
+  };
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -78,52 +123,164 @@ export default function AdminInventory() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
-        <div className="flex justify-end mb-4">
-          <div className="relative w-full max-w-[200px]">
-            <select
-              value={selectedRegion}
-              onChange={(e) => handleRegionChange(e.target.value)}
-              className="appearance-none w-full bg-white border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded-md focus:outline-none focus:ring-2 focus:ring-[#288DD1] focus:border-[#288DD1] text-sm"
-              disabled={isRegionsFetching}
-            >
-              {isRegionsFetching ? (
-                <option value="" disabled>
-                  Loading regions...
-                </option>
-              ) : (
-                regions?.map((region) => (
-                  <option key={region.code} value={region.code}>
-                    {region.name}
-                  </option>
-                ))
-              )}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+      <main 
+        className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8"
+        style={{ backgroundColor: designTokens.colors.neutral[25] }}
+      >
+        <div className="space-y-6">
+          {/* Page Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 
+                className="text-2xl font-bold"
+                style={{ color: designTokens.colors.neutral[900] }}
+              >
+                Inventory Management
+              </h1>
+              <p 
+                className="mt-1 text-sm"
+                style={{ color: designTokens.colors.neutral[600] }}
+              >
+                Monitor and manage infrastructure resources across regions
+              </p>
+            </div>
+            
+            {/* Region Selector */}
+            <div className="relative w-full max-w-[200px]">
+              <label 
+                className="block text-sm font-medium mb-2"
+                style={{ color: designTokens.colors.neutral[700] }}
+              >
+                Select Region
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedRegion}
+                  onChange={(e) => handleRegionChange(e.target.value)}
+                  className="appearance-none w-full px-4 py-2 pr-8 rounded-lg border"
+                  style={{
+                    backgroundColor: designTokens.colors.neutral[0],
+                    borderColor: designTokens.colors.neutral[300],
+                    color: designTokens.colors.neutral[900]
+                  }}
+                  disabled={isRegionsFetching}
+                >
+                  {isRegionsFetching ? (
+                    <option value="" disabled>
+                      Loading regions...
+                    </option>
+                  ) : (
+                    regions?.map((region) => (
+                      <option key={region.code} value={region.code}>
+                        {region.name}
+                      </option>
+                    ))
+                  )}
+                </select>
+                <ChevronDown 
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4"
+                  style={{ color: designTokens.colors.neutral[400] }}
+                />
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="flex flex-col lg:flex-row w-full">
-          <ProductSideMenu
-            activeTab={activeProductTab}
-            onTabChange={handleProductTabChange}
-          />
-          <div className="flex-1 bg-white rounded-lg shadow-sm p-4 lg:p-6 lg:w-[76%]">
-            {ActiveComponent && !isRegionsFetching ? (
-              <div>
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                  {ActiveComponent.name}
-                </h2>
-                <ActiveComponent.Component selectedRegion={selectedRegion} />
-              </div>
-            ) : (
-              <div className="text-center text-gray-500 py-10">
-                <p>
-                  {isRegionsFetching
-                    ? "Loading regions..."
-                    : "Select a product category from the menu."}
-                </p>
-              </div>
-            )}
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <ModernStatsCard
+              title="Virtual Machines"
+              value={inventoryStats.totalVMs}
+              icon={<Server size={24} />}
+              change={12}
+              trend="up"
+              color="primary"
+              description="Active instances"
+            />
+            <ModernStatsCard
+              title="Floating IPs"
+              value={inventoryStats.activeIPs}
+              icon={<Globe size={24} />}
+              change={3}
+              trend="up"
+              color="success"
+              description="Available IPs"
+            />
+            <ModernStatsCard
+              title="Storage Volumes"
+              value={inventoryStats.storageVolumes}
+              icon={<Database size={24} />}
+              change={-2}
+              trend="down"
+              color="warning"
+              description="EBS volumes"
+            />
+            <ModernStatsCard
+              title="Total Bandwidth"
+              value={inventoryStats.totalBandwidth}
+              icon={<Wifi size={24} />}
+              color="info"
+              description="Monthly allocation"
+            />
+          </div>
+
+          {/* Inventory Management Interface */}
+          <div className="flex flex-col lg:flex-row w-full gap-6">
+            <ProductSideMenu
+              activeTab={activeProductTab}
+              onTabChange={handleProductTabChange}
+            />
+            <ModernCard className="flex-1 lg:w-[76%]">
+              {ActiveComponent && !isRegionsFetching ? (
+                <div>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div 
+                      className="p-2 rounded-lg"
+                      style={{
+                        backgroundColor: designTokens.colors.primary[50],
+                        color: designTokens.colors.primary[600]
+                      }}
+                    >
+                      <ActiveComponent.icon size={20} />
+                    </div>
+                    <div>
+                      <h2 
+                        className="text-xl font-semibold"
+                        style={{ color: designTokens.colors.neutral[900] }}
+                      >
+                        {ActiveComponent.name}
+                      </h2>
+                      <p 
+                        className="text-sm"
+                        style={{ color: designTokens.colors.neutral[600] }}
+                      >
+                        {ActiveComponent.description}
+                      </p>
+                    </div>
+                  </div>
+                  <ActiveComponent.Component selectedRegion={selectedRegion} />
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <div className="mb-4">
+                    <Server 
+                      size={48} 
+                      style={{ 
+                        color: designTokens.colors.neutral[400],
+                        margin: '0 auto'
+                      }} 
+                    />
+                  </div>
+                  <p 
+                    className="text-lg font-medium"
+                    style={{ color: designTokens.colors.neutral[500] }}
+                  >
+                    {isRegionsFetching
+                      ? "Loading regions..."
+                      : "Select an inventory category from the menu."}
+                  </p>
+                </div>
+              )}
+            </ModernCard>
           </div>
         </div>
       </main>

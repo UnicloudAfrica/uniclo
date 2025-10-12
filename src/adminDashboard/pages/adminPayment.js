@@ -1,9 +1,14 @@
 import React, { useState } from "react";
-import { Settings2, ChevronLeft, ChevronRight, Download } from "lucide-react";
+import { Download, CreditCard, Calendar, DollarSign, TrendingUp, FileText, Shield } from "lucide-react";
 import jsPDF from "jspdf";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
+import ModernTable from "../components/ModernTable";
+import ModernCard from "../components/ModernCard";
+import ModernStatsCard from "../components/ModernStatsCard";
+import ModernButton from "../components/ModernButton";
+import { designTokens } from "../../styles/designTokens";
 
 export default function AdminPayment() {
   // State to control mobile menu visibility
@@ -19,128 +24,175 @@ export default function AdminPayment() {
     setIsMobileMenuOpen(false);
   };
 
-  // Empty data array to show "No data found"
-  const data = [];
-  /*
-  // Original data for reference if needed later
+  // Sample payment data
   const data = [
     {
       id: 1,
-      date: "May 13, 2025",
+      date: "Dec 12, 2024",
       module: "Z2 Compute Instances",
       plan: "Business Tier",
-      amount: "₦38M",
+      amount: "₦180,000.00",
       paymentMethod: "Paystack (Visa)",
-      status: "Active",
-      receiptId: "RCP-001-2025",
+      status: "Completed",
+      receiptId: "RCP-001-2024",
     },
     {
       id: 2,
-      date: "May 13, 2025",
+      date: "Dec 11, 2024",
       module: "Z4 Compute Instances",
       plan: "100GB Tier",
-      amount: "₦100,000.00",
+      amount: "₦250,000.00",
       paymentMethod: "Stripe (Mastercard)",
-      status: "Inactive",
-      receiptId: "RCP-002-2025",
+      status: "Completed",
+      receiptId: "RCP-002-2024",
     },
     {
       id: 3,
-      date: "May 13, 2025",
+      date: "Dec 10, 2024",
       module: "Z8 Compute Instances",
-      plan: "Business Tier",
-      amount: "₦100,000.00",
+      plan: "Premium Tier",
+      amount: "₦420,000.00",
       paymentMethod: "Flutterwave (Verve)",
-      status: "Inactive",
-      receiptId: "RCP-003-2025",
+      status: "Processing",
+      receiptId: "RCP-003-2024",
     },
     {
       id: 4,
-      date: "May 13, 2025",
+      date: "Dec 09, 2024",
       module: "Shared Storage",
       plan: "Business Tier",
-      amount: "₦100,000.00",
-      paymentMethod: "Stripe",
-      status: "Inactive",
-      receiptId: "RCP-004-2025",
+      amount: "₦85,000.00",
+      paymentMethod: "Paystack (Visa)",
+      status: "Failed",
+      receiptId: "RCP-004-2024",
     },
     {
       id: 5,
-      date: "May 13, 2025",
-      module: "Z4 Compute Instances",
-      plan: "100GB Tier",
-      amount: "₦100,000.00",
-      paymentMethod: "Flutterwave (Verve)",
-      status: "Inactive",
-      receiptId: "RCP-005-2025",
-    },
-    {
-      id: 6,
-      date: "May 13, 2025",
-      module: "Z4 Compute Instances",
-      plan: "Business Tier",
-      amount: "₦100,000.00",
-      paymentMethod: "Flutterwave (Verve)",
-      status: "Inactive",
-      receiptId: "RCP-006-2025",
-    },
-    {
-      id: 7,
-      date: "May 13, 2025",
-      module: "Z4 Compute Instances",
-      plan: "Business Tier",
-      amount: "₦38M",
-      paymentMethod: "Flutterwave (Verve)",
-      status: "Inactive",
-      receiptId: "RCP-007-2025",
-    },
-    {
-      id: 8,
-      date: "May 13, 2025",
-      module: "Z4 Compute Instances",
-      plan: "100GB Tier",
-      amount: "₦38M",
-      paymentMethod: "Paystack (Visa)",
-      status: "Inactive",
-      receiptId: "RCP-008-2025",
-    },
-    {
-      id: 9,
-      date: "May 13, 2025",
-      module: "Z4 Compute Instances",
-      plan: "Business Tier",
-      amount: "₦38M",
-      paymentMethod: "Paystack (Visa)",
-      status: "Inactive",
-      receiptId: "RCP-009-2025",
-    },
-    {
-      id: 10,
-      date: "May 13, 2025",
-      module: "Z4 Compute Instances",
-      plan: "Business Tier",
-      amount: "₦38M",
-      paymentMethod: "Paystack (Visa)",
-      status: "Inactive",
-      receiptId: "RCP-010-2025",
-    },
-  ];
-  */
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-  const totalPages = Math.ceil(data.length / itemsPerPage);
-
-  const currentData = data.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const handlePageChange = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
+      date: "Dec 08, 2024",
+      module: "Database Services",
+      plan: "Professional",
+      amount: "₦320,000.00",
+      paymentMethod: "Stripe (Visa)",
+      status: "Completed",
+      receiptId: "RCP-005-2024",
     }
-  };
+  ];
+
+  // Calculate payment statistics
+  const totalRevenue = data.reduce((sum, payment) => {
+    const amount = parseFloat(payment.amount.replace(/[₦,]/g, ''));
+    return sum + (payment.status === 'Completed' ? amount : 0);
+  }, 0);
+
+  const completedPayments = data.filter(p => p.status === 'Completed').length;
+  const processingPayments = data.filter(p => p.status === 'Processing').length;
+  const failedPayments = data.filter(p => p.status === 'Failed').length;
+
+  // Define columns for ModernTable
+  const columns = [
+    {
+      key: 'date',
+      header: 'Date',
+      render: (value) => (
+        <div className="flex items-center gap-2">
+          <Calendar size={16} style={{ color: designTokens.colors.neutral[500] }} />
+          <span>{value}</span>
+        </div>
+      )
+    },
+    {
+      key: 'module',
+      header: 'Service',
+      render: (value) => (
+        <div className="flex items-center gap-2">
+          <Shield size={16} style={{ color: designTokens.colors.primary[500] }} />
+          <span className="font-medium">{value}</span>
+        </div>
+      )
+    },
+    {
+      key: 'plan',
+      header: 'Plan'
+    },
+    {
+      key: 'amount',
+      header: 'Amount',
+      render: (value) => (
+        <div className="flex items-center gap-2">
+          <DollarSign size={16} style={{ color: designTokens.colors.success[500] }} />
+          <span className="font-semibold" style={{ color: designTokens.colors.success[700] }}>
+            {value}
+          </span>
+        </div>
+      )
+    },
+    {
+      key: 'paymentMethod',
+      header: 'Payment Method',
+      render: (value) => (
+        <div className="flex items-center gap-2">
+          <CreditCard size={16} style={{ color: designTokens.colors.neutral[500] }} />
+          <span>{value}</span>
+        </div>
+      )
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (value) => {
+        const statusConfig = {
+          'Completed': {
+            bg: designTokens.colors.success[50],
+            text: designTokens.colors.success[700],
+            border: designTokens.colors.success[200]
+          },
+          'Processing': {
+            bg: designTokens.colors.warning[50],
+            text: designTokens.colors.warning[700],
+            border: designTokens.colors.warning[200]
+          },
+          'Failed': {
+            bg: designTokens.colors.error[50],
+            text: designTokens.colors.error[700],
+            border: designTokens.colors.error[200]
+          }
+        };
+        const config = statusConfig[value] || statusConfig['Processing'];
+        
+        return (
+          <span 
+            className="px-3 py-1 rounded-full text-xs font-medium"
+            style={{
+              backgroundColor: config.bg,
+              color: config.text,
+              border: `1px solid ${config.border}`
+            }}
+          >
+            {value}
+          </span>
+        );
+      }
+    },
+    {
+      key: 'receiptId',
+      header: 'Receipt ID',
+      render: (value) => (
+        <div className="flex items-center gap-2">
+          <FileText size={16} style={{ color: designTokens.colors.neutral[500] }} />
+          <span className="font-mono text-sm">{value}</span>
+        </div>
+      )
+    }
+  ];
+
+  // Define actions for ModernTable
+  const actions = [
+    {
+      icon: <Download size={16} />,
+      label: '',
+      onClick: (item) => downloadReceipt(item, { preventDefault: () => {} })
+    }
+  ];
 
   const generatePDFReceipt = async (item) => {
     const doc = new jsPDF();
@@ -249,21 +301,6 @@ export default function AdminPayment() {
     }
   };
 
-  const StatusBadge = ({ status }) => {
-    const isActive = status === "Active";
-    return (
-      <span
-        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-          isActive
-            ? "bg-[#00BF6B14] text-[#00BF6B]"
-            : "bg-[#EB417833] text-[#EB4178]"
-        }`}
-      >
-        {status}
-      </span>
-    );
-  };
-
   return (
     <>
       <AdminHeadbar onMenuClick={toggleMobileMenu} />
@@ -272,205 +309,81 @@ export default function AdminPayment() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main className=" absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%]  bg-[#FAFAFA]  min-h-full p-6 md:p-8">
-        <div className="flex items-center justify-between ">
-          <h2 className="text-base font-medium text-[#1C1C1C]">Payment</h2>
-          <button className="flex items-center gap-2 px-3 py-2 text-sm bg-[#F2F4F8] rounded-[8px] text-gray-600 hover:text-gray-900 transition-colors">
-            <Settings2 className="w-4 h-4 text-[#555E67]" />
-            Filter
-          </button>
-        </div>
-
-        {/* Desktop Table */}
-        <div className="hidden md:block overflow-x-auto rounded-[12px] mt-6 border border-gray-200">
-          <table className="w-full">
-            <thead className="bg-[#F5F5F5]">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  DATE
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  MODULE
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  PLAN
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  AMOUNT
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  PAYMENT METHOD
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  STATUS
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                  RECEIPT
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-[#E8E6EA]">
-              {currentData.length > 0 ? (
-                currentData.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.date}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.module}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.plan}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.amount}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.paymentMethod}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <StatusBadge status={item.status} />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={(e) => downloadReceipt(item, e)}
-                        className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                      >
-                        <Download className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan="7"
-                    className="px-6 py-4 text-center text-sm text-gray-500"
-                  >
-                    No payment data found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Mobile Cards */}
-        <div className="md:hidden mt-6">
-          {currentData.length > 0 ? (
-            currentData.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white border border-[#E8E6EA] rounded-[8px] p-4 mb-4"
+      <main 
+        className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8"
+        style={{ backgroundColor: designTokens.colors.neutral[25] }}
+      >
+        <div className="space-y-6">
+          {/* Page Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 
+                className="text-2xl font-bold"
+                style={{ color: designTokens.colors.neutral[900] }}
               >
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium text-[#1C1C1C]">
-                    {item.module}
-                  </h3>
-                  <StatusBadge status={item.status} />
-                </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="font-medium text-[#555E67]">Date:</span>
-                    <span className="text-[#575758]">{item.date}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium text-[#555E67]">Plan:</span>
-                    <span className="text-[#575758]">{item.plan}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium text-[#555E67]">Amount:</span>
-                    <span className="text-[#575758]">{item.amount}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium text-[#555E67]">
-                      Payment Method:
-                    </span>
-                    <span className="text-[#575758]">{item.paymentMethod}</span>
-                  </div>
-                  <div className="flex justify-between items-center pt-2 border-t border-[#E8E6EA]">
-                    <span className="font-medium text-[#555E67]">Receipt:</span>
-                    <button
-                      onClick={(e) => downloadReceipt(item, e)}
-                      className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                    >
-                      <Download className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="bg-white rounded-[8px] shadow-sm p-4 text-center text-gray-500">
-              No payment data found.
-            </div>
-          )}
-        </div>
-
-        {/* Pagination */}
-        {data.length > 0 && ( // Only show pagination if there's data
-          <div className="flex items-center justify-center px-4 py-3 mt-6">
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-[#333333] rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                Payment Management
+              </h1>
+              <p 
+                className="mt-1 text-sm"
+                style={{ color: designTokens.colors.neutral[600] }}
               >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-
-              <div className="flex items-center space-x-1">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNumber;
-                  if (totalPages <= 5) {
-                    pageNumber = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNumber = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNumber = totalPages - 4 + i;
-                  } else {
-                    pageNumber = currentPage - 2 + i;
-                  }
-
-                  return (
-                    <button
-                      key={pageNumber}
-                      onClick={() => handlePageChange(pageNumber)}
-                      className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                        currentPage === pageNumber
-                          ? "bg-[#288DD1] text-white"
-                          : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
-                      }`}
-                    >
-                      {pageNumber}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <span className="text-sm text-gray-700">of</span>
-
-              <button
-                onClick={() => handlePageChange(totalPages)}
-                className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                  currentPage === totalPages
-                    ? "bg-[#288DD1] text-white"
-                    : "text-gray-700 bg-white border border-[#333333] hover:bg-gray-50"
-                }`}
-              >
-                {totalPages}
-              </button>
-
-              <button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-[#333333] rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+                Monitor and manage all payment transactions
+              </p>
             </div>
           </div>
-        )}
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <ModernStatsCard
+              title="Total Revenue"
+              value={`₦${totalRevenue.toLocaleString()}`}
+              icon={<DollarSign size={24} />}
+              change={15}
+              trend="up"
+              color="success"
+              description="This month"
+            />
+            <ModernStatsCard
+              title="Completed Payments"
+              value={completedPayments}
+              icon={<CreditCard size={24} />}
+              change={8}
+              trend="up"
+              color="primary"
+              description="Successfully processed"
+            />
+            <ModernStatsCard
+              title="Processing"
+              value={processingPayments}
+              icon={<TrendingUp size={24} />}
+              color="warning"
+              description="Pending transactions"
+            />
+            <ModernStatsCard
+              title="Failed Payments"
+              value={failedPayments}
+              icon={<FileText size={24} />}
+              color="error"
+              description="Requires attention"
+            />
+          </div>
+
+          {/* Payment Transactions Table */}
+          <ModernCard>
+            <ModernTable
+              title="Payment Transactions"
+              data={data}
+              columns={columns}
+              actions={actions}
+              searchable={true}
+              filterable={true}
+              exportable={true}
+              sortable={true}
+              loading={false}
+              emptyMessage="No payment transactions found"
+            />
+          </ModernCard>
+        </div>
       </main>
     </>
   );

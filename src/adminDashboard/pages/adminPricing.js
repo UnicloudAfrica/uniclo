@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import AdminSidebar from "../components/adminSidebar";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminActiveTab from "../components/adminActiveTab";
+import ModernCard from "../components/ModernCard";
+import ModernStatsCard from "../components/ModernStatsCard";
+import ModernTable from "../components/ModernTable";
+import ModernButton from "../components/ModernButton";
 import PricingSideMenu from "../components/pricingSideMenu";
 import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
 import {
@@ -9,10 +13,11 @@ import {
   useExportProductPricingTemplate,
 } from "../../hooks/adminHooks/adminproductPricingHook";
 import { useFetchProducts } from "../../hooks/adminHooks/adminProductHooks";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { ChevronDown, Loader2, DollarSign, TrendingUp, Package, Globe, Plus, Upload, Download } from "lucide-react";
 import AddProductPricing from "./productPricingComps/addProductPricing";
 import ToastUtils from "../../utils/toastUtil";
 import UploadPricingFileModal from "./productPricingComps/uploadPricingFile";
+import { designTokens } from "../../styles/designTokens";
 
 export default function AdminPricing() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -71,6 +76,65 @@ export default function AdminPricing() {
     name:
       products?.find((p) => p.id === item.productable_id)?.name || "Unnamed",
   }));
+
+  // Calculate pricing statistics
+  const pricingStats = {
+    totalProducts: pricingWithNames?.length || 0,
+    averagePrice: pricingWithNames?.length > 0 
+      ? (pricingWithNames.reduce((sum, item) => sum + parseFloat(item.price_usd || 0), 0) / pricingWithNames.length).toFixed(2)
+      : 0,
+    highestPrice: pricingWithNames?.length > 0 
+      ? Math.max(...pricingWithNames.map(item => parseFloat(item.price_usd || 0))).toFixed(2)
+      : 0,
+    uniqueRegions: [...new Set(pricingWithNames?.map(item => item.region))].length || 0
+  };
+
+  // Define columns for ModernTable
+  const columns = [
+    {
+      key: 'product_name',
+      header: 'Product Name',
+      render: (value) => (
+        <div className="flex items-center gap-2">
+          <Package size={16} style={{ color: designTokens.colors.primary[500] }} />
+          <span className="font-medium">{value}</span>
+        </div>
+      )
+    },
+    {
+      key: 'price_usd',
+      header: 'Price (USD)',
+      render: (value) => (
+        <div className="flex items-center gap-2">
+          <DollarSign size={16} style={{ color: designTokens.colors.success[500] }} />
+          <span 
+            className="font-semibold"
+            style={{ color: designTokens.colors.success[700] }}
+          >
+            ${parseFloat(value).toFixed(2) || "N/A"}
+          </span>
+        </div>
+      )
+    },
+    {
+      key: 'region',
+      header: 'Region',
+      render: (value) => (
+        <div className="flex items-center gap-2">
+          <Globe size={16} style={{ color: designTokens.colors.neutral[500] }} />
+          <span 
+            className="px-2 py-1 rounded-full text-xs font-medium"
+            style={{
+              backgroundColor: designTokens.colors.primary[50],
+              color: designTokens.colors.primary[700]
+            }}
+          >
+            {value}
+          </span>
+        </div>
+      )
+    }
+  ];
 
   return (
     <>

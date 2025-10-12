@@ -265,26 +265,12 @@ function App() {
             element={<AdminCalculatorOptions />}
           /> */}
           <Route path="/admin-dashboard/quote" element={<AdminMultiQuote />} />
-          <Route
-            path="/admin-dashboard/advanced-calculator"
-            element={<AdminAdvancedCalculator />}
-          />
-          <Route
-            path="/admin-dashboard/instance-management"
-            element={<InstanceManagement />}
-          />
-          <Route
-            path="/admin-dashboard/instance-management/details"
-            element={<InstanceDetails />}
-          />
-          <Route
-            path="/admin-dashboard/enhanced-profile-settings"
-            element={<EnhancedProfileSettings />}
-          />
-          <Route
-            path="/admin-dashboard/multi-instance-creation"
-            element={<MultiInstanceCreation />}
-          />
+          <Route path="/admin-dashboard/advanced-calculator" element={<AdminAdvancedCalculator />} />
+          {/* Instance Management routes removed - functionality moved to standard instances */}
+          {/* <Route path="/admin-dashboard/instance-management" element={<InstanceManagement />} /> */}
+          {/* <Route path="/admin-dashboard/instance-management/details" element={<InstanceDetails />} /> */}
+          <Route path="/admin-dashboard/enhanced-profile-settings" element={<EnhancedProfileSettings />} />
+          <Route path="/admin-dashboard/multi-instance-creation" element={<MultiInstanceCreation />} />
           {/* <Route
             path="/admin-dashboard/quote-calculator"
             element={<AdminQuoteCalculator />}
@@ -341,8 +327,8 @@ function App() {
               element={<ClientSupport />}
             />
           </Route>
-        </Routes>
-      </AnimatePresence>
+        </Routes >
+      </AnimatePresence >
     </>
   );
 }

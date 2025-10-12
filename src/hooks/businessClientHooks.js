@@ -3,6 +3,7 @@ import clientApi from "../index/client/api";
 import clientSilentApi from "../index/client/silent";
 import api from "../index/api"; // Keep for public endpoints
 import silentApi from "../index/silent"; // Keep for public endpoints
+import { useSharedCalculatorOptions, useSharedMultiQuotes, useSharedCalculatorPricing } from "./sharedCalculatorHooks";
 
 /**
  * Business/Client API Hooks
@@ -15,12 +16,12 @@ import silentApi from "../index/silent"; // Keep for public endpoints
 // Public Endpoints (No Auth Required)
 // ================================
 
-// Calculator Options
-const fetchCalculatorOptions = async () => {
-  const res = await silentApi("GET", "/calculator-options");
-  if (!res.data) throw new Error("Failed to fetch calculator options");
-  return res;
-};
+// Calculator Options - Use shared hook instead
+// const fetchCalculatorOptions = async () => {
+//   const res = await silentApi("GET", "/calculator-options");
+//   if (!res.data) throw new Error("Failed to fetch calculator options");
+//   return res;
+// };
 
 // Product Pricing Catalog
 const fetchProductPricing = async () => {
@@ -29,12 +30,12 @@ const fetchProductPricing = async () => {
   return res;
 };
 
-// Multi Quotes
-const createMultiQuote = async (quoteData) => {
-  const res = await clientApi("POST", "/multi-quotes", quoteData);
-  if (!res.data) throw new Error("Failed to create multi quote");
-  return res.data;
-};
+// Multi Quotes - Use shared hook instead
+// const createMultiQuote = async (quoteData) => {
+//   const res = await clientApi("POST", "/multi-quotes", quoteData);
+//   if (!res.data) throw new Error("Failed to create multi quote");
+//   return res.data;
+// };
 
 // App Settings
 const fetchAppSettings = async () => {
@@ -145,12 +146,12 @@ const createBusinessVerification = async (verificationData) => {
   return res.data;
 };
 
-// Calculator Pricing
-const calculatePricing = async (pricingData) => {
-  const res = await clientApi("POST", "/calculator/pricing", pricingData);
-  if (!res.data) throw new Error("Failed to calculate pricing");
-  return res.data;
-};
+// Calculator Pricing - Use shared hook instead
+// const calculatePricing = async (pricingData) => {
+//   const res = await clientApi("POST", "/calculator/pricing", pricingData);
+//   if (!res.data) throw new Error("Failed to calculate pricing");
+//   return res.data;
+// };
 
 // ================================
 // Business Auth Endpoints

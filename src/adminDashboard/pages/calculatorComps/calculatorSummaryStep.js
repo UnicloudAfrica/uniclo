@@ -12,6 +12,7 @@ import {
   CheckCircle
 } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
+import { useSharedMultiQuotes } from "../../../hooks/sharedCalculatorHooks";
 
 const CalculatorSummaryStep = ({ 
   calculatorData, 
@@ -22,6 +23,9 @@ const CalculatorSummaryStep = ({
   const [showLeadOptions, setShowLeadOptions] = useState(false);
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
   const [isCreatingLead, setIsCreatingLead] = useState(false);
+  
+  // Use shared multi-quotes hook
+  const { mutate: createMultiQuote, isPending: isMultiQuotePending } = useSharedMultiQuotes();
   
   const [invoiceData, setInvoiceData] = useState({
     subject: "",
@@ -69,6 +73,15 @@ const CalculatorSummaryStep = ({
       const payload = {
         ...invoiceData,
         tenant_id: calculatorData.tenant_id || null,
+        create_lead: true, // Automatically create lead when generating invoice
+        lead_info: {
+          first_name: invoiceData.bill_to_name ? invoiceData.bill_to_name.split(' ')[0] || '' : '',
+          last_name: invoiceData.bill_to_name ? invoiceData.bill_to_name.split(' ').slice(1).join(' ') || '' : '',
+          email: invoiceData.email || '',
+          phone: null,
+          company: null,
+          country: null,
+        },
         pricing_requests: calculatorData.pricing_requests.map((req) => {
           const { _display, ...rest } = req;
           return rest;
@@ -84,34 +97,23 @@ const CalculatorSummaryStep = ({
         };
       }
 
-      const response = await fetch('/api/v1/multi-quotes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('admin_token') || localStorage.getItem('token')}`,
+      createMultiQuote(payload, {
+        onSuccess: (data) => {
+          ToastUtils.success("Invoice generated successfully!");
+          
+          // Handle PDF download if available
+          if (data.invoices && data.invoices[0] && data.invoices[0].pdf) {
+            downloadPdf(data.invoices[0].pdf, data.invoices[0].filename || 'invoice.pdf');
+          }
+          setIsGeneratingInvoice(false);
         },
-        body: JSON.stringify(payload),
+        onError: (error) => {
+          console.error('Invoice generation error:', error);
+          ToastUtils.error(error.message || "Failed to generate invoice. Please try again.");
+          setIsGeneratingInvoice(false);
+        }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || data.error || 'Failed to generate invoice');
-      }
-
-      ToastUtils.success("Invoice generated successfully!");
-      
-      // Handle PDF download if available
-      if (data.invoices && data.invoices[0] && data.invoices[0].pdf) {
-        downloadPdf(data.invoices[0].pdf, data.invoices[0].filename || 'invoice.pdf');
-      }
-
-    } catch (error) {
-      console.error('Invoice generation error:', error);
-      ToastUtils.error(error.message || "Failed to generate invoice. Please try again.");
-    } finally {
-      setIsGeneratingInvoice(false);
-    }
   };
 
   const createLead = async () => {
@@ -159,29 +161,18 @@ const CalculatorSummaryStep = ({
         };
       }
 
-      const response = await fetch('/api/v1/multi-quotes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('admin_token') || localStorage.getItem('token')}`,
+      createMultiQuote(payload, {
+        onSuccess: (data) => {
+          ToastUtils.success("Lead created successfully!");
+          setIsCreatingLead(false);
         },
-        body: JSON.stringify(payload),
+        onError: (error) => {
+          console.error('Lead creation error:', error);
+          ToastUtils.error(error.message || "Failed to create lead. Please try again.");
+          setIsCreatingLead(false);
+        }
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || data.error || 'Failed to create lead');
-      }
-
-      ToastUtils.success("Lead created successfully!");
-
-    } catch (error) {
-      console.error('Lead creation error:', error);
-      ToastUtils.error(error.message || "Failed to create lead. Please try again.");
-    } finally {
-      setIsCreatingLead(false);
-    }
   };
 
   const downloadPdf = (base64String, filename) => {

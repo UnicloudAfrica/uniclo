@@ -481,9 +481,6 @@ const CreateLead = ({ isOpen, onClose }) => {
           </form>
         </div>
 
-          </form>
-        </div>
-
         <div className="flex items-center justify-end px-6 py-4 border-t bg-gray-50 rounded-b-[24px]">
           <div className="flex gap-3">
             <ModernButton

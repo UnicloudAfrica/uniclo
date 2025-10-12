@@ -909,9 +909,9 @@ export default function MultiInstanceCreation() {
       if (data.success) {
         ToastUtils.success(data.message);
         
-        // Redirect to instances management or show success page
+        // Redirect to projects page since instance-management was removed
         setTimeout(() => {
-window.location.href = '/admin-dashboard/instance-management';
+          window.location.href = '/admin-dashboard/projects';
         }, 2000);
       } else {
         if (data.errors) {
@@ -1165,7 +1165,7 @@ window.location.href = '/admin-dashboard/instance-management';
 
             <div className="flex items-center space-x-3">
               <button
-onClick={() => window.location.href = '/admin-dashboard/instance-management'}
+                onClick={() => window.location.href = '/admin-dashboard/projects'}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800"
               >
                 Cancel

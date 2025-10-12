@@ -40,28 +40,15 @@ const EmbeddedConsole = ({
   const iframeRef = useRef(null);
   const headerRef = useRef(null);
 
-  // Fetch console URL
+  // Fetch console URL - Disabled as instance-management endpoints were removed
   const fetchConsoleUrl = async (type = 'novnc') => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const { token } = useAdminAuthStore.getState();
-      const response = await fetch(`${config.baseURL}/business/instance-management/${instanceId}/console?type=${encodeURIComponent(type)}`, {
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : '',
-          'Accept': 'application/json',
-        },
-      });
-      
-      const data = await response.json();
-      
-      if (response.ok && data.success) {
-        setConsoleUrl(data.data.url);
-        setConnectionStatus('connected');
-      } else {
-        throw new Error(data.error || data.message || 'Failed to get console URL');
-      }
+      // Console access has been temporarily disabled due to removal of instance-management endpoints
+      setError('Console access is currently unavailable. This feature will be restored in the updated instance management interface.');
+      setConnectionStatus('error');
     } catch (err) {
       setError(err.message);
       setConnectionStatus('error');

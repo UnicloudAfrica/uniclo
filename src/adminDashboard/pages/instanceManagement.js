@@ -462,92 +462,27 @@ export default function InstanceManagement() {
     }
   };
 
-  // Execute instance action
+  // Execute instance action - REMOVED: Instance management endpoints no longer available
   const executeInstanceAction = async (instanceId, action) => {
-    setActionLoading(prev => ({
-      ...prev,
-      [instanceId]: { ...prev[instanceId], [action]: true }
-    }));
-
-    try {
-      const { token } = useAdminAuthStore.getState();
-      const response = await fetch(`${config.baseURL}/business/instance-management/${instanceId}/actions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({ action, confirmed: true }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        ToastUtils.success(data.message || `${action} initiated successfully`);
-        setTimeout(() => fetchInstances(false), 2000);
-      } else {
-        throw new Error(data.error || `Failed to execute ${action}`);
-      }
-    } catch (err) {
-      ToastUtils.error(err.message);
-    } finally {
-      setActionLoading(prev => ({
-        ...prev,
-        [instanceId]: { ...prev[instanceId], [action]: false }
-      }));
-    }
+    ToastUtils.warning(`Instance actions (${action}) have been removed. Please use the instance details page for basic operations.`);
   };
 
-  // Handle bulk actions
+  // Handle bulk actions - REMOVED: Bulk action endpoints no longer available
   const executeBulkAction = async (action) => {
     if (selectedInstances.size === 0) {
       ToastUtils.warning('Please select instances first');
       return;
     }
 
-    const instanceIds = Array.from(selectedInstances);
-    const confirmed = window.confirm(
-      `Are you sure you want to ${action} ${instanceIds.length} instance(s)?`
-    );
-
-    if (!confirmed) return;
-
-    try {
-      const { token } = useAdminAuthStore.getState();
-      const response = await fetch(`${config.baseURL}/business/instance-management/bulk-actions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({
-          action,
-          instance_ids: instanceIds,
-          confirmed: true
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        ToastUtils.success(data.message || `Bulk ${action} initiated successfully`);
-        setSelectedInstances(new Set());
-        setTimeout(() => fetchInstances(false), 2000);
-      } else {
-        throw new Error(data.error || `Failed to execute bulk ${action}`);
-      }
-    } catch (err) {
-      ToastUtils.error(err.message);
-    }
+    ToastUtils.warning(`Bulk actions (${action}) have been removed. Please manage instances individually.`);
+    setSelectedInstances(new Set()); // Clear selection
   };
 
   // Navigate to instance details
   const navigateToInstanceDetails = (instanceId) => {
     const identifier = instanceId; // instanceId variable here holds the id passed; prefer using instance.identifier below.
-    // Navigate by identifier for details
-    window.location.href = `/admin-dashboard/instance-management/details?identifier=${encodeURIComponent(instanceId)}`;
+    // Navigate to standard instance details page
+    window.location.href = `/admin-dashboard/instances/details?identifier=${encodeURIComponent(instanceId)}`;
   };
 
   // Handle console access

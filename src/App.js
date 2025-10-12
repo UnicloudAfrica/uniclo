@@ -93,8 +93,9 @@ import ClientInstances from "./clientDashboard/pages/clientInstances";
 import ClientAddInstancePage from "./clientDashboard/pages/clientAddInstances";
 import AdminMultiQuote from "./adminDashboard/pages/adminMultiQuote";
 import AdminAdvancedCalculator from "./adminDashboard/pages/adminAdvancedCalculator";
-import InstanceManagement from "./adminDashboard/pages/instanceManagement";
-import InstanceDetails from "./adminDashboard/pages/instanceDetails";
+// Instance Management routes removed - functionality moved to standard instances
+// import InstanceManagement from "./adminDashboard/pages/instanceManagement";
+// import InstanceDetails from "./adminDashboard/pages/instanceDetails";
 import EnhancedProfileSettings from "./adminDashboard/pages/enhancedProfileSettings";
 import MultiInstanceCreation from "./adminDashboard/pages/multiInstanceCreation";
 import ClientCalculator from "./clientDashboard/pages/clientCalculator";

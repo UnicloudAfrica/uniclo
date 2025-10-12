@@ -257,29 +257,34 @@ const fetchInstanceDetails = async (id, identifier) => {
     
     try {
       const { token } = useAdminAuthStore.getState();
-      const response = await fetch(`${config.baseURL}/business/instance-management/${instanceId}/actions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({ action, params, confirmed: true }),
-      });
+      // Note: Instance actions endpoint has been removed
+      // Basic instance operations should be handled through standard CRUD endpoints
+      ToastUtils.warning(`${action} action is no longer available - instance actions have been moved to standard instance management`);
       
-      const data = await response.json();
-      
-      if (data.success) {
-        ToastUtils.success(data.message || `${action} initiated successfully`);
-        // Refresh instance details after action
-        setTimeout(() => fetchInstanceDetails(instanceId), 2000);
-      } else if (data.requires_confirmation) {
-        const confirmed = window.confirm(data.confirmation_message);
+      // For basic operations, redirect to appropriate endpoint
+      if (action === 'destroy') {
+        const confirmed = window.confirm('Are you sure you want to delete this instance? This action cannot be undone.');
         if (confirmed) {
-          executeAction(action, { ...params, confirmed: true });
+          const response = await fetch(`${config.baseURL}/business/instances/${instanceId}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/json',
+            },
+          });
+          
+          const data = await response.json();
+          
+          if (data.success || response.ok) {
+            ToastUtils.success('Instance deleted successfully');
+            window.location.href = '/admin-dashboard/instances';
+          } else {
+            throw new Error(data.error || 'Failed to delete instance');
+          }
         }
       } else {
-        throw new Error(data.error || `Failed to execute ${action}`);
+        // For other actions, show informational message
+        ToastUtils.info(`${action} functionality will be available in the updated instance management interface`);
       }
     } catch (err) {
       ToastUtils.error(err.message);
@@ -293,15 +298,7 @@ const fetchInstanceDetails = async (id, identifier) => {
     if (!instanceId) return;
     
     try {
-      const { token } = useAdminAuthStore.getState();
-      await fetch(`${config.baseURL}/business/instance-management/${instanceId}/refresh`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-        },
-      });
-      
+      // Simply refetch the instance details since status refresh endpoint was removed
       fetchInstanceDetails(instanceId);
       ToastUtils.success('Status refreshed');
     } catch (err) {
@@ -358,7 +355,7 @@ const fetchInstanceDetails = async (id, identifier) => {
             {error || "Instance couldn't be found"}
           </p>
           <button
-            onClick={() => window.location.href = "/admin-dashboard/instance-management"}
+            onClick={() => window.location.href = "/admin-dashboard/instances"}
             className="px-6 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors"
           >
             Go back to instances

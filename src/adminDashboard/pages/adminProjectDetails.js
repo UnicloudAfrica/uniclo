@@ -104,9 +104,12 @@ export default function AdminProjectDetails() {
   const handleRowClick = (item) => {
     const encodedId = encodeURIComponent(btoa(item.identifier));
     const instanceName = item.name;
-navigate(
-      `/admin-dashboard/instance-management/details?identifier=${encodeURIComponent(item.identifier)}&name=${encodeURIComponent(instanceName)}`
-    );
+    // Note: Instance management details have been moved to standard instances
+    // For now, show a message instead of navigating to removed route
+    alert('Instance details functionality will be available in the updated instances interface');
+    // navigate(
+    //   `/admin-dashboard/instances/details?identifier=${encodeURIComponent(item.identifier)}&name=${encodeURIComponent(instanceName)}`
+    // );
   };
 
   const canDeleteProject = instances.length === 0;

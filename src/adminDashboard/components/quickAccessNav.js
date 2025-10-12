@@ -18,10 +18,10 @@ const QuickAccessNav = () => {
 
   const quickLinks = [
     {
-      title: "Instance Management",
-      description: "Manage and monitor your cloud instances",
+      title: "Projects",
+      description: "Manage projects and infrastructure",
       icon: Server,
-      path: "/admin-dashboard/instance-management",
+      path: "/admin-dashboard/projects",
       color: "bg-blue-50 text-blue-600",
       bgColor: "hover:bg-blue-100"
     },
@@ -42,10 +42,10 @@ const QuickAccessNav = () => {
       bgColor: "hover:bg-purple-100"
     },
     {
-      title: "Instance Console",
-      description: "Access instance consoles directly",
+      title: "Advanced Calculator",
+      description: "Calculate pricing and generate quotes",
       icon: Terminal,
-      path: "/admin-dashboard/instance-management",
+      path: "/admin-dashboard/advanced-calculator",
       color: "bg-green-50 text-green-600",
       bgColor: "hover:bg-green-100"
     }
@@ -100,7 +100,7 @@ const QuickAccessNav = () => {
             </div>
           </div>
           <button
-            onClick={() => navigate("/admin-dashboard/instance-management")}
+            onClick={() => navigate("/admin-dashboard/projects")}
             className="text-blue-600 hover:text-blue-800 font-medium"
           >
             Get Started →

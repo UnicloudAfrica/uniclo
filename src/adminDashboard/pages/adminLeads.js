@@ -7,10 +7,22 @@ import {
   Loader2,
   ArrowUpRight,
   ArrowDownRight,
+  Users,
+  UserPlus,
+  Phone,
+  Mail,
+  Target,
+  TrendingUp,
+  Calendar,
+  Filter,
+  Search
 } from "lucide-react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
+import ModernStatsCard from "../components/ModernStatsCard";
+import ModernTable from "../components/ModernTable";
+import ModernButton from "../components/ModernButton";
 import {
   useFetchLeads,
   useFetchLeadStats,
@@ -116,32 +128,53 @@ export default function AdminLeads() {
               <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <div className="flex-1 p-4 w-full rounded-[12px] bg-[#288DD10D] border border-[#288dd12d]">
-                <p className="text-xs text-[#676767] capitalize">Total Leads</p>
-                <div className="flex items-center mt-4 space-x-1.5">
-                  <p className="text-lg md:text-2xl font-medium text-[#3272CA]">
-                    {leadStats?.message?.leads || 0}
-                  </p>
-                </div>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <ModernStatsCard
+                title="Total Leads"
+                value={leadStats?.message?.leads || 0}
+                icon={<Users />}
+                color="primary"
+                trend="neutral"
+                description="All leads in the system"
+              />
               {leadStats?.message?.leads_by_status &&
-                Object.keys(leadStats?.message.leads_by_status).map(
-                  (status, index) => (
-                    <div
-                      key={index}
-                      className="flex-1 p-4 w-full rounded-[12px] bg-[#288DD10D] border border-[#288dd12d]"
-                    >
-                      <p className="text-xs text-[#676767] capitalize">
-                        {formatStatusForDisplay(status)} Leads
-                      </p>
-                      <div className="flex items-center mt-4 space-x-1.5">
-                        <p className="text-lg md:text-2xl font-medium text-[#3272CA]">
-                          {leadStats?.message.leads_by_status[status]}
-                        </p>
-                      </div>
-                    </div>
-                  )
+                Object.entries(leadStats?.message.leads_by_status).map(
+                  ([status, count], index) => {
+                    const getStatusConfig = (status) => {
+                      switch (status) {
+                        case "new":
+                          return { icon: <UserPlus />, color: "info" };
+                        case "contacted":
+                          return { icon: <Phone />, color: "warning" };
+                        case "qualified":
+                          return { icon: <Target />, color: "success" };
+                        case "proposal_sent":
+                          return { icon: <Mail />, color: "primary" };
+                        case "negotiating":
+                          return { icon: <TrendingUp />, color: "warning" };
+                        case "closed_won":
+                          return { icon: <Target />, color: "success" };
+                        case "closed_lost":
+                          return { icon: <Users />, color: "error" };
+                        default:
+                          return { icon: <Users />, color: "info" };
+                      }
+                    };
+                    
+                    const config = getStatusConfig(status);
+                    
+                    return (
+                      <ModernStatsCard
+                        key={status}
+                        title={`${formatStatusForDisplay(status)} Leads`}
+                        value={count}
+                        icon={config.icon}
+                        color={config.color}
+                        trend="neutral"
+                        description={`Leads in ${formatStatusForDisplay(status).toLowerCase()} stage`}
+                      />
+                    );
+                  }
                 )}
             </div>
           )}

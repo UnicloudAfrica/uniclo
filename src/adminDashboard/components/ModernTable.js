@@ -14,6 +14,7 @@ import {
 import { designTokens } from '../../styles/designTokens';
 import ModernButton from './ModernButton';
 import { useAnimations, animationUtils, useReducedMotion } from '../../hooks/useAnimations';
+import { useResponsive } from '../../hooks/useResponsive';
 
 const ModernTable = ({
   data = [],
@@ -29,7 +30,8 @@ const ModernTable = ({
   onRowClick = null,
   emptyMessage = "No data available",
   actions = [],
-  enableAnimations = true
+  enableAnimations = true,
+  responsive = true
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
@@ -41,6 +43,9 @@ const ModernTable = ({
   const [tableRef, isInView] = useInView(0.1);
   const showLoadingAnimation = useLoadingAnimation(loading);
   const prefersReducedMotion = useReducedMotion();
+  
+  // Responsive hooks
+  const { isMobile, isTablet, isDesktop, getResponsiveValue } = useResponsive();
   
   // State for animations
   const [tableLoaded, setTableLoaded] = useState(false);

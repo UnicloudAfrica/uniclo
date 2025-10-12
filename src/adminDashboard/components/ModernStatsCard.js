@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { designTokens } from '../../styles/designTokens';
 import { useAnimations, animationUtils, useReducedMotion } from '../../hooks/useAnimations';
+import { useResponsive } from '../../hooks/useResponsive';
 
 const ModernStatsCard = ({
   title = '',
@@ -20,7 +21,8 @@ const ModernStatsCard = ({
   suffix = '',
   description = '',
   animateOnMount = true,
-  staggerDelay = 0
+  staggerDelay = 0,
+  responsive = true
 }) => {
   // Animation hooks
   const { useInView, useLoadingAnimation, useFlashAnimation, useHoverAnimation } = useAnimations();
@@ -29,6 +31,9 @@ const ModernStatsCard = ({
   const { flashState, triggerSuccess, triggerError } = useFlashAnimation();
   const { isHovered, hoverProps } = useHoverAnimation();
   const prefersReducedMotion = useReducedMotion();
+  
+  // Responsive hooks
+  const { isMobile, isTablet, isDesktop, getResponsiveValue, getFontSize, getSpacing } = useResponsive();
   
   // State for mount animations
   const [isMounted, setIsMounted] = useState(false);
@@ -93,29 +98,92 @@ const ModernStatsCard = ({
     }
   };
 
-  const sizes = {
-    sm: {
-      padding: '16px',
-      titleSize: designTokens.typography.fontSize.xs[0],
-      valueSize: designTokens.typography.fontSize.lg[0],
-      iconSize: 20,
-      changeSize: designTokens.typography.fontSize.xs[0]
-    },
-    md: {
-      padding: '20px',
-      titleSize: designTokens.typography.fontSize.sm[0],
-      valueSize: designTokens.typography.fontSize['2xl'][0],
-      iconSize: 24,
-      changeSize: designTokens.typography.fontSize.sm[0]
-    },
-    lg: {
-      padding: '24px',
-      titleSize: designTokens.typography.fontSize.base[0],
-      valueSize: designTokens.typography.fontSize['3xl'][0],
-      iconSize: 28,
-      changeSize: designTokens.typography.fontSize.base[0]
+  // Responsive sizes with mobile-first approach
+  const getResponsiveSizes = () => {
+    if (!responsive) {
+      // Use original sizes object for non-responsive cards
+      return {
+        sm: {
+          padding: '16px',
+          titleSize: designTokens.typography.fontSize.xs[0],
+          valueSize: designTokens.typography.fontSize.lg[0],
+          iconSize: 20,
+          changeSize: designTokens.typography.fontSize.xs[0]
+        },
+        md: {
+          padding: '20px',
+          titleSize: designTokens.typography.fontSize.sm[0],
+          valueSize: designTokens.typography.fontSize['2xl'][0],
+          iconSize: 24,
+          changeSize: designTokens.typography.fontSize.sm[0]
+        },
+        lg: {
+          padding: '24px',
+          titleSize: designTokens.typography.fontSize.base[0],
+          valueSize: designTokens.typography.fontSize['3xl'][0],
+          iconSize: 28,
+          changeSize: designTokens.typography.fontSize.base[0]
+        }
+      };
     }
+    
+    // Responsive sizes that adapt to screen size
+    const responsivePadding = getResponsiveValue({
+      mobile: '16px',
+      tablet: '20px', 
+      desktop: '24px'
+    });
+    
+    const responsiveTitleSize = getResponsiveValue({
+      mobile: designTokens.typography.fontSize.xs[0],
+      tablet: designTokens.typography.fontSize.sm[0],
+      desktop: designTokens.typography.fontSize.sm[0]
+    });
+    
+    const responsiveValueSize = getResponsiveValue({
+      mobile: designTokens.typography.fontSize.lg[0],
+      tablet: designTokens.typography.fontSize.xl[0],
+      desktop: designTokens.typography.fontSize['2xl'][0]
+    });
+    
+    const responsiveIconSize = getResponsiveValue({
+      mobile: 20,
+      tablet: 22,
+      desktop: 24
+    });
+    
+    const responsiveChangeSize = getResponsiveValue({
+      mobile: designTokens.typography.fontSize.xs[0],
+      tablet: designTokens.typography.fontSize.sm[0],
+      desktop: designTokens.typography.fontSize.sm[0]
+    });
+    
+    return {
+      sm: {
+        padding: responsivePadding,
+        titleSize: responsiveTitleSize,
+        valueSize: responsiveValueSize,
+        iconSize: responsiveIconSize,
+        changeSize: responsiveChangeSize
+      },
+      md: {
+        padding: responsivePadding,
+        titleSize: responsiveTitleSize, 
+        valueSize: responsiveValueSize,
+        iconSize: responsiveIconSize,
+        changeSize: responsiveChangeSize
+      },
+      lg: {
+        padding: responsivePadding,
+        titleSize: responsiveTitleSize,
+        valueSize: responsiveValueSize,
+        iconSize: responsiveIconSize,
+        changeSize: responsiveChangeSize
+      }
+    };
   };
+  
+  const sizes = getResponsiveSizes();
 
   const calculateChange = () => {
     if (change !== null) return change;
@@ -318,12 +386,28 @@ const ModernStatsCard = ({
     }
   };
 
+  // Get responsive class names
+  const getResponsiveClasses = () => {
+    const classes = [];
+    
+    if (responsive) {
+      classes.push('stats-card-responsive');
+      
+      // Add device-specific classes if needed
+      if (isMobile) classes.push('mobile-stats-card');
+      if (isTablet) classes.push('tablet-stats-card'); 
+      if (isDesktop) classes.push('desktop-stats-card');
+    }
+    
+    return classes.join(' ');
+  };
+
   return (
     <div
       ref={inViewRef}
       data-stats-card
       style={cardStyles}
-      className={`${className} ${getAnimationClasses()}`}
+      className={`${className} ${getAnimationClasses()} ${getResponsiveClasses()}`}
       onClick={handleClick}
       {...hoverProps}
     >

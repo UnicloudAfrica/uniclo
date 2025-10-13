@@ -528,6 +528,7 @@ export default function AdminProjectDetails() {
               {ActiveInfraComponent && (
                 <ActiveInfraComponent
                   projectId={projectDetails.identifier}
+                  projectName={projectDetails.name}
                   region={projectDetails.default_region}
                 />
               )}

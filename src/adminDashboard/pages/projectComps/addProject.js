@@ -148,12 +148,11 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
   
   const redirectToInfrastructureSetup = () => {
     const projectData = createdProjectData?.data;
-    if (projectData?.identifier && projectData?.name) {
+    if (projectData?.identifier) {
       const encodedId = encodeURIComponent(btoa(projectData.identifier));
-      const encodedName = encodeURIComponent(projectData.name);
       
-      // Navigate to project details page with infrastructure tab
-      navigate(`/admin-dashboard/projects/details?id=${encodedId}&name=${encodedName}`);
+      // Navigate to dedicated infrastructure setup page for new projects
+      navigate(`/admin-dashboard/infrastructure-setup?id=${encodedId}&new=1`);
       handleSuccess(); // Close modal
     }
   };

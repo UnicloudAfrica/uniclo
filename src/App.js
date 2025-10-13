@@ -93,6 +93,7 @@ import ClientInstances from "./clientDashboard/pages/clientInstances";
 import ClientAddInstancePage from "./clientDashboard/pages/clientAddInstances";
 import AdminMultiQuote from "./adminDashboard/pages/adminMultiQuote";
 import AdminAdvancedCalculator from "./adminDashboard/pages/adminAdvancedCalculator";
+import AdminInfrastructureSetup from "./adminDashboard/pages/adminInfrastructureSetup";
 // Instance Management routes removed - functionality moved to standard instances
 // import InstanceManagement from "./adminDashboard/pages/instanceManagement";
 // import InstanceDetails from "./adminDashboard/pages/instanceDetails";
@@ -250,6 +251,10 @@ function App() {
           <Route
             path="/admin-dashboard/projects/details"
             element={<AdminProjectDetails />}
+          />
+          <Route
+            path="/admin-dashboard/infrastructure-setup"
+            element={<AdminInfrastructureSetup />}
           />
           {/* Instances route removed in favor of Instance Management */}
           <Route

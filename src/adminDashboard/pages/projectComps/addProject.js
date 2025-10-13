@@ -71,23 +71,20 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
       setTimeout(() => setProgressMessage('Finalizing project setup...'), 30000);
 
       createProject(payload, {
-        onSuccess: () => {
-          setProgressMessage('Project created successfully!');
-          setTimeout(() => {
-            setIsSubmitting(false);
-            setSubmitAttempts(0);
-            setProgressMessage('');
-            onClose();
-            setFormData({
-              name: "",
-              description: "",
-              type: "vpc",
-              tenant_id: "",
-              client_ids: [],
-              default_region: "",
-              provider: "",
-            });
-          }, 1000);
+        onSuccess: (data) => {
+          console.log('Project creation response:', data);
+          
+          if (data?.data?.status === 'provisioning') {
+            setProgressMessage('Project created! Provisioning infrastructure...');
+            // Start polling for status updates
+            startStatusPolling(data.data.identifier || data.data.id);
+          } else {
+            // Immediate success (legacy mode)
+            setProgressMessage('Project created successfully!');
+            setTimeout(() => {
+              handleSuccess();
+            }, 1000);
+          }
         },
         onError: (error) => {
           console.error(`Error creating project (Attempt ${submitAttempts + 1}):`, error.message);
@@ -113,6 +110,91 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
     } else {
       ToastUtils.error('Maximum retry attempts reached. Please contact support if the issue persists.');
     }
+  };
+  
+  const handleSuccess = () => {
+    setIsSubmitting(false);
+    setSubmitAttempts(0);
+    setProgressMessage('');
+    onClose();
+    setFormData({
+      name: "",
+      description: "",
+      type: "vpc",
+      tenant_id: "",
+      client_ids: [],
+      default_region: "",
+      provider: "",
+    });
+  };
+  
+  const startStatusPolling = (projectIdentifier) => {
+    let pollCount = 0;
+    const maxPolls = 60; // 2 minutes with 2-second intervals
+    
+    const pollInterval = setInterval(async () => {
+      pollCount++;
+      
+      try {
+        const response = await fetch(`/admin/v1/projects/${projectIdentifier}/status`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const statusData = await response.json();
+        console.log('Project status:', statusData);
+        
+        // Update progress message
+        if (statusData.progress?.message) {
+          setProgressMessage(statusData.progress.message);
+        }
+        
+        // Check for completion
+        if (statusData.status === 'active') {
+          clearInterval(pollInterval);
+          setProgressMessage('Project provisioning completed successfully!');
+          setTimeout(() => {
+            handleSuccess();
+          }, 1500);
+          return;
+        }
+        
+        if (statusData.status === 'failed') {
+          clearInterval(pollInterval);
+          setIsSubmitting(false);
+          setProgressMessage('');
+          ToastUtils.error(`Project provisioning failed: ${statusData.error || 'Unknown error'}`);
+          return;
+        }
+        
+        // Timeout after max polls
+        if (pollCount >= maxPolls) {
+          clearInterval(pollInterval);
+          setIsSubmitting(false);
+          setProgressMessage('');
+          ToastUtils.warning('Project is still provisioning. Please check the projects page for updates.');
+          handleSuccess(); // Close modal anyway
+        }
+        
+      } catch (error) {
+        console.error('Status polling error:', error);
+        
+        // On error, retry a few times then give up
+        if (pollCount >= 5) {
+          clearInterval(pollInterval);
+          setIsSubmitting(false);
+          setProgressMessage('');
+          ToastUtils.warning('Unable to track provisioning status. Please check the projects page.');
+          handleSuccess(); // Close modal anyway
+        }
+      }
+    }, 2000); // Poll every 2 seconds
   };
 
   return (

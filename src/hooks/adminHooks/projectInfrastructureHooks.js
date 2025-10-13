@@ -115,6 +115,37 @@ export const useSetupInfrastructureComponent = () => {
   });
 };
 
+export const useProvisionVpc = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ projectId, payload = {} }) => {
+      if (!projectId) {
+        throw new Error('Project ID is required');
+      }
+
+      return await api('POST', `/projects/${projectId}/vpc/provision`, payload);
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['project-infrastructure-status', variables.projectId]
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['project-details', variables.projectId]
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['admin-project', variables.projectId]
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['admin-projects']
+      });
+    },
+    onError: (error) => {
+      console.error('Failed to provision VPC:', error);
+    }
+  });
+};
+
 // Bulk infrastructure setup mutation (for future use)
 export const useBulkSetupInfrastructure = () => {
   const queryClient = useQueryClient();
@@ -233,7 +264,8 @@ const projectInfrastructureHooks = {
   useSetupInfrastructureComponent,
   useBulkSetupInfrastructure,
   useResetInfrastructureComponent,
-  useInfrastructureProgress
+  useInfrastructureProgress,
+  useProvisionVpc
 };
 
 export default projectInfrastructureHooks;

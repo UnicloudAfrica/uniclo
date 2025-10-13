@@ -267,3 +267,12 @@ Parameters & prerequisites (infra)
 - region: region code (required for region-scoped queries)
 - project_id: string project identifier (not numeric id)
 - Omit optional fields when not set (avoid null/empty keys)
+
+---
+
+## 8) Cloud accounts
+
+- Admin: GET `/admin/v1/cloud-accounts?provider={key}&tenant_id={uuid?}` returns paginated cloud accounts with `cloud_account_id`, `metadata`, and `credentials_count`.
+- Tenant: GET `/tenant/v1/admin/cloud-accounts?provider={key}` respects the acting tenant scope (includes descendants when `include_subtenants` is true).
+- Responses include: `id`, `name`, `provider_key`, `region`, `metadata`, `cloud_account_id`, and `credentials_count`. Use `cloud_account_id` when linking dashboard views to backend resources.
+- New auth flows now expose `cloud_account_id` in payloads (e.g., project auth context, instance console) so re-use that identifier instead of recomputing account info client-side.

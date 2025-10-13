@@ -4,7 +4,7 @@ import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useFetchProjectById } from "../../hooks/adminHooks/projectHooks";
-import { useProjectInfrastructureStatus, useSetupInfrastructureComponent } from "../../hooks/adminHooks/projectInfrastructureHooks";
+import { useProjectInfrastructureStatus, useProvisionVpc } from "../../hooks/adminHooks/projectInfrastructureHooks";
 import {
   ChevronLeft,
   ChevronRight,
@@ -167,8 +167,8 @@ export default function AdminProjectDetails() {
     refetch: refetchInfraStatus,
   } = useProjectInfrastructureStatus(projectId);
 
-  const { mutate: setupInfrastructureComponent } =
-    useSetupInfrastructureComponent();
+  const { mutate: provisionVpc, isPending: isProvisioningVpc } =
+    useProvisionVpc();
 
   const [activeInfraAction, setActiveInfraAction] = useState(null);
 
@@ -217,14 +217,26 @@ export default function AdminProjectDetails() {
     }
 
     setActiveInfraAction("vpc");
-    setupInfrastructureComponent(
-      { projectId, componentType: "vpc" },
+    provisionVpc(
       {
-        onSuccess: () => {
-          ToastUtils.success(
-            "Requested VPC provisioning. Zadara will update the project once the VPC is ready."
-          );
-          refetchInfraStatus();
+        projectId,
+        payload: {
+          region:
+            infraStatus?.project?.region ||
+            projectDetails?.default_region ||
+            undefined,
+          name: `main-vpc-${projectDetails?.identifier || projectId}`,
+        },
+      },
+      {
+        onSuccess: (response) => {
+          const successMessage =
+            response?.message ||
+            "Requested VPC provisioning. Zadara will update the project once the VPC is ready.";
+          ToastUtils.success(successMessage);
+          Promise.all([refetchInfraStatus(), refetchProject()]).then(() => {
+            setLastRefreshedAt(new Date());
+          });
         },
         onError: (error) => {
           console.error("Failed to request VPC provisioning:", error);
@@ -235,7 +247,6 @@ export default function AdminProjectDetails() {
         },
         onSettled: () => {
           setActiveInfraAction(null);
-          refetchProject();
         },
       }
     );
@@ -323,13 +334,14 @@ export default function AdminProjectDetails() {
       key: "vpc",
       label: hasVpcConfigured
         ? "VPC Provisioned"
-        : activeInfraAction === "vpc"
+        : activeInfraAction === "vpc" || isProvisioningVpc
         ? "Provisioning VPC..."
         : "Provision VPC",
       onClick: handleProvisionVpc,
       icon: <Network size={16} />,
-      disabled: hasVpcConfigured || activeInfraAction === "vpc",
-      loading: activeInfraAction === "vpc",
+      disabled:
+        hasVpcConfigured || activeInfraAction === "vpc" || isProvisioningVpc,
+      loading: activeInfraAction === "vpc" || isProvisioningVpc,
     },
     {
       key: "edge",
@@ -372,7 +384,8 @@ export default function AdminProjectDetails() {
   const isRefreshing =
     isManualRefreshing ||
     (isProjectFetching && !isProjectLoading) ||
-    isInfraFetching;
+    isInfraFetching ||
+    isProvisioningVpc;
 
   return (
     <>

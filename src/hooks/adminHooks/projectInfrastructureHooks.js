@@ -146,6 +146,39 @@ export const useProvisionVpc = () => {
   });
 };
 
+// Enable VPC for a project in Zadara
+export const useEnableProjectVpc = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ projectId }) => {
+      if (!projectId) {
+        throw new Error('Project ID is required');
+      }
+
+      return await api('POST', `/projects/${projectId}/enable-vpc`);
+    },
+    onSuccess: (data, variables) => {
+      // Invalidate all related queries
+      queryClient.invalidateQueries({
+        queryKey: ['project-infrastructure-status', variables.projectId]
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['project-details', variables.projectId]
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['admin-project', variables.projectId]
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['admin-projects']
+      });
+    },
+    onError: (error) => {
+      console.error('Failed to enable VPC:', error);
+    }
+  });
+};
+
 // Bulk infrastructure setup mutation (for future use)
 export const useBulkSetupInfrastructure = () => {
   const queryClient = useQueryClient();

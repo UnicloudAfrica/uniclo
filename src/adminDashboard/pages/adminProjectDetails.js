@@ -4,7 +4,7 @@ import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useFetchProjectById } from "../../hooks/adminHooks/projectHooks";
-import { useProjectInfrastructureStatus, useProvisionVpc } from "../../hooks/adminHooks/projectInfrastructureHooks";
+import { useProjectInfrastructureStatus, useProvisionVpc, useEnableProjectVpc } from "../../hooks/adminHooks/projectInfrastructureHooks";
 import {
   ChevronLeft,
   ChevronRight,
@@ -170,10 +170,17 @@ export default function AdminProjectDetails() {
   const { mutate: provisionVpc, isPending: isProvisioningVpc } =
     useProvisionVpc();
 
+  const { mutate: enableVpc, isPending: isEnablingVpc } =
+    useEnableProjectVpc();
+
   const [activeInfraAction, setActiveInfraAction] = useState(null);
 
   const hasVpcConfigured =
     infraStatus?.components?.vpc?.status === "completed";
+
+  // Check if project is VPC-enabled (from provisioning_progress)
+  const isVpcEnabled = projectDetails?.provisioning_progress?.vpc_enabled === true;
+  const needsVpcEnabling = !isVpcEnabled && projectDetails?.status === 'pending';
 
   const handleManualRefresh = async () => {
     if (!projectId) {
@@ -243,6 +250,46 @@ export default function AdminProjectDetails() {
           ToastUtils.error(
             error?.message ||
               "Failed to request VPC provisioning. Please try again."
+          );
+        },
+        onSettled: () => {
+          setActiveInfraAction(null);
+        },
+      }
+    );
+  };
+
+  const handleEnableVpc = () => {
+    if (!projectId) {
+      ToastUtils.error(
+        "Project identifier is missing. Unable to enable VPC."
+      );
+      return;
+    }
+
+    if (isVpcEnabled) {
+      ToastUtils.info("VPC is already enabled for this project.");
+      return;
+    }
+
+    setActiveInfraAction("enable-vpc");
+    enableVpc(
+      { projectId },
+      {
+        onSuccess: (response) => {
+          const successMessage =
+            response?.message ||
+            "VPC has been enabled successfully! The project can now use VPC features.";
+          ToastUtils.success(successMessage);
+          Promise.all([refetchInfraStatus(), refetchProject()]).then(() => {
+            setLastRefreshedAt(new Date());
+          });
+        },
+        onError: (error) => {
+          console.error("Failed to enable VPC:", error);
+          ToastUtils.error(
+            error?.message ||
+              "Failed to enable VPC. Please try again."
           );
         },
         onSettled: () => {
@@ -330,6 +377,18 @@ export default function AdminProjectDetails() {
   )?.component;
 
   const quickActions = [
+    // Add Enable VPC action if needed
+    ...(needsVpcEnabling ? [{
+      key: "enable-vpc",
+      label: activeInfraAction === "enable-vpc" || isEnablingVpc
+        ? "Enabling VPC..."
+        : "Enable VPC",
+      onClick: handleEnableVpc,
+      icon: <Network size={16} />,
+      disabled: activeInfraAction === "enable-vpc" || isEnablingVpc,
+      loading: activeInfraAction === "enable-vpc" || isEnablingVpc,
+      priority: true, // Show this first if needed
+    }] : []),
     {
       key: "vpc",
       label: hasVpcConfigured
@@ -340,7 +399,7 @@ export default function AdminProjectDetails() {
       onClick: handleProvisionVpc,
       icon: <Network size={16} />,
       disabled:
-        hasVpcConfigured || activeInfraAction === "vpc" || isProvisioningVpc,
+        hasVpcConfigured || activeInfraAction === "vpc" || isProvisioningVpc || !isVpcEnabled,
       loading: activeInfraAction === "vpc" || isProvisioningVpc,
     },
     {
@@ -385,7 +444,8 @@ export default function AdminProjectDetails() {
     isManualRefreshing ||
     (isProjectFetching && !isProjectLoading) ||
     isInfraFetching ||
-    isProvisioningVpc;
+    isProvisioningVpc ||
+    isEnablingVpc;
 
   return (
     <>
@@ -461,6 +521,8 @@ export default function AdminProjectDetails() {
                 <p className="text-sm text-gray-700">
                   {hasVpcConfigured
                     ? "Continue configuring edge networking and infrastructure resources to activate this project."
+                    : !isVpcEnabled
+                    ? "Enable VPC for this project first, then request VPC provisioning to activate it."
                     : "Request VPC provisioning and complete the networking resources below to activate it."}
                 </p>
               </div>
@@ -536,9 +598,27 @@ export default function AdminProjectDetails() {
             </div>
             <div className="flex flex-col">
               <span className="font-medium text-gray-600">VPC Status:</span>
-              <span className="text-gray-900">
-                {hasVpcConfigured ? "Provisioned by Zadara" : "Awaiting provisioning"}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-900">
+                  {!isVpcEnabled ? "Not VPC-enabled" :
+                   hasVpcConfigured ? "Provisioned by Zadara" : "VPC-enabled, awaiting provisioning"}
+                </span>
+                {!isVpcEnabled && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-800">
+                    Enable Required
+                  </span>
+                )}
+                {isVpcEnabled && !hasVpcConfigured && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                    Ready to Provision
+                  </span>
+                )}
+                {hasVpcConfigured && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                    Active
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>

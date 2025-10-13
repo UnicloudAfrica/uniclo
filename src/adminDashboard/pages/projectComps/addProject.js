@@ -53,8 +53,14 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
       setSubmitAttempts(prev => prev + 1);
       setProgressMessage('Preparing project data...');
       
+      // Add timestamp to name on retry to avoid duplicates
+      const baseName = formData.name;
+      const projectName = submitAttempts > 0 
+        ? `${baseName}_${Date.now()}`  // Add timestamp on retry
+        : baseName;
+      
       const payload = {
-        name: formData.name,
+        name: projectName,
         description: formData.description,
         type: formData.type,
         tenant_id: formData.tenant_id || null,

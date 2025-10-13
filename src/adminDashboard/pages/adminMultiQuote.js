@@ -8,6 +8,8 @@ import {
 } from "../../hooks/adminHooks/calculatorOptionHooks";
 import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
 import { useFetchTenants } from "../../hooks/adminHooks/tenantHooks";
+import { useFetchClients } from "../../hooks/adminHooks/clientHooks";
+import { useSharedClients } from "../../hooks/sharedCalculatorHooks";
 import { useFetchProductPricing } from "../../hooks/resource";
 import AdminSidebar from "../components/adminSidebar";
 import AdminHeadbar from "../components/adminHeadbar";
@@ -30,7 +32,6 @@ const AdminMultiQuote = () => {
 
   const [formData, setFormData] = useState({
     // Step 1
-    tenant_id: "",
     subject: "",
     email: "",
     emails: "",
@@ -66,12 +67,21 @@ const AdminMultiQuote = () => {
   const [pricingRequests, setPricingRequests] = useState([]);
   const [errors, setErrors] = useState({});
   const [apiResponse, setApiResponse] = useState(null);
+  
+  // Assignment system (Admin only)
+  const [assignType, setAssignType] = useState(''); // '', 'tenant', 'user'
+  const [selectedTenantId, setSelectedTenantId] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState('');
 
   // Hooks
   const { data: regions, isFetching: isRegionsFetching } = useFetchRegions();
   const { data: tenants, isFetching: isTenantsFetching } = useFetchTenants();
   const { mutate: createMultiQuotes, isPending: isSubmissionPending } =
     useCreateMultiQuotes();
+    
+  // Admin lists for assignment (tenants and users)
+  const { data: adminClients = [] } = useFetchClients(); // Direct admin clients
+  const { data: tenantClients = [] } = useSharedClients(selectedTenantId, { enabled: !!selectedTenantId }); // Tenant clients
 
   const { data: computerInstances, isFetching: isComputerInstancesFetching } =
     useFetchProductPricing(formData.region, "compute_instance", {
@@ -117,11 +127,10 @@ const AdminMultiQuote = () => {
     const newErrors = {};
     if (step === 0) {
       if (!formData.subject) newErrors.subject = "Subject is required.";
-      if (!formData.tenant_id) newErrors.tenant_id = "Tenant is required.";
       if (!formData.email) newErrors.email = "Primary email is required.";
       if (!formData.bill_to_name)
         newErrors.bill_to_name = "Bill to name is required.";
-    } else if (step === 1) {
+    }
       if (pricingRequests.length === 0) {
         newErrors.general = "Please add at least one item to the quote.";
       }
@@ -231,7 +240,6 @@ const AdminMultiQuote = () => {
     }
 
     const payload = {
-      tenant_id: formData.tenant_id,
       subject: formData.subject,
       email: formData.email,
       emails: formData.emails.trim()
@@ -247,6 +255,17 @@ const AdminMultiQuote = () => {
         return rest;
       }),
     };
+    
+    // Add assignment data based on assignment type
+    if (assignType === 'tenant' && selectedTenantId) {
+      payload.tenant_id = selectedTenantId;
+    } else if (assignType === 'user' && selectedUserId) {
+      payload.client_id = selectedUserId;
+      // If user is under a tenant, include tenant_id as well
+      if (selectedTenantId) {
+        payload.tenant_id = selectedTenantId;
+      }
+    }
 
     // Add total discount if applied
     if (formData.apply_total_discount && formData.total_discount_value) {
@@ -296,8 +315,6 @@ const AdminMultiQuote = () => {
             errors={errors}
             updateFormData={updateFormData}
             handleSelectChange={handleSelectChange}
-            tenants={tenants}
-            isTenantsFetching={isTenantsFetching}
           />
         );
       case 1:
@@ -374,6 +391,75 @@ const AdminMultiQuote = () => {
           <div className="sticky top-0 z-10 bg-white pt-6 pb-4 border-b mb-6">
             <StepProgress currentStep={currentStep} steps={steps} />
           </div>
+
+          {/* Assignment Section (Admin only) */}
+          {currentStep === 0 && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
+              <h3 className="text-md font-semibold mb-4 text-gray-900">
+                Assignment (Admin only)
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Assign To</label>
+                  <select
+                    value={assignType}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setAssignType(v);
+                      setSelectedTenantId('');
+                      setSelectedUserId('');
+                    }}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300"
+                  >
+                    <option value="">None</option>
+                    <option value="tenant">Tenant</option>
+                    <option value="user">User (Client)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Tenant</label>
+                  <select
+                    value={selectedTenantId}
+                    onChange={(e) => {
+                      setSelectedTenantId(e.target.value);
+                      setSelectedUserId('');
+                    }}
+                    disabled={assignType !== 'tenant' && assignType !== 'user'}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      assignType ? 'border-gray-300' : 'bg-gray-50 cursor-not-allowed border-gray-200'
+                    }`}
+                  >
+                    <option value="">{assignType ? 'Select Tenant' : 'Select assign type first'}</option>
+                    {tenants?.map(t => (
+                      <option key={t.id} value={t.id}>
+                        {t.name || t.company_name || `Tenant ${t.id}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">User</label>
+                  <select
+                    value={selectedUserId}
+                    onChange={(e) => setSelectedUserId(e.target.value)}
+                    disabled={assignType !== 'user'}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      assignType === 'user' ? 'border-gray-300' : 'bg-gray-50 cursor-not-allowed border-gray-200'
+                    }`}
+                  >
+                    <option value="">{assignType === 'user' ? 'Select User' : 'Select assign type user'}</option>
+                    {(selectedTenantId ? tenantClients : adminClients)?.map(u => (
+                      <option key={u.id} value={u.id}>
+                        {u.business_name || `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || `User ${u.id}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
           <div
             ref={contentRef}
             className="w-full flex flex-col items-center justify-start"

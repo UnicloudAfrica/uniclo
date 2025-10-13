@@ -1,13 +1,10 @@
 import React from "react";
-import { Loader2 } from "lucide-react";
 
 const QuoteInfoStep = ({
   formData,
   errors,
   updateFormData,
   handleSelectChange,
-  tenants,
-  isTenantsFetching,
 }) => {
   const inputClass =
     "block w-full rounded-md border-gray-300 focus:border-[#288DD1] focus:ring-[#288DD1] sm:text-sm input-field";
@@ -47,47 +44,6 @@ const QuoteInfoStep = ({
           )}
         </div>
 
-        <div>
-          <label
-            htmlFor="tenant_id"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Tenant (Partner)<span className="text-red-500">*</span>
-          </label>
-          <span
-            className={`w-full input-field block transition-all ${
-              errors.tenant_id ? "border-red-500 border" : ""
-            }`}
-          >
-            {isTenantsFetching ? (
-              <div className="flex items-center">
-                <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
-                <span className="text-gray-500 text-sm">
-                  Loading tenants...
-                </span>
-              </div>
-            ) : (
-              <select
-                id="tenant_id"
-                value={formData.tenant_id || ""}
-                onChange={(e) =>
-                  handleSelectChange("tenant_id", e.target.value)
-                }
-                className="w-full bg-transparent outline-none"
-              >
-                <option value="">Select a Tenant</option>
-                {tenants?.map((tenant) => (
-                  <option key={tenant.id} value={tenant.id}>
-                    {tenant.name}
-                  </option>
-                ))}
-              </select>
-            )}
-          </span>
-          {errors.tenant_id && (
-            <p className="text-red-500 text-xs mt-1">{errors.tenant_id}</p>
-          )}
-        </div>
 
         <div>
           <label

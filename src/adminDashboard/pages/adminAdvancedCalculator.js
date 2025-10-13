@@ -8,7 +8,9 @@ import StepProgress from "../../dashboard/components/instancesubcomps/stepProgre
 import CalculatorConfigStep from "./calculatorComps/calculatorConfigStep";
 import CalculatorSummaryStep from "./calculatorComps/calculatorSummaryStep";
 import ToastUtils from "../../utils/toastUtil";
-import { useSharedCalculatorPricing } from "../../hooks/sharedCalculatorHooks";
+import { useSharedCalculatorPricing, useSharedClients } from "../../hooks/sharedCalculatorHooks";
+import { useFetchTenants } from "../../hooks/adminHooks/tenantHooks";
+import { useFetchClients } from "../../hooks/adminHooks/clientHooks";
 
 const AdminAdvancedCalculator = () => {
   const navigate = useNavigate();
@@ -18,8 +20,6 @@ const AdminAdvancedCalculator = () => {
   const [isCalculating, setIsCalculating] = useState(false);
 
   const [calculatorData, setCalculatorData] = useState({
-    tenant_id: "",
-    client_id: "",
     pricing_requests: [],
     // Total discount fields
     apply_total_discount: false,
@@ -27,6 +27,11 @@ const AdminAdvancedCalculator = () => {
     total_discount_value: "",
     total_discount_label: "",
   });
+  
+  // Assignment system (Admin only)
+  const [assignType, setAssignType] = useState(''); // '', 'tenant', 'user'
+  const [selectedTenantId, setSelectedTenantId] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState('');
 
   const [pricingResult, setPricingResult] = useState(null);
   const [errors, setErrors] = useState({});
@@ -35,6 +40,11 @@ const AdminAdvancedCalculator = () => {
   
   // Use shared calculator pricing hook
   const { mutate: calculatePricingMutation, isPending: isCalculatingMutation } = useSharedCalculatorPricing();
+  
+  // Admin lists for assignment (tenants and users)
+  const { data: tenants = [] } = useFetchTenants();
+  const { data: adminClients = [] } = useFetchClients(); // Direct admin clients
+  const { data: tenantClients = [] } = useSharedClients(selectedTenantId, { enabled: !!selectedTenantId }); // Tenant clients
 
   const updateCalculatorData = (field, value) => {
     setCalculatorData((prev) => ({ ...prev, [field]: value }));
@@ -81,13 +91,22 @@ const AdminAdvancedCalculator = () => {
 
     // Prepare payload
     const payload = {
-      client_id: calculatorData.client_id || null,
-      tenant_id: calculatorData.tenant_id || null,
       pricing_requests: calculatorData.pricing_requests.map((req) => {
         const { _display, ...rest } = req;
         return rest;
       }),
     };
+    
+    // Add assignment data based on assignment type
+    if (assignType === 'tenant' && selectedTenantId) {
+      payload.tenant_id = selectedTenantId;
+    } else if (assignType === 'user' && selectedUserId) {
+      payload.client_id = selectedUserId;
+      // If user is under a tenant, include tenant_id as well
+      if (selectedTenantId) {
+        payload.tenant_id = selectedTenantId;
+      }
+    }
 
     // Add total discount if applied
     if (calculatorData.apply_total_discount && calculatorData.total_discount_value) {
@@ -190,6 +209,75 @@ const AdminAdvancedCalculator = () => {
           <div className="sticky top-0 z-10 bg-white pt-6 pb-4 border-b mb-6">
             <StepProgress currentStep={currentStep} steps={steps} />
           </div>
+
+          {/* Assignment Section (Admin only) */}
+          {currentStep === 0 && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
+              <h3 className="text-md font-semibold mb-4 text-gray-900">
+                Assignment (Admin only)
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Assign To</label>
+                  <select
+                    value={assignType}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setAssignType(v);
+                      setSelectedTenantId('');
+                      setSelectedUserId('');
+                    }}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300"
+                  >
+                    <option value="">None</option>
+                    <option value="tenant">Tenant</option>
+                    <option value="user">User (Client)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Tenant</label>
+                  <select
+                    value={selectedTenantId}
+                    onChange={(e) => {
+                      setSelectedTenantId(e.target.value);
+                      setSelectedUserId('');
+                    }}
+                    disabled={assignType !== 'tenant' && assignType !== 'user'}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      assignType ? 'border-gray-300' : 'bg-gray-50 cursor-not-allowed border-gray-200'
+                    }`}
+                  >
+                    <option value="">{assignType ? 'Select Tenant' : 'Select assign type first'}</option>
+                    {tenants?.map(t => (
+                      <option key={t.id} value={t.id}>
+                        {t.name || t.company_name || `Tenant ${t.id}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">User</label>
+                  <select
+                    value={selectedUserId}
+                    onChange={(e) => setSelectedUserId(e.target.value)}
+                    disabled={assignType !== 'user'}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      assignType === 'user' ? 'border-gray-300' : 'bg-gray-50 cursor-not-allowed border-gray-200'
+                    }`}
+                  >
+                    <option value="">{assignType === 'user' ? 'Select User' : 'Select assign type user'}</option>
+                    {(selectedTenantId ? tenantClients : adminClients)?.map(u => (
+                      <option key={u.id} value={u.id}>
+                        {u.business_name || `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || `User ${u.id}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div
             ref={contentRef}

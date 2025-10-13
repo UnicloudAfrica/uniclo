@@ -1,15 +1,24 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useFetchProjectById } from "../../hooks/adminHooks/projectHooks";
+import { useFetchProjectById, useUpdateProject } from "../../hooks/adminHooks/projectHooks";
 import {
   ChevronLeft,
   ChevronRight,
   Loader2,
   Pencil,
   Trash2,
+  RefreshCw,
+  Info,
+  Network,
+  Globe,
+  Key,
+  Wifi,
+  GitBranch,
+  RadioTower,
+  HardDrive,
 } from "lucide-react";
 import EditProjectModal from "./projectComps/editProject";
 import ConfirmDeleteModal from "./projectComps/deleteProject";
@@ -24,6 +33,7 @@ import RouteTables from "./infraComps/routetable";
 import AssignEdgeConfigModal from "./projectComps/assignEdgeConfig";
 import AdminEdgeConfigPanel from "../components/AdminEdgeConfigPanel";
 import InfrastructureSetupFlow from "./infraComps/InfrastructureSetupFlow";
+import ToastUtils from "../../utils/toastUtil";
 
 // Function to decode the ID from URL
 const decodeId = (encodedId) => {
@@ -60,9 +70,18 @@ export default function AdminProjectDetails() {
 
   const {
     data: projectDetails,
+    isLoading: isProjectLoading,
     isFetching: isProjectFetching,
     error: projectError,
+    refetch: refetchProject,
   } = useFetchProjectById(projectId);
+
+  const { mutate: updateProject, isPending: isUpdatingProject } = useUpdateProject();
+  const [lastRefreshedAt, setLastRefreshedAt] = useState(null);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const infrastructureSectionRef = useRef(null);
+
+  const isVpcProject = projectDetails?.type?.toLowerCase() === "vpc";
 
   useEffect(() => {
     if (projectDetails?.instances) {
@@ -71,6 +90,12 @@ export default function AdminProjectDetails() {
       setInstances([]);
     }
   }, [projectDetails]);
+
+  useEffect(() => {
+    if (!isProjectLoading && projectDetails && !lastRefreshedAt) {
+      setLastRefreshedAt(new Date());
+    }
+  }, [isProjectLoading, projectDetails, lastRefreshedAt]);
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -113,6 +138,89 @@ export default function AdminProjectDetails() {
     // );
   };
 
+  const handleManualRefresh = async () => {
+    if (!projectId) {
+      ToastUtils.warning("Project identifier is missing. Please return to the projects list.");
+      return;
+    }
+
+    try {
+      setIsManualRefreshing(true);
+      const result = await refetchProject();
+      if (result?.error) {
+        throw result.error;
+      }
+      setLastRefreshedAt(new Date());
+      ToastUtils.success("Project details refreshed");
+    } catch (error) {
+      console.error("Failed to refresh project details:", error);
+      ToastUtils.error(
+        error?.message || "Failed to refresh project details. Please try again."
+      );
+    } finally {
+      setIsManualRefreshing(false);
+    }
+  };
+
+  const formattedLastRefreshed = lastRefreshedAt
+    ? lastRefreshedAt.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
+    : null;
+
+  const jumpToInfrastructureTab = (tabName) => {
+    setActiveTopLevelTab("Infrastructure");
+    setActiveInfraTab(tabName);
+    setTimeout(() => {
+      infrastructureSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 50);
+  };
+
+  const handleConfigureEdge = () => {
+    jumpToInfrastructureTab("Setup");
+    setIsAssignEdgeOpen(true);
+  };
+
+  const handleSwitchToVpc = () => {
+    if (!projectId) {
+      ToastUtils.error("Project identifier is missing. Unable to update project type.");
+      return;
+    }
+
+    if (isVpcProject) {
+      ToastUtils.info("Project is already configured for VPC.");
+      return;
+    }
+
+    updateProject(
+      { id: projectId, projectData: { type: "vpc" } },
+      {
+        onSuccess: async () => {
+          ToastUtils.success("Project switched to VPC mode.");
+          const result = await refetchProject();
+          if (!result?.error) {
+            setLastRefreshedAt(new Date());
+          }
+        },
+        onError: (error) => {
+          console.error("Failed to switch project to VPC:", error);
+          ToastUtils.error(
+            error?.message || "Failed to switch project to VPC. Please try again."
+          );
+        },
+      }
+    );
+  };
+
+  const handleNavigateToInventory = () => {
+    navigate("/admin-dashboard/inventory?tab=ebs-volumes");
+  };
+
   const canDeleteProject = instances.length === 0;
 
   // Array of menu items and their corresponding components
@@ -136,7 +244,7 @@ export default function AdminProjectDetails() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (isProjectFetching) {
+  if (isProjectLoading) {
     return (
       <>
         <AdminHeadbar onMenuClick={toggleMobileMenu} />
@@ -153,7 +261,11 @@ export default function AdminProjectDetails() {
     );
   }
 
-  if (!projectDetails || projectError) {
+  const projectErrorMessage = !projectId
+    ? "Project identifier is missing or invalid."
+    : projectError?.message || "This project could not be found.";
+
+  if (!projectId || !projectDetails || projectError) {
     return (
       <>
         <AdminHeadbar onMenuClick={toggleMobileMenu} />
@@ -163,8 +275,8 @@ export default function AdminProjectDetails() {
         />
         <AdminActiveTab />
         <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center flex-col text-center">
-          <p className=" text-sm md:text-base font-normal text-gray-700 mb-4">
-            This project could not be found.
+          <p className="text-sm md:text-base font-normal text-gray-700 mb-4">
+            {projectErrorMessage}
           </p>
           <button
             onClick={() => navigate("/admin-dashboard/projects")}
@@ -182,6 +294,55 @@ export default function AdminProjectDetails() {
     (item) => item.name === activeInfraTab
   )?.component;
 
+  const quickActions = [
+    {
+      key: "vpc",
+      label: isVpcProject ? "VPC Enabled" : "Switch to VPC",
+      onClick: handleSwitchToVpc,
+      icon: <Network size={16} />,
+      disabled: isVpcProject || isUpdatingProject,
+      loading: isUpdatingProject && !isVpcProject,
+    },
+    {
+      key: "edge",
+      label: "Configure Edge",
+      onClick: handleConfigureEdge,
+      icon: <Globe size={16} />,
+    },
+    {
+      key: "keypairs",
+      label: "Create Key Pair",
+      onClick: () => jumpToInfrastructureTab("Key Pairs"),
+      icon: <Key size={16} />,
+    },
+    {
+      key: "eips",
+      label: "Manage Elastic IPs",
+      onClick: () => jumpToInfrastructureTab("EIPs"),
+      icon: <Wifi size={16} />,
+    },
+    {
+      key: "subnets",
+      label: "Manage Subnets",
+      onClick: () => jumpToInfrastructureTab("Subnets"),
+      icon: <GitBranch size={16} />,
+    },
+    {
+      key: "igw",
+      label: "Configure IGW",
+      onClick: () => jumpToInfrastructureTab("IGWs"),
+      icon: <RadioTower size={16} />,
+    },
+    {
+      key: "storage",
+      label: "Volumes & Storage",
+      onClick: handleNavigateToInventory,
+      icon: <HardDrive size={16} />,
+    },
+  ];
+
+  const isRefreshing = isManualRefreshing || (isProjectFetching && !isProjectLoading);
+
   return (
     <>
       <AdminHeadbar onMenuClick={toggleMobileMenu} />
@@ -191,15 +352,35 @@ export default function AdminProjectDetails() {
       />
       <AdminActiveTab />
       <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-[#1E1E1EB2]">
-            Project Details
-          </h1>
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-[#1E1E1EB2]">
+              Project Details
+            </h1>
+            {formattedLastRefreshed && (
+              <p className="text-xs text-gray-500 mt-1">
+                Last refreshed {formattedLastRefreshed}
+              </p>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
             <button
-              onClick={() => setIsAssignEdgeOpen(true)}
+              onClick={handleManualRefresh}
+              className="flex items-center gap-2 px-4 py-2 border border-[#288DD1] text-[#288DD1] rounded-lg hover:bg-[#E0F2FF] transition-colors text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={isRefreshing}
+              title="Refresh project details"
+              type="button"
+            >
+              <RefreshCw
+                className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
+              />
+              {isRefreshing ? "Refreshing..." : "Refresh"}
+            </button>
+            <button
+              onClick={handleConfigureEdge}
               className="flex items-center gap-2 px-4 py-2 bg-[#288DD1] text-white rounded-lg hover:bg-[#1976D2] transition-colors text-sm"
               title="Configure Edge"
+              type="button"
             >
               Configure Edge
             </button>
@@ -208,6 +389,7 @@ export default function AdminProjectDetails() {
                 onClick={() => setIsDeleteConfirmModalOpen(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm"
                 title="Delete Project"
+                type="button"
               >
                 <Trash2 className="w-4 h-4" />
                 Delete Project
@@ -216,12 +398,60 @@ export default function AdminProjectDetails() {
           </div>
         </div>
 
+        <div
+          className={`mb-6 p-4 rounded-xl border ${
+            isVpcProject ? "bg-green-50 border-green-200" : "bg-blue-50 border-blue-200"
+          }`}
+        >
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <Info
+                className={`w-5 h-5 mt-0.5 ${
+                  isVpcProject ? "text-green-600" : "text-blue-600"
+                }`}
+              />
+              <div>
+                <h2 className="text-sm font-semibold text-gray-900">
+                  Provisioning checklist
+                </h2>
+                <p className="text-sm text-gray-700">
+                  {isVpcProject
+                    ? "Continue configuring edge networking and infrastructure resources to activate this project."
+                    : "Switch this project to VPC mode and complete the networking resources below to activate it."}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {quickActions.map((action) => (
+                <button
+                  key={action.key}
+                  onClick={action.onClick}
+                  disabled={action.disabled}
+                  type="button"
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors border ${
+                    action.disabled
+                      ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                      : "bg-white text-[#288DD1] border-[#B3E5FC] hover:bg-[#E0F2FF]"
+                  }`}
+                >
+                  {action.loading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    action.icon
+                  )}
+                  <span>{action.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Project Details Section */}
         <div className="bg-white rounded-[12px] p-6 shadow-sm mb-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-[#575758]">Overview</h2>
             <button
-              onClick={() => setIsAssignEdgeOpen(true)}
+              onClick={handleConfigureEdge}
               className="flex items-center gap-2 px-4 py-2 bg-[#288DD1] text-white rounded-lg hover:bg-[#1976D2] transition-colors text-sm"
               title="Configure Edge"
             >
@@ -504,7 +734,7 @@ export default function AdminProjectDetails() {
           </>
         ) : (
           /* Infrastructure Content Block */
-          <div>
+          <div ref={infrastructureSectionRef}>
             <div className="w-full flex items-center justify-start border-b border-gray-300 mb-6 bg-white rounded-b-xl overflow-x-auto">
               {infraMenuItems.map((item) => (
                 <button

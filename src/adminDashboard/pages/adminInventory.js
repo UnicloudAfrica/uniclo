@@ -13,6 +13,7 @@ import FloatingIP from "./inventoryComponents/floatingIP";
 import CrossConnect from "./inventoryComponents/crossConnect";
 import ColocationSetting from "./inventoryComponents/colocation";
 import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
+import { useLocation } from "react-router-dom";
 import { ChevronDown, Server, HardDrive, Globe, Cpu, Database, Wifi } from "lucide-react";
 import { designTokens } from "../../styles/designTokens";
 
@@ -21,6 +22,7 @@ export default function AdminInventory() {
   const [activeProductTab, setActiveProductTab] = useState("os-image");
   const [selectedRegion, setSelectedRegion] = useState("");
   const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
+  const location = useLocation();
 
   useEffect(() => {
     if (
@@ -84,6 +86,19 @@ export default function AdminInventory() {
       description: "Manage network cross connections"
     },
   ];
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get("tab");
+
+    if (
+      tabParam &&
+      tabParam !== activeProductTab &&
+      productComponents.some((product) => product.id === tabParam)
+    ) {
+      setActiveProductTab(tabParam);
+    }
+  }, [location.search, activeProductTab]);
 
   // Mock inventory statistics (in a real app, these would come from APIs)
   const inventoryStats = {

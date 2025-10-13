@@ -13,17 +13,18 @@ import {
   Plus, 
   FolderOpen, 
   Calendar, 
-  Users, 
   Activity,
   FileText,
   Settings,
   Check,
   AlertCircle,
-  Clock
+  Clock,
+  RefreshCw
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import CreateProjectModal from "./projectComps/addProject";
 import { designTokens } from "../../styles/designTokens";
+import ToastUtils from "../../utils/toastUtil";
 
 // Function to encode the ID for URL
 const encodeId = (id) => {
@@ -60,17 +61,15 @@ export default function AdminProjects() {
   // Fetch projects with backend pagination
   const { 
     data: projectsResponse, 
-    isFetching: isProjectsFetching, 
+    isLoading: isProjectsLoading,
+    isFetching: isProjectsFetching,
     isError: isProjectsError, 
     error: projectsError, 
     refetch: refetchProjects 
-  } = useFetchProjects(
-    { page: currentPage, per_page: itemsPerPage },
-    {
-      refetchInterval: 5000, // Always refresh every 5 seconds to catch processing updates
-      refetchIntervalInBackground: false
-    }
-  );
+  } = useFetchProjects({ page: currentPage, per_page: itemsPerPage });
+
+  const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
 
   // Extract list and pagination meta
   const currentData = projectsResponse?.data || [];
@@ -215,6 +214,39 @@ export default function AdminProjects() {
     setCurrentPage(1);
   };
 
+  useEffect(() => {
+    if (!isProjectsLoading && projectsResponse && !lastUpdatedAt) {
+      setLastUpdatedAt(new Date());
+    }
+  }, [isProjectsLoading, projectsResponse, lastUpdatedAt]);
+
+  const handleManualRefresh = async () => {
+    try {
+      setIsManualRefreshing(true);
+      const result = await refetchProjects();
+      if (result?.error) {
+        throw result.error;
+      }
+      setLastUpdatedAt(new Date());
+      ToastUtils.success("Projects refreshed");
+    } catch (error) {
+      console.error("Failed to refresh projects:", error);
+      ToastUtils.error(
+        error?.message || "Failed to refresh projects. Please try again."
+      );
+    } finally {
+      setIsManualRefreshing(false);
+    }
+  };
+
+  const formattedLastUpdated = lastUpdatedAt
+    ? lastUpdatedAt.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      })
+    : null;
+
   // Keep URL in sync when state changes
   useEffect(() => {
     const currentParamsPage = Number(searchParams.get("page")) || 1;
@@ -243,7 +275,7 @@ export default function AdminProjects() {
     );
   };
 
-  if (isProjectsFetching) {
+  if (isProjectsLoading) {
     return (
       <>
         <AdminHeadbar onMenuClick={toggleMobileMenu} />
@@ -339,14 +371,40 @@ export default function AdminProjects() {
               >
                 Manage and track your infrastructure projects
               </p>
+              {formattedLastUpdated && (
+                <p 
+                  className="mt-1 text-xs"
+                  style={{ color: designTokens.colors.neutral[500] }}
+                >
+                  Last updated: {formattedLastUpdated}
+                </p>
+              )}
             </div>
-            <ModernButton
-              onClick={openAddProject}
-              className="flex items-center gap-2"
-            >
-              <Plus size={18} />
-              Add Project
-            </ModernButton>
+            <div className="flex flex-col items-start sm:items-end gap-2">
+              <div className="flex items-center gap-2">
+                <ModernButton
+                  onClick={handleManualRefresh}
+                  variant="outline"
+                  size="sm"
+                  isLoading={isManualRefreshing}
+                  isDisabled={isManualRefreshing}
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw
+                    size={16}
+                    className={isManualRefreshing ? "animate-spin" : ""}
+                  />
+                  Refresh
+                </ModernButton>
+                <ModernButton
+                  onClick={openAddProject}
+                  className="flex items-center gap-2"
+                >
+                  <Plus size={18} />
+                  Add Project
+                </ModernButton>
+              </div>
+            </div>
           </div>
 
           {/* Stats Cards */}

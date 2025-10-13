@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { X, Loader2, ExternalLink } from "lucide-react";
+import React, { useState } from "react";
+import { X, Loader2 } from "lucide-react";
 import { useCreateProject } from "../../../hooks/adminHooks/projectHooks";
 import { useNavigate } from "react-router-dom";
 import ToastUtils from "../../../utils/toastUtil";
@@ -20,25 +20,11 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
     default_region: "",
   });
   const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitAttempts, setSubmitAttempts] = useState(0);
-  const [progressMessage, setProgressMessage] = useState('');
-  const [createdProjectData, setCreatedProjectData] = useState(null);
-  const [showSetupRedirect, setShowSetupRedirect] = useState(false);
-  const [redirectCountdown, setRedirectCountdown] = useState(null);
+  const [progressMessage, setProgressMessage] = useState("");
   const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
   const { data: tenants, isFetching: isTenantsFetching } = useFetchTenants();
   const { data: clients, isFetching: isClientsFetching } = useFetchClients();
-
-  // Cleanup countdown timer on component unmount
-  useEffect(() => {
-    return () => {
-      // Clear any active countdown timers when component unmounts
-      if (redirectCountdown !== null) {
-        setRedirectCountdown(null);
-      }
-    };
-  }, []);
 
   // Provider derived server-side; no UI binding
 
@@ -63,94 +49,73 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
   };
 
   const handleSubmit = () => {
-    if (validateForm()) {
-      setIsSubmitting(true);
-      setSubmitAttempts(prev => prev + 1);
-      setProgressMessage('Preparing project data...');
-      
-      // Add timestamp to name on retry to avoid duplicates
-      const baseName = formData.name;
-      const projectName = submitAttempts > 0 
-        ? `${baseName}_${Date.now()}`  // Add timestamp on retry
-        : baseName;
-      
-      const payload = {
-        name: projectName,
-        description: formData.description,
-        type: formData.type,
-        tenant_id: formData.tenant_id || null,
-        client_ids: formData.client_ids,
-        default_region: formData.default_region,
-        // provider omitted; derived server-side
-      };
-
-      console.log("Submitting Project Payload (Attempt ", submitAttempts + 1, "):", payload);
-      
-      // Show progress messages
-      setTimeout(() => setProgressMessage('Creating project infrastructure...'), 5000);
-      setTimeout(() => setProgressMessage('Configuring network resources...'), 15000);
-      setTimeout(() => setProgressMessage('Finalizing project setup...'), 30000);
-
-      createProject(payload, {
-        onSuccess: (data) => {
-          console.log('Project creation response:', data);
-          setCreatedProjectData(data);
-          
-          // Always show setup redirect options and start countdown
-          setProgressMessage('Project created successfully!');
-          setShowSetupRedirect(true);
-          setIsSubmitting(false);
-          
-          // Start 10-second countdown to auto-redirect to project details
-          setRedirectCountdown(10);
-          
-          ToastUtils.success('Project created successfully!');
-          
-          // Start countdown timer
-          const countdownInterval = setInterval(() => {
-            setRedirectCountdown((prev) => {
-              if (prev <= 1) {
-                clearInterval(countdownInterval);
-                redirectToProjectDetails();
-                return 0;
-              }
-              return prev - 1;
-            });
-          }, 1000);
-        },
-        onError: (error) => {
-          console.error(`Error creating project (Attempt ${submitAttempts + 1}):`, error.message);
-          setIsSubmitting(false);
-          setProgressMessage('');
-          
-          // Provide specific error handling
-          if (error.message.includes('timeout')) {
-            ToastUtils.error('The project creation is taking longer than expected. This might be due to heavy server load. Please try again or contact support if the issue persists.');
-          } else if (error.message.includes('Network error')) {
-            ToastUtils.error('Network connection issue. Please check your internet connection and try again.');
-          } else {
-            ToastUtils.error(`Failed to create project: ${error.message}`);
-          }
-        },
-      });
+    if (submitAttempts >= 3) {
+      ToastUtils.error(
+        "Maximum retry attempts reached. Please contact support if the issue persists."
+      );
+      return;
     }
-  };
-  
-  const handleRetry = () => {
-    if (submitAttempts < 3) {
-      handleSubmit();
-    } else {
-      ToastUtils.error('Maximum retry attempts reached. Please contact support if the issue persists.');
+
+    if (!validateForm()) {
+      return;
     }
+
+    const baseName = formData.name;
+    const isRetry = submitAttempts > 0;
+    const nextAttempt = submitAttempts + 1;
+    const projectName = isRetry ? `${baseName}_${Date.now()}` : baseName;
+
+    setSubmitAttempts(nextAttempt);
+    setProgressMessage("Creating project...");
+
+    const payload = {
+      name: projectName,
+      description: formData.description,
+      type: formData.type,
+      tenant_id: formData.tenant_id || null,
+      client_ids: formData.client_ids,
+      default_region: formData.default_region,
+      // provider omitted; derived server-side
+    };
+
+    console.log(
+      "Submitting Project Payload (Attempt ",
+      nextAttempt,
+      "):",
+      payload
+    );
+
+    createProject(payload, {
+      onSuccess: (project) => {
+        console.log("Project creation response:", project);
+        ToastUtils.success("Project created successfully!");
+        redirectToProjectDetails(project);
+      },
+      onError: (error) => {
+        console.error(
+          `Error creating project (Attempt ${nextAttempt}):`,
+          error.message
+        );
+        setProgressMessage("");
+
+        if (error.message.includes("timeout")) {
+          ToastUtils.error(
+            "The project creation is taking longer than expected. This might be due to heavy server load. Please try again or contact support if the issue persists."
+          );
+        } else if (error.message.includes("Network error")) {
+          ToastUtils.error(
+            "Network connection issue. Please check your internet connection and try again."
+          );
+        } else {
+          ToastUtils.error(`Failed to create project: ${error.message}`);
+        }
+      },
+    });
   };
   
   const handleSuccess = () => {
-    setIsSubmitting(false);
     setSubmitAttempts(0);
-    setProgressMessage('');
-    setCreatedProjectData(null);
-    setShowSetupRedirect(false);
-    setRedirectCountdown(null);
+    setProgressMessage("");
     onClose();
     setFormData({
       name: "",
@@ -163,97 +128,21 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
     });
   };
   
-  const redirectToInfrastructureSetup = () => {
-    const projectData = createdProjectData?.data;
-    if (projectData?.identifier) {
-      const encodedId = encodeURIComponent(btoa(projectData.identifier));
-      
-      // Navigate to dedicated infrastructure setup page for new projects
-      navigate(`/admin-dashboard/infrastructure-setup?id=${encodedId}&new=1`);
-      handleSuccess(); // Close modal
+  const redirectToProjectDetails = (project) => {
+    const identifier = project?.identifier || project?.id;
+    if (!identifier) {
+      ToastUtils.warning(
+        "Project created but identifier is missing. Please check the projects list."
+      );
+      handleSuccess();
+      return;
     }
-  };
-  
-  const redirectToProjectDetails = () => {
-    const projectData = createdProjectData?.data;
-    if (projectData?.identifier) {
-      const encodedId = encodeURIComponent(btoa(projectData.identifier));
-      
-      // Navigate to project details page
-      navigate(`/admin-dashboard/projects/details?id=${encodedId}`);
-      handleSuccess(); // Close modal
-    }
-  };
-  
-  const startStatusPolling = (projectIdentifier) => {
-    let pollCount = 0;
-    const maxPolls = 60; // 2 minutes with 2-second intervals
-    
-    const pollInterval = setInterval(async () => {
-      pollCount++;
-      
-      try {
-        const response = await fetch(`/admin/v1/projects/${projectIdentifier}/status`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-        
-        const statusData = await response.json();
-        console.log('Project status:', statusData);
-        
-        // Update progress message
-        if (statusData.progress?.message) {
-          setProgressMessage(statusData.progress.message);
-        }
-        
-        // Check for completion
-        if (statusData.status === 'active') {
-          clearInterval(pollInterval);
-          setProgressMessage('Project provisioning completed successfully!');
-          setTimeout(() => {
-            handleSuccess();
-          }, 1500);
-          return;
-        }
-        
-        if (statusData.status === 'failed') {
-          clearInterval(pollInterval);
-          setIsSubmitting(false);
-          setProgressMessage('');
-          ToastUtils.error(`Project provisioning failed: ${statusData.error || 'Unknown error'}`);
-          return;
-        }
-        
-        // Timeout after max polls
-        if (pollCount >= maxPolls) {
-          clearInterval(pollInterval);
-          setIsSubmitting(false);
-          setProgressMessage('');
-          ToastUtils.warning('Project is still provisioning. Please check the projects page for updates.');
-          handleSuccess(); // Close modal anyway
-        }
-        
-      } catch (error) {
-        console.error('Status polling error:', error);
-        
-        // On error, retry a few times then give up
-        if (pollCount >= 5) {
-          clearInterval(pollInterval);
-          setIsSubmitting(false);
-          setProgressMessage('');
-          ToastUtils.warning('Unable to track provisioning status. Please check the projects page.');
-          handleSuccess(); // Close modal anyway
-        }
-      }
-    }, 2000); // Poll every 2 seconds
-  };
 
+    const encodedId = encodeURIComponent(btoa(identifier));
+    navigate(`/admin-dashboard/projects/details?id=${encodedId}`);
+    handleSuccess();
+  };
+  
   return (
     <>
       {isOpen && (
@@ -467,69 +356,32 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                 >
                   Close
                 </button>
-                {!isSubmitting ? (
-                  <button
-                    onClick={handleSubmit}
-                    disabled={
-                      isPending ||
-                      isRegionsFetching ||
-                      isTenantsFetching ||
-                      isClientsFetching
-                    }
-                    className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                  >
-                    {submitAttempts > 0 && submitAttempts < 3 ? `Retry (${submitAttempts}/3)` : 'Create Project'}
-                    {isPending && (
-                      <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-                    )}
-                  </button>
-                ) : showSetupRedirect ? (
-                  // Show infrastructure setup options with countdown
-                  <div className="flex flex-col space-y-3">
-                    <div className="flex items-center justify-center px-4 py-2 bg-green-50 text-green-700 rounded-lg">
-                      <span className="text-sm font-medium text-center">
-                        {progressMessage || 'Project created successfully!'}
-                        {redirectCountdown > 0 && (
-                          <div className="mt-1 text-xs text-green-600">
-                            Redirecting to project details in {redirectCountdown} seconds...
-                          </div>
-                        )}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-center space-x-3">
-                      <button
-                        onClick={redirectToProjectDetails}
-                        className="flex items-center gap-2 px-4 py-2 bg-[#288DD1] text-white rounded-lg hover:bg-[#1976D2] transition-colors text-sm"
-                      >
-                        View Project Details
-                      </button>
-                      <button
-                        onClick={redirectToInfrastructureSetup}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                        Setup Infrastructure
-                      </button>
-                      <button
-                        onClick={handleSuccess}
-                        className="px-4 py-2 text-gray-600 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors text-sm"
-                      >
-                        Close
-                      </button>
-                    </div>
-                  </div>
-                ) : (
+                {isPending ? (
                   <div className="flex items-center space-x-3">
                     <div className="flex items-center px-6 py-3 bg-blue-50 text-blue-700 rounded-[30px]">
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       <span className="text-sm font-medium">
-                        {progressMessage || 'Creating project...'}
+                        {progressMessage || "Creating project..."}
                       </span>
                     </div>
                     <div className="text-xs text-gray-500">
                       Attempt {submitAttempts}/3
                     </div>
                   </div>
+                ) : (
+                  <button
+                    onClick={handleSubmit}
+                    disabled={
+                      isRegionsFetching ||
+                      isTenantsFetching ||
+                      isClientsFetching
+                    }
+                    className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  >
+                    {submitAttempts > 0 && submitAttempts < 3
+                      ? `Retry (${submitAttempts}/3)`
+                      : "Create Project"}
+                  </button>
                 )}
               </div>
             </div>

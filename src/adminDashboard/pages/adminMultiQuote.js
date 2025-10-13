@@ -130,7 +130,7 @@ const AdminMultiQuote = () => {
       if (!formData.email) newErrors.email = "Primary email is required.";
       if (!formData.bill_to_name)
         newErrors.bill_to_name = "Bill to name is required.";
-    }
+    } else if (step === 1) {
       if (pricingRequests.length === 0) {
         newErrors.general = "Please add at least one item to the quote.";
       }

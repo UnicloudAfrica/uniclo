@@ -3,7 +3,8 @@ import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useFetchProjectById, useUpdateProject } from "../../hooks/adminHooks/projectHooks";
+import { useFetchProjectById } from "../../hooks/adminHooks/projectHooks";
+import { useProjectInfrastructureStatus, useSetupInfrastructureComponent } from "../../hooks/adminHooks/projectInfrastructureHooks";
 import {
   ChevronLeft,
   ChevronRight,
@@ -76,12 +77,10 @@ export default function AdminProjectDetails() {
     refetch: refetchProject,
   } = useFetchProjectById(projectId);
 
-  const { mutate: updateProject, isPending: isUpdatingProject } = useUpdateProject();
   const [lastRefreshedAt, setLastRefreshedAt] = useState(null);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
   const infrastructureSectionRef = useRef(null);
 
-  const isVpcProject = projectDetails?.type?.toLowerCase() === "vpc";
 
   useEffect(() => {
     if (projectDetails?.instances) {
@@ -138,30 +137,6 @@ export default function AdminProjectDetails() {
     // );
   };
 
-  const handleManualRefresh = async () => {
-    if (!projectId) {
-      ToastUtils.warning("Project identifier is missing. Please return to the projects list.");
-      return;
-    }
-
-    try {
-      setIsManualRefreshing(true);
-      const result = await refetchProject();
-      if (result?.error) {
-        throw result.error;
-      }
-      setLastRefreshedAt(new Date());
-      ToastUtils.success("Project details refreshed");
-    } catch (error) {
-      console.error("Failed to refresh project details:", error);
-      ToastUtils.error(
-        error?.message || "Failed to refresh project details. Please try again."
-      );
-    } finally {
-      setIsManualRefreshing(false);
-    }
-  };
-
   const formattedLastRefreshed = lastRefreshedAt
     ? lastRefreshedAt.toLocaleTimeString([], {
         hour: "2-digit",
@@ -186,32 +161,81 @@ export default function AdminProjectDetails() {
     setIsAssignEdgeOpen(true);
   };
 
-  const handleSwitchToVpc = () => {
+  const {
+    data: infraStatus,
+    isFetching: isInfraFetching,
+    refetch: refetchInfraStatus,
+  } = useProjectInfrastructureStatus(projectId);
+
+  const { mutate: setupInfrastructureComponent } =
+    useSetupInfrastructureComponent();
+
+  const [activeInfraAction, setActiveInfraAction] = useState(null);
+
+  const hasVpcConfigured =
+    infraStatus?.components?.vpc?.status === "completed";
+
+  const handleManualRefresh = async () => {
     if (!projectId) {
-      ToastUtils.error("Project identifier is missing. Unable to update project type.");
+      ToastUtils.warning(
+        "Project identifier is missing. Please return to the projects list."
+      );
       return;
     }
 
-    if (isVpcProject) {
-      ToastUtils.info("Project is already configured for VPC.");
+    try {
+      setIsManualRefreshing(true);
+      const result = await refetchProject();
+      if (result?.error) {
+        throw result.error;
+      }
+      await refetchInfraStatus();
+      setLastRefreshedAt(new Date());
+      ToastUtils.success("Project details refreshed");
+    } catch (error) {
+      console.error("Failed to refresh project details:", error);
+      ToastUtils.error(
+        error?.message ||
+          "Failed to refresh project details. Please try again."
+      );
+    } finally {
+      setIsManualRefreshing(false);
+    }
+  };
+
+  const handleProvisionVpc = () => {
+    if (!projectId) {
+      ToastUtils.error(
+        "Project identifier is missing. Unable to request VPC provisioning."
+      );
       return;
     }
 
-    updateProject(
-      { id: projectId, projectData: { type: "vpc" } },
+    if (hasVpcConfigured) {
+      ToastUtils.info("Zadara has already provisioned the VPC for this project.");
+      return;
+    }
+
+    setActiveInfraAction("vpc");
+    setupInfrastructureComponent(
+      { projectId, componentType: "vpc" },
       {
-        onSuccess: async () => {
-          ToastUtils.success("Project switched to VPC mode.");
-          const result = await refetchProject();
-          if (!result?.error) {
-            setLastRefreshedAt(new Date());
-          }
+        onSuccess: () => {
+          ToastUtils.success(
+            "Requested VPC provisioning. Zadara will update the project once the VPC is ready."
+          );
+          refetchInfraStatus();
         },
         onError: (error) => {
-          console.error("Failed to switch project to VPC:", error);
+          console.error("Failed to request VPC provisioning:", error);
           ToastUtils.error(
-            error?.message || "Failed to switch project to VPC. Please try again."
+            error?.message ||
+              "Failed to request VPC provisioning. Please try again."
           );
+        },
+        onSettled: () => {
+          setActiveInfraAction(null);
+          refetchProject();
         },
       }
     );
@@ -297,11 +321,15 @@ export default function AdminProjectDetails() {
   const quickActions = [
     {
       key: "vpc",
-      label: isVpcProject ? "VPC Enabled" : "Switch to VPC",
-      onClick: handleSwitchToVpc,
+      label: hasVpcConfigured
+        ? "VPC Provisioned"
+        : activeInfraAction === "vpc"
+        ? "Provisioning VPC..."
+        : "Provision VPC",
+      onClick: handleProvisionVpc,
       icon: <Network size={16} />,
-      disabled: isVpcProject || isUpdatingProject,
-      loading: isUpdatingProject && !isVpcProject,
+      disabled: hasVpcConfigured || activeInfraAction === "vpc",
+      loading: activeInfraAction === "vpc",
     },
     {
       key: "edge",
@@ -341,7 +369,10 @@ export default function AdminProjectDetails() {
     },
   ];
 
-  const isRefreshing = isManualRefreshing || (isProjectFetching && !isProjectLoading);
+  const isRefreshing =
+    isManualRefreshing ||
+    (isProjectFetching && !isProjectLoading) ||
+    isInfraFetching;
 
   return (
     <>
@@ -400,14 +431,14 @@ export default function AdminProjectDetails() {
 
         <div
           className={`mb-6 p-4 rounded-xl border ${
-            isVpcProject ? "bg-green-50 border-green-200" : "bg-blue-50 border-blue-200"
+            hasVpcConfigured ? "bg-green-50 border-green-200" : "bg-blue-50 border-blue-200"
           }`}
         >
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="flex items-start gap-3">
               <Info
                 className={`w-5 h-5 mt-0.5 ${
-                  isVpcProject ? "text-green-600" : "text-blue-600"
+                  hasVpcConfigured ? "text-green-600" : "text-blue-600"
                 }`}
               />
               <div>
@@ -415,9 +446,9 @@ export default function AdminProjectDetails() {
                   Provisioning checklist
                 </h2>
                 <p className="text-sm text-gray-700">
-                  {isVpcProject
+                  {hasVpcConfigured
                     ? "Continue configuring edge networking and infrastructure resources to activate this project."
-                    : "Switch this project to VPC mode and complete the networking resources below to activate it."}
+                    : "Request VPC provisioning and complete the networking resources below to activate it."}
                 </p>
               </div>
             </div>
@@ -488,6 +519,12 @@ export default function AdminProjectDetails() {
               <span className="font-medium text-gray-600">Created At:</span>
               <span className="text-gray-900">
                 {formatDate(projectDetails.created_at)}
+              </span>
+            </div>
+            <div className="flex flex-col">
+              <span className="font-medium text-gray-600">VPC Status:</span>
+              <span className="text-gray-900">
+                {hasVpcConfigured ? "Provisioned by Zadara" : "Awaiting provisioning"}
               </span>
             </div>
           </div>

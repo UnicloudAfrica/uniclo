@@ -2,40 +2,52 @@ import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../index/admin/api';
 
-// Mock infrastructure status for development (remove when backend is ready)
-const getMockInfrastructureStatus = (projectId) => {
+// Convert backend response to frontend format
+const convertBackendResponse = (backendData) => {
+  if (!backendData) return null;
+  
+  // Convert backend format to frontend expected format
+  const infrastructure = backendData.infrastructure || {};
+  
   return {
-    project_id: projectId,
-    overall_status: 'pending',
+    project_id: backendData.project?.identifier,
+    overall_status: backendData.project?.status || 'pending',
     components: {
       domain: {
-        status: 'pending',
+        status: 'completed', // Domain is managed separately
         details: null,
         error: null
       },
       vpc: {
-        status: 'pending',
-        details: null,
+        status: infrastructure.vpc?.status === 'configured' ? 'completed' : 
+                infrastructure.vpc?.status === 'ready' ? 'pending' : 'pending',
+        details: infrastructure.vpc?.details || null,
         error: null
       },
       edge_networks: {
-        status: 'pending',
-        details: null,
+        status: infrastructure.edge_networks?.status === 'configured' ? 'completed' :
+                infrastructure.edge_networks?.ready_for_setup ? 'pending' : 'pending',
+        details: infrastructure.edge_networks?.details || null,
         error: null
       },
-      storage: {
-        status: 'pending',
-        details: null,
+      security_groups: {
+        status: infrastructure.security_groups?.status === 'configured' ? 'completed' :
+                infrastructure.security_groups?.ready_for_setup ? 'pending' : 'pending',
+        details: infrastructure.security_groups?.details || null,
         error: null
       },
-      networking: {
-        status: 'pending',
-        details: null,
+      subnets: {
+        status: infrastructure.subnets?.status === 'configured' ? 'completed' :
+                infrastructure.subnets?.ready_for_setup ? 'pending' : 'pending',
+        details: infrastructure.subnets?.details || null,
         error: null
       }
     },
-    estimated_completion: null,
-    last_updated: new Date().toISOString()
+    completion_percentage: backendData.completion_percentage || 0,
+    estimated_completion: backendData.estimated_completion_time ? 
+      new Date(Date.now() + backendData.estimated_completion_time * 1000).toISOString() : null,
+    last_updated: new Date().toISOString(),
+    next_steps: backendData.next_steps || []
   };
 };
 
@@ -48,18 +60,12 @@ export const useProjectInfrastructureStatus = (projectId, options = {}) => {
         throw new Error('Project ID is required');
       }
 
-      try {
-        // Try to call the real API first
-        return await api('GET', `/projects/${projectId}/infrastructure/status`);
-      } catch (error) {
-        // If API returns 404 (not found), return mock data for development
-        if (error.message.includes('404') || error.message.includes('could not be found')) {
-          console.warn('Infrastructure API not yet implemented, using mock data for development');
-          return { data: getMockInfrastructureStatus(projectId) };
-        }
-        // Re-throw other errors
-        throw error;
-      }
+      const response = await api('GET', `/business/project-infrastructure/${projectId}`);
+      
+      // Convert backend response format to frontend expected format
+      const convertedData = convertBackendResponse(response.data || response);
+      
+      return { data: convertedData };
     },
     enabled: !!projectId,
     staleTime: 30000, // Consider data stale after 30 seconds
@@ -85,8 +91,10 @@ export const useSetupInfrastructureComponent = () => {
         throw new Error('Project ID and component type are required');
       }
 
-      return await api('POST', `/projects/${projectId}/infrastructure/setup/${componentType}`, {
+      return await api('POST', '/business/project-infrastructure', {
+        project_identifier: projectId,
         component: componentType,
+        auto_configure: true,
         timestamp: new Date().toISOString()
       });
     },
@@ -117,10 +125,19 @@ export const useBulkSetupInfrastructure = () => {
         throw new Error('Project ID and components array are required');
       }
 
-      return await api('POST', `/projects/${projectId}/infrastructure/setup/bulk`, {
-        components,
-        timestamp: new Date().toISOString()
-      });
+      // For bulk setup, we'll call the endpoint multiple times
+      // since the backend currently supports single component setup
+      const results = [];
+      for (const component of components) {
+        const result = await api('POST', '/business/project-infrastructure', {
+          project_identifier: projectId,
+          component,
+          auto_configure: true,
+          timestamp: new Date().toISOString()
+        });
+        results.push(result);
+      }
+      return { success: true, results };
     },
     onSuccess: (data, variables) => {
       // Invalidate infrastructure status
@@ -149,7 +166,9 @@ export const useResetInfrastructureComponent = () => {
         throw new Error('Project ID and component type are required');
       }
 
-      return await api('POST', `/projects/${projectId}/infrastructure/reset/${componentType}`, {
+      // Reset functionality is not yet implemented in backend
+      // Using DELETE endpoint when it becomes available
+      return await api('DELETE', `/business/project-infrastructure/${projectId}`, {
         component: componentType,
         timestamp: new Date().toISOString()
       });
@@ -182,7 +201,7 @@ export const useInfrastructureProgress = (projectId) => {
     }
 
     const components = infraStatus.components;
-    const stepOrder = ['domain', 'vpc', 'edge_networks', 'storage', 'networking'];
+    const stepOrder = ['domain', 'vpc', 'edge_networks', 'security_groups', 'subnets'];
     
     const completedSteps = stepOrder.filter(step => 
       components[step]?.status === 'completed'

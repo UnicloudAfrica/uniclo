@@ -172,7 +172,7 @@ const InfrastructureSetupFlow = ({ projectId, projectName }) => {
   const { mutate: setupComponent, isPending: isSettingUp } = useSetupInfrastructureComponent();
   const { mutate: ensureDomain, isPending: isEnsuringDomain } = useEnsureRootDomain();
 
-  // Define infrastructure setup steps
+  // Define infrastructure setup steps (matching backend components)
   const infrastructureSteps = [
     {
       id: 'domain',
@@ -199,20 +199,20 @@ const InfrastructureSetupFlow = ({ projectId, projectName }) => {
       troubleshooting: 'Ensure VPC is active before configuring edge networks'
     },
     {
-      id: 'storage',
-      title: 'Storage Setup',
-      description: 'Configure storage volumes and backup policies',
-      component: 'storage',
+      id: 'security_groups',
+      title: 'Security Groups',
+      description: 'Configure firewall rules and security policies',
+      component: 'security_groups',
       prerequisites: ['VPC must be available'],
-      troubleshooting: 'Check storage quotas and regional availability'
+      troubleshooting: 'Verify network security rules and access policies'
     },
     {
-      id: 'networking',
-      title: 'Advanced Networking',
-      description: 'Setup load balancers, security groups, and routing',
-      component: 'networking',
-      prerequisites: ['VPC and Edge Networks must be configured'],
-      troubleshooting: 'Verify security group rules and network ACLs'
+      id: 'subnets',
+      title: 'Subnets',
+      description: 'Create and configure network subnets for resource organization',
+      component: 'subnets',
+      prerequisites: ['VPC must be configured'],
+      troubleshooting: 'Check CIDR blocks and subnet configurations'
     }
   ];
 

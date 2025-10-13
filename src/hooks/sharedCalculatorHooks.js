@@ -4,7 +4,7 @@ import useAdminAuthStore from "../stores/adminAuthStore";
 import useAuthStore from "../stores/userAuthStore";
 import ToastUtils from "../utils/toastUtil";
 
-// Determine if user is admin or tenant and get appropriate token
+// Determine if user is admin or tenant and get appropriate token and base URL
 const getAuthConfig = () => {
   const adminAuth = useAdminAuthStore.getState();
   const tenantAuth = useAuthStore.getState();
@@ -13,7 +13,7 @@ const getAuthConfig = () => {
   if (adminAuth.token) {
     return {
       token: adminAuth.token,
-      baseURL: config.baseURL // Use general v1 API for shared endpoints
+      baseURL: config.adminURL // Use admin API endpoints
     };
   }
   
@@ -21,14 +21,14 @@ const getAuthConfig = () => {
   if (tenantAuth.token) {
     return {
       token: tenantAuth.token,
-      baseURL: config.baseURL // Use general v1 API for shared endpoints
+      baseURL: config.tenantURL + '/admin' // Use tenant admin API endpoints
     };
   }
   
   // No authentication - this shouldn't happen for calculator/pricing
   return {
     token: null,
-    baseURL: config.baseURL
+    baseURL: config.baseURL // Fallback to general API
   };
 };
 

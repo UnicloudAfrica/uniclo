@@ -109,6 +109,11 @@ const CalculatorSummaryStep = ({
           setIsGeneratingInvoice(false);
         }
       });
+    } catch (error) {
+      console.error('Invoice generation error:', error);
+      ToastUtils.error(error.message || "Failed to generate invoice. Please try again.");
+      setIsGeneratingInvoice(false);
+    }
   };
 
   const createLead = async () => {
@@ -171,6 +176,11 @@ const CalculatorSummaryStep = ({
           setIsCreatingLead(false);
         }
       });
+    } catch (error) {
+      console.error('Lead creation error:', error);
+      ToastUtils.error(error.message || "Failed to create lead. Please try again.");
+      setIsCreatingLead(false);
+    }
   };
 
   const downloadPdf = (base64String, filename) => {

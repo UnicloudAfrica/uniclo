@@ -5,6 +5,7 @@ import adminApi from "../index/admin/api";
 import silentAdminApi from "../index/admin/silent";
 import tenantApi from "../index/tenant/tenantApi";
 import silentTenantApi from "../index/tenant/silentTenant";
+import api from "../index/api";
 
 /**
  * Shared Resource Hooks
@@ -13,6 +14,49 @@ import silentTenantApi from "../index/tenant/silentTenant";
  * as defined in shared_resources.php. They use different API clients
  * based on the context they're called from.
  */
+
+// ================================
+// COUNTRIES (Shared across all contexts via /api/v1)
+// ================================
+
+const fetchCountries = async () => {
+  // Countries endpoint should not require authentication
+  // Use direct fetch to avoid auth store complications
+  const baseURL = process.env.REACT_APP_API_USER_BASE_URL || '';
+  const url = `${baseURL}/api/v1/countries`;
+  
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const res = await response.json();
+    if (!res?.data) throw new Error("Failed to fetch countries");
+    return res.data;
+  } catch (error) {
+    console.error('Error fetching countries:', error);
+    throw error;
+  }
+};
+
+// Shared Countries Hook (uses /api/v1/countries)
+export const useSharedFetchCountries = (options = {}) => {
+  return useQuery({
+    queryKey: ["shared-countries"],
+    queryFn: fetchCountries,
+    staleTime: 1000 * 60 * 15, // 15 minutes - countries don't change often
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
 
 // ================================
 // Multi-Instance Operations (Shared across all contexts)

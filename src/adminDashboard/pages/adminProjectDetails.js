@@ -23,7 +23,7 @@ import ENIs from "./infraComps/enis";
 import RouteTables from "./infraComps/routetable";
 import AssignEdgeConfigModal from "./projectComps/assignEdgeConfig";
 import AdminEdgeConfigPanel from "../components/AdminEdgeConfigPanel";
-import InfrastructureSetupFlow from "../components/InfrastructureSetupFlow";
+import InfrastructureSetupFlow from "./infraComps/InfrastructureSetupFlow";
 
 // Function to decode the ID from URL
 const decodeId = (encodedId) => {

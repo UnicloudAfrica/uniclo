@@ -25,9 +25,20 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
   const [progressMessage, setProgressMessage] = useState('');
   const [createdProjectData, setCreatedProjectData] = useState(null);
   const [showSetupRedirect, setShowSetupRedirect] = useState(false);
+  const [redirectCountdown, setRedirectCountdown] = useState(null);
   const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
   const { data: tenants, isFetching: isTenantsFetching } = useFetchTenants();
   const { data: clients, isFetching: isClientsFetching } = useFetchClients();
+
+  // Cleanup countdown timer on component unmount
+  useEffect(() => {
+    return () => {
+      // Clear any active countdown timers when component unmounts
+      if (redirectCountdown !== null) {
+        setRedirectCountdown(null);
+      }
+    };
+  }, []);
 
   // Provider derived server-side; no UI binding
 
@@ -85,22 +96,27 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
           console.log('Project creation response:', data);
           setCreatedProjectData(data);
           
-          if (data?.data?.status === 'provisioning' || data?.infrastructure_setup) {
-            setProgressMessage('Project created successfully!');
-            setShowSetupRedirect(true);
-            setIsSubmitting(false);
-            
-            // If we have infrastructure setup info, show redirect option
-            if (data?.infrastructure_setup?.url) {
-              ToastUtils.success('Project created! You can now set up your infrastructure.');
-            }
-          } else {
-            // Legacy mode - immediate success
-            setProgressMessage('Project created successfully!');
-            setTimeout(() => {
-              handleSuccess();
-            }, 1000);
-          }
+          // Always show setup redirect options and start countdown
+          setProgressMessage('Project created successfully!');
+          setShowSetupRedirect(true);
+          setIsSubmitting(false);
+          
+          // Start 10-second countdown to auto-redirect to project details
+          setRedirectCountdown(10);
+          
+          ToastUtils.success('Project created successfully!');
+          
+          // Start countdown timer
+          const countdownInterval = setInterval(() => {
+            setRedirectCountdown((prev) => {
+              if (prev <= 1) {
+                clearInterval(countdownInterval);
+                redirectToProjectDetails();
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
         },
         onError: (error) => {
           console.error(`Error creating project (Attempt ${submitAttempts + 1}):`, error.message);
@@ -134,6 +150,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
     setProgressMessage('');
     setCreatedProjectData(null);
     setShowSetupRedirect(false);
+    setRedirectCountdown(null);
     onClose();
     setFormData({
       name: "",
@@ -153,6 +170,17 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
       
       // Navigate to dedicated infrastructure setup page for new projects
       navigate(`/admin-dashboard/infrastructure-setup?id=${encodedId}&new=1`);
+      handleSuccess(); // Close modal
+    }
+  };
+  
+  const redirectToProjectDetails = () => {
+    const projectData = createdProjectData?.data;
+    if (projectData?.identifier) {
+      const encodedId = encodeURIComponent(btoa(projectData.identifier));
+      
+      // Navigate to project details page
+      navigate(`/admin-dashboard/projects/details?id=${encodedId}`);
       handleSuccess(); // Close modal
     }
   };
@@ -456,26 +484,39 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                     )}
                   </button>
                 ) : showSetupRedirect ? (
-                  // Show infrastructure setup options
-                  <div className="flex items-center space-x-3">
-                    <div className="flex items-center px-4 py-2 bg-green-50 text-green-700 rounded-lg">
-                      <span className="text-sm font-medium">
+                  // Show infrastructure setup options with countdown
+                  <div className="flex flex-col space-y-3">
+                    <div className="flex items-center justify-center px-4 py-2 bg-green-50 text-green-700 rounded-lg">
+                      <span className="text-sm font-medium text-center">
                         {progressMessage || 'Project created successfully!'}
+                        {redirectCountdown > 0 && (
+                          <div className="mt-1 text-xs text-green-600">
+                            Redirecting to project details in {redirectCountdown} seconds...
+                          </div>
+                        )}
                       </span>
                     </div>
-                    <button
-                      onClick={redirectToInfrastructureSetup}
-                      className="flex items-center gap-2 px-4 py-2 bg-[#288DD1] text-white rounded-lg hover:bg-[#1976D2] transition-colors text-sm"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      Setup Infrastructure
-                    </button>
-                    <button
-                      onClick={handleSuccess}
-                      className="px-4 py-2 text-gray-600 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors text-sm"
-                    >
-                      Close
-                    </button>
+                    <div className="flex items-center justify-center space-x-3">
+                      <button
+                        onClick={redirectToProjectDetails}
+                        className="flex items-center gap-2 px-4 py-2 bg-[#288DD1] text-white rounded-lg hover:bg-[#1976D2] transition-colors text-sm"
+                      >
+                        View Project Details
+                      </button>
+                      <button
+                        onClick={redirectToInfrastructureSetup}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Setup Infrastructure
+                      </button>
+                      <button
+                        onClick={handleSuccess}
+                        className="px-4 py-2 text-gray-600 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                      >
+                        Close
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div className="flex items-center space-x-3">

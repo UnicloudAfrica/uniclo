@@ -2,6 +2,43 @@ import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../index/admin/api';
 
+// Mock infrastructure status for development (remove when backend is ready)
+const getMockInfrastructureStatus = (projectId) => {
+  return {
+    project_id: projectId,
+    overall_status: 'pending',
+    components: {
+      domain: {
+        status: 'pending',
+        details: null,
+        error: null
+      },
+      vpc: {
+        status: 'pending',
+        details: null,
+        error: null
+      },
+      edge_networks: {
+        status: 'pending',
+        details: null,
+        error: null
+      },
+      storage: {
+        status: 'pending',
+        details: null,
+        error: null
+      },
+      networking: {
+        status: 'pending',
+        details: null,
+        error: null
+      }
+    },
+    estimated_completion: null,
+    last_updated: new Date().toISOString()
+  };
+};
+
 // Fetch project infrastructure status
 export const useProjectInfrastructureStatus = (projectId, options = {}) => {
   return useQuery({
@@ -11,7 +48,18 @@ export const useProjectInfrastructureStatus = (projectId, options = {}) => {
         throw new Error('Project ID is required');
       }
 
-      return await api('GET', `/projects/${projectId}/infrastructure/status`);
+      try {
+        // Try to call the real API first
+        return await api('GET', `/projects/${projectId}/infrastructure/status`);
+      } catch (error) {
+        // If API returns 404 (not found), return mock data for development
+        if (error.message.includes('404') || error.message.includes('could not be found')) {
+          console.warn('Infrastructure API not yet implemented, using mock data for development');
+          return { data: getMockInfrastructureStatus(projectId) };
+        }
+        // Re-throw other errors
+        throw error;
+      }
     },
     enabled: !!projectId,
     staleTime: 30000, // Consider data stale after 30 seconds

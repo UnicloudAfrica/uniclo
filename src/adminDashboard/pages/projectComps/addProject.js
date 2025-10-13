@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, ExternalLink } from "lucide-react";
 import { useCreateProject } from "../../../hooks/adminHooks/projectHooks";
+import { useNavigate } from "react-router-dom";
 import ToastUtils from "../../../utils/toastUtil";
 import { useFetchTenants } from "../../../hooks/adminHooks/tenantHooks";
 import { useFetchClients } from "../../../hooks/adminHooks/clientHooks";
@@ -9,6 +10,7 @@ import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
 
 const CreateProjectModal = ({ isOpen, onClose }) => {
   const { mutate: createProject, isPending } = useCreateProject();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -21,6 +23,8 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitAttempts, setSubmitAttempts] = useState(0);
   const [progressMessage, setProgressMessage] = useState('');
+  const [createdProjectData, setCreatedProjectData] = useState(null);
+  const [showSetupRedirect, setShowSetupRedirect] = useState(false);
   const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
   const { data: tenants, isFetching: isTenantsFetching } = useFetchTenants();
   const { data: clients, isFetching: isClientsFetching } = useFetchClients();
@@ -79,13 +83,19 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
       createProject(payload, {
         onSuccess: (data) => {
           console.log('Project creation response:', data);
+          setCreatedProjectData(data);
           
-          if (data?.data?.status === 'provisioning') {
-            setProgressMessage('Project created! Provisioning infrastructure...');
-            // Start polling for status updates
-            startStatusPolling(data.data.identifier || data.data.id);
+          if (data?.data?.status === 'provisioning' || data?.infrastructure_setup) {
+            setProgressMessage('Project created successfully!');
+            setShowSetupRedirect(true);
+            setIsSubmitting(false);
+            
+            // If we have infrastructure setup info, show redirect option
+            if (data?.infrastructure_setup?.url) {
+              ToastUtils.success('Project created! You can now set up your infrastructure.');
+            }
           } else {
-            // Immediate success (legacy mode)
+            // Legacy mode - immediate success
             setProgressMessage('Project created successfully!');
             setTimeout(() => {
               handleSuccess();
@@ -122,6 +132,8 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
     setIsSubmitting(false);
     setSubmitAttempts(0);
     setProgressMessage('');
+    setCreatedProjectData(null);
+    setShowSetupRedirect(false);
     onClose();
     setFormData({
       name: "",
@@ -132,6 +144,18 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
       default_region: "",
       provider: "",
     });
+  };
+  
+  const redirectToInfrastructureSetup = () => {
+    const projectData = createdProjectData?.data;
+    if (projectData?.identifier && projectData?.name) {
+      const encodedId = encodeURIComponent(btoa(projectData.identifier));
+      const encodedName = encodeURIComponent(projectData.name);
+      
+      // Navigate to project details page with infrastructure tab
+      navigate(`/admin-dashboard/projects/details?id=${encodedId}&name=${encodedName}`);
+      handleSuccess(); // Close modal
+    }
   };
   
   const startStatusPolling = (projectIdentifier) => {
@@ -432,6 +456,28 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                       <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
                     )}
                   </button>
+                ) : showSetupRedirect ? (
+                  // Show infrastructure setup options
+                  <div className="flex items-center space-x-3">
+                    <div className="flex items-center px-4 py-2 bg-green-50 text-green-700 rounded-lg">
+                      <span className="text-sm font-medium">
+                        {progressMessage || 'Project created successfully!'}
+                      </span>
+                    </div>
+                    <button
+                      onClick={redirectToInfrastructureSetup}
+                      className="flex items-center gap-2 px-4 py-2 bg-[#288DD1] text-white rounded-lg hover:bg-[#1976D2] transition-colors text-sm"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Setup Infrastructure
+                    </button>
+                    <button
+                      onClick={handleSuccess}
+                      className="px-4 py-2 text-gray-600 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                    >
+                      Close
+                    </button>
+                  </div>
                 ) : (
                   <div className="flex items-center space-x-3">
                     <div className="flex items-center px-6 py-3 bg-blue-50 text-blue-700 rounded-[30px]">

@@ -23,6 +23,7 @@ import ENIs from "./infraComps/enis";
 import RouteTables from "./infraComps/routetable";
 import AssignEdgeConfigModal from "./projectComps/assignEdgeConfig";
 import AdminEdgeConfigPanel from "../components/AdminEdgeConfigPanel";
+import InfrastructureSetupFlow from "../components/InfrastructureSetupFlow";
 
 // Function to decode the ID from URL
 const decodeId = (encodedId) => {
@@ -50,7 +51,7 @@ export default function AdminProjectDetails() {
 
   // Separate state for top-level tabs and sub-tabs
   const [activeTopLevelTab, setActiveTopLevelTab] = useState("Instances");
-  const [activeInfraTab, setActiveInfraTab] = useState("VPCs");
+  const [activeInfraTab, setActiveInfraTab] = useState("Setup");
 
   const queryParams = new URLSearchParams(location.search);
   const encodedProjectId = queryParams.get("id");
@@ -116,6 +117,7 @@ export default function AdminProjectDetails() {
 
   // Array of menu items and their corresponding components
   const infraMenuItems = [
+    { name: "Setup", component: InfrastructureSetupFlow },
     { name: "VPCs", component: VPCs },
     { name: "Key Pairs", component: KeyPairs },
     { name: "SGs", component: SecurityGroup },

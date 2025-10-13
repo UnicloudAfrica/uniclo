@@ -92,12 +92,75 @@ export const useCreateProject = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createProject,
-    onSuccess: () => {
-      // Invalidate projects query to refresh the list
+    onMutate: async (newProject) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries(["admin-projects"]);
+
+      // Snapshot the previous value
+      const previousProjects = queryClient.getQueryData(["admin-projects"]);
+
+      // Create optimistic project data
+      const optimisticProject = {
+        id: Date.now(), // temporary ID
+        identifier: `temp_${Date.now()}`, // temporary identifier
+        name: newProject.name,
+        description: newProject.description,
+        type: newProject.type,
+        default_region: newProject.default_region,
+        status: "processing", // Show as processing until Zadara confirms
+        provisioning_status: "processing",
+        provisioning_progress: 5,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        instances: [],
+        tenant_id: newProject.tenant_id,
+        client_ids: newProject.client_ids || [],
+        _isOptimistic: true // Flag to identify optimistic updates
+      };
+
+      // Optimistically update the projects list
+      if (previousProjects?.data) {
+        queryClient.setQueryData(["admin-projects"], (old) => ({
+          ...old,
+          data: [optimisticProject, ...old.data], // Add to beginning of list
+          meta: {
+            ...old.meta,
+            total: old.meta.total + 1
+          }
+        }));
+      }
+
+      // Return a context object with the snapshotted value
+      return { previousProjects };
+    },
+    onSuccess: (data, variables, context) => {
+      // Replace the optimistic project with real data
+      queryClient.setQueryData(["admin-projects"], (old) => {
+        if (!old?.data) return old;
+        
+        return {
+          ...old,
+          data: old.data.map(project => 
+            project._isOptimistic && project.name === variables.name
+              ? { ...data, status: data.status || "provisioning" } // Use real project data
+              : project
+          )
+        };
+      });
+
+      // Also invalidate to ensure we get the latest data from server
       queryClient.invalidateQueries(["admin-projects"]);
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousProjects) {
+        queryClient.setQueryData(["admin-projects"], context.previousProjects);
+      }
       console.error("Error creating project:", error);
+    },
+    onSettled: () => {
+      // Always refetch after error or success to ensure server state
+      queryClient.invalidateQueries(["admin-projects"]);
     },
   });
 };

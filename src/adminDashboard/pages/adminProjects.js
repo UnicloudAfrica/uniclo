@@ -16,7 +16,10 @@ import {
   Users, 
   Activity,
   FileText,
-  Settings
+  Settings,
+  Check,
+  AlertCircle,
+  Clock
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import CreateProjectModal from "./projectComps/addProject";
@@ -61,7 +64,13 @@ export default function AdminProjects() {
     isError: isProjectsError, 
     error: projectsError, 
     refetch: refetchProjects 
-  } = useFetchProjects({ page: currentPage, per_page: itemsPerPage });
+  } = useFetchProjects(
+    { page: currentPage, per_page: itemsPerPage },
+    {
+      refetchInterval: 5000, // Always refresh every 5 seconds to catch processing updates
+      refetchIntervalInBackground: false
+    }
+  );
 
   // Extract list and pagination meta
   const currentData = projectsResponse?.data || [];
@@ -111,6 +120,65 @@ export default function AdminProjects() {
           {value || 'Standard'}
         </span>
       )
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (value, row) => {
+        const getStatusStyle = (status) => {
+          switch (status) {
+            case 'processing':
+            case 'provisioning':
+              return {
+                backgroundColor: '#FEF3C7',
+                color: '#D97706',
+                icon: <Loader2 size={12} className="animate-spin" />
+              };
+            case 'active':
+              return {
+                backgroundColor: '#D1FAE5',
+                color: '#059669',
+                icon: <Check size={12} />
+              };
+            case 'failed':
+            case 'error':
+              return {
+                backgroundColor: '#FEE2E2',
+                color: '#DC2626',
+                icon: <AlertCircle size={12} />
+              };
+            default:
+              return {
+                backgroundColor: designTokens.colors.neutral[100],
+                color: designTokens.colors.neutral[600],
+                icon: <Clock size={12} />
+              };
+          }
+        };
+        
+        const style = getStatusStyle(value);
+        return (
+          <div className="flex items-center gap-1">
+            <span 
+              className="px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1"
+              style={{
+                backgroundColor: style.backgroundColor,
+                color: style.color
+              }}
+            >
+              {style.icon}
+              <span className="capitalize">
+                {value === 'processing' ? 'Processing...' : 
+                 value === 'provisioning' ? 'Provisioning...' : 
+                 value || 'Unknown'}
+              </span>
+            </span>
+            {row._isOptimistic && (
+              <span className="text-xs text-gray-400 italic">*</span>
+            )}
+          </div>
+        );
+      }
     },
     {
       key: 'created_at',

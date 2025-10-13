@@ -182,3 +182,36 @@ export const useSharedMultiQuotePreviews = () => {
     },
   });
 };
+
+// Shared Client Fetching Hook
+const fetchClients = async () => {
+  const { token, baseURL } = getAuthConfig();
+  
+  // Use appropriate endpoint based on user type
+  const endpoint = baseURL.includes('/admin') ? '/clients' : '/clients';
+  const res = await sharedApiCall("GET", endpoint);
+  
+  if (!res?.data) {
+    throw new Error("Failed to fetch clients");
+  }
+  return res.data;
+};
+
+export const useSharedClients = (tenantId = null, options = {}) => {
+  return useQuery({
+    queryKey: ["shared-clients", { tenantId }],
+    queryFn: fetchClients,
+    select: (data) => {
+      // Filter clients based on tenantId for admin users
+      if (tenantId && Array.isArray(data)) {
+        return data.filter(client => 
+          client.tenant_id === parseInt(tenantId) || client.tenant_id === tenantId
+        );
+      }
+      return data || [];
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};

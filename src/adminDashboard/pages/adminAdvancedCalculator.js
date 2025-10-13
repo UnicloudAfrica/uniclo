@@ -8,6 +8,7 @@ import StepProgress from "../../dashboard/components/instancesubcomps/stepProgre
 import CalculatorConfigStep from "./calculatorComps/calculatorConfigStep";
 import CalculatorSummaryStep from "./calculatorComps/calculatorSummaryStep";
 import ToastUtils from "../../utils/toastUtil";
+import { useSharedCalculatorPricing } from "../../hooks/sharedCalculatorHooks";
 
 const AdminAdvancedCalculator = () => {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ const AdminAdvancedCalculator = () => {
 
   const [calculatorData, setCalculatorData] = useState({
     tenant_id: "",
+    client_id: "",
     pricing_requests: [],
     // Total discount fields
     apply_total_discount: false,
@@ -30,6 +32,9 @@ const AdminAdvancedCalculator = () => {
   const [errors, setErrors] = useState({});
 
   const steps = ["Configuration", "Summary & Options"];
+  
+  // Use shared calculator pricing hook
+  const { mutate: calculatePricingMutation, isPending: isCalculatingMutation } = useSharedCalculatorPricing();
 
   const updateCalculatorData = (field, value) => {
     setCalculatorData((prev) => ({ ...prev, [field]: value }));
@@ -67,56 +72,46 @@ const AdminAdvancedCalculator = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const calculatePricing = async () => {
+  const calculatePricing = () => {
     if (!validateConfiguration()) {
       return;
     }
 
     setIsCalculating(true);
 
-    try {
-      const payload = {
-        tenant_id: calculatorData.tenant_id || null,
-        pricing_requests: calculatorData.pricing_requests.map((req) => {
-          const { _display, ...rest } = req;
-          return rest;
-        }),
+    // Prepare payload
+    const payload = {
+      client_id: calculatorData.client_id || null,
+      tenant_id: calculatorData.tenant_id || null,
+      pricing_requests: calculatorData.pricing_requests.map((req) => {
+        const { _display, ...rest } = req;
+        return rest;
+      }),
+    };
+
+    // Add total discount if applied
+    if (calculatorData.apply_total_discount && calculatorData.total_discount_value) {
+      payload.total_discount = {
+        type: calculatorData.total_discount_type,
+        value: parseFloat(calculatorData.total_discount_value),
+        label: calculatorData.total_discount_label || null,
       };
-
-      // Add total discount if applied
-      if (calculatorData.apply_total_discount && calculatorData.total_discount_value) {
-        payload.total_discount = {
-          type: calculatorData.total_discount_type,
-          value: parseFloat(calculatorData.total_discount_value),
-          label: calculatorData.total_discount_label || null,
-        };
-      }
-
-      const response = await fetch('/api/v1/calculator/pricing', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('admin_token') || localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || data.error || 'Failed to calculate pricing');
-      }
-
-      setPricingResult(data);
-      setCurrentStep(1); // Move to summary step
-      ToastUtils.success("Pricing calculated successfully!");
-
-    } catch (error) {
-      console.error('Calculation error:', error);
-      ToastUtils.error(error.message || "Failed to calculate pricing. Please try again.");
-    } finally {
-      setIsCalculating(false);
     }
+
+    // Use the mutation from shared hook
+    calculatePricingMutation(payload, {
+      onSuccess: (data) => {
+        setPricingResult(data);
+        setCurrentStep(1); // Move to summary step
+        ToastUtils.success("Pricing calculated successfully!");
+        setIsCalculating(false);
+      },
+      onError: (error) => {
+        console.error('Calculation error:', error);
+        ToastUtils.error(error.message || "Failed to calculate pricing. Please try again.");
+        setIsCalculating(false);
+      }
+    });
   };
 
   const handleBack = () => {
@@ -209,7 +204,7 @@ const AdminAdvancedCalculator = () => {
                 <button
                   onClick={handleBack}
                   className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
-                  disabled={isCalculating}
+                  disabled={isCalculating || isCalculatingMutation}
                 >
                   <ChevronLeft className="w-4 h-4 mr-1 inline-block" /> Back
                 </button>
@@ -219,10 +214,10 @@ const AdminAdvancedCalculator = () => {
             {currentStep === 0 && (
               <button
                 onClick={handleNext}
-                disabled={isCalculating || calculatorData.pricing_requests.length === 0}
+                disabled={isCalculating || isCalculatingMutation || calculatorData.pricing_requests.length === 0}
                 className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
-                {isCalculating ? (
+                {(isCalculating || isCalculatingMutation) ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Calculating...

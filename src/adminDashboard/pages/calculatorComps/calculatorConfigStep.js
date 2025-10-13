@@ -6,6 +6,7 @@ import {
 import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
 import { useFormattedRegions } from "../../../utils/regionUtils";
 import { useFetchTenants } from "../../../hooks/adminHooks/tenantHooks";
+import { useSharedClients } from "../../../hooks/sharedCalculatorHooks";
 
 const CalculatorConfigStep = ({
   calculatorData,
@@ -35,6 +36,10 @@ const CalculatorConfigStep = ({
   const { data: rawRegions, isFetching: isRegionsFetching } = useFetchRegions();
   const regions = useFormattedRegions(rawRegions);
   const { data: tenants, isFetching: isTenantsFetching } = useFetchTenants();
+  const { data: clients, isFetching: isClientsFetching } = useSharedClients(
+    calculatorData.tenant_id,
+    { enabled: !!calculatorData.tenant_id }
+  );
 
   const { data: computerInstances, isFetching: isComputerInstancesFetching } =
     useFetchProductPricing(currentItem.region, "compute_instance", {
@@ -146,32 +151,66 @@ const CalculatorConfigStep = ({
         </p>
       </div>
 
-      {/* Tenant Selection */}
+      {/* Tenant & Client Selection */}
       <div className="bg-blue-50 p-4 rounded-lg">
-        <h4 className="font-semibold text-gray-800 mb-3">Tenant Selection (Optional)</h4>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Select Tenant for Pricing
-          </label>
-          {isTenantsFetching ? (
-            <div className="flex items-center">
-              <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
-              <span className="text-gray-500 text-sm">Loading tenants...</span>
-            </div>
-          ) : (
-            <select
-              value={calculatorData.tenant_id || ""}
-              onChange={(e) => updateCalculatorData("tenant_id", e.target.value)}
-              className={inputClass}
-            >
-              <option value="">Global pricing (no tenant)</option>
-              {tenants?.map((tenant) => (
-                <option key={tenant.id} value={tenant.id}>
-                  {tenant.name}
-                </option>
-              ))}
-            </select>
-          )}
+        <h4 className="font-semibold text-gray-800 mb-3">Tenant & Client Selection (Optional)</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Select Tenant for Pricing (Optional)
+            </label>
+            {isTenantsFetching ? (
+              <div className="flex items-center">
+                <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
+                <span className="text-gray-500 text-sm">Loading tenants...</span>
+              </div>
+            ) : (
+              <select
+                value={calculatorData.tenant_id || ""}
+                onChange={(e) => updateCalculatorData("tenant_id", e.target.value)}
+                className={inputClass}
+              >
+                <option value="">Global pricing (no tenant)</option>
+                {tenants?.map((tenant) => (
+                  <option key={tenant.id} value={tenant.id}>
+                    {tenant.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Select Client (Optional)
+            </label>
+            {isClientsFetching && calculatorData.tenant_id ? (
+              <div className="flex items-center">
+                <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
+                <span className="text-gray-500 text-sm">Loading clients...</span>
+              </div>
+            ) : (
+              <select
+                value={calculatorData.client_id || ""}
+                onChange={(e) => updateCalculatorData("client_id", e.target.value)}
+                className={inputClass}
+                disabled={!calculatorData.tenant_id}
+              >
+                <option value="">No specific client</option>
+                {clients?.map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {client.business_name || client.first_name + ' ' + client.last_name || `Client ${client.id}`}
+                  </option>
+                ))}
+              </select>
+            )}
+            {!calculatorData.tenant_id && (
+              <p className="text-xs text-gray-500 mt-1">Select a tenant first to choose clients</p>
+            )}
+            {calculatorData.tenant_id && clients && clients.length === 0 && !isClientsFetching && (
+              <p className="text-xs text-gray-500 mt-1">No clients found for selected tenant</p>
+            )}
+          </div>
         </div>
       </div>
 

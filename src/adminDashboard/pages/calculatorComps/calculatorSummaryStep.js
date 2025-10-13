@@ -350,6 +350,9 @@ const CalculatorSummaryStep = ({
                   onChange={(e) => setInvoiceData(prev => ({ ...prev, email: e.target.value }))}
                   className={`${inputClass} ${errors.email ? "border-red-500" : ""}`}
                   placeholder="client@company.com"
+                  autoComplete="email"
+                  autoCorrect="off"
+                  spellCheck="false"
                 />
                 {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
               </div>
@@ -362,6 +365,9 @@ const CalculatorSummaryStep = ({
                   onChange={(e) => setInvoiceData(prev => ({ ...prev, bill_to_name: e.target.value }))}
                   className={`${inputClass} ${errors.bill_to_name ? "border-red-500" : ""}`}
                   placeholder="Client Name"
+                  autoComplete="name"
+                  autoCorrect="off"
+                  spellCheck="false"
                 />
                 {errors.bill_to_name && <p className="text-red-500 text-xs mt-1">{errors.bill_to_name}</p>}
               </div>
@@ -434,6 +440,9 @@ const CalculatorSummaryStep = ({
                     onChange={(e) => setLeadData(prev => ({ ...prev, first_name: e.target.value }))}
                     className={`${inputClass} ${errors.first_name ? "border-red-500" : ""}`}
                     placeholder="John"
+                    autoComplete="given-name"
+                    autoCorrect="off"
+                    spellCheck="false"
                   />
                   {errors.first_name && <p className="text-red-500 text-xs mt-1">{errors.first_name}</p>}
                 </div>
@@ -445,6 +454,9 @@ const CalculatorSummaryStep = ({
                     onChange={(e) => setLeadData(prev => ({ ...prev, last_name: e.target.value }))}
                     className={`${inputClass} ${errors.last_name ? "border-red-500" : ""}`}
                     placeholder="Doe"
+                    autoComplete="family-name"
+                    autoCorrect="off"
+                    spellCheck="false"
                   />
                   {errors.last_name && <p className="text-red-500 text-xs mt-1">{errors.last_name}</p>}
                 </div>
@@ -458,6 +470,9 @@ const CalculatorSummaryStep = ({
                   onChange={(e) => setLeadData(prev => ({ ...prev, email: e.target.value }))}
                   className={`${inputClass} ${errors.email ? "border-red-500" : ""}`}
                   placeholder="john.doe@company.com"
+                  autoComplete="email"
+                  autoCorrect="off"
+                  spellCheck="false"
                 />
                 {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
               </div>
@@ -470,6 +485,9 @@ const CalculatorSummaryStep = ({
                   onChange={(e) => setLeadData(prev => ({ ...prev, phone: e.target.value }))}
                   className={inputClass}
                   placeholder="+1 (555) 123-4567"
+                  autoComplete="tel"
+                  autoCorrect="off"
+                  spellCheck="false"
                 />
               </div>
               
@@ -481,6 +499,9 @@ const CalculatorSummaryStep = ({
                   onChange={(e) => setLeadData(prev => ({ ...prev, company: e.target.value }))}
                   className={inputClass}
                   placeholder="Company Name Ltd"
+                  autoComplete="organization"
+                  autoCorrect="off"
+                  spellCheck="false"
                 />
               </div>
               

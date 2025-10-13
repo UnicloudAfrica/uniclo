@@ -202,6 +202,7 @@ const CreateLead = ({ isOpen, onClose }) => {
                     required
                     error={errors.first_name}
                     icon={<User />}
+                    autoComplete="given-name"
                   />
                   <ModernInput
                     label="Last Name"
@@ -212,6 +213,7 @@ const CreateLead = ({ isOpen, onClose }) => {
                     required
                     error={errors.last_name}
                     icon={<User />}
+                    autoComplete="family-name"
                   />
                   <ModernInput
                     label="Email"
@@ -222,14 +224,18 @@ const CreateLead = ({ isOpen, onClose }) => {
                     required
                     error={errors.email}
                     icon={<Mail />}
+                    autoComplete="email"
+                    autoCorrect="off"
+                    spellCheck="false"
                   />
                   <ModernInput
                     label="Phone"
-                    type="text"
+                    type="tel"
                     value={formData.phone}
                     onChange={(e) => updateFormData("phone", e.target.value)}
                     placeholder="e.g., +1234567890"
                     icon={<Phone />}
+                    autoComplete="tel"
                   />
                   <ModernInput
                     label="Company"
@@ -238,6 +244,7 @@ const CreateLead = ({ isOpen, onClose }) => {
                     onChange={(e) => updateFormData("company", e.target.value)}
                     placeholder="e.g., Acme Corp"
                     icon={<Building />}
+                    autoComplete="organization"
                   />
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">

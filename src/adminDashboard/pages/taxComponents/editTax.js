@@ -378,30 +378,49 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType }) => {
                       htmlFor="newRateValue"
                       className="block text-xs font-medium text-gray-700 mb-1"
                     >
-                      Rate (0-1)
+                      Rate (Enter percentage: 7.5 for 7.5% or decimal: 0.075)
                     </label>
-                    <input
-                      id="newRateValue"
-                      type="number"
-                      step="0.001"
-                      value={newRateValue}
-                      onChange={(e) => {
-                        setNewRateValue(e.target.value);
-                        setErrors((prev) => ({ ...prev, newRateValue: null }));
-                      }}
-                      placeholder="e.g., 0.075"
-                      className={`w-full input-field ${
-                        errors.newRateValue
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
-                      disabled={isPending}
-                    />
+                    <div className="relative">
+                      <input
+                        id="newRateValue"
+                        type="number"
+                        step="0.001"
+                        min="0"
+                        max="100"
+                        value={newRateValue}
+                        onChange={(e) => {
+                          let value = e.target.value;
+                          // If user enters a value greater than 1, assume it's percentage format
+                          // Convert to decimal for storage (7.5 becomes 0.075)
+                          if (parseFloat(value) > 1 && parseFloat(value) <= 100) {
+                            value = (parseFloat(value) / 100).toString();
+                          }
+                          setNewRateValue(value);
+                          setErrors((prev) => ({ ...prev, newRateValue: null }));
+                        }}
+                        placeholder="7.5 or 0.075"
+                        className={`w-full input-field ${
+                          errors.newRateValue
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
+                        disabled={isPending}
+                      />
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">
+                        {newRateValue && parseFloat(newRateValue) ? 
+                          `${(parseFloat(newRateValue) * 100).toFixed(2)}%` : 
+                          '%'
+                        }
+                      </div>
+                    </div>
                     {errors.newRateValue && (
                       <p className="text-red-500 text-xs mt-1">
                         {errors.newRateValue}
                       </p>
                     )}
+                    <p className="text-xs text-gray-500 mt-1">
+                      Enter 7.5 for 7.5% tax (will be stored as 0.075)
+                    </p>
                   </div>
                 </div>
                 <button

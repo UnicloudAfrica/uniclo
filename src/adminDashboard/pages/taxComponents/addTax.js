@@ -169,27 +169,46 @@ const AddTaxTypeModal = ({ isOpen, onClose }) => {
                   htmlFor="initialRate"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Rate (e.g., 0.075 for 7.5%)
+                  Rate (Enter percentage: 7.5 for 7.5% or decimal: 0.075)
                 </label>
-                <input
-                  id="initialRate"
-                  type="number"
-                  step="0.001" // Allow for precise rates
-                  value={formData.initialRate}
-                  onChange={(e) =>
-                    updateFormData("initialRate", e.target.value)
-                  }
-                  placeholder="e.g., 0.075"
-                  className={`w-full input-field ${
-                    errors.initialRate ? "border-red-500" : "border-gray-300"
-                  }`}
-                  disabled={isPending}
-                />
+                <div className="relative">
+                  <input
+                    id="initialRate"
+                    type="number"
+                    step="0.001"
+                    min="0"
+                    max="100"
+                    value={formData.initialRate}
+                    onChange={(e) => {
+                      let value = e.target.value;
+                      // If user enters a value greater than 1, assume it's percentage format
+                      // Convert to decimal for storage (7.5 becomes 0.075)
+                      if (parseFloat(value) > 1 && parseFloat(value) <= 100) {
+                        value = (parseFloat(value) / 100).toString();
+                      }
+                      updateFormData("initialRate", value);
+                    }}
+                    placeholder="7.5 or 0.075"
+                    className={`w-full input-field ${
+                      errors.initialRate ? "border-red-500" : "border-gray-300"
+                    }`}
+                    disabled={isPending}
+                  />
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">
+                    {formData.initialRate && parseFloat(formData.initialRate) ? 
+                      `${(parseFloat(formData.initialRate) * 100).toFixed(2)}%` : 
+                      '%'
+                    }
+                  </div>
+                </div>
                 {errors.initialRate && (
                   <p className="text-red-500 text-xs mt-1">
                     {errors.initialRate}
                   </p>
                 )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Enter 7.5 for 7.5% tax (will be stored as 0.075)
+                </p>
               </div>
               <div className="mt-4">
                 <label

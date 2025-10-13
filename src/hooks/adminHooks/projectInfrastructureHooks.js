@@ -179,6 +179,67 @@ export const useEnableProjectVpc = () => {
   });
 };
 
+// Real-time project status polling
+export const useProjectStatusPolling = (projectId, options = {}) => {
+  const {
+    enabled = true,
+    interval = 30000, // 30 seconds
+    maxPollingTime = 1800000, // 30 minutes
+    stopOnStatus = ['active', 'failed', 'deleted'],
+    triggerSync = false
+  } = options;
+
+  const [pollingStartTime] = React.useState(() => Date.now());
+  const [shouldStop, setShouldStop] = React.useState(false);
+
+  return useQuery({
+    queryKey: ['project-status-polling', projectId],
+    queryFn: async () => {
+      if (!projectId) {
+        throw new Error('Project ID is required');
+      }
+
+      const syncParam = triggerSync ? '?sync=true' : '';
+      const response = await api('GET', `/projects/${projectId}/status${syncParam}`);
+      
+      return response.data || response;
+    },
+    enabled: enabled && !!projectId && !shouldStop,
+    refetchInterval: (data, query) => {
+      // Stop polling if we've reached max time
+      if (Date.now() - pollingStartTime > maxPollingTime) {
+        setShouldStop(true);
+        return false;
+      }
+
+      // Stop polling if project reached final status
+      if (data && stopOnStatus.includes(data.status)) {
+        setShouldStop(true);
+        return false;
+      }
+
+      // Continue polling
+      return interval;
+    },
+    refetchIntervalInBackground: false,
+    staleTime: 0, // Always consider data stale to trigger refetches
+    retry: (failureCount, error) => {
+      // Stop retrying after 3 failures
+      return failureCount < 3;
+    },
+    onSuccess: (data) => {
+      // Log status changes
+      console.log(`Project ${projectId} status:`, data.status);
+      
+      // If project completed, trigger success callback
+      if (options.onStatusChange) {
+        options.onStatusChange(data);
+      }
+    },
+    ...options.queryOptions
+  });
+};
+
 // Bulk infrastructure setup mutation (for future use)
 export const useBulkSetupInfrastructure = () => {
   const queryClient = useQueryClient();

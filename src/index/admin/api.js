@@ -24,8 +24,27 @@ const api = async (method, uri, body = null) => {
     body: body ? JSON.stringify(body) : null,
   };
 
+  // Add timeout for slow requests
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, 60000); // 60 second timeout
+
+  options.signal = controller.signal;
+
   try {
+    console.log(`🚀 API Request: ${method} ${url}`, body ? { payload: body } : '');
+    const startTime = Date.now();
+    
     const response = await fetch(url, options);
+    
+    const responseTime = Date.now() - startTime;
+    console.log(`⏱️ API Response: ${method} ${url} - ${responseTime}ms - Status: ${response.status}`);
+    
+    // Log slow requests for debugging
+    if (responseTime > 10000) { // Warn if request takes more than 10 seconds
+      console.warn(`🐌 Slow request detected: ${method} ${url} took ${responseTime}ms`);
+    }
     const res = await response.json();
 
     if (response.ok || response.status === 201) {
@@ -82,8 +101,28 @@ const api = async (method, uri, body = null) => {
       throw new Error(errorMessage);
     }
   } catch (err) {
-    ToastUtils.error(err.message);
-    throw err;
+    // Clear the timeout
+    clearTimeout(timeoutId);
+    
+    // Handle different types of errors
+    let errorMessage = "An error occurred";
+    
+    if (err.name === 'AbortError') {
+      errorMessage = "Request timed out. The server is taking too long to respond. Please try again.";
+      console.error(`⏰ Request timeout: ${method} ${url}`);
+    } else if (err.message.includes('Failed to fetch')) {
+      errorMessage = "Network error: Unable to connect to the server. Please check your internet connection.";
+      console.error(`🌐 Network error: ${method} ${url}`);
+    } else {
+      errorMessage = err.message;
+      console.error(`❌ API Error: ${method} ${url}`, err);
+    }
+    
+    ToastUtils.error(errorMessage);
+    throw new Error(errorMessage);
+  } finally {
+    // Ensure timeout is always cleared
+    clearTimeout(timeoutId);
   }
 };
 

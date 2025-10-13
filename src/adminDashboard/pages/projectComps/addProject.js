@@ -18,6 +18,9 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
     default_region: "",
   });
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitAttempts, setSubmitAttempts] = useState(0);
+  const [progressMessage, setProgressMessage] = useState('');
   const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
   const { data: tenants, isFetching: isTenantsFetching } = useFetchTenants();
   const { data: clients, isFetching: isClientsFetching } = useFetchClients();
@@ -46,6 +49,10 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
 
   const handleSubmit = () => {
     if (validateForm()) {
+      setIsSubmitting(true);
+      setSubmitAttempts(prev => prev + 1);
+      setProgressMessage('Preparing project data...');
+      
       const payload = {
         name: formData.name,
         description: formData.description,
@@ -56,27 +63,55 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
         // provider omitted; derived server-side
       };
 
-      console.log("Submitting Project Payload:", payload);
+      console.log("Submitting Project Payload (Attempt ", submitAttempts + 1, "):", payload);
+      
+      // Show progress messages
+      setTimeout(() => setProgressMessage('Creating project infrastructure...'), 5000);
+      setTimeout(() => setProgressMessage('Configuring network resources...'), 15000);
+      setTimeout(() => setProgressMessage('Finalizing project setup...'), 30000);
 
       createProject(payload, {
         onSuccess: () => {
-          // ToastUtils.success("Project Created Successfully");
-          onClose();
-          setFormData({
-            name: "",
-            description: "",
-            type: "vpc",
-            tenant_id: "",
-            client_ids: [],
-            default_region: "",
-            provider: "",
-          });
+          setProgressMessage('Project created successfully!');
+          setTimeout(() => {
+            setIsSubmitting(false);
+            setSubmitAttempts(0);
+            setProgressMessage('');
+            onClose();
+            setFormData({
+              name: "",
+              description: "",
+              type: "vpc",
+              tenant_id: "",
+              client_ids: [],
+              default_region: "",
+              provider: "",
+            });
+          }, 1000);
         },
         onError: (error) => {
-          console.error("Error creating project:", error.message);
-          // ToastUtils.error("Failed to create project. Please try again.");
+          console.error(`Error creating project (Attempt ${submitAttempts + 1}):`, error.message);
+          setIsSubmitting(false);
+          setProgressMessage('');
+          
+          // Provide specific error handling
+          if (error.message.includes('timeout')) {
+            ToastUtils.error('The project creation is taking longer than expected. This might be due to heavy server load. Please try again or contact support if the issue persists.');
+          } else if (error.message.includes('Network error')) {
+            ToastUtils.error('Network connection issue. Please check your internet connection and try again.');
+          } else {
+            ToastUtils.error(`Failed to create project: ${error.message}`);
+          }
         },
       });
+    }
+  };
+  
+  const handleRetry = () => {
+    if (submitAttempts < 3) {
+      handleSubmit();
+    } else {
+      ToastUtils.error('Maximum retry attempts reached. Please contact support if the issue persists.');
     }
   };
 
@@ -293,21 +328,35 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                 >
                   Close
                 </button>
-                <button
-                  onClick={handleSubmit}
-                  disabled={
-                    isPending ||
-                    isRegionsFetching ||
-                    isTenantsFetching ||
-                    isClientsFetching
-                  }
-                  className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                >
-                  Create Project
-                  {isPending && (
-                    <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-                  )}
-                </button>
+                {!isSubmitting ? (
+                  <button
+                    onClick={handleSubmit}
+                    disabled={
+                      isPending ||
+                      isRegionsFetching ||
+                      isTenantsFetching ||
+                      isClientsFetching
+                    }
+                    className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  >
+                    {submitAttempts > 0 && submitAttempts < 3 ? `Retry (${submitAttempts}/3)` : 'Create Project'}
+                    {isPending && (
+                      <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
+                    )}
+                  </button>
+                ) : (
+                  <div className="flex items-center space-x-3">
+                    <div className="flex items-center px-6 py-3 bg-blue-50 text-blue-700 rounded-[30px]">
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      <span className="text-sm font-medium">
+                        {progressMessage || 'Creating project...'}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Attempt {submitAttempts}/3
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

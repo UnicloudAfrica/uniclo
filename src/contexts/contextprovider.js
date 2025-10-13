@@ -1,7 +1,7 @@
 import { createContext, useEffect, useState } from "react";
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, query, onSnapshot } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { initializeApp, getApp, getApps } from "firebase/app";
+import { getFirestore, collection, query, onSnapshot } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 export const BlogContext = createContext();
 export const PageContext = createContext();
@@ -47,11 +47,11 @@ const ContextProvider = (props) => {
     storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
     messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
     appId: process.env.REACT_APP_FIREBASE_APP_ID,
-    measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
+    measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID,
   };
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth();
+  const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+  const auth = getAuth(app);
   const db = getFirestore(app);
 
   const [page, setPage] = useState('General');

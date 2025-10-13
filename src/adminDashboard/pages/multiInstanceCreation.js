@@ -1298,18 +1298,29 @@ export default function MultiInstanceCreation() {
               <ModernButton
                 onClick={createInstances}
                 disabled={creating || totalInstances === 0 || !pricing}
-                className="inline-flex items-center"
+                size="lg"
+                className="inline-flex items-center font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                 style={{
                   backgroundColor: designTokens.colors.success[600],
-                  borderColor: designTokens.colors.success[600]
+                  borderColor: designTokens.colors.success[600],
+                  background: `linear-gradient(135deg, ${designTokens.colors.success[500]} 0%, ${designTokens.colors.success[600]} 100%)`,
+                  boxShadow: `0 8px 25px -8px ${designTokens.colors.success[500]}80, 0 4px 12px -4px ${designTokens.colors.success[600]}40`,
+                  border: 'none'
                 }}
               >
                 {creating ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <>
+                    <Loader2 className="w-5 h-5 mr-3 animate-spin" />
+                    <span className="animate-pulse">Creating Instances...</span>
+                  </>
                 ) : (
-                  <Play className="w-4 h-4 mr-2" />
+                  <>
+                    <Play className="w-5 h-5 mr-3 drop-shadow-sm" />
+                    <span className="tracking-wide">
+                      {totalInstances === 1 ? '🚀 Launch Instance' : `🚀 Launch ${totalInstances} Instances`}
+                    </span>
+                  </>
                 )}
-                Create {totalInstances} Instance{totalInstances !== 1 ? 's' : ''}
               </ModernButton>
             </div>
           </ModernCard>

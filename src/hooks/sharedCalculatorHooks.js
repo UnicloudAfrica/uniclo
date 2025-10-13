@@ -54,22 +54,43 @@ const sharedApiCall = async (method, uri, body = null) => {
 
   try {
     const response = await fetch(url, options);
-    const res = await response.json();
-
-    if (response.ok || response.status === 201) {
-      return res;
-    } else {
+    
+    // Check if response is ok before trying to parse JSON
+    if (!response.ok && response.status !== 201) {
+      // Try to get error message from response
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData?.data?.error || errorData?.error || errorData?.message || errorMessage;
+      } catch (jsonError) {
+        // Response might not be JSON, use status text
+        console.warn('Could not parse error response as JSON:', jsonError);
+      }
+      
       if (response.status === 401) {
         ToastUtils.error("Session expired. Please login again.");
         // Let individual auth stores handle redirect logic
         return null;
       }
-
-      const errorMessage =
-        res?.data?.error || res?.error || res?.message || "An error occurred";
+      
       throw new Error(errorMessage);
     }
+    
+    // Try to parse successful response
+    try {
+      const res = await response.json();
+      return res;
+    } catch (jsonError) {
+      console.error('Failed to parse successful response as JSON:', jsonError);
+      throw new Error('Server returned invalid JSON response');
+    }
+    
   } catch (err) {
+    // Handle network errors and other fetch failures
+    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+      throw new Error('Network error: Unable to connect to the server. Please check your internet connection.');
+    }
     throw err;
   }
 };
@@ -115,11 +136,25 @@ export const useSharedCalculatorOptions = (
 
 // Calculator Pricing (shared endpoint)
 const calculatePricing = async (pricingData) => {
-  const res = await sharedApiCall("POST", "/calculator/pricing", pricingData);
-  if (!res?.data) {
-    throw new Error("Failed to calculate pricing");
+  try {
+    console.log('Calculating pricing with payload:', pricingData);
+    const res = await sharedApiCall("POST", "/calculator/pricing", pricingData);
+    console.log('Pricing calculation response:', res);
+    
+    // Handle different response structures
+    if (res?.data) {
+      return res.data;
+    } else if (res && typeof res === 'object') {
+      // Response might be the data itself
+      return res;
+    } else {
+      throw new Error("Invalid pricing calculation response format");
+    }
+  } catch (error) {
+    console.error('Error in calculatePricing:', error);
+    // Re-throw with more descriptive error message
+    throw new Error(error.message || "Failed to calculate pricing. Please check your configuration and try again.");
   }
-  return res.data;
 };
 
 export const useSharedCalculatorPricing = () => {

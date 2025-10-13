@@ -97,6 +97,24 @@ const AdminAdvancedCalculator = () => {
       }),
     };
     
+    // Validate payload before sending
+    if (!payload.pricing_requests || payload.pricing_requests.length === 0) {
+      ToastUtils.error("No pricing requests found. Please add at least one configuration.");
+      setIsCalculating(false);
+      return;
+    }
+    
+    // Validate each pricing request has required fields
+    const invalidRequests = payload.pricing_requests.filter(req => 
+      !req.region || !req.compute_instance_id || !req.os_image_id
+    );
+    
+    if (invalidRequests.length > 0) {
+      ToastUtils.error("Some configurations are missing required fields (region, compute instance, or OS image).");
+      setIsCalculating(false);
+      return;
+    }
+    
     // Add assignment data based on assignment type
     if (assignType === 'tenant' && selectedTenantId) {
       payload.tenant_id = selectedTenantId;
@@ -110,24 +128,53 @@ const AdminAdvancedCalculator = () => {
 
     // Add total discount if applied
     if (calculatorData.apply_total_discount && calculatorData.total_discount_value) {
+      const discountValue = parseFloat(calculatorData.total_discount_value);
+      if (isNaN(discountValue) || discountValue <= 0) {
+        ToastUtils.error("Please enter a valid discount value.");
+        setIsCalculating(false);
+        return;
+      }
+      
       payload.total_discount = {
         type: calculatorData.total_discount_type,
-        value: parseFloat(calculatorData.total_discount_value),
+        value: discountValue,
         label: calculatorData.total_discount_label || null,
       };
     }
+    
+    console.log('Final payload being sent:', payload);
 
     // Use the mutation from shared hook
     calculatePricingMutation(payload, {
       onSuccess: (data) => {
+        console.log('Pricing calculation successful:', data);
         setPricingResult(data);
         setCurrentStep(1); // Move to summary step
         ToastUtils.success("Pricing calculated successfully!");
         setIsCalculating(false);
       },
       onError: (error) => {
-        console.error('Calculation error:', error);
-        ToastUtils.error(error.message || "Failed to calculate pricing. Please try again.");
+        console.error('Calculation error details:', {
+          error,
+          message: error.message,
+          stack: error.stack,
+          payload
+        });
+        
+        // Provide more specific error messages
+        let errorMessage = "Failed to calculate pricing. Please try again.";
+        
+        if (error.message) {
+          if (error.message.includes('Invalid pricing calculation response format')) {
+            errorMessage = "The pricing calculation service returned an unexpected response. Please contact support.";
+          } else if (error.message.includes('Failed to fetch')) {
+            errorMessage = "Unable to connect to the pricing service. Please check your internet connection.";
+          } else {
+            errorMessage = error.message;
+          }
+        }
+        
+        ToastUtils.error(errorMessage);
         setIsCalculating(false);
       }
     });

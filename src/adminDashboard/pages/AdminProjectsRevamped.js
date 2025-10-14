@@ -182,7 +182,7 @@ const AdminProjectsRevamped = () => {
       <div className="flex-1 flex flex-col md:ml-20 lg:ml-[20%]">
         <AdminHeadbar onMenuClick={toggleMobileMenu} />
 
-        <main className="flex-1 p-4 sm:p-6 pt-24 md:pt-6 overflow-auto">
+        <main className="flex-1 p-4 sm:p-6 pt-[6.5rem] overflow-auto">
           {/* Header */}
           <div className="mb-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

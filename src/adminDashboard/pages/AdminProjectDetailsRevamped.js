@@ -36,6 +36,10 @@ const AdminProjectDetailsRevamped = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
 
+  const toggleMobileMenu = () =>
+    setIsMobileMenuOpen((prevState) => !prevState);
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
   // Get project identifier from URL and validate it
   const rawIdentifier = searchParams.get("identifier") || searchParams.get("id");
   
@@ -196,14 +200,11 @@ const AdminProjectDetailsRevamped = () => {
       <div className="flex min-h-screen bg-gray-50">
         <AdminSidebar
           isMobileMenuOpen={isMobileMenuOpen}
-          onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
+          onCloseMobileMenu={closeMobileMenu}
         />
         <div className="flex-1 flex flex-col md:ml-20 lg:ml-[20%]">
-          <AdminHeadbar
-            toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            title="Project Details"
-          />
-          <main className="flex-1 p-6 pt-20 md:pt-6">
+          <AdminHeadbar onMenuClick={toggleMobileMenu} />
+          <main className="flex-1 p-4 sm:p-6 pt-[6.5rem] md:pt-6">
             <Skeleton height={200} className="mb-6" />
             <Skeleton height={400} />
           </main>
@@ -217,14 +218,11 @@ const AdminProjectDetailsRevamped = () => {
       <div className="flex min-h-screen bg-gray-50">
         <AdminSidebar
           isMobileMenuOpen={isMobileMenuOpen}
-          onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
+          onCloseMobileMenu={closeMobileMenu}
         />
         <div className="flex-1 flex flex-col md:ml-20 lg:ml-[20%]">
-          <AdminHeadbar
-            toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            title="Project Details"
-          />
-          <main className="flex-1 p-6 pt-20 md:pt-6 flex items-center justify-center">
+          <AdminHeadbar onMenuClick={toggleMobileMenu} />
+          <main className="flex-1 p-4 sm:p-6 pt-[6.5rem] md:pt-6 flex items-center justify-center">
             <div className="text-center max-w-md">
               <AlertCircle size={48} className="mx-auto text-gray-400 mb-4" />
               <h2 className="text-xl font-semibold text-gray-900 mb-2">Project not found</h2>
@@ -258,16 +256,13 @@ const AdminProjectDetailsRevamped = () => {
     <div className="flex min-h-screen bg-gray-50">
       <AdminSidebar
         isMobileMenuOpen={isMobileMenuOpen}
-        closeMobileMenu={() => setIsMobileMenuOpen(false)}
+        onCloseMobileMenu={closeMobileMenu}
       />
 
       <div className="flex-1 flex flex-col md:ml-20 lg:ml-[20%]">
-        <AdminHeadbar
-          toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          title="Project Details"
-        />
+        <AdminHeadbar onMenuClick={toggleMobileMenu} />
 
-        <main className="flex-1 p-6 pt-20 md:pt-6 overflow-auto">
+        <main className="flex-1 p-4 sm:p-6 pt-[6.5rem] md:pt-6 overflow-auto">
           {/* Back button */}
           <button
             onClick={() => navigate("/admin-dashboard/projects-revamped")}
@@ -279,7 +274,7 @@ const AdminProjectDetailsRevamped = () => {
 
           {/* Project Header */}
           <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-            <div className="flex items-start justify-between mb-4">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between mb-4">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">{project.name}</h1>
                 <p className="text-gray-600">{project.description || "No description"}</p>
@@ -292,7 +287,7 @@ const AdminProjectDetailsRevamped = () => {
                   />
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-end gap-2">
                 <button
                   onClick={() => {
                     refetchProject();
@@ -342,7 +337,7 @@ const AdminProjectDetailsRevamped = () => {
             </div>
 
             {/* Info Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-6">
               <InfoCard
                 icon={Network}
                 label="Region"
@@ -372,38 +367,38 @@ const AdminProjectDetailsRevamped = () => {
 
           {/* Provisioning Progress */}
           {project.provisioning_progress && (
-            <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Provisioning Status</h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Status:</span>
-                  <span className="font-medium text-gray-900 capitalize">
-                    {project.provisioning_progress.status}
+          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Provisioning Status</h3>
+            <div className="space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <span className="text-gray-600">Status:</span>
+                <span className="font-medium text-gray-900 capitalize">
+                  {project.provisioning_progress.status}
+                </span>
+              </div>
+              {project.provisioning_progress.step && (
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <span className="text-gray-600">Current Step:</span>
+                  <span className="font-medium text-gray-900">
+                    {project.provisioning_progress.step}
                   </span>
                 </div>
-                {project.provisioning_progress.step && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Current Step:</span>
-                    <span className="font-medium text-gray-900">
-                      {project.provisioning_progress.step}
-                    </span>
-                  </div>
-                )}
-                {project.provisioning_started_at && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Started:</span>
-                    <span className="font-medium text-gray-900">
-                      {new Date(project.provisioning_started_at).toLocaleString()}
-                    </span>
-                  </div>
-                )}
-                {project.provisioning_completed_at && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Completed:</span>
-                    <span className="font-medium text-gray-900">
-                      {new Date(project.provisioning_completed_at).toLocaleString()}
-                    </span>
-                  </div>
+              )}
+              {project.provisioning_started_at && (
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <span className="text-gray-600">Started:</span>
+                  <span className="font-medium text-gray-900">
+                    {new Date(project.provisioning_started_at).toLocaleString()}
+                  </span>
+                </div>
+              )}
+              {project.provisioning_completed_at && (
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <span className="text-gray-600">Completed:</span>
+                  <span className="font-medium text-gray-900">
+                    {new Date(project.provisioning_completed_at).toLocaleString()}
+                  </span>
+                </div>
                 )}
               </div>
             </div>
@@ -432,12 +427,12 @@ const AdminProjectDetailsRevamped = () => {
             </div>
 
             {/* Tab Content */}
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               {activeTab === "overview" && (
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Information</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm text-gray-600">Name</label>
                         <p className="font-medium text-gray-900">{project.name}</p>
@@ -472,7 +467,7 @@ const AdminProjectDetailsRevamped = () => {
                   {/* Resource Summary */}
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Resources Summary</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                       <div className="border border-gray-200 rounded-lg p-4 text-center">
                         <Server size={24} className="mx-auto text-primary-600 mb-2" />
                         <p className="text-2xl font-bold text-gray-900">

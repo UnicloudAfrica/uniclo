@@ -417,7 +417,10 @@ const Contact = () => {
                   checked={agreeToPrivacyPolicy}
                 />
                 <span className="ml-2 text-base text-[#1E1E1E99] font-Outfit font-medium">
-                  Click here to accept our privacy policy
+                  Click here to accept our{" "}
+                  <a href="/terms" className=" underline underline-offset-2">
+                    privacy policy
+                  </a>
                 </span>
               </label>
               {privacyPolicyError && (
@@ -484,13 +487,13 @@ const Contact = () => {
               <p className=" text-sm">
                 {" "}
                 <span className=" block gradient-text underline">
-                 +2348028431253
+                  +2348028431253
                 </span>
               </p>
               <p className=" text-sm">
                 {" "}
                 <span className=" block gradient-text underline">
-                +2348060040620
+                  +2348060040620
                 </span>
               </p>
             </div>

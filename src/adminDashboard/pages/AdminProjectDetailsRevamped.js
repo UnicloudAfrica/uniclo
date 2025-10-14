@@ -196,14 +196,14 @@ const AdminProjectDetailsRevamped = () => {
       <div className="flex min-h-screen bg-gray-50">
         <AdminSidebar
           isMobileMenuOpen={isMobileMenuOpen}
-          closeMobileMenu={() => setIsMobileMenuOpen(false)}
+          onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
         />
         <div className="flex-1 flex flex-col md:ml-20 lg:ml-[20%]">
           <AdminHeadbar
             toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             title="Project Details"
           />
-          <main className="flex-1 p-6">
+          <main className="flex-1 p-6 pt-20 md:pt-6">
             <Skeleton height={200} className="mb-6" />
             <Skeleton height={400} />
           </main>
@@ -217,14 +217,14 @@ const AdminProjectDetailsRevamped = () => {
       <div className="flex min-h-screen bg-gray-50">
         <AdminSidebar
           isMobileMenuOpen={isMobileMenuOpen}
-          closeMobileMenu={() => setIsMobileMenuOpen(false)}
+          onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
         />
         <div className="flex-1 flex flex-col md:ml-20 lg:ml-[20%]">
           <AdminHeadbar
             toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             title="Project Details"
           />
-          <main className="flex-1 p-6 flex items-center justify-center">
+          <main className="flex-1 p-6 pt-20 md:pt-6 flex items-center justify-center">
             <div className="text-center max-w-md">
               <AlertCircle size={48} className="mx-auto text-gray-400 mb-4" />
               <h2 className="text-xl font-semibold text-gray-900 mb-2">Project not found</h2>
@@ -267,7 +267,7 @@ const AdminProjectDetailsRevamped = () => {
           title="Project Details"
         />
 
-        <main className="flex-1 p-6 overflow-auto">
+        <main className="flex-1 p-6 pt-20 md:pt-6 overflow-auto">
           {/* Back button */}
           <button
             onClick={() => navigate("/admin-dashboard/projects-revamped")}

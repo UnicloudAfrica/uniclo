@@ -179,7 +179,9 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   const handleItemClick = (itemName, path) => {
     setActiveItem(itemName);
     navigate(path);
-    onCloseMobileMenu(); // Close mobile menu after navigation
+    if (onCloseMobileMenu && typeof onCloseMobileMenu === 'function') {
+      onCloseMobileMenu(); // Close mobile menu after navigation
+    }
   };
 
   const renderMenuItem = (item, isBottom = false) => {

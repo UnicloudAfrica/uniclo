@@ -172,7 +172,7 @@ const AdminProjectsRevamped = () => {
     <div className="flex min-h-screen bg-gray-50">
       <AdminSidebar
         isMobileMenuOpen={isMobileMenuOpen}
-        closeMobileMenu={() => setIsMobileMenuOpen(false)}
+        onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
       />
 
       <div className="flex-1 flex flex-col md:ml-20 lg:ml-[20%]">
@@ -181,7 +181,7 @@ const AdminProjectsRevamped = () => {
           title="Projects"
         />
 
-        <main className="flex-1 p-6 overflow-auto">
+        <main className="flex-1 p-6 pt-20 md:pt-6 overflow-auto">
           {/* Header */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
@@ -299,8 +299,8 @@ const AdminProjectsRevamped = () => {
               </div>
             ) : (
               <>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
+                <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
+                  <table className="w-full min-w-[800px]">
                     <thead className="bg-gray-50 border-b border-gray-200">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">

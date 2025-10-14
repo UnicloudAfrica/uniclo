@@ -370,7 +370,7 @@ const AdminProjectsRevamped = () => {
                           <td className="px-6 py-4">
                             <div className="flex items-center justify-end gap-2">
                               <button
-                                onClick={() => navigate(`/admin-dashboard/projects/details?identifier=${project.identifier}`)}
+                                onClick={() => navigate(`/admin-dashboard/projects-revamped/details?identifier=${project.identifier}`)}
                                 className="p-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
                                 title="View Details"
                               >

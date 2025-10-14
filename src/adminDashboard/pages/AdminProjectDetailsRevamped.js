@@ -18,7 +18,7 @@ import {
   Boxes,
   Info
 } from "lucide-react";
-import { useFetchProjectById, useFetchProjectStatus } from "../../hooks/adminHooks/projectHooks";
+import { useFetchProjectById } from "../../hooks/adminHooks/projectHooks";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import Skeleton from "react-loading-skeleton";
@@ -30,8 +30,20 @@ const AdminProjectDetailsRevamped = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
 
-  // Get project identifier from URL
-  const projectIdentifier = searchParams.get("identifier") || searchParams.get("id");
+  // Get project identifier from URL and validate it
+  const rawIdentifier = searchParams.get("identifier") || searchParams.get("id");
+  
+  // Validate identifier format (should be 6 uppercase alphanumeric characters)
+  const projectIdentifier = rawIdentifier;
+  
+  // Debug log
+  useEffect(() => {
+    if (rawIdentifier) {
+      console.log('Raw identifier from URL:', rawIdentifier);
+      console.log('Length:', rawIdentifier.length);
+      console.log('Encoded:', encodeURIComponent(rawIdentifier));
+    }
+  }, [rawIdentifier]);
 
   // Fetch project details
   const {
@@ -40,26 +52,18 @@ const AdminProjectDetailsRevamped = () => {
     refetch: refetchProject
   } = useFetchProjectById(projectIdentifier);
 
-  // Fetch project status
-  const {
-    data: statusResponse,
-    refetch: refetchStatus
-  } = useFetchProjectStatus(projectIdentifier);
-
   const project = projectResponse?.data;
-  const status = statusResponse?.data;
 
   // Auto-refresh if provisioning
   useEffect(() => {
     if (project?.provisioning_progress?.status === 'provisioning') {
       const interval = setInterval(() => {
         refetchProject();
-        refetchStatus();
       }, 5000); // Poll every 5 seconds
 
       return () => clearInterval(interval);
     }
-  }, [project?.provisioning_progress?.status, refetchProject, refetchStatus]);
+  }, [project?.provisioning_progress?.status, refetchProject]);
 
   // Status badge
   const StatusBadge = ({ status, provisioningProgress }) => {
@@ -160,7 +164,7 @@ const AdminProjectDetailsRevamped = () => {
     );
   }
 
-  if (!project) {
+  if (!project && !isLoading) {
     return (
       <div className="flex min-h-screen bg-gray-50">
         <AdminSidebar
@@ -176,6 +180,7 @@ const AdminProjectDetailsRevamped = () => {
             <div className="text-center">
               <AlertCircle size={48} className="mx-auto text-gray-400 mb-4" />
               <h2 className="text-xl font-semibold text-gray-900 mb-2">Project not found</h2>
+              <p className="text-sm text-gray-500 mb-4">Identifier: {projectIdentifier}</p>
               <button
                 onClick={() => navigate("/admin-dashboard/projects-revamped")}
                 className="text-primary-600 hover:text-primary-700"
@@ -230,7 +235,6 @@ const AdminProjectDetailsRevamped = () => {
               <button
                 onClick={() => {
                   refetchProject();
-                  refetchStatus();
                   toast.success("Project data refreshed");
                 }}
                 className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"

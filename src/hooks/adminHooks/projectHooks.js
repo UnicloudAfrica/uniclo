@@ -29,7 +29,8 @@ const fetchProjects = async (params = {}) => {
 
 // GET: Fetch project status (provisioning + VPC checklist)
 const fetchProjectStatus = async (id) => {
-  const res = await silentApi('GET', `/projects/${id}/status`);
+  const encodedId = encodeURIComponent(id);
+  const res = await silentApi('GET', `/projects/${encodedId}/status`);
   if (!res.project) {
     throw new Error(`Failed to fetch project status for ${id}`);
   }
@@ -38,7 +39,8 @@ const fetchProjectStatus = async (id) => {
 
 // GET: Fetch project by ID
 const fetchProjectById = async (id) => {
-  const res = await silentApi("GET", `/projects/${id}`);
+  const encodedId = encodeURIComponent(id);
+  const res = await silentApi("GET", `/projects/${encodedId}`);
   if (!res.data) {
     throw new Error(`Failed to fetch project with ID ${id}`);
   }
@@ -56,7 +58,8 @@ const createProject = async (projectData) => {
 
 // PATCH: Update a project
 const updateProject = async ({ id, projectData }) => {
-  const res = await api("PATCH", `/projects/${id}`, projectData);
+  const encodedId = encodeURIComponent(id);
+  const res = await api("PATCH", `/projects/${encodedId}`, projectData);
   if (!res.data) {
     throw new Error(`Failed to update project with ID ${id}`);
   }
@@ -65,7 +68,8 @@ const updateProject = async ({ id, projectData }) => {
 
 // DELETE: Delete a project
 const deleteProject = async (id) => {
-  const res = await api("DELETE", `/projects/${id}`);
+  const encodedId = encodeURIComponent(id);
+  const res = await api("DELETE", `/projects/${encodedId}`);
   if (!res.data) {
     throw new Error(`Failed to delete project with ID ${id}`);
   }

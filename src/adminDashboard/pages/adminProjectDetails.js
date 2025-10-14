@@ -3,7 +3,7 @@ import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useFetchProjectById } from "../../hooks/adminHooks/projectHooks";
+import { useFetchProjectById, useProjectStatus } from "../../hooks/adminHooks/projectHooks";
 import { useProjectInfrastructureStatus, useProvisionVpc, useEnableProjectVpc } from "../../hooks/adminHooks/projectInfrastructureHooks";
 import {
   ChevronLeft,
@@ -13,6 +13,8 @@ import {
   Trash2,
   RefreshCw,
   Info,
+  CheckCircle,
+  AlertCircle,
   Network,
   Globe,
   Key,
@@ -33,8 +35,10 @@ import ENIs from "./infraComps/enis";
 import RouteTables from "./infraComps/routetable";
 import AssignEdgeConfigModal from "./projectComps/assignEdgeConfig";
 import AdminEdgeConfigPanel from "../components/AdminEdgeConfigPanel";
+import ModernButton from "../components/ModernButton";
 import InfrastructureSetupFlow from "./infraComps/InfrastructureSetupFlow";
 import ToastUtils from "../../utils/toastUtil";
+import api from "../../index/admin/api";
 
 // Function to decode the ID from URL
 const decodeId = (encodedId) => {
@@ -60,6 +64,8 @@ export default function AdminProjectDetails() {
     useState(false);
   const [isAssignEdgeOpen, setIsAssignEdgeOpen] = useState(false);
 
+  const [summaryActionEndpoint, setSummaryActionEndpoint] = useState(null);
+
   // Separate state for top-level tabs and sub-tabs
   const [activeTopLevelTab, setActiveTopLevelTab] = useState("Instances");
   const [activeInfraTab, setActiveInfraTab] = useState("Setup");
@@ -68,6 +74,14 @@ export default function AdminProjectDetails() {
   const encodedProjectId = queryParams.get("id");
   const projectId = decodeId(encodedProjectId);
   const openEdgeFromQuery = queryParams.get("openEdge") === "1";
+const {
+    data: projectStatusData,
+    isFetching: isProjectStatusFetching,
+    refetch: refetchProjectStatus,
+  } = useProjectStatus(projectId);
+
+  const summaryItems = projectStatusData?.project?.summary ?? [];
+
 
   const {
     data: projectDetails,
@@ -161,6 +175,26 @@ export default function AdminProjectDetails() {
     setIsAssignEdgeOpen(true);
   };
 
+  const handleChecklistAction = async (action) => {
+    if (!action || !action.endpoint) return;
+
+    const method = (action.method || 'POST').toUpperCase();
+    const endpoint = action.endpoint.startsWith('/') ? action.endpoint : `/${action.endpoint}`;
+
+    try {
+      setSummaryActionEndpoint(endpoint);
+      await api(method, endpoint, action.body ?? undefined);
+      ToastUtils.success(action.success_message || 'Action completed');
+      refetchProjectStatus();
+      refetchInfraStatus();
+    } catch (error) {
+      console.error('Checklist action failed', error);
+      ToastUtils.error(error?.message || 'Action failed');
+    } finally {
+      setSummaryActionEndpoint(null);
+    }
+  };
+
   const {
     data: infraStatus,
     isFetching: isInfraFetching,
@@ -199,6 +233,7 @@ export default function AdminProjectDetails() {
       await refetchInfraStatus();
       setLastRefreshedAt(new Date());
       ToastUtils.success("Project details refreshed");
+      refetchProjectStatus();
     } catch (error) {
       console.error("Failed to refresh project details:", error);
       ToastUtils.error(
@@ -241,7 +276,7 @@ export default function AdminProjectDetails() {
             response?.message ||
             "Requested VPC provisioning. Zadara will update the project once the VPC is ready.";
           ToastUtils.success(successMessage);
-          Promise.all([refetchInfraStatus(), refetchProject()]).then(() => {
+          Promise.all([refetchInfraStatus(), refetchProject(), refetchProjectStatus()]).then(() => {
             setLastRefreshedAt(new Date());
           });
         },
@@ -281,7 +316,7 @@ export default function AdminProjectDetails() {
             response?.message ||
             "VPC has been enabled successfully! The project can now use VPC features.";
           ToastUtils.success(successMessage);
-          Promise.all([refetchInfraStatus(), refetchProject()]).then(() => {
+          Promise.all([refetchInfraStatus(), refetchProject(), refetchProjectStatus()]).then(() => {
             setLastRefreshedAt(new Date());
           });
         },
@@ -656,16 +691,74 @@ export default function AdminProjectDetails() {
 
         {/* Region badge for Infrastructure */}
         {activeTopLevelTab === "Infrastructure" && (
-          <div className="mb-3">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-700">
-              Region: {projectDetails.default_region}
-            </span>
-          </div>
+          <>
+            <ModernCard className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Info className="w-4 h-4 text-[#288DD1]" />
+                  <span className="font-semibold text-gray-800">VPC Checklist</span>
+                </div>
+                {isProjectStatusFetching && (
+                  <Loader2 className="w-4 h-4 animate-spin text-[#288DD1]" />
+                )}
+              </div>
+              <div className="space-y-3">
+                {summaryItems.length === 0 ? (
+                  <div className="text-sm text-gray-500">Checklist data unavailable.</div>
+                ) : (
+                  summaryItems.map((item, index) => (
+                    <div
+                      key={`${item.title}-${index}`}
+                      className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 p-3"
+                    >
+                      <div className="flex items-start gap-3">
+                        {item.completed ? (
+                          <CheckCircle className="w-4 h-4 text-emerald-500 mt-1" />
+                        ) : (
+                          <AlertCircle className="w-4 h-4 text-amber-500 mt-1" />
+                        )}
+                        <div className="space-y-1">
+                          <div className="text-sm font-medium text-gray-800">{item.title}</div>
+                          {typeof item.count === 'number' && (
+                            <div className="text-xs text-gray-500">Total: {item.count}</div>
+                          )}
+                          {!item.completed && typeof item.missing_count === 'number' ? (
+                            <div className="text-xs text-gray-500">{item.missing_count} pending</div>
+                          ) : null}
+                          {item.updated_at && (
+                            <div className="text-xs text-gray-400">Last updated {new Date(item.updated_at).toLocaleString()}</div>
+                          )}
+                        </div>
+                      </div>
+                      {item.action ? (
+                        <ModernButton
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleChecklistAction(item.action)}
+                          isLoading={summaryActionEndpoint === (item.action.endpoint.startsWith('/') ? item.action.endpoint : `/${item.action.endpoint}`)}
+                        >
+                          {item.action.label || 'Fix'}
+                        </ModernButton>
+                      ) : null}
+                    </div>
+                  ))
+                )}
+              </div>
+            </ModernCard>
+
+            {/* Region badge for Infrastructure */}
+            <div className="mb-3">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-700">
+                Region: {projectDetails.default_region}
+              </span>
+            </div>
+
+          </>
         )}
 
         {/* Conditionally Render Content based on Top-Level Tab */}
         {activeTopLevelTab === "Instances" ? (
-          <>
+
             <div className="w-full flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-[#575758]">
                 Instances

@@ -27,6 +27,15 @@ const fetchProjects = async (params = {}) => {
   return res;
 };
 
+// GET: Fetch project status (provisioning + VPC checklist)
+const fetchProjectStatus = async (id) => {
+  const res = await silentApi('GET', `/projects/${id}/status`);
+  if (!res.project) {
+    throw new Error(`Failed to fetch project status for ${id}`);
+  }
+  return res;
+};
+
 // GET: Fetch project by ID
 const fetchProjectById = async (id) => {
   const res = await silentApi("GET", `/projects/${id}`);
@@ -82,6 +91,18 @@ export const useFetchProjectById = (id, options = {}) => {
     queryFn: () => fetchProjectById(id),
     enabled: !!id, // Only fetch if ID is provided
     staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+
+// Hook to fetch project status
+export const useProjectStatus = (id, options = {}) => {
+  return useQuery({
+    queryKey: ['admin-project-status', id],
+    queryFn: () => fetchProjectStatus(id),
+    enabled: !!id,
+    staleTime: 1000 * 60 * 2,
     refetchOnWindowFocus: false,
     ...options,
   });

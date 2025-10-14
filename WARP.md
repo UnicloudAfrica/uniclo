@@ -554,4 +554,70 @@ npm test -- --coverage
 
 ---
 
+## Frontend Development Workflow
+
+### Testing Backend APIs & Building UI
+
+This project includes tools to test the backend API and capture real response structures for building the frontend.
+
+**Quick Start:**
+```bash
+# 1. Ensure backend is running
+cd ../uca-backend && php artisan serve
+
+# 2. Seed database (if needed)
+php artisan db:seed
+
+# 3. Test APIs and save responses
+cd ../uca-frontend
+./scripts/quick-test-api.sh
+
+# 4. Review saved responses
+cat api-responses/api_v1_product-pricing.json | jq
+
+# 5. Build UI based on actual response structure
+```
+
+**Testing Scripts:**
+- `./scripts/quick-test-api.sh` - Bash script for quick API testing with curl
+- `node scripts/test-api-responses.js` - Node.js script for detailed testing
+
+**Documentation:**
+- See `docs/FRONTEND_DEVELOPMENT_GUIDE.md` for complete guide
+- All API responses saved to `./api-responses/` directory
+- Use real response structures to build UI components
+
+**Development Pattern:**
+1. Test endpoint → Capture response
+2. Create hook based on response structure
+3. Build UI component using the hook
+4. Handle loading/error/empty states
+5. Match backend field names exactly (never assume)
+
+**Example:**
+```javascript
+// 1. Test endpoint
+./scripts/quick-test-api.sh
+
+// 2. Check response
+cat api-responses/api_v1_product-pricing.json
+
+// 3. Create hook matching response structure
+export const useFetchProductPricing = () => {
+  return useQuery({
+    queryKey: ['product-pricing'],
+    queryFn: async () => {
+      const response = await api.get('/product-pricing');
+      return response.data; // { data: [...], meta: {...} }
+    }
+  });
+};
+
+// 4. Build UI using actual field names from response
+const { data, isLoading } = useFetchProductPricing();
+const items = data?.data || []; // Access actual data array
+```
+
+---
+
 **Last Updated:** 2025-10-14

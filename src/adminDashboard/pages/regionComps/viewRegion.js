@@ -4,6 +4,53 @@ import { X, Check, X as Cross, Activity } from "lucide-react";
 const ViewRegionModal = ({ isOpen, onClose, region }) => {
   if (!isOpen || !region) return null;
 
+  const formatScalar = (value) => {
+    if (value === null || value === undefined || value === "") {
+      return "N/A";
+    }
+    if (typeof value === "boolean") {
+      return value ? "Enabled" : "Disabled";
+    }
+    if (typeof value === "number") {
+      return Number.isFinite(value) ? value.toLocaleString() : String(value);
+    }
+    if (Array.isArray(value)) {
+      if (!value.length) return "N/A";
+      return value
+        .map((item) =>
+          typeof item === "object" && item !== null
+            ? JSON.stringify(item)
+            : String(item)
+        )
+        .join(", ");
+    }
+
+    return String(value);
+  };
+
+  const renderNestedObject = (obj) => {
+    if (!obj || typeof obj !== "object") {
+      return null;
+    }
+
+    return (
+      <div className="mt-1 space-y-1 text-xs text-gray-500 text-right">
+        {Object.entries(obj).map(([nestedKey, nestedValue]) => (
+          <div key={nestedKey} className="flex items-start justify-between gap-3">
+            <span className="capitalize text-gray-500">
+              {nestedKey.replace(/_/g, " ")}:
+            </span>
+            <span className="font-medium text-gray-700">
+              {typeof nestedValue === "object" && nestedValue !== null
+                ? JSON.stringify(nestedValue)
+                : formatScalar(nestedValue)}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   // Parse features if it's a JSON string, otherwise use as object
   const parsedFeatures =
     typeof region.features === "string"
@@ -136,13 +183,15 @@ const ViewRegionModal = ({ isOpen, onClose, region }) => {
                       <span className="font-medium capitalize">
                         {key.replace(/_/g, " ")}:
                       </span>
-                      <span className="text-gray-500 text-right">
-                        {typeof value === "boolean"
-                          ? value
-                            ? "Enabled"
-                            : "Disabled"
-                          : value ?? "N/A"}
-                      </span>
+                      {value && typeof value === "object" && !Array.isArray(value) ? (
+                        <div className="flex-1">
+                          {renderNestedObject(value)}
+                        </div>
+                      ) : (
+                        <span className="text-gray-500 text-right">
+                          {formatScalar(value)}
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -160,11 +209,15 @@ const ViewRegionModal = ({ isOpen, onClose, region }) => {
                       <span className="font-medium capitalize">
                         {key.replace(/_/g, " ")}:
                       </span>
-                      <span className="text-gray-500 text-right">
-                        {typeof value === "number"
-                          ? value.toLocaleString()
-                          : value ?? "N/A"}
-                      </span>
+                      {value && typeof value === "object" && !Array.isArray(value) ? (
+                        <div className="flex-1">
+                          {renderNestedObject(value)}
+                        </div>
+                      ) : (
+                        <span className="text-gray-500 text-right">
+                          {formatScalar(value)}
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>

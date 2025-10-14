@@ -36,6 +36,10 @@ const AdminProjectsRevamped = () => {
   const [filterStatus, setFilterStatus] = useState("");
   const [filterRegion, setFilterRegion] = useState("");
 
+  const toggleMobileMenu = () =>
+    setIsMobileMenuOpen((prevState) => !prevState);
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
   // Pagination from URL
   const currentPage = Number(searchParams.get("page")) || 1;
   const itemsPerPage = Number(searchParams.get("per_page")) || 15;
@@ -172,26 +176,23 @@ const AdminProjectsRevamped = () => {
     <div className="flex min-h-screen bg-gray-50">
       <AdminSidebar
         isMobileMenuOpen={isMobileMenuOpen}
-        onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
+        onCloseMobileMenu={closeMobileMenu}
       />
 
       <div className="flex-1 flex flex-col md:ml-20 lg:ml-[20%]">
-        <AdminHeadbar
-          toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          title="Projects"
-        />
+        <AdminHeadbar onMenuClick={toggleMobileMenu} />
 
-        <main className="flex-1 p-6 pt-20 md:pt-6 overflow-auto">
+        <main className="flex-1 p-4 sm:p-6 pt-24 md:pt-6 overflow-auto">
           {/* Header */}
           <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Projects</h1>
                 <p className="text-gray-600 mt-1">Manage your cloud infrastructure projects</p>
               </div>
               <button
                 onClick={() => setIsCreateModalOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                className="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
               >
                 <Plus size={20} />
                 Create Project
@@ -229,9 +230,9 @@ const AdminProjectsRevamped = () => {
 
           {/* Filters and Search */}
           <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Search */}
-              <div className="md:col-span-2">
+              <div className="sm:col-span-2">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                   <input
@@ -376,7 +377,7 @@ const AdminProjectsRevamped = () => {
 
                 {/* Desktop Table View */}
                 <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full">
+                  <table className="w-full min-w-[960px]">
                     <thead className="bg-gray-50 border-b border-gray-200">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">

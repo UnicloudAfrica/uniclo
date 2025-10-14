@@ -40,11 +40,26 @@ const AdminRegion = () => {
   const [selectedRegion, setSelectedRegion] = useState(null);
 
   // Calculate region statistics
+  const regionList = Array.isArray(regions) ? regions : [];
+  const uniqueCountries = new Set(
+    regionList.map((region) => region.country_code).filter(Boolean)
+  );
+  const uniqueProviders = new Set(
+    regionList.map((region) => region.provider).filter(Boolean)
+  );
+  const uniqueCities = new Set(
+    regionList.map((region) => region.city).filter(Boolean)
+  );
+  const activeRegionsCount = regionList.filter(
+    (region) => region.is_active
+  ).length;
+
   const regionStats = {
-    totalRegions: regions?.length || 0,
-    uniqueCountries: [...new Set(regions?.map(r => r.country_code))].length || 0,
-    uniqueProviders: [...new Set(regions?.map(r => r.provider))].length || 0,
-    activeCities: [...new Set(regions?.map(r => r.city))].length || 0
+    totalRegions: regionList.length,
+    activeRegions: activeRegionsCount,
+    uniqueCountries: uniqueCountries.size,
+    uniqueProviders: uniqueProviders.size,
+    uniqueCities: uniqueCities.size,
   };
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -98,18 +113,21 @@ const AdminRegion = () => {
       header: 'Provider',
       render: (value) => (
         <div className="flex items-center gap-2">
-          <Server size={16} style={{ color: designTokens.colors.success[500] }} />
-          <span 
+          <Server
+            size={16}
+            style={{ color: designTokens.colors.success[500] }}
+          />
+          <span
             className="px-2 py-1 rounded-full text-xs font-medium"
             style={{
               backgroundColor: designTokens.colors.success[50],
-              color: designTokens.colors.success[700]
+              color: designTokens.colors.success[700],
             }}
           >
             {value}
           </span>
         </div>
-      )
+      ),
     },
     {
       key: 'country_code',
@@ -130,7 +148,48 @@ const AdminRegion = () => {
           <span>{value}</span>
         </div>
       )
-    }
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (value) => (
+        <span
+          className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium capitalize"
+          style={{
+            backgroundColor:
+              value === 'healthy'
+                ? designTokens.colors.success[50]
+                : designTokens.colors.warning[50],
+            color:
+              value === 'healthy'
+                ? designTokens.colors.success[700]
+                : designTokens.colors.warning[700],
+          }}
+        >
+          <Activity size={14} />
+          {value || 'unknown'}
+        </span>
+      ),
+    },
+    {
+      key: 'is_active',
+      header: 'Active',
+      render: (value) => (
+        <span
+          className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+          style={{
+            backgroundColor: value
+              ? designTokens.colors.primary[50]
+              : designTokens.colors.neutral[100],
+            color: value
+              ? designTokens.colors.primary[700]
+              : designTokens.colors.neutral[700],
+          }}
+        >
+          {value ? 'Active' : 'Inactive'}
+        </span>
+      ),
+    },
   ];
 
   // Define actions for ModernTable
@@ -213,33 +272,33 @@ const AdminRegion = () => {
               description="Available regions"
             />
             <ModernStatsCard
+              title="Active Regions"
+              value={regionStats.activeRegions}
+              icon={<Activity size={24} />}
+              color="success"
+              description="Currently enabled"
+            />
+            <ModernStatsCard
               title="Countries"
               value={regionStats.uniqueCountries}
               icon={<Globe size={24} />}
-              color="success"
+              color="warning"
               description="Geographic coverage"
             />
             <ModernStatsCard
-              title="Providers"
-              value={regionStats.uniqueProviders}
-              icon={<Server size={24} />}
-              color="warning"
-              description="Infrastructure partners"
-            />
-            <ModernStatsCard
-              title="Cities"
-              value={regionStats.activeCities}
+              title="Locations"
+              value={regionStats.uniqueCities}
               icon={<Building size={24} />}
               color="info"
-              description="Active locations"
+              description="Active cities"
             />
           </div>
 
           {/* Regions Table */}
           <ModernCard>
             <ModernTable
-              title="Infrastructure Regions"
-              data={regions || []}
+              title={`Infrastructure Regions · Providers: ${regionStats.uniqueProviders}`}
+              data={regionList}
               columns={columns}
               actions={actions}
               searchable={true}

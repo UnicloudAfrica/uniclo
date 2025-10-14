@@ -1,14 +1,41 @@
 import React from "react";
-import { X, Check, X as Cross } from "lucide-react";
+import { X, Check, X as Cross, Activity } from "lucide-react";
 
 const ViewRegionModal = ({ isOpen, onClose, region }) => {
   if (!isOpen || !region) return null;
 
   // Parse features if it's a JSON string, otherwise use as object
-  const features =
+  const parsedFeatures =
     typeof region.features === "string"
       ? JSON.parse(region.features)
       : region.features;
+
+  const features =
+    Array.isArray(parsedFeatures) && parsedFeatures.length > 0
+      ? parsedFeatures.reduce((acc, feature) => {
+          acc[feature] = true;
+          return acc;
+        }, {})
+      : parsedFeatures;
+
+  const metrics =
+    region.metrics && typeof region.metrics === "object" ? region.metrics : null;
+  const metaRaw =
+    region.meta?.raw && typeof region.meta.raw === "object"
+      ? region.meta.raw
+      : null;
+
+  const status = region.status || "unknown";
+  const statusStyles =
+    status === "healthy"
+      ? {
+          background: "rgba(34,197,94,0.12)",
+          color: "#15803d",
+        }
+      : {
+          background: "rgba(249,115,22,0.12)",
+          color: "#c2410c",
+        };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
@@ -51,35 +78,43 @@ const ViewRegionModal = ({ isOpen, onClose, region }) => {
               <span>{region.base_url || "N/A"}</span>
             </div>
             <div className="flex justify-between">
+              <span className="font-medium">Status:</span>
+              <span
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold uppercase tracking-wide"
+                style={statusStyles}
+              >
+                <Activity size={14} />
+                {status}
+              </span>
+            </div>
+            <div className="flex justify-between">
               <span className="font-medium">Active:</span>
               <span>{region.is_active ? "Yes" : "No"}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium">Priority:</span>
+              <span>{region.priority ?? "N/A"}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium">Price Multiplier:</span>
+              <span>{region.price_multiplier ?? "1.0"}</span>
             </div>
             <div className="flex flex-col">
               <span className="font-medium mb-2">Features:</span>
               <div className="space-y-2">
                 {features ? (
-                  Array.isArray(features) ? (
-                    features.map((feature) => (
-                      <div
-                        key={feature}
-                        className="flex items-center space-x-2"
-                      >
-                        <span className="capitalize">{feature}:</span>
+                  Object.entries(features).map(([key, value]) => (
+                    <div key={key} className="flex items-center space-x-2">
+                      <span className="capitalize">
+                        {key.replace(/_/g, " ")}:
+                      </span>
+                      {value ? (
                         <Check className="w-4 h-4 text-green-500" />
-                      </div>
-                    ))
-                  ) : (
-                    Object.entries(features).map(([key, value]) => (
-                      <div key={key} className="flex items-center space-x-2">
-                        <span className="capitalize">{key}:</span>
-                        {value ? (
-                          <Check className="w-4 h-4 text-green-500" />
-                        ) : (
-                          <Cross className="w-4 h-4 text-red-500" />
-                        )}
-                      </div>
-                    ))
-                  )
+                      ) : (
+                        <Cross className="w-4 h-4 text-red-500" />
+                      )}
+                    </div>
+                  ))
                 ) : (
                   <span>N/A</span>
                 )}
@@ -89,6 +124,52 @@ const ViewRegionModal = ({ isOpen, onClose, region }) => {
               <span className="font-medium">Provider Label:</span>
               <span>{region.meta?.provider_label || "N/A"}</span>
             </div>
+            {metaRaw && (
+              <div className="flex flex-col">
+                <span className="font-medium mb-2">Metadata:</span>
+                <div className="space-y-1">
+                  {Object.entries(metaRaw).map(([key, value]) => (
+                    <div
+                      key={key}
+                      className="flex items-center justify-between gap-4"
+                    >
+                      <span className="font-medium capitalize">
+                        {key.replace(/_/g, " ")}:
+                      </span>
+                      <span className="text-gray-500 text-right">
+                        {typeof value === "boolean"
+                          ? value
+                            ? "Enabled"
+                            : "Disabled"
+                          : value ?? "N/A"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {metrics && Object.keys(metrics).length > 0 && (
+              <div className="flex flex-col">
+                <span className="font-medium mb-2">Metrics:</span>
+                <div className="space-y-1">
+                  {Object.entries(metrics).map(([key, value]) => (
+                    <div
+                      key={key}
+                      className="flex items-center justify-between gap-4"
+                    >
+                      <span className="font-medium capitalize">
+                        {key.replace(/_/g, " ")}:
+                      </span>
+                      <span className="text-gray-500 text-right">
+                        {typeof value === "number"
+                          ? value.toLocaleString()
+                          : value ?? "N/A"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="font-medium">Created At:</span>
               <span>{new Date(region.created_at).toLocaleString()}</span>

@@ -1,23 +1,51 @@
-import React, { useState } from "react";
-import { X, Loader2 } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { X, Loader2, Plus } from "lucide-react";
 import { useFetchCountries } from "../../../hooks/resource";
 import ToastUtils from "../../../utils/toastUtil";
 import { useCreateRegion } from "../../../hooks/adminHooks/regionHooks";
+
+const DEFAULT_FEATURE_KEYS = ["compute", "vpc", "ebs", "gpu"];
+
+const buildFeatureState = (features = {}) => {
+  const normalized = DEFAULT_FEATURE_KEYS.reduce((acc, key) => {
+    acc[key] = Boolean(features?.[key]);
+    return acc;
+  }, {});
+
+  Object.entries(features || {}).forEach(([key, value]) => {
+    normalized[key] = Boolean(value);
+  });
+
+  return normalized;
+};
+
+const createInitialFormData = () => ({
+  provider: "",
+  code: "",
+  name: "",
+  country_code: "",
+  city: "",
+  base_url: "",
+  provider_label: "",
+  is_active: true,
+  features: buildFeatureState(),
+});
 
 const AddRegionModal = ({ isOpen, onClose }) => {
   const { mutate, isPending } = useCreateRegion();
   const { isCountriesLoading: isFetching, data: countries } =
     useFetchCountries();
-  const [formData, setFormData] = useState({
-    provider: "",
-    code: "",
-    name: "",
-    country_code: "",
-    city: "",
-    base_url: "",
-    is_active: true,
-  });
+  const [formData, setFormData] = useState(() => createInitialFormData());
   const [errors, setErrors] = useState({});
+  const [newFeatureKey, setNewFeatureKey] = useState("");
+
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData(createInitialFormData());
+      setErrors({});
+      setNewFeatureKey("");
+    }
+  }, [isOpen]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -26,9 +54,10 @@ const AddRegionModal = ({ isOpen, onClose }) => {
     if (!formData.name.trim()) newErrors.name = "Region Name is required";
     if (!formData.country_code) newErrors.country_code = "Country is required";
     if (!formData.city.trim()) newErrors.city = "City is required";
-    if (!formData.base_url.trim()) {
-      newErrors.base_url = "Base URL is required";
-    } else if (!/^https?:\/\/[^\s$.?#].[^\s]*$/.test(formData.base_url)) {
+    if (
+      formData.base_url &&
+      !/^https?:\/\/[^\s$.?#].[^\s]*$/i.test(formData.base_url.trim())
+    ) {
       newErrors.base_url = "Base URL must be a valid URL";
     }
     setErrors(newErrors);
@@ -40,19 +69,76 @@ const AddRegionModal = ({ isOpen, onClose }) => {
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
+  const handleFeatureToggle = (feature) => {
+    setFormData((prev) => ({
+      ...prev,
+      features: {
+        ...buildFeatureState(prev.features),
+        [feature]: !prev.features?.[feature],
+      },
+    }));
+  };
+
+  const handleAddFeature = () => {
+    const normalizedKey = newFeatureKey.trim().toLowerCase().replace(/\s+/g, "_");
+    if (!normalizedKey) return;
+
+    setFormData((prev) => {
+      if (prev.features?.hasOwnProperty(normalizedKey)) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        features: {
+          ...buildFeatureState(prev.features),
+          [normalizedKey]: true,
+        },
+      };
+    });
+    setNewFeatureKey("");
+  };
+
+  const featureKeys = useMemo(
+    () => Object.keys(formData.features || {}).sort(),
+    [formData.features]
+  );
+
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
     if (!validateForm()) return;
 
+    const trimmedProvider = formData.provider.trim();
+    const trimmedCode = formData.code.trim();
+    const trimmedName = formData.name.trim();
+    const trimmedCity = formData.city.trim();
+    const trimmedBaseUrl = formData.base_url.trim();
+
+    const featuresPayload = Object.entries(buildFeatureState(formData.features));
+    const normalizedFeatures = featuresPayload.reduce(
+      (acc, [key, value]) => ({ ...acc, [key]: Boolean(value) }),
+      {}
+    );
+
     const regionData = {
-      provider: formData.provider,
-      code: formData.code,
-      name: formData.name,
+      provider: trimmedProvider,
+      code: trimmedCode,
+      name: trimmedName || null,
       country_code: formData.country_code,
-      city: formData.city,
-      base_url: formData.base_url,
+      city: trimmedCity || null,
+      base_url: trimmedBaseUrl || null,
       is_active: formData.is_active,
+      features: normalizedFeatures,
     };
+
+    const meta = {};
+    if (formData.provider_label.trim()) {
+      meta.provider_label = formData.provider_label.trim();
+    }
+
+    if (Object.keys(meta).length > 0) {
+      regionData.meta = meta;
+    }
 
     mutate(regionData, {
       onSuccess: () => {
@@ -203,7 +289,7 @@ const AddRegionModal = ({ isOpen, onClose }) => {
                 htmlFor="base_url"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                Base URL<span className="text-red-500">*</span>
+                Base URL
               </label>
               <input
                 id="base_url"
@@ -233,6 +319,65 @@ const AddRegionModal = ({ isOpen, onClose }) => {
                 onChange={(e) => updateFormData("is_active", e.target.checked)}
                 className="h-4 w-4 text-[#288DD1] focus:ring-[#288DD1] border-gray-300 rounded"
               />
+            </div>
+            <div>
+              <label
+                htmlFor="provider_label"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Provider Label
+              </label>
+              <input
+                id="provider_label"
+                type="text"
+                value={formData.provider_label}
+                onChange={(e) =>
+                  updateFormData("provider_label", e.target.value)
+                }
+                placeholder="e.g., UCA zCompute"
+                className="w-full input-field border-gray-300"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Features
+              </label>
+              <div className="space-y-2">
+                {featureKeys.map((feature) => (
+                  <div key={feature} className="flex items-center space-x-2">
+                    <input
+                      id={`feature-${feature}`}
+                      type="checkbox"
+                      checked={Boolean(formData.features?.[feature])}
+                      onChange={() => handleFeatureToggle(feature)}
+                      className="h-4 w-4 text-[#288DD1] focus:ring-[#288DD1] border-gray-300 rounded"
+                    />
+                    <label
+                      htmlFor={`feature-${feature}`}
+                      className="text-sm text-gray-600 capitalize"
+                    >
+                      {feature.replace(/_/g, " ")}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 mt-3">
+                <input
+                  type="text"
+                  value={newFeatureKey}
+                  onChange={(e) => setNewFeatureKey(e.target.value)}
+                  placeholder="Add custom feature"
+                  className="flex-1 input-field border-gray-300"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddFeature}
+                  className="inline-flex items-center gap-1 px-3 py-2 rounded-full bg-[#E3F2FD] text-[#288DD1] text-sm font-medium hover:bg-[#d4e9fa] transition-colors"
+                >
+                  <Plus size={16} />
+                  Add
+                </button>
+              </div>
             </div>
           </div>
         </div>

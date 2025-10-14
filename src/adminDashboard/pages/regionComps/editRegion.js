@@ -1,36 +1,59 @@
-import React, { useState } from "react";
-import { X, Loader2 } from "lucide-react";
-import { useUpdateRegion } from "../../../hooks/adminHooks/regionHooks"; // Adjust path
-import { useFetchCountries } from "../../../hooks/resource"; // Adjust path
-import ToastUtils from "../../../utils/toastUtil"; // Adjust path
+import React, { useEffect, useMemo, useState } from "react";
+import { X, Loader2, Plus } from "lucide-react";
+import { useUpdateRegion } from "../../../hooks/adminHooks/regionHooks";
+import { useFetchCountries } from "../../../hooks/resource";
+import ToastUtils from "../../../utils/toastUtil";
+
+const DEFAULT_FEATURE_KEYS = ["compute", "vpc", "ebs", "gpu"];
+
+const buildFeatureState = (features = {}) => {
+  const normalized = DEFAULT_FEATURE_KEYS.reduce((acc, key) => {
+    acc[key] = Boolean(features?.[key]);
+    return acc;
+  }, {});
+
+  Object.entries(features || {}).forEach(([key, value]) => {
+    normalized[key] = Boolean(value);
+  });
+
+  return normalized;
+};
+
+const createFormState = (region) => ({
+  name: region?.name || "",
+  country_code: region?.country_code || "",
+  city: region?.city || "",
+  base_url: region?.base_url || "",
+  is_active: region?.is_active ?? true,
+  provider_label: region?.meta?.provider_label || "",
+  features: buildFeatureState(region?.features || {}),
+});
 
 const EditRegionModal = ({ isOpen, onClose, region }) => {
   const { mutate, isPending } = useUpdateRegion();
   const { isCountriesLoading: isFetching, data: countries } =
     useFetchCountries();
-  const [formData, setFormData] = useState({
-    name: region?.name || "",
-    country_code: region?.country_code || "",
-    city: region?.city || "",
-    base_url: region?.base_url || "",
-    is_active: region?.is_active || false,
-    features: region?.features || {
-      ebs: false,
-      gpu: false,
-      vpc: false,
-      compute: false,
-    },
-  });
+  const [formData, setFormData] = useState(() => createFormState(region));
   const [errors, setErrors] = useState({});
+  const [newFeatureKey, setNewFeatureKey] = useState("");
+
+  useEffect(() => {
+    if (region && isOpen) {
+      setFormData(createFormState(region));
+      setErrors({});
+      setNewFeatureKey("");
+    }
+  }, [region, isOpen]);
 
   const validateForm = () => {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = "Region Name is required";
     if (!formData.country_code) newErrors.country_code = "Country is required";
     if (!formData.city.trim()) newErrors.city = "City is required";
-    if (!formData.base_url.trim()) {
-      newErrors.base_url = "Base URL is required";
-    } else if (!/^https?:\/\/[^\s$.?#].[^\s]*$/.test(formData.base_url)) {
+    if (
+      formData.base_url &&
+      !/^https?:\/\/[^\s$.?#].[^\s]*$/i.test(formData.base_url.trim())
+    ) {
       newErrors.base_url = "Base URL must be a valid URL";
     }
     setErrors(newErrors);
@@ -42,28 +65,76 @@ const EditRegionModal = ({ isOpen, onClose, region }) => {
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const updateFeature = (feature) => {
+  const handleFeatureToggle = (feature) => {
     setFormData((prev) => ({
       ...prev,
-      features: { ...prev.features, [feature]: !prev.features[feature] },
+      features: {
+        ...buildFeatureState(prev.features),
+        [feature]: !prev.features?.[feature],
+      },
     }));
   };
 
+  const handleAddFeature = () => {
+    const normalizedKey = newFeatureKey.trim().toLowerCase().replace(/\s+/g, "_");
+    if (!normalizedKey) return;
+
+    setFormData((prev) => {
+      if (prev.features?.hasOwnProperty(normalizedKey)) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        features: {
+          ...buildFeatureState(prev.features),
+          [normalizedKey]: true,
+        },
+      };
+    });
+    setNewFeatureKey("");
+  };
+
+  const featureKeys = useMemo(
+    () => Object.keys(formData.features || {}).sort(),
+    [formData.features]
+  );
+
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
-    if (!validateForm()) return;
+    if (!validateForm() || !region) return;
+
+    const trimmedName = formData.name.trim();
+    const trimmedCity = formData.city.trim();
+    const trimmedBaseUrl = formData.base_url.trim();
+    const normalizedFeatures = {};
+
+    Object.entries(buildFeatureState(formData.features)).forEach(
+      ([key, value]) => {
+        normalizedFeatures[key] = Boolean(value);
+      }
+    );
+
+    const meta = {};
+    if (formData.provider_label.trim()) {
+      meta.provider_label = formData.provider_label.trim();
+    }
 
     const regionData = {
       id: region.id,
       regionData: {
-        name: formData.name,
+        name: trimmedName,
         country_code: formData.country_code,
-        city: formData.city,
-        base_url: formData.base_url,
+        city: trimmedCity || null,
+        base_url: trimmedBaseUrl || null,
         is_active: formData.is_active,
-        features: formData.features,
+        features: normalizedFeatures,
       },
     };
+
+    if (Object.keys(meta).length > 0) {
+      regionData.regionData.meta = meta;
+    }
 
     mutate(regionData, {
       onSuccess: () => {
@@ -93,6 +164,30 @@ const EditRegionModal = ({ isOpen, onClose, region }) => {
         </div>
         <div className="px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start">
           <div className="space-y-4 w-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Provider
+                </label>
+                <input
+                  type="text"
+                  value={region?.provider || ""}
+                  readOnly
+                  className="w-full input-field border-gray-200 bg-gray-50 cursor-not-allowed"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Region Code
+                </label>
+                <input
+                  type="text"
+                  value={region?.code || ""}
+                  readOnly
+                  className="w-full input-field border-gray-200 bg-gray-50 cursor-not-allowed"
+                />
+              </div>
+            </div>
             <div>
               <label
                 htmlFor="name"
@@ -171,14 +266,14 @@ const EditRegionModal = ({ isOpen, onClose, region }) => {
                 htmlFor="base_url"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                Base URL<span className="text-red-500">*</span>
+                Base URL
               </label>
               <input
                 id="base_url"
                 type="text"
                 value={formData.base_url}
                 onChange={(e) => updateFormData("base_url", e.target.value)}
-                placeholder="e.g., http://example.com"
+                placeholder="e.g., https://api.example.com"
                 className={`w-full input-field ${
                   errors.base_url ? "border-red-500" : "border-gray-300"
                 }`}
@@ -187,43 +282,82 @@ const EditRegionModal = ({ isOpen, onClose, region }) => {
                 <p className="text-red-500 text-xs mt-1">{errors.base_url}</p>
               )}
             </div>
-            <div>
-              <label
-                htmlFor="is_active"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Active
-              </label>
-              <input
-                id="is_active"
-                type="checkbox"
-                checked={formData.is_active}
-                onChange={(e) => updateFormData("is_active", e.target.checked)}
-                className="h-4 w-4 text-[#288DD1] focus:ring-[#288DD1] border-gray-300 rounded"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="is_active"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Active
+                </label>
+                <input
+                  id="is_active"
+                  type="checkbox"
+                  checked={formData.is_active}
+                  onChange={(e) =>
+                    updateFormData("is_active", e.target.checked)
+                  }
+                  className="h-4 w-4 text-[#288DD1] focus:ring-[#288DD1] border-gray-300 rounded"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="provider_label"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Provider Label
+                </label>
+                <input
+                  id="provider_label"
+                  type="text"
+                  value={formData.provider_label}
+                  onChange={(e) =>
+                    updateFormData("provider_label", e.target.value)
+                  }
+                  placeholder="e.g., UCA zCompute"
+                  className="w-full input-field border-gray-300"
+                />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Features
               </label>
               <div className="space-y-2">
-                {["ebs", "gpu", "vpc", "compute"].map((feature) => (
+                {featureKeys.map((feature) => (
                   <div key={feature} className="flex items-center space-x-2">
                     <input
-                      id={feature}
+                      id={`feature-${feature}`}
                       type="checkbox"
-                      checked={formData.features[feature]}
-                      onChange={() => updateFeature(feature)}
+                      checked={Boolean(formData.features?.[feature])}
+                      onChange={() => handleFeatureToggle(feature)}
                       className="h-4 w-4 text-[#288DD1] focus:ring-[#288DD1] border-gray-300 rounded"
                     />
                     <label
-                      htmlFor={feature}
+                      htmlFor={`feature-${feature}`}
                       className="text-sm text-gray-600 capitalize"
                     >
-                      {feature}
+                      {feature.replace(/_/g, " ")}
                     </label>
                   </div>
                 ))}
+              </div>
+              <div className="flex items-center gap-2 mt-3">
+                <input
+                  type="text"
+                  value={newFeatureKey}
+                  onChange={(e) => setNewFeatureKey(e.target.value)}
+                  placeholder="Add custom feature"
+                  className="flex-1 input-field border-gray-300"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddFeature}
+                  className="inline-flex items-center gap-1 px-3 py-2 rounded-full bg-[#E3F2FD] text-[#288DD1] text-sm font-medium hover:bg-[#d4e9fa] transition-colors"
+                >
+                  <Plus size={16} />
+                  Add
+                </button>
               </div>
             </div>
           </div>

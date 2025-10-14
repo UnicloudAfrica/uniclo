@@ -28,10 +28,6 @@ import { designTokens } from "../../styles/designTokens";
 import ToastUtils from "../../utils/toastUtil";
 
 // Function to encode the ID for URL
-const encodeId = (id) => {
-  return encodeURIComponent(btoa(id));
-};
-
 const STATUS_OPTIONS = [
   { label: "All Statuses", value: "" },
   { label: "Active", value: "active" },
@@ -433,10 +429,10 @@ export default function AdminProjects() {
       return;
     }
 
-    const encodedId = encodeId(item.identifier);
-    const encodedName = encodeURIComponent(item.name);
     navigate(
-      `/admin-dashboard/projects/details?id=${encodedId}&name=${encodedName}`
+      `/admin-dashboard/projects/details?identifier=${encodeURIComponent(
+        item.identifier
+      )}`
     );
   };
 

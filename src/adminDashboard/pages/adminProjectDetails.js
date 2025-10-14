@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
@@ -76,15 +76,11 @@ export default function AdminProjectDetails() {
   const queryParams = new URLSearchParams(location.search);
   const identifierParam = queryParams.get("identifier");
   const encodedProjectId = queryParams.get("id");
-  const projectId = useMemo(() => {
-    if (identifierParam) {
-      return identifierParam;
-    }
-    if (encodedProjectId) {
-      return decodeId(encodedProjectId);
-    }
-    return null;
-  }, [identifierParam, encodedProjectId]);
+  const projectId = identifierParam
+    ? identifierParam
+    : encodedProjectId
+      ? decodeId(encodedProjectId)
+      : null;
   const backToProjectsPath = isRevampedRoute
     ? "/admin-dashboard/projects-revamped"
     : "/admin-dashboard/projects";
@@ -426,45 +422,36 @@ export default function AdminProjectDetails() {
     (item) => item.name === activeInfraTab
   )?.component;
 
-  const overviewMetrics = useMemo(() => {
-    if (!projectDetails) {
-      return [];
-    }
-
-    const regionValue = projectDetails.default_region
-      ? projectDetails.default_region.toUpperCase()
-      : "N/A";
-    const providerValue = (projectDetails.default_provider || "zadara").toUpperCase();
-    const instancesValue = projectDetails.resources_count?.instances ?? 0;
-    const volumesValue = projectDetails.resources_count?.volumes ?? 0;
-
-    return [
-      {
-        label: "Region",
-        value: regionValue,
-        description: "Deployment region",
-        icon: <Network size={18} className="text-[#288DD1]" />,
-      },
-      {
-        label: "Provider",
-        value: providerValue,
-        description: "Cloud provider",
-        icon: <Globe size={18} className="text-[#288DD1]" />,
-      },
-      {
-        label: "Instances",
-        value: instancesValue,
-        description: "Compute resources",
-        icon: <Server size={18} className="text-[#288DD1]" />,
-      },
-      {
-        label: "Volumes",
-        value: volumesValue,
-        description: "Storage resources",
-        icon: <HardDrive size={18} className="text-[#288DD1]" />,
-      },
-    ];
-  }, [projectDetails]);
+  const overviewMetrics = projectDetails
+    ? [
+        {
+          label: "Region",
+          value: projectDetails.default_region
+            ? projectDetails.default_region.toUpperCase()
+            : "N/A",
+          description: "Deployment region",
+          icon: <Network size={18} className="text-[#288DD1]" />,
+        },
+        {
+          label: "Provider",
+          value: (projectDetails.default_provider || "zadara").toUpperCase(),
+          description: "Cloud provider",
+          icon: <Globe size={18} className="text-[#288DD1]" />,
+        },
+        {
+          label: "Instances",
+          value: projectDetails.resources_count?.instances ?? 0,
+          description: "Compute resources",
+          icon: <Server size={18} className="text-[#288DD1]" />,
+        },
+        {
+          label: "Volumes",
+          value: projectDetails.resources_count?.volumes ?? 0,
+          description: "Storage resources",
+          icon: <HardDrive size={18} className="text-[#288DD1]" />,
+        },
+      ]
+    : [];
 
   const quickActions = [
     // Add Enable VPC action if needed

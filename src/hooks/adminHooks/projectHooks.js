@@ -220,3 +220,117 @@ export const useDeleteProject = () => {
     },
   });
 };
+
+// POST: Provision project infrastructure
+const provisionProject = async (id) => {
+  const encodedId = encodeURIComponent(id);
+  const res = await api("POST", `/projects/${encodedId}/provision`);
+  if (!res.data) {
+    throw new Error(`Failed to provision project ${id}`);
+  }
+  return res.data;
+};
+
+// POST: Simulate provision
+const simulateProvision = async (id) => {
+  const encodedId = encodeURIComponent(id);
+  const res = await api("POST", `/projects/${encodedId}/provision-simulated`);
+  if (!res.data) {
+    throw new Error(`Failed to simulate provision for project ${id}`);
+  }
+  return res.data;
+};
+
+// GET: Verify Zadara connection
+const verifyZadara = async (id) => {
+  const encodedId = encodeURIComponent(id);
+  const res = await silentApi("GET", `/projects/${encodedId}/verify-zadara`);
+  return res;
+};
+
+// POST: Enable VPC for project
+const enableVpc = async (id) => {
+  const encodedId = encodeURIComponent(id);
+  const res = await api("POST", `/projects/${encodedId}/enable-vpc`);
+  if (!res.data) {
+    throw new Error(`Failed to enable VPC for project ${id}`);
+  }
+  return res.data;
+};
+
+// POST: Sync project user
+const syncProjectUser = async ({ projectId, userId, data = {} }) => {
+  const encodedProjectId = encodeURIComponent(projectId);
+  const encodedUserId = encodeURIComponent(userId);
+  const res = await api("POST", `/projects/${encodedProjectId}/users/${encodedUserId}/sync`, data);
+  if (!res.data) {
+    throw new Error(`Failed to sync user ${userId} for project ${projectId}`);
+  }
+  return res.data;
+};
+
+// Hook to provision project
+export const useProvisionProject = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: provisionProject,
+    onSuccess: (data, projectId) => {
+      queryClient.invalidateQueries(["admin-projects"]);
+      queryClient.invalidateQueries(["admin-project", projectId]);
+    },
+    onError: (error) => {
+      console.error("Error provisioning project:", error);
+    },
+  });
+};
+
+// Hook to simulate provision
+export const useSimulateProvision = () => {
+  return useMutation({
+    mutationFn: simulateProvision,
+    onError: (error) => {
+      console.error("Error simulating provision:", error);
+    },
+  });
+};
+
+// Hook to verify Zadara
+export const useVerifyZadara = (id, options = {}) => {
+  return useQuery({
+    queryKey: ['admin-project-zadara-verify', id],
+    queryFn: () => verifyZadara(id),
+    enabled: !!id && (options.enabled !== false),
+    staleTime: 1000 * 60 * 1,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+
+// Hook to enable VPC
+export const useEnableVpc = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: enableVpc,
+    onSuccess: (data, projectId) => {
+      queryClient.invalidateQueries(["admin-projects"]);
+      queryClient.invalidateQueries(["admin-project", projectId]);
+    },
+    onError: (error) => {
+      console.error("Error enabling VPC:", error);
+    },
+  });
+};
+
+// Hook to sync project user
+export const useSyncProjectUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: syncProjectUser,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries(["admin-project", variables.projectId]);
+    },
+    onError: (error) => {
+      console.error("Error syncing project user:", error);
+    },
+  });
+};

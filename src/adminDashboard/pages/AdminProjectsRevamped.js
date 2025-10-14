@@ -55,9 +55,17 @@ const AdminProjectsRevamped = () => {
 
   const deleteProject = useDeleteProject();
 
-  // Extract data
-  const projects = projectsResponse?.data || [];
-  const pagination = projectsResponse?.meta;
+  // Debug: Log API response structure
+  React.useEffect(() => {
+    if (projectsResponse) {
+      console.log('API Response structure:', projectsResponse);
+      console.log('First project:', projectsResponse?.data?.data?.[0] || projectsResponse?.data?.[0]);
+    }
+  }, [projectsResponse]);
+
+  // Extract data - handle both possible response structures
+  const projects = projectsResponse?.data?.data || projectsResponse?.data || [];
+  const pagination = projectsResponse?.data?.meta || projectsResponse?.meta;
   const totalProjects = pagination?.total || 0;
   const totalPages = pagination?.last_page || 1;
 
@@ -370,7 +378,11 @@ const AdminProjectsRevamped = () => {
                           <td className="px-6 py-4">
                             <div className="flex items-center justify-end gap-2">
                               <button
-                                onClick={() => navigate(`/admin-dashboard/projects-revamped/details?identifier=${project.identifier}`)}
+                                onClick={() => {
+                                  const projectId = project.identifier || project.id;
+                                  console.log('Navigating to project:', { identifier: project.identifier, id: project.id, using: projectId });
+                                  navigate(`/admin-dashboard/projects-revamped/details?identifier=${projectId}`);
+                                }}
                                 className="p-2 text-gray-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
                                 title="View Details"
                               >

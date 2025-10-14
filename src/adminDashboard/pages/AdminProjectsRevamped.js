@@ -299,8 +299,84 @@ const AdminProjectsRevamped = () => {
               </div>
             ) : (
               <>
-                <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
-                  <table className="w-full min-w-[800px]">
+                {/* Mobile Card View */}
+                <div className="md:hidden divide-y divide-gray-200">
+                  {filteredProjects.map((project) => (
+                    <div key={project.id} className="p-4 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-start gap-3 flex-1">
+                          <div className="p-2 bg-primary-100 rounded-lg flex-shrink-0">
+                            <FolderOpen size={20} className="text-primary-600" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-gray-900 truncate">{project.name}</h3>
+                            <p className="text-xs text-gray-500 mt-0.5">{project.identifier}</p>
+                            {project.description && (
+                              <p className="text-sm text-gray-600 mt-1 line-clamp-2">{project.description}</p>
+                            )}
+                          </div>
+                        </div>
+                        <StatusBadge
+                          status={project.status}
+                          provisioningProgress={project.provisioning_progress}
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                          <p className="text-xs text-gray-500">Region</p>
+                          <p className="text-sm font-medium text-gray-900">{project.default_region || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500">Provider</p>
+                          <p className="text-sm font-medium text-gray-900">{project.default_provider || 'zadara'}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4 text-xs text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <Server size={12} />
+                            <span>{project.resources_count?.instances || 0}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Database size={12} />
+                            <span>{project.resources_count?.volumes || 0}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Network size={12} />
+                            <span>{project.resources_count?.vpcs || 0}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => {
+                              const projectId = project.identifier || project.id;
+                              navigate(`/admin-dashboard/projects-revamped/details?identifier=${projectId}`);
+                            }}
+                            className="p-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                            title="View Details"
+                          >
+                            <Eye size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(project.id)}
+                            disabled={deleteProject.isPending}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                            title="Delete"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full">
                     <thead className="bg-gray-50 border-b border-gray-200">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -408,7 +484,9 @@ const AdminProjectsRevamped = () => {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                      </table>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Pagination */}

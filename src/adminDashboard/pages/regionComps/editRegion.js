@@ -36,14 +36,26 @@ const EditRegionModal = ({ isOpen, onClose, region }) => {
   const [formData, setFormData] = useState(() => createFormState(region));
   const [errors, setErrors] = useState({});
   const [newFeatureKey, setNewFeatureKey] = useState("");
+  const [metaRawInput, setMetaRawInput] = useState(
+    region?.meta?.raw ? JSON.stringify(region.meta.raw, null, 2) : ""
+  );
 
   useEffect(() => {
     if (region && isOpen) {
       setFormData(createFormState(region));
       setErrors({});
       setNewFeatureKey("");
+      setMetaRawInput(
+        region.meta?.raw ? JSON.stringify(region.meta.raw, null, 2) : ""
+      );
     }
   }, [region, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setMetaRawInput("");
+    }
+  }, [isOpen]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -100,6 +112,11 @@ const EditRegionModal = ({ isOpen, onClose, region }) => {
     [formData.features]
   );
 
+  const handleMetaRawChange = (value) => {
+    setMetaRawInput(value);
+    setErrors((prev) => ({ ...prev, meta_raw: null }));
+  };
+
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
     if (!validateForm() || !region) return;
@@ -118,6 +135,22 @@ const EditRegionModal = ({ isOpen, onClose, region }) => {
     const meta = {};
     if (formData.provider_label.trim()) {
       meta.provider_label = formData.provider_label.trim();
+    }
+
+    if (metaRawInput.trim()) {
+      try {
+        const parsedMeta = JSON.parse(metaRawInput.trim());
+        if (typeof parsedMeta !== "object" || parsedMeta === null) {
+          throw new Error("Metadata must be an object");
+        }
+        meta.raw = parsedMeta;
+      } catch (err) {
+        setErrors((prev) => ({
+          ...prev,
+          meta_raw: "Metadata must be valid JSON describing an object.",
+        }));
+        return;
+      }
     }
 
     const regionData = {
@@ -359,6 +392,30 @@ const EditRegionModal = ({ isOpen, onClose, region }) => {
                   Add
                 </button>
               </div>
+            </div>
+            <div>
+              <label
+                htmlFor="meta_raw"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Advanced Metadata (JSON)
+              </label>
+              <textarea
+                id="meta_raw"
+                value={metaRawInput}
+                onChange={(e) => handleMetaRawChange(e.target.value)}
+                placeholder='e.g., {"platform_project_id":"1234"}'
+                rows={4}
+                className={`w-full input-field ${
+                  errors.meta_raw ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Optional: supply provider-specific metadata. Must be valid JSON.
+              </p>
+              {errors.meta_raw && (
+                <p className="text-red-500 text-xs mt-1">{errors.meta_raw}</p>
+              )}
             </div>
           </div>
         </div>

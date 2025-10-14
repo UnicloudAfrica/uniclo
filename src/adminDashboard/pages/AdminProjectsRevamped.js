@@ -484,9 +484,7 @@ const AdminProjectsRevamped = () => {
                         </tr>
                       ))}
                     </tbody>
-                      </table>
-                    </div>
-                  </div>
+                  </table>
                 </div>
 
                 {/* Pagination */}

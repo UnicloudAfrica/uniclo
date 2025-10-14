@@ -28,8 +28,7 @@ const updateRegion = async ({ id, regionData }) => {
 
 const deleteRegion = async (id) => {
   const res = await api("DELETE", `/regions/${id}`);
-  if (!res.data) throw new Error(`Failed to delete region with ID ${id}`);
-  return res.data;
+  return res?.data ?? null;
 };
 
 export const useFetchRegions = (options = {}) => {

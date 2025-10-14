@@ -91,6 +91,15 @@ export default function AdminProjectDetails() {
     refetch: refetchProjectStatus,
   } = useProjectStatus(projectId);
 
+  // Debug logging
+  useEffect(() => {
+    if (projectStatusData) {
+      console.log('✅ projectStatusData received:', projectStatusData);
+      console.log('📊 Summary items:', projectStatusData?.project?.summary);
+      console.log('👥 Users data:', projectStatusData?.project?.users);
+    }
+  }, [projectStatusData]);
+
   const summaryItems = projectStatusData?.project?.summary ?? [];
 
 
@@ -776,7 +785,25 @@ export default function AdminProjectDetails() {
               </div>
               <div className="space-y-3">
                 {summaryItems.length === 0 ? (
-                  <div className="text-sm text-gray-500">Checklist data unavailable.</div>
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <div className="text-sm font-medium text-amber-900">Checklist data unavailable</div>
+                        <div className="text-xs text-amber-700 mt-1">
+                          {isProjectStatusFetching ? 'Loading checklist...' : 'No checklist data returned from backend'}
+                        </div>
+                        {!isProjectStatusFetching && (
+                          <button
+                            onClick={() => refetchProjectStatus()}
+                            className="mt-2 text-xs text-amber-600 hover:text-amber-800 underline"
+                          >
+                            Retry loading checklist
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 ) : (
                   summaryItems.map((item, index) => (
                     <div

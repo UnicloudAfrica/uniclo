@@ -18,7 +18,13 @@ import {
   Boxes,
   Info
 } from "lucide-react";
-import { useFetchProjectById } from "../../hooks/adminHooks/projectHooks";
+import { 
+  useFetchProjectById,
+  useProvisionProject,
+  useVerifyZadara,
+  useEnableVpc,
+  useProjectStatus
+} from "../../hooks/adminHooks/projectHooks";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import Skeleton from "react-loading-skeleton";
@@ -53,6 +59,48 @@ const AdminProjectDetailsRevamped = () => {
   } = useFetchProjectById(projectIdentifier);
 
   const project = projectResponse?.data;
+  
+  // Additional hooks for project actions
+  const provisionMutation = useProvisionProject();
+  const enableVpcMutation = useEnableVpc();
+  const { data: zadaraVerification, refetch: refetchZadara } = useVerifyZadara(
+    projectIdentifier,
+    { enabled: false } // Only fetch on demand
+  );
+  
+  // Handlers
+  const handleProvision = async () => {
+    if (!window.confirm('Are you sure you want to provision this project?')) return;
+    
+    try {
+      await provisionMutation.mutateAsync(projectIdentifier);
+      toast.success('Project provisioning started!');
+      refetchProject();
+    } catch (error) {
+      toast.error(error.message || 'Failed to provision project');
+    }
+  };
+  
+  const handleVerifyZadara = async () => {
+    try {
+      await refetchZadara();
+      toast.success('Zadara verification complete');
+    } catch (error) {
+      toast.error(error.message || 'Failed to verify Zadara connection');
+    }
+  };
+  
+  const handleEnableVpc = async () => {
+    if (!window.confirm('Enable VPC for this project?')) return;
+    
+    try {
+      await enableVpcMutation.mutateAsync(projectIdentifier);
+      toast.success('VPC enabled successfully!');
+      refetchProject();
+    } catch (error) {
+      toast.error(error.message || 'Failed to enable VPC');
+    }
+  };
 
   // Auto-refresh if provisioning
   useEffect(() => {

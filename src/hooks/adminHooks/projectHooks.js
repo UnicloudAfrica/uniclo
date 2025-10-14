@@ -44,7 +44,8 @@ const fetchProjectById = async (id) => {
   if (!res.data) {
     throw new Error(`Failed to fetch project with ID ${id}`);
   }
-  return res.data;
+  // Return full response - component will access res.data
+  return res;
 };
 
 // POST: Create a new project

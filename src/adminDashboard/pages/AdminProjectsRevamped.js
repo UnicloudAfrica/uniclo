@@ -175,7 +175,7 @@ const AdminProjectsRevamped = () => {
         closeMobileMenu={() => setIsMobileMenuOpen(false)}
       />
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col md:ml-20 lg:ml-[20%]">
         <AdminHeadbar
           toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           title="Projects"

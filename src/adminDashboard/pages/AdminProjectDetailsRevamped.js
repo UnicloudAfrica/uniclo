@@ -198,7 +198,7 @@ const AdminProjectDetailsRevamped = () => {
           isMobileMenuOpen={isMobileMenuOpen}
           closeMobileMenu={() => setIsMobileMenuOpen(false)}
         />
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col md:ml-20 lg:ml-[20%]">
           <AdminHeadbar
             toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             title="Project Details"
@@ -219,21 +219,33 @@ const AdminProjectDetailsRevamped = () => {
           isMobileMenuOpen={isMobileMenuOpen}
           closeMobileMenu={() => setIsMobileMenuOpen(false)}
         />
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col md:ml-20 lg:ml-[20%]">
           <AdminHeadbar
             toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             title="Project Details"
           />
           <main className="flex-1 p-6 flex items-center justify-center">
-            <div className="text-center">
+            <div className="text-center max-w-md">
               <AlertCircle size={48} className="mx-auto text-gray-400 mb-4" />
               <h2 className="text-xl font-semibold text-gray-900 mb-2">Project not found</h2>
-              <p className="text-sm text-gray-500 mb-4">Identifier: {projectIdentifier}</p>
+              <p className="text-sm text-gray-500 mb-4">Identifier: <code className="bg-gray-100 px-2 py-1 rounded">{projectIdentifier}</code></p>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4 text-left">
+                <p className="text-sm text-gray-700 mb-2"><strong>This might be cached data.</strong></p>
+                <p className="text-xs text-gray-600">Try:</p>
+                <ol className="text-xs text-gray-600 list-decimal list-inside space-y-1 mt-2">
+                  <li>Hard refresh the page (Cmd/Ctrl + Shift + R)</li>
+                  <li>Clear browser cache</li>
+                  <li>Go back to projects list and click again</li>
+                </ol>
+              </div>
               <button
-                onClick={() => navigate("/admin-dashboard/projects-revamped")}
-                className="text-primary-600 hover:text-primary-700"
+                onClick={() => {
+                  // Clear React Query cache
+                  window.location.href = "/admin-dashboard/projects-revamped";
+                }}
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
               >
-                ← Back to projects
+                ← Back to projects list
               </button>
             </div>
           </main>
@@ -249,7 +261,7 @@ const AdminProjectDetailsRevamped = () => {
         closeMobileMenu={() => setIsMobileMenuOpen(false)}
       />
 
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col md:ml-20 lg:ml-[20%]">
         <AdminHeadbar
           toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           title="Project Details"

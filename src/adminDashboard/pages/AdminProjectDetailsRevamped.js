@@ -204,7 +204,7 @@ const AdminProjectDetailsRevamped = () => {
         />
         <div className="flex-1 flex flex-col md:ml-20 lg:ml-[20%]">
           <AdminHeadbar onMenuClick={toggleMobileMenu} />
-          <main className="flex-1 p-4 sm:p-6 pt-[6.5rem] md:pt-6">
+          <main className="flex-1 p-4 sm:p-6 pt-[6.5rem] md:pt-[7.5rem] lg:pt-[8rem]">
             <Skeleton height={200} className="mb-6" />
             <Skeleton height={400} />
           </main>
@@ -222,7 +222,7 @@ const AdminProjectDetailsRevamped = () => {
         />
         <div className="flex-1 flex flex-col md:ml-20 lg:ml-[20%]">
           <AdminHeadbar onMenuClick={toggleMobileMenu} />
-          <main className="flex-1 p-4 sm:p-6 pt-[6.5rem] md:pt-6 flex items-center justify-center">
+          <main className="flex-1 p-4 sm:p-6 pt-[6.5rem] md:pt-[7.5rem] lg:pt-[8rem] flex items-center justify-center">
             <div className="text-center max-w-md">
               <AlertCircle size={48} className="mx-auto text-gray-400 mb-4" />
               <h2 className="text-xl font-semibold text-gray-900 mb-2">Project not found</h2>
@@ -262,7 +262,7 @@ const AdminProjectDetailsRevamped = () => {
       <div className="flex-1 flex flex-col md:ml-20 lg:ml-[20%]">
         <AdminHeadbar onMenuClick={toggleMobileMenu} />
 
-        <main className="flex-1 p-4 sm:p-6 pt-[6.5rem] md:pt-6 overflow-auto">
+        <main className="flex-1 p-4 sm:p-6 pt-[6.5rem] md:pt-[7.5rem] lg:pt-[8rem] overflow-auto">
           {/* Back button */}
           <button
             onClick={() => navigate("/admin-dashboard/projects-revamped")}

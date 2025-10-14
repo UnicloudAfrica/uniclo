@@ -280,16 +280,53 @@ const AdminProjectDetailsRevamped = () => {
                   />
                 </div>
               </div>
-              <button
-                onClick={() => {
-                  refetchProject();
-                  toast.success("Project data refreshed");
-                }}
-                className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                <RefreshCw size={16} />
-                Refresh
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    refetchProject();
+                    toast.success("Project data refreshed");
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  <RefreshCw size={16} />
+                  Refresh
+                </button>
+                
+                {/* Show provision button only if project is pending */}
+                {project.status === 'pending' && (
+                  <button
+                    onClick={handleProvision}
+                    disabled={provisionMutation.isPending}
+                    className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                  >
+                    {provisionMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Settings size={16} />}
+                    Provision
+                  </button>
+                )}
+                
+                {/* Verify Zadara button */}
+                <button
+                  onClick={handleVerifyZadara}
+                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  title="Verify Zadara Connection"
+                >
+                  <CheckCircle2 size={16} />
+                  Verify
+                </button>
+                
+                {/* Enable VPC button (if not already enabled) */}
+                {project.type !== 'vpc' && (
+                  <button
+                    onClick={handleEnableVpc}
+                    disabled={enableVpcMutation.isPending}
+                    className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                    title="Enable VPC"
+                  >
+                    {enableVpcMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Network size={16} />}
+                    Enable VPC
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Info Grid */}

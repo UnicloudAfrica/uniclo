@@ -426,6 +426,46 @@ export default function AdminProjectDetails() {
     (item) => item.name === activeInfraTab
   )?.component;
 
+  const overviewMetrics = useMemo(() => {
+    if (!projectDetails) {
+      return [];
+    }
+
+    const regionValue = projectDetails.default_region
+      ? projectDetails.default_region.toUpperCase()
+      : "N/A";
+    const providerValue = (projectDetails.default_provider || "zadara").toUpperCase();
+    const instancesValue = projectDetails.resources_count?.instances ?? 0;
+    const volumesValue = projectDetails.resources_count?.volumes ?? 0;
+
+    return [
+      {
+        label: "Region",
+        value: regionValue,
+        description: "Deployment region",
+        icon: <Network size={18} className="text-[#288DD1]" />,
+      },
+      {
+        label: "Provider",
+        value: providerValue,
+        description: "Cloud provider",
+        icon: <Globe size={18} className="text-[#288DD1]" />,
+      },
+      {
+        label: "Instances",
+        value: instancesValue,
+        description: "Compute resources",
+        icon: <Server size={18} className="text-[#288DD1]" />,
+      },
+      {
+        label: "Volumes",
+        value: volumesValue,
+        description: "Storage resources",
+        icon: <HardDrive size={18} className="text-[#288DD1]" />,
+      },
+    ];
+  }, [projectDetails]);
+
   const quickActions = [
     // Add Enable VPC action if needed
     ...(needsVpcEnabling ? [{
@@ -489,46 +529,6 @@ export default function AdminProjectDetails() {
       icon: <HardDrive size={16} />,
     },
   ];
-
-  const overviewMetrics = useMemo(() => {
-    if (!projectDetails) {
-      return [];
-    }
-
-    const regionValue = projectDetails.default_region
-      ? projectDetails.default_region.toUpperCase()
-      : "N/A";
-    const providerValue = (projectDetails.default_provider || "zadara").toUpperCase();
-    const instancesValue = projectDetails.resources_count?.instances ?? 0;
-    const volumesValue = projectDetails.resources_count?.volumes ?? 0;
-
-    return [
-      {
-        label: "Region",
-        value: regionValue,
-        description: "Deployment region",
-        icon: <Network size={18} className="text-[#288DD1]" />,
-      },
-      {
-        label: "Provider",
-        value: providerValue,
-        description: "Cloud provider",
-        icon: <Globe size={18} className="text-[#288DD1]" />,
-      },
-      {
-        label: "Instances",
-        value: instancesValue,
-        description: "Compute resources",
-        icon: <Server size={18} className="text-[#288DD1]" />,
-      },
-      {
-        label: "Volumes",
-        value: volumesValue,
-        description: "Storage resources",
-        icon: <HardDrive size={18} className="text-[#288DD1]" />,
-      },
-    ];
-  }, [projectDetails]);
 
   const isRefreshing =
     isManualRefreshing ||

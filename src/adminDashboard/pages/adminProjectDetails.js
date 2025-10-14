@@ -36,6 +36,7 @@ import RouteTables from "./infraComps/routetable";
 import AssignEdgeConfigModal from "./projectComps/assignEdgeConfig";
 import AdminEdgeConfigPanel from "../components/AdminEdgeConfigPanel";
 import ModernButton from "../components/ModernButton";
+import ModernCard from "../components/ModernCard";
 import InfrastructureSetupFlow from "./infraComps/InfrastructureSetupFlow";
 import ToastUtils from "../../utils/toastUtil";
 import api from "../../index/admin/api";

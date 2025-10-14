@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
@@ -17,6 +17,7 @@ import {
   AlertCircle,
   Network,
   Globe,
+  Server,
   Key,
   Wifi,
   GitBranch,
@@ -54,6 +55,7 @@ const decodeId = (encodedId) => {
 export default function AdminProjectDetails() {
   const location = useLocation();
   const navigate = useNavigate();
+  const isRevampedRoute = location.pathname.includes("projects-revamped");
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [instances, setInstances] = useState([]);
@@ -72,8 +74,20 @@ export default function AdminProjectDetails() {
   const [activeInfraTab, setActiveInfraTab] = useState("Setup");
 
   const queryParams = new URLSearchParams(location.search);
+  const identifierParam = queryParams.get("identifier");
   const encodedProjectId = queryParams.get("id");
-  const projectId = decodeId(encodedProjectId);
+  const projectId = useMemo(() => {
+    if (identifierParam) {
+      return identifierParam;
+    }
+    if (encodedProjectId) {
+      return decodeId(encodedProjectId);
+    }
+    return null;
+  }, [identifierParam, encodedProjectId]);
+  const backToProjectsPath = isRevampedRoute
+    ? "/admin-dashboard/projects-revamped"
+    : "/admin-dashboard/projects";
   const openEdgeFromQuery = queryParams.get("openEdge") === "1";
   const {
     data: projectStatusData,
@@ -397,7 +411,7 @@ export default function AdminProjectDetails() {
             {projectErrorMessage}
           </p>
           <button
-            onClick={() => navigate("/admin-dashboard/projects")}
+            onClick={() => navigate(backToProjectsPath)}
             className="px-6 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors"
           >
             Go to Projects Page
@@ -476,6 +490,46 @@ export default function AdminProjectDetails() {
     },
   ];
 
+  const overviewMetrics = useMemo(() => {
+    if (!projectDetails) {
+      return [];
+    }
+
+    const regionValue = projectDetails.default_region
+      ? projectDetails.default_region.toUpperCase()
+      : "N/A";
+    const providerValue = (projectDetails.default_provider || "zadara").toUpperCase();
+    const instancesValue = projectDetails.resources_count?.instances ?? 0;
+    const volumesValue = projectDetails.resources_count?.volumes ?? 0;
+
+    return [
+      {
+        label: "Region",
+        value: regionValue,
+        description: "Deployment region",
+        icon: <Network size={18} className="text-[#288DD1]" />,
+      },
+      {
+        label: "Provider",
+        value: providerValue,
+        description: "Cloud provider",
+        icon: <Globe size={18} className="text-[#288DD1]" />,
+      },
+      {
+        label: "Instances",
+        value: instancesValue,
+        description: "Compute resources",
+        icon: <Server size={18} className="text-[#288DD1]" />,
+      },
+      {
+        label: "Volumes",
+        value: volumesValue,
+        description: "Storage resources",
+        icon: <HardDrive size={18} className="text-[#288DD1]" />,
+      },
+    ];
+  }, [projectDetails]);
+
   const isRefreshing =
     isManualRefreshing ||
     (isProjectFetching && !isProjectLoading) ||
@@ -492,6 +546,15 @@ export default function AdminProjectDetails() {
       />
       <AdminActiveTab />
       <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
+        <button
+          type="button"
+          onClick={() => navigate(backToProjectsPath)}
+          className="mb-4 inline-flex items-center gap-2 text-sm text-[#288DD1] hover:text-[#1976D2] transition-colors"
+        >
+          <ChevronLeft size={16} />
+          Back to Projects
+        </button>
+
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-[#1E1E1EB2]">
@@ -537,6 +600,32 @@ export default function AdminProjectDetails() {
             )}
           </div>
         </div>
+
+        {overviewMetrics.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+            {overviewMetrics.map((metric) => (
+              <ModernCard
+                key={metric.label}
+                padding="sm"
+                variant="outlined"
+                className="flex items-center gap-3"
+              >
+                <div className="p-3 rounded-full bg-[#E0F2FF] text-[#288DD1]">
+                  {metric.icon}
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-gray-500">
+                    {metric.label}
+                  </p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {metric.value}
+                  </p>
+                  <p className="text-xs text-gray-500">{metric.description}</p>
+                </div>
+              </ModernCard>
+            ))}
+          </div>
+        )}
 
         <div
           className={`mb-6 p-4 rounded-xl border ${hasVpcConfigured ? "bg-green-50 border-green-200" : "bg-blue-50 border-blue-200"

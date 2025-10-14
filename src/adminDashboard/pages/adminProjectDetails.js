@@ -768,7 +768,7 @@ export default function AdminProjectDetails() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Info className="w-4 h-4 text-[#288DD1]" />
-                  <span className="font-semibold text-gray-800">VPC Checklist</span>
+                  <span className="font-semibold text-gray-800">Provisioning Checklist</span>
                 </div>
                 {isProjectStatusFetching && (
                   <Loader2 className="w-4 h-4 animate-spin text-[#288DD1]" />
@@ -783,39 +783,179 @@ export default function AdminProjectDetails() {
                       key={`${item.title}-${index}`}
                       className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 p-3"
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-3 flex-1">
                         {item.completed ? (
-                          <CheckCircle className="w-4 h-4 text-emerald-500 mt-1" />
+                          <CheckCircle className="w-4 h-4 text-emerald-500 mt-1 flex-shrink-0" />
                         ) : (
-                          <AlertCircle className="w-4 h-4 text-amber-500 mt-1" />
+                          <AlertCircle className="w-4 h-4 text-amber-500 mt-1 flex-shrink-0" />
                         )}
-                        <div className="space-y-1">
+                        <div className="space-y-1 flex-1">
                           <div className="text-sm font-medium text-gray-800">{item.title}</div>
                           {typeof item.count === 'number' && (
                             <div className="text-xs text-gray-500">Total: {item.count}</div>
                           )}
-                          {!item.completed && typeof item.missing_count === 'number' ? (
-                            <div className="text-xs text-gray-500">{item.missing_count} pending</div>
-                          ) : null}
+                          {!item.completed && typeof item.missing_count === 'number' && item.missing_count > 0 && (
+                            <div className="text-xs text-amber-600 font-medium">{item.missing_count} pending</div>
+                          )}
                           {item.updated_at && (
-                            <div className="text-xs text-gray-400">Last updated {new Date(item.updated_at).toLocaleString()}</div>
+                            <div className="text-xs text-gray-400">Completed {new Date(item.updated_at).toLocaleString()}</div>
                           )}
                         </div>
                       </div>
-                      {item.action ? (
-                        <ModernButton
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleChecklistAction(item.action)}
-                          isLoading={summaryActionEndpoint === (item.action.endpoint.startsWith('/') ? item.action.endpoint : `/${item.action.endpoint}`)}
-                        >
-                          {item.action.label || 'Fix'}
-                        </ModernButton>
-                      ) : null}
+                      <div className="flex-shrink-0">
+                        {item.action ? (
+                          <ModernButton
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleChecklistAction(item.action)}
+                            isLoading={summaryActionEndpoint === (item.action.endpoint.startsWith('/') ? item.action.endpoint : `/${item.action.endpoint}`)}
+                          >
+                            {item.action.label || 'Fix'}
+                          </ModernButton>
+                        ) : null}
+                      </div>
                     </div>
                   ))
                 )}
               </div>
+              
+              {/* User Details Section */}
+              {projectStatusData?.project?.users && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <h3 className="text-sm font-semibold text-gray-800 mb-4">Project Users ({projectStatusData.project.users.total})</h3>
+                  
+                  {/* All Users */}
+                  {projectStatusData.project.users.local && projectStatusData.project.users.local.length > 0 && (
+                    <div className="mb-4">
+                      <div className="text-xs font-medium text-gray-600 mb-2">All Local Users</div>
+                      <div className="space-y-2">
+                        {projectStatusData.project.users.local.map((user) => (
+                          <div key={user.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg text-xs">
+                            <div>
+                              <div className="font-medium text-gray-900">{user.name}</div>
+                              <div className="text-gray-500">{user.email}</div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className={`px-2 py-1 rounded ${user.status.zadara_account ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'}`}>
+                                Zadara
+                              </span>
+                              <span className={`px-2 py-1 rounded ${user.status.aws_policy ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'}`}>
+                                AWS
+                              </span>
+                              <span className={`px-2 py-1 rounded ${user.status.symp_policy ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'}`}>
+                                Symp
+                              </span>
+                              <span className={`px-2 py-1 rounded ${user.status.tenant_admin ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'}`}>
+                                Admin
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Missing Zadara Accounts */}
+                  {projectStatusData.project.users.zadara_missing && projectStatusData.project.users.zadara_missing.length > 0 && (
+                    <div className="mb-4">
+                      <div className="text-xs font-medium text-amber-600 mb-2">Missing Zadara Accounts ({projectStatusData.project.users.zadara_missing.length})</div>
+                      <div className="space-y-2">
+                        {projectStatusData.project.users.zadara_missing.map((user) => (
+                          <div key={user.id} className="flex items-center justify-between p-2 bg-amber-50 rounded-lg text-xs">
+                            <div>
+                              <div className="font-medium text-gray-900">{user.name}</div>
+                            </div>
+                            {user.sync_endpoint && (
+                              <ModernButton
+                                size="xs"
+                                variant="outline"
+                                onClick={() => handleChecklistAction({ method: 'POST', endpoint: user.sync_endpoint, label: 'Sync User' })}
+                              >
+                                Sync
+                              </ModernButton>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Missing AWS Policies */}
+                  {projectStatusData.project.users.aws_policy_missing && projectStatusData.project.users.aws_policy_missing.length > 0 && (
+                    <div className="mb-4">
+                      <div className="text-xs font-medium text-amber-600 mb-2">Missing AWS Policies ({projectStatusData.project.users.aws_policy_missing.length})</div>
+                      <div className="space-y-2">
+                        {projectStatusData.project.users.aws_policy_missing.map((user) => (
+                          <div key={user.id} className="flex items-center justify-between p-2 bg-amber-50 rounded-lg text-xs">
+                            <div>
+                              <div className="font-medium text-gray-900">{user.name}</div>
+                            </div>
+                            {user.assign_endpoint && (
+                              <ModernButton
+                                size="xs"
+                                variant="outline"
+                                onClick={() => handleChecklistAction({ method: user.method || 'POST', endpoint: user.assign_endpoint, label: 'Assign' })}
+                              >
+                                Assign Policy
+                              </ModernButton>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Missing Symp Policies */}
+                  {projectStatusData.project.users.symp_policy_missing && projectStatusData.project.users.symp_policy_missing.length > 0 && (
+                    <div className="mb-4">
+                      <div className="text-xs font-medium text-amber-600 mb-2">Missing Symp Policies ({projectStatusData.project.users.symp_policy_missing.length})</div>
+                      <div className="space-y-2">
+                        {projectStatusData.project.users.symp_policy_missing.map((user) => (
+                          <div key={user.id} className="flex items-center justify-between p-2 bg-amber-50 rounded-lg text-xs">
+                            <div>
+                              <div className="font-medium text-gray-900">{user.name}</div>
+                            </div>
+                            {user.assign_endpoint && (
+                              <ModernButton
+                                size="xs"
+                                variant="outline"
+                                onClick={() => handleChecklistAction({ method: user.method || 'POST', endpoint: user.assign_endpoint, label: 'Assign' })}
+                              >
+                                Assign Policy
+                              </ModernButton>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Missing Tenant Admin */}
+                  {projectStatusData.project.users.tenant_admin_missing && projectStatusData.project.users.tenant_admin_missing.length > 0 && (
+                    <div>
+                      <div className="text-xs font-medium text-amber-600 mb-2">Missing Tenant Admin Role ({projectStatusData.project.users.tenant_admin_missing.length})</div>
+                      <div className="space-y-2">
+                        {projectStatusData.project.users.tenant_admin_missing.map((user) => (
+                          <div key={user.id} className="flex items-center justify-between p-2 bg-amber-50 rounded-lg text-xs">
+                            <div>
+                              <div className="font-medium text-gray-900">{user.name}</div>
+                            </div>
+                            {user.assign_endpoint && (
+                              <ModernButton
+                                size="xs"
+                                variant="outline"
+                                onClick={() => handleChecklistAction({ method: user.method || 'POST', endpoint: user.assign_endpoint, label: 'Assign' })}
+                              >
+                                Assign Role
+                              </ModernButton>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </ModernCard>
 
             {/* Region badge for Infrastructure */}

@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { 
-  FolderOpen, 
-  Plus, 
+import {
+  FolderOpen,
+  Plus,
   Search,
   Filter,
   RefreshCw,
@@ -19,6 +19,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from "lucide-react";
+
 import { useFetchProjects, useDeleteProject } from "../../hooks/adminHooks/projectHooks";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
@@ -40,13 +41,13 @@ const AdminProjectsRevamped = () => {
   const itemsPerPage = Number(searchParams.get("per_page")) || 15;
 
   // Fetch projects with filters
-  const { 
-    data: projectsResponse, 
-    isLoading, 
+  const {
+    data: projectsResponse,
+    isLoading,
     isFetching,
-    refetch 
-  } = useFetchProjects({ 
-    page: currentPage, 
+    refetch
+  } = useFetchProjects({
+    page: currentPage,
     per_page: itemsPerPage,
     status: filterStatus || undefined,
     region: filterRegion || undefined
@@ -80,7 +81,7 @@ const AdminProjectsRevamped = () => {
   // Handle delete
   const handleDelete = async (projectId) => {
     if (!window.confirm("Are you sure you want to delete this project?")) return;
-    
+
     try {
       await deleteProject.mutateAsync(projectId);
       toast.success("Project deleted successfully");
@@ -161,13 +162,13 @@ const AdminProjectsRevamped = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <AdminSidebar 
+      <AdminSidebar
         isMobileMenuOpen={isMobileMenuOpen}
         closeMobileMenu={() => setIsMobileMenuOpen(false)}
       />
-      
+
       <div className="flex-1 flex flex-col">
-        <AdminHeadbar 
+        <AdminHeadbar
           toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           title="Projects"
         />
@@ -192,25 +193,25 @@ const AdminProjectsRevamped = () => {
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <StatsCard 
+            <StatsCard
               icon={FolderOpen}
               label="Total Projects"
               value={totalProjects}
               color="bg-blue-500"
             />
-            <StatsCard 
+            <StatsCard
               icon={CheckCircle2}
               label="Active Projects"
               value={projects.filter(p => p.status === 'active').length}
               color="bg-green-500"
             />
-            <StatsCard 
+            <StatsCard
               icon={Loader2}
               label="Provisioning"
               value={projects.filter(p => p.provisioning_progress?.status === 'provisioning').length}
               color="bg-yellow-500"
             />
-            <StatsCard 
+            <StatsCard
               icon={Server}
               label="Total Instances"
               value={projects.reduce((sum, p) => sum + (p.resources_count?.instances || 0), 0)}
@@ -340,8 +341,8 @@ const AdminProjectsRevamped = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4">
-                            <StatusBadge 
-                              status={project.status} 
+                            <StatusBadge
+                              status={project.status}
                               provisioningProgress={project.provisioning_progress}
                             />
                           </td>
@@ -433,7 +434,7 @@ const AdminProjectsRevamped = () => {
 
       {/* Create Project Modal */}
       {isCreateModalOpen && (
-        <CreateProjectModal 
+        <CreateProjectModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
           onSuccess={() => {

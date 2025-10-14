@@ -74,7 +74,7 @@ export default function AdminProjectDetails() {
   const encodedProjectId = queryParams.get("id");
   const projectId = decodeId(encodedProjectId);
   const openEdgeFromQuery = queryParams.get("openEdge") === "1";
-const {
+  const {
     data: projectStatusData,
     isFetching: isProjectStatusFetching,
     refetch: refetchProjectStatus,
@@ -153,10 +153,10 @@ const {
 
   const formattedLastRefreshed = lastRefreshedAt
     ? lastRefreshedAt.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      })
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    })
     : null;
 
   const jumpToInfrastructureTab = (tabName) => {
@@ -238,7 +238,7 @@ const {
       console.error("Failed to refresh project details:", error);
       ToastUtils.error(
         error?.message ||
-          "Failed to refresh project details. Please try again."
+        "Failed to refresh project details. Please try again."
       );
     } finally {
       setIsManualRefreshing(false);
@@ -284,7 +284,7 @@ const {
           console.error("Failed to request VPC provisioning:", error);
           ToastUtils.error(
             error?.message ||
-              "Failed to request VPC provisioning. Please try again."
+            "Failed to request VPC provisioning. Please try again."
           );
         },
         onSettled: () => {
@@ -324,7 +324,7 @@ const {
           console.error("Failed to enable VPC:", error);
           ToastUtils.error(
             error?.message ||
-              "Failed to enable VPC. Please try again."
+            "Failed to enable VPC. Please try again."
           );
         },
         onSettled: () => {
@@ -429,8 +429,8 @@ const {
       label: hasVpcConfigured
         ? "VPC Provisioned"
         : activeInfraAction === "vpc" || isProvisioningVpc
-        ? "Provisioning VPC..."
-        : "Provision VPC",
+          ? "Provisioning VPC..."
+          : "Provision VPC",
       onClick: handleProvisionVpc,
       icon: <Network size={16} />,
       disabled:
@@ -538,16 +538,14 @@ const {
         </div>
 
         <div
-          className={`mb-6 p-4 rounded-xl border ${
-            hasVpcConfigured ? "bg-green-50 border-green-200" : "bg-blue-50 border-blue-200"
-          }`}
+          className={`mb-6 p-4 rounded-xl border ${hasVpcConfigured ? "bg-green-50 border-green-200" : "bg-blue-50 border-blue-200"
+            }`}
         >
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="flex items-start gap-3">
               <Info
-                className={`w-5 h-5 mt-0.5 ${
-                  hasVpcConfigured ? "text-green-600" : "text-blue-600"
-                }`}
+                className={`w-5 h-5 mt-0.5 ${hasVpcConfigured ? "text-green-600" : "text-blue-600"
+                  }`}
               />
               <div>
                 <h2 className="text-sm font-semibold text-gray-900">
@@ -557,8 +555,8 @@ const {
                   {hasVpcConfigured
                     ? "Continue configuring edge networking and infrastructure resources to activate this project."
                     : !isVpcEnabled
-                    ? "Enable VPC for this project first, then request VPC provisioning to activate it."
-                    : "Request VPC provisioning and complete the networking resources below to activate it."}
+                      ? "Enable VPC for this project first, then request VPC provisioning to activate it."
+                      : "Request VPC provisioning and complete the networking resources below to activate it."}
                 </p>
               </div>
             </div>
@@ -569,11 +567,10 @@ const {
                   onClick={action.onClick}
                   disabled={action.disabled}
                   type="button"
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors border ${
-                    action.disabled
-                      ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                      : "bg-white text-[#288DD1] border-[#B3E5FC] hover:bg-[#E0F2FF]"
-                  }`}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors border ${action.disabled
+                    ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                    : "bg-white text-[#288DD1] border-[#B3E5FC] hover:bg-[#E0F2FF]"
+                    }`}
                 >
                   {action.loading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -636,7 +633,7 @@ const {
               <div className="flex items-center gap-2">
                 <span className="text-gray-900">
                   {!isVpcEnabled ? "Not VPC-enabled" :
-                   hasVpcConfigured ? "Provisioned by Zadara" : "VPC-enabled, awaiting provisioning"}
+                    hasVpcConfigured ? "Provisioned by Zadara" : "VPC-enabled, awaiting provisioning"}
                 </span>
                 {!isVpcEnabled && (
                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-800">
@@ -666,22 +663,20 @@ const {
           <button
             onClick={() => setActiveTopLevelTab("Instances")}
             className={`px-8 py-4 text-sm font-medium transition-colors border-b-2
-                    ${
-                      activeTopLevelTab === "Instances"
-                        ? "text-[#288DD1] border-[#288DD1]"
-                        : "text-gray-600 border-transparent hover:text-gray-900 hover:border-gray-400"
-                    }`}
+                    ${activeTopLevelTab === "Instances"
+                ? "text-[#288DD1] border-[#288DD1]"
+                : "text-gray-600 border-transparent hover:text-gray-900 hover:border-gray-400"
+              }`}
           >
             Instances
           </button>
           <button
             onClick={() => setActiveTopLevelTab("Infrastructure")}
             className={`px-8 py-4 text-sm font-medium transition-colors border-b-2
-                    ${
-                      activeTopLevelTab === "Infrastructure"
-                        ? "text-[#288DD1] border-[#288DD1]"
-                        : "text-gray-600 border-transparent hover:text-gray-900 hover:border-gray-400"
-                    }`}
+                    ${activeTopLevelTab === "Infrastructure"
+                ? "text-[#288DD1] border-[#288DD1]"
+                : "text-gray-600 border-transparent hover:text-gray-900 hover:border-gray-400"
+              }`}
           >
             Infrastructure
           </button>
@@ -758,7 +753,7 @@ const {
 
         {/* Conditionally Render Content based on Top-Level Tab */}
         {activeTopLevelTab === "Instances" ? (
-
+          <>
             <div className="w-full flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-[#575758]">
                 Instances
@@ -823,17 +818,16 @@ const {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                           <span
-                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${
-                              item.status === "Running"
-                                ? "bg-green-100 text-green-800"
-                                : item.status === "Stopped"
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${item.status === "Running"
+                              ? "bg-green-100 text-green-800"
+                              : item.status === "Stopped"
                                 ? "bg-red-100 text-red-800"
                                 : item.status === "spawning"
-                                ? "bg-blue-100 text-blue-800"
-                                : item.status === "payment_pending"
-                                ? "bg-orange-100 text-orange-800"
-                                : "bg-gray-100 text-gray-800"
-                            }`}
+                                  ? "bg-blue-100 text-blue-800"
+                                  : item.status === "payment_pending"
+                                    ? "bg-orange-100 text-orange-800"
+                                    : "bg-gray-100 text-gray-800"
+                              }`}
                           >
                             {item.status?.replace(/_/g, " ") || "N/A"}
                           </span>
@@ -878,17 +872,16 @@ const {
                         {item.name || "N/A"}
                       </h3>
                       <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${
-                          item.status === "Running"
-                            ? "bg-green-100 text-green-800"
-                            : item.status === "Stopped"
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${item.status === "Running"
+                          ? "bg-green-100 text-green-800"
+                          : item.status === "Stopped"
                             ? "bg-red-100 text-red-800"
                             : item.status === "spawning"
-                            ? "bg-blue-100 text-blue-800"
-                            : item.status === "payment_pending"
-                            ? "bg-orange-100 text-orange-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
+                              ? "bg-blue-100 text-blue-800"
+                              : item.status === "payment_pending"
+                                ? "bg-orange-100 text-orange-800"
+                                : "bg-gray-100 text-gray-800"
+                          }`}
                       >
                         {item.status?.replace(/_/g, " ") || "N/A"}
                       </span>
@@ -964,10 +957,9 @@ const {
                   key={item.name}
                   onClick={() => setActiveInfraTab(item.name)}
                   className={`px-4 py-3 text-sm font-medium transition-colors border-b-2
-                    ${
-                      activeInfraTab === item.name
-                        ? "text-[#288DD1] border-[#288DD1]"
-                        : "text-gray-600 border-transparent hover:text-gray-900 hover:border-gray-400"
+                    ${activeInfraTab === item.name
+                      ? "text-[#288DD1] border-[#288DD1]"
+                      : "text-gray-600 border-transparent hover:text-gray-900 hover:border-gray-400"
                     }`}
                 >
                   {item.name}
@@ -988,12 +980,13 @@ const {
             </div>
           </div>
         )}
-      </main>
+      </main >
 
       {/* Modals are unchanged */}
-      <EditProjectModal
+      < EditProjectModal
         isOpen={isEditDescriptionModalOpen}
-        onClose={() => setIsEditDescriptionModalOpen(false)}
+        onClose={() => setIsEditDescriptionModalOpen(false)
+        }
         projectId={projectId}
         projectDetails={projectDetails}
       />

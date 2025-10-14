@@ -9,11 +9,17 @@ import { motion } from "framer-motion";
 const Features = () => {
   return (
     <>
-      <div className="py-[3em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
+      <section
+        aria-labelledby="features-heading"
+        className="py-[3em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]"
+      >
         <motion.div className=" flex flex-col md:flex-row w-full justify-between items-start">
-          <p className=" w-full md:w-[48%] font-medium text-2xl md:text-3xl lg:text-4xl lg:leading-[50px] xl:leading-[48px] xl:text-5xl">
+          <h2
+            id="features-heading"
+            className=" w-full md:w-[48%] font-medium text-2xl md:text-3xl lg:text-4xl lg:leading-[50px] xl:leading-[48px] xl:text-5xl"
+          >
             Cloud Services for African Businesses & Governments
-          </p>
+          </h2>
           <p className=" w-full md:w-[48%] text-base lg:text-lg xl:text-xl mt-3 md:mt-0">
             Get on-demand, enterprise-grade cloud services for compute,
             networking, and storage, anywhere - on-premises, hybrid,
@@ -25,7 +31,7 @@ const Features = () => {
         <div className=" grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[32px]  mt-8 md:mt-16">
           <motion.div className="w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[#288DD11A] to-[#3FE0C81A] p-5 lg:p-7">
             <span className=" flex flex-col md:flex-row items-start md:items-center md:space-x-3">
-              <img src={beneone} alt="" />
+              <img src={beneone} alt="Zero-risk services icon" />
               <p className=" font-medium text-xl mt-2">
                 Zero-risk Cloud Services
               </p>
@@ -40,7 +46,7 @@ const Features = () => {
 
           <motion.div className="w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[#288DD11A] to-[#3FE0C81A] p-5 lg:p-7">
             <span className=" flex flex-col md:flex-row items-start md:items-center md:space-x-3">
-              <img src={benetwo} alt="" />
+              <img src={benetwo} alt="Hybrid-ready design icon" />
               <p className=" font-medium text-xl mt-2">
                 Hybrid-Ready by Design
               </p>
@@ -55,7 +61,7 @@ const Features = () => {
 
           <motion.div className="w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[#288DD11A] to-[#3FE0C81A] p-5 lg:p-7">
             <span className=" flex flex-col md:flex-row items-start md:items-center md:space-x-3">
-              <img src={benethree} alt="" />
+              <img src={benethree} alt="Global reach icon" />
               <p className=" font-medium text-xl mt-2">
                 Global Reach, Local Appeal
               </p>
@@ -69,7 +75,7 @@ const Features = () => {
 
           <motion.div className="w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[#288DD11A] to-[#3FE0C81A] p-5 lg:p-7">
             <span className=" flex flex-col md:flex-row items-start md:items-center md:space-x-3">
-              <img src={benefour} alt="" />
+              <img src={benefour} alt="Cloud trust icon" />
               <p className=" font-medium text-xl mt-2">Trust your Cloud</p>
             </span>
             <p className=" text-[#121212CC] text-sm md:text-base mt-2">
@@ -82,7 +88,7 @@ const Features = () => {
 
           <motion.div className="w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[#288DD11A] to-[#3FE0C81A] p-5 lg:p-7">
             <span className=" flex flex-col md:flex-row items-start md:items-center md:space-x-3">
-              <img src={benefive} alt="" />
+              <img src={benefive} alt="Centralized monitoring icon" />
               <p className=" font-medium text-xl mt-2">
                 Centralized and Easy Monitoring
               </p>
@@ -97,7 +103,7 @@ const Features = () => {
 
           <motion.div className="w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[#288DD11A] to-[#3FE0C81A] p-5 lg:p-7">
             <span className=" flex flex-col md:flex-row items-start md:items-center md:space-x-3">
-              <img src={benesix} alt="" />
+              <img src={benesix} alt="24/7 support icon" />
               <p className=" font-medium text-xl mt-2">
                 24/7/365 DevOps Support
               </p>
@@ -109,7 +115,7 @@ const Features = () => {
             </p>
           </motion.div>
         </div>
-      </div>
+      </section>
     </>
   );
 };

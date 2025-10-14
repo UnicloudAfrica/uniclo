@@ -8,12 +8,12 @@ const Hero = () => {
     <>
       <div className=" text-center md:text-left py-10 flex flex-col text-[#121212]">
         <div className="w-full px-4 mt-28 md:px-8 lg:px-16 flex items-center justify-center flex-col font-Outfit text-center">
-          <p className="font-medium text-[32px] leading-10 lg:text-6xl lg:leading-[80px]">
+          <h1 className="font-medium text-[32px] leading-10 lg:text-6xl lg:leading-[80px]">
             Africa's leading indigenous Pan-African Cloud Platform
-          </p>
-          <p className="w-full text-base md:text-2xl text-center font-normal mt-3 md:leading-[30px]">
+          </h1>
+          <h2 className="w-full text-base md:text-2xl text-center font-normal mt-3 md:leading-[30px]">
             Empower Your Business in Africa with Cloud Innovation
-          </p>
+          </h2>
           <Link to="/contact">
             <button className="text-white px-6 md:px-9 py-3 text-base md:text-xl w-[231px] mt-8 rounded-[30px] bg-gradient-to-r from-[#288DD1] via-[#3fd0e0] to-[#3FE0C8]">
               Get started today

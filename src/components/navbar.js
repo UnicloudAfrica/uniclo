@@ -5,6 +5,7 @@ import { useState } from "react";
 import { GeneralContext } from "../contexts/contextprovider";
 import logo from "./assets/logo.png";
 import { useContext } from "react";
+
 const Navbar = () => {
   function overlay() {
     //check classlist

@@ -21,6 +21,7 @@
     "react": "^18.2.0",
     "react-datepicker": "^4.24.0",
     "react-dom": "^18.2.0",
+    "react-helmet-async": "^2.0.5",
     "react-loading-skeleton": "^3.5.0",
     "react-pdf": "^10.0.1",
     "react-router-dom": "^6.18.0",
@@ -42,7 +43,9 @@
     ],
     "overrides": [
       {
-        "files": ["src/adminDashboard/**/*.*"],
+        "files": [
+          "src/adminDashboard/**/*.*"
+        ],
         "rules": {
           "no-restricted-imports": [
             "error",
@@ -57,7 +60,11 @@
         }
       },
       {
-        "files": ["src/dashboard/**/*.*", "src/clientDashboard/**/*.*", "src/tenantDashboard/**/*.*"],
+        "files": [
+          "src/dashboard/**/*.*",
+          "src/clientDashboard/**/*.*",
+          "src/tenantDashboard/**/*.*"
+        ],
         "rules": {
           "no-restricted-imports": [
             "error",

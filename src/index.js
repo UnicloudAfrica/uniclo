@@ -7,17 +7,20 @@ import { BrowserRouter as Router } from "react-router-dom";
 import ContextProvider from "./contexts/contextprovider";
 import { Toaster } from "sonner";
 import QueryProvider from "./utils/queryProvider";
+import { HelmetProvider } from "react-helmet-async";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <Router>
-      <QueryProvider>
-        <Toaster position="top-right" richColors closeButton />
-        <ContextProvider>
-          <App />
-        </ContextProvider>
-      </QueryProvider>
+      <HelmetProvider>
+        <QueryProvider>
+          <Toaster position="top-right" richColors closeButton />
+          <ContextProvider>
+            <App />
+          </ContextProvider>
+        </QueryProvider>
+      </HelmetProvider>
     </Router>
   </React.StrictMode>
 );

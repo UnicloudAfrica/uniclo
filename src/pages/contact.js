@@ -35,6 +35,8 @@ const Contact = () => {
   const [message, setMessage] = useState("");
   const [agreeToPrivacyPolicy, setAgreeToPrivacyPolicy] = useState(false);
   const [reasonForContact, setReasonForContact] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [companyWebsite, setCompanyWebsite] = useState("");
 
   //error messages
   const [firstNameError, setFirstNameError] = useState("");
@@ -44,6 +46,8 @@ const Contact = () => {
   const [reasonForContactError, setReasonForContactError] = useState("");
   const [messageError, setMessageError] = useState("");
   const [privacyPolicyError, setPrivacyPolicyError] = useState("");
+  const [companyNameError, setCompanyNameError] = useState("");
+  const [companyWebsiteError, setCompanyWebsiteError] = useState("");
 
   const handleSelectClick = () => {
     setIsSelectOpen(!isSelectOpen);
@@ -138,7 +142,7 @@ const Contact = () => {
     }
 
     if (!message.trim()) {
-      setMessageError("Message is required");
+      setMessageError("Feedback is required");
       isValid = false;
     } else {
       setMessageError("");
@@ -170,6 +174,8 @@ const Contact = () => {
       name: `${firstName} ${lastName}`,
       number: completePhoneNumber,
       email,
+      "Company Name": companyName,
+      "Company Website": companyWebsite,
       message,
     };
 
@@ -383,12 +389,47 @@ const Contact = () => {
                 )}
               </span>
 
+              <div className=" w-full flex mt-3 md:mt-3 flex-col md:flex-row justify-between md:mb-3 space-y-3 md:space-y-0">
+                <span className="w-full md:w-[48%]">
+                  <label
+                    className="font-Outfit text-base text-[#1E1E1EB2] font-medium"
+                    htmlFor="company-name"
+                  >
+                    Company Name
+                  </label>
+                  <input
+                    type="text"
+                    id="company-name"
+                    onInput={(e) => {
+                      setCompanyName(e.target.value);
+                    }}
+                    placeholder="Company Name"
+                    className="h-[45px] bg-[#F5F5F4] shadow-md shadow-[#1018280D] mt-2 text-gray-900 font-Outfit font-normal placeholder:font-Outfit placeholder:text-[#1E1E1E33] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                  />
+                </span>
+                <span className="w-full md:w-[48%]">
+                  <label
+                    className="font-Outfit text-base text-[#1E1E1EB2] font-medium"
+                    htmlFor="company-website"
+                  >
+                    Company Website
+                  </label>
+                  <input
+                    type="text"
+                    id="company-website"
+                    onInput={(e) => setCompanyWebsite(e.target.value)}
+                    placeholder="Company Website"
+                    className="h-[45px] bg-[#F5F5F4] shadow-md shadow-[#1018280D] mt-2 text-gray-900 font-Outfit font-normal placeholder:font-Outfit placeholder:text-[#1E1E1E33] text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                  />
+                </span>
+              </div>
+
               <div className=" block mt-3">
                 <label
                   className="font-Outfit md:mt-3 text-base text-[#1E1E1EB2] font-medium"
                   htmlFor="Message"
                 >
-                  Message
+                  Feedbacks
                 </label>
                 <textarea
                   id="message"
@@ -487,7 +528,7 @@ const Contact = () => {
               <p className=" text-sm">
                 {" "}
                 <span className=" block gradient-text underline">
-                  +2348028431253
+                  +2348035350147
                 </span>
               </p>
               <p className=" text-sm">

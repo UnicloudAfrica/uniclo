@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 
 const Carousel = () => {
   return (
-    <div className="px-0 md:px-8 lg:px-6">
+    <section aria-label="Company mission" className="px-0 md:px-8 lg:px-6">
       <div className="flex flex-col w-full mt-8 mb-10 rounded-[20px] border border-[#288DD11A]">
         <div className="w-full h-[50px] md:h-[80px] clip"></div>
         <div className="relative w-full flex items-start justify-center py-5 md:py-0 md:items-center px-4 md:px-16">
@@ -16,7 +16,7 @@ const Carousel = () => {
             <img
               src={map}
               className="w-[92px] h-[100px] md:w-auto md:h-auto"
-              alt=""
+              alt="Map of Africa"
             />
             <p className=" text-base md:text-3xl xl:text-[32px] font-Outfit font-medium">
               Making Cloud Services Available For African Businesses,
@@ -26,7 +26,7 @@ const Carousel = () => {
         </div>
         <div className="w-full h-[50px] md:h-[80px] clip"></div>
       </div>
-    </div>
+    </section>
   );
 };
 

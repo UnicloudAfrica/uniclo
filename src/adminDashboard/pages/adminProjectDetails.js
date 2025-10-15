@@ -231,8 +231,8 @@ export default function AdminProjectDetails() {
   const hasVpcConfigured =
     infraStatus?.components?.vpc?.status === "completed";
 
-  // Check if project is VPC-enabled (from provisioning_progress)
-  const isVpcEnabled = projectDetails?.provisioning_progress?.vpc_enabled === true;
+  // Check if project is VPC-enabled (use status API data which includes fallback logic)
+  const isVpcEnabled = projectStatusData?.project?.vpc_enabled ?? projectDetails?.provisioning_progress?.vpc_enabled === true;
   const needsVpcEnabling = !isVpcEnabled && projectDetails?.status === 'pending';
 
   const handleManualRefresh = async () => {

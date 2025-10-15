@@ -38,7 +38,6 @@ import AssignEdgeConfigModal from "./projectComps/assignEdgeConfig";
 import AdminEdgeConfigPanel from "../components/AdminEdgeConfigPanel";
 import ModernButton from "../components/ModernButton";
 import ModernCard from "../components/ModernCard";
-import InfrastructureSetupFlow from "./infraComps/InfrastructureSetupFlow";
 import ToastUtils from "../../utils/toastUtil";
 import api from "../../index/admin/api";
 
@@ -71,7 +70,7 @@ export default function AdminProjectDetails() {
 
   // Separate state for top-level tabs and sub-tabs
   const [activeTopLevelTab, setActiveTopLevelTab] = useState("Instances");
-  const [activeInfraTab, setActiveInfraTab] = useState("Setup");
+  const [activeInfraTab, setActiveInfraTab] = useState("VPCs");
 
   const queryParams = new URLSearchParams(location.search);
   const identifierParam = queryParams.get("identifier");
@@ -191,7 +190,7 @@ export default function AdminProjectDetails() {
   };
 
   const handleConfigureEdge = () => {
-    jumpToInfrastructureTab("Setup");
+    jumpToInfrastructureTab("VPCs");
     setIsAssignEdgeOpen(true);
   };
 
@@ -362,7 +361,6 @@ export default function AdminProjectDetails() {
 
   // Array of menu items and their corresponding components
   const infraMenuItems = [
-    { name: "Setup", component: InfrastructureSetupFlow },
     { name: "VPCs", component: VPCs },
     { name: "Key Pairs", component: KeyPairs },
     { name: "SGs", component: SecurityGroup },

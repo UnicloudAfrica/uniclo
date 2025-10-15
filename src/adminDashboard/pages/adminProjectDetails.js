@@ -861,16 +861,16 @@ export default function AdminProjectDetails() {
                               <div className="text-gray-500">{user.email}</div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className={`px-2 py-1 rounded ${user.status.zadara_account ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'}`}>
-                                Zadara
+                              <span className={`px-2 py-1 rounded text-[10px] ${(user.status.provider_account || user.status.zadara_account) ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'}`}>
+                                {projectStatusData.project.region_name || 'Region'}
                               </span>
-                              <span className={`px-2 py-1 rounded ${user.status.aws_policy ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'}`}>
-                                AWS
+                              <span className={`px-2 py-1 rounded text-[10px] ${user.status.aws_policy ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'}`}>
+                                Storage
                               </span>
-                              <span className={`px-2 py-1 rounded ${user.status.symp_policy ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'}`}>
-                                Symp
+                              <span className={`px-2 py-1 rounded text-[10px] ${user.status.symp_policy ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'}`}>
+                                Network
                               </span>
-                              <span className={`px-2 py-1 rounded ${user.status.tenant_admin ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'}`}>
+                              <span className={`px-2 py-1 rounded text-[10px] ${user.status.tenant_admin ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'}`}>
                                 Admin
                               </span>
                             </div>
@@ -880,12 +880,12 @@ export default function AdminProjectDetails() {
                     </div>
                   )}
 
-                  {/* Missing Zadara Accounts */}
-                  {projectStatusData.project.users.zadara_missing && projectStatusData.project.users.zadara_missing.length > 0 && (
+                  {/* Missing Provider Accounts */}
+                  {(projectStatusData.project.users.provider_missing || projectStatusData.project.users.zadara_missing) && (projectStatusData.project.users.provider_missing?.length > 0 || projectStatusData.project.users.zadara_missing?.length > 0) && (
                     <div className="mb-4">
-                      <div className="text-xs font-medium text-amber-600 mb-2">Missing Zadara Accounts ({projectStatusData.project.users.zadara_missing.length})</div>
+                      <div className="text-xs font-medium text-amber-600 mb-2">Missing {projectStatusData.project.region_name || 'Provider'} Accounts ({(projectStatusData.project.users.provider_missing || projectStatusData.project.users.zadara_missing).length})</div>
                       <div className="space-y-2">
-                        {projectStatusData.project.users.zadara_missing.map((user) => (
+                        {(projectStatusData.project.users.provider_missing || projectStatusData.project.users.zadara_missing).map((user) => (
                           <div key={user.id} className="flex items-center justify-between p-2 bg-amber-50 rounded-lg text-xs">
                             <div>
                               <div className="font-medium text-gray-900">{user.name}</div>
@@ -905,10 +905,10 @@ export default function AdminProjectDetails() {
                     </div>
                   )}
 
-                  {/* Missing AWS Policies */}
+                  {/* Missing Storage Policies */}
                   {projectStatusData.project.users.aws_policy_missing && projectStatusData.project.users.aws_policy_missing.length > 0 && (
                     <div className="mb-4">
-                      <div className="text-xs font-medium text-amber-600 mb-2">Missing AWS Policies ({projectStatusData.project.users.aws_policy_missing.length})</div>
+                      <div className="text-xs font-medium text-amber-600 mb-2">Missing Storage Policies ({projectStatusData.project.users.aws_policy_missing.length})</div>
                       <div className="space-y-2">
                         {projectStatusData.project.users.aws_policy_missing.map((user) => (
                           <div key={user.id} className="flex items-center justify-between p-2 bg-amber-50 rounded-lg text-xs">
@@ -930,10 +930,10 @@ export default function AdminProjectDetails() {
                     </div>
                   )}
 
-                  {/* Missing Symp Policies */}
+                  {/* Missing Network Policies */}
                   {projectStatusData.project.users.symp_policy_missing && projectStatusData.project.users.symp_policy_missing.length > 0 && (
                     <div className="mb-4">
-                      <div className="text-xs font-medium text-amber-600 mb-2">Missing Symp Policies ({projectStatusData.project.users.symp_policy_missing.length})</div>
+                      <div className="text-xs font-medium text-amber-600 mb-2">Missing Network Policies ({projectStatusData.project.users.symp_policy_missing.length})</div>
                       <div className="space-y-2">
                         {projectStatusData.project.users.symp_policy_missing.map((user) => (
                           <div key={user.id} className="flex items-center justify-between p-2 bg-amber-50 rounded-lg text-xs">

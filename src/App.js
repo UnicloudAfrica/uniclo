@@ -111,6 +111,8 @@ import RegionApprovals from "./adminDashboard/pages/RegionApprovals";
 import RegionApprovalDetail from "./adminDashboard/pages/RegionApprovalDetail";
 import RegionApprovalEdit from "./adminDashboard/pages/RegionApprovalEdit";
 import RegionApprovalCreate from "./adminDashboard/pages/RegionApprovalCreate";
+import RegionDetail from "./adminDashboard/pages/RegionDetail";
+import RegionEdit from "./adminDashboard/pages/RegionEdit";
 import RegionRequests from "./tenantDashboard/pages/RegionRequests";
 import RegionRequestDetail from "./tenantDashboard/pages/RegionRequestDetail";
 import NewRegionRequest from "./tenantDashboard/pages/NewRegionRequest";
@@ -262,6 +264,8 @@ function App() {
           <Route path="/admin-dashboard/projects-revamped/details" element={<AdminProjectDetailsRevamped />} />
           <Route path="/admin-dashboard/leads" element={<AdminLeads />} />
           <Route path="/admin-dashboard/regions" element={<AdminRegion />} />
+          <Route path="/admin-dashboard/regions/:id" element={<RegionDetail />} />
+          <Route path="/admin-dashboard/regions/:id/edit" element={<RegionEdit />} />
           <Route path="/admin-dashboard/region-approvals" element={<RegionApprovals />} />
           <Route path="/admin-dashboard/region-approvals/create" element={<RegionApprovalCreate />} />
           <Route path="/admin-dashboard/region-approvals/:id" element={<RegionApprovalDetail />} />

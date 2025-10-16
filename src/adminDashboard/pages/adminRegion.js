@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Loader2,
   Eye,
@@ -19,24 +20,18 @@ import ModernCard from "../components/ModernCard";
 import ModernStatsCard from "../components/ModernStatsCard";
 import ModernButton from "../components/ModernButton";
 import { designTokens } from "../../styles/designTokens";
-import AddRegionModal from "./regionComps/addRegion";
 import DeleteRegionModal from "./regionComps/deleteRegion";
 import {
   useFetchRegions,
   useDeleteRegion,
 } from "../../hooks/adminHooks/regionHooks";
 import useAuthRedirect from "../../utils/adminAuthRedirect";
-import EditRegionModal from "./regionComps/editRegion";
-import ViewRegionModal from "./regionComps/viewRegion";
 
 const AdminRegion = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isLoading } = useAuthRedirect();
   const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
-  const [isCreateModalOpen, setCreateModal] = useState(false);
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [isViewModalOpen, setViewModalOpen] = useState(false);
-  const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState(null);
 
   // Calculate region statistics
@@ -64,24 +59,6 @@ const AdminRegion = () => {
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
-  const openCreateModal = () => setCreateModal(true);
-  const closeCreateModal = () => setCreateModal(false);
-  const openViewModal = (item) => {
-    setSelectedRegion(item);
-    setViewModalOpen(true);
-  };
-  const closeViewModal = () => {
-    setViewModalOpen(false);
-    setSelectedRegion(null);
-  };
-  const openEditModal = (item) => {
-    setSelectedRegion(item);
-    setEditModalOpen(true);
-  };
-  const closeEditModal = () => {
-    setEditModalOpen(false);
-    setSelectedRegion(null);
-  };
   const openDeleteModal = (item) => {
     setSelectedRegion(item);
     setDeleteModalOpen(true);
@@ -197,12 +174,12 @@ const AdminRegion = () => {
     {
       icon: <Eye size={16} />,
       label: '',
-      onClick: (item) => openViewModal(item)
+      onClick: (item) => window.location.href = `/admin-dashboard/regions/${item.id}`
     },
     {
       icon: <Edit size={16} />,
       label: '',
-      onClick: (item) => openEditModal(item)
+      onClick: (item) => window.location.href = `/admin-dashboard/regions/${item.id}/edit`
     },
     {
       icon: <Trash2 size={16} />,
@@ -251,13 +228,12 @@ const AdminRegion = () => {
                 Manage cloud infrastructure regions and locations
               </p>
             </div>
-            <ModernButton
-              onClick={openCreateModal}
-              className="flex items-center gap-2"
-            >
-              <Plus size={18} />
-              Add Region
-            </ModernButton>
+            <Link to="/admin-dashboard/region-approvals/create">
+              <ModernButton className="flex items-center gap-2">
+                <Plus size={18} />
+                Add Region
+              </ModernButton>
+            </Link>
           </div>
 
           {/* Stats Cards */}
@@ -306,7 +282,7 @@ const AdminRegion = () => {
               exportable={true}
               sortable={true}
               loading={isRegionsFetching}
-              onRowClick={(region) => openViewModal(region)}
+              onRowClick={(region) => window.location.href = `/admin-dashboard/regions/${region.id}`}
               emptyMessage="No regions configured. Add regions to manage your infrastructure."
             />
           </ModernCard>
@@ -315,17 +291,6 @@ const AdminRegion = () => {
 
       </main>
 
-      <AddRegionModal isOpen={isCreateModalOpen} onClose={closeCreateModal} />
-      <ViewRegionModal
-        isOpen={isViewModalOpen}
-        onClose={closeViewModal}
-        region={selectedRegion}
-      />
-      <EditRegionModal
-        isOpen={isEditModalOpen}
-        onClose={closeEditModal}
-        region={selectedRegion}
-      />
       <DeleteRegionModal
         isOpen={isDeleteModalOpen}
         onClose={closeDeleteModal}

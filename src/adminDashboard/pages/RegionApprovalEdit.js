@@ -65,6 +65,10 @@ const RegionApprovalEdit = () => {
           await adminRegionApi.suspendRegion(id, formData.reason);
           ToastUtils.success('Region suspended');
           break;
+        case 'reactivate':
+          await adminRegionApi.reactivateRegion(id);
+          ToastUtils.success('Region reactivated successfully');
+          break;
         case 'update_fee':
           await adminRegionApi.updatePlatformFee(id, parseFloat(formData.platform_fee_percentage));
           ToastUtils.success('Platform fee updated');
@@ -86,6 +90,7 @@ const RegionApprovalEdit = () => {
       approve: 'Approve Region',
       reject: 'Reject Region',
       suspend: 'Suspend Region',
+      reactivate: 'Reactivate Region',
       update_fee: 'Update Platform Fee',
     };
     return titles[action] || 'Edit Region';
@@ -96,6 +101,7 @@ const RegionApprovalEdit = () => {
       approve: 'Approve',
       reject: 'Reject',
       suspend: 'Suspend',
+      reactivate: 'Reactivate',
       update_fee: 'Update Fee',
     };
     return texts[action] || 'Submit';
@@ -228,20 +234,31 @@ const RegionApprovalEdit = () => {
                   </div>
                 )}
 
+                {/* Confirmation (for reactivate) */}
+                {action === 'reactivate' && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <p className="text-sm text-green-800">
+                      Are you sure you want to reactivate this region? This will restore full access and allow new orders.
+                    </p>
+                  </div>
+                )}
+
                 {/* Info Box */}
                 <div className={`border rounded-lg p-4 ${
                   action === 'reject' || action === 'suspend' 
                     ? 'bg-red-50 border-red-200' 
+                    : action === 'reactivate'
+                    ? 'bg-green-50 border-green-200'
                     : 'bg-blue-50 border-blue-200'
                 }`}>
                   <div className="flex gap-3">
                     <svg className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
-                      action === 'reject' || action === 'suspend' ? 'text-red-600' : 'text-blue-600'
+                      action === 'reject' || action === 'suspend' ? 'text-red-600' : action === 'reactivate' ? 'text-green-600' : 'text-blue-600'
                     }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <div className={`text-sm ${
-                      action === 'reject' || action === 'suspend' ? 'text-red-800' : 'text-blue-800'
+                      action === 'reject' || action === 'suspend' ? 'text-red-800' : action === 'reactivate' ? 'text-green-800' : 'text-blue-800'
                     }`}>
                       {action === 'approve' && (
                         <>
@@ -266,6 +283,12 @@ const RegionApprovalEdit = () => {
                         <>
                           <p className="font-medium mb-1">⚠️ Warning</p>
                           <p>This will temporarily suspend the region. Existing resources will remain but new orders will be blocked.</p>
+                        </>
+                      )}
+                      {action === 'reactivate' && (
+                        <>
+                          <p className="font-medium mb-1">✓ Reactivation</p>
+                          <p>This will restore the region to active status and re-enable all operations including new orders.</p>
                         </>
                       )}
                       {action === 'update_fee' && (

@@ -12,23 +12,7 @@ const RegionApprovals = () => {
     ownership_type: '',
     approval_status: '',
   });
-  const [selectedRegion, setSelectedRegion] = useState(null);
-  const [showActionModal, setShowActionModal] = useState(false);
-  const [action, setAction] = useState('');
-  const [actionData, setActionData] = useState({
-    platform_fee_percentage: '',
-    reason: '',
-    notes: '',
-  });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [showCredentialModal, setShowCredentialModal] = useState(false);
-  const [verifying, setVerifying] = useState(false);
-  const [credentials, setCredentials] = useState({
-    username: '',
-    password: '',
-    domain: '',
-    domain_id: '',
-  });
 
   useEffect(() => {
     fetchRegions();
@@ -49,93 +33,6 @@ const RegionApprovals = () => {
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
-  };
-
-  const openActionModal = (region, actionType) => {
-    setSelectedRegion(region);
-    setAction(actionType);
-    setActionData({
-      platform_fee_percentage: region.platform_fee_percentage || 20,
-      reason: '',
-      notes: '',
-    });
-    setShowActionModal(true);
-  };
-
-  const closeActionModal = () => {
-    setShowActionModal(false);
-    setSelectedRegion(null);
-    setAction('');
-    setActionData({ platform_fee_percentage: '', reason: '', notes: '' });
-  };
-
-  const openCredentialModal = (region) => {
-    setSelectedRegion(region);
-    setShowCredentialModal(true);
-    setCredentials({ username: '', password: '', domain: '', domain_id: '' });
-  };
-
-  const closeCredentialModal = () => {
-    setShowCredentialModal(false);
-    setSelectedRegion(null);
-    setCredentials({ username: '', password: '', domain: '', domain_id: '' });
-  };
-
-  const handleVerifyCredentials = async (e) => {
-    e.preventDefault();
-    
-    if (!credentials.username || !credentials.password || !credentials.domain) {
-      ToastUtils.error('Please fill in all required fields');
-      return;
-    }
-
-    try {
-      setVerifying(true);
-      await adminRegionApi.verifyCredentials(selectedRegion.id, credentials);
-      closeCredentialModal();
-      fetchRegions(); // Refresh to show verification status
-    } catch (error) {
-      console.error('Error verifying credentials:', error);
-    } finally {
-      setVerifying(false);
-    }
-  };
-
-  const handleActionSubmit = async (e) => {
-    e.preventDefault();
-    if (!selectedRegion) return;
-
-    try {
-      switch (action) {
-        case 'approve':
-          await adminRegionApi.approveRegion(selectedRegion.id, {
-            platform_fee_percentage: parseFloat(actionData.platform_fee_percentage),
-            notes: actionData.notes,
-          });
-          break;
-        case 'reject':
-          await adminRegionApi.rejectRegion(selectedRegion.id, actionData.reason);
-          break;
-        case 'suspend':
-          await adminRegionApi.suspendRegion(selectedRegion.id, actionData.reason);
-          break;
-        case 'reactivate':
-          await adminRegionApi.reactivateRegion(selectedRegion.id);
-          break;
-        case 'update_fee':
-          await adminRegionApi.updatePlatformFee(
-            selectedRegion.id,
-            parseFloat(actionData.platform_fee_percentage)
-          );
-          break;
-        default:
-          break;
-      }
-      closeActionModal();
-      fetchRegions();
-    } catch (error) {
-      console.error(`Error performing ${action}:`, error);
-    }
   };
 
   const getStatusBadge = (status) => {
@@ -340,56 +237,49 @@ const RegionApprovals = () => {
                               <Link
                                 to={`/admin-dashboard/region-approvals/${region.id}`}
                                 className="text-blue-600 hover:text-blue-900"
+                                title="View details"
                               >
                                 View
                               </Link>
                               {region.approval_status === 'pending' && (
                                 <>
-                                  <button
-                                    onClick={() => openActionModal(region, 'approve')}
+                                  <Link
+                                    to={`/admin-dashboard/region-approvals/${region.id}/edit?action=approve`}
                                     className="text-green-600 hover:text-green-900"
                                   >
                                     Approve
-                                  </button>
-                                  <button
-                                    onClick={() => openActionModal(region, 'reject')}
+                                  </Link>
+                                  <Link
+                                    to={`/admin-dashboard/region-approvals/${region.id}/edit?action=reject`}
                                     className="text-red-600 hover:text-red-900"
                                   >
                                     Reject
-                                  </button>
+                                  </Link>
                                 </>
                               )}
                               {region.approval_status === 'approved' && (
                                 <>
-                                  {region.ownership_type === 'platform' && region.fulfillment_mode === 'automated' && !region.msp_credentials_verified_at && (
-                                    <button
-                                      onClick={() => openCredentialModal(region)}
-                                      className="text-purple-600 hover:text-purple-900"
-                                    >
-                                      Verify Creds
-                                    </button>
-                                  )}
-                                  <button
-                                    onClick={() => openActionModal(region, 'update_fee')}
+                                  <Link
+                                    to={`/admin-dashboard/region-approvals/${region.id}/edit?action=update_fee`}
                                     className="text-blue-600 hover:text-blue-900"
                                   >
-                                    Update Fee
-                                  </button>
-                                  <button
-                                    onClick={() => openActionModal(region, 'suspend')}
+                                    Edit
+                                  </Link>
+                                  <Link
+                                    to={`/admin-dashboard/region-approvals/${region.id}/edit?action=suspend`}
                                     className="text-orange-600 hover:text-orange-900"
                                   >
                                     Suspend
-                                  </button>
+                                  </Link>
                                 </>
                               )}
                               {region.approval_status === 'suspended' && (
-                                <button
-                                  onClick={() => openActionModal(region, 'reactivate')}
+                                <Link
+                                  to={`/admin-dashboard/region-approvals/${region.id}/edit?action=reactivate`}
                                   className="text-green-600 hover:text-green-900"
                                 >
                                   Reactivate
-                                </button>
+                                </Link>
                               )}
                             </div>
                           </td>
@@ -404,197 +294,6 @@ const RegionApprovals = () => {
         </main>
       </div>
 
-      {/* Action Modal */}
-      {showActionModal && selectedRegion && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-            <div className="p-6">
-              <h2 className="text-2xl font-bold mb-4 capitalize">{action.replace('_', ' ')} Region</h2>
-              <p className="text-sm text-gray-600 mb-4">
-                Region: <strong>{selectedRegion.name}</strong>
-              </p>
-              <form onSubmit={handleActionSubmit}>
-                <div className="space-y-4">
-                  {(action === 'approve' || action === 'update_fee') && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Platform Fee Percentage
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.01"
-                        value={actionData.platform_fee_percentage}
-                        onChange={(e) => setActionData(prev => ({ ...prev, platform_fee_percentage: e.target.value }))}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        required
-                      />
-                    </div>
-                  )}
-
-                  {(action === 'reject' || action === 'suspend') && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Reason
-                      </label>
-                      <textarea
-                        value={actionData.reason}
-                        onChange={(e) => setActionData(prev => ({ ...prev, reason: e.target.value }))}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        rows="3"
-                        required
-                      />
-                    </div>
-                  )}
-
-                  {action === 'approve' && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Notes (Optional)
-                      </label>
-                      <textarea
-                        value={actionData.notes}
-                        onChange={(e) => setActionData(prev => ({ ...prev, notes: e.target.value }))}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        rows="3"
-                      />
-                    </div>
-                  )}
-
-                  {action === 'reactivate' && (
-                    <p className="text-sm text-gray-600">
-                      Are you sure you want to reactivate this region?
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex justify-end gap-3 mt-6">
-                  <button
-                    type="button"
-                    onClick={closeActionModal}
-                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className={`px-4 py-2 text-white rounded-lg ${
-                      action === 'reject' || action === 'suspend'
-                        ? 'bg-red-600 hover:bg-red-700'
-                        : 'bg-blue-600 hover:bg-blue-700'
-                    }`}
-                  >
-                    Confirm
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Credential Verification Modal */}
-      {showCredentialModal && selectedRegion && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Verify MSP Admin Credentials</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Region: <strong>{selectedRegion.name}</strong> (Platform-owned)
-            </p>
-            <form onSubmit={handleVerifyCredentials}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Username <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={credentials.username}
-                    onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="MSP admin username"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Password <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="password"
-                    value={credentials.password}
-                    onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="MSP admin password"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Domain <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={credentials.domain}
-                    onChange={(e) => setCredentials({ ...credentials, domain: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="cloud_msp"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Domain ID <span className="text-gray-500">(optional)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={credentials.domain_id}
-                    onChange={(e) => setCredentials({ ...credentials, domain_id: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="dom-xxxxx"
-                  />
-                </div>
-
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-xs text-blue-800">
-                    <strong>Admin Note:</strong> MSP admins authenticate using the default project token (compulsory). 
-                    Ensure credentials have <strong>msp_admin</strong> role in the default project for super-admin powers across all projects.
-                  </p>
-                </div>
-
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                  <p className="text-xs text-yellow-800">
-                    <strong>⚠️ Platform-owned only:</strong> You can only verify credentials for platform-owned regions. 
-                    Tenant-owned region credentials must be verified by the tenant themselves.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-3 mt-6">
-                <button
-                  type="button"
-                  onClick={closeCredentialModal}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-                  disabled={verifying}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={verifying}
-                >
-                  {verifying ? 'Verifying...' : 'Verify'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

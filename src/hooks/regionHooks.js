@@ -1,34 +1,34 @@
-// src/hooks/adminHooks/adminHooks.js
+// src/hooks/adminHooks/regionHooks.js
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import silentTenantApi from "../index/tenant/silentTenant";
-import tenantApi from "../index/tenant/tenantApi";
+import silentApi from "../index/admin/silent";
+import api from "../index/admin/api";
 
 const fetchRegions = async () => {
-  const res = await silentTenantApi("GET", "/admin/regions");
+  const res = await silentApi("GET", "/regions");
   if (!res.data) throw new Error("Failed to fetch regions");
   return res.data;
 };
 
 const fetchRegionById = async (id) => {
-  const res = await silentTenantApi("GET", `/admin/regions/${id}`);
+  const res = await silentApi("GET", `/regions/${id}`);
   if (!res.data) throw new Error(`Failed to fetch region with ID ${id}`);
   return res.data;
 };
 
 const createRegion = async (regionData) => {
-  const res = await tenantApi("POST", "/admin/regions", regionData);
+  const res = await api("POST", "/regions", regionData);
   if (!res.data) throw new Error("Failed to create region");
   return res.data;
 };
 
 const updateRegion = async ({ id, regionData }) => {
-  const res = await tenantApi("PATCH", `/admin/regions/${id}`, regionData);
+  const res = await api("PATCH", `/regions/${id}`, regionData);
   if (!res.data) throw new Error(`Failed to update region with ID ${id}`);
   return res.data;
 };
 
 const deleteRegion = async (id) => {
-  const res = await tenantApi("DELETE", `/admin/regions/${id}`);
+  const res = await api("DELETE", `/regions/${id}`);
   if (!res.data) throw new Error(`Failed to delete region with ID ${id}`);
   return res.data;
 };

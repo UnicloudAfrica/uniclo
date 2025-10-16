@@ -4,6 +4,8 @@ import adminRegionApi from '../../services/adminRegionApi';
 import ToastUtils from '../../utils/toastUtil';
 import AdminSidebar from '../components/adminSidebar';
 import AdminHeadbar from '../components/adminHeadbar';
+import { designTokens } from '../../styles/designTokens';
+import { ArrowLeft, Edit, CheckCircle, AlertCircle, MapPin, Globe, Server } from 'lucide-react';
 
 const RegionDetail = () => {
   const { id: code } = useParams();
@@ -62,12 +64,12 @@ const RegionDetail = () => {
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-gray-50">
+      <div className="flex h-screen" style={{ backgroundColor: designTokens.colors.neutral[50] }}>
         <AdminSidebar isMobileMenuOpen={isMobileMenuOpen} closeMobileMenu={() => setIsMobileMenuOpen(false)} />
         <div className="flex-1 flex flex-col overflow-hidden">
           <AdminHeadbar toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
           <div className="flex items-center justify-center flex-1">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: designTokens.colors.primary[600] }}></div>
           </div>
         </div>
       </div>
@@ -76,15 +78,16 @@ const RegionDetail = () => {
 
   if (!region) {
     return (
-      <div className="flex h-screen bg-gray-50">
+      <div className="flex h-screen" style={{ backgroundColor: designTokens.colors.neutral[50] }}>
         <AdminSidebar isMobileMenuOpen={isMobileMenuOpen} closeMobileMenu={() => setIsMobileMenuOpen(false)} />
         <div className="flex-1 flex flex-col overflow-hidden">
           <AdminHeadbar toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
           <main className="flex-1 overflow-y-auto p-6">
-            <div className="max-w-4xl mx-auto">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Region not found</h3>
-                <Link to="/admin-dashboard/regions" className="text-blue-600 hover:text-blue-700">
+            <div className="max-w-6xl mx-auto">
+              <div className="bg-white rounded-2xl shadow-sm p-12 text-center" style={{ borderColor: designTokens.colors.neutral[200], borderWidth: '1px' }}>
+                <AlertCircle size={48} style={{ color: designTokens.colors.error[500], margin: '0 auto 16px' }} />
+                <h3 className="text-lg font-semibold mb-2" style={{ color: designTokens.colors.neutral[900] }}>Region not found</h3>
+                <Link to="/admin-dashboard/regions" style={{ color: designTokens.colors.primary[600] }} className="hover:underline font-medium">
                   Back to regions
                 </Link>
               </div>
@@ -96,108 +99,145 @@ const RegionDetail = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen" style={{ backgroundColor: designTokens.colors.neutral[50] }}>
       <AdminSidebar isMobileMenuOpen={isMobileMenuOpen} closeMobileMenu={() => setIsMobileMenuOpen(false)} />
       
       <div className="flex-1 flex flex-col overflow-hidden">
         <AdminHeadbar toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
         
         <main className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             {/* Header */}
-            <div className="mb-6">
+            <div className="mb-8">
               <Link
                 to="/admin-dashboard/regions"
-                className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2 mb-4"
+                className="font-medium flex items-center gap-2 mb-6 transition-colors hover:gap-3"
+                style={{ color: designTokens.colors.primary[600] }}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
+                <ArrowLeft size={20} />
                 Back to Regions
               </Link>
-              <div className="flex justify-between items-start">
+              <div className="flex justify-between items-start flex-wrap gap-4">
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900">{region.name}</h1>
-                  <p className="text-gray-600 mt-1">{region.code} • {region.country_code}</p>
+                  <h1 className="text-4xl font-bold mb-2" style={{ color: designTokens.colors.neutral[900] }}>{region.name}</h1>
+                  <div className="flex items-center gap-3 text-lg" style={{ color: designTokens.colors.neutral[600] }}>
+                    <span className="font-mono" style={{ color: designTokens.colors.primary[700] }}>{region.code}</span>
+                    <span>•</span>
+                    <div className="flex items-center gap-1.5">
+                      <Globe size={18} />
+                      <span>{region.country_code}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex gap-3">
-                  <Link
-                    to={`/admin-dashboard/regions/${region.code}/edit`}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-                  >
-                    Edit Region
-                  </Link>
-                </div>
+                <Link
+                  to={`/admin-dashboard/regions/${region.code}/edit`}
+                  className="px-5 py-2.5 rounded-xl font-semibold text-white transition-all shadow-sm hover:shadow-md flex items-center gap-2"
+                  style={{ backgroundColor: designTokens.colors.primary[600] }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = designTokens.colors.primary[700]}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = designTokens.colors.primary[600]}
+                >
+                  <Edit size={18} />
+                  Edit Region
+                </Link>
               </div>
             </div>
 
             {/* Main Info Card */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Region Information</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="text-sm text-gray-500">Provider</div>
-                  <div className="text-lg font-medium text-gray-900 capitalize">{region.provider}</div>
+            <div className="bg-white rounded-2xl shadow-sm p-8 mb-6" style={{ borderColor: designTokens.colors.neutral[200], borderWidth: '1px' }}>
+              <h2 className="text-2xl font-bold mb-6" style={{ color: designTokens.colors.neutral[900] }}>Region Information</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="p-4 rounded-xl" style={{ backgroundColor: designTokens.colors.neutral[50] }}>
+                  <div className="flex items-center gap-2 mb-2" style={{ color: designTokens.colors.neutral[600] }}>
+                    <Server size={16} />
+                    <div className="text-sm font-medium">Provider</div>
+                  </div>
+                  <div className="text-xl font-semibold capitalize" style={{ color: designTokens.colors.neutral[900] }}>{region.provider}</div>
                 </div>
-                <div>
-                  <div className="text-sm text-gray-500">Region Code</div>
-                  <div className="text-lg font-medium text-gray-900">{region.code}</div>
+                <div className="p-4 rounded-xl" style={{ backgroundColor: designTokens.colors.neutral[50] }}>
+                  <div className="text-sm font-medium mb-2" style={{ color: designTokens.colors.neutral[600] }}>Region Code</div>
+                  <div className="text-xl font-mono font-semibold" style={{ color: designTokens.colors.primary[700] }}>{region.code}</div>
                 </div>
-                <div>
-                  <div className="text-sm text-gray-500">Country</div>
-                  <div className="text-lg font-medium text-gray-900">{region.country_code}</div>
+                <div className="p-4 rounded-xl" style={{ backgroundColor: designTokens.colors.neutral[50] }}>
+                  <div className="flex items-center gap-2 mb-2" style={{ color: designTokens.colors.neutral[600] }}>
+                    <Globe size={16} />
+                    <div className="text-sm font-medium">Country</div>
+                  </div>
+                  <div className="text-xl font-semibold" style={{ color: designTokens.colors.neutral[900] }}>{region.country_code}</div>
                 </div>
-                <div>
-                  <div className="text-sm text-gray-500">City</div>
-                  <div className="text-lg font-medium text-gray-900">{region.city || 'N/A'}</div>
+                <div className="p-4 rounded-xl" style={{ backgroundColor: designTokens.colors.neutral[50] }}>
+                  <div className="flex items-center gap-2 mb-2" style={{ color: designTokens.colors.neutral[600] }}>
+                    <MapPin size={16} />
+                    <div className="text-sm font-medium">City</div>
+                  </div>
+                  <div className="text-xl font-semibold" style={{ color: designTokens.colors.neutral[900] }}>{region.city || 'N/A'}</div>
                 </div>
-                <div>
-                  <div className="text-sm text-gray-500">Status</div>
-                  <div className="text-lg font-medium text-gray-900 capitalize">{region.status || 'unknown'}</div>
+                <div className="p-4 rounded-xl" style={{ backgroundColor: designTokens.colors.neutral[50] }}>
+                  <div className="text-sm font-medium mb-2" style={{ color: designTokens.colors.neutral[600] }}>Status</div>
+                  <div className="text-xl font-semibold capitalize" style={{ color: designTokens.colors.neutral[900] }}>{region.status || 'unknown'}</div>
                 </div>
-                <div>
-                  <div className="text-sm text-gray-500">Active</div>
-                  <div className="text-lg font-medium text-gray-900">{region.is_active ? 'Yes' : 'No'}</div>
+                <div className="p-4 rounded-xl" style={{ backgroundColor: designTokens.colors.neutral[50] }}>
+                  <div className="text-sm font-medium mb-2" style={{ color: designTokens.colors.neutral[600] }}>Active</div>
+                  <div className="flex items-center gap-2">
+                    {region.is_active ? (
+                      <>
+                        <CheckCircle size={20} style={{ color: designTokens.colors.success[500] }} />
+                        <span className="text-xl font-semibold" style={{ color: designTokens.colors.success[700] }}>Yes</span>
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle size={20} style={{ color: designTokens.colors.error[500] }} />
+                        <span className="text-xl font-semibold" style={{ color: designTokens.colors.error[700] }}>No</span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* MSP Credentials Card */}
             {region.provider === 'zadara' && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold text-gray-900">MSP Admin Credentials</h2>
+              <div className="bg-white rounded-2xl shadow-sm p-8" style={{ borderColor: designTokens.colors.neutral[200], borderWidth: '1px' }}>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold" style={{ color: designTokens.colors.neutral[900] }}>MSP Admin Credentials</h2>
                   {region.msp_credentials_verified_at ? (
-                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
-                      ✓ Verified
-                    </span>
+                    <div className="px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2" style={{ backgroundColor: designTokens.colors.success[100], color: designTokens.colors.success[800] }}>
+                      <CheckCircle size={16} />
+                      Verified
+                    </div>
                   ) : (
-                    <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-semibold">
+                    <div className="px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2" style={{ backgroundColor: designTokens.colors.warning[100], color: designTokens.colors.warning[800] }}>
+                      <AlertCircle size={16} />
                       Not Verified
-                    </span>
+                    </div>
                   )}
                 </div>
                 
                 {region.msp_credentials_verified_at ? (
                   <div>
-                    <p className="text-sm text-gray-600 mb-2">
+                    <p className="text-sm mb-3" style={{ color: designTokens.colors.neutral[600] }}>
                       Last verified: {new Date(region.msp_credentials_verified_at).toLocaleString()}
                     </p>
                     <button
                       onClick={() => setShowCredentialModal(true)}
-                      className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+                      className="font-semibold text-sm transition-colors"
+                      style={{ color: designTokens.colors.primary[600] }}
+                      onMouseEnter={(e) => e.currentTarget.style.color = designTokens.colors.primary[700]}
+                      onMouseLeave={(e) => e.currentTarget.style.color = designTokens.colors.primary[600]}
                     >
-                      Update credentials
+                      Update credentials →
                     </button>
                   </div>
                 ) : (
                   <div>
-                    <p className="text-sm text-gray-600 mb-4">
+                    <p className="text-sm mb-5" style={{ color: designTokens.colors.neutral[600] }}>
                       MSP admin credentials are required for automated provisioning in this region.
                     </p>
                     <button
                       onClick={() => setShowCredentialModal(true)}
-                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                      className="px-5 py-2.5 rounded-xl font-semibold text-white transition-all shadow-sm hover:shadow-md"
+                      style={{ backgroundColor: designTokens.colors.primary[600] }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = designTokens.colors.primary[700]}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = designTokens.colors.primary[600]}
                     >
                       Verify Credentials
                     </button>

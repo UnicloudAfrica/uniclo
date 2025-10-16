@@ -258,6 +258,37 @@ class AdminRegionApiService {
       throw error;
     }
   }
+
+  /**
+   * Verify MSP admin credentials for platform-owned regions
+   * Admin can only verify credentials for regions they create (platform-owned)
+   */
+  async verifyCredentials(regionId, credentials) {
+    try {
+      const response = await fetch(`${config.baseURL}/admin/v1/region-approvals/${regionId}/verify-credentials`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(credentials),
+      });
+
+      const data = await response.json();
+
+      if (data.success || response.ok) {
+        ToastUtils.success(data.message || 'Credentials verified successfully');
+        return {
+          success: true,
+          verified: data.verified || true,
+          credentials_updated_at: data.credentials_updated_at
+        };
+      } else {
+        throw new Error(data.message || 'Failed to verify credentials');
+      }
+    } catch (error) {
+      console.error(`Error verifying credentials for region ${regionId}:`, error);
+      ToastUtils.error(error.message);
+      throw error;
+    }
+  }
 }
 
 export default new AdminRegionApiService();

@@ -109,6 +109,7 @@ import AdminProjectsRevamped from "./adminDashboard/pages/AdminProjectsRevamped"
 import AdminProjectDetailsRevamped from "./adminDashboard/pages/AdminProjectDetailsRevamped";
 import RegionApprovals from "./adminDashboard/pages/RegionApprovals";
 import RegionRequests from "./tenantDashboard/pages/RegionRequests";
+import RegionRequestDetail from "./tenantDashboard/pages/RegionRequestDetail";
 import RevenueDashboard from "./tenantDashboard/pages/RevenueDashboard";
 
 import ClientDashboardLayout from "./clientDashboard/components/ClientDashboardLayout";
@@ -198,6 +199,7 @@ function App() {
           
           {/* Tenant Region Marketplace Routes */}
           <Route path="/tenant-dashboard/region-requests" element={<RegionRequests />} />
+          <Route path="/tenant-dashboard/region-requests/:id" element={<RegionRequestDetail />} />
           <Route path="/tenant-dashboard/revenue" element={<RevenueDashboard />} />
           <Route path="/dashboard/account-settings" element={<Settings />} />
           <Route

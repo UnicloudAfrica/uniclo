@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import adminRegionApi from '../../services/adminRegionApi';
+import ToastUtils from '../../utils/toastUtil';
 import AdminSidebar from '../components/adminSidebar';
 import AdminHeadbar from '../components/adminHeadbar';
 
@@ -19,6 +20,14 @@ const RegionApprovals = () => {
     notes: '',
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showCredentialModal, setShowCredentialModal] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [credentials, setCredentials] = useState({
+    username: '',
+    password: '',
+    domain: '',
+    domain_id: '',
+  });
 
   useEffect(() => {
     fetchRegions();
@@ -57,6 +66,38 @@ const RegionApprovals = () => {
     setSelectedRegion(null);
     setAction('');
     setActionData({ platform_fee_percentage: '', reason: '', notes: '' });
+  };
+
+  const openCredentialModal = (region) => {
+    setSelectedRegion(region);
+    setShowCredentialModal(true);
+    setCredentials({ username: '', password: '', domain: '', domain_id: '' });
+  };
+
+  const closeCredentialModal = () => {
+    setShowCredentialModal(false);
+    setSelectedRegion(null);
+    setCredentials({ username: '', password: '', domain: '', domain_id: '' });
+  };
+
+  const handleVerifyCredentials = async (e) => {
+    e.preventDefault();
+    
+    if (!credentials.username || !credentials.password || !credentials.domain) {
+      ToastUtils.error('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      setVerifying(true);
+      await adminRegionApi.verifyCredentials(selectedRegion.id, credentials);
+      closeCredentialModal();
+      fetchRegions(); // Refresh to show verification status
+    } catch (error) {
+      console.error('Error verifying credentials:', error);
+    } finally {
+      setVerifying(false);
+    }
   };
 
   const handleActionSubmit = async (e) => {
@@ -221,6 +262,9 @@ const RegionApprovals = () => {
                         Fulfillment
                       </th>
                       <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        MSP Credentials
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
                       </th>
                       <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -233,8 +277,8 @@ const RegionApprovals = () => {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {regions.length === 0 ? (
-                      <tr>
-                        <td colSpan="7" className="px-6 py-12 text-center text-gray-500">
+                                <tr>
+                        <td colSpan="8" className="px-6 py-12 text-center text-gray-500">
                           No region requests found
                         </td>
                       </tr>
@@ -255,6 +299,21 @@ const RegionApprovals = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {region.fulfillment_mode}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-center">
+                            {region.fulfillment_mode === 'automated' ? (
+                              region.msp_credentials_verified_at ? (
+                                <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800" title={`Verified: ${new Date(region.msp_credentials_verified_at).toLocaleString()}`}>
+                                  ✓ Verified
+                                </span>
+                              ) : (
+                                <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                  Pending
+                                </span>
+                              )
+                            ) : (
+                              <span className="text-gray-400 text-xs">N/A</span>
+                            )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
                             {getStatusBadge(region.approval_status)}
@@ -282,6 +341,14 @@ const RegionApprovals = () => {
                               )}
                               {region.approval_status === 'approved' && (
                                 <>
+                                  {region.ownership_type === 'platform' && region.fulfillment_mode === 'automated' && !region.msp_credentials_verified_at && (
+                                    <button
+                                      onClick={() => openCredentialModal(region)}
+                                      className="text-purple-600 hover:text-purple-900"
+                                    >
+                                      Verify Creds
+                                    </button>
+                                  )}
                                   <button
                                     onClick={() => openActionModal(region, 'update_fee')}
                                     className="text-blue-600 hover:text-blue-900"
@@ -403,6 +470,108 @@ const RegionApprovals = () => {
                 </div>
               </form>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Credential Verification Modal */}
+      {showCredentialModal && selectedRegion && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">Verify MSP Admin Credentials</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Region: <strong>{selectedRegion.name}</strong> (Platform-owned)
+            </p>
+            <form onSubmit={handleVerifyCredentials}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Username <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={credentials.username}
+                    onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="MSP admin username"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Password <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    value={credentials.password}
+                    onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="MSP admin password"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Domain <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={credentials.domain}
+                    onChange={(e) => setCredentials({ ...credentials, domain: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="cloud_msp"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Domain ID <span className="text-gray-500">(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={credentials.domain_id}
+                    onChange={(e) => setCredentials({ ...credentials, domain_id: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="dom-xxxxx"
+                  />
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-xs text-blue-800">
+                    <strong>Admin Note:</strong> MSP admins authenticate using the default project token (compulsory). 
+                    Ensure credentials have <strong>msp_admin</strong> role in the default project for super-admin powers across all projects.
+                  </p>
+                </div>
+
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <p className="text-xs text-yellow-800">
+                    <strong>⚠️ Platform-owned only:</strong> You can only verify credentials for platform-owned regions. 
+                    Tenant-owned region credentials must be verified by the tenant themselves.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={closeCredentialModal}
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                  disabled={verifying}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={verifying}
+                >
+                  {verifying ? 'Verifying...' : 'Verify'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

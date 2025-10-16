@@ -2,10 +2,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import adminSilentApiforUser from "../../index/admin/silentadminforuser";
 import apiAdminforUser from "../../index/admin/apiAdminforUser";
 
-const fetchVpcs = async ({ project_id, region }) => {
+const fetchVpcs = async ({ project_id, region, refresh = false }) => {
   const params = new URLSearchParams();
   if (project_id) params.append("project_id", project_id);
   if (region) params.append("region", region);
+  if (refresh) params.append("refresh", "true"); // Trigger backend sync from provider
 
   const queryString = params.toString();
   const res = await adminSilentApiforUser(
@@ -14,6 +15,11 @@ const fetchVpcs = async ({ project_id, region }) => {
   );
   if (!res) throw new Error("Failed to fetch VPCs");
   return res;
+};
+
+// Separate function for explicit refresh/sync
+export const syncVpcsFromProvider = async ({ project_id, region }) => {
+  return fetchVpcs({ project_id, region, refresh: true });
 };
 
 const fetchVpcById = async (id) => {

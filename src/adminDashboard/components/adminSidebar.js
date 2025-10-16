@@ -37,8 +37,6 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/admin-dashboard/clients": "Clients",
     "/admin-dashboard/payment": "Payment",
     "/admin-dashboard/projects": "Projects",
-    "/admin-dashboard/projects-revamped": "Projects (Revamped)",
-    "/admin-dashboard/projects-revamped/details": "Projects (Revamped)",
     // Instance management paths removed - functionality moved to standard instances
     // "/admin-dashboard/instance-management": "Instance Management",
     // "/admin-dashboard/instance-management/details": "Instance Details",
@@ -127,12 +125,6 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       icon: FolderOpen,
       isLucide: true,
       path: "/admin-dashboard/projects",
-    },
-    {
-      name: "Projects (Revamped)",
-      icon: FolderOpen,
-      isLucide: true,
-      path: "/admin-dashboard/projects-revamped",
     },
     {
       name: "Multi-Instance Creation",

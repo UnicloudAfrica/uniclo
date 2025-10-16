@@ -333,12 +333,23 @@ class AdminRegionApiService {
         headers: this.getAuthHeaders(),
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: Failed to fetch region`);
+      }
+
       const data = await response.json();
 
-      if (data.success) {
+      // Handle both response formats: { data: {...} } and { success: true, data: {...} }
+      if (data.data) {
         return {
           success: true,
           data: data.data
+        };
+      } else if (data.success !== false) {
+        // If no nested data but success is not explicitly false, return data as is
+        return {
+          success: true,
+          data: data
         };
       } else {
         throw new Error(data.message || 'Failed to fetch region');
@@ -360,17 +371,18 @@ class AdminRegionApiService {
         body: JSON.stringify(regionData),
       });
 
-      const data = await response.json();
-
-      if (data.success || response.ok) {
-        ToastUtils.success(data.message || 'Region updated successfully');
-        return {
-          success: true,
-          data: data.data
-        };
-      } else {
-        throw new Error(data.message || 'Failed to update region');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP ${response.status}: Failed to update region`);
       }
+
+      const data = await response.json();
+      
+      ToastUtils.success(data.message || 'Region updated successfully');
+      return {
+        success: true,
+        data: data.data || data
+      };
     } catch (error) {
       console.error(`Error updating region ${code}:`, error);
       ToastUtils.error(error.message);

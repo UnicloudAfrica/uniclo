@@ -107,6 +107,9 @@ import TenantLeads from "./tenantDashboard/pages/tenant-leads";
 import TenantLeadDetails from "./tenantDashboard/pages/tenant-lead-details";
 import AdminProjectsRevamped from "./adminDashboard/pages/AdminProjectsRevamped";
 import AdminProjectDetailsRevamped from "./adminDashboard/pages/AdminProjectDetailsRevamped";
+import RegionApprovals from "./adminDashboard/pages/RegionApprovals";
+import RegionRequests from "./tenantDashboard/pages/RegionRequests";
+import RevenueDashboard from "./tenantDashboard/pages/RevenueDashboard";
 
 import ClientDashboardLayout from "./clientDashboard/components/ClientDashboardLayout";
 function App() {
@@ -192,6 +195,10 @@ function App() {
           {/* Tenant Leads Routes */}
           <Route path="/tenant-dashboard/leads" element={<TenantLeads />} />
           <Route path="/tenant-dashboard/leads/details" element={<TenantLeadDetails />} />
+          
+          {/* Tenant Region Marketplace Routes */}
+          <Route path="/tenant-dashboard/region-requests" element={<RegionRequests />} />
+          <Route path="/tenant-dashboard/revenue" element={<RevenueDashboard />} />
           <Route path="/dashboard/account-settings" element={<Settings />} />
           <Route
             path="/dashboard/tax-configurations"
@@ -248,6 +255,7 @@ function App() {
           <Route path="/admin-dashboard/projects-revamped/details" element={<AdminProjectDetailsRevamped />} />
           <Route path="/admin-dashboard/leads" element={<AdminLeads />} />
           <Route path="/admin-dashboard/regions" element={<AdminRegion />} />
+          <Route path="/admin-dashboard/region-approvals" element={<RegionApprovals />} />
           <Route
             path="/admin-dashboard/leads/details"
             element={<AdminLeadDetails />}

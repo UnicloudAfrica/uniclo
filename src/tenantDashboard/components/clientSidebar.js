@@ -13,7 +13,7 @@ import activePaymentHistory from "./assets/activeHistory.png";
 import supportTicket from "./assets/support.png";
 import activeSupportTicket from "./assets/activeSupport.png";
 import appSettings from "./assets/settings.png";
-import { LogOut, X, Users } from "lucide-react";
+import { LogOut, X, Users, MapPin, DollarSign } from "lucide-react";
 import useAuthStore from "../../stores/userAuthStore";
 
 const Sidebar = ({ tenantData, activeTab, setActiveTab }) => {
@@ -29,6 +29,8 @@ const Sidebar = ({ tenantData, activeTab, setActiveTab }) => {
     "/dashboard/purchased-modules": "Purchased Modules",
     "/dashboard/instances-request": "Instances Request",
     "/tenant-dashboard/leads": "Leads",
+    "/tenant-dashboard/region-requests": "Region Requests",
+    "/tenant-dashboard/revenue": "Revenue",
     "/dashboard/payment-history": "Payment History",
     "/dashboard/support-ticket": "Support Ticket",
     "/dashboard/app-settings": "App Settings",
@@ -66,6 +68,20 @@ const Sidebar = ({ tenantData, activeTab, setActiveTab }) => {
       icon: clients, // Using clients icon temporarily - you can add a specific leads icon
       activeIcon: activeClients,
       path: "/tenant-dashboard/leads",
+    },
+    {
+      name: "Region Requests",
+      icon: MapPin,
+      activeIcon: MapPin,
+      path: "/tenant-dashboard/region-requests",
+      isLucide: true,
+    },
+    {
+      name: "Revenue",
+      icon: DollarSign,
+      activeIcon: DollarSign,
+      path: "/tenant-dashboard/revenue",
+      isLucide: true,
     },
     {
       name: "Payment History",
@@ -119,11 +135,15 @@ const Sidebar = ({ tenantData, activeTab, setActiveTab }) => {
             {isActive && (
               <div className="absolute left-[-14px] w-1 h-4 bg-[tenantData.color] rounded-[3px]" />
             )}
-            <img
-              src={isActive ? item.activeIcon : item.icon}
-              className="w-4 h-4"
-              alt={item.name}
-            />
+            {item.isLucide ? (
+              <item.icon size={16} className="flex-shrink-0" />
+            ) : (
+              <img
+                src={isActive ? item.activeIcon : item.icon}
+                className="w-4 h-4"
+                alt={item.name}
+              />
+            )}
           </div>
           <span className="text-sm font-normal md:hidden lg:block font-Outfit">
             {item.name}
@@ -150,11 +170,15 @@ const Sidebar = ({ tenantData, activeTab, setActiveTab }) => {
           }}
         >
           <div className="flex items-center justify-center w-4 h-4 flex-shrink-0">
-            <img
-              src={isActive ? item.activeIcon : item.icon}
-              className="w-4 h-4 brightness-0 invert"
-              alt={item.name}
-            />
+            {item.isLucide ? (
+              <item.icon size={16} className="brightness-0 invert" />
+            ) : (
+              <img
+                src={isActive ? item.activeIcon : item.icon}
+                className="w-4 h-4 brightness-0 invert"
+                alt={item.name}
+              />
+            )}
           </div>
           <span className="text-xs font-medium">{item.name}</span>
         </button>

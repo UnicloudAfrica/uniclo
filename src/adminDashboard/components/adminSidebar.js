@@ -19,7 +19,8 @@ import {
   Settings,
   HelpCircle,
   User,
-  UserCog
+  UserCog,
+  CheckSquare
 } from "lucide-react";
 
 const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
@@ -51,7 +52,8 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/admin-dashboard/country-pricing": "Country Pricing",
     "/admin-dashboard/key-pairs": "Key Pairs",
     "/admin-dashboard/pricing": "Pricing",
-    "/admin-dashboard/inventory": "Inventory",
+    "/admin-dashboard/regions": "Regions",
+    "/admin-dashboard/region-approvals": "Region Approvals",
     "/admin-dashboard/calculator": "Calculator",
     "/admin-dashboard/calculator-new": "Calculator",
     "/admin-dashboard/advanced-calculator": "Calculator",
@@ -143,6 +145,12 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       icon: MapPin,
       isLucide: true,
       path: "/admin-dashboard/regions",
+    },
+    {
+      name: "Region Approvals",
+      icon: CheckSquare,
+      isLucide: true,
+      path: "/admin-dashboard/region-approvals",
     },
     {
       name: "Calculator",

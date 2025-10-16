@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import tenantRegionApi from '../../services/tenantRegionApi';
 import ToastUtils from '../../utils/toastUtil';
+import Sidebar from '../components/clientSidebar';
+import HeaderBar from '../components/clientHeadbar';
+import BreadcrumbNav from '../components/clientAciveTab';
 
 const RegionRequestDetail = () => {
   const { id } = useParams();
@@ -16,6 +19,23 @@ const RegionRequestDetail = () => {
     domain: '',
     domain_id: '',
   });
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('regions');
+  const contentRef = useRef(null);
+
+  const tenantData = {
+    name: 'Your Organization',
+    logo: '',
+    color: '#288DD1',
+  };
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
 
   useEffect(() => {
     fetchRegionDetail();
@@ -89,36 +109,73 @@ const RegionRequestDetail = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <>
+        <Sidebar
+          tenantData={tenantData}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          isMobileMenuOpen={isMobileMenuOpen}
+          onCloseMobileMenu={closeMobileMenu}
+        />
+        <HeaderBar tenantData={tenantData} onMenuClick={toggleMobileMenu} />
+        <BreadcrumbNav tenantData={tenantData} activeTab={activeTab} />
+        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 overflow-y-auto">
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        </main>
+      </>
     );
   }
 
   if (!region) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Region not found</h3>
-            <Link to="/tenant/regions" className="text-blue-600 hover:text-blue-700">
-              Back to regions
-            </Link>
+      <>
+        <Sidebar
+          tenantData={tenantData}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          isMobileMenuOpen={isMobileMenuOpen}
+          onCloseMobileMenu={closeMobileMenu}
+        />
+        <HeaderBar tenantData={tenantData} onMenuClick={toggleMobileMenu} />
+        <BreadcrumbNav tenantData={tenantData} activeTab={activeTab} />
+        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 overflow-y-auto">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Region not found</h3>
+              <Link to="/tenant-dashboard/region-requests" className="text-blue-600 hover:text-blue-700">
+                Back to regions
+              </Link>
+            </div>
           </div>
-        </div>
-      </div>
+        </main>
+      </>
     );
   }
 
   const statusBadge = getStatusBadge(region.approval_status);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-4xl mx-auto">
+    <>
+      <Sidebar
+        tenantData={tenantData}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isMobileMenuOpen={isMobileMenuOpen}
+        onCloseMobileMenu={closeMobileMenu}
+      />
+      <HeaderBar tenantData={tenantData} onMenuClick={toggleMobileMenu} />
+      <BreadcrumbNav tenantData={tenantData} activeTab={activeTab} />
+      <main
+        ref={contentRef}
+        className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 overflow-y-auto"
+      >
+        <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-6">
           <Link
-            to="/tenant/regions"
+            to="/tenant-dashboard/region-requests"
             className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2 mb-4"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -285,9 +342,9 @@ const RegionRequestDetail = () => {
             </button>
           </div>
         )}
-      </div>
+        </div>
 
-      {/* Credential Verification Modal */}
+        {/* Credential Verification Modal */}
       {showCredentialModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
@@ -381,7 +438,8 @@ const RegionRequestDetail = () => {
           </div>
         </div>
       )}
-    </div>
+      </main>
+    </>
   );
 };
 

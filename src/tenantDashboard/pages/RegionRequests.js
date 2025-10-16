@@ -1,11 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import tenantRegionApi from '../../services/tenantRegionApi';
+import Sidebar from '../components/clientSidebar';
+import HeaderBar from '../components/clientHeadbar';
+import BreadcrumbNav from '../components/clientAciveTab';
 
 const RegionRequests = () => {
   const [regions, setRegions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('regions');
+  const contentRef = useRef(null);
+
+  const tenantData = {
+    name: 'Your Organization',
+    logo: '',
+    color: '#288DD1',
+  };
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
 
   useEffect(() => {
     fetchRegions();
@@ -47,15 +67,41 @@ const RegionRequests = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <>
+        <Sidebar
+          tenantData={tenantData}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          isMobileMenuOpen={isMobileMenuOpen}
+          onCloseMobileMenu={closeMobileMenu}
+        />
+        <HeaderBar tenantData={tenantData} onMenuClick={toggleMobileMenu} />
+        <BreadcrumbNav tenantData={tenantData} activeTab={activeTab} />
+        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 overflow-y-auto">
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        </main>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <>
+      <Sidebar
+        tenantData={tenantData}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isMobileMenuOpen={isMobileMenuOpen}
+        onCloseMobileMenu={closeMobileMenu}
+      />
+      <HeaderBar tenantData={tenantData} onMenuClick={toggleMobileMenu} />
+      <BreadcrumbNav tenantData={tenantData} activeTab={activeTab} />
+      <main
+        ref={contentRef}
+        className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 overflow-y-auto"
+      >
+        <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
@@ -63,7 +109,7 @@ const RegionRequests = () => {
             <p className="text-gray-600 mt-1">Manage your cloud hosting regions</p>
           </div>
           <Link
-            to="/tenant/regions/new"
+            to="/tenant-dashboard/region-requests/new"
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -126,7 +172,7 @@ const RegionRequests = () => {
             </p>
             {filter === 'all' && (
               <Link
-                to="/tenant/regions/new"
+                to="/tenant-dashboard/region-requests/new"
                 className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
               >
                 Submit Your First Region
@@ -176,8 +222,9 @@ const RegionRequests = () => {
             ))}
           </div>
         )}
-      </div>
-    </div>
+        </div>
+      </main>
+    </>
   );
 };
 

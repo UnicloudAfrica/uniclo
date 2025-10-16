@@ -260,6 +260,35 @@ class AdminRegionApiService {
   }
 
   /**
+   * Create a new platform-owned region (auto-approved)
+   */
+  async createPlatformRegion(regionData) {
+    try {
+      const response = await fetch(`${config.baseURL}/admin/v1/regions`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(regionData),
+      });
+
+      const data = await response.json();
+
+      if (data.success || response.ok) {
+        ToastUtils.success(data.message || 'Platform region created successfully');
+        return {
+          success: true,
+          data: data.data
+        };
+      } else {
+        throw new Error(data.message || 'Failed to create platform region');
+      }
+    } catch (error) {
+      console.error('Error creating platform region:', error);
+      ToastUtils.error(error.message);
+      throw error;
+    }
+  }
+
+  /**
    * Verify MSP admin credentials for platform-owned regions
    * Admin can only verify credentials for regions they create (platform-owned)
    */

@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import tenantRegionApi from '../../services/tenantRegionApi';
+import Sidebar from '../components/clientSidebar';
+import HeaderBar from '../components/clientHeadbar';
+import BreadcrumbNav from '../components/clientAciveTab';
 
 const NewRegionRequest = () => {
   const navigate = useNavigate();
@@ -14,6 +17,23 @@ const NewRegionRequest = () => {
     base_url: '',
     fulfillment_mode: 'automated',
   });
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('regions');
+  const contentRef = useRef(null);
+
+  const tenantData = {
+    name: 'Your Organization',
+    logo: '',
+    color: '#288DD1',
+  };
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
 
   const [errors, setErrors] = useState({});
 
@@ -46,7 +66,7 @@ const NewRegionRequest = () => {
     try {
       setSubmitting(true);
       await tenantRegionApi.createRegionRequest(formData);
-      navigate('/tenant/regions');
+      navigate('/tenant-dashboard/region-requests');
     } catch (error) {
       console.error('Error creating region:', error);
     } finally {
@@ -55,8 +75,21 @@ const NewRegionRequest = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-3xl mx-auto">
+    <>
+      <Sidebar
+        tenantData={tenantData}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isMobileMenuOpen={isMobileMenuOpen}
+        onCloseMobileMenu={closeMobileMenu}
+      />
+      <HeaderBar tenantData={tenantData} onMenuClick={toggleMobileMenu} />
+      <BreadcrumbNav tenantData={tenantData} activeTab={activeTab} />
+      <main
+        ref={contentRef}
+        className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 overflow-y-auto"
+      >
+        <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Request New Region</h1>
@@ -233,7 +266,7 @@ const NewRegionRequest = () => {
           <div className="flex gap-4">
             <button
               type="button"
-              onClick={() => navigate('/tenant/regions')}
+              onClick={() => navigate('/tenant-dashboard/region-requests')}
               className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
             >
               Cancel
@@ -247,8 +280,9 @@ const NewRegionRequest = () => {
             </button>
           </div>
         </form>
-      </div>
-    </div>
+        </div>
+      </main>
+    </>
   );
 };
 

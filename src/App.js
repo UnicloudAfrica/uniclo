@@ -108,8 +108,12 @@ import TenantLeadDetails from "./tenantDashboard/pages/tenant-lead-details";
 import AdminProjectsRevamped from "./adminDashboard/pages/AdminProjectsRevamped";
 import AdminProjectDetailsRevamped from "./adminDashboard/pages/AdminProjectDetailsRevamped";
 import RegionApprovals from "./adminDashboard/pages/RegionApprovals";
+import RegionApprovalDetail from "./adminDashboard/pages/RegionApprovalDetail";
+import RegionApprovalEdit from "./adminDashboard/pages/RegionApprovalEdit";
+import RegionApprovalCreate from "./adminDashboard/pages/RegionApprovalCreate";
 import RegionRequests from "./tenantDashboard/pages/RegionRequests";
 import RegionRequestDetail from "./tenantDashboard/pages/RegionRequestDetail";
+import NewRegionRequest from "./tenantDashboard/pages/NewRegionRequest";
 import RevenueDashboard from "./tenantDashboard/pages/RevenueDashboard";
 
 import ClientDashboardLayout from "./clientDashboard/components/ClientDashboardLayout";
@@ -199,6 +203,7 @@ function App() {
           
           {/* Tenant Region Marketplace Routes */}
           <Route path="/tenant-dashboard/region-requests" element={<RegionRequests />} />
+          <Route path="/tenant-dashboard/region-requests/new" element={<NewRegionRequest />} />
           <Route path="/tenant-dashboard/region-requests/:id" element={<RegionRequestDetail />} />
           <Route path="/tenant-dashboard/revenue" element={<RevenueDashboard />} />
           <Route path="/dashboard/account-settings" element={<Settings />} />
@@ -258,6 +263,9 @@ function App() {
           <Route path="/admin-dashboard/leads" element={<AdminLeads />} />
           <Route path="/admin-dashboard/regions" element={<AdminRegion />} />
           <Route path="/admin-dashboard/region-approvals" element={<RegionApprovals />} />
+          <Route path="/admin-dashboard/region-approvals/create" element={<RegionApprovalCreate />} />
+          <Route path="/admin-dashboard/region-approvals/:id" element={<RegionApprovalDetail />} />
+          <Route path="/admin-dashboard/region-approvals/:id/edit" element={<RegionApprovalEdit />} />
           <Route
             path="/admin-dashboard/leads/details"
             element={<AdminLeadDetails />}

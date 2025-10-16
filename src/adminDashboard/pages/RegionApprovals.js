@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import adminRegionApi from '../../services/adminRegionApi';
 import ToastUtils from '../../utils/toastUtil';
 import AdminSidebar from '../components/adminSidebar';
@@ -184,8 +185,21 @@ const RegionApprovals = () => {
           <div className="max-w-7xl mx-auto">
             {/* Header */}
             <div className="mb-6">
-              <h1 className="text-3xl font-bold text-gray-900">Region Approvals</h1>
-              <p className="text-gray-600 mt-1">Review and manage tenant-owned region requests</p>
+              <div className="flex justify-between items-start">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900">Region Approvals</h1>
+                  <p className="text-gray-600 mt-1">Review and manage region requests</p>
+                </div>
+                <Link
+                  to="/admin-dashboard/region-approvals/create"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Create Platform Region
+                </Link>
+              </div>
             </div>
 
             {/* Stats Cards */}
@@ -323,6 +337,12 @@ const RegionApprovals = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                             <div className="flex justify-center gap-2">
+                              <Link
+                                to={`/admin-dashboard/region-approvals/${region.id}`}
+                                className="text-blue-600 hover:text-blue-900"
+                              >
+                                View
+                              </Link>
                               {region.approval_status === 'pending' && (
                                 <>
                                   <button

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { 
   ChevronLeft, 
@@ -30,6 +30,8 @@ import ENIs from "./infraComps/enis";
 import EIPs from "./infraComps/eips";
 import AssignEdgeConfigModal from "./projectComps/assignEdgeConfig";
 import { designTokens } from "../../styles/designTokens";
+import ToastUtils from "../../utils/toastUtil";
+import api from "../../index/admin/api";
 
 const decodeId = (encodedId) => {
   try {
@@ -65,6 +67,34 @@ export default function AdminProjectDetails() {
 
   const project = projectStatusData?.project;
   const summary = project?.summary ?? [];
+  const resolvedProjectId = project?.identifier || projectId;
+
+  const normalizeSummaryKey = (value = "") =>
+    value.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  const summaryStatusMap = useMemo(() => {
+    const map = new Map();
+    summary.forEach((item) => {
+      if (item?.title) {
+        map.set(normalizeSummaryKey(item.title), item);
+      }
+      if (item?.key) {
+        map.set(normalizeSummaryKey(item.key), item);
+      }
+    });
+    return map;
+  }, [summary]);
+
+  const summaryCompleted = (...labels) => {
+    for (const label of labels) {
+      const normalized = normalizeSummaryKey(label);
+      if (summaryStatusMap.has(normalized)) {
+        const item = summaryStatusMap.get(normalized);
+        return item?.completed ?? item?.complete ?? false;
+      }
+    }
+    return undefined;
+  };
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
@@ -74,6 +104,23 @@ export default function AdminProjectDetails() {
     setTimeout(() => {
       contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
+  };
+
+  // Handle action button clicks for provisioning checklist
+  const handleSummaryAction = async (action) => {
+    if (!action || !action.endpoint) return;
+    
+    const method = (action.method || 'POST').toUpperCase();
+    const endpoint = action.endpoint;
+    
+    try {
+      await api(method, endpoint);
+      ToastUtils.success('Action completed successfully');
+      refetchProjectStatus();
+    } catch (error) {
+      console.error('Action failed:', error);
+      ToastUtils.error(error?.message || 'Action failed');
+    }
   };
 
   // Define infrastructure sections with icons
@@ -130,21 +177,64 @@ export default function AdminProjectDetails() {
     },
   ];
 
-  // For now, default all sections to incomplete (❌) since we don't have specific checks
-  // Backend summary only tracks: project created, users, synced, VPC, policies
+  // Setup is complete only when ALL summary items are complete
+  const areAllSummaryItemsComplete = summary.length > 0 && summary.every(item => item.completed === true);
+
   const getStatusForSection = (sectionKey) => {
-    // Setup is complete if project is synced
-    if (sectionKey === "setup") {
-      const syncedItem = summary.find(s => s.title && s.title.includes("Synced"));
-      return syncedItem?.completed === true;
+    switch (sectionKey) {
+      case "setup":
+        return areAllSummaryItemsComplete;
+      case "vpcs":
+        return summaryCompleted(
+          "vpc",
+          "vpcs",
+          "virtualprivatecloud",
+          "vpcprovisioned"
+        ) ?? false;
+      case "keypairs":
+        return summaryCompleted("keypair", "keypairs", "createkeypair") ?? false;
+      case "edge":
+        return summaryCompleted(
+          "edgenetwork",
+          "edge network",
+          "edge"
+        ) ?? false;
+      case "security-groups":
+        return summaryCompleted(
+          "securitygroup",
+          "securitygroups",
+          "create security groups"
+        ) ?? false;
+      case "subnets":
+        return summaryCompleted("subnet", "subnets", "manage subnets") ?? false;
+      case "igws":
+        return summaryCompleted(
+          "igw",
+          "igws",
+          "internetgateway",
+          "internet gateways",
+          "configure igw"
+        ) ?? false;
+      case "route-tables":
+        return summaryCompleted("routetable", "routetables") ?? false;
+      case "enis":
+        return summaryCompleted(
+          "eni",
+          "enis",
+          "networkinterface",
+          "networkinterfaces"
+        ) ?? false;
+      case "eips":
+        return summaryCompleted(
+          "eip",
+          "eips",
+          "elasticip",
+          "elasticips",
+          "elastic ip"
+        ) ?? false;
+      default:
+        return false;
     }
-    // VPCs is complete if VPC mode is enabled
-    if (sectionKey === "vpcs") {
-      const vpcItem = summary.find(s => s.title && s.title.includes("VPC"));
-      return vpcItem?.completed === true;
-    }
-    // Other sections default to false for now
-    return false;
   };
 
   const renderSectionContent = () => {
@@ -184,45 +274,64 @@ export default function AdminProjectDetails() {
             <div className="mt-6">
               <h4 className="font-semibold mb-3" style={{ color: designTokens.colors.neutral[800] }}>Provisioning Checklist</h4>
               <div className="space-y-2">
-                {summary.map((item, index) => (
-                  <div 
-                    key={index} 
-                    className="flex items-center gap-3 p-3 rounded-lg"
-                    style={{ backgroundColor: designTokens.colors.neutral[50] }}
-                  >
-                    {item.completed ? (
-                      <CheckCircle size={18} style={{ color: designTokens.colors.success[500] }} />
-                    ) : (
-                      <XCircle size={18} style={{ color: designTokens.colors.error[500] }} />
-                    )}
-                    <div className="flex-1">
-                      <span style={{ color: designTokens.colors.neutral[700] }}>{item.title}</span>
-                      {item.count !== undefined && (
-                        <span className="ml-2 text-xs" style={{ color: designTokens.colors.neutral[500] }}>({item.count})</span>
+                {summary.map((item, index) => {
+                  const isComplete = item?.completed ?? item?.complete ?? false;
+                  return (
+                    <div
+                      key={index}
+                      className="flex items-center gap-3 p-3 rounded-lg"
+                      style={{ backgroundColor: designTokens.colors.neutral[50] }}
+                    >
+                      {isComplete ? (
+                        <CheckCircle size={18} style={{ color: designTokens.colors.success[500] }} />
+                      ) : (
+                        <XCircle size={18} style={{ color: designTokens.colors.error[500] }} />
                       )}
-                      {item.missing_count !== undefined && item.missing_count > 0 && (
-                        <span className="ml-2 text-xs" style={{ color: designTokens.colors.warning[600] }}>({item.missing_count} missing)</span>
+                      <div className="flex-1">
+                        <span style={{ color: designTokens.colors.neutral[700] }}>{item.title}</span>
+                        {item.count !== undefined && (
+                          <span className="ml-2 text-xs" style={{ color: designTokens.colors.neutral[500] }}>
+                            ({item.count})
+                          </span>
+                        )}
+                        {item.missing_count !== undefined && item.missing_count > 0 && (
+                          <span className="ml-2 text-xs" style={{ color: designTokens.colors.warning[600] }}>
+                            ({item.missing_count} missing)
+                          </span>
+                        )}
+                      </div>
+                      {item.action && (
+                        <button
+                          className="px-3 py-1 rounded text-xs font-medium text-white"
+                          style={{ backgroundColor: designTokens.colors.primary[600] }}
+                          onClick={() => handleSummaryAction(item.action)}
+                        >
+                          {item.action.label}
+                        </button>
                       )}
                     </div>
-                    {item.action && (
-                      <button
-                        className="px-3 py-1 rounded text-xs font-medium text-white"
-                        style={{ backgroundColor: designTokens.colors.primary[600] }}
-                        onClick={() => console.log('Action:', item.action)}
-                      >
-                        {item.action.label}
-                      </button>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
         );
       case "vpcs":
-        return <VPCs projectId={projectId} region={project?.region} provider={project?.provider} />;
+        return (
+          <VPCs
+            projectId={resolvedProjectId}
+            region={project?.region}
+            provider={project?.provider}
+          />
+        );
       case "keypairs":
-        return <KeyPairs projectId={projectId} region={project?.region} provider={project?.provider} />;
+        return (
+          <KeyPairs
+            projectId={resolvedProjectId}
+            region={project?.region}
+            provider={project?.provider}
+          />
+        );
       case "edge":
         return (
           <div className="space-y-4">
@@ -244,17 +353,53 @@ export default function AdminProjectDetails() {
           </div>
         );
       case "security-groups":
-        return <SecurityGroup projectId={projectId} region={project?.region} provider={project?.provider} />;
+        return (
+          <SecurityGroup
+            projectId={resolvedProjectId}
+            region={project?.region}
+            provider={project?.provider}
+          />
+        );
       case "subnets":
-        return <Subnets projectId={projectId} region={project?.region} provider={project?.provider} />;
+        return (
+          <Subnets
+            projectId={resolvedProjectId}
+            region={project?.region}
+            provider={project?.provider}
+          />
+        );
       case "igws":
-        return <IGWs projectId={projectId} region={project?.region} provider={project?.provider} />;
+        return (
+          <IGWs
+            projectId={resolvedProjectId}
+            region={project?.region}
+            provider={project?.provider}
+          />
+        );
       case "route-tables":
-        return <RouteTables projectId={projectId} region={project?.region} provider={project?.provider} />;
+        return (
+          <RouteTables
+            projectId={resolvedProjectId}
+            region={project?.region}
+            provider={project?.provider}
+          />
+        );
       case "enis":
-        return <ENIs projectId={projectId} region={project?.region} provider={project?.provider} />;
+        return (
+          <ENIs
+            projectId={resolvedProjectId}
+            region={project?.region}
+            provider={project?.provider}
+          />
+        );
       case "eips":
-        return <EIPs projectId={projectId} region={project?.region} provider={project?.provider} />;
+        return (
+          <EIPs
+            projectId={resolvedProjectId}
+            region={project?.region}
+            provider={project?.provider}
+          />
+        );
       default:
         return <div>Select a section from the menu</div>;
     }
@@ -364,7 +509,7 @@ export default function AdminProjectDetails() {
                   </h3>
                   <div className="space-y-1">
                     {infrastructureSections.map((section) => {
-                      const isComplete = getStatusForSection(section.checkKey);
+                      const isComplete = getStatusForSection(section.key);
                       const isActive = activeSection === section.key;
                       return (
                         <button
@@ -414,7 +559,7 @@ export default function AdminProjectDetails() {
         <AssignEdgeConfigModal
           isOpen={isAssignEdgeOpen}
           onClose={() => setIsAssignEdgeOpen(false)}
-          projectId={projectId}
+          projectId={resolvedProjectId}
           onSuccess={() => {
             refetchProjectStatus();
             setIsAssignEdgeOpen(false);

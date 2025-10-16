@@ -76,73 +76,75 @@ export default function AdminProjectDetails() {
     }, 50);
   };
 
-  // Define infrastructure sections with icons and status checks
+  // Define infrastructure sections with icons
   const infrastructureSections = [
     { 
       key: "setup", 
       label: "Setup", 
       icon: <CheckCircle size={16} />,
-      checkKey: "project_setup_complete"
     },
     { 
       key: "vpcs", 
       label: "VPCs", 
       icon: <Network size={16} />,
-      checkKey: "default_vpc_exists"
     },
     { 
       key: "keypairs", 
       label: "Create Key Pair", 
       icon: <Key size={16} />,
-      checkKey: "keypairs_exist"
     },
     { 
       key: "edge", 
       label: "Configure Edge Network", 
       icon: <Wifi size={16} />,
-      checkKey: "edge_network_configured"
     },
     { 
       key: "security-groups", 
       label: "Create Security Groups", 
       icon: <Shield size={16} />,
-      checkKey: "security_groups_exist"
     },
     { 
       key: "subnets", 
       label: "Manage Subnets", 
       icon: <GitBranch size={16} />,
-      checkKey: "subnets_exist"
     },
     { 
       key: "igws", 
       label: "Configure IGW", 
       icon: <Globe size={16} />,
-      checkKey: "internet_gateway_exists"
     },
     { 
       key: "route-tables", 
       label: "Route Tables", 
       icon: <Route size={16} />,
-      checkKey: "route_tables_exist"
     },
     { 
       key: "enis", 
       label: "ENIs", 
       icon: <Radio size={16} />,
-      checkKey: "network_interfaces_exist"
     },
     { 
       key: "eips", 
       label: "EIPs", 
       icon: <Wifi size={16} />,
-      checkKey: "elastic_ips_exist"
     },
   ];
 
-  const getStatusForSection = (checkKey) => {
-    const item = summary.find(s => s.key === checkKey);
-    return item?.complete === true;
+  // For now, default all sections to incomplete (❌) since we don't have specific checks
+  // Backend summary only tracks: project created, users, synced, VPC, policies
+  const getStatusForSection = (sectionKey) => {
+    // Setup is complete if project is synced
+    if (sectionKey === "setup") {
+      const syncedItem = summary.find(s => s.title && s.title.includes("Synced"));
+      return syncedItem?.completed === true;
+    }
+    // VPCs is complete if VPC mode is enabled
+    if (sectionKey === "vpcs") {
+      const vpcItem = summary.find(s => s.title && s.title.includes("VPC"));
+      return vpcItem?.completed === true;
+    }
+    // Other sections default to false for now
+    return false;
   };
 
   const renderSectionContent = () => {
@@ -180,7 +182,7 @@ export default function AdminProjectDetails() {
               </div>
             </div>
             <div className="mt-6">
-              <h4 className="font-semibold mb-3" style={{ color: designTokens.colors.neutral[800] }}>Setup Checklist</h4>
+              <h4 className="font-semibold mb-3" style={{ color: designTokens.colors.neutral[800] }}>Provisioning Checklist</h4>
               <div className="space-y-2">
                 {summary.map((item, index) => (
                   <div 
@@ -188,12 +190,29 @@ export default function AdminProjectDetails() {
                     className="flex items-center gap-3 p-3 rounded-lg"
                     style={{ backgroundColor: designTokens.colors.neutral[50] }}
                   >
-                    {item.complete ? (
+                    {item.completed ? (
                       <CheckCircle size={18} style={{ color: designTokens.colors.success[500] }} />
                     ) : (
                       <XCircle size={18} style={{ color: designTokens.colors.error[500] }} />
                     )}
-                    <span style={{ color: designTokens.colors.neutral[700] }}>{item.label}</span>
+                    <div className="flex-1">
+                      <span style={{ color: designTokens.colors.neutral[700] }}>{item.title}</span>
+                      {item.count !== undefined && (
+                        <span className="ml-2 text-xs" style={{ color: designTokens.colors.neutral[500] }}>({item.count})</span>
+                      )}
+                      {item.missing_count !== undefined && item.missing_count > 0 && (
+                        <span className="ml-2 text-xs" style={{ color: designTokens.colors.warning[600] }}>({item.missing_count} missing)</span>
+                      )}
+                    </div>
+                    {item.action && (
+                      <button
+                        className="px-3 py-1 rounded text-xs font-medium text-white"
+                        style={{ backgroundColor: designTokens.colors.primary[600] }}
+                        onClick={() => console.log('Action:', item.action)}
+                      >
+                        {item.action.label}
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -362,9 +381,9 @@ export default function AdminProjectDetails() {
                           }}
                         >
                           {isComplete ? (
-                            <CheckCircle size={16} style={{ color: designTokens.colors.success[500] }} />
+                            <span style={{ color: designTokens.colors.success[500] }}>✅</span>
                           ) : (
-                            <XCircle size={16} style={{ color: designTokens.colors.error[500] }} />
+                            <span style={{ color: designTokens.colors.error[500] }}>❌</span>
                           )}
                           <span className="flex-1 text-sm font-medium">{section.label}</span>
                           {React.cloneElement(section.icon, {

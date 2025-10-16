@@ -105,8 +105,6 @@ import ClientSettings from "./clientDashboard/pages/clientAccountSettings";
 import ClientSupport from "./clientDashboard/pages/clientSupport";
 import TenantLeads from "./tenantDashboard/pages/tenant-leads";
 import TenantLeadDetails from "./tenantDashboard/pages/tenant-lead-details";
-import AdminProjectsRevamped from "./adminDashboard/pages/AdminProjectsRevamped";
-import AdminProjectDetailsRevamped from "./adminDashboard/pages/AdminProjectDetailsRevamped";
 import RegionApprovals from "./adminDashboard/pages/RegionApprovals";
 import RegionApprovalDetail from "./adminDashboard/pages/RegionApprovalDetail";
 import RegionApprovalEdit from "./adminDashboard/pages/RegionApprovalEdit";
@@ -260,8 +258,6 @@ function App() {
             element={<AdminInventory />}
           />
           <Route path="/admin-dashboard/projects" element={<AdminProjects />} />
-          <Route path="/admin-dashboard/projects-revamped" element={<AdminProjectsRevamped />} />
-          <Route path="/admin-dashboard/projects-revamped/details" element={<AdminProjectDetailsRevamped />} />
           <Route path="/admin-dashboard/leads" element={<AdminLeads />} />
           <Route path="/admin-dashboard/regions" element={<AdminRegion />} />
           <Route path="/admin-dashboard/regions/:id" element={<RegionDetail />} />

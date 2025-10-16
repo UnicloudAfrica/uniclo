@@ -174,12 +174,12 @@ const AdminRegion = () => {
     {
       icon: <Eye size={16} />,
       label: '',
-      onClick: (item) => window.location.href = `/admin-dashboard/regions/${item.id}`
+      onClick: (item) => window.location.href = `/admin-dashboard/regions/${item.code}`
     },
     {
       icon: <Edit size={16} />,
       label: '',
-      onClick: (item) => window.location.href = `/admin-dashboard/regions/${item.id}/edit`
+      onClick: (item) => window.location.href = `/admin-dashboard/regions/${item.code}/edit`
     },
     {
       icon: <Trash2 size={16} />,
@@ -282,7 +282,7 @@ const AdminRegion = () => {
               exportable={true}
               sortable={true}
               loading={isRegionsFetching}
-              onRowClick={(region) => window.location.href = `/admin-dashboard/regions/${region.id}`}
+              onRowClick={(region) => window.location.href = `/admin-dashboard/regions/${region.code}`}
               emptyMessage="No regions configured. Add regions to manage your infrastructure."
             />
           </ModernCard>

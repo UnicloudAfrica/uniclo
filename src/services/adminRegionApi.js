@@ -292,9 +292,9 @@ class AdminRegionApiService {
    * Verify MSP admin credentials for platform-owned regions
    * Admin can only verify credentials for regions they create (platform-owned)
    */
-  async verifyCredentials(regionId, credentials) {
+  async verifyCredentials(regionCode, credentials) {
     try {
-      const response = await fetch(`${config.baseURL}/admin/v1/region-approvals/${regionId}/verify-credentials`, {
+      const response = await fetch(`${config.baseURL}/admin/v1/regions/${regionCode}/verify-credentials`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
         body: JSON.stringify(credentials),
@@ -313,7 +313,66 @@ class AdminRegionApiService {
         throw new Error(data.message || 'Failed to verify credentials');
       }
     } catch (error) {
-      console.error(`Error verifying credentials for region ${regionId}:`, error);
+      console.error(`Error verifying credentials for region ${regionCode}:`, error);
+      ToastUtils.error(error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Region Management APIs (uses region code)
+   */
+
+  /**
+   * Get region by code
+   */
+  async fetchRegionByCode(code) {
+    try {
+      const response = await fetch(`${config.baseURL}/admin/v1/regions/${code}`, {
+        method: 'GET',
+        headers: this.getAuthHeaders(),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        return {
+          success: true,
+          data: data.data
+        };
+      } else {
+        throw new Error(data.message || 'Failed to fetch region');
+      }
+    } catch (error) {
+      console.error(`Error fetching region ${code}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update region by code
+   */
+  async updateRegion(code, regionData) {
+    try {
+      const response = await fetch(`${config.baseURL}/admin/v1/regions/${code}`, {
+        method: 'PUT',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(regionData),
+      });
+
+      const data = await response.json();
+
+      if (data.success || response.ok) {
+        ToastUtils.success(data.message || 'Region updated successfully');
+        return {
+          success: true,
+          data: data.data
+        };
+      } else {
+        throw new Error(data.message || 'Failed to update region');
+      }
+    } catch (error) {
+      console.error(`Error updating region ${code}:`, error);
       ToastUtils.error(error.message);
       throw error;
     }

@@ -6,7 +6,7 @@ import AdminSidebar from '../components/adminSidebar';
 import AdminHeadbar from '../components/adminHeadbar';
 
 const RegionDetail = () => {
-  const { id } = useParams();
+  const { id: code } = useParams();
   const navigate = useNavigate();
   const [region, setRegion] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -23,12 +23,12 @@ const RegionDetail = () => {
 
   useEffect(() => {
     fetchRegionDetail();
-  }, [id]);
+  }, [code]);
 
   const fetchRegionDetail = async () => {
     try {
       setLoading(true);
-      const response = await adminRegionApi.fetchRegionById(id);
+      const response = await adminRegionApi.fetchRegionByCode(code);
       setRegion(response.data);
     } catch (error) {
       console.error('Error fetching region:', error);
@@ -48,7 +48,7 @@ const RegionDetail = () => {
 
     try {
       setVerifying(true);
-      await adminRegionApi.verifyCredentials(id, credentials);
+      await adminRegionApi.verifyCredentials(code, credentials);
       setShowCredentialModal(false);
       setCredentials({ username: '', password: '', domain: '', domain_id: '', default_project: '' });
       fetchRegionDetail(); // Refresh to show verification status
@@ -122,7 +122,7 @@ const RegionDetail = () => {
                 </div>
                 <div className="flex gap-3">
                   <Link
-                    to={`/admin-dashboard/regions/${id}/edit`}
+                    to={`/admin-dashboard/regions/${region.code}/edit`}
                     className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
                   >
                     Edit Region

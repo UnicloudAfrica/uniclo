@@ -6,7 +6,7 @@ import AdminSidebar from '../components/adminSidebar';
 import AdminHeadbar from '../components/adminHeadbar';
 
 const RegionEdit = () => {
-  const { id } = useParams();
+  const { id: code } = useParams();
   const navigate = useNavigate();
   const [region, setRegion] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -25,12 +25,12 @@ const RegionEdit = () => {
 
   useEffect(() => {
     fetchRegionDetail();
-  }, [id]);
+  }, [code]);
 
   const fetchRegionDetail = async () => {
     try {
       setLoading(true);
-      const response = await adminRegionApi.fetchRegionById(id);
+      const response = await adminRegionApi.fetchRegionByCode(code);
       const regionData = response.data;
       setRegion(regionData);
       setFormData({
@@ -80,9 +80,9 @@ const RegionEdit = () => {
 
     try {
       setSubmitting(true);
-      await adminRegionApi.updateRegion(id, formData);
+      await adminRegionApi.updateRegion(code, formData);
       ToastUtils.success('Region updated successfully');
-      navigate(`/admin-dashboard/regions/${id}`);
+      navigate(`/admin-dashboard/regions/${region.code}`);
     } catch (error) {
       console.error('Error updating region:', error);
       ToastUtils.error('Failed to update region');
@@ -138,7 +138,7 @@ const RegionEdit = () => {
             {/* Header */}
             <div className="mb-6">
               <Link
-                to={`/admin-dashboard/regions/${id}`}
+                to={`/admin-dashboard/regions/${region.code}`}
                 className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2 mb-4"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -277,7 +277,7 @@ const RegionEdit = () => {
               <div className="flex gap-4 mt-8">
                 <button
                   type="button"
-                  onClick={() => navigate(`/admin-dashboard/regions/${id}`)}
+                  onClick={() => navigate(`/admin-dashboard/regions/${region.code}`)}
                   className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
                   disabled={submitting}
                 >

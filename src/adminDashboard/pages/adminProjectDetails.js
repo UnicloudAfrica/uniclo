@@ -48,6 +48,7 @@ export default function AdminProjectDetails() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("setup");
   const [isAssignEdgeOpen, setIsAssignEdgeOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState(null); // Track which action is loading
   const contentRef = useRef(null);
 
   const queryParams = new URLSearchParams(location.search);
@@ -107,19 +108,22 @@ export default function AdminProjectDetails() {
   };
 
   // Handle action button clicks for provisioning checklist
-  const handleSummaryAction = async (action) => {
-    if (!action || !action.endpoint) return;
+  const handleSummaryAction = async (action, actionKey) => {
+    if (!action || !action.endpoint || actionLoading) return;
     
     const method = (action.method || 'POST').toUpperCase();
     const endpoint = action.endpoint;
     
     try {
+      setActionLoading(actionKey);
       await api(method, endpoint);
       ToastUtils.success('Action completed successfully');
-      refetchProjectStatus();
+      await refetchProjectStatus();
     } catch (error) {
       console.error('Action failed:', error);
       ToastUtils.error(error?.message || 'Action failed');
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -276,6 +280,8 @@ export default function AdminProjectDetails() {
               <div className="space-y-2">
                 {summary.map((item, index) => {
                   const isComplete = item?.completed ?? item?.complete ?? false;
+                  const actionKey = `action-${index}`;
+                  const isThisActionLoading = actionLoading === actionKey;
                   return (
                     <div
                       key={index}
@@ -302,10 +308,12 @@ export default function AdminProjectDetails() {
                       </div>
                       {item.action && (
                         <button
-                          className="px-3 py-1 rounded text-xs font-medium text-white"
+                          className="px-3 py-1 rounded text-xs font-medium text-white transition-opacity flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                           style={{ backgroundColor: designTokens.colors.primary[600] }}
-                          onClick={() => handleSummaryAction(item.action)}
+                          onClick={() => handleSummaryAction(item.action, actionKey)}
+                          disabled={actionLoading !== null}
                         >
+                          {isThisActionLoading && <Loader2 size={12} className="animate-spin" />}
                           {item.action.label}
                         </button>
                       )}

@@ -254,7 +254,6 @@ const RegionDetail = () => {
           )}
         </div>
       </main>
-    </>
 
       {/* Credential Verification Modal */}
       {showCredentialModal && (
@@ -366,7 +365,7 @@ const RegionDetail = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

@@ -264,7 +264,7 @@ class AdminRegionApiService {
    */
   async createPlatformRegion(regionData) {
     try {
-      const response = await fetch(`${config.baseURL}/admin/v1/regions`, {
+      const response = await fetch(`${config.adminURL}/regions`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
         body: JSON.stringify(regionData),
@@ -294,7 +294,7 @@ class AdminRegionApiService {
    */
   async verifyCredentials(regionCode, credentials) {
     try {
-      const response = await fetch(`${config.baseURL}/admin/v1/regions/${regionCode}/verify-credentials`, {
+      const response = await fetch(`${config.adminURL}/regions/${regionCode}/verify-credentials`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
         body: JSON.stringify(credentials),
@@ -328,7 +328,7 @@ class AdminRegionApiService {
    */
   async fetchRegionByCode(code) {
     try {
-      const response = await fetch(`${config.baseURL}/admin/v1/regions/${code}`, {
+      const response = await fetch(`${config.adminURL}/regions/${code}`, {
         method: 'GET',
         headers: this.getAuthHeaders(),
       });
@@ -354,7 +354,7 @@ class AdminRegionApiService {
    */
   async updateRegion(code, regionData) {
     try {
-      const response = await fetch(`${config.baseURL}/admin/v1/regions/${code}`, {
+      const response = await fetch(`${config.adminURL}/regions/${code}`, {
         method: 'PUT',
         headers: this.getAuthHeaders(),
         body: JSON.stringify(regionData),

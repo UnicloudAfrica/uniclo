@@ -4,6 +4,8 @@ import adminRegionApi from '../../services/adminRegionApi';
 import ToastUtils from '../../utils/toastUtil';
 import AdminSidebar from '../components/adminSidebar';
 import AdminHeadbar from '../components/adminHeadbar';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import { designTokens } from '../../styles/designTokens';
 
 const RegionEdit = () => {
   const { id: code } = useParams();
@@ -93,65 +95,72 @@ const RegionEdit = () => {
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-gray-50">
+      <>
+        <AdminHeadbar toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
         <AdminSidebar isMobileMenuOpen={isMobileMenuOpen} closeMobileMenu={() => setIsMobileMenuOpen(false)} />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <AdminHeadbar toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
-          <div className="flex items-center justify-center flex-1">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div 
+          className="min-h-screen pt-[126px] px-4 md:px-6 lg:px-8 md:ml-20 lg:ml-[20%]"
+          style={{ backgroundColor: designTokens.colors.neutral[50] }}
+        >
+          <div className="flex items-center justify-center py-20">
+            <Loader2 size={48} className="animate-spin" style={{ color: designTokens.colors.primary[600] }} />
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (!region) {
     return (
-      <div className="flex h-screen bg-gray-50">
+      <>
+        <AdminHeadbar toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
         <AdminSidebar isMobileMenuOpen={isMobileMenuOpen} closeMobileMenu={() => setIsMobileMenuOpen(false)} />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <AdminHeadbar toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
-          <main className="flex-1 overflow-y-auto p-6">
-            <div className="max-w-3xl mx-auto">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Region not found</h3>
-                <Link to="/admin-dashboard/regions" className="text-blue-600 hover:text-blue-700">
-                  Back to regions
-                </Link>
-              </div>
+        <div 
+          className="min-h-screen pt-[126px] px-4 md:px-6 lg:px-8 md:ml-20 lg:ml-[20%]"
+          style={{ backgroundColor: designTokens.colors.neutral[50] }}
+        >
+          <div className="max-w-4xl mx-auto py-8">
+            <div className="bg-white rounded-2xl shadow-sm p-12 text-center" style={{ borderColor: designTokens.colors.neutral[200], borderWidth: '1px' }}>
+              <h3 className="text-lg font-semibold mb-2" style={{ color: designTokens.colors.neutral[900] }}>Region not found</h3>
+              <Link to="/admin-dashboard/regions" style={{ color: designTokens.colors.primary[600] }} className="hover:underline font-medium">
+                Back to regions
+              </Link>
             </div>
-          </main>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <>
+      <AdminHeadbar toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
       <AdminSidebar isMobileMenuOpen={isMobileMenuOpen} closeMobileMenu={() => setIsMobileMenuOpen(false)} />
       
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <AdminHeadbar toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
-        
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-3xl mx-auto">
-            {/* Header */}
-            <div className="mb-6">
-              <Link
-                to={`/admin-dashboard/regions/${region.code}`}
-                className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2 mb-4"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Back to Region Detail
-              </Link>
-              <h1 className="text-3xl font-bold text-gray-900">Edit Region</h1>
-              <p className="text-gray-600 mt-1">Update region: {region.name} ({region.code})</p>
-            </div>
+      <main 
+        className="min-h-screen pt-[126px] px-4 md:px-6 lg:px-8 pb-8 md:ml-20 lg:ml-[20%]"
+        style={{ backgroundColor: designTokens.colors.neutral[50] }}
+      >
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="mb-6 md:mb-8">
+            <Link
+              to={`/admin-dashboard/regions/${region.code}`}
+              className="inline-flex font-medium items-center gap-2 mb-4 md:mb-6 transition-all hover:gap-3"
+              style={{ color: designTokens.colors.primary[600] }}
+            >
+              <ArrowLeft size={20} />
+              <span className="hidden sm:inline">Back to Region Detail</span>
+              <span className="sm:hidden">Back</span>
+            </Link>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2" style={{ color: designTokens.colors.neutral[900] }}>Edit Region</h1>
+            <p className="text-sm sm:text-base" style={{ color: designTokens.colors.neutral[600] }}>
+              Update region: <span className="font-semibold">{region.name}</span> <span className="font-mono">({region.code})</span>
+            </p>
+          </div>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-6 lg:p-8" style={{ borderColor: designTokens.colors.neutral[200], borderWidth: '1px' }}>
               <div className="space-y-6">
                 {/* Region Name */}
                 <div>
@@ -187,7 +196,7 @@ const RegionEdit = () => {
                 </div>
 
                 {/* Country and City */}
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Country Code <span className="text-red-500">*</span>
@@ -239,7 +248,7 @@ const RegionEdit = () => {
                 </div>
 
                 {/* Status and Active */}
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Status
@@ -274,11 +283,14 @@ const RegionEdit = () => {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-4 mt-8">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8">
                 <button
                   type="button"
                   onClick={() => navigate(`/admin-dashboard/regions/${region.code}`)}
-                  className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 border rounded-lg font-medium transition-colors"
+                  style={{ borderColor: designTokens.colors.neutral[300], color: designTokens.colors.neutral[700] }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = designTokens.colors.neutral[50]}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   disabled={submitting}
                 >
                   Cancel
@@ -286,16 +298,19 @@ const RegionEdit = () => {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  style={{ backgroundColor: designTokens.colors.primary[600] }}
+                  onMouseEnter={(e) => !submitting && (e.currentTarget.style.backgroundColor = designTokens.colors.primary[700])}
+                  onMouseLeave={(e) => !submitting && (e.currentTarget.style.backgroundColor = designTokens.colors.primary[600])}
                 >
+                  {submitting && <Loader2 size={16} className="animate-spin" />}
                   {submitting ? 'Updating...' : 'Update Region'}
                 </button>
               </div>
             </form>
-          </div>
-        </main>
-      </div>
-    </div>
+        </div>
+      </main>
+    </>
   );
 };
 

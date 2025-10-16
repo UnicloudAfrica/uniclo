@@ -48,7 +48,8 @@ export default function AdminProjectDetails() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("setup");
   const [isAssignEdgeOpen, setIsAssignEdgeOpen] = useState(false);
-  const [actionLoading, setActionLoading] = useState(null); // Track which action is loading
+  const [actionLoading, setActionLoading] = useState(null); // Track which checklist action is loading
+  const [userActionLoading, setUserActionLoading] = useState(null); // Track per-user provisioning actions
   const contentRef = useRef(null);
 
   const queryParams = new URLSearchParams(location.search);
@@ -126,6 +127,62 @@ export default function AdminProjectDetails() {
       setActionLoading(null);
     }
   };
+
+  const projectUsers = project?.users?.local ?? [];
+  const userActionOrder = [
+    "link_provider_user",
+    "reset_provider_password",
+    "authenticate",
+    "sync",
+    "assign_aws_policy",
+    "assign_symp_policy",
+    "assign_tenant_admin",
+  ];
+
+  const handleUserAction = async (user, actionKey) => {
+    const action = user?.actions?.[actionKey];
+    if (!action || !action.endpoint) return;
+
+    const method = (action.method || "POST").toUpperCase();
+    const endpoint = action.endpoint;
+    const payload = action.payload_defaults || null;
+    const hasPayload =
+      payload && typeof payload === "object" && Object.keys(payload).length > 0;
+    const body = hasPayload ? payload : null;
+    const loadingKey = `${user.id}-${actionKey}`;
+
+    try {
+      setUserActionLoading(loadingKey);
+      await api(method, endpoint, body);
+      ToastUtils.success(`${action.label} completed`);
+      await refetchProjectStatus();
+    } catch (error) {
+      console.error("User action failed:", error);
+      ToastUtils.error(error?.message || "Action failed");
+    } finally {
+      setUserActionLoading(null);
+    }
+  };
+
+  const renderStatusChip = (label, isActive) => (
+    <span
+      key={label}
+      className="px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1"
+      style={{
+        backgroundColor: isActive
+          ? designTokens.colors.success[50]
+          : designTokens.colors.error[50],
+        color: isActive
+          ? designTokens.colors.success[600]
+          : designTokens.colors.error[600],
+      }}
+    >
+      {isActive ? "✔" : "✖"} {label}
+    </span>
+  );
+
+  const providerLabel =
+    project?.region_name || project?.region || "Provider";
 
   // Define infrastructure sections with icons
   const infrastructureSections = [
@@ -322,6 +379,102 @@ export default function AdminProjectDetails() {
                 })}
               </div>
             </div>
+            {projectUsers.length > 0 && (
+              <div className="mt-6 space-y-3">
+                <h4
+                  className="font-semibold"
+                  style={{ color: designTokens.colors.neutral[800] }}
+                >
+                  User Provisioning
+                </h4>
+                <div className="space-y-3">
+                  {projectUsers.map((user) => {
+                    const statusEntries = [
+                      {
+                        label: `${providerLabel} Account`,
+                        value: user?.status?.provider_account,
+                      },
+                      {
+                        label: "Storage Policy",
+                        value: user?.status?.aws_policy,
+                      },
+                      {
+                        label: "Network Policy",
+                        value: user?.status?.symp_policy,
+                      },
+                      {
+                        label: "Tenant Admin",
+                        value: user?.status?.tenant_admin,
+                      },
+                    ];
+
+                    const visibleActions = userActionOrder.filter(
+                      (key) => user?.actions?.[key]?.show
+                    );
+
+                    return (
+                      <div
+                        key={user.id}
+                        className="p-4 rounded-lg border"
+                        style={{
+                          borderColor: designTokens.colors.neutral[200],
+                          backgroundColor: designTokens.colors.neutral[50],
+                        }}
+                      >
+                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                          <div>
+                            <div
+                              className="text-sm font-semibold"
+                              style={{ color: designTokens.colors.neutral[900] }}
+                            >
+                              {user.name}
+                            </div>
+                            <div
+                              className="text-xs"
+                              style={{ color: designTokens.colors.neutral[600] }}
+                            >
+                              {user.email}
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {statusEntries.map(({ label, value }) =>
+                              renderStatusChip(label, Boolean(value))
+                            )}
+                          </div>
+                        </div>
+                        {visibleActions.length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {visibleActions.map((actionKey) => {
+                              const action = user.actions[actionKey];
+                              const loadingKey = `${user.id}-${actionKey}`;
+                              const isLoading =
+                                userActionLoading === loadingKey;
+                              return (
+                                <button
+                                  key={actionKey}
+                                  className="px-3 py-1.5 rounded text-xs font-medium text-white flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  style={{
+                                    backgroundColor:
+                                      designTokens.colors.primary[600],
+                                  }}
+                                  onClick={() => handleUserAction(user, actionKey)}
+                                  disabled={userActionLoading !== null}
+                                >
+                                  {isLoading && (
+                                    <Loader2 size={12} className="animate-spin" />
+                                  )}
+                                  {action.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         );
       case "vpcs":

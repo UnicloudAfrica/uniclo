@@ -53,6 +53,21 @@ const disassociateElasticIp = async (disassociationData) => {
   return res.data;
 };
 
+const syncElasticIps = async ({ project_id, region }) => {
+  const params = new URLSearchParams();
+  if (project_id) params.append("project_id", project_id);
+  if (region) params.append("region", region);
+  params.append("refresh", "1");
+
+  const queryString = params.toString();
+  const res = await silentApi(
+    "GET",
+    `/business/elastic-ips${queryString ? `?${queryString}` : ""}`
+  );
+  if (!res.data) throw new Error("Failed to sync elastic IPs");
+  return res.data;
+};
+
 export const useFetchTenantElasticIps = (projectId, region, options = {}) => {
   return useQuery({
     queryKey: ["elasticIps", { projectId, region }],
@@ -111,6 +126,19 @@ export const useDisassociateTenantElasticIp = () => {
     },
     onError: (error) => {
       console.error("Error disassociating elastic IP:", error);
+    },
+  });
+};
+
+export const useSyncTenantElasticIps = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: syncElasticIps,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["elasticIps"] });
+    },
+    onError: (error) => {
+      console.error("Error syncing elastic IPs:", error);
     },
   });
 };

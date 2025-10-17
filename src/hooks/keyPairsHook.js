@@ -43,6 +43,21 @@ const deleteKeyPair = async (id) => {
   return res;
 };
 
+const syncKeyPairs = async ({ project_id, region }) => {
+  const params = new URLSearchParams();
+  if (project_id) params.append("project_id", project_id);
+  if (region) params.append("region", region);
+  params.append("refresh", "1");
+
+  const queryString = params.toString();
+  const res = await silentApi(
+    "GET",
+    `/business/key-pairs${queryString ? `?${queryString}` : ""}`
+  );
+  if (!res?.data) throw new Error("Failed to sync key pairs");
+  return res.data;
+};
+
 export const useFetchTenantKeyPairs = (projectId, region, options = {}) => {
   return useQuery({
     queryKey: ["keyPairs", { projectId, region }],
@@ -100,6 +115,19 @@ export const useDeleteTenantKeyPair = () => {
     },
     onError: (error) => {
       console.error("Error deleting key pair:", error);
+    },
+  });
+};
+
+export const useSyncTenantKeyPairs = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: syncKeyPairs,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["keyPairs"] });
+    },
+    onError: (error) => {
+      console.error("Error syncing key pairs:", error);
     },
   });
 };

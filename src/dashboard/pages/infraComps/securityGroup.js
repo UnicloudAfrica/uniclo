@@ -3,16 +3,20 @@ import { Eye, Trash2 } from "lucide-react";
 import {
   useDeleteTenantSecurityGroup,
   useFetchTenantSecurityGroups,
+  useSyncTenantSecurityGroups,
 } from "../../../hooks/securityGroupHooks";
 import AddSG from "../sgComps/addSG";
 import ViewSGModal from "../sgComps/viewSG";
 import DeleteSGModal from "../sgComps/deleteSG";
+import ToastUtils from "../../../utils/toastUtil";
 
-const SecurityGroup = ({ projectId = "" }) => {
+const SecurityGroup = ({ projectId = "", region = "" }) => {
   const { data: securityGroups, isFetching } =
-    useFetchTenantSecurityGroups(projectId);
+    useFetchTenantSecurityGroups(projectId, region);
   const { mutate: deleteSecurityGroup, isPending: isDeleting } =
     useDeleteTenantSecurityGroup();
+  const { mutate: syncSecurityGroups, isPending: isSyncing } =
+    useSyncTenantSecurityGroups();
   const [isCreateModalOpen, setCreateModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(null); // { id, name }
   const [viewModal, setViewModal] = useState(null); // securityGroup object
@@ -50,6 +54,26 @@ const SecurityGroup = ({ projectId = "" }) => {
     });
   };
 
+  const handleSync = () => {
+    if (!projectId) {
+      ToastUtils.error("Project context is required to sync security groups.");
+      return;
+    }
+
+    syncSecurityGroups(
+      { project_id: projectId, region },
+      {
+        onSuccess: () => {
+          ToastUtils.success("Security groups synced with provider.");
+        },
+        onError: (err) => {
+          console.error("Failed to sync security groups:", err);
+          ToastUtils.error(err?.message || "Failed to sync security groups.");
+        },
+      }
+    );
+  };
+
   if (isFetching) {
     return (
       <div className="flex items-center justify-center p-6 bg-gray-50 rounded-lg">
@@ -61,7 +85,14 @@ const SecurityGroup = ({ projectId = "" }) => {
   return (
     <>
       <div className="bg-gray-50 rounded-[10px] font-Outfit">
-        <div className="flex justify-end items-center mb-6">
+        <div className="flex justify-end items-center gap-3 mb-6">
+          <button
+            onClick={handleSync}
+            disabled={isSyncing || !projectId}
+            className="rounded-[30px] py-3 px-6 border border-[#288DD1] text-[#288DD1] bg-white font-normal text-base hover:bg-[#288DD1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSyncing ? "Syncing..." : "Sync Security Groups"}
+          </button>
           <button
             onClick={openCreateModal}
             className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"

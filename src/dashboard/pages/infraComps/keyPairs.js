@@ -3,14 +3,21 @@ import { Trash2, X, Loader2 } from "lucide-react";
 import {
   useDeleteTenantKeyPair,
   useFetchTenantKeyPairs,
+  useSyncTenantKeyPairs,
 } from "../../../hooks/keyPairsHook";
 import AddKeyTenantPair from "../keyPairComps/addKeyPair";
 import DeleteKeyPairModal from "../keyPairComps/deleteKeyPair";
+import ToastUtils from "../../../utils/toastUtil";
 
-const KeyPairs = ({ projectId = "" }) => {
-  const { data: keyPairs, isFetching } = useFetchTenantKeyPairs(projectId);
+const KeyPairs = ({ projectId = "", region = "" }) => {
+  const { data: keyPairs, isFetching } = useFetchTenantKeyPairs(
+    projectId,
+    region
+  );
   const { mutate: deleteKeyPair, isPending: isDeleting } =
     useDeleteTenantKeyPair();
+  const { mutate: syncKeyPairs, isPending: isSyncing } =
+    useSyncTenantKeyPairs();
   const [isCreateModalOpen, setCreateModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(null); // { keyPairId, keyPairName } or null
   const [currentPage, setCurrentPage] = useState(1);
@@ -58,6 +65,26 @@ const KeyPairs = ({ projectId = "" }) => {
     });
   };
 
+  const handleSync = () => {
+    if (!projectId) {
+      ToastUtils.error("Project context is required to sync key pairs.");
+      return;
+    }
+
+    syncKeyPairs(
+      { project_id: projectId, region },
+      {
+        onSuccess: () => {
+          ToastUtils.success("Key pairs synced with provider.");
+        },
+        onError: (err) => {
+          console.error("Failed to sync key pairs:", err);
+          ToastUtils.error(err?.message || "Failed to sync key pairs.");
+        },
+      }
+    );
+  };
+
   if (isFetching) {
     return (
       <div className="flex items-center justify-center mt-6 bg-gray-50 rounded-[10px] font-Outfit">
@@ -68,8 +95,15 @@ const KeyPairs = ({ projectId = "" }) => {
 
   return (
     <div className="bg-gray-50 rounded-[10px] pfont-Outfit">
-      <div className="flex justify-end items-center mb-6">
+      <div className="flex justify-end items-center gap-3 mb-6">
         {/* <h2 className="text-lg font-semibold text-[#575758]">Key Pairs</h2> */}
+        <button
+          onClick={handleSync}
+          disabled={isSyncing || !projectId}
+          className="rounded-[30px] py-3 px-6 border border-[#288DD1] text-[#288DD1] bg-white font-normal text-base hover:bg-[#288DD1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSyncing ? "Syncing..." : "Sync Key Pairs"}
+        </button>
         <button
           onClick={openCreateModal}
           className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"

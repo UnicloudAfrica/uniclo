@@ -2,12 +2,14 @@ import { useState } from "react";
 import {
   useDeleteTenantElasticIp,
   useFetchTenantElasticIps,
+  useSyncTenantElasticIps,
 } from "../../../hooks/elasticIPHooks";
 // import AddEip from "../eipComps/addEip";
 import { Trash2 } from "lucide-react";
 import AddEip from "../EIPComps/addEIp";
 import DeleteEipModal from "../EIPComps/deleteEip";
 // import DeleteEipModal from "../eipComps/deleteEip";
+import ToastUtils from "../../../utils/toastUtil";
 
 const EIPs = ({ projectId = "", region = "" }) => {
   const { data: eips, isFetching } = useFetchTenantElasticIps(
@@ -16,6 +18,8 @@ const EIPs = ({ projectId = "", region = "" }) => {
   );
   const { mutate: deleteElasticIp, isPending: isDeleting } =
     useDeleteTenantElasticIp();
+  const { mutate: syncElasticIps, isPending: isSyncing } =
+    useSyncTenantElasticIps();
   const [isCreateModalOpen, setCreateModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(null); // { id, name }
   const openCreateModal = () => setCreateModal(true);
@@ -64,6 +68,26 @@ const EIPs = ({ projectId = "", region = "" }) => {
     if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
   };
 
+  const handleSync = () => {
+    if (!projectId) {
+      ToastUtils.error("Project context is required to sync Elastic IPs.");
+      return;
+    }
+
+    syncElasticIps(
+      { project_id: projectId, region },
+      {
+        onSuccess: () => {
+          ToastUtils.success("Elastic IPs synced with provider.");
+        },
+        onError: (err) => {
+          console.error("Failed to sync Elastic IPs:", err);
+          ToastUtils.error(err?.message || "Failed to sync Elastic IPs.");
+        },
+      }
+    );
+  };
+
   if (isFetching) {
     return (
       <div className="flex items-center justify-center p-6 bg-gray-50 rounded-lg">
@@ -75,7 +99,14 @@ const EIPs = ({ projectId = "", region = "" }) => {
   return (
     <>
       <div className="bg-gray-50 rounded-[10px] font-Outfit">
-        <div className="flex justify-end items-center mb-6">
+        <div className="flex justify-end items-center gap-3 mb-6">
+          <button
+            onClick={handleSync}
+            disabled={isSyncing || !projectId}
+            className="rounded-[30px] py-3 px-6 border border-[#288DD1] text-[#288DD1] bg-white font-normal text-base hover:bg-[#288DD1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSyncing ? "Syncing..." : "Sync Elastic IPs"}
+          </button>
           <button
             onClick={openCreateModal}
             className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"

@@ -43,6 +43,21 @@ const deleteSubnet = async (id) => {
   return res.data;
 };
 
+const syncSubnets = async ({ project_id, region }) => {
+  const params = new URLSearchParams();
+  if (project_id) params.append("project_id", project_id);
+  if (region) params.append("region", region);
+  params.append("refresh", "1");
+
+  const queryString = params.toString();
+  const res = await silentApi(
+    "GET",
+    `/business/subnets${queryString ? `?${queryString}` : ""}`
+  );
+  if (!res.data) throw new Error("Failed to sync subnets");
+  return res.data;
+};
+
 export const useFetchTenantSubnets = (projectId, region, options = {}) => {
   return useQuery({
     queryKey: ["subnets", { projectId, region }],
@@ -100,6 +115,19 @@ export const useDeleteTenantSubnet = () => {
     },
     onError: (error) => {
       console.error("Error deleting subnet:", error);
+    },
+  });
+};
+
+export const useSyncTenantSubnets = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: syncSubnets,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["subnets"] });
+    },
+    onError: (error) => {
+      console.error("Error syncing subnets:", error);
     },
   });
 };

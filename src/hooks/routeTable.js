@@ -40,6 +40,21 @@ const associateRouteTable = async (associationData) => {
   return res.data;
 };
 
+const syncRouteTables = async ({ project_id, region }) => {
+  const params = new URLSearchParams();
+  if (project_id) params.append("project_id", project_id);
+  if (region) params.append("region", region);
+  params.append("refresh", "1");
+
+  const queryString = params.toString();
+  const res = await silentApi(
+    "GET",
+    `/business/route-tables${queryString ? `?${queryString}` : ""}`
+  );
+  if (!res.data) throw new Error("Failed to sync route tables");
+  return res.data;
+};
+
 export const useFetchTenantRouteTables = (projectId, region, options = {}) => {
   return useQuery({
     queryKey: ["routeTables", { projectId, region }],
@@ -85,6 +100,19 @@ export const useAssociateTenantRouteTable = () => {
     },
     onError: (error) => {
       console.error("Error associating route table:", error);
+    },
+  });
+};
+
+export const useSyncTenantRouteTables = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: syncRouteTables,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["routeTables"] });
+    },
+    onError: (error) => {
+      console.error("Error syncing route tables:", error);
     },
   });
 };

@@ -71,6 +71,21 @@ const detachInternetGateway = async (detachData) => {
   return res.data;
 };
 
+const syncInternetGateways = async ({ project_id, region }) => {
+  const params = new URLSearchParams();
+  if (project_id) params.append("project_id", project_id);
+  if (region) params.append("region", region);
+  params.append("refresh", "1");
+
+  const queryString = params.toString();
+  const res = await silentApi(
+    "GET",
+    `/business/internet-gateways${queryString ? `?${queryString}` : ""}`
+  );
+  if (!res.data) throw new Error("Failed to sync internet gateways");
+  return res.data;
+};
+
 export const useFetchTenantInternetGateways = (
   projectId,
   region,
@@ -133,6 +148,19 @@ export const useDetachTenantInternetGateway = () => {
     },
     onError: (error) => {
       console.error("Error detaching internet gateway:", error);
+    },
+  });
+};
+
+export const useSyncTenantInternetGateways = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: syncInternetGateways,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["internetGateways"] });
+    },
+    onError: (error) => {
+      console.error("Error syncing internet gateways:", error);
     },
   });
 };

@@ -49,6 +49,21 @@ const deleteSecurityGroup = async (id) => {
   return res.data;
 };
 
+const syncSecurityGroups = async ({ project_id, region }) => {
+  const params = new URLSearchParams();
+  if (project_id) params.append("project_id", project_id);
+  if (region) params.append("region", region);
+  params.append("refresh", "1");
+
+  const queryString = params.toString();
+  const res = await silentApi(
+    "GET",
+    `/business/security-groups${queryString ? `?${queryString}` : ""}`
+  );
+  if (!res.data) throw new Error("Failed to sync security groups");
+  return res.data;
+};
+
 export const useFetchTenantSecurityGroups = (
   projectId,
   region,
@@ -112,6 +127,19 @@ export const useDeleteTenantSecurityGroup = () => {
     },
     onError: (error) => {
       console.error("Error deleting security group:", error);
+    },
+  });
+};
+
+export const useSyncTenantSecurityGroups = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: syncSecurityGroups,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["securityGroups"] });
+    },
+    onError: (error) => {
+      console.error("Error syncing security groups:", error);
     },
   });
 };

@@ -6,6 +6,7 @@ import ViewVpcModal from "../VpcComps/viewVpc";
 import {
   useFetchTenantVpcs,
   useDeleteTenantVpc,
+  useSyncTenantVpcs,
 } from "../../../hooks/vpcHooks";
 import AddTenantVpc from "../VpcComps/addVpc";
 
@@ -28,9 +29,10 @@ const Badge = ({ text }) => {
   );
 };
 
-const VPCs = ({ projectId = "" }) => {
-  const { data: vpcs, isFetching } = useFetchTenantVpcs(projectId);
+const VPCs = ({ projectId = "", region = "" }) => {
+  const { data: vpcs, isFetching } = useFetchTenantVpcs(projectId, region);
   const { mutate: deleteVpc, isPending: isDeleting } = useDeleteTenantVpc();
+  const { mutate: syncVpcs, isPending: isSyncing } = useSyncTenantVpcs();
   const [isCreateModalOpen, setCreateModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(null); // { vpcId, vpcName } or null
   const [viewModal, setViewModal] = useState(null); // vpc object or null
@@ -62,6 +64,26 @@ const VPCs = ({ projectId = "" }) => {
     if (currentPage < totalPages) {
       setCurrentPage((prev) => prev + 1);
     }
+  };
+
+  const handleSync = () => {
+    if (!projectId) {
+      ToastUtils.error("Project context is required to sync VPCs.");
+      return;
+    }
+
+    syncVpcs(
+      { project_id: projectId, region },
+      {
+        onSuccess: () => {
+          ToastUtils.success("VPCs synced with provider.");
+        },
+        onError: (err) => {
+          console.error("Failed to sync VPCs:", err);
+          ToastUtils.error(err?.message || "Failed to sync VPCs.");
+        },
+      }
+    );
   };
 
   const handleDelete = () => {
@@ -100,7 +122,14 @@ const VPCs = ({ projectId = "" }) => {
 
   return (
     <div className="bg-gray-50 rounded-[10px]  font-Outfit">
-      <div className="flex justify-end items-center mb-6">
+      <div className="flex justify-end items-center gap-3 mb-6">
+        <button
+          onClick={handleSync}
+          disabled={isSyncing || !projectId}
+          className="rounded-[30px] py-3 px-6 border border-[#288DD1] text-[#288DD1] bg-white font-normal text-base hover:bg-[#288DD1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSyncing ? "Syncing..." : "Sync VPCs"}
+        </button>
         <button
           onClick={openCreateModal}
           className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"

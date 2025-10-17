@@ -53,6 +53,21 @@ const detachSecurityGroup = async (params) => {
   return res.data;
 };
 
+const syncNetworkInterfaces = async ({ project_id, region }) => {
+  const params = new URLSearchParams();
+  if (project_id) params.append("project_id", project_id);
+  if (region) params.append("region", region);
+  params.append("refresh", "1");
+
+  const queryString = params.toString();
+  const res = await silentApi(
+    "GET",
+    `/business/network-interfaces${queryString ? `?${queryString}` : ""}`
+  );
+  if (!res.data) throw new Error("Failed to sync network interfaces");
+  return res.data;
+};
+
 export const useFetchTenantNetworkInterfaces = (
   projectId,
   region,
@@ -89,6 +104,19 @@ export const useDetachTenantSecurityGroup = () => {
     },
     onError: (error) => {
       console.error("Error detaching security group:", error);
+    },
+  });
+};
+
+export const useSyncTenantNetworkInterfaces = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: syncNetworkInterfaces,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["networkInterfaces"] });
+    },
+    onError: (error) => {
+      console.error("Error syncing network interfaces:", error);
     },
   });
 };

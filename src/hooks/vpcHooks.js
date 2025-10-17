@@ -49,6 +49,21 @@ const deleteVpc = async (id) => {
   return res.data;
 };
 
+const syncVpcs = async ({ project_id, region }) => {
+  const params = new URLSearchParams();
+  if (project_id) params.append("project_id", project_id);
+  if (region) params.append("region", region);
+  params.append("refresh", "1");
+
+  const queryString = params.toString();
+  const res = await silentApi(
+    "GET",
+    `/business/vpcs${queryString ? `?${queryString}` : ""}`
+  );
+  if (!res) throw new Error("Failed to sync VPCs");
+  return res;
+};
+
 export const useFetchTenantVpcs = (projectId, region, options = {}) => {
   return useQuery({
     queryKey: ["vpcs", { projectId, region }],
@@ -106,6 +121,19 @@ export const useDeleteTenantVpc = () => {
     },
     onError: (error) => {
       console.error("Error deleting VPC:", error);
+    },
+  });
+};
+
+export const useSyncTenantVpcs = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: syncVpcs,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vpcs"] });
+    },
+    onError: (error) => {
+      console.error("Error syncing VPCs:", error);
     },
   });
 };

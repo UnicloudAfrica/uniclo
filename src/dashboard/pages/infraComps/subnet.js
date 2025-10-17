@@ -3,10 +3,12 @@ import { Eye, Trash2 } from "lucide-react";
 import {
   useDeleteTenantSubnet,
   useFetchTenantSubnets,
+  useSyncTenantSubnets,
 } from "../../../hooks/subnetHooks";
 import AddSubnet from "../subnetComps/addSubnet";
 // import DeleteSubnetModal from "../subnetComps/deleteSubnet";
 // import ViewSubnetModal from "../subnetComps/viewSubnet";
+import ToastUtils from "../../../utils/toastUtil";
 
 const Badge = ({ text }) => {
   const badgeClasses = {
@@ -27,10 +29,14 @@ const Badge = ({ text }) => {
   );
 };
 
-const Subnets = ({ projectId = "" }) => {
-  const { data: subnets, isFetching } = useFetchTenantSubnets(projectId);
+const Subnets = ({ projectId = "", region = "" }) => {
+  const { data: subnets, isFetching } = useFetchTenantSubnets(
+    projectId,
+    region
+  );
   const { mutate: deleteSubnet, isPending: isDeleting } =
     useDeleteTenantSubnet();
+  const { mutate: syncSubnets, isPending: isSyncing } = useSyncTenantSubnets();
 
   const [isCreateModalOpen, setCreateModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(null);
@@ -79,6 +85,26 @@ const Subnets = ({ projectId = "" }) => {
     );
   };
 
+  const handleSync = () => {
+    if (!projectId) {
+      ToastUtils.error("Project context is required to sync subnets.");
+      return;
+    }
+
+    syncSubnets(
+      { project_id: projectId, region },
+      {
+        onSuccess: () => {
+          ToastUtils.success("Subnets synced with provider.");
+        },
+        onError: (err) => {
+          console.error("Failed to sync subnets:", err);
+          ToastUtils.error(err?.message || "Failed to sync subnets.");
+        },
+      }
+    );
+  };
+
   if (isFetching) {
     return (
       <div className="flex items-center justify-center p-6 bg-gray-50 rounded-[10px] font-Outfit">
@@ -89,7 +115,14 @@ const Subnets = ({ projectId = "" }) => {
 
   return (
     <div className="bg-gray-50 rounded-[10px] font-Outfit">
-      <div className="flex justify-end items-center mb-6">
+      <div className="flex justify-end items-center gap-3 mb-6">
+        <button
+          onClick={handleSync}
+          disabled={isSyncing || !projectId}
+          className="rounded-[30px] py-3 px-6 border border-[#288DD1] text-[#288DD1] bg-white font-normal text-base hover:bg-[#288DD1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSyncing ? "Syncing..." : "Sync Subnets"}
+        </button>
         <button
           onClick={openCreateModal}
           className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"

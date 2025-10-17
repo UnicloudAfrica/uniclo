@@ -3,7 +3,11 @@ import ToastUtils from "../../../utils/toastUtil";
 import {
   useFetchTenantInternetGateways,
   useSyncTenantInternetGateways,
+  useDeleteTenantInternetGateway,
 } from "../../../hooks/internetGatewayHooks";
+import AddIgwModal from "../igwComps/addIGW";
+import AttachIgwModal from "../igwComps/attachIGW";
+import DeleteIgwModal from "../igwComps/deleteIGW";
 
 const IGWs = ({ projectId = "", region = "" }) => {
   const { data: igws, isFetching } = useFetchTenantInternetGateways(
@@ -12,8 +16,13 @@ const IGWs = ({ projectId = "", region = "" }) => {
   );
   const { mutate: syncInternetGateways, isPending: isSyncing } =
     useSyncTenantInternetGateways();
+  const { mutate: deleteIgw, isPending: isDeleting } =
+    useDeleteTenantInternetGateway();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(null); // { igw }
+  const [attachModal, setAttachModal] = useState(null); // { igw, mode }
 
   const items = igws || [];
   const totalItems = items.length;
@@ -49,6 +58,41 @@ const IGWs = ({ projectId = "", region = "" }) => {
     );
   };
 
+  const handleDelete = () => {
+    if (!deleteModal?.igw) return;
+    const igw = deleteModal.igw;
+    const providerId =
+      igw.provider_resource_id || igw.id || igw.uuid || igw.name;
+
+    deleteIgw(
+      {
+        id: igw.id ?? providerId,
+        payload: {
+          project_id: projectId,
+          region,
+          internet_gateway_id: providerId,
+        },
+      },
+      {
+        onSuccess: () => {
+          ToastUtils.success("Internet Gateway deleted.");
+          setDeleteModal(null);
+        },
+        onError: (err) => {
+          console.error("Failed to delete IGW:", err);
+          ToastUtils.error(err?.message || "Failed to delete IGW.");
+          setDeleteModal(null);
+        },
+      }
+    );
+  };
+
+  const openAttachModal = (igw, mode = "attach") => {
+    setAttachModal({ igw, mode });
+  };
+
+  const closeAttachModal = () => setAttachModal(null);
+
   if (isFetching) {
     return (
       <div className="flex items-center justify-center p-6 bg-gray-50 rounded-[10px] font-Outfit">
@@ -66,6 +110,13 @@ const IGWs = ({ projectId = "", region = "" }) => {
           className="rounded-[30px] py-3 px-6 border border-[#288DD1] text-[#288DD1] bg-white font-normal text-base hover:bg-[#288DD1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSyncing ? "Syncing..." : "Sync IGWs"}
+        </button>
+        <button
+          onClick={() => setCreateModalOpen(true)}
+          className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
+          disabled={!projectId}
+        >
+          Add IGW
         </button>
       </div>
 
@@ -88,6 +139,34 @@ const IGWs = ({ projectId = "", region = "" }) => {
                   <p>Region: {igw.region || "N/A"}</p>
                   <p>Status: {igw.status || "unknown"}</p>
                   <p>VPC: {igw.attached_vpc_id || "Not attached"}</p>
+                </div>
+                <div className="mt-4 pt-3 border-t flex flex-wrap gap-2">
+                  <button
+                    onClick={() => openAttachModal(igw, "attach")}
+                    disabled={!projectId || !region}
+                    className="px-3 py-1 rounded-full text-xs border border-[#288DD1] text-[#288DD1] hover:bg-[#E6F2FA] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Attach
+                  </button>
+                  <button
+                    onClick={() => openAttachModal(igw, "detach")}
+                    disabled={
+                      !projectId ||
+                      !region ||
+                      !igw.attached_vpc_id ||
+                      igw.attached_vpc_id === ""
+                    }
+                    className="px-3 py-1 rounded-full text-xs border border-amber-500 text-amber-600 hover:bg-amber-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Detach
+                  </button>
+                  <button
+                    onClick={() => setDeleteModal({ igw })}
+                    disabled={isDeleting}
+                    className="px-3 py-1 rounded-full text-xs border border-red-500 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             ))}
@@ -119,6 +198,27 @@ const IGWs = ({ projectId = "", region = "" }) => {
           No Internet Gateways found for this project.
         </p>
       )}
+      <AddIgwModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        projectId={projectId}
+        region={region}
+      />
+      <DeleteIgwModal
+        isOpen={!!deleteModal}
+        onClose={() => setDeleteModal(null)}
+        igwName={deleteModal?.igw?.name || deleteModal?.igw?.provider_resource_id || ""}
+        onConfirm={handleDelete}
+        isDeleting={isDeleting}
+      />
+      <AttachIgwModal
+        isOpen={!!attachModal}
+        onClose={closeAttachModal}
+        projectId={projectId}
+        region={region}
+        igw={attachModal?.igw}
+        mode={attachModal?.mode}
+      />
     </div>
   );
 };

@@ -8,6 +8,8 @@ import {
 import { Trash2 } from "lucide-react";
 import AddEip from "../EIPComps/addEIp";
 import DeleteEipModal from "../EIPComps/deleteEip";
+import AssociateEipModal from "../EIPComps/associateEip";
+import DisassociateEipModal from "../EIPComps/disassociateEip";
 // import DeleteEipModal from "../eipComps/deleteEip";
 import ToastUtils from "../../../utils/toastUtil";
 
@@ -22,18 +24,25 @@ const EIPs = ({ projectId = "", region = "" }) => {
     useSyncTenantElasticIps();
   const [isCreateModalOpen, setCreateModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(null); // { id, name }
+  const [associateModal, setAssociateModal] = useState(null); // { eip }
+  const [disassociateModal, setDisassociateModal] = useState(null); // { eip }
   const openCreateModal = () => setCreateModal(true);
   const closeCreateModal = () => setCreateModal(false);
-  const openDeleteModal = (id, name) => setDeleteModal({ id, name });
+  const openDeleteModal = (eip) =>
+    setDeleteModal({
+      id: eip.id ?? eip.provider_resource_id,
+      name: eip.address || eip.public_ip,
+      allocationId: eip.provider_resource_id || eip.public_ip,
+    });
   const closeDeleteModal = () => setDeleteModal(null);
 
   const handleDelete = () => {
     if (!deleteModal) return;
-    const { id, name } = deleteModal;
+    const { id, allocationId } = deleteModal;
     const payload = {
       project_id: projectId,
       region: region,
-      elastic_ip_id: id,
+      elastic_ip_id: allocationId,
     };
 
     deleteElasticIp(
@@ -131,7 +140,7 @@ const EIPs = ({ projectId = "", region = "" }) => {
                         {eip.address}
                       </h3>
                       <button
-                        onClick={() => openDeleteModal(eip.id, eip.address)}
+                    onClick={() => openDeleteModal(eip)}
                         disabled={isDeleting}
                         className="text-gray-400 hover:text-red-500 transition-colors"
                         title="Delete Elastic IP"
@@ -147,9 +156,24 @@ const EIPs = ({ projectId = "", region = "" }) => {
                         Status: <span className="capitalize">{eip.status}</span>
                       </p>
                     </div>
-                  </div>
-                </div>
-              ))}
+              </div>
+              <div className="mt-4 pt-3 border-t flex flex-wrap gap-2 text-xs">
+                <button
+                  onClick={() => setAssociateModal({ eip })}
+                  className="px-3 py-1 rounded-full border border-[#288DD1] text-[#288DD1] hover:bg-[#E6F2FA] transition-colors"
+                >
+                  Associate
+                </button>
+                <button
+                  onClick={() => setDisassociateModal({ eip })}
+                  disabled={!(eip.associated_network_interface_id || eip.associated_instance_id)}
+                  className="px-3 py-1 rounded-full border border-amber-500 text-amber-600 hover:bg-amber-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Disassociate
+                </button>
+              </div>
+            </div>
+          ))}
             </div>
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-6">
@@ -191,6 +215,20 @@ const EIPs = ({ projectId = "", region = "" }) => {
         eipName={deleteModal?.name || ""}
         onConfirm={handleDelete}
         isDeleting={isDeleting}
+      />
+      <AssociateEipModal
+        isOpen={!!associateModal}
+        onClose={() => setAssociateModal(null)}
+        projectId={projectId}
+        region={region}
+        elasticIp={associateModal?.eip}
+      />
+      <DisassociateEipModal
+        isOpen={!!disassociateModal}
+        onClose={() => setDisassociateModal(null)}
+        projectId={projectId}
+        region={region}
+        elasticIp={disassociateModal?.eip}
       />
     </>
   );

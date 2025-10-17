@@ -1,9 +1,9 @@
 import { X } from "lucide-react";
 
-const DeleteSubnetModal = ({
+const DeleteIgwModal = ({
   isOpen,
   onClose,
-  subnetName = "",
+  igwName = "",
   onConfirm,
   isDeleting = false,
 }) => {
@@ -14,7 +14,7 @@ const DeleteSubnetModal = ({
       <div className="bg-white rounded-[24px] max-w-[520px] w-full mx-4">
         <div className="flex items-center justify-between px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
           <h2 className="text-lg font-semibold text-[#575758]">
-            Delete Subnet
+            Delete Internet Gateway
           </h2>
           <button
             onClick={onClose}
@@ -25,8 +25,8 @@ const DeleteSubnetModal = ({
         </div>
         <div className="px-6 py-6 space-y-3 text-sm text-gray-700">
           <p>
-            Are you sure you want to delete the subnet{" "}
-            <span className="font-semibold text-gray-900">{subnetName}</span>?
+            Are you sure you want to delete{" "}
+            <span className="font-semibold text-gray-900">{igwName}</span>?
           </p>
           <p>This action cannot be undone.</p>
         </div>
@@ -50,4 +50,4 @@ const DeleteSubnetModal = ({
   );
 };
 
-export default DeleteSubnetModal;
+export default DeleteIgwModal;

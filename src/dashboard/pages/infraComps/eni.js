@@ -3,7 +3,11 @@ import ToastUtils from "../../../utils/toastUtil";
 import {
   useFetchTenantNetworkInterfaces,
   useSyncTenantNetworkInterfaces,
+  useDeleteTenantNetworkInterface,
 } from "../../../hooks/eni";
+import AddEniModal from "../eniComps/addEni";
+import DeleteEniModal from "../eniComps/deleteEni";
+import ManageEniSecurityGroupsModal from "../eniComps/manageSecurityGroups";
 
 const ENIs = ({ projectId = "", region = "" }) => {
   const { data: enis, isFetching } = useFetchTenantNetworkInterfaces(
@@ -12,10 +16,16 @@ const ENIs = ({ projectId = "", region = "" }) => {
   );
   const { mutate: syncEnis, isPending: isSyncing } =
     useSyncTenantNetworkInterfaces();
+  const { mutate: deleteEni, isPending: isDeleting } =
+    useDeleteTenantNetworkInterface();
+
   const [currentPage, setCurrentPage] = useState(1);
+  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(null);
+  const [manageModal, setManageModal] = useState(null);
   const itemsPerPage = 6;
 
-  const items = enis || [];
+  const items = Array.isArray(enis) ? enis : [];
   const totalItems = items.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -49,12 +59,37 @@ const ENIs = ({ projectId = "", region = "" }) => {
     );
   };
 
+  const handleDelete = () => {
+    if (!deleteModal?.eni) return;
+    const eni = deleteModal.eni;
+    const id = eni.id ?? eni.provider_resource_id;
+
+    deleteEni(
+      {
+        id,
+        payload: {
+          project_id: projectId,
+          region,
+        },
+      },
+      {
+        onSuccess: () => {
+          ToastUtils.success("Network interface deleted.");
+          setDeleteModal(null);
+        },
+        onError: (err) => {
+          console.error("Failed to delete network interface:", err);
+          ToastUtils.error(err?.message || "Failed to delete network interface.");
+          setDeleteModal(null);
+        },
+      }
+    );
+  };
+
   if (isFetching) {
     return (
       <div className="flex items-center justify-center p-6 bg-gray-50 rounded-[10px] font-Outfit">
-        <p className="text-gray-500 text-sm">
-          Loading Network Interfaces...
-        </p>
+        <p className="text-gray-500 text-sm">Loading Network Interfaces...</p>
       </div>
     );
   }
@@ -69,6 +104,13 @@ const ENIs = ({ projectId = "", region = "" }) => {
         >
           {isSyncing ? "Syncing..." : "Sync ENIs"}
         </button>
+        <button
+          onClick={() => setCreateModalOpen(true)}
+          className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
+          disabled={!projectId}
+        >
+          Add ENI
+        </button>
       </div>
 
       {currentItems.length > 0 ? (
@@ -79,7 +121,7 @@ const ENIs = ({ projectId = "", region = "" }) => {
                 key={eni.id}
                 className="p-4 bg-white rounded-[10px] shadow-sm border border-gray-200 flex flex-col justify-between"
               >
-                <div className="flex-grow space-y-1 text-sm text-gray-500">
+                <div className="flex-grow space-y-2 text-sm text-gray-500">
                   <h3
                     className="font-medium text-gray-800 truncate"
                     title={eni.provider_resource_id}
@@ -91,11 +133,26 @@ const ENIs = ({ projectId = "", region = "" }) => {
                   <p>Private IP: {eni.private_ip_address || "N/A"}</p>
                   <p>Status: {eni.status || "unknown"}</p>
                   <p>
-                    Security Groups:{" "}
+                    Security Groups: {" "}
                     {Array.isArray(eni.security_groups)
                       ? eni.security_groups.length
                       : 0}
                   </p>
+                </div>
+                <div className="mt-4 pt-3 border-t flex flex-wrap gap-2 text-xs">
+                  <button
+                    onClick={() => setManageModal({ eni })}
+                    className="px-3 py-1 rounded-full border border-[#288DD1] text-[#288DD1] hover:bg-[#E6F2FA] transition-colors"
+                  >
+                    Manage Security Groups
+                  </button>
+                  <button
+                    onClick={() => setDeleteModal({ eni })}
+                    disabled={isDeleting}
+                    className="px-3 py-1 rounded-full border border-red-500 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             ))}
@@ -127,6 +184,29 @@ const ENIs = ({ projectId = "", region = "" }) => {
           No Network Interfaces found for this project.
         </p>
       )}
+
+      <AddEniModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        projectId={projectId}
+        region={region}
+      />
+      <DeleteEniModal
+        isOpen={!!deleteModal}
+        onClose={() => setDeleteModal(null)}
+        eniName={
+          deleteModal?.eni?.provider_resource_id || deleteModal?.eni?.id || ""
+        }
+        onConfirm={handleDelete}
+        isDeleting={isDeleting}
+      />
+      <ManageEniSecurityGroupsModal
+        isOpen={!!manageModal}
+        onClose={() => setManageModal(null)}
+        projectId={projectId}
+        region={region}
+        eni={manageModal?.eni}
+      />
     </div>
   );
 };

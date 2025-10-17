@@ -1,31 +1,77 @@
 import { useState, useEffect } from "react";
 import { Loader2, X } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
-import { useCreateSubnet, useFetchSubnets } from "../../../hooks/adminHooks/subnetHooks";
-import { useFetchVpcs, useFetchAvailableCidrs } from "../../../hooks/adminHooks/vcpHooks";
+import {
+  useCreateTenantSubnet,
+  useFetchTenantSubnets,
+} from "../../../hooks/subnetHooks";
+import {
+  useFetchTenantVpcs,
+  useFetchAvailableCidrs,
+} from "../../../hooks/vpcHooks";
 import { useFetchGeneralRegions } from "../../../hooks/resource";
 import { useFetchProjectEdgeConfigTenant } from "../../../hooks/edgeHooks";
 
-const AddSubnet = ({ isOpen, onClose, projectId }) => {
-  const { data: vpcs, isFetching: isFetchingVpcs } = useFetchVpcs(projectId);
-  const { data: regions, isFetching: isFetchingRegions } =
-    useFetchGeneralRegions();
-  const { mutate: createSubnet, isPending: isCreating } = useCreateSubnet();
-  const { data: edgeConfig, isFetching: isFetchingEdgeConfig } =
-    useFetchProjectEdgeConfigTenant(projectId, formData.region, { enabled: !!projectId && !!formData.region });
-  const { data: existingSubnets, isFetching: isFetchingSubnets } = useFetchSubnets(projectId, formData.region, { enabled: !!projectId && !!formData.region });
-  const { data: availableCidrs, isFetching: isFetchingAvailableCidrs } = useFetchAvailableCidrs(projectId, formData.region, formData.vpc_id, suggestPrefix, 8, { enabled: !!projectId && !!formData.region && !!formData.vpc_id });
-
+const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) => {
   const [formData, setFormData] = useState({
     name: "",
     cidr_block: "",
     vpc_id: "",
-    region: "",
+    region: defaultRegion || "",
     description: "",
   });
   const [errors, setErrors] = useState({});
   const [suggestions, setSuggestions] = useState([]);
   const [suggestPrefix, setSuggestPrefix] = useState(24);
+
+  useEffect(() => {
+    if (defaultRegion && !formData.region) {
+      setFormData((prev) => ({ ...prev, region: defaultRegion }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultRegion]);
+
+  const { data: regions, isFetching: isFetchingRegions } =
+    useFetchGeneralRegions();
+  const { data: vpcRaw, isFetching: isFetchingVpcs } = useFetchTenantVpcs(
+    projectId,
+    formData.region,
+    { enabled: !!projectId }
+  );
+  const vpcs = Array.isArray(vpcRaw?.data)
+    ? vpcRaw.data
+    : Array.isArray(vpcRaw)
+    ? vpcRaw
+    : [];
+
+  const { mutate: createSubnet, isPending: isCreating } =
+    useCreateTenantSubnet();
+
+  const { data: edgeConfig, isFetching: isFetchingEdgeConfig } =
+    useFetchProjectEdgeConfigTenant(projectId, formData.region, {
+      enabled: !!projectId && !!formData.region,
+    });
+
+  const {
+    data: existingSubnets = [],
+    isFetching: isFetchingSubnets,
+  } = useFetchTenantSubnets(projectId, formData.region, {
+    enabled: !!projectId && !!formData.region,
+  });
+
+  const {
+    data: availableCidrs = [],
+    isFetching: isFetchingAvailableCidrs,
+  } = useFetchAvailableCidrs(
+    projectId,
+    formData.region,
+    formData.vpc_id,
+    suggestPrefix,
+    8,
+    {
+      enabled: !!projectId && !!formData.region && !!formData.vpc_id,
+    }
+  );
 
   const validateForm = () => {
     const newErrors = {};
@@ -43,8 +89,16 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
     }
 
     // Additional validations
-    const selectedVpc = vpcs?.find((v) => String(v.id) === String(formData.vpc_id));
-    if (selectedVpc && selectedVpc.cidr_block === formData.cidr_block) {
+    const selectedVpc = vpcs?.find(
+      (v) =>
+        String(v.id ?? v.uuid ?? v.provider_resource_id) ===
+        String(formData.vpc_id)
+    );
+    if (
+      selectedVpc &&
+      (selectedVpc.cidr_block === formData.cidr_block ||
+        selectedVpc.cidr === formData.cidr_block)
+    ) {
       newErrors.cidr_block =
         "Subnet CIDR cannot be the same as the selected VPC CIDR";
     }
@@ -81,9 +135,15 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
   const computeSuggestions = () => {
     setSuggestions([]);
     try {
-      const selectedVpc = vpcs?.find((v) => String(v.id) === String(formData.vpc_id));
-      if (!selectedVpc?.cidr_block) return;
-      const v = parseCidr(selectedVpc.cidr_block);
+      const selectedVpc = vpcs?.find(
+        (v) =>
+          String(v.id ?? v.uuid ?? v.provider_resource_id) ===
+          String(formData.vpc_id)
+      );
+      const selectedVpcCidr =
+        selectedVpc?.cidr_block || selectedVpc?.cidr || selectedVpc?.network_cidr;
+      if (!selectedVpcCidr) return;
+      const v = parseCidr(selectedVpcCidr);
       const used = (existingSubnets || [])
         .filter((s) => String(s.vpc_id || s.network_id || s.vpc?.id) === String(formData.vpc_id))
         .map((s) => parseCidr(s.cidr || s.cidr_block))
@@ -147,7 +207,7 @@ const AddSubnet = ({ isOpen, onClose, projectId }) => {
   };
 
   // Recompute suggestions when inputs change
-useEffect(() => {
+  useEffect(() => {
     if (formData.vpc_id && formData.region && !isFetchingSubnets) {
       computeSuggestions();
     } else {
@@ -282,11 +342,17 @@ useEffect(() => {
                 <option value="">
                   {isFetchingVpcs ? "Loading VPCs..." : "Select a VPC"}
                 </option>
-                {vpcs?.map((vpc) => (
-                  <option key={vpc.id} value={vpc.id}>
-                    {vpc.name} ({vpc.cidr_block})
-                  </option>
-                ))}
+                {vpcs?.map((vpc) => {
+                  const value = String(
+                    vpc.id ?? vpc.uuid ?? vpc.provider_resource_id
+                  );
+                  const labelCidr = vpc.cidr_block || vpc.cidr || "N/A";
+                  return (
+                    <option key={value} value={value}>
+                      {vpc.name || vpc.identifier || value} ({labelCidr})
+                    </option>
+                  );
+                })}
               </select>
               {errors.vpc_id && (
                 <p className="text-red-500 text-xs mt-1">{errors.vpc_id}</p>

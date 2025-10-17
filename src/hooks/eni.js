@@ -17,6 +17,22 @@ const fetchNetworkInterfaces = async ({ project_id, region }) => {
   return res.data;
 };
 
+const createNetworkInterface = async (payload) => {
+  const res = await api("POST", "/business/network-interfaces", payload);
+  if (!res.data) throw new Error("Failed to create network interface");
+  return res.data;
+};
+
+const deleteNetworkInterface = async ({ id, payload }) => {
+  const res = await api(
+    "DELETE",
+    `/business/network-interfaces/${id}`,
+    payload
+  );
+  if (!res.data) throw new Error("Failed to delete network interface");
+  return res.data;
+};
+
 const attachSecurityGroup = async (params) => {
   // Backward compatibility: support old signature ({ id, securityGroupData })
   let payload = params;
@@ -79,6 +95,32 @@ export const useFetchTenantNetworkInterfaces = (
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
+  });
+};
+
+export const useCreateTenantNetworkInterface = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createNetworkInterface,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["networkInterfaces"] });
+    },
+    onError: (error) => {
+      console.error("Error creating network interface:", error);
+    },
+  });
+};
+
+export const useDeleteTenantNetworkInterface = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteNetworkInterface,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["networkInterfaces"] });
+    },
+    onError: (error) => {
+      console.error("Error deleting network interface:", error);
+    },
   });
 };
 

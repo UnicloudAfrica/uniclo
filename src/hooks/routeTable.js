@@ -17,6 +17,18 @@ const fetchRouteTables = async ({ project_id, region }) => {
   return res.data;
 };
 
+const createRouteTable = async (payload) => {
+  const res = await api("POST", "/business/route-tables", payload);
+  if (!res.data) throw new Error("Failed to create route table");
+  return res.data;
+};
+
+const deleteRouteTable = async ({ id, payload }) => {
+  const res = await api("DELETE", `/business/route-tables/${id}`, payload);
+  if (!res.data) throw new Error("Failed to delete route table");
+  return res.data;
+};
+
 const createRoute = async (routeData) => {
   const res = await api("POST", "/business/routes", routeData);
   if (!res.data) throw new Error("Failed to create route");
@@ -62,6 +74,32 @@ export const useFetchTenantRouteTables = (projectId, region, options = {}) => {
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
+  });
+};
+
+export const useCreateTenantRouteTable = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createRouteTable,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["routeTables"] });
+    },
+    onError: (error) => {
+      console.error("Error creating route table:", error);
+    },
+  });
+};
+
+export const useDeleteTenantRouteTable = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteRouteTable,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["routeTables"] });
+    },
+    onError: (error) => {
+      console.error("Error deleting route table:", error);
+    },
   });
 };
 

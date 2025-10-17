@@ -6,8 +6,8 @@ import {
   useSyncTenantSubnets,
 } from "../../../hooks/subnetHooks";
 import AddSubnet from "../subnetComps/addSubnet";
-// import DeleteSubnetModal from "../subnetComps/deleteSubnet";
-// import ViewSubnetModal from "../subnetComps/viewSubnet";
+import DeleteSubnetModal from "../subnetComps/deleteSubnet";
+import ViewSubnetModal from "../subnetComps/viewSubnet";
 import ToastUtils from "../../../utils/toastUtil";
 
 const Badge = ({ text }) => {
@@ -214,13 +214,22 @@ const Subnets = ({ projectId = "", region = "" }) => {
         isOpen={isCreateModalOpen}
         onClose={closeCreateModal}
         projectId={projectId}
+        region={region}
       />
 
-      {/* Placeholder for DeleteSubnetModal */}
-      {/* <DeleteSubnetModal isOpen={!!deleteModal} onClose={closeDeleteModal} subnetName={deleteModal?.subnetName || ""} onConfirm={handleDelete} isDeleting={isDeleting} /> */}
+      <DeleteSubnetModal
+        isOpen={!!deleteModal}
+        onClose={closeDeleteModal}
+        subnetName={deleteModal?.subnetName || ""}
+        onConfirm={handleDelete}
+        isDeleting={isDeleting}
+      />
 
-      {/* Placeholder for ViewSubnetModal */}
-      {/* <ViewSubnetModal isOpen={!!viewModal} onClose={closeViewModal} subnet={viewModal} /> */}
+      <ViewSubnetModal
+        isOpen={!!viewModal}
+        onClose={closeViewModal}
+        subnet={viewModal}
+      />
     </div>
   );
 };

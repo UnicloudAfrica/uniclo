@@ -9,7 +9,6 @@ import AddSG from "../sgComps/addSG";
 import ViewSGModal from "../sgComps/viewSG";
 import DeleteSGModal from "../sgComps/deleteSG";
 import ToastUtils from "../../../utils/toastUtil";
-import ToastUtils from "../../../utils/toastUtil";
 
 const SecurityGroup = ({
   projectId = "",

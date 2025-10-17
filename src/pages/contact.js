@@ -534,7 +534,7 @@ const Contact = () => {
               <p className=" text-sm">
                 {" "}
                 <span className=" block gradient-text underline">
-                  +2348060040620
+                  +2348059792644
                 </span>
               </p>
             </div>

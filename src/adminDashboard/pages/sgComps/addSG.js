@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Loader2, X } from "lucide-react";
 import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
 import ToastUtils from "../../../utils/toastUtil";
 import { useCreateSecurityGroup } from "../../../hooks/adminHooks/securityGroupHooks";
 
-const AddSG = ({ isOpen, onClose, projectId = "" }) => {
+const AddSG = ({ isOpen, onClose, projectId = "", region: projectRegion = "" }) => {
   const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
   const { mutate, isPending } = useCreateSecurityGroup();
   const [formData, setFormData] = useState({
@@ -50,6 +50,12 @@ const AddSG = ({ isOpen, onClose, projectId = "" }) => {
       },
     });
   };
+
+  useEffect(() => {
+    if (isOpen && projectRegion && !formData.region) {
+      setFormData((prev) => ({ ...prev, region: projectRegion }));
+    }
+  }, [isOpen, projectRegion, formData.region]);
 
   if (!isOpen) return null;
 

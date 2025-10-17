@@ -1,21 +1,25 @@
 import { useState } from "react";
-import { Trash2, X, Loader2 } from "lucide-react";
+import { Trash2, X, Loader2, RefreshCw } from "lucide-react";
 import {
   useFetchKeyPairs,
   useDeleteKeyPair,
+  syncKeyPairsFromProvider,
 } from "../../../hooks/adminHooks/keyPairHooks";
 import AddKeyPair from "../keyPairComps/addKeyPairs";
 // import DeleteKeyPairModal from "../keyPairComps/deleteKeyPair";
 import ToastUtils from "../../../utils/toastUtil";
 import DeleteKeyPairModal from "../keyPairComps/deleteKeyPair";
+import { useQueryClient } from "@tanstack/react-query";
 
-const KeyPairs = ({ projectId = "" }) => {
-  const { data: keyPairs, isFetching } = useFetchKeyPairs(projectId);
+const KeyPairs = ({ projectId = "", region = "" }) => {
+  const queryClient = useQueryClient();
+  const { data: keyPairs, isFetching } = useFetchKeyPairs(projectId, region);
   const { mutate: deleteKeyPair, isPending: isDeleting } = useDeleteKeyPair();
   const [isCreateModalOpen, setCreateModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(null); // { keyPairId, keyPairName } or null
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6; // Number of key pairs per page
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const openCreateModal = () => setCreateModal(true);
   const closeCreateModal = () => setCreateModal(false);
@@ -59,6 +63,26 @@ const KeyPairs = ({ projectId = "" }) => {
     });
   };
 
+  const handleSync = async () => {
+    if (!projectId) {
+      ToastUtils.error("Project is required to sync key pairs");
+      return;
+    }
+    setIsSyncing(true);
+    try {
+      await syncKeyPairsFromProvider({ project_id: projectId, region });
+      await queryClient.invalidateQueries({
+        queryKey: ["keyPairs", { projectId, region }],
+      });
+      ToastUtils.success("Key pairs synced successfully!");
+    } catch (error) {
+      console.error("Failed to sync key pairs:", error);
+      ToastUtils.error(error?.message || "Failed to sync key pairs. Please try again.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   if (isFetching) {
     return (
       <div className="flex items-center justify-center mt-6 bg-gray-50 rounded-[10px] font-Outfit">
@@ -69,8 +93,16 @@ const KeyPairs = ({ projectId = "" }) => {
 
   return (
     <div className="bg-gray-50 rounded-[10px] pfont-Outfit">
-      <div className="flex justify-end items-center mb-6">
-        {/* <h2 className="text-lg font-semibold text-[#575758]">Key Pairs</h2> */}
+      <div className="flex justify-end items-center gap-3 mb-6">
+        <button
+          onClick={handleSync}
+          disabled={isSyncing || !projectId}
+          className="rounded-[30px] py-3 px-6 bg-white border border-[#288DD1] text-[#288DD1] font-normal text-base hover:bg-[#288DD1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          title="Sync key pairs from cloud provider"
+        >
+          <RefreshCw className={`w-4 h-4 ${isSyncing ? "animate-spin" : ""}`} />
+          {isSyncing ? "Syncing..." : "Sync Key Pairs"}
+        </button>
         <button
           onClick={openCreateModal}
           className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
@@ -139,6 +171,7 @@ const KeyPairs = ({ projectId = "" }) => {
         isOpen={isCreateModalOpen}
         onClose={closeCreateModal}
         projectId={projectId}
+        region={region}
       />
 
       <DeleteKeyPairModal

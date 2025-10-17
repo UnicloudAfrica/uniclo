@@ -32,6 +32,7 @@ import AssignEdgeConfigModal from "./projectComps/assignEdgeConfig";
 import { designTokens } from "../../styles/designTokens";
 import ToastUtils from "../../utils/toastUtil";
 import api from "../../index/admin/api";
+import { syncProjectEdgeConfigAdmin } from "../../hooks/adminHooks/edgeHooks";
 
 const decodeId = (encodedId) => {
   try {
@@ -50,6 +51,7 @@ export default function AdminProjectDetails() {
   const [isAssignEdgeOpen, setIsAssignEdgeOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(null); // Track which checklist action is loading
   const [userActionLoading, setUserActionLoading] = useState(null); // Track per-user provisioning actions
+  const [isEdgeSyncing, setIsEdgeSyncing] = useState(false);
   const contentRef = useRef(null);
 
   const queryParams = new URLSearchParams(location.search);
@@ -107,6 +109,29 @@ export default function AdminProjectDetails() {
     setTimeout(() => {
       contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 50);
+  };
+
+  const handleEdgeSync = async () => {
+    if (!resolvedProjectId || !project?.region) {
+      ToastUtils.error("Project and region are required to sync edge configuration");
+      return;
+    }
+    if (isEdgeSyncing) return;
+
+    try {
+      setIsEdgeSyncing(true);
+      await syncProjectEdgeConfigAdmin({
+        project_id: resolvedProjectId,
+        region: project.region,
+      });
+      ToastUtils.success("Edge network configuration synced successfully");
+      await refetchProjectStatus();
+    } catch (error) {
+      console.error("Edge sync failed:", error);
+      ToastUtils.error(error?.message || "Failed to sync edge configuration");
+    } finally {
+      setIsEdgeSyncing(false);
+    }
   };
 
   // Handle action button clicks for provisioning checklist
@@ -547,17 +572,32 @@ export default function AdminProjectDetails() {
       case "edge":
         return (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <h3 className="text-xl font-semibold" style={{ color: designTokens.colors.neutral[900] }}>
                 Configure Edge Network
               </h3>
-              <button
-                onClick={() => setIsAssignEdgeOpen(true)}
-                className="px-4 py-2 rounded-lg font-medium text-white"
-                style={{ backgroundColor: designTokens.colors.primary[600] }}
-              >
-                Assign Edge Config
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleEdgeSync}
+                  disabled={isEdgeSyncing || !resolvedProjectId || !project?.region}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed border"
+                  style={{
+                    backgroundColor: designTokens.colors.neutral[50],
+                    color: designTokens.colors.primary[700],
+                    borderColor: designTokens.colors.primary[200],
+                  }}
+                >
+                  <RefreshCw size={16} className={isEdgeSyncing ? "animate-spin" : ""} />
+                  {isEdgeSyncing ? "Syncing..." : "Sync Edge Config"}
+                </button>
+                <button
+                  onClick={() => setIsAssignEdgeOpen(true)}
+                  className="px-4 py-2 rounded-lg font-medium text-white"
+                  style={{ backgroundColor: designTokens.colors.primary[600] }}
+                >
+                  Assign Edge Config
+                </button>
+              </div>
             </div>
             <p style={{ color: designTokens.colors.neutral[600] }}>
               Configure edge network settings for enhanced connectivity and performance.

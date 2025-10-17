@@ -2,12 +2,13 @@ import { useState } from "react";
 import {
   useFetchElasticIps,
   useDeleteElasticIp,
+  syncElasticIpsFromProvider,
 } from "../../../hooks/adminHooks/eipHooks";
 import AddEip from "../eipComps/addEip";
-import { Trash2, RotateCw } from "lucide-react";
-import adminSilentApiforUser from "../../../index/admin/silentadminforuser";
+import { Trash2, RefreshCw } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import DeleteEipModal from "../eipComps/deleteEip";
+import ToastUtils from "../../../utils/toastUtil";
 
 const EIPs = ({ projectId = "", region = "" }) => {
   const { data: eips, isFetching } = useFetchElasticIps(projectId, region);
@@ -46,6 +47,7 @@ const EIPs = ({ projectId = "", region = "" }) => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Pagination logic
   const totalItems = eips?.length || 0;
@@ -76,21 +78,27 @@ const EIPs = ({ projectId = "", region = "" }) => {
         <div className="flex justify-between items-center mb-6">
           <button
             onClick={async () => {
+              if (!projectId || !region) {
+                ToastUtils.error("Project and region are required to sync EIPs");
+                return;
+              }
+              setIsSyncing(true);
               try {
-                if (!projectId || !region) return;
-                const params = new URLSearchParams();
-                params.append("project_id", projectId);
-                params.append("region", region);
-                params.append("refresh", "1");
-                await adminSilentApiforUser("GET", `/business/elastic-ips?${params.toString()}`);
+                await syncElasticIpsFromProvider({ project_id: projectId, region });
+                await queryClient.invalidateQueries({ queryKey: ["elasticIps", { projectId, region }] });
+                ToastUtils.success("Elastic IPs synced successfully!");
+              } catch (error) {
+                console.error("Failed to sync Elastic IPs:", error);
+                ToastUtils.error(error?.message || "Failed to sync Elastic IPs.");
               } finally {
-                queryClient.invalidateQueries({ queryKey: ["elasticIps"] });
+                setIsSyncing(false);
               }
             }}
-            className="flex items-center gap-2 rounded-[30px] py-2 px-4 bg-white border text-gray-700 text-sm hover:bg-gray-50"
-title="Refresh"
+            disabled={isSyncing || !projectId || !region}
+            className="flex items-center gap-2 rounded-[30px] py-2 px-4 bg-white border border-[#288DD1] text-[#288DD1] text-sm hover:bg-[#288DD1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Sync Elastic IPs from cloud provider"
           >
-            <RotateCw className="w-4 h-4" /> Refresh
+            <RefreshCw className={`w-4 h-4 ${isSyncing ? "animate-spin" : ""}`} /> {isSyncing ? "Syncing..." : "Sync EIPs"}
           </button>
           <button
             onClick={openCreateModal}

@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
-import { Eye, Trash2, RotateCw } from "lucide-react";
-import { useFetchIgws, useDeleteIgw } from "../../../hooks/adminHooks/igwHooks";
+import { useState } from "react";
+import { Eye, Trash2, RefreshCw } from "lucide-react";
+import { useFetchIgws, useDeleteIgw, syncIgwsFromProvider } from "../../../hooks/adminHooks/igwHooks";
 import AddIgw from "../igwComps/addIGW";
 import DeleteIgwModal from "../igwComps/deleteIGW";
 import ViewIgwModal from "../igwComps/viewIGW";
-import adminSilentApiforUser from "../../../index/admin/silentadminforuser";
 import { useQueryClient } from "@tanstack/react-query";
 import ToastUtils from "../../../utils/toastUtil";
 
@@ -44,8 +43,7 @@ const IGWs = ({ projectId = "", region = "" }) => {
   const [viewModal, setViewModal] = useState(null); // igw object
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
-
-  useEffect(() => {}, []);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const openCreateModal = () => setCreateModal(true);
   const closeCreateModal = () => setCreateModal(false);
@@ -99,21 +97,27 @@ const IGWs = ({ projectId = "", region = "" }) => {
         <div />
         <button
             onClick={async () => {
+              if (!projectId || !selectedRegion) {
+                ToastUtils.error("Project and region are required to sync IGWs");
+                return;
+              }
+              setIsSyncing(true);
               try {
-                if (!projectId || !selectedRegion) return;
-                const params = new URLSearchParams();
-                params.append("project_id", projectId);
-                params.append("region", selectedRegion);
-                params.append("refresh", "1");
-                await adminSilentApiforUser("GET", `/business/internet-gateways?${params.toString()}`);
+                await syncIgwsFromProvider({ project_id: projectId, region: selectedRegion });
+                await queryClient.invalidateQueries({ queryKey: ["igws", { projectId, region: selectedRegion }] });
+                ToastUtils.success("Internet Gateways synced successfully!");
+              } catch (error) {
+                console.error("Failed to sync IGWs:", error);
+                ToastUtils.error(error?.message || "Failed to sync Internet Gateways.");
               } finally {
-                queryClient.invalidateQueries({ queryKey: ["igws"] });
+                setIsSyncing(false);
               }
             }}
-            className="flex items-center gap-2 rounded-[30px] py-2 px-4 bg-white border text-gray-700 text-sm hover:bg-gray-50"
-            title="Refresh"
+            disabled={isSyncing || !projectId || !selectedRegion}
+            className="flex items-center gap-2 rounded-[30px] py-2 px-4 bg-white border border-[#288DD1] text-[#288DD1] text-sm hover:bg-[#288DD1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Sync Internet Gateways from cloud provider"
           >
-            <RotateCw className="w-4 h-4" /> Refresh
+            <RefreshCw className={`w-4 h-4 ${isSyncing ? "animate-spin" : ""}`} /> {isSyncing ? "Syncing..." : "Sync IGWs"}
           </button>
           <button
             onClick={openCreateModal}

@@ -1,16 +1,20 @@
 import { useState } from "react";
-import { Eye, Trash2 } from "lucide-react";
+import { Eye, Trash2, RefreshCw } from "lucide-react";
 import {
   useFetchSecurityGroups,
   useDeleteSecurityGroup,
+  syncSecurityGroupsFromProvider,
 } from "../../../hooks/adminHooks/securityGroupHooks";
 import AddSG from "../sgComps/addSG";
 import DeleteSGModal from "../sgComps/deleteSG";
 import ViewSGModal from "../sgComps/viewSGModal";
+import { useQueryClient } from "@tanstack/react-query";
+import ToastUtils from "../../../utils/toastUtil";
 
-const SecurityGroup = ({ projectId = "" }) => {
+const SecurityGroup = ({ projectId = "", region = "" }) => {
+  const queryClient = useQueryClient();
   const { data: securityGroups, isFetching } =
-    useFetchSecurityGroups(projectId);
+    useFetchSecurityGroups(projectId, region);
   const { mutate: deleteSecurityGroup, isPending: isDeleting } =
     useDeleteSecurityGroup();
   const [isCreateModalOpen, setCreateModal] = useState(false);
@@ -20,6 +24,7 @@ const SecurityGroup = ({ projectId = "" }) => {
   const closeCreateModal = () => setCreateModal(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Pagination logic
   const totalItems = securityGroups?.length || 0;
@@ -50,6 +55,26 @@ const SecurityGroup = ({ projectId = "" }) => {
     });
   };
 
+  const handleSync = async () => {
+    if (!projectId) {
+      ToastUtils.error("Project is required to sync security groups");
+      return;
+    }
+    setIsSyncing(true);
+    try {
+      await syncSecurityGroupsFromProvider({ project_id: projectId, region });
+      await queryClient.invalidateQueries({
+        queryKey: ["securityGroups", { projectId, region }],
+      });
+      ToastUtils.success("Security groups synced successfully!");
+    } catch (error) {
+      console.error("Failed to sync Security Groups:", error);
+      ToastUtils.error(error?.message || "Failed to sync security groups.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   if (isFetching) {
     return (
       <div className="flex items-center justify-center p-6 bg-gray-50 rounded-lg">
@@ -61,7 +86,16 @@ const SecurityGroup = ({ projectId = "" }) => {
   return (
     <>
       <div className="bg-gray-50 rounded-[10px] font-Outfit">
-        <div className="flex justify-end items-center mb-6">
+        <div className="flex justify-end items-center gap-3 mb-6">
+          <button
+            onClick={handleSync}
+            disabled={isSyncing || !projectId}
+            className="rounded-[30px] py-3 px-6 bg-white border border-[#288DD1] text-[#288DD1] font-normal text-base hover:bg-[#288DD1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            title="Sync security groups from cloud provider"
+          >
+            <RefreshCw className={`w-4 h-4 ${isSyncing ? "animate-spin" : ""}`} />
+            {isSyncing ? "Syncing..." : "Sync Security Groups"}
+          </button>
           <button
             onClick={openCreateModal}
             className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
@@ -160,6 +194,7 @@ const SecurityGroup = ({ projectId = "" }) => {
         isOpen={isCreateModalOpen}
         onClose={closeCreateModal}
         projectId={projectId}
+        region={region}
       />
       <ViewSGModal
         isOpen={!!viewModal}

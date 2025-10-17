@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { useFetchRouteTables, useCreateRouteTableAssociation, useDeleteRoute, useCreateRoute } from "../../../hooks/adminHooks/routeTableHooks";
+import { useFetchRouteTables, useCreateRouteTableAssociation, useDeleteRoute, useCreateRoute, syncRouteTablesFromProvider } from "../../../hooks/adminHooks/routeTableHooks";
 import { useFetchSubnets } from "../../../hooks/adminHooks/subnetHooks";
 import { useFetchIgws } from "../../../hooks/adminHooks/igwHooks";
 import ToastUtils from "../../../utils/toastUtil";
-import adminSilentApiforUser from "../../../index/admin/silentadminforuser";
 import { useQueryClient } from "@tanstack/react-query";
-import { RotateCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import AddRouteTable from "../routeTableComps/addRouteTable";
 import AddRoute from "../routeTableComps/addRoute";
 
@@ -22,6 +21,7 @@ const RouteTables = ({ projectId = "", region = "" }) => {
   const [igwChoice, setIgwChoice] = useState({}); // map of routeTableId -> igwId
   const { data: subnets } = useFetchSubnets(projectId, region, { enabled: !!projectId && !!region });
   const { data: igws } = useFetchIgws(projectId, region, { enabled: !!projectId && !!region });
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const handleAssociate = (e) => {
     e.preventDefault();
@@ -45,21 +45,27 @@ const RouteTables = ({ projectId = "", region = "" }) => {
           {isFetching && <p className="text-sm text-gray-500">Loading route tables...</p>}
           <button
             onClick={async () => {
+              if (!projectId || !region) {
+                ToastUtils.error("Project and region are required to sync route tables");
+                return;
+              }
+              setIsSyncing(true);
               try {
-                if (!projectId || !region) return;
-                const params = new URLSearchParams();
-                params.append("project_id", projectId);
-                params.append("region", region);
-                params.append("refresh", "1");
-                await adminSilentApiforUser("GET", `/business/route-tables?${params.toString()}`);
+                await syncRouteTablesFromProvider({ project_id: projectId, region });
+                await queryClient.invalidateQueries({ queryKey: ["routeTables", { projectId, region }] });
+                ToastUtils.success("Route tables synced successfully!");
+              } catch (error) {
+                console.error("Failed to sync route tables:", error);
+                ToastUtils.error(error?.message || "Failed to sync route tables.");
               } finally {
-                queryClient.invalidateQueries({ queryKey: ["routeTables"] });
+                setIsSyncing(false);
               }
             }}
-            className="flex items-center gap-2 rounded-[30px] py-1.5 px-3 bg-white border text-gray-700 text-xs hover:bg-gray-50"
-title="Refresh"
+            disabled={isSyncing || !projectId || !region}
+            className="flex items-center gap-2 rounded-[30px] py-1.5 px-3 bg-white border border-[#288DD1] text-[#288DD1] text-xs hover:bg-[#288DD1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Sync route tables from cloud provider"
           >
-            <RotateCw className="w-4 h-4" /> Refresh
+            <RefreshCw className={`w-4 h-4 ${isSyncing ? "animate-spin" : ""}`} /> {isSyncing ? "Syncing..." : "Sync Route Tables"}
           </button>
         </div>
       </div>

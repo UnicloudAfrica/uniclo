@@ -2,10 +2,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import adminSilentApiforUser from "../../index/admin/silentadminforuser";
 import apiAdminforUser from "../../index/admin/apiAdminforUser";
 
-const fetchElasticIps = async ({ project_id, region }) => {
+const fetchElasticIps = async ({ project_id, region, refresh = false }) => {
   const params = new URLSearchParams();
   if (project_id) params.append("project_id", project_id);
   if (region) params.append("region", region);
+  if (refresh) params.append("refresh", "1");
 
   const queryString = params.toString();
   const res = await adminSilentApiforUser(
@@ -106,11 +107,21 @@ export const useDeleteElasticIp = () => {
     mutationFn: deleteElasticIp,
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["elasticIps", { projectId: variables.payload.project_id }],
+        queryKey: [
+          "elasticIps",
+          {
+            projectId: variables.payload.project_id,
+            region: variables.payload.region,
+          },
+        ],
       });
     },
     onError: (error) => {
       console.error("Error deleting elastic IP:", error);
     },
   });
+};
+
+export const syncElasticIpsFromProvider = async ({ project_id, region }) => {
+  return fetchElasticIps({ project_id, region, refresh: true });
 };

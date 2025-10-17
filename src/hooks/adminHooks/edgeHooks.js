@@ -3,13 +3,14 @@ import adminSilentApiforUser from "../../index/admin/silentadminforuser";
 import apiAdminforUser from "../../index/admin/apiAdminforUser";
 
 // Admin: fetch project edge configuration
-const fetchProjectEdgeConfigAdmin = async (projectId, region) => {
+const fetchProjectEdgeConfigAdmin = async (projectId, region, refresh = false) => {
   if (!projectId) throw new Error("projectId is required");
   if (!region) throw new Error("region is required");
   try {
     const params = new URLSearchParams();
     params.append("project_id", projectId);
     params.append("region", region);
+    if (refresh) params.append("refresh", "1");
     const res = await adminSilentApiforUser(
       "GET",
       `/business/edge-config?${params.toString()}`
@@ -108,4 +109,8 @@ export const useAssignProjectEdge = () => {
       }
     },
   });
+};
+
+export const syncProjectEdgeConfigAdmin = async ({ project_id, region }) => {
+  return fetchProjectEdgeConfigAdmin(project_id, region, true);
 };

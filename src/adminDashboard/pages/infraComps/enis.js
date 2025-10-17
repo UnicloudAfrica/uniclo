@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useFetchNetworkInterfaces } from "../../../hooks/adminHooks/networkHooks";
-import adminSilentApiforUser from "../../../index/admin/silentadminforuser";
+import { useFetchNetworkInterfaces, syncNetworkInterfacesFromProvider } from "../../../hooks/adminHooks/networkHooks";
 import { useQueryClient } from "@tanstack/react-query";
-import { RotateCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import AddEni from "../eniComps/addEni";
 import { AttachSgModal, DetachSgModal } from "../eniComps/sgModals";
+import ToastUtils from "../../../utils/toastUtil";
 
 const ENIs = ({ projectId = "", region = "" }) => {
   const { data: networkInterfaces, isFetching } = useFetchNetworkInterfaces(projectId, region);
@@ -12,6 +12,7 @@ const ENIs = ({ projectId = "", region = "" }) => {
   const [isCreateModalOpen, setCreateModal] = useState(false);
   const [attachModal, setAttachModal] = useState({ open: false, eniId: "" });
   const [detachModal, setDetachModal] = useState({ open: false, eniId: "" });
+  const [isSyncing, setIsSyncing] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -24,21 +25,27 @@ const ENIs = ({ projectId = "", region = "" }) => {
           {isFetching && <p className="text-sm text-gray-500">Loading ENIs...</p>}
           <button
             onClick={async () => {
+              if (!projectId || !region) {
+                ToastUtils.error("Project and region are required to sync ENIs");
+                return;
+              }
+              setIsSyncing(true);
               try {
-                if (!projectId || !region) return;
-                const params = new URLSearchParams();
-                params.append("project_id", projectId);
-                params.append("region", region);
-                params.append("refresh", "1");
-                await adminSilentApiforUser("GET", `/business/network-interfaces?${params.toString()}`);
+                await syncNetworkInterfacesFromProvider({ project_id: projectId, region });
+                await queryClient.invalidateQueries({ queryKey: ["networkInterfaces", { projectId, region }] });
+                ToastUtils.success("Network interfaces synced successfully!");
+              } catch (error) {
+                console.error("Failed to sync network interfaces:", error);
+                ToastUtils.error(error?.message || "Failed to sync network interfaces.");
               } finally {
-                queryClient.invalidateQueries({ queryKey: ["networkInterfaces"] });
+                setIsSyncing(false);
               }
             }}
-            className="flex items-center gap-2 rounded-[30px] py-1.5 px-3 bg-white border text-gray-700 text-xs hover:bg-gray-50"
-title="Refresh"
+            disabled={isSyncing || !projectId || !region}
+            className="flex items-center gap-2 rounded-[30px] py-1.5 px-3 bg-white border border-[#288DD1] text-[#288DD1] text-xs hover:bg-[#288DD1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Sync network interfaces from cloud provider"
           >
-            <RotateCw className="w-4 h-4" /> Refresh
+            <RefreshCw className={`w-4 h-4 ${isSyncing ? "animate-spin" : ""}`} /> {isSyncing ? "Syncing..." : "Sync ENIs"}
           </button>
           <button
             onClick={() => setCreateModal(true)}

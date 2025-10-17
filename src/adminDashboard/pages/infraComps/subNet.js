@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Eye, Trash2, RotateCw } from "lucide-react";
+import { Eye, Trash2, RefreshCw } from "lucide-react";
 import {
   useFetchSubnets,
   useDeleteSubnet,
   // useCreateSubnet, // Already imported indirectly by AddSubnet
+  syncSubnetsFromProvider,
 } from "../../../hooks/adminHooks/subnetHooks";
 import AddSubnet from "../subnetComps/addSubnet";
-import adminSilentApiforUser from "../../../index/admin/silentadminforuser";
 import { useQueryClient } from "@tanstack/react-query";
 import DeleteSubnetModal from "../subnetComps/deleteSubnet";
 import ViewSubnetModal from "../subnetComps/viewSubnet";
@@ -41,6 +41,7 @@ const Subnets = ({ projectId = "", region = "" }) => {
   const [viewModal, setViewModal] = useState(null); // subnet object
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const openCreateModal = () => setCreateModal(true);
   const closeCreateModal = () => setCreateModal(false);
@@ -80,6 +81,27 @@ const Subnets = ({ projectId = "", region = "" }) => {
     );
   };
 
+  const handleSync = async () => {
+    if (!projectId) {
+      ToastUtils.error("Project is required to sync subnets");
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      await syncSubnetsFromProvider({ project_id: projectId, region });
+      await queryClient.invalidateQueries({
+        queryKey: ["subnets", { projectId, region }],
+      });
+      ToastUtils.success("Subnets synced successfully!");
+    } catch (error) {
+      console.error("Failed to sync Subnets:", error);
+      ToastUtils.error(error?.message || "Failed to sync subnets.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   if (isFetching) {
     return (
       <div className="flex items-center justify-center p-6 bg-gray-50 rounded-[10px] font-Outfit">
@@ -90,24 +112,15 @@ const Subnets = ({ projectId = "", region = "" }) => {
 
   return (
     <div className="bg-gray-50 rounded-[10px] font-Outfit">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center gap-3 mb-6">
         <button
-          onClick={async () => {
-            try {
-              if (!projectId) return;
-              const params = new URLSearchParams();
-              params.append("project_id", projectId);
-              if (region) params.append("region", region);
-              params.append("refresh", "1");
-              await adminSilentApiforUser("GET", `/business/subnets?${params.toString()}`);
-            } finally {
-              queryClient.invalidateQueries({ queryKey: ["subnets"] });
-            }
-          }}
-          className="flex items-center gap-2 rounded-[30px] py-2 px-4 bg-white border text-gray-700 text-sm hover:bg-gray-50"
-title="Refresh"
+          onClick={handleSync}
+          disabled={isSyncing || !projectId}
+          className="flex items-center gap-2 rounded-[30px] py-2 px-4 bg-white border border-[#288DD1] text-[#288DD1] text-sm hover:bg-[#288DD1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title="Sync subnets from cloud provider"
         >
-          <RotateCw className="w-4 h-4" /> Refresh
+          <RefreshCw className={`w-4 h-4 ${isSyncing ? "animate-spin" : ""}`} />{" "}
+          {isSyncing ? "Syncing..." : "Sync Subnets"}
         </button>
         <button
           onClick={openCreateModal}

@@ -2,10 +2,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import adminSilentApiforUser from "../../index/admin/silentadminforuser";
 import apiAdminforUser from "../../index/admin/apiAdminforUser";
 
-const fetchIgws = async ({ project_id, region }) => {
+const fetchIgws = async ({ project_id, region, refresh = false }) => {
   const params = new URLSearchParams();
   if (project_id) params.append("project_id", project_id);
   if (region) params.append("region", region);
+  if (refresh) params.append("refresh", "1");
 
   const queryString = params.toString();
   const res = await adminSilentApiforUser(
@@ -77,4 +78,8 @@ export const useDeleteIgw = () => {
       console.error("Error deleting Internet Gateway:", error);
     },
   });
+};
+
+export const syncIgwsFromProvider = async ({ project_id, region }) => {
+  return fetchIgws({ project_id, region, refresh: true });
 };

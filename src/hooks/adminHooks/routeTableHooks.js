@@ -2,10 +2,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import adminSilentApiforUser from "../../index/admin/silentadminforuser";
 import apiAdminforUser from "../../index/admin/apiAdminforUser";
 
-const fetchRouteTables = async ({ project_id, region }) => {
+const fetchRouteTables = async ({ project_id, region, refresh = false }) => {
   const params = new URLSearchParams();
   if (project_id) params.append("project_id", project_id);
   if (region) params.append("region", region);
+  if (refresh) params.append("refresh", "1");
 
   const queryString = params.toString();
   const res = await adminSilentApiforUser(
@@ -114,4 +115,8 @@ export const useDeleteRoute = () => {
       queryClient.invalidateQueries({ queryKey: ["routeTables", { projectId: variables.project_id }] });
     },
   });
+};
+
+export const syncRouteTablesFromProvider = async ({ project_id, region }) => {
+  return fetchRouteTables({ project_id, region, refresh: true });
 };

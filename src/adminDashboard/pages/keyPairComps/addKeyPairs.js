@@ -5,7 +5,7 @@ import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
 import ToastUtils from "../../../utils/toastUtil";
 import { useCreateKeyPair } from "../../../hooks/adminHooks/keyPairHooks";
 
-const AddKeyPair = ({ isOpen, onClose, projectId = "" }) => {
+const AddKeyPair = ({ isOpen, onClose, projectId = "", region: projectRegion = "" }) => {
   const queryClient = useQueryClient();
   const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
   const { mutate, isPending } = useCreateKeyPair();
@@ -22,8 +22,10 @@ const AddKeyPair = ({ isOpen, onClose, projectId = "" }) => {
 
   // Debug state changes
   useEffect(() => {
-    // console.log("Modal State - isOpen:", isOpen, "successState:", successState);
-  }, [isOpen, successState]);
+    if (isOpen && projectRegion && !formData.region) {
+      setFormData((prev) => ({ ...prev, region: projectRegion }));
+    }
+  }, [isOpen, projectRegion, formData.region]);
 
   const validateForm = () => {
     const newErrors = {};

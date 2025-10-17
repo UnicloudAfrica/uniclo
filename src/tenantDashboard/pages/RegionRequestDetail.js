@@ -128,6 +128,9 @@ const RegionRequestDetail = () => {
     );
   }
 
+  const credentialSummary = region?.msp_credential_summary || {};
+  const hasMspCredentials = Boolean(region?.has_msp_credentials);
+
   if (!region) {
     return (
       <>
@@ -221,6 +224,37 @@ const RegionRequestDetail = () => {
             <div>
               <div className="text-sm text-gray-500">Base URL</div>
               <div className="text-lg font-medium text-gray-900 truncate">{region.base_url || 'N/A'}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Credential Summary */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Credential Summary</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <div className="text-sm text-gray-500">Domain</div>
+              <div className="text-lg font-medium text-gray-900">
+                {credentialSummary.domain || 'N/A'}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">Default Project</div>
+              <div className="text-lg font-medium text-gray-900">
+                {credentialSummary.default_project || 'N/A'}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">Credential Status</div>
+              <div className="text-lg font-medium text-gray-900">
+                {hasMspCredentials ? 'Stored' : 'Not Stored'}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">Username</div>
+              <div className="text-lg font-medium text-gray-900">
+                {credentialSummary.username_preview || '—'}
+              </div>
             </div>
           </div>
         </div>

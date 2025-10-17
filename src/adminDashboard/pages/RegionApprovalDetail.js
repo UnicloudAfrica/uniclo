@@ -82,6 +82,17 @@ const RegionApprovalDetail = () => {
     }
   };
 
+  const credentialSummary = region?.msp_credential_summary || {};
+  const hasMspCredentials = Boolean(region?.has_msp_credentials);
+  const recentRevenue = region?.recent_revenue_shares || [];
+
+  const formatCurrency = (value) =>
+    new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+    }).format(Number(value ?? 0));
+
   const handleUpdateFee = () => {
     navigate(`/admin-dashboard/region-approvals/${id}/edit?action=update_fee`);
   };
@@ -220,6 +231,37 @@ const RegionApprovalDetail = () => {
               </div>
             )}
 
+            {/* Credential Summary */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Credential Summary</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm text-gray-500">Domain</div>
+                  <div className="text-lg font-medium text-gray-900">
+                    {credentialSummary.domain || 'N/A'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500">Default Project</div>
+                  <div className="text-lg font-medium text-gray-900">
+                    {credentialSummary.default_project || 'N/A'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500">Credential Stored</div>
+                  <div className="text-lg font-medium text-gray-900">
+                    {hasMspCredentials ? 'Yes' : 'No'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500">Username Preview</div>
+                  <div className="text-lg font-medium text-gray-900">
+                    {credentialSummary.username_preview || '—'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* MSP Credentials Card */}
             {region.fulfillment_mode === 'automated' && (
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
@@ -285,6 +327,57 @@ const RegionApprovalDetail = () => {
                     )}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Recent Revenue */}
+            {recentRevenue.length > 0 && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Revenue Shares</h2>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Date
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Gross
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Platform Fee
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Tenant Share
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {recentRevenue.map((share) => (
+                        <tr key={share.id}>
+                          <td className="px-4 py-2 text-sm text-gray-700">
+                            {share.created_at ? new Date(share.created_at).toLocaleString() : 'N/A'}
+                          </td>
+                          <td className="px-4 py-2 text-sm text-gray-700">
+                            {formatCurrency(share.gross_amount)}
+                          </td>
+                          <td className="px-4 py-2 text-sm text-gray-700">
+                            {formatCurrency(share.platform_fee_amount)}
+                          </td>
+                          <td className="px-4 py-2 text-sm text-gray-700">
+                            {formatCurrency(share.tenant_share_amount)}
+                          </td>
+                          <td className="px-4 py-2 text-sm capitalize text-gray-700">
+                            {share.status || 'pending'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 

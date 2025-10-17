@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { 
-  ChevronLeft, 
-  Loader2, 
+import {
+  ChevronLeft,
+  Loader2,
   RefreshCw,
-  CheckCircle, 
+  CheckCircle,
   XCircle,
   Network,
   Key,
@@ -144,10 +144,10 @@ export default function AdminProjectDetails() {
   // Handle action button clicks for provisioning checklist
   const handleSummaryAction = async (action, actionKey) => {
     if (!action || !action.endpoint || actionLoading) return;
-    
+
     const method = (action.method || 'POST').toUpperCase();
     const endpoint = action.endpoint;
-    
+
     try {
       setActionLoading(actionKey);
       await api(method, endpoint);
@@ -243,54 +243,54 @@ export default function AdminProjectDetails() {
 
   // Define infrastructure sections with icons
   const infrastructureSections = [
-    { 
-      key: "setup", 
-      label: "Setup", 
+    {
+      key: "setup",
+      label: "Setup",
       icon: <CheckCircle size={16} />,
     },
-    { 
-      key: "vpcs", 
-      label: "VPCs", 
+    {
+      key: "vpcs",
+      label: "VPCs",
       icon: <Network size={16} />,
     },
-    { 
-      key: "keypairs", 
-      label: "Create Key Pair", 
+    {
+      key: "keypairs",
+      label: "Create Key Pair",
       icon: <Key size={16} />,
     },
-    { 
-      key: "edge", 
-      label: "Configure Edge Network", 
+    {
+      key: "edge",
+      label: "Configure Edge Network",
       icon: <Wifi size={16} />,
     },
-    { 
-      key: "security-groups", 
-      label: "Create Security Groups", 
+    {
+      key: "security-groups",
+      label: "Create Security Groups",
       icon: <Shield size={16} />,
     },
-    { 
-      key: "subnets", 
-      label: "Manage Subnets", 
+    {
+      key: "subnets",
+      label: "Manage Subnets",
       icon: <GitBranch size={16} />,
     },
-    { 
-      key: "igws", 
-      label: "Configure IGW", 
+    {
+      key: "igws",
+      label: "Configure IGW",
       icon: <Globe size={16} />,
     },
-    { 
-      key: "route-tables", 
-      label: "Route Tables", 
+    {
+      key: "route-tables",
+      label: "Route Tables",
       icon: <Route size={16} />,
     },
-    { 
-      key: "enis", 
-      label: "ENIs", 
+    {
+      key: "enis",
+      label: "ENIs",
       icon: <Radio size={16} />,
     },
-    { 
-      key: "eips", 
-      label: "EIPs", 
+    {
+      key: "eips",
+      label: "EIPs",
       icon: <Wifi size={16} />,
     },
   ];
@@ -376,6 +376,12 @@ export default function AdminProjectDetails() {
         return false;
     }
   };
+
+  // Section content rendering function
+  const renderSectionContent = () => {
+    switch (activeSection) {
+      case "setup":
+        return (
           <div className="space-y-4">
             <h3 className="text-xl font-semibold" style={{ color: designTokens.colors.neutral[900] }}>
               Project Setup
@@ -684,8 +690,8 @@ export default function AdminProjectDetails() {
   if (isProjectStatusFetching && !project) {
     return (
       <div className="w-full h-svh flex items-center justify-center">
-        <Loader2 
-          className="w-12 animate-spin" 
+        <Loader2
+          className="w-12 animate-spin"
           style={{ color: designTokens.colors.primary[500] }}
         />
       </div>
@@ -700,7 +706,7 @@ export default function AdminProjectDetails() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main 
+      <main
         className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8"
         style={{ backgroundColor: designTokens.colors.neutral[25] }}
       >
@@ -720,7 +726,7 @@ export default function AdminProjectDetails() {
             <button
               onClick={() => refetchProjectStatus()}
               className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium"
-              style={{ 
+              style={{
                 backgroundColor: designTokens.colors.neutral[100],
                 color: designTokens.colors.neutral[700]
               }}
@@ -793,11 +799,11 @@ export default function AdminProjectDetails() {
                           onClick={() => handleSectionClick(section.key)}
                           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors"
                           style={{
-                            backgroundColor: isActive 
-                              ? designTokens.colors.primary[50] 
+                            backgroundColor: isActive
+                              ? designTokens.colors.primary[50]
                               : "transparent",
-                            color: isActive 
-                              ? designTokens.colors.primary[700] 
+                            color: isActive
+                              ? designTokens.colors.primary[700]
                               : designTokens.colors.neutral[700]
                           }}
                         >

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Loader2, X } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useAssociateTenantElasticIp } from "../../../hooks/elasticIPHooks";
@@ -22,6 +22,14 @@ const AssociateEipModal = ({
     { enabled: isOpen && !!projectId && !!region }
   );
   const enis = useMemo(() => (Array.isArray(enisRaw) ? enisRaw : []), [enisRaw]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setTargetType("eni");
+      setEniId("");
+      setInstanceId("");
+    }
+  }, [isOpen]);
 
   if (!isOpen || !elasticIp) return null;
 
@@ -159,7 +167,11 @@ const AssociateEipModal = ({
           </button>
           <button
             onClick={handleSubmit}
-            disabled={isPending}
+            disabled={
+              isPending ||
+              (targetType === "eni" && !eniId) ||
+              (targetType === "instance" && !instanceId.trim())
+            }
             className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
             Associate

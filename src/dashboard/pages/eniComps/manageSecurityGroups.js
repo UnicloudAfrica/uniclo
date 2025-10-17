@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Loader2, X } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import {
@@ -40,6 +40,12 @@ const ManageEniSecurityGroupsModal = ({
     useAttachTenantSecurityGroup();
   const { mutate: detachSecurityGroup, isPending: isDetaching } =
     useDetachTenantSecurityGroup();
+
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedAttach("");
+    }
+  }, [isOpen]);
 
   if (!isOpen || !eni) return null;
 

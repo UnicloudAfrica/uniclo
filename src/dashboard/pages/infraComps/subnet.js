@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Eye, Trash2 } from "lucide-react";
 import {
   useDeleteTenantSubnet,
@@ -8,6 +8,7 @@ import {
 import AddSubnet from "../subnetComps/addSubnet";
 import DeleteSubnetModal from "../subnetComps/deleteSubnet";
 import ViewSubnetModal from "../subnetComps/viewSubnet";
+import ToastUtils from "../../../utils/toastUtil";
 import ToastUtils from "../../../utils/toastUtil";
 
 const Badge = ({ text }) => {
@@ -29,7 +30,13 @@ const Badge = ({ text }) => {
   );
 };
 
-const Subnets = ({ projectId = "", region = "" }) => {
+const Subnets = ({
+  projectId = "",
+  region = "",
+  actionRequest,
+  onActionHandled,
+  onStatsUpdate,
+}) => {
   const { data: subnets, isFetching } = useFetchTenantSubnets(
     projectId,
     region
@@ -104,6 +111,38 @@ const Subnets = ({ projectId = "", region = "" }) => {
       }
     );
   };
+
+  const lastActionToken = useRef(null);
+  const lastCountRef = useRef(-1);
+
+  useEffect(() => {
+    if (!isFetching) {
+      const count = Array.isArray(subnets) ? subnets.length : 0;
+      if (lastCountRef.current !== count) {
+        lastCountRef.current = count;
+        onStatsUpdate?.(count);
+      }
+    }
+  }, [isFetching, subnets, onStatsUpdate]);
+
+  useEffect(() => {
+    if (!actionRequest || actionRequest.resource !== "subnets") {
+      return;
+    }
+    if (lastActionToken.current === actionRequest.token) {
+      return;
+    }
+    lastActionToken.current = actionRequest.token;
+
+    if (actionRequest.type === "sync") {
+      handleSync();
+    } else if (actionRequest.type === "create") {
+      openCreateModal();
+    }
+
+    onActionHandled?.(actionRequest);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actionRequest]);
 
   if (isFetching) {
     return (

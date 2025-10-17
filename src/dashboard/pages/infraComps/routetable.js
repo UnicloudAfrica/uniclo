@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ToastUtils from "../../../utils/toastUtil";
 import {
   useFetchTenantRouteTables,
@@ -11,7 +11,13 @@ import AddRouteModal from "../routeTableComps/addRoute";
 import DeleteRouteTableModal from "../routeTableComps/deleteRouteTable";
 import AssociateRouteTableModal from "../routeTableComps/associateRouteTable";
 
-const RouteTables = ({ projectId = "", region = "" }) => {
+const RouteTables = ({
+  projectId = "",
+  region = "",
+  actionRequest,
+  onActionHandled,
+  onStatsUpdate,
+}) => {
   const { data: routeTables, isFetching } = useFetchTenantRouteTables(
     projectId,
     region
@@ -89,6 +95,36 @@ const RouteTables = ({ projectId = "", region = "" }) => {
       }
     );
   };
+
+  const lastActionToken = useRef(null);
+  const lastCountRef = useRef(-1);
+
+  useEffect(() => {
+    const count = Array.isArray(items) ? items.length : 0;
+    if (lastCountRef.current !== count) {
+      lastCountRef.current = count;
+      onStatsUpdate?.(count);
+    }
+  }, [items, onStatsUpdate]);
+
+  useEffect(() => {
+    if (!actionRequest || actionRequest.resource !== "routeTables") {
+      return;
+    }
+    if (lastActionToken.current === actionRequest.token) {
+      return;
+    }
+    lastActionToken.current = actionRequest.token;
+
+    if (actionRequest.type === "sync") {
+      handleSync();
+    } else if (actionRequest.type === "create") {
+      setAddModalOpen(true);
+    }
+
+    onActionHandled?.(actionRequest);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actionRequest]);
 
   const handleDeleteRoute = (rt, route) => {
     if (!rt || !route) return;

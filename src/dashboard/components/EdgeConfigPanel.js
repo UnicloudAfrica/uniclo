@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
 import { useFetchProjectEdgeConfigTenant } from "../../hooks/edgeHooks";
 import ToastUtils from "../../utils/toastUtil";
@@ -10,23 +10,42 @@ const Field = ({ label, value }) => (
   </div>
 );
 
-export default function EdgeConfigPanel({ projectId, region }) {
-  const { data: edgeConfig, isFetching, error, refetch } =
-    useFetchProjectEdgeConfigTenant(projectId, region, { enabled: !!projectId && !!region });
+export default function EdgeConfigPanel({ projectId, region, refreshSignal }) {
+  const {
+    data: edgeConfig,
+    isFetching,
+    error,
+    refetch,
+  } = useFetchProjectEdgeConfigTenant(projectId, region, {
+    enabled: !!projectId && !!region,
+  });
+
+  const handleRefresh = async () => {
+    const r = await refetch();
+    if (r?.error) {
+      ToastUtils.error(
+        r.error.message || "Failed to refresh edge configuration"
+      );
+    } else {
+      ToastUtils.success("Edge configuration refreshed");
+    }
+    return r;
+  };
+
+  useEffect(() => {
+    if (!refreshSignal) {
+      return;
+    }
+    handleRefresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshSignal]);
 
   return (
     <div className="bg-white rounded-[12px] p-6 shadow-sm mb-8">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-semibold text-[#575758]">Edge Configuration</h2>
         <button
-          onClick={async () => {
-            const r = await refetch();
-            if (r?.error) {
-              ToastUtils.error(r.error.message || "Failed to refresh edge configuration");
-            } else {
-              ToastUtils.success("Edge configuration refreshed");
-            }
-          }}
+          onClick={handleRefresh}
           disabled={isFetching || !projectId || !region}
           className="text-sm text-[#288DD1] hover:text-[#1976D2] disabled:opacity-50"
           title="Refresh edge configuration"
@@ -70,3 +89,7 @@ export default function EdgeConfigPanel({ projectId, region }) {
     </div>
   );
 }
+
+EdgeConfigPanel.defaultProps = {
+  refreshSignal: 0,
+};

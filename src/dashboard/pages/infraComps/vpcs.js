@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Eye, Trash2 } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import DeleteVpcModal from "../VpcComps/deleteVpc";
@@ -29,7 +29,13 @@ const Badge = ({ text }) => {
   );
 };
 
-const VPCs = ({ projectId = "", region = "" }) => {
+const VPCs = ({
+  projectId = "",
+  region = "",
+  actionRequest,
+  onActionHandled,
+  onStatsUpdate,
+}) => {
   const { data: vpcs, isFetching } = useFetchTenantVpcs(projectId, region);
   const { mutate: deleteVpc, isPending: isDeleting } = useDeleteTenantVpc();
   const { mutate: syncVpcs, isPending: isSyncing } = useSyncTenantVpcs();
@@ -85,6 +91,44 @@ const VPCs = ({ projectId = "", region = "" }) => {
       }
     );
   };
+
+  const lastActionToken = useRef(null);
+  const lastCountRef = useRef(-1);
+
+  useEffect(() => {
+    if (isFetching) {
+      return;
+    }
+    const list = Array.isArray(vpcs)
+      ? vpcs
+      : Array.isArray(vpcs?.data)
+      ? vpcs.data
+      : [];
+    const count = list.length;
+    if (lastCountRef.current !== count) {
+      lastCountRef.current = count;
+      onStatsUpdate?.(count);
+    }
+  }, [vpcs, onStatsUpdate, isFetching]);
+
+  useEffect(() => {
+    if (!actionRequest || actionRequest.resource !== "vpcs") {
+      return;
+    }
+    if (lastActionToken.current === actionRequest.token) {
+      return;
+    }
+    lastActionToken.current = actionRequest.token;
+
+    if (actionRequest.type === "sync") {
+      handleSync();
+    } else if (actionRequest.type === "create") {
+      openCreateModal();
+    }
+
+    onActionHandled?.(actionRequest);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actionRequest]);
 
   const handleDelete = () => {
     if (!deleteModal) return;

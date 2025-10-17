@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ToastUtils from "../../../utils/toastUtil";
 import {
   useFetchTenantInternetGateways,
@@ -9,7 +9,13 @@ import AddIgwModal from "../igwComps/addIGW";
 import AttachIgwModal from "../igwComps/attachIGW";
 import DeleteIgwModal from "../igwComps/deleteIGW";
 
-const IGWs = ({ projectId = "", region = "" }) => {
+const IGWs = ({
+  projectId = "",
+  region = "",
+  actionRequest,
+  onActionHandled,
+  onStatsUpdate,
+}) => {
   const { data: igws, isFetching } = useFetchTenantInternetGateways(
     projectId,
     region
@@ -57,6 +63,39 @@ const IGWs = ({ projectId = "", region = "" }) => {
       }
     );
   };
+
+  const lastActionToken = useRef(null);
+  const lastCountRef = useRef(-1);
+
+  useEffect(() => {
+    if (isFetching) {
+      return;
+    }
+    const count = Array.isArray(items) ? items.length : 0;
+    if (lastCountRef.current !== count) {
+      lastCountRef.current = count;
+      onStatsUpdate?.(count);
+    }
+  }, [items, onStatsUpdate, isFetching]);
+
+  useEffect(() => {
+    if (!actionRequest || actionRequest.resource !== "igws") {
+      return;
+    }
+    if (lastActionToken.current === actionRequest.token) {
+      return;
+    }
+    lastActionToken.current = actionRequest.token;
+
+    if (actionRequest.type === "sync") {
+      handleSync();
+    } else if (actionRequest.type === "create") {
+      setCreateModalOpen(true);
+    }
+
+    onActionHandled?.(actionRequest);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actionRequest]);
 
   const handleDelete = () => {
     if (!deleteModal?.igw) return;

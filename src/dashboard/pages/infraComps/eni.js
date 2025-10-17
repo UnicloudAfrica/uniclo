@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ToastUtils from "../../../utils/toastUtil";
 import {
   useFetchTenantNetworkInterfaces,
@@ -9,7 +9,13 @@ import AddEniModal from "../eniComps/addEni";
 import DeleteEniModal from "../eniComps/deleteEni";
 import ManageEniSecurityGroupsModal from "../eniComps/manageSecurityGroups";
 
-const ENIs = ({ projectId = "", region = "" }) => {
+const ENIs = ({
+  projectId = "",
+  region = "",
+  actionRequest,
+  onActionHandled,
+  onStatsUpdate,
+}) => {
   const { data: enis, isFetching } = useFetchTenantNetworkInterfaces(
     projectId,
     region
@@ -85,6 +91,36 @@ const ENIs = ({ projectId = "", region = "" }) => {
       }
     );
   };
+
+  const lastActionToken = useRef(null);
+  const lastCountRef = useRef(-1);
+
+  useEffect(() => {
+    const count = Array.isArray(items) ? items.length : 0;
+    if (lastCountRef.current !== count) {
+      lastCountRef.current = count;
+      onStatsUpdate?.(count);
+    }
+  }, [items, onStatsUpdate]);
+
+  useEffect(() => {
+    if (!actionRequest || actionRequest.resource !== "enis") {
+      return;
+    }
+    if (lastActionToken.current === actionRequest.token) {
+      return;
+    }
+    lastActionToken.current = actionRequest.token;
+
+    if (actionRequest.type === "sync") {
+      handleSync();
+    } else if (actionRequest.type === "create") {
+      setCreateModalOpen(true);
+    }
+
+    onActionHandled?.(actionRequest);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actionRequest]);
 
   if (isFetching) {
     return (

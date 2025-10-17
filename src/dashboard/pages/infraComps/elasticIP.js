@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   useDeleteTenantElasticIp,
   useFetchTenantElasticIps,
@@ -13,7 +13,13 @@ import DisassociateEipModal from "../EIPComps/disassociateEip";
 // import DeleteEipModal from "../eipComps/deleteEip";
 import ToastUtils from "../../../utils/toastUtil";
 
-const EIPs = ({ projectId = "", region = "" }) => {
+const EIPs = ({
+  projectId = "",
+  region = "",
+  actionRequest,
+  onActionHandled,
+  onStatsUpdate,
+}) => {
   const { data: eips, isFetching } = useFetchTenantElasticIps(
     projectId,
     region
@@ -96,6 +102,36 @@ const EIPs = ({ projectId = "", region = "" }) => {
       }
     );
   };
+
+  const lastActionToken = useRef(null);
+  const lastCountRef = useRef(-1);
+
+  useEffect(() => {
+    const count = Array.isArray(eips) ? eips.length : 0;
+    if (lastCountRef.current !== count) {
+      lastCountRef.current = count;
+      onStatsUpdate?.(count);
+    }
+  }, [eips, onStatsUpdate]);
+
+  useEffect(() => {
+    if (!actionRequest || actionRequest.resource !== "eips") {
+      return;
+    }
+    if (lastActionToken.current === actionRequest.token) {
+      return;
+    }
+    lastActionToken.current = actionRequest.token;
+
+    if (actionRequest.type === "sync") {
+      handleSync();
+    } else if (actionRequest.type === "create") {
+      openCreateModal();
+    }
+
+    onActionHandled?.(actionRequest);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actionRequest]);
 
   if (isFetching) {
     return (

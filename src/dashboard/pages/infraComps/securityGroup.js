@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Eye, Trash2 } from "lucide-react";
 import {
   useDeleteTenantSecurityGroup,
@@ -9,8 +9,15 @@ import AddSG from "../sgComps/addSG";
 import ViewSGModal from "../sgComps/viewSG";
 import DeleteSGModal from "../sgComps/deleteSG";
 import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil";
 
-const SecurityGroup = ({ projectId = "", region = "" }) => {
+const SecurityGroup = ({
+  projectId = "",
+  region = "",
+  actionRequest,
+  onActionHandled,
+  onStatsUpdate,
+}) => {
   const { data: securityGroups, isFetching } =
     useFetchTenantSecurityGroups(projectId, region);
   const { mutate: deleteSecurityGroup, isPending: isDeleting } =
@@ -73,6 +80,40 @@ const SecurityGroup = ({ projectId = "", region = "" }) => {
       }
     );
   };
+
+  const lastActionToken = useRef(null);
+  const lastCountRef = useRef(-1);
+
+  useEffect(() => {
+    if (!isFetching) {
+      const count = Array.isArray(securityGroups)
+        ? securityGroups.length
+        : 0;
+      if (lastCountRef.current !== count) {
+        lastCountRef.current = count;
+        onStatsUpdate?.(count);
+      }
+    }
+  }, [isFetching, securityGroups, onStatsUpdate]);
+
+  useEffect(() => {
+    if (!actionRequest || actionRequest.resource !== "securityGroups") {
+      return;
+    }
+    if (lastActionToken.current === actionRequest.token) {
+      return;
+    }
+    lastActionToken.current = actionRequest.token;
+
+    if (actionRequest.type === "sync") {
+      handleSync();
+    } else if (actionRequest.type === "create") {
+      openCreateModal();
+    }
+
+    onActionHandled?.(actionRequest);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actionRequest]);
 
   if (isFetching) {
     return (

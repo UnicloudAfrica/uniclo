@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import CartFloat from "../components/cartFloat";
 import Headbar from "../components/headbar";
 import Sidebar from "../components/sidebar";
@@ -25,6 +25,14 @@ import ENIs from "./infraComps/eni";
 import EIPs from "./infraComps/elasticIP";
 import Subnets from "./infraComps/subnet";
 import EdgeConfigPanel from "../components/EdgeConfigPanel";
+import { useFetchTenantKeyPairs } from "../../hooks/keyPairsHook";
+import { useFetchTenantSecurityGroups } from "../../hooks/securityGroupHooks";
+import { useFetchTenantSubnets } from "../../hooks/subnetHooks";
+import { useFetchTenantInternetGateways } from "../../hooks/internetGatewayHooks";
+import { useFetchTenantRouteTables } from "../../hooks/routeTable";
+import { useFetchTenantNetworkInterfaces } from "../../hooks/eni";
+import { useFetchTenantElasticIps } from "../../hooks/elasticIPHooks";
+import { useFetchTenantVpcs } from "../../hooks/vpcHooks";
 
 // Function to decode the ID from URL
 const decodeId = (encodedId) => {
@@ -57,12 +65,207 @@ export default function ProjectDetails() {
   // Separate state for top-level tabs and sub-tabs
   const [activeTopLevelTab, setActiveTopLevelTab] = useState("Instances");
   const [activeInfraTab, setActiveInfraTab] = useState("VPCs");
+  const [edgeRefreshSignal, setEdgeRefreshSignal] = useState(0);
+  const [infraActionRequest, setInfraActionRequest] = useState(null);
+  const infraActionTokenRef = useRef(0);
+  const [infraCounts, setInfraCounts] = useState({});
+
+  const infraQuickActions = [
+    {
+      key: "keyPairs",
+      title: "Create Key Pair",
+      description: "Manage SSH credentials for your project.",
+      tab: "Key Pairs",
+      supportsCreate: true,
+      supportsSync: true,
+    },
+    {
+      key: "securityGroups",
+      title: "Create Security Groups",
+      description: "Control access rules for your workloads.",
+      tab: "SGs",
+      supportsCreate: true,
+      supportsSync: true,
+    },
+    {
+      key: "subnets",
+      title: "Manage Subnets",
+      description: "Allocate subnets within your VPCs.",
+      tab: "Subnets",
+      supportsCreate: true,
+      supportsSync: true,
+    },
+    {
+      key: "igws",
+      title: "Configure IGW",
+      description: "Attach internet gateways to expose networks.",
+      tab: "IGWs",
+      supportsCreate: true,
+      supportsSync: true,
+    },
+    {
+      key: "routeTables",
+      title: "Route Tables",
+      description: "Define traffic flow across your networks.",
+      tab: "Route Tables",
+      supportsCreate: true,
+      supportsSync: true,
+    },
+    {
+      key: "enis",
+      title: "ENIs",
+      description: "Provision elastic network interfaces.",
+      tab: "ENIs",
+      supportsCreate: true,
+      supportsSync: true,
+    },
+    {
+      key: "eips",
+      title: "EIPs",
+      description: "Allocate and manage elastic IP addresses.",
+      tab: "EIPs",
+      supportsCreate: true,
+      supportsSync: true,
+    },
+    {
+      key: "edge",
+      title: "Configure Edge Network",
+      description: "Refresh edge network assignments.",
+      tab: null,
+      supportsCreate: false,
+      supportsSync: true,
+    },
+  ];
+
+  const triggerInfraAction = (resource, type, tab) => {
+    if (activeTopLevelTab !== "Infrastructure") {
+      setActiveTopLevelTab("Infrastructure");
+    }
+
+    if (resource === "edge") {
+      setEdgeRefreshSignal((prev) => prev + 1);
+      return;
+    }
+    if (tab) {
+      setActiveInfraTab(tab);
+    }
+
+    infraActionTokenRef.current += 1;
+    setInfraActionRequest({
+      resource,
+      type,
+      token: infraActionTokenRef.current,
+    });
+  };
+
+  const handleInfraActionHandled = (action) => {
+    setInfraActionRequest((prev) =>
+      prev && prev.token === action.token ? null : prev
+    );
+  };
+
+  const handleInfraStatsUpdate = (resource, count) => {
+    if (!resource) {
+      return;
+    }
+    setInfraCounts((prev) =>
+      prev[resource] === count ? prev : { ...prev, [resource]: count }
+    );
+  };
+
+  const extractCount = (result) => {
+    if (!result) return 0;
+    if (Array.isArray(result)) return result.length;
+    if (Array.isArray(result.data)) return result.data.length;
+    if (Array.isArray(result.items)) return result.items.length;
+    return 0;
+  };
+
+  useEffect(() => {
+    if (!projectEnabled) return;
+    handleInfraStatsUpdate("vpcs", extractCount(quickVpcs));
+  }, [quickVpcs, projectEnabled]);
+
+  useEffect(() => {
+    if (!regionEnabled) return;
+    handleInfraStatsUpdate("keyPairs", extractCount(quickKeyPairs));
+  }, [quickKeyPairs, regionEnabled]);
+
+  useEffect(() => {
+    if (!regionEnabled) return;
+    handleInfraStatsUpdate(
+      "securityGroups",
+      extractCount(quickSecurityGroups)
+    );
+  }, [quickSecurityGroups, regionEnabled]);
+
+  useEffect(() => {
+    if (!regionEnabled) return;
+    handleInfraStatsUpdate("subnets", extractCount(quickSubnets));
+  }, [quickSubnets, regionEnabled]);
+
+  useEffect(() => {
+    if (!regionEnabled) return;
+    handleInfraStatsUpdate("igws", extractCount(quickIgws));
+  }, [quickIgws, regionEnabled]);
+
+  useEffect(() => {
+    if (!regionEnabled) return;
+    handleInfraStatsUpdate("routeTables", extractCount(quickRouteTables));
+  }, [quickRouteTables, regionEnabled]);
+
+  useEffect(() => {
+    if (!regionEnabled) return;
+    handleInfraStatsUpdate("enis", extractCount(quickEnis));
+  }, [quickEnis, regionEnabled]);
+
+  useEffect(() => {
+    if (!regionEnabled) return;
+    handleInfraStatsUpdate("eips", extractCount(quickEips));
+  }, [quickEips, regionEnabled]);
 
   const {
     data: projectDetails,
     isFetching: isProjectFetching,
     error: projectError,
   } = useFetchProjectById(projectId);
+
+  const projectRegion = projectDetails?.default_region || projectDetails?.region;
+  const projectEnabled = !!projectId;
+  const regionEnabled = projectEnabled && !!projectRegion;
+
+  const { data: quickVpcs } = useFetchTenantVpcs(projectId, projectRegion, {
+    enabled: projectEnabled,
+  });
+  const { data: quickKeyPairs } = useFetchTenantKeyPairs(projectId, projectRegion, {
+    enabled: regionEnabled,
+  });
+  const { data: quickSecurityGroups } = useFetchTenantSecurityGroups(
+    projectId,
+    projectRegion,
+    { enabled: regionEnabled }
+  );
+  const { data: quickSubnets } = useFetchTenantSubnets(projectId, projectRegion, {
+    enabled: regionEnabled,
+  });
+  const { data: quickIgws } = useFetchTenantInternetGateways(
+    projectId,
+    projectRegion,
+    { enabled: regionEnabled }
+  );
+  const { data: quickRouteTables } = useFetchTenantRouteTables(
+    projectId,
+    projectRegion,
+    { enabled: regionEnabled }
+  );
+  const { data: quickEnis } = useFetchTenantNetworkInterfaces(
+    projectId,
+    projectRegion,
+    { enabled: regionEnabled }
+  );
+  const { data: quickEips } = useFetchTenantElasticIps(projectId, projectRegion, {
+    enabled: regionEnabled,
+  });
 
   // Update local instances state when projectDetails changes
   useEffect(() => {
@@ -131,14 +334,14 @@ export default function ProjectDetails() {
 
   // Array of menu items and their corresponding components
   const infraMenuItems = [
-    { name: "VPCs", component: VPCs },
-    { name: "Key Pairs", component: KeyPairs },
-    { name: "SGs", component: SecurityGroup },
-    { name: "Subnets", component: Subnets },
-    { name: "IGWs", component: IGWs },
-    { name: "Route Tables", component: RouteTables },
-    { name: "ENIs", component: ENIs },
-    { name: "EIPs", component: EIPs },
+    { name: "VPCs", component: VPCs, resourceKey: "vpcs" },
+    { name: "Key Pairs", component: KeyPairs, resourceKey: "keyPairs" },
+    { name: "SGs", component: SecurityGroup, resourceKey: "securityGroups" },
+    { name: "Subnets", component: Subnets, resourceKey: "subnets" },
+    { name: "IGWs", component: IGWs, resourceKey: "igws" },
+    { name: "Route Tables", component: RouteTables, resourceKey: "routeTables" },
+    { name: "ENIs", component: ENIs, resourceKey: "enis" },
+    { name: "EIPs", component: EIPs, resourceKey: "eips" },
   ];
 
 
@@ -186,9 +389,10 @@ export default function ProjectDetails() {
   }
 
   // Determine which sub-component to render for the Infra tab
-  const ActiveInfraComponent = infraMenuItems.find(
+  const activeInfraDef = infraMenuItems.find(
     (item) => item.name === activeInfraTab
-  )?.component;
+  );
+  const ActiveInfraComponent = activeInfraDef?.component;
 
   return (
     <>
@@ -257,7 +461,75 @@ export default function ProjectDetails() {
         </div>
 
         {/* Edge Config Panel (Tenant view) */}
-        <EdgeConfigPanel projectId={projectId} region={projectDetails.default_region} />
+        <EdgeConfigPanel
+          projectId={projectId}
+          region={projectDetails.default_region}
+          refreshSignal={edgeRefreshSignal}
+        />
+
+        {/* Quick Infrastructure Actions */}
+        {activeTopLevelTab === "Infrastructure" && (
+          <div className="bg-white rounded-[12px] p-6 shadow-sm mb-6">
+            <h3 className="text-lg font-semibold text-[#575758] mb-4">
+              Infrastructure Actions
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {infraQuickActions.map((item) => {
+                const count = infraCounts[item.key] ?? 0;
+                const hasItems = count > 0;
+
+                return (
+                  <div
+                    key={item.key}
+                    className="border border-gray-200 rounded-[12px] p-4 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="font-semibold text-gray-800">
+                          {item.title}
+                        </h4>
+                        {item.key !== "edge" && (
+                          <span
+                            className={`text-xs font-medium px-2 py-0.5 rounded-full ${hasItems ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600"}`}
+                          >
+                            {hasItems
+                              ? `${count} item${count === 1 ? "" : "s"}`
+                              : "Empty"}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {item.description}
+                      </p>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {item.supportsCreate && (
+                        <button
+                          onClick={() =>
+                            triggerInfraAction(item.key, "create", item.tab)
+                          }
+                          className="px-3 py-2 rounded-full border border-[#288DD1] text-[#288DD1] hover:bg-[#E6F2FA] transition-colors text-sm"
+                        >
+                          Create
+                        </button>
+                      )}
+                      {item.supportsSync && (
+                        <button
+                          onClick={() =>
+                            triggerInfraAction(item.key, "sync", item.tab)
+                          }
+                          className="px-3 py-2 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors text-sm"
+                        >
+                          Sync
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
 
         {/* Top-Level Tab Navigation: Instances and Infrastructure */}
@@ -510,6 +782,11 @@ export default function ProjectDetails() {
                 <ActiveInfraComponent
                   projectId={projectId}
                   region={projectDetails.default_region}
+                  actionRequest={infraActionRequest}
+                  onActionHandled={handleInfraActionHandled}
+                  onStatsUpdate={(count) =>
+                    handleInfraStatsUpdate(activeInfraDef?.resourceKey, count)
+                  }
                 />
               )}
             </div>

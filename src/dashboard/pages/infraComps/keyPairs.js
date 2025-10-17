@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Trash2, X, Loader2 } from "lucide-react";
 import {
   useDeleteTenantKeyPair,
@@ -9,7 +9,13 @@ import AddKeyTenantPair from "../keyPairComps/addKeyPair";
 import DeleteKeyPairModal from "../keyPairComps/deleteKeyPair";
 import ToastUtils from "../../../utils/toastUtil";
 
-const KeyPairs = ({ projectId = "", region = "" }) => {
+const KeyPairs = ({
+  projectId = "",
+  region = "",
+  actionRequest,
+  onActionHandled,
+  onStatsUpdate,
+}) => {
   const { data: keyPairs, isFetching } = useFetchTenantKeyPairs(
     projectId,
     region
@@ -84,6 +90,38 @@ const KeyPairs = ({ projectId = "", region = "" }) => {
       }
     );
   };
+
+  const lastActionToken = useRef(null);
+  const lastCountRef = useRef(-1);
+
+  useEffect(() => {
+    if (!isFetching) {
+      const count = Array.isArray(keyPairs) ? keyPairs.length : 0;
+      if (lastCountRef.current !== count) {
+        lastCountRef.current = count;
+        onStatsUpdate?.(count);
+      }
+    }
+  }, [isFetching, keyPairs, onStatsUpdate]);
+
+  useEffect(() => {
+    if (!actionRequest || actionRequest.resource !== "keyPairs") {
+      return;
+    }
+    if (lastActionToken.current === actionRequest.token) {
+      return;
+    }
+    lastActionToken.current = actionRequest.token;
+
+    if (actionRequest.type === "sync") {
+      handleSync();
+    } else if (actionRequest.type === "create") {
+      openCreateModal();
+    }
+
+    onActionHandled?.(actionRequest);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actionRequest]);
 
   if (isFetching) {
     return (

@@ -70,6 +70,7 @@ export default function AdminProjectDetails() {
   const project = projectStatusData?.project;
   const summary = project?.summary ?? [];
   const resolvedProjectId = project?.identifier || projectId;
+  const tenantAdminMissingUsers = project?.users?.tenant_admin_missing ?? [];
 
   const normalizeSummaryKey = (value = "") =>
     value.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -123,6 +124,30 @@ export default function AdminProjectDetails() {
     } catch (error) {
       console.error('Action failed:', error);
       ToastUtils.error(error?.message || 'Action failed');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleAssignTenantAdmins = async () => {
+    if (!tenantAdminMissingUsers.length || actionLoading) {
+      return;
+    }
+
+    try {
+      setActionLoading("tenant_admin_bulk");
+      for (const entry of tenantAdminMissingUsers) {
+        const method = (entry.method || "POST").toUpperCase();
+        if (!entry.assign_endpoint) {
+          continue;
+        }
+        await api(method, entry.assign_endpoint, entry.assign_payload || null);
+      }
+      ToastUtils.success("Tenant admin role assigned to missing users");
+      await refetchProjectStatus();
+    } catch (error) {
+      console.error("Bulk tenant admin assignment failed:", error);
+      ToastUtils.error(error?.message || "Failed to assign tenant admin role");
     } finally {
       setActionLoading(null);
     }
@@ -339,6 +364,13 @@ export default function AdminProjectDetails() {
                   const isComplete = item?.completed ?? item?.complete ?? false;
                   const actionKey = `action-${index}`;
                   const isThisActionLoading = actionLoading === actionKey;
+                  const normalizedTitle = normalizeSummaryKey(item?.title || "");
+                  const tenantAdminSummaryKey = normalizeSummaryKey("Tenant Admin Role Assigned");
+                  const showBulkAssign =
+                    normalizedTitle === tenantAdminSummaryKey &&
+                    tenantAdminMissingUsers.length > 0;
+                  const isBulkLoading = actionLoading === "tenant_admin_bulk";
+
                   return (
                     <div
                       key={index}
@@ -373,6 +405,25 @@ export default function AdminProjectDetails() {
                           {isThisActionLoading && <Loader2 size={12} className="animate-spin" />}
                           {item.action.label}
                         </button>
+                      )}
+                      {!item.action && showBulkAssign && (
+                        <button
+                          className="px-3 py-1 rounded text-xs font-medium text-white transition-opacity flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{ backgroundColor: designTokens.colors.primary[600] }}
+                          onClick={handleAssignTenantAdmins}
+                          disabled={isBulkLoading}
+                        >
+                          {isBulkLoading && <Loader2 size={12} className="animate-spin" />}
+                          Assign Tenant Admin
+                        </button>
+                      )}
+                      {showBulkAssign && (
+                        <div className="ml-4 text-xs" style={{ color: designTokens.colors.neutral[500] }}>
+                          Needs elevation:&nbsp;
+                          {tenantAdminMissingUsers
+                            .map((entry) => entry.name || entry.identifier || entry.id)
+                            .join(", ")}
+                        </div>
                       )}
                     </div>
                   );

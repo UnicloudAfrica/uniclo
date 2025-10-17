@@ -24,7 +24,7 @@ class AdminRegionApiService {
   async fetchRegionApprovals(params = {}) {
     try {
       const queryString = new URLSearchParams(params).toString();
-      const url = `${config.baseURL}/admin/v1/region-approvals${queryString ? `?${queryString}` : ''}`;
+      const url = `${config.adminURL}/region-approvals${queryString ? `?${queryString}` : ''}`;
       
       const response = await fetch(url, {
         method: 'GET',
@@ -52,7 +52,7 @@ class AdminRegionApiService {
    */
   async fetchRegionApprovalById(id) {
     try {
-      const response = await fetch(`${config.baseURL}/admin/v1/region-approvals/${id}`, {
+      const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
         method: 'GET',
         headers: this.getAuthHeaders(),
       });
@@ -78,7 +78,7 @@ class AdminRegionApiService {
    */
   async approveRegion(id, approvalData = {}) {
     try {
-      const response = await fetch(`${config.baseURL}/admin/v1/region-approvals/${id}`, {
+      const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
         method: 'PATCH',
         headers: this.getAuthHeaders(),
         body: JSON.stringify({
@@ -110,7 +110,7 @@ class AdminRegionApiService {
    */
   async rejectRegion(id, reason) {
     try {
-      const response = await fetch(`${config.baseURL}/admin/v1/region-approvals/${id}`, {
+      const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
         method: 'PATCH',
         headers: this.getAuthHeaders(),
         body: JSON.stringify({
@@ -142,7 +142,7 @@ class AdminRegionApiService {
    */
   async suspendRegion(id, reason) {
     try {
-      const response = await fetch(`${config.baseURL}/admin/v1/region-approvals/${id}`, {
+      const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
         method: 'PATCH',
         headers: this.getAuthHeaders(),
         body: JSON.stringify({
@@ -174,7 +174,7 @@ class AdminRegionApiService {
    */
   async reactivateRegion(id) {
     try {
-      const response = await fetch(`${config.baseURL}/admin/v1/region-approvals/${id}`, {
+      const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
         method: 'PATCH',
         headers: this.getAuthHeaders(),
         body: JSON.stringify({
@@ -205,7 +205,7 @@ class AdminRegionApiService {
    */
   async updatePlatformFee(id, platformFeePercentage) {
     try {
-      const response = await fetch(`${config.baseURL}/admin/v1/region-approvals/${id}`, {
+      const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
         method: 'PATCH',
         headers: this.getAuthHeaders(),
         body: JSON.stringify({
@@ -237,7 +237,7 @@ class AdminRegionApiService {
    */
   async deleteRegion(id) {
     try {
-      const response = await fetch(`${config.baseURL}/admin/v1/region-approvals/${id}`, {
+      const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
         method: 'DELETE',
         headers: this.getAuthHeaders(),
       });

@@ -6,6 +6,7 @@
  */
 
 import config from '../config';
+import useMultiTenantAuthStore from '../stores/multiTenantAuthStore';
 import useAdminAuthStore from '../stores/adminAuthStore';
 import ToastUtils from '../utils/toastUtil';
 
@@ -14,7 +15,9 @@ class TenantRegionApiService {
    * Get the authorization headers
    */
   getAuthHeaders() {
-    const { token } = useAdminAuthStore.getState();
+    const tenantToken = useMultiTenantAuthStore.getState().token;
+    const adminToken = useAdminAuthStore.getState().token;
+    const token = tenantToken || adminToken;
     return {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
@@ -27,7 +30,7 @@ class TenantRegionApiService {
    */
   async fetchRegionRequests() {
     try {
-      const response = await fetch(`${config.baseURL}/tenant/v1/admin/region-requests`, {
+      const response = await fetch(`${config.tenantURL}/admin/region-requests`, {
         method: 'GET',
         headers: this.getAuthHeaders(),
       });
@@ -53,7 +56,7 @@ class TenantRegionApiService {
    */
   async createRegionRequest(regionData) {
     try {
-      const response = await fetch(`${config.baseURL}/tenant/v1/admin/region-requests`, {
+      const response = await fetch(`${config.tenantURL}/admin/region-requests`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
         body: JSON.stringify(regionData),
@@ -82,7 +85,7 @@ class TenantRegionApiService {
    */
   async fetchRegionRequestById(id) {
     try {
-      const response = await fetch(`${config.baseURL}/tenant/v1/admin/region-requests/${id}`, {
+      const response = await fetch(`${config.tenantURL}/admin/region-requests/${id}`, {
         method: 'GET',
         headers: this.getAuthHeaders(),
       });
@@ -108,7 +111,7 @@ class TenantRegionApiService {
    */
   async updateFulfillmentMode(id, mode) {
     try {
-      const response = await fetch(`${config.baseURL}/tenant/v1/admin/region-requests/${id}`, {
+      const response = await fetch(`${config.tenantURL}/admin/region-requests/${id}`, {
         method: 'PATCH',
         headers: this.getAuthHeaders(),
         body: JSON.stringify({ fulfillment_mode: mode }),
@@ -137,7 +140,7 @@ class TenantRegionApiService {
    */
   async cancelRegionRequest(id) {
     try {
-      const response = await fetch(`${config.baseURL}/tenant/v1/admin/region-requests/${id}`, {
+      const response = await fetch(`${config.tenantURL}/admin/region-requests/${id}`, {
         method: 'DELETE',
         headers: this.getAuthHeaders(),
       });
@@ -165,7 +168,7 @@ class TenantRegionApiService {
    */
   async verifyCredentials(regionId, credentials) {
     try {
-      const response = await fetch(`${config.baseURL}/tenant/v1/admin/region-requests/${regionId}/verify-credentials`, {
+      const response = await fetch(`${config.tenantURL}/admin/region-requests/${regionId}/verify-credentials`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
         body: JSON.stringify(credentials),
@@ -195,7 +198,7 @@ class TenantRegionApiService {
   async fetchRevenueShares(params = {}) {
     try {
       const queryString = new URLSearchParams(params).toString();
-      const url = `${config.baseURL}/tenant/v1/admin/revenue-shares${queryString ? `?${queryString}` : ''}`;
+      const url = `${config.tenantURL}/admin/revenue-shares${queryString ? `?${queryString}` : ''}`;
       
       const response = await fetch(url, {
         method: 'GET',
@@ -226,7 +229,7 @@ class TenantRegionApiService {
   async fetchRevenueStats(params = {}) {
     try {
       const queryString = new URLSearchParams(params).toString();
-      const url = `${config.baseURL}/tenant/v1/admin/revenue-shares-stats${queryString ? `?${queryString}` : ''}`;
+      const url = `${config.tenantURL}/admin/revenue-shares-stats${queryString ? `?${queryString}` : ''}`;
       
       const response = await fetch(url, {
         method: 'GET',
@@ -255,7 +258,7 @@ class TenantRegionApiService {
   async exportRevenueShares(params = {}) {
     try {
       const queryString = new URLSearchParams(params).toString();
-      const url = `${config.baseURL}/tenant/v1/admin/revenue-shares-export${queryString ? `?${queryString}` : ''}`;
+      const url = `${config.tenantURL}/admin/revenue-shares-export${queryString ? `?${queryString}` : ''}`;
       
       const response = await fetch(url, {
         method: 'GET',

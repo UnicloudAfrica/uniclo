@@ -74,7 +74,9 @@ export default function AdminProjectDetails() {
     data: infraStatusData,
   } = useProjectInfrastructureStatus(projectId, { enabled: Boolean(projectId) });
 
-  const vpcComponent = infraStatusData?.data?.components?.vpc;
+  const infrastructureComponents = infraStatusData?.data?.components;
+  const vpcComponent = infrastructureComponents?.vpc;
+  const keypairComponent = infrastructureComponents?.keypairs ?? infrastructureComponents?.keypair;
 
   const project = projectStatusData?.project;
   const summary = project?.summary ?? [];
@@ -332,7 +334,29 @@ export default function AdminProjectDetails() {
           return summaryFlag ?? false;
         }
       case "keypairs":
-        return summaryCompleted("keypair", "keypairs", "createkeypair") ?? false;
+        {
+          const summaryFlag = summaryCompleted("keypair", "keypairs", "createkeypair");
+
+          if (summaryFlag === true) {
+            return true;
+          }
+
+          if (keypairComponent) {
+            if (keypairComponent.status === "completed") {
+              return true;
+            }
+
+            if (Array.isArray(keypairComponent.details) && keypairComponent.details.length > 0) {
+              return true;
+            }
+
+            if (typeof keypairComponent.count === "number" && keypairComponent.count > 0) {
+              return true;
+            }
+          }
+
+          return summaryFlag ?? false;
+        }
       case "edge":
         return summaryCompleted(
           "edgenetwork",

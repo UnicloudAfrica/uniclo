@@ -9,7 +9,6 @@ import AddSubnet from "../subnetComps/addSubnet";
 import DeleteSubnetModal from "../subnetComps/deleteSubnet";
 import ViewSubnetModal from "../subnetComps/viewSubnet";
 import ToastUtils from "../../../utils/toastUtil";
-import ToastUtils from "../../../utils/toastUtil";
 
 const Badge = ({ text }) => {
   const badgeClasses = {

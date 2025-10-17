@@ -18,6 +18,19 @@ const convertBackendResponse = (backendData) => {
         details: null,
         error: null
       },
+      keypairs: {
+        status: (() => {
+          const kp = infrastructure.keypairs;
+          if (!kp) return 'pending';
+          if (kp.status === 'configured' || (typeof kp.count === 'number' && kp.count > 0) || (Array.isArray(kp.details) && kp.details.length > 0)) {
+            return 'completed';
+          }
+          return kp.ready_for_setup ? 'pending' : 'pending';
+        })(),
+        details: infrastructure.keypairs?.details || null,
+        count: infrastructure.keypairs?.count ?? null,
+        error: null
+      },
       vpc: {
         status: infrastructure.vpc?.status === 'configured' ? 'completed' : 
                 infrastructure.vpc?.status === 'ready' ? 'pending' : 'pending',

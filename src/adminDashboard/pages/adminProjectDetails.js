@@ -20,6 +20,7 @@ import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import ModernCard from "../components/ModernCard";
 import { useProjectStatus } from "../../hooks/adminHooks/projectHooks";
+import { useProjectInfrastructureStatus } from "../../hooks/adminHooks/projectInfrastructureHooks";
 import KeyPairs from "./infraComps/keyPairs";
 import SecurityGroup from "./infraComps/securityGroup";
 import VPCs from "./infraComps/vpcs";
@@ -68,6 +69,12 @@ export default function AdminProjectDetails() {
     isFetching: isProjectStatusFetching,
     refetch: refetchProjectStatus,
   } = useProjectStatus(projectId);
+
+  const {
+    data: infraStatusData,
+  } = useProjectInfrastructureStatus(projectId, { enabled: Boolean(projectId) });
+
+  const vpcComponent = infraStatusData?.data?.components?.vpc;
 
   const project = projectStatusData?.project;
   const summary = project?.summary ?? [];
@@ -296,12 +303,34 @@ export default function AdminProjectDetails() {
       case "setup":
         return areAllSummaryItemsComplete;
       case "vpcs":
-        return summaryCompleted(
-          "vpc",
-          "vpcs",
-          "virtualprivatecloud",
-          "vpcprovisioned"
-        ) ?? false;
+        {
+          const summaryFlag = summaryCompleted(
+            "vpc",
+            "vpcs",
+            "virtualprivatecloud",
+            "vpcprovisioned"
+          );
+
+          if (summaryFlag === true) {
+            return true;
+          }
+
+          if (project?.vpc_enabled) {
+            return true;
+          }
+
+          if (vpcComponent) {
+            if (vpcComponent.status === "completed") {
+              return true;
+            }
+
+            if (Array.isArray(vpcComponent.details) && vpcComponent.details.length > 0) {
+              return true;
+            }
+          }
+
+          return summaryFlag ?? false;
+        }
       case "keypairs":
         return summaryCompleted("keypair", "keypairs", "createkeypair") ?? false;
       case "edge":
@@ -347,11 +376,6 @@ export default function AdminProjectDetails() {
         return false;
     }
   };
-
-  const renderSectionContent = () => {
-    switch (activeSection) {
-      case "setup":
-        return (
           <div className="space-y-4">
             <h3 className="text-xl font-semibold" style={{ color: designTokens.colors.neutral[900] }}>
               Project Setup

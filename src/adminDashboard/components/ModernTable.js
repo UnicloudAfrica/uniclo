@@ -137,8 +137,7 @@ const ModernTable = ({
     container: {
       backgroundColor: designTokens.colors.neutral[0],
       borderRadius: designTokens.borderRadius.xl,
-      border: `1px solid ${designTokens.colors.neutral[200]}`,
-      boxShadow: designTokens.shadows.sm,
+      boxShadow: 'rgba(0, 0, 0, 0.06) 0px 1px 2px 0px',
       overflow: 'hidden',
       opacity: !enableAnimations || tableLoaded || isInView ? 1 : 0,
       transform: !enableAnimations || tableLoaded || isInView ? 'translateY(0)' : 'translateY(20px)',

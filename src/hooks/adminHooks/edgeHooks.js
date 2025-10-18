@@ -22,6 +22,20 @@ const fetchProjectEdgeConfigAdmin = async (projectId, region, refresh = false) =
 };
 
 // Admin: list available edge networks (optionally scoped by project)
+const normalizeCollection = (payload) => {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload.items)) return payload.items;
+  if (Array.isArray(payload.edge_networks)) return payload.edge_networks;
+  if (Array.isArray(payload.edge_network_ip_pools)) return payload.edge_network_ip_pools;
+  if (Array.isArray(payload.pools)) return payload.pools;
+  if (Array.isArray(payload.data)) return payload.data;
+  if (payload.data) {
+    return normalizeCollection(payload.data);
+  }
+  return [];
+};
+
 const fetchEdgeNetworks = async ({ project_id, region }) => {
   const params = new URLSearchParams();
   if (project_id) params.append("project_id", project_id);
@@ -30,7 +44,7 @@ const fetchEdgeNetworks = async ({ project_id, region }) => {
     "GET",
     `/business/edge-networks${params.toString() ? `?${params}` : ""}`
   );
-  return res?.data ?? res;
+  return normalizeCollection(res);
 };
 
 // Admin: list available IP pools (optionally scoped by project)
@@ -43,7 +57,7 @@ const fetchIpPools = async ({ project_id, region, edge_network_id }) => {
     "GET",
     `/business/edge-ip-pools${params.toString() ? `?${params}` : ""}`
   );
-  return res?.data ?? res;
+  return normalizeCollection(res);
 };
 
 // Admin: assign or update edge config for a project

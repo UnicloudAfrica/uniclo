@@ -26,17 +26,38 @@
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-/* Button press animation */
+/* Button styling and micro-interactions */
 .modern-button {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: var(--btn-border, 1px solid transparent);
+  background-color: var(--btn-bg, transparent);
+  color: var(--btn-color, inherit);
+  box-shadow: var(--btn-shadow, none);
 }
 
-.modern-button:active {
-  transform: scale(0.95);
+.modern-button:disabled {
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
 }
 
-.modern-button:hover {
+.modern-button:not(:disabled):hover {
+  background-color: var(--btn-hover-bg, var(--btn-bg, transparent));
+  color: var(--btn-hover-color, var(--btn-color, inherit));
+  border: var(--btn-hover-border, var(--btn-border, 1px solid transparent));
+  box-shadow: var(--btn-hover-shadow, var(--btn-shadow, none));
   transform: translateY(-1px);
+}
+
+.modern-button:not(:disabled):active {
+  background-color: var(--btn-active-bg, var(--btn-hover-bg, var(--btn-bg, transparent)));
+  border: var(--btn-active-border, var(--btn-hover-border, var(--btn-border, 1px solid transparent)));
+  transform: scale(0.97);
+}
+
+.modern-button:focus-visible {
+  outline: 2px solid rgba(8, 145, 178, 0.35);
+  outline-offset: 2px;
 }
 
 /* Loading spinner */

@@ -77,6 +77,7 @@ export default function AdminProjectDetails() {
   const infrastructureComponents = infraStatusData?.data?.components;
   const vpcComponent = infrastructureComponents?.vpc;
   const keypairComponent = infrastructureComponents?.keypairs ?? infrastructureComponents?.keypair;
+  const edgeComponent = infrastructureComponents?.edge_networks ?? infrastructureComponents?.edge;
 
   const project = projectStatusData?.project;
   const summary = project?.summary ?? [];
@@ -358,11 +359,39 @@ export default function AdminProjectDetails() {
           return summaryFlag ?? false;
         }
       case "edge":
-        return summaryCompleted(
-          "edgenetwork",
-          "edge network",
-          "edge"
-        ) ?? false;
+        {
+          const summaryFlag = summaryCompleted(
+            "edgenetwork",
+            "edge network",
+            "edge"
+          );
+
+          if (summaryFlag === true) {
+            return true;
+          }
+
+          if (edgeComponent) {
+            if (edgeComponent.status === "completed") {
+              return true;
+            }
+
+            const details = edgeComponent.details;
+            if (details) {
+              if (Array.isArray(details) && details.length > 0) {
+                return true;
+              }
+              if (!Array.isArray(details) && Object.keys(details).length > 0) {
+                return true;
+              }
+            }
+
+            if (typeof edgeComponent.count === "number" && edgeComponent.count > 0) {
+              return true;
+            }
+          }
+
+          return summaryFlag ?? false;
+        }
       case "security-groups":
         return summaryCompleted(
           "securitygroup",

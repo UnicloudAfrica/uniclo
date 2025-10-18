@@ -11,7 +11,8 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        Outfit: ['Outfit', 'sans'],
+        sans: ['Outfit', 'Inter', 'SF Pro Display', 'system-ui', 'sans-serif'],
+        outfit: ['Outfit', 'sans-serif'],
       },
       colors: {
         primary: {
@@ -44,4 +45,3 @@ module.exports = {
     })
   ],
 }
-

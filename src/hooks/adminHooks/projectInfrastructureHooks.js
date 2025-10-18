@@ -9,6 +9,42 @@ const convertBackendResponse = (backendData) => {
   // Convert backend format to frontend expected format
   const infrastructure = backendData.infrastructure || {};
   
+  const normalizeDetails = (component) => {
+    if (!component || !component.details) {
+      return null;
+    }
+
+    if (Array.isArray(component.details)) {
+      return component.details;
+    }
+
+    if (typeof component.details === 'object') {
+      return [component.details];
+    }
+
+    return null;
+  };
+
+  const normalizeStatus = (component) => {
+    if (!component) return 'pending';
+    const status = component.status;
+    if (status === 'configured' || status === 'completed') {
+      return 'completed';
+    }
+    if (status === 'ready') {
+      const details = normalizeDetails(component);
+      if ((details && details.length > 0) || (typeof component.count === 'number' && component.count > 0)) {
+        return 'completed';
+      }
+      return component.ready_for_setup ? 'pending' : 'pending';
+    }
+    const details = normalizeDetails(component);
+    if ((details && details.length > 0) || (typeof component.count === 'number' && component.count > 0)) {
+      return 'completed';
+    }
+    return component.ready_for_setup ? 'pending' : 'pending';
+  };
+
   return {
     project_id: backendData.project?.identifier,
     overall_status: backendData.project?.status || 'pending',
@@ -22,37 +58,38 @@ const convertBackendResponse = (backendData) => {
         status: (() => {
           const kp = infrastructure.keypairs;
           if (!kp) return 'pending';
-          if (kp.status === 'configured' || (typeof kp.count === 'number' && kp.count > 0) || (Array.isArray(kp.details) && kp.details.length > 0)) {
-            return 'completed';
-          }
+          if (kp.status === 'configured' || kp.status === 'completed') return 'completed';
+          if (typeof kp.count === 'number' && kp.count > 0) return 'completed';
+          const details = normalizeDetails(kp);
+          if (details && details.length > 0) return 'completed';
           return kp.ready_for_setup ? 'pending' : 'pending';
         })(),
-        details: infrastructure.keypairs?.details || null,
+        details: normalizeDetails(infrastructure.keypairs),
         count: infrastructure.keypairs?.count ?? null,
         error: null
       },
       vpc: {
-        status: infrastructure.vpc?.status === 'configured' ? 'completed' : 
-                infrastructure.vpc?.status === 'ready' ? 'pending' : 'pending',
-        details: infrastructure.vpc?.details || null,
+        status: normalizeStatus(infrastructure.vpc),
+        details: normalizeDetails(infrastructure.vpc),
+        count: infrastructure.vpc?.count ?? null,
         error: null
       },
       edge_networks: {
-        status: infrastructure.edge_networks?.status === 'configured' ? 'completed' :
-                infrastructure.edge_networks?.ready_for_setup ? 'pending' : 'pending',
-        details: infrastructure.edge_networks?.details || null,
+        status: normalizeStatus(infrastructure.edge_networks),
+        details: normalizeDetails(infrastructure.edge_networks),
+        count: infrastructure.edge_networks?.count ?? null,
         error: null
       },
       security_groups: {
-        status: infrastructure.security_groups?.status === 'configured' ? 'completed' :
-                infrastructure.security_groups?.ready_for_setup ? 'pending' : 'pending',
-        details: infrastructure.security_groups?.details || null,
+        status: normalizeStatus(infrastructure.security_groups),
+        details: normalizeDetails(infrastructure.security_groups),
+        count: infrastructure.security_groups?.count ?? null,
         error: null
       },
       subnets: {
-        status: infrastructure.subnets?.status === 'configured' ? 'completed' :
-                infrastructure.subnets?.ready_for_setup ? 'pending' : 'pending',
-        details: infrastructure.subnets?.details || null,
+        status: normalizeStatus(infrastructure.subnets),
+        details: normalizeDetails(infrastructure.subnets),
+        count: infrastructure.subnets?.count ?? null,
         error: null
       }
     },

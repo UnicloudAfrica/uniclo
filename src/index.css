@@ -24,6 +24,13 @@
 body {
   background-color: #fff;
 }
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
 /* menu  */
 
 /* Target sonner toasts */
@@ -51,6 +58,15 @@ body {
 }
 :root {
   --bar-bg: #121212;
+  font-family: "Outfit", "Inter", "SF Pro Display", system-ui, sans-serif;
+}
+
+html,
+body {
+  font-family: "Outfit", "Inter", "SF Pro Display", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 .menu-icon {
   position: relative;

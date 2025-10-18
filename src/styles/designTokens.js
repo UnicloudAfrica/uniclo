@@ -103,7 +103,7 @@ export const designTokens = {
   // ==================== TYPOGRAPHY ====================
   typography: {
     fontFamily: {
-      sans: ['Inter', 'SF Pro Display', 'system-ui', 'sans-serif'],
+      sans: ['Outfit', 'Inter', 'SF Pro Display', 'system-ui', 'sans-serif'],
       mono: ['JetBrains Mono', 'Monaco', 'Menlo', 'monospace']
     },
     

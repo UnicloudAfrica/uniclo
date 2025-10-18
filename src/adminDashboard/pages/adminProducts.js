@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Loader2,
   ChevronDown,
@@ -27,7 +28,6 @@ import {
   useUpdateProduct,
   useDeleteProduct,
 } from "../../hooks/adminHooks/adminProductHooks";
-import AddProduct from "./productComps/addProduct";
 import EditProduct from "./productComps/editProduct";
 import DeleteProduct from "./productComps/deleteProduct";
 import useAuthRedirect from "../../utils/adminAuthRedirect";
@@ -39,10 +39,10 @@ export default function AdminProducts() {
   const [selectedRegion, setSelectedRegion] = useState("");
   const [selectedCountryCode, setSelectedCountryCode] = useState("");
   const [selectedProvider, setSelectedProvider] = useState("");
-  const [isAddProductOpen, setAddProduct] = useState(false);
   const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const navigate = useNavigate();
   const { isLoading } = useAuthRedirect();
   const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
   const { isFetching: isCountriesFetching, data: countries } =
@@ -59,9 +59,6 @@ export default function AdminProducts() {
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
-  const openAddProduct = () => setAddProduct(true);
-  const closeAddProduct = () => setAddProduct(false);
-
   const openEditModal = (item) => {
     if (item && typeof item === "object" && item.id && item.name) {
       setSelectedProduct(item);
@@ -266,7 +263,7 @@ export default function AdminProducts() {
               </p>
             </div>
             <ModernButton
-              onClick={openAddProduct}
+              onClick={() => navigate("/admin-dashboard/products/add")}
               className="flex items-center gap-2"
             >
               <Plus size={18} />
@@ -437,7 +434,6 @@ export default function AdminProducts() {
         </div>
       </main>
 
-      <AddProduct isOpen={isAddProductOpen} onClose={closeAddProduct} />
       {isEditModalOpen && selectedProduct && selectedProduct.id && (
         <EditProduct
           isOpen={isEditModalOpen}

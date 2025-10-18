@@ -80,6 +80,7 @@ import AdminRegion from "./adminDashboard/pages/adminRegion";
 import AdminKeyPairs from "./adminDashboard/pages/adminKeyPairs";
 import AdminPricing from "./adminDashboard/pages/adminPricing";
 import AdminProducts from "./adminDashboard/pages/adminProducts";
+import AdminProductCreate from "./adminDashboard/pages/AdminProductCreate";
 import AdminColocation from "./adminDashboard/pages/adminColocation";
 import AddInstancePage from "./dashboard/pages/addInstance";
 // import AdminQuoteCalculator from "./adminDashboard/pages/AdminQuoteCalculator";
@@ -249,6 +250,7 @@ function App() {
           />
           <Route path="/admin-dashboard/payment" element={<AdminPayment />} />
           <Route path="/admin-dashboard/products" element={<AdminProducts />} />
+          <Route path="/admin-dashboard/products/add" element={<AdminProductCreate />} />
           <Route
             path="/admin-dashboard/colocation"
             element={<AdminColocation />}

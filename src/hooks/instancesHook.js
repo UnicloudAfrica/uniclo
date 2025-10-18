@@ -56,7 +56,7 @@ const fetchPurchasedInstances = async (params = {}) => {
   if (!res.data) {
     throw new Error("Failed to fetch instance requests");
   }
-  // Emulate purchased-instances behavior by filtering out pending_payment
+  // Emulate instances behavior by filtering out pending_payment
   const filtered = { ...res, data: (res.data || []).filter((it) => it.status !== "pending_payment") };
   return filtered;
 };

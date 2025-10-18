@@ -8,7 +8,7 @@ const ActiveTab = () => {
   const pathMap = {
     dashboard: "Home",
     modules: "Modules",
-    "purchased-instances": "Purchased Instances",
+    "instances": "Purchased Instances",
     clients: "Clients",
     "payment-history": "Payment History",
     "support-ticket": "Support Ticket",
@@ -55,11 +55,10 @@ const ActiveTab = () => {
         <div key={index} className="flex items-center">
           {index > 0 && <ChevronRight className="text-[#1C1C1C80] mx-2 w-4" />}
           <button
-            className={`font-Outfit text-sm ${
-              index === breadcrumbItems.length - 1
+            className={`font-Outfit text-sm ${index === breadcrumbItems.length - 1
                 ? "text-[#288DD1] font-medium"
                 : "text-[#288DD1]/50 font-normal"
-            }`}
+              }`}
             onClick={() => (window.location.href = item.path)} // Basic navigation (replace with useNavigate if needed)
           >
             {item.name}

@@ -49,7 +49,7 @@ const fetchPurchasedInstances = async (params = {}) => {
     .join("&");
 
   // Construct the URI with the query string
-  const uri = `/purchased-instances${queryString ? `?${queryString}` : ""}`;
+  const uri = `/instances${queryString ? `?${queryString}` : ""}`;
 
   const res = await silentApi("GET", uri);
   if (!res.data) {

@@ -182,7 +182,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/modules" element={<Modules />} />
           <Route
-            path="/dashboard/purchased-instances"
+            path="/dashboard/instances"
             element={<PurchasedModules />}
           />
           <Route path="/dashboard/clients" element={<Clients />} />
@@ -198,11 +198,11 @@ function App() {
           <Route path="/dashboard/instances" element={<Instances />} />
           <Route path="/dashboard/quotes" element={<TenantQuotes />} />
           <Route path="/dashboard/add-instance" element={<AddInstancePage />} />
-          
+
           {/* Tenant Leads Routes */}
           <Route path="/tenant-dashboard/leads" element={<TenantLeads />} />
           <Route path="/tenant-dashboard/leads/details" element={<TenantLeadDetails />} />
-          
+
           {/* Tenant Region Marketplace Routes */}
           <Route path="/tenant-dashboard/region-requests" element={<RegionRequests />} />
           <Route path="/tenant-dashboard/region-requests/new" element={<NewRegionRequest />} />

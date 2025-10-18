@@ -75,19 +75,19 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     },
     ...(projects.length > 0
       ? [
-          {
-            name: "Instances",
-            icon: clients,
-            activeIcon: activeClients,
-            path: "/dashboard/instances",
-          },
-          {
-            name: "Purchased Instances",
-            icon: purchasedModules,
-            activeIcon: activePurchasedModules,
-            path: "/dashboard/purchased-instances",
-          },
-        ]
+        {
+          name: "Instances",
+          icon: clients,
+          activeIcon: activeClients,
+          path: "/dashboard/instances",
+        },
+        {
+          name: "Purchased Instances",
+          icon: purchasedModules,
+          activeIcon: activePurchasedModules,
+          path: "/dashboard/instances",
+        },
+      ]
       : []),
 
     {
@@ -180,9 +180,8 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       <li key={item.name} className={isBottom ? "mt-auto" : ""}>
         <button
           onClick={() => handleItemClick(item.name, item.path)}
-          className={`w-full flex items-center py-2 px-3.5 space-x-2 text-left transition-all duration-200 hover:bg-gray-50 ${
-            isActive ? "text-[#1C1C1C]" : "text-[#676767] hover:text-[#1C1C1C]"
-          }`}
+          className={`w-full flex items-center py-2 px-3.5 space-x-2 text-left transition-all duration-200 hover:bg-gray-50 ${isActive ? "text-[#1C1C1C]" : "text-[#676767] hover:text-[#1C1C1C]"
+            }`}
         >
           <div className="relative flex items-center justify-center w-5 h-5 flex-shrink-0">
             {isActive && (
@@ -209,11 +208,10 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       <li key={item.name}>
         <button
           onClick={() => handleItemClick(item.name, item.path)}
-          className={`w-full flex items-center py-2 px-4 space-x-3 text-left transition-all duration-200 rounded-lg ${
-            isActive
+          className={`w-full flex items-center py-2 px-4 space-x-3 text-left transition-all duration-200 rounded-lg ${isActive
               ? "bg-[#ffffff15] text-white"
               : "text-gray-200 hover:bg-[#ffffff15] hover:text-white"
-          }`}
+            }`}
         >
           <div className="flex items-center justify-center w-4 h-4 flex-shrink-0">
             <img
@@ -261,18 +259,16 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       <div className="md:hidden">
         {/* Overlay Background */}
         <div
-          className={`fixed inset-0 bg-black z-[999] transition-all duration-300 ease-in-out ${
-            isMobileMenuOpen
+          className={`fixed inset-0 bg-black z-[999] transition-all duration-300 ease-in-out ${isMobileMenuOpen
               ? "bg-opacity-50 pointer-events-auto"
               : "bg-opacity-0 pointer-events-none"
-          }`}
+            }`}
           onClick={onCloseMobileMenu}
         >
           {/* Sidebar Panel */}
           <div
-            className={`fixed top-0 left-0 h-full w-[280px] bg-[#14547F] text-white flex flex-col transform transition-transform duration-300 ease-in-out ${
-              isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-            }`}
+            className={`fixed top-0 left-0 h-full w-[280px] bg-[#14547F] text-white flex flex-col transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+              }`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header with User Info */}

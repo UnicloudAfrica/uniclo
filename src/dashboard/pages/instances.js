@@ -58,11 +58,11 @@ const StatusBadge = ({ status, size = 'sm' }) => {
       'error': { color: 'bg-red-100 text-red-800 border-red-200', icon: AlertCircle, label: 'Error' },
       'deleted': { color: 'bg-gray-100 text-gray-800 border-gray-200', icon: Trash2, label: 'Deleted' },
     };
-    
-    return statusMap[status?.toLowerCase()] || { 
-      color: 'bg-gray-100 text-gray-800 border-gray-200', 
-      icon: AlertCircle, 
-      label: status || 'Unknown' 
+
+    return statusMap[status?.toLowerCase()] || {
+      color: 'bg-gray-100 text-gray-800 border-gray-200',
+      icon: AlertCircle,
+      label: status || 'Unknown'
     };
   };
 
@@ -80,14 +80,14 @@ const StatusBadge = ({ status, size = 'sm' }) => {
 };
 
 // Instance Row Component
-const InstanceRow = ({ 
-  instance, 
-  isSelected, 
-  onSelect, 
-  onAction, 
-  onConsoleAccess, 
+const InstanceRow = ({
+  instance,
+  isSelected,
+  onSelect,
+  onAction,
+  onConsoleAccess,
   onNavigateToDetails,
-  actionLoading 
+  actionLoading
 }) => {
   const [showActions, setShowActions] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -349,7 +349,7 @@ const InstanceRow = ({
 // Main Component
 export default function Instances() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const {
+  const {
     isFetching: isInstancesFetching,
     data: instancesResponse,
     error,
@@ -357,51 +357,6 @@ export default function Instances() {
   } = useFetchInstanceRequests();
 
   const instances = instancesResponse?.data || [];
-  const [filteredInstances, setFilteredInstances] = useState([]);
-
-  // Filter and sort instances
-  useEffect(() => {
-    let filtered = [...instances];
-
-    // Apply search filter
-    if (searchTerm) {
-      filtered = filtered.filter(instance =>
-        (instance.name && instance.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (instance.identifier && instance.identifier.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (instance.floating_ip?.ip_address && instance.floating_ip.ip_address.includes(searchTerm)) ||
-        (instance.private_ip && instance.private_ip.includes(searchTerm))
-      );
-    }
-
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(instance => instance.status === statusFilter);
-    }
-
-    // Apply sorting
-    filtered.sort((a, b) => {
-      let aValue = a[sortBy];
-      let bValue = b[sortBy];
-
-      if (sortBy === 'created_at') {
-        aValue = new Date(aValue);
-        bValue = new Date(bValue);
-      }
-
-      if (typeof aValue === 'string') {
-        aValue = aValue.toLowerCase();
-        bValue = bValue?.toLowerCase() || '';
-      }
-
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
-    });
-
-    setFilteredInstances(filtered);
-  }, [instances, searchTerm, statusFilter, sortBy, sortOrder]);
   const [selectedInstances, setSelectedInstances] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -568,7 +523,7 @@ export default function Instances() {
                 Manage and monitor your cloud instances
               </p>
             </div>
-            
+
             <div className="flex items-center space-x-3">
               <button
                 onClick={() => refetch()}
@@ -578,7 +533,7 @@ export default function Instances() {
                 <RefreshCw className={`w-4 h-4 mr-2 ${isInstancesFetching ? 'animate-spin' : ''}`} />
                 Refresh
               </button>
-              
+
               <button
                 onClick={() => window.location.href = '/dashboard/add-instance'}
                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
@@ -687,7 +642,7 @@ export default function Instances() {
 
         {/* Instance Table */}
         <div className="bg-white m-6 md:m-8 rounded-lg shadow-sm border border-gray-200">
-          {isInstancesFetching ? (
+          {loading ? (
             <div className="p-12 text-center">
               <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
               <p className="text-gray-500">Loading instances...</p>
@@ -697,8 +652,8 @@ export default function Instances() {
               <Server className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500 text-lg font-medium">No instances found</p>
               <p className="text-gray-400 mt-2">
-                {searchTerm || statusFilter !== 'all' 
-                  ? 'Try adjusting your search or filters' 
+                {searchTerm || statusFilter !== 'all'
+                  ? 'Try adjusting your search or filters'
                   : 'Create your first instance to get started'
                 }
               </p>
@@ -753,7 +708,7 @@ export default function Instances() {
                       onSelect={handleInstanceSelect}
                       onAction={executeInstanceAction}
                       onConsoleAccess={handleConsoleAccess}
-onNavigateToDetails={(idOrIdentifier) => navigateToInstanceDetails(idOrIdentifier)}
+                      onNavigateToDetails={(idOrIdentifier) => navigateToInstanceDetails(idOrIdentifier)}
                       actionLoading={actionLoading}
                     />
                   ))}

@@ -1462,6 +1462,7 @@ const AddInstancePage = () => {
     } finally {
       setSubmitLoading(false);
     }
+  };
 
   const totalInstances = configurations.reduce(
     (acc, cfg) => acc + (Number(cfg.number_of_instances) || 0),

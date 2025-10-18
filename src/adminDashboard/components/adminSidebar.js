@@ -20,7 +20,8 @@ import {
   HelpCircle,
   User,
   UserCog,
-  CheckSquare
+  CheckSquare,
+  Server
 } from "lucide-react";
 
 const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {

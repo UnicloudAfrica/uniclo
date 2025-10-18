@@ -108,10 +108,6 @@ export default function AdminInstancesDetails() {
     isError,
     error,
   } = useFetchInstanceRequestById(instanceId);
-  const { data: instanceConsole, isFetching: isConsoleFetching } =
-    useFetchInstanceConsoleById(instanceId);
-  const { data: instanceConsoles, isFetching: isConsolesFetching } =
-    useFetchInstanceConsoles();
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);

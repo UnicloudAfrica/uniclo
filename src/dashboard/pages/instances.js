@@ -356,7 +356,7 @@ export default function Instances() {
     refetch,
   } = useFetchInstanceRequests();
 
-  const instances = instancesResponse?.data || [];
+  const [filteredInstances, setFilteredInstances] = useState([]);
   const [selectedInstances, setSelectedInstances] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -368,38 +368,9 @@ export default function Instances() {
 
   const { consoles, openConsole, closeConsole } = useConsoleManager();
 
-  // Fetch instances
-  const fetchInstances = useCallback(async (showLoader = true) => {
-    if (showLoader) setLoading(true);
-    else setRefreshing(true);
-
-    try {
-      const { token } = useAuthStore.getState();
-      const response = await fetch(`${config.baseURL}/instances`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-        },
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setInstances(data.data || []);
-      } else {
-        throw new Error(data.error || 'Failed to fetch instances');
-      }
-    } catch (err) {
-      ToastUtils.error(err.message);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
-
   // Filter and sort instances
   useEffect(() => {
-    let filtered = [...instances];
+    let filtered = [...(instancesResponse?.data || [])];
 
     // Apply search filter
     if (searchTerm) {
@@ -439,12 +410,7 @@ export default function Instances() {
     });
 
     setFilteredInstances(filtered);
-  }, [instances, searchTerm, statusFilter, sortBy, sortOrder]);
-
-  // Load instances on mount
-  useEffect(() => {
-    fetchInstances();
-  }, [fetchInstances]);
+  }, [instancesResponse, searchTerm, statusFilter, sortBy, sortOrder]);
 
   // Handle instance selection
   const handleInstanceSelect = (instanceId) => {
@@ -502,7 +468,7 @@ export default function Instances() {
     setIsMobileMenuOpen(false);
   };
 
-  const uniqueStatuses = [...new Set(instances.map(i => i.status))].filter(Boolean);
+  const uniqueStatuses = [...new Set((instancesResponse?.data || []).map(i => i.status))].filter(Boolean);
 
   return (
     <>
@@ -642,7 +608,7 @@ export default function Instances() {
 
         {/* Instance Table */}
         <div className="bg-white m-6 md:m-8 rounded-lg shadow-sm border border-gray-200">
-          {loading ? (
+          {isInstancesFetching ? (
             <div className="p-12 text-center">
               <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
               <p className="text-gray-500">Loading instances...</p>

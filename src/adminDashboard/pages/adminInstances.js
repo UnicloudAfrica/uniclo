@@ -358,50 +358,6 @@ export default function AdminInstances() {
 
   const instances = instancesResponse?.data || [];
   const [filteredInstances, setFilteredInstances] = useState([]);
-
-  // Filter and sort instances
-  useEffect(() => {
-    let filtered = [...instances];
-
-    // Apply search filter
-    if (searchTerm) {
-      filtered = filtered.filter(instance =>
-        (instance.name && instance.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (instance.identifier && instance.identifier.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (instance.floating_ip?.ip_address && instance.floating_ip.ip_address.includes(searchTerm)) ||
-        (instance.private_ip && instance.private_ip.includes(searchTerm))
-      );
-    }
-
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(instance => instance.status === statusFilter);
-    }
-
-    // Apply sorting
-    filtered.sort((a, b) => {
-      let aValue = a[sortBy];
-      let bValue = b[sortBy];
-
-      if (sortBy === 'created_at') {
-        aValue = new Date(aValue);
-        bValue = new Date(bValue);
-      }
-
-      if (typeof aValue === 'string') {
-        aValue = aValue.toLowerCase();
-        bValue = bValue?.toLowerCase() || '';
-      }
-
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
-    });
-
-    setFilteredInstances(filtered);
-  }, [instances, searchTerm, statusFilter, sortBy, sortOrder]);
   const [selectedInstances, setSelectedInstances] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -411,37 +367,6 @@ export default function AdminInstances() {
   const [actionLoading, setActionLoading] = useState({});
   const [showBulkActions, setShowBulkActions] = useState(false);
 
-  const { consoles, openConsole, closeConsole } = useConsoleManager();
-
-  // Fetch instances
-  const fetchInstances = useCallback(async (showLoader = true) => {
-    if (showLoader) setLoading(true);
-    else setRefreshing(true);
-
-    try {
-      const { token } = useAdminAuthStore.getState();
-      const response = await fetch(`${config.baseURL}/business/instances`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-        },
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setInstances(data.data || []);
-      } else {
-        throw new Error(data.error || 'Failed to fetch instances');
-      }
-    } catch (err) {
-      ToastUtils.error(err.message);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
-
   // Filter and sort instances
   useEffect(() => {
     let filtered = [...instances];
@@ -486,10 +411,9 @@ export default function AdminInstances() {
     setFilteredInstances(filtered);
   }, [instances, searchTerm, statusFilter, sortBy, sortOrder]);
 
-  // Load instances on mount
-  useEffect(() => {
-    fetchInstances();
-  }, [fetchInstances]);
+  const { consoles, openConsole, closeConsole } = useConsoleManager();
+
+
 
   // Handle instance selection
   const handleInstanceSelect = (instanceId) => {

@@ -357,6 +357,51 @@ export default function Instances() {
   } = useFetchInstanceRequests();
 
   const instances = instancesResponse?.data || [];
+  const [filteredInstances, setFilteredInstances] = useState([]);
+
+  // Filter and sort instances
+  useEffect(() => {
+    let filtered = [...instances];
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(instance =>
+        (instance.name && instance.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (instance.identifier && instance.identifier.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (instance.floating_ip?.ip_address && instance.floating_ip.ip_address.includes(searchTerm)) ||
+        (instance.private_ip && instance.private_ip.includes(searchTerm))
+      );
+    }
+
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(instance => instance.status === statusFilter);
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let aValue = a[sortBy];
+      let bValue = b[sortBy];
+
+      if (sortBy === 'created_at') {
+        aValue = new Date(aValue);
+        bValue = new Date(bValue);
+      }
+
+      if (typeof aValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = bValue?.toLowerCase() || '';
+      }
+
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+
+    setFilteredInstances(filtered);
+  }, [instances, searchTerm, statusFilter, sortBy, sortOrder]);
   const [selectedInstances, setSelectedInstances] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -642,7 +687,7 @@ export default function Instances() {
 
         {/* Instance Table */}
         <div className="bg-white m-6 md:m-8 rounded-lg shadow-sm border border-gray-200">
-          {loading ? (
+          {isInstancesFetching ? (
             <div className="p-12 text-center">
               <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
               <p className="text-gray-500">Loading instances...</p>

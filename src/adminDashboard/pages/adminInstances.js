@@ -526,11 +526,11 @@ export default function AdminInstances() {
             
             <div className="flex items-center space-x-3">
               <button
-                onClick={() => fetchInstances(false)}
-                disabled={refreshing}
+                onClick={() => refetch()}
+                disabled={isInstancesFetching}
                 className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 mr-2 ${isInstancesFetching ? 'animate-spin' : ''}`} />
                 Refresh
               </button>
               

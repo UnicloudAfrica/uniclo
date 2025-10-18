@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, Trash2 } from "lucide-react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
@@ -8,213 +8,227 @@ import ModernCard from "../components/ModernCard";
 import ModernButton from "../components/ModernButton";
 import { designTokens } from "../../styles/designTokens";
 import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
-import {
-  useFetchBandwidths,
-  useFetchComputerInstances,
-  useFetchCrossConnect,
-  useFetchEbsVolumes,
-  useFetchFloatingIPs,
-  useFetchOsImages,
-} from "../../hooks/resource";
 import { useCreateProducts } from "../../hooks/adminHooks/adminProductHooks";
 import ToastUtils from "../../utils/toastUtil";
 import useAuthRedirect from "../../utils/adminAuthRedirect";
+import silentApi from "../../index/admin/silent";
 
 const productTypes = [
   { value: "compute_instance", label: "Compute Instance" },
   { value: "cross_connect", label: "Cross Connect" },
   { value: "os_image", label: "OS Image" },
   { value: "bandwidth", label: "Bandwidth" },
-  { value: "ip", label: "IP" },
+  { value: "ip", label: "Floating IP" },
   { value: "volume_type", label: "Volume Type" },
 ];
+
+const typeToEndpoint = {
+  compute_instance: "/product-compute-instance",
+  cross_connect: "/product-cross-connect",
+  os_image: "/product-os-image",
+  bandwidth: "/product-bandwidth",
+  ip: "/product-floating-ip",
+  volume_type: "/product-volume-type",
+};
+
+const generateEntryId = () =>
+  `entry-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+const createEmptyEntry = () => ({
+  id: generateEntryId(),
+  name: "",
+  productable_type: "",
+  productable_id: "",
+  provider: "",
+  region: "",
+  options: [],
+  loadingOptions: false,
+  errors: {},
+});
 
 const AdminProductCreate = () => {
   const navigate = useNavigate();
   const { isLoading } = useAuthRedirect();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    productable_type: "",
-    productable_id: "",
-    provider: "",
-    region: "",
-  });
-  const [selectedRegionCode, setSelectedRegionCode] = useState("");
-  const [errors, setErrors] = useState({});
+  const [entries, setEntries] = useState([createEmptyEntry()]);
 
   const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
+  const { mutate: createProducts, isPending } = useCreateProducts();
 
-  const enableProductFetch =
-    !!selectedRegionCode && !!formData.productable_type;
+  const regionLookup = useMemo(() => {
+    if (!regions) return {};
+    return regions.reduce((acc, region) => {
+      acc[region.code] = region;
+      return acc;
+    }, {});
+  }, [regions]);
 
-  const { isFetching: isVmsFetching, data: vms } = useFetchComputerInstances(
-    "USD",
-    selectedRegionCode,
-    {
-      enabled:
-        enableProductFetch && formData.productable_type === "compute_instance",
-    }
-  );
-  const { isFetching: isOsImagesFetching, data: osImages } = useFetchOsImages(
-    "USD",
-    selectedRegionCode,
-    { enabled: enableProductFetch && formData.productable_type === "os_image" }
-  );
-  const { isFetching: isEbsVolumesFetching, data: ebsVolumes } =
-    useFetchEbsVolumes("USD", selectedRegionCode, {
-      enabled:
-        enableProductFetch && formData.productable_type === "volume_type",
-    });
-  const { isFetching: isBandwidthsFetching, data: bandwidths } =
-    useFetchBandwidths("USD", selectedRegionCode, {
-      enabled: enableProductFetch && formData.productable_type === "bandwidth",
-    });
-  const { isFetching: isIPsFetching, data: ips } = useFetchFloatingIPs(
-    "USD",
-    selectedRegionCode,
-    { enabled: enableProductFetch && formData.productable_type === "ip" }
-  );
-  const { isFetching: isCrossConnectsFetching, data: crossConnects } =
-    useFetchCrossConnect("USD", selectedRegionCode, {
-      enabled:
-        enableProductFetch && formData.productable_type === "cross_connect",
-    });
-
-  const { mutate: createProduct, isPending } = useCreateProducts();
-
-  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+  const toggleMobileMenu = () => setIsMobileMenuOpen((open) => !open);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
-  const resetForm = () => {
-    setFormData({
-      name: "",
-      productable_type: "",
-      productable_id: "",
-      provider: "",
-      region: "",
+  const updateEntry = (index, updater) => {
+    setEntries((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], ...updater };
+      return next;
     });
-    setSelectedRegionCode("");
-    setErrors({});
   };
 
-  const updateFormData = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: null }));
-  };
+  const loadProductOptions = async (index, regionCode, type) => {
+    const endpoint = typeToEndpoint[type];
+    if (!endpoint || !regionCode || !type) {
+      return;
+    }
 
-  const handleSelectChange = (field, value) => {
-    if (field === "productable_type") {
-      setFormData((prev) => ({
-        ...prev,
-        productable_type: value,
-        productable_id: "",
-      }));
-      setErrors((prev) => ({
-        ...prev,
-        productable_type: null,
-        productable_id: null,
-      }));
-    } else if (field === "region") {
-      const region = regions?.find((r) => r.code === value);
-      setSelectedRegionCode(value);
-      setFormData((prev) => ({
-        ...prev,
-        region: region ? region.code : "",
-        provider: region ? region.provider : "",
-      }));
-      setErrors((prev) => ({ ...prev, region: null, provider: null }));
-    } else {
-      updateFormData(field, value);
+    updateEntry(index, { loadingOptions: true, options: [], productable_id: "" });
+
+    try {
+      const params = new URLSearchParams();
+      params.append("country", "USD");
+      params.append("region", regionCode);
+
+      const response = await silentApi(
+        "GET",
+        `${endpoint}?${params.toString()}`
+      );
+      const options = response?.data || [];
+
+      updateEntry(index, { options, loadingOptions: false });
+    } catch (error) {
+      console.error("Failed to load product options:", error);
+      ToastUtils.error("Unable to load products for the selected type/region.");
+      updateEntry(index, { loadingOptions: false, options: [] });
     }
   };
 
-  const getProductOptions = () => {
-    switch (formData.productable_type) {
-      case "compute_instance":
-        return vms;
-      case "cross_connect":
-        return crossConnects;
-      case "os_image":
-        return osImages;
-      case "bandwidth":
-        return bandwidths;
-      case "ip":
-        return ips;
-      case "volume_type":
-        return ebsVolumes;
-      default:
-        return [];
+  const handleEntryFieldChange = (index, field, value) => {
+    const entry = entries[index];
+    if (!entry) return;
+
+    const nextRegion =
+      field === "region" ? value : entry.region;
+    const nextType =
+      field === "productable_type" ? value : entry.productable_type;
+
+    setEntries((prev) => {
+      const next = [...prev];
+      const current = { ...next[index] };
+      current.errors = { ...current.errors, [field]: null };
+
+      if (field === "name") {
+        current.name = value;
+      } else if (field === "region") {
+        current.region = value;
+        const regionInfo = regionLookup[value];
+        current.provider = regionInfo?.provider ?? "";
+        current.productable_id = "";
+        current.options = [];
+      } else if (field === "productable_type") {
+        current.productable_type = value;
+        current.productable_id = "";
+        current.options = [];
+      } else if (field === "productable_id") {
+        current.productable_id = value;
+
+        if (!current.name) {
+          const option = current.options.find(
+            (opt) => String(getOptionValue(opt)) === String(value)
+          );
+          if (option) {
+            current.name = getOptionLabel(option);
+          }
+        }
+      }
+
+      next[index] = current;
+      return next;
+    });
+
+    if (
+      (field === "region" || field === "productable_type") &&
+      nextRegion &&
+      nextType
+    ) {
+      loadProductOptions(index, nextRegion, nextType);
     }
   };
 
-  const isProductOptionsFetching = () => {
-    switch (formData.productable_type) {
-      case "compute_instance":
-        return isVmsFetching;
-      case "cross_connect":
-        return isCrossConnectsFetching;
-      case "os_image":
-        return isOsImagesFetching;
-      case "bandwidth":
-        return isBandwidthsFetching;
-      case "ip":
-        return isIPsFetching;
-      case "volume_type":
-        return isEbsVolumesFetching;
-      default:
-        return false;
+  const addEntry = () => {
+    setEntries((prev) => [...prev, createEmptyEntry()]);
+  };
+
+  const removeEntry = (index) => {
+    setEntries((prev) => prev.filter((_, idx) => idx !== index));
+  };
+
+  const validateEntries = () => {
+    let hasErrors = false;
+
+    const next = entries.map((entry) => {
+      const entryErrors = {};
+
+      if (!entry.name.trim()) entryErrors.name = "Name is required";
+      if (!entry.region) entryErrors.region = "Region is required";
+      if (!entry.productable_type)
+        entryErrors.productable_type = "Product type is required";
+      if (!entry.productable_id)
+        entryErrors.productable_id = "Product selection is required";
+      if (!entry.provider)
+        entryErrors.provider = "Region must supply a provider";
+
+      if (Object.keys(entryErrors).length > 0) {
+        hasErrors = true;
+      }
+
+      return { ...entry, errors: entryErrors };
+    });
+
+    setEntries(next);
+
+    if (hasErrors) {
+      ToastUtils.error("Please fix the highlighted issues before submitting.");
     }
+
+    return !hasErrors;
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = "Name is required";
-    if (!formData.region) newErrors.region = "Region is required";
-    if (!formData.productable_type)
-      newErrors.productable_type = "Product type is required";
-    if (!formData.productable_id)
-      newErrors.productable_id = "Product selection is required";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const handleSubmit = (event) => {
+    event.preventDefault();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!validateForm()) {
-      ToastUtils.error("Please correct the errors in the form.");
+    if (!validateEntries()) {
       return;
     }
 
     const payload = {
-      name: formData.name,
-      productable_type: formData.productable_type,
-      productable_id: parseInt(formData.productable_id, 10),
-      provider: formData.provider || null,
-      region: formData.region || null,
+      products: entries.map((entry) => ({
+        name: entry.name.trim(),
+        productable_type: entry.productable_type,
+        productable_id: Number(entry.productable_id),
+        provider: entry.provider,
+        region: entry.region,
+      })),
     };
 
-    createProduct(payload, {
+    createProducts(payload, {
       onSuccess: () => {
-        ToastUtils.success("Product added successfully!");
+        ToastUtils.success("Products added successfully!");
         navigate("/admin-dashboard/products");
       },
-      onError: (err) => {
-        const errorMsg =
-          err.response?.data?.message ||
-          err.message ||
-          "Failed to add product.";
-        ToastUtils.error(errorMsg);
-        if (err.response?.data?.errors) {
-          setErrors((prev) => ({ ...prev, ...err.response.data.errors }));
-        }
+      onError: (error) => {
+        const message =
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to add products.";
+        ToastUtils.error(message);
       },
     });
   };
 
+  const isSubmitting = isPending || isLoading;
+
   if (isLoading) {
     return null;
-  }
+    }
 
   return (
     <>
@@ -228,198 +242,279 @@ const AdminProductCreate = () => {
         className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8"
         style={{ backgroundColor: designTokens.colors.neutral[25] }}
       >
-        <div className="space-y-6 max-w-4xl">
-          <div className="flex items-center gap-3">
-            <ModernButton
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-              onClick={() => navigate("/admin-dashboard/products")}
-            >
-              <ArrowLeft size={16} />
-              Back to Products
-            </ModernButton>
-          </div>
+        <div className="space-y-6 max-w-5xl">
+          <ModernButton
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+            onClick={() => navigate("/admin-dashboard/products")}
+            isDisabled={isSubmitting}
+          >
+            <ArrowLeft size={16} />
+            Back to Products
+          </ModernButton>
 
           <div className="space-y-2">
             <h1
               className="text-2xl font-bold"
               style={{ color: designTokens.colors.neutral[900] }}
             >
-              Add New Product
+              Add Products
             </h1>
             <p
               className="text-sm"
               style={{ color: designTokens.colors.neutral[600] }}
             >
-              Register a new product to make it available across tenant and
-              business workflows.
+              Capture multiple products in one submission. Region determines the
+              provider automatically and product options update based on the
+              selected type.
             </p>
           </div>
 
-          <ModernCard>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Name<span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => updateFormData("name", e.target.value)}
-                    placeholder="Enter product name"
-                    className={`w-full input-field ${
-                      errors.name ? "border-red-500" : "border-gray-300"
-                    }`}
-                    disabled={isPending}
-                  />
-                  {errors.name && (
-                    <p className="text-red-500 text-xs mt-1">{errors.name}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Region<span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={selectedRegionCode}
-                    onChange={(e) =>
-                      handleSelectChange("region", e.target.value)
-                    }
-                    className={`w-full input-field ${
-                      errors.region ? "border-red-500" : "border-gray-300"
-                    }`}
-                    disabled={isPending || isRegionsFetching}
-                  >
-                    <option value="">
-                      {isRegionsFetching ? "Loading regions..." : "Select region"}
-                    </option>
-                    {regions?.map((region) => (
-                      <option key={region.code} value={region.code}>
-                        {region.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.region && (
-                    <p className="text-red-500 text-xs mt-1">{errors.region}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Product Type<span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={formData.productable_type}
-                    onChange={(e) =>
-                      handleSelectChange("productable_type", e.target.value)
-                    }
-                    className={`w-full input-field ${
-                      errors.productable_type
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
-                    disabled={isPending}
-                  >
-                    <option value="">Select a product type</option>
-                    {productTypes.map((type) => (
-                      <option key={type.value} value={type.value}>
-                        {type.label}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.productable_type && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.productable_type}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {entries.map((entry, index) => (
+              <ModernCard key={entry.id} className="space-y-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      Product #{index + 1}
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      Configure the catalogue entry for this product.
                     </p>
+                  </div>
+                  {entries.length > 1 && (
+                    <ModernButton
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-600"
+                      onClick={() => removeEntry(index)}
+                      type="button"
+                      isDisabled={isSubmitting}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Remove
+                    </ModernButton>
                   )}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Product<span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={formData.productable_id}
-                    onChange={(e) =>
-                      updateFormData("productable_id", e.target.value)
-                    }
-                    className={`w-full input-field ${
-                      errors.productable_id
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
-                    disabled={
-                      isPending ||
-                      !selectedRegionCode ||
-                      !formData.productable_type ||
-                      isProductOptionsFetching()
-                    }
-                  >
-                    <option value="">
-                      {!selectedRegionCode || !formData.productable_type
-                        ? "Select region and type first"
-                        : isProductOptionsFetching()
-                        ? "Loading products..."
-                        : "Select a product"}
-                    </option>
-                    {getProductOptions()?.map((product) => (
-                      <option key={product.id} value={product.id}>
-                        {product.name}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Name<span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={entry.name}
+                      onChange={(e) =>
+                        handleEntryFieldChange(index, "name", e.target.value)
+                      }
+                      placeholder="Enter product name"
+                      className={`w-full input-field ${
+                        entry.errors.name ? "border-red-500" : "border-gray-300"
+                      }`}
+                      disabled={isSubmitting}
+                    />
+                    {entry.errors.name && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {entry.errors.name}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Region<span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={entry.region}
+                      onChange={(e) =>
+                        handleEntryFieldChange(index, "region", e.target.value)
+                      }
+                      className={`w-full input-field ${
+                        entry.errors.region
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
+                      disabled={isSubmitting || isRegionsFetching}
+                    >
+                      <option value="">
+                        {isRegionsFetching ? "Loading regions..." : "Select region"}
                       </option>
-                    ))}
-                  </select>
-                  {errors.productable_id && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.productable_id}
-                    </p>
-                  )}
-                </div>
+                      {regions?.map((region) => (
+                        <option key={region.code} value={region.code}>
+                          {region.name}
+                        </option>
+                      ))}
+                    </select>
+                    {entry.errors.region && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {entry.errors.region}
+                      </p>
+                    )}
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Provider
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.provider}
-                    readOnly
-                    placeholder="Auto-filled from region"
-                    className="w-full input-field bg-gray-100 cursor-not-allowed"
-                  />
-                </div>
-              </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Product Type<span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={entry.productable_type}
+                      onChange={(e) =>
+                        handleEntryFieldChange(
+                          index,
+                          "productable_type",
+                          e.target.value
+                        )
+                      }
+                      className={`w-full input-field ${
+                        entry.errors.productable_type
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
+                      disabled={isSubmitting}
+                    >
+                      <option value="">Select a product type</option>
+                      {productTypes.map((type) => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
+                    {entry.errors.productable_type && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {entry.errors.productable_type}
+                      </p>
+                    )}
+                  </div>
 
-              <div className="flex items-center justify-end gap-3">
-                <ModernButton
-                  variant="outline"
-                  onClick={() => {
-                    resetForm();
-                    navigate("/admin-dashboard/products");
-                  }}
-                  isDisabled={isPending}
-                >
-                  Cancel
-                </ModernButton>
-                <ModernButton type="submit" isDisabled={isPending}>
-                  {isPending ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Adding...
-                    </>
-                  ) : (
-                    "Add Product"
-                  )}
-                </ModernButton>
-              </div>
-            </form>
-          </ModernCard>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Product<span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={entry.productable_id}
+                      onChange={(e) =>
+                        handleEntryFieldChange(
+                          index,
+                          "productable_id",
+                          e.target.value
+                        )
+                      }
+                      className={`w-full input-field ${
+                        entry.errors.productable_id
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
+                      disabled={
+                        isSubmitting ||
+                        entry.loadingOptions ||
+                        !entry.region ||
+                        !entry.productable_type
+                      }
+                    >
+                      <option value="">
+                        {!entry.region || !entry.productable_type
+                          ? "Select region and type first"
+                          : entry.loadingOptions
+                          ? "Loading products..."
+                          : "Select a product"}
+                      </option>
+                      {entry.options.map((option) => {
+                        const value = getOptionValue(option);
+                        const label = getOptionLabel(option);
+                        return (
+                          <option key={`${entry.id}-${value}`} value={value}>
+                            {label}
+                          </option>
+                        );
+                      })}
+                    </select>
+                    {entry.errors.productable_id && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {entry.errors.productable_id}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Provider
+                    </label>
+                    <input
+                      type="text"
+                      value={entry.provider}
+                      readOnly
+                      className={`w-full input-field bg-gray-100 ${
+                        entry.errors.provider ? "border-red-500" : "border-gray-300"
+                      }`}
+                      placeholder="Auto-filled from region"
+                    />
+                    {entry.errors.provider && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {entry.errors.provider}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </ModernCard>
+            ))}
+
+            <ModernButton
+              type="button"
+              variant="outline"
+              className="flex items-center gap-2"
+              onClick={addEntry}
+              isDisabled={isSubmitting}
+            >
+              <Plus className="w-4 h-4" />
+              Add Another Product
+            </ModernButton>
+
+            <div className="flex items-center justify-end gap-3">
+              <ModernButton
+                variant="outline"
+                type="button"
+                onClick={() => navigate("/admin-dashboard/products")}
+                isDisabled={isSubmitting}
+              >
+                Cancel
+              </ModernButton>
+              <ModernButton type="submit" isDisabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Products"
+                )}
+              </ModernButton>
+            </div>
+          </form>
         </div>
       </main>
     </>
   );
 };
+
+function getOptionValue(option) {
+  if (option?.id !== undefined) return option.id;
+  if (option?.productable_id !== undefined) return option.productable_id;
+  if (option?.product?.productable_id !== undefined) {
+    return option.product.productable_id;
+  }
+  if (option?.product?.id !== undefined) return option.product.id;
+  return option?.value ?? "";
+}
+
+function getOptionLabel(option) {
+  return (
+    option?.name ??
+    option?.product?.name ??
+    option?.label ??
+    "Unnamed Product"
+  );
+}
 
 export default AdminProductCreate;

@@ -1,6 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, Trash2, Upload } from "lucide-react";
+import Papa from "papaparse";
+import { read as readWorkbook, utils as xlsxUtils } from "xlsx";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
@@ -41,6 +43,7 @@ const createEmptyEntry = () => ({
   productable_id: "",
   provider: "",
   region: "",
+  price: "",
   options: [],
   loadingOptions: false,
   errors: {},
@@ -51,6 +54,8 @@ const AdminProductCreate = () => {
   const { isLoading } = useAuthRedirect();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [entries, setEntries] = useState([createEmptyEntry()]);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef(null);
 
   const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
   const { mutate: createProducts, isPending } = useCreateProducts();
@@ -62,6 +67,111 @@ const AdminProductCreate = () => {
       return acc;
     }, {});
   }, [regions]);
+
+  const allowedTypes = useMemo(
+    () => new Set(productTypes.map((type) => type.value)),
+    []
+  );
+
+  const normalizeType = (raw) => {
+    if (raw === null || raw === undefined) return "";
+    const value = String(raw).trim().toLowerCase();
+    const aliases = {
+      "compute instance": "compute_instance",
+      "compute": "compute_instance",
+      "cross connect": "cross_connect",
+      "cross-connect": "cross_connect",
+      "os image": "os_image",
+      "operating system": "os_image",
+      bandwidth: "bandwidth",
+      "floating ip": "ip",
+      "floating_ip": "ip",
+      ip: "ip",
+      "volume type": "volume_type",
+      volume: "volume_type",
+    };
+
+    if (aliases[value]) {
+      return aliases[value];
+    }
+
+    const normalized = value.replace(/[-\s]+/g, "_");
+    return normalized;
+  };
+
+  const mapRowToEntry = (row, rowIndex, regionMap) => {
+    const rowLabel = rowIndex + 2; // account for header row
+
+    const name = coerceTrimmedString(
+      row.name ?? row.product_name ?? row.Name ?? row["Product Name"]
+    );
+    const region = coerceTrimmedString(
+      row.region ?? row.region_code ?? row.Region ?? row["Region"]
+    );
+    const rawType = row.productable_type ?? row.type ?? row.ProductType ?? row["Product Type"];
+    const productableType = normalizeType(rawType);
+    const rawProductId = row.productable_id ?? row.product_id ?? row.ProductID ?? row["Product ID"];
+    const productableIdNumber = Number(rawProductId);
+    const rawPrice = row.price ?? row.price_usd ?? row.Price ?? row["Price"] ?? row["priceUSD"];
+    const priceNumber = Number(rawPrice);
+
+    if (!name) {
+      return { error: { row: rowLabel, message: "Missing product name." } };
+    }
+
+    if (!region) {
+      return { error: { row: rowLabel, message: "Missing region." } };
+    }
+
+    const regionInfo = regionMap[region];
+    if (!regionInfo) {
+      return {
+        error: {
+          row: rowLabel,
+          message: `Unknown region '${region}'.`,
+        },
+      };
+    }
+
+    if (!productableType || !allowedTypes.has(productableType)) {
+      return {
+        error: {
+          row: rowLabel,
+          message: "Invalid or missing product type.",
+        },
+      };
+    }
+
+    if (!Number.isFinite(productableIdNumber) || productableIdNumber <= 0) {
+      return {
+        error: {
+          row: rowLabel,
+          message: "Product ID must be a positive number.",
+        },
+      };
+    }
+
+    if (!Number.isFinite(priceNumber) || priceNumber < 0) {
+      return {
+        error: {
+          row: rowLabel,
+          message: "Price must be a positive number.",
+        },
+      };
+    }
+
+    const entry = {
+      ...createEmptyEntry(),
+      name,
+      productable_type: productableType,
+      productable_id: String(productableIdNumber),
+      provider: regionInfo.provider ?? "",
+      region,
+      price: priceNumber.toString(),
+    };
+
+    return { entry };
+  };
 
   const toggleMobileMenu = () => setIsMobileMenuOpen((open) => !open);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
@@ -98,6 +208,93 @@ const AdminProductCreate = () => {
       console.error("Failed to load product options:", error);
       ToastUtils.error("Unable to load products for the selected type/region.");
       updateEntry(index, { loadingOptions: false, options: [] });
+    }
+  };
+
+  const handleImportClick = () => {
+    if (isImporting || isPending || isLoading) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    setIsImporting(true);
+
+    try {
+      const extension = file.name.split(".").pop()?.toLowerCase();
+
+      let rows = [];
+      if (extension === "csv") {
+        rows = await parseCsvFile(file);
+      } else if (extension === "xlsx" || extension === "xls") {
+        rows = await parseExcelFile(file);
+      } else {
+        ToastUtils.error("Unsupported file type. Please upload a CSV or Excel file.");
+        return;
+      }
+
+      const nonEmptyRows = rows.filter((row) =>
+        Object.values(row || {}).some((value) =>
+          value !== null && value !== undefined && String(value).trim() !== ""
+        )
+      );
+
+      if (!nonEmptyRows.length) {
+        ToastUtils.error("The uploaded file does not contain any rows to import.");
+        return;
+      }
+
+      const parseErrors = [];
+      const newEntries = [];
+      const existingLength = entries.length;
+
+      nonEmptyRows.forEach((row, rowIndex) => {
+        const mapped = mapRowToEntry(row, rowIndex, regionLookup);
+        if (mapped.error) {
+          parseErrors.push(mapped.error);
+        } else if (mapped.entry) {
+          newEntries.push(mapped.entry);
+        }
+      });
+
+      if (parseErrors.length) {
+        const summary = parseErrors
+          .slice(0, 5)
+          .map((error) => `Row ${error.row}: ${error.message}`)
+          .join("\n");
+        const more = parseErrors.length > 5 ? "\n..." : "";
+        ToastUtils.error(`Some rows could not be imported:\n${summary}${more}`);
+      }
+
+      if (!newEntries.length) {
+        if (!parseErrors.length) {
+          ToastUtils.error("No valid rows were found in the uploaded file.");
+        }
+        return;
+      }
+
+      setEntries((prev) => [...prev, ...newEntries]);
+
+      newEntries.forEach((entry, idx) => {
+        const targetIndex = existingLength + idx;
+        setTimeout(() => {
+          loadProductOptions(targetIndex, entry.region, entry.productable_type);
+        }, 0);
+      });
+
+      ToastUtils.success(`Imported ${newEntries.length} product${newEntries.length > 1 ? "s" : ""}.`);
+    } catch (error) {
+      console.error("Failed to import products:", error);
+      ToastUtils.error("Failed to import products. Please verify the file and try again.");
+    } finally {
+      setIsImporting(false);
+      if (event.target) {
+        event.target.value = "";
+      }
     }
   };
 
@@ -138,6 +335,8 @@ const AdminProductCreate = () => {
             current.name = getOptionLabel(option);
           }
         }
+      } else if (field === "price") {
+        current.price = value;
       }
 
       next[index] = current;
@@ -173,6 +372,10 @@ const AdminProductCreate = () => {
         entryErrors.productable_type = "Product type is required";
       if (!entry.productable_id)
         entryErrors.productable_id = "Product selection is required";
+      const priceValue = Number(entry.price);
+      if (!Number.isFinite(priceValue) || priceValue < 0) {
+        entryErrors.price = "Valid price is required";
+      }
 
       if (Object.keys(entryErrors).length > 0) {
         hasErrors = true;
@@ -204,6 +407,7 @@ const AdminProductCreate = () => {
         productable_id: Number(entry.productable_id),
         provider: entry.provider,
         region: entry.region,
+        price: Number(entry.price),
       })),
     };
 
@@ -222,7 +426,7 @@ const AdminProductCreate = () => {
     });
   };
 
-  const isSubmitting = isPending || isLoading;
+  const isSubmitting = isPending || isLoading || isImporting;
 
   if (isLoading) {
     return null;
@@ -289,7 +493,7 @@ const AdminProductCreate = () => {
                         Product<span className="text-red-500">*</span>
                       </th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
-                        Provider
+                        Price (USD)<span className="text-red-500">*</span>
                       </th>
                       <th className="px-4 py-3 text-right text-sm font-semibold text-gray-600">
                         Actions
@@ -339,9 +543,12 @@ const AdminProductCreate = () => {
                               </option>
                             ))}
                           </select>
-                          {entry.errors.region && (
-                            <p className="text-red-500 text-xs mt-1">{entry.errors.region}</p>
-                          )}
+                            {entry.errors.region && (
+                              <p className="text-red-500 text-xs mt-1">{entry.errors.region}</p>
+                            )}
+                          <p className="text-xs text-gray-400 mt-1">
+                            Provider: {entry.provider || "Auto-detected"}
+                          </p>
                         </td>
                         <td className="px-4 py-3">
                           <select
@@ -418,8 +625,26 @@ const AdminProductCreate = () => {
                             </p>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {entry.provider || "Auto from region"}
+                        <td className="px-4 py-3">
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={entry.price}
+                            onChange={(e) =>
+                              handleEntryFieldChange(index, "price", e.target.value)
+                            }
+                            placeholder="0.00"
+                            className={`w-full input-field ${
+                              entry.errors.price ? "border-red-500" : "border-gray-300"
+                            }`}
+                            disabled={isSubmitting}
+                          />
+                          {entry.errors.price && (
+                            <p className="text-red-500 text-xs mt-1">
+                              {entry.errors.price}
+                            </p>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-right">
                           {entries.length > 1 && (
@@ -445,18 +670,38 @@ const AdminProductCreate = () => {
                 <p className="text-sm text-gray-500">
                   Region automatically determines the provider. Select a type to load available products.
                 </p>
-                <ModernButton
-                  type="button"
-                  variant="outline"
-                  className="flex items-center gap-2"
-                  onClick={addEntry}
-                  isDisabled={isSubmitting}
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Row
-                </ModernButton>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
+                  <ModernButton
+                    type="button"
+                    variant="outline"
+                    className="flex items-center gap-2"
+                    onClick={handleImportClick}
+                    isDisabled={isSubmitting}
+                  >
+                    <Upload className="w-4 h-4" />
+                    Import CSV/Excel
+                  </ModernButton>
+                  <ModernButton
+                    type="button"
+                    variant="outline"
+                    className="flex items-center gap-2"
+                    onClick={addEntry}
+                    isDisabled={isSubmitting}
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Row
+                  </ModernButton>
+                </div>
               </div>
             </ModernCard>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              className="hidden"
+              onChange={handleFileChange}
+            />
 
             <div className="flex items-center justify-end gap-3">
               <ModernButton
@@ -467,22 +712,85 @@ const AdminProductCreate = () => {
               >
                 Cancel
               </ModernButton>
-              <ModernButton type="submit" isDisabled={isSubmitting}>
+              <button
+                type="submit"
+                className="modern-button modern-button--primary modern-button--sm flex items-center gap-2"
+                disabled={isSubmitting}
+                aria-busy={isSubmitting}
+                style={{
+                  fontFamily: 'Outfit, Inter, "SF Pro Display", system-ui, sans-serif',
+                  fontWeight: 600,
+                  borderRadius: '12px',
+                  transition: '200ms cubic-bezier(0.4, 0, 0.2, 1)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  outline: 'none',
+                  textDecoration: 'none',
+                  padding: '8px 12px',
+                  fontSize: '14px',
+                  lineHeight: '20px',
+                  minHeight: '32px',
+                  opacity: isSubmitting ? 0.6 : 1,
+                  pointerEvents: isSubmitting ? 'none' : 'auto',
+                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                  backgroundColor: '#06b6d4',
+                  color: '#ffffff',
+                  border: '1px solid transparent',
+                  boxShadow: '0 10px 18px -10px #06b6d4',
+                  '--btn-bg': '#06b6d4',
+                  '--btn-color': '#ffffff',
+                  '--btn-border': '1px solid transparent',
+                  '--btn-shadow': '0 10px 18px -10px #06b6d4',
+                  '--btn-hover-bg': '#0891b2',
+                  '--btn-hover-shadow': '0 14px 24px -12px #06b6d4',
+                  '--btn-active-bg': '#0e7490',
+                }}
+              >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                     Saving...
                   </>
                 ) : (
-                  "Save Products"
+                  <>Save Products</>
                 )}
-              </ModernButton>
+              </button>
             </div>
           </form>
         </div>
       </main>
     </>
   );
+};
+
+const parseCsvFile = (file) =>
+  new Promise((resolve, reject) => {
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        resolve(results.data ?? []);
+      },
+      error: (error) => reject(error),
+    });
+  });
+
+const parseExcelFile = async (file) => {
+  const buffer = await file.arrayBuffer();
+  const workbook = readWorkbook(buffer, { type: "array" });
+  const firstSheetName = workbook.SheetNames[0];
+  const worksheet = workbook.Sheets[firstSheetName];
+  if (!worksheet) {
+    return [];
+  }
+  return xlsxUtils.sheet_to_json(worksheet, { defval: "" });
+};
+
+const coerceTrimmedString = (value) => {
+  if (value === null || value === undefined) return "";
+  return String(value).trim();
 };
 
 function getOptionValue(option) {

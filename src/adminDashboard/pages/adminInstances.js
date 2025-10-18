@@ -38,7 +38,7 @@ import AdminActiveTab from "../components/adminActiveTab";
 import EmbeddedConsole, { useConsoleManager } from "../../components/Console/EmbeddedConsole";
 import ToastUtils from "../../utils/toastUtil";
 import useAdminAuthStore from "../../stores/adminAuthStore";
-import config from "../../config";
+import { useFetchPurchasedInstances } from "../../hooks/adminHooks/instancesHook";
 
 // Enhanced Status Badge Component
 const StatusBadge = ({ status, size = 'sm' }) => {
@@ -349,10 +349,14 @@ const InstanceRow = ({
 // Main Component
 export default function AdminInstances() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [instances, setInstances] = useState([]);
-  const [filteredInstances, setFilteredInstances] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+    const {
+    isFetching: isInstancesFetching,
+    data: instancesResponse,
+    error,
+    refetch,
+  } = useFetchPurchasedInstances();
+
+  const instances = instancesResponse?.data || [];
   const [selectedInstances, setSelectedInstances] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');

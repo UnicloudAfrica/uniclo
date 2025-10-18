@@ -45,6 +45,7 @@ const ModernAdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/admin-dashboard/inventory": "Inventory",
     "/admin-dashboard/pricing": "Pricing",
     "/admin-dashboard/projects": "Projects",
+    "/admin-dashboard/instances": "Instances",
     "/admin-dashboard/multi-instance-creation": "Multi-Instance Creation",
     "/admin-dashboard/regions": "Regions",
     "/admin-dashboard/advanced-calculator": "Calculator",

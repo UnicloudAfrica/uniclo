@@ -38,7 +38,7 @@ import ActiveTab from "../components/activeTab";
 import EmbeddedConsole, { useConsoleManager } from "../../components/Console/EmbeddedConsole";
 import ToastUtils from "../../utils/toastUtil";
 import useAuthStore from "../../stores/userAuthStore";
-import config from "../../config";
+import { useFetchInstanceRequests } from "../../hooks/instancesHook";
 
 // Enhanced Status Badge Component
 const StatusBadge = ({ status, size = 'sm' }) => {
@@ -349,10 +349,14 @@ const InstanceRow = ({
 // Main Component
 export default function Instances() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [instances, setInstances] = useState([]);
-  const [filteredInstances, setFilteredInstances] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+    const {
+    isFetching: isInstancesFetching,
+    data: instancesResponse,
+    error,
+    refetch,
+  } = useFetchInstanceRequests();
+
+  const instances = instancesResponse?.data || [];
   const [selectedInstances, setSelectedInstances] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');

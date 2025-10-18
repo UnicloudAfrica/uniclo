@@ -148,8 +148,19 @@ const InstanceConfigCard = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <button
+              type="button"
               onClick={() => onToggleExpand(index)}
-              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              className="modern-button btn-icon transition-colors"
+              style={{
+                '--btn-bg': 'transparent',
+                '--btn-color': designTokens.colors.neutral[500],
+                '--btn-border': '1px solid transparent',
+                '--btn-shadow': 'none',
+                '--btn-hover-bg': designTokens.colors.neutral[100],
+                '--btn-hover-color': designTokens.colors.primary[600],
+                '--btn-hover-border': '1px solid transparent',
+                '--btn-active-bg': designTokens.colors.neutral[200],
+              }}
             >
               {isExpanded ? (
                 <ChevronDown className="w-4 h-4" style={{ color: designTokens.colors.neutral[600] }} />
@@ -175,36 +186,36 @@ const InstanceConfigCard = ({
           
           <div className="flex items-center space-x-2">
             <button
+              type="button"
               onClick={() => onDuplicate(index)}
-              className="p-2 rounded transition-colors"
+              className="modern-button btn-icon transition-colors"
               style={{
-                color: designTokens.colors.neutral[400],
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.color = designTokens.colors.primary[600];
-                e.target.style.backgroundColor = designTokens.colors.primary[50];
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.color = designTokens.colors.neutral[400];
-                e.target.style.backgroundColor = 'transparent';
+                '--btn-bg': 'transparent',
+                '--btn-color': designTokens.colors.neutral[400],
+                '--btn-border': '1px solid transparent',
+                '--btn-shadow': 'none',
+                '--btn-hover-bg': designTokens.colors.primary[50],
+                '--btn-hover-color': designTokens.colors.primary[600],
+                '--btn-hover-border': '1px solid transparent',
+                '--btn-active-bg': designTokens.colors.primary[100],
               }}
               title="Duplicate Configuration"
             >
               <Copy className="w-4 h-4" />
             </button>
             <button
+              type="button"
               onClick={() => onDelete(index)}
-              className="p-2 rounded transition-colors"
+              className="modern-button btn-icon transition-colors"
               style={{
-                color: designTokens.colors.neutral[400],
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.color = designTokens.colors.error[600];
-                e.target.style.backgroundColor = designTokens.colors.error[50];
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.color = designTokens.colors.neutral[400];
-                e.target.style.backgroundColor = 'transparent';
+                '--btn-bg': 'transparent',
+                '--btn-color': designTokens.colors.neutral[400],
+                '--btn-border': '1px solid transparent',
+                '--btn-shadow': 'none',
+                '--btn-hover-bg': designTokens.colors.error[50],
+                '--btn-hover-color': designTokens.colors.error[600],
+                '--btn-hover-border': '1px solid transparent',
+                '--btn-active-bg': designTokens.colors.error[100],
               }}
               title="Delete Configuration"
             >
@@ -418,8 +429,19 @@ const InstanceConfigCard = ({
                   </h5>
                   {volumeIndex > 0 && (
                     <button
+                      type="button"
                       onClick={() => removeVolumeType(volumeIndex)}
-                      className="p-1 text-red-600 hover:bg-red-50 rounded"
+                      className="modern-button btn-icon"
+                      style={{
+                        '--btn-bg': 'transparent',
+                        '--btn-color': designTokens.colors.error[600],
+                        '--btn-border': '1px solid transparent',
+                        '--btn-shadow': 'none',
+                        '--btn-hover-bg': designTokens.colors.error[50],
+                        '--btn-hover-color': designTokens.colors.error[600],
+                        '--btn-hover-border': '1px solid transparent',
+                        '--btn-active-bg': designTokens.colors.error[100],
+                      }}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -466,8 +488,18 @@ const InstanceConfigCard = ({
             ))}
 
             <button
+              type="button"
               onClick={addVolumeType}
-              className="inline-flex items-center px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+              className="modern-button btn-compact inline-flex items-center px-3 py-2"
+              style={{
+                '--btn-bg': '#f3f4f6',
+                '--btn-color': '#374151',
+                '--btn-border': '1px solid transparent',
+                '--btn-shadow': 'none',
+                '--btn-hover-bg': '#e5e7eb',
+                '--btn-hover-color': '#111827',
+                '--btn-active-bg': '#d1d5db',
+              }}
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Additional Volume

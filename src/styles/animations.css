@@ -60,6 +60,21 @@
   outline-offset: 2px;
 }
 
+.btn-icon {
+  border-radius: 9999px !important;
+  min-height: auto;
+}
+
+.btn-icon svg {
+  pointer-events: none;
+}
+
+.btn-compact {
+  min-height: auto;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
 /* Loading spinner */
 @keyframes spin {
   from {

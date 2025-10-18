@@ -49,11 +49,11 @@ import config from "../../config";
 import { useLocation } from "react-router-dom";
 
 // Configuration Card Component
-const InstanceConfigCard = ({ 
-  config, 
-  index, 
-  onUpdate, 
-  onDelete, 
+const InstanceConfigCard = ({
+  config,
+  index,
+  onUpdate,
+  onDelete,
   onDuplicate,
   resources,
   errors = {},
@@ -169,13 +169,13 @@ const InstanceConfigCard = ({
               )}
             </button>
             <div>
-              <h3 
+              <h3
                 className="text-lg font-semibold"
                 style={{ color: designTokens.colors.neutral[900] }}
               >
                 Configuration #{index + 1}: {localConfig.name || 'Untitled'}
               </h3>
-              <p 
+              <p
                 className="text-sm"
                 style={{ color: designTokens.colors.neutral[500] }}
               >
@@ -183,7 +183,7 @@ const InstanceConfigCard = ({
               </p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <button
               type="button"
@@ -238,9 +238,8 @@ const InstanceConfigCard = ({
                 value={localConfig.name || ''}
                 onChange={(e) => updateConfig('name', e.target.value)}
                 placeholder="Enter instance name"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  getErrorForField('name') ? 'border-red-300' : 'border-gray-300'
-                }`}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${getErrorForField('name') ? 'border-red-300' : 'border-gray-300'
+                  }`}
               />
               {getErrorForField('name') && (
                 <p className="text-sm text-red-600 mt-1">{getErrorForField('name')}</p>
@@ -257,9 +256,8 @@ const InstanceConfigCard = ({
                 max="10"
                 value={localConfig.count || 1}
                 onChange={(e) => updateConfig('count', parseInt(e.target.value))}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  getErrorForField('count') ? 'border-red-300' : 'border-gray-300'
-                }`}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${getErrorForField('count') ? 'border-red-300' : 'border-gray-300'
+                  }`}
               />
               {getErrorForField('count') && (
                 <p className="text-sm text-red-600 mt-1">{getErrorForField('count')}</p>
@@ -295,9 +293,8 @@ const InstanceConfigCard = ({
                 <select
                   value={localConfig.region || ''}
                   onChange={(e) => updateConfig('region', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    getErrorForField('region') ? 'border-red-300' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${getErrorForField('region') ? 'border-red-300' : 'border-gray-300'
+                    }`}
                 >
                   <option value="">Select Region</option>
                   {(resources?.regions || []).map((region) => {
@@ -328,9 +325,8 @@ const InstanceConfigCard = ({
                   value={localConfig.project_id || ''}
                   onChange={(e) => updateConfig('project_id', e.target.value)}
                   disabled={!selectedRegion}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    getErrorForField('project_id') ? 'border-red-300' : 'border-gray-300'
-                  } ${!selectedRegion ? 'bg-gray-50 cursor-not-allowed' : ''}`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${getErrorForField('project_id') ? 'border-red-300' : 'border-gray-300'
+                    } ${!selectedRegion ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                 >
                   <option value="">{selectedRegion ? 'Select Project' : 'Select region first'}</option>
                   {projectsForRegion?.map(project => (
@@ -368,9 +364,8 @@ const InstanceConfigCard = ({
                   value={localConfig.compute_instance_id || ''}
                   onChange={(e) => updateConfig('compute_instance_id', e.target.value)}
                   disabled={!selectedRegion}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    getErrorForField('compute_instance_id') ? 'border-red-300' : 'border-gray-300'
-                  } ${!selectedRegion ? 'bg-gray-50 cursor-not-allowed' : ''}`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${getErrorForField('compute_instance_id') ? 'border-red-300' : 'border-gray-300'
+                    } ${!selectedRegion ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                 >
                   <option value="">Select Instance Type</option>
                   {(computeInstancesByRegion || []).map(item => {
@@ -394,9 +389,8 @@ const InstanceConfigCard = ({
                   value={localConfig.os_image_id || ''}
                   onChange={(e) => updateConfig('os_image_id', e.target.value)}
                   disabled={!selectedRegion}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    getErrorForField('os_image_id') ? 'border-red-300' : 'border-gray-300'
-                  } ${!selectedRegion ? 'bg-gray-50 cursor-not-allowed' : ''}`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${getErrorForField('os_image_id') ? 'border-red-300' : 'border-gray-300'
+                    } ${!selectedRegion ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                 >
                   <option value="">Select OS Image</option>
                   {(osImagesByRegion || []).map(item => {
@@ -522,9 +516,8 @@ const InstanceConfigCard = ({
                   value={localConfig.network_id || ''}
                   onChange={(e) => updateConfig('network_id', e.target.value)}
                   disabled={!projectIdentifier || !selectedRegion}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    getErrorForField('network_id') ? 'border-red-300' : 'border-gray-300'
-                  } ${(!projectIdentifier || !selectedRegion) ? 'bg-gray-50 cursor-not-allowed' : ''}`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${getErrorForField('network_id') ? 'border-red-300' : 'border-gray-300'
+                    } ${(!projectIdentifier || !selectedRegion) ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                 >
                   <option value="">None (use default)</option>
                   {(networkInterfaces || []).map(network => (
@@ -543,9 +536,8 @@ const InstanceConfigCard = ({
                   value={localConfig.subnet_id || ''}
                   onChange={(e) => updateConfig('subnet_id', e.target.value)}
                   disabled={!projectIdentifier || !selectedRegion}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    getErrorForField('subnet_id') ? 'border-red-300' : 'border-gray-300'
-                  } ${(!projectIdentifier || !selectedRegion) ? 'bg-gray-50 cursor-not-allowed' : ''}`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${getErrorForField('subnet_id') ? 'border-red-300' : 'border-gray-300'
+                    } ${(!projectIdentifier || !selectedRegion) ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                 >
                   <option value="">None (use default)</option>
                   {(subnets || []).map(subnet => (
@@ -584,9 +576,8 @@ const InstanceConfigCard = ({
                     updateConfig('security_group_ids', values);
                   }}
                   disabled={!projectIdentifier || !selectedRegion}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-24 ${
-                    getErrorForField('security_group_ids') ? 'border-red-300' : 'border-gray-300'
-                  } ${(!projectIdentifier || !selectedRegion) ? 'bg-gray-50 cursor-not-allowed' : ''}`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-24 ${getErrorForField('security_group_ids') ? 'border-red-300' : 'border-gray-300'
+                    } ${(!projectIdentifier || !selectedRegion) ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                 >
                   {(securityGroups || []).map(sg => (
                     <option key={sg.id} value={sg.id}>
@@ -762,7 +753,7 @@ export default function MultiInstanceCreation() {
       floating_ip_count: 0,
       tags: []
     };
-    
+
     const newConfigurations = [...configurations, newConfig];
     setConfigurations(newConfigurations);
     setExpandedConfigs(new Set([...expandedConfigs, newConfigurations.length - 1]));
@@ -774,10 +765,10 @@ export default function MultiInstanceCreation() {
       ToastUtils.warning('You must have at least one configuration');
       return;
     }
-    
+
     const newConfigs = configurations.filter((_, i) => i !== index);
     setConfigurations(newConfigs);
-    
+
     // Update expanded configs
     const newExpanded = new Set();
     expandedConfigs.forEach(i => {
@@ -791,11 +782,11 @@ export default function MultiInstanceCreation() {
   const duplicateConfiguration = (index) => {
     const configToDuplicate = { ...configurations[index] };
     configToDuplicate.name = configToDuplicate.name + ' (Copy)';
-    
+
     const newConfigurations = [...configurations];
     newConfigurations.splice(index + 1, 0, configToDuplicate);
     setConfigurations(newConfigurations);
-    
+
     setExpandedConfigs(new Set([...expandedConfigs, index + 1]));
   };
 
@@ -864,10 +855,10 @@ export default function MultiInstanceCreation() {
     setConfigurations(prev => prev.map(c => ({ ...c, region: c.region || selectedRegion || firstRegionCode || c.region })));
 
     setPricingLoading(true);
-    
+
     try {
       const { token } = useAdminAuthStore.getState();
-      const response = await fetch(`${config.baseURL}/business/multi-instances/preview-pricing`, {
+      const response = await fetch(`${config.baseURL}/business/instances/preview-pricing`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -876,8 +867,8 @@ export default function MultiInstanceCreation() {
         },
         body: JSON.stringify({
           pricing_requests: configurations.map(c => ({
-          region: c.region || selectedRegion || firstRegionCode || undefined,
-          project_id: c.project_id || undefined,
+            region: c.region || selectedRegion || firstRegionCode || undefined,
+            project_id: c.project_id || undefined,
             compute_instance_id: c.compute_instance_id ? Number(c.compute_instance_id) : undefined,
             os_image_id: c.os_image_id ? Number(c.os_image_id) : undefined,
             months: Number(c.months),
@@ -901,7 +892,7 @@ export default function MultiInstanceCreation() {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         setPricing(data.data);
         ToastUtils.success('Pricing calculated successfully');
@@ -969,10 +960,10 @@ export default function MultiInstanceCreation() {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         ToastUtils.success(data.message);
-        
+
         // Redirect to projects page since instance-management was removed
         setTimeout(() => {
           window.location.href = '/admin-dashboard/projects';
@@ -1011,13 +1002,13 @@ export default function MultiInstanceCreation() {
           onCloseMobileMenu={closeMobileMenu}
         />
         <AdminActiveTab />
-        <main 
+        <main
           className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8 flex items-center justify-center"
           style={{ backgroundColor: designTokens.colors.neutral[25] }}
         >
           <div className="text-center">
-            <Loader2 
-              className="w-8 h-8 animate-spin mx-auto mb-2" 
+            <Loader2
+              className="w-8 h-8 animate-spin mx-auto mb-2"
               style={{ color: designTokens.colors.primary[500] }}
             />
             <p style={{ color: designTokens.colors.neutral[700] }}>Loading resources...</p>
@@ -1036,59 +1027,59 @@ export default function MultiInstanceCreation() {
       />
       <AdminActiveTab />
 
-      <main 
+      <main
         className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full"
         style={{ backgroundColor: designTokens.colors.neutral[25] }}
       >
         {/* Header */}
-        <div 
+        <div
           className="bg-white px-6 md:px-8 py-6"
           style={{ borderBottom: `1px solid ${designTokens.colors.neutral[200]}` }}
         >
           <div className="flex items-center justify-between">
             <div>
-              <h1 
+              <h1
                 className="text-2xl font-bold"
                 style={{ color: designTokens.colors.neutral[900] }}
               >
                 Multi-Instance Creation
               </h1>
-              <p 
+              <p
                 className="text-sm mt-1"
                 style={{ color: designTokens.colors.neutral[500] }}
               >
                 Create multiple instances with different configurations in a single request
               </p>
             </div>
-            
+
             <div className="flex items-center space-x-3">
               <div className="text-right">
-                <p 
+                <p
                   className="text-sm font-medium"
                   style={{ color: designTokens.colors.neutral[900] }}
                 >
                   {totalInstances} Total Instances
                 </p>
-                <p 
+                <p
                   className="text-xs"
                   style={{ color: designTokens.colors.neutral[500] }}
                 >
                   {configurations.length} Configurations
                 </p>
               </div>
-              
+
               {pricing && (
-                <div 
+                <div
                   className="text-right px-3 py-2 rounded-lg"
                   style={{ backgroundColor: designTokens.colors.success[50] }}
                 >
-                  <p 
+                  <p
                     className="text-sm font-semibold"
                     style={{ color: designTokens.colors.success[900] }}
                   >
                     {pricing.currency} {pricing.grand_total}
                   </p>
-                  <p 
+                  <p
                     className="text-xs"
                     style={{ color: designTokens.colors.success[600] }}
                   >
@@ -1104,7 +1095,7 @@ export default function MultiInstanceCreation() {
         <div className="p-6 md:p-8">
           {/* Assignment (Admin only) */}
           <ModernCard className="p-6 mb-8">
-            <h3 
+            <h3
               className="text-md font-semibold mb-4"
               style={{ color: designTokens.colors.neutral[900] }}
             >
@@ -1202,28 +1193,28 @@ export default function MultiInstanceCreation() {
           {/* Pricing Section */}
           {pricing && (
             <ModernCard className="p-6 mb-8">
-              <h3 
+              <h3
                 className="text-lg font-semibold mb-4"
                 style={{ color: designTokens.colors.neutral[900] }}
               >
                 Pricing Breakdown
               </h3>
-              
+
               <div className="space-y-4">
                 {pricing.previews.map((preview, index) => (
-                  <div 
-                    key={index} 
+                  <div
+                    key={index}
                     className="flex items-center justify-between p-4 rounded-lg"
                     style={{ backgroundColor: designTokens.colors.neutral[50] }}
                   >
                     <div>
-                      <h4 
+                      <h4
                         className="font-medium"
                         style={{ color: designTokens.colors.neutral[900] }}
                       >
                         Configuration #{preview.index + 1}
                       </h4>
-                      <p 
+                      <p
                         className="text-sm"
                         style={{ color: designTokens.colors.neutral[500] }}
                       >
@@ -1231,13 +1222,13 @@ export default function MultiInstanceCreation() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p 
+                      <p
                         className="font-semibold"
                         style={{ color: designTokens.colors.neutral[900] }}
                       >
                         {preview.currency} {preview.total_price}
                       </p>
-                      <p 
+                      <p
                         className="text-sm"
                         style={{ color: designTokens.colors.neutral[500] }}
                       >
@@ -1246,17 +1237,17 @@ export default function MultiInstanceCreation() {
                     </div>
                   </div>
                 ))}
-                
+
                 <div className="pt-4" style={{ borderTop: `1px solid ${designTokens.colors.neutral[200]}` }}>
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 
+                      <h4
                         className="text-lg font-bold"
                         style={{ color: designTokens.colors.neutral[900] }}
                       >
                         Grand Total
                       </h4>
-                      <p 
+                      <p
                         className="text-sm"
                         style={{ color: designTokens.colors.neutral[500] }}
                       >
@@ -1264,7 +1255,7 @@ export default function MultiInstanceCreation() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p 
+                      <p
                         className="text-2xl font-bold"
                         style={{ color: designTokens.colors.success[600] }}
                       >
@@ -1280,15 +1271,15 @@ export default function MultiInstanceCreation() {
           {/* Action Bar */}
           <ModernCard className="flex items-center justify-between p-6">
             <div className="flex items-center space-x-4">
-              <label 
+              <label
                 className="inline-flex items-center space-x-2 text-sm mr-4"
                 style={{ color: designTokens.colors.neutral[700] }}
               >
-                <input 
-                  type="checkbox" 
-                  checked={fastTrack} 
-                  onChange={(e) => setFastTrack(e.target.checked)} 
-                  className="rounded" 
+                <input
+                  type="checkbox"
+                  checked={fastTrack}
+                  onChange={(e) => setFastTrack(e.target.checked)}
+                  className="rounded"
                   style={{
                     borderColor: designTokens.colors.neutral[300],
                     color: designTokens.colors.primary[600]
@@ -1296,7 +1287,7 @@ export default function MultiInstanceCreation() {
                 />
                 <span>Fast track</span>
               </label>
-              
+
               <ModernButton
                 onClick={getPricingPreview}
                 disabled={pricingLoading || totalInstances === 0}
@@ -1326,7 +1317,7 @@ export default function MultiInstanceCreation() {
               >
                 Cancel
               </ModernButton>
-              
+
               <ModernButton
                 onClick={createInstances}
                 disabled={creating || totalInstances === 0 || !pricing}

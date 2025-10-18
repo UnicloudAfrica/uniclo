@@ -444,7 +444,7 @@ const AdminProductCreate = () => {
         className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8"
         style={{ backgroundColor: designTokens.colors.neutral[25] }}
       >
-        <div className="space-y-6 max-w-5xl">
+        <div className="space-y-6">
           <ModernButton
             variant="outline"
             size="sm"

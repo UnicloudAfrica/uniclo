@@ -105,6 +105,12 @@ const ModernAdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       category: "management"
     },
     {
+      name: "Instances",
+      icon: Server,
+      path: "/admin-dashboard/instances",
+      category: "management"
+    },
+    {
       name: "Multi-Instance Creation",
       icon: Server,
       path: "/admin-dashboard/multi-instance-creation",

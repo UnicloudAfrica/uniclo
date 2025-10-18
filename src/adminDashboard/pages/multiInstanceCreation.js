@@ -964,9 +964,9 @@ export default function MultiInstanceCreation() {
       if (data.success) {
         ToastUtils.success(data.message);
 
-        // Redirect to projects page since instance-management was removed
+        // Redirect to instances page
         setTimeout(() => {
-          window.location.href = '/admin-dashboard/projects';
+          window.location.href = '/admin-dashboard/instances';
         }, 2000);
       } else {
         if (data.errors) {

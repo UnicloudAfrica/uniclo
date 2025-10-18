@@ -104,6 +104,7 @@ import ClientCalculator from "./clientDashboard/pages/clientCalculator";
 import ClientPaymentHistory from "./clientDashboard/pages/clientTransaction";
 import ClientSettings from "./clientDashboard/pages/clientAccountSettings";
 import ClientSupport from "./clientDashboard/pages/clientSupport";
+import AdminInstances from "./adminDashboard/pages/adminInstances";
 import TenantLeads from "./tenantDashboard/pages/tenant-leads";
 import TenantLeadDetails from "./tenantDashboard/pages/tenant-lead-details";
 import RegionApprovals from "./adminDashboard/pages/RegionApprovals";
@@ -307,6 +308,7 @@ function App() {
           {/* <Route path="/admin-dashboard/instance-management/details" element={<InstanceDetails />} /> */}
           <Route path="/admin-dashboard/enhanced-profile-settings" element={<EnhancedProfileSettings />} />
           <Route path="/admin-dashboard/multi-instance-creation" element={<MultiInstanceCreation />} />
+          <Route path="/admin-dashboard/instances" element={<AdminInstances />} />
           {/* <Route
             path="/admin-dashboard/quote-calculator"
             element={<AdminQuoteCalculator />}

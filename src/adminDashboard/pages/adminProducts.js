@@ -51,6 +51,7 @@ export default function AdminProducts() {
     isFetching: isProductsFetching,
     data: products,
     error,
+    refetch,
   } = useFetchProducts(selectedCountryCode, selectedProvider, {
     enabled: Boolean(!isRegionsFetching && !isCountriesFetching),
   });
@@ -447,6 +448,7 @@ export default function AdminProducts() {
           onClose={closeDeleteModal}
           productId={selectedProduct.id}
           productName={selectedProduct.name}
+          refetch={refetch}
         />
       )}
     </>

@@ -2,13 +2,18 @@ import React from "react";
 import { X, Loader2 } from "lucide-react";
 import { useDeleteProduct } from "../../../hooks/adminHooks/adminProductHooks";
 
-const DeleteProduct = ({ isOpen, onClose, productId, productName }) => {
+const DeleteProduct = ({ isOpen, onClose, productId, productName, refetch }) => {
   const { mutate: deleteProduct, isPending } = useDeleteProduct();
 
   const handleDelete = () => {
     if (!productId) return;
     deleteProduct(productId, {
-      onSuccess: () => onClose(),
+      onSuccess: () => {
+        onClose();
+        if (refetch) {
+          refetch();
+        }
+      },
       onError: (error) =>
         console.error("Error deleting product:", error.message),
     });

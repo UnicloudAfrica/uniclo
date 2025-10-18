@@ -173,8 +173,6 @@ const AdminProductCreate = () => {
         entryErrors.productable_type = "Product type is required";
       if (!entry.productable_id)
         entryErrors.productable_id = "Product selection is required";
-      if (!entry.provider)
-        entryErrors.provider = "Region must supply a provider";
 
       if (Object.keys(entryErrors).length > 0) {
         hasErrors = true;
@@ -272,204 +270,193 @@ const AdminProductCreate = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {entries.map((entry, index) => (
-              <ModernCard key={entry.id} className="space-y-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-900">
-                      Product #{index + 1}
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                      Configure the catalogue entry for this product.
-                    </p>
-                  </div>
-                  {entries.length > 1 && (
-                    <ModernButton
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600"
-                      onClick={() => removeEntry(index)}
-                      type="button"
-                      isDisabled={isSubmitting}
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Remove
-                    </ModernButton>
-                  )}
-                </div>
+            <ModernCard>
+              <div className="overflow-x-auto">
+                <table className="min-w-[960px] w-full table-auto">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">#</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                        Product Name<span className="text-red-500">*</span>
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                        Region<span className="text-red-500">*</span>
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                        Type<span className="text-red-500">*</span>
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                        Product<span className="text-red-500">*</span>
+                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                        Provider
+                      </th>
+                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-600">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {entries.map((entry, index) => (
+                      <tr key={entry.id} className="align-top">
+                        <td className="px-4 py-3 text-sm text-gray-500">{index + 1}</td>
+                        <td className="px-4 py-3">
+                          <input
+                            type="text"
+                            value={entry.name}
+                            onChange={(e) =>
+                              handleEntryFieldChange(index, "name", e.target.value)
+                            }
+                            placeholder="Product name"
+                            className={`w-full input-field ${
+                              entry.errors.name ? "border-red-500" : "border-gray-300"
+                            }`}
+                            disabled={isSubmitting}
+                          />
+                          {entry.errors.name && (
+                            <p className="text-red-500 text-xs mt-1">{entry.errors.name}</p>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <select
+                            value={entry.region}
+                            onChange={(e) =>
+                              handleEntryFieldChange(index, "region", e.target.value)
+                            }
+                            className={`w-full input-field ${
+                              entry.errors.region
+                                ? "border-red-500"
+                                : "border-gray-300"
+                            }`}
+                            disabled={isSubmitting || isRegionsFetching}
+                          >
+                            <option value="">
+                              {isRegionsFetching ? "Loading regions..." : "Select region"}
+                            </option>
+                            {regions?.map((region) => (
+                              <option key={region.code} value={region.code}>
+                                {region.name}
+                              </option>
+                            ))}
+                          </select>
+                          {entry.errors.region && (
+                            <p className="text-red-500 text-xs mt-1">{entry.errors.region}</p>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <select
+                            value={entry.productable_type}
+                            onChange={(e) =>
+                              handleEntryFieldChange(
+                                index,
+                                "productable_type",
+                                e.target.value
+                              )
+                            }
+                            className={`w-full input-field ${
+                              entry.errors.productable_type
+                                ? "border-red-500"
+                                : "border-gray-300"
+                            }`}
+                            disabled={isSubmitting}
+                          >
+                            <option value="">Select type</option>
+                            {productTypes.map((type) => (
+                              <option key={type.value} value={type.value}>
+                                {type.label}
+                              </option>
+                            ))}
+                          </select>
+                          {entry.errors.productable_type && (
+                            <p className="text-red-500 text-xs mt-1">
+                              {entry.errors.productable_type}
+                            </p>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <select
+                            value={entry.productable_id}
+                            onChange={(e) =>
+                              handleEntryFieldChange(
+                                index,
+                                "productable_id",
+                                e.target.value
+                              )
+                            }
+                            className={`w-full input-field ${
+                              entry.errors.productable_id
+                                ? "border-red-500"
+                                : "border-gray-300"
+                            }`}
+                            disabled={
+                              isSubmitting ||
+                              entry.loadingOptions ||
+                              !entry.region ||
+                              !entry.productable_type
+                            }
+                          >
+                            <option value="">
+                              {!entry.region || !entry.productable_type
+                                ? "Select region & type"
+                                : entry.loadingOptions
+                                ? "Loading options..."
+                                : "Select product"}
+                            </option>
+                            {entry.options.map((option) => {
+                              const value = getOptionValue(option);
+                              const label = getOptionLabel(option);
+                              return (
+                                <option key={`${entry.id}-${value}`} value={value}>
+                                  {label}
+                                </option>
+                              );
+                            })}
+                          </select>
+                          {entry.errors.productable_id && (
+                            <p className="text-red-500 text-xs mt-1">
+                              {entry.errors.productable_id}
+                            </p>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {entry.provider || "Auto from region"}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {entries.length > 1 && (
+                            <ModernButton
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeEntry(index)}
+                              type="button"
+                              isDisabled={isSubmitting}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </ModernButton>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Name<span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={entry.name}
-                      onChange={(e) =>
-                        handleEntryFieldChange(index, "name", e.target.value)
-                      }
-                      placeholder="Enter product name"
-                      className={`w-full input-field ${
-                        entry.errors.name ? "border-red-500" : "border-gray-300"
-                      }`}
-                      disabled={isSubmitting}
-                    />
-                    {entry.errors.name && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {entry.errors.name}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Region<span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={entry.region}
-                      onChange={(e) =>
-                        handleEntryFieldChange(index, "region", e.target.value)
-                      }
-                      className={`w-full input-field ${
-                        entry.errors.region
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
-                      disabled={isSubmitting || isRegionsFetching}
-                    >
-                      <option value="">
-                        {isRegionsFetching ? "Loading regions..." : "Select region"}
-                      </option>
-                      {regions?.map((region) => (
-                        <option key={region.code} value={region.code}>
-                          {region.name}
-                        </option>
-                      ))}
-                    </select>
-                    {entry.errors.region && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {entry.errors.region}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Product Type<span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={entry.productable_type}
-                      onChange={(e) =>
-                        handleEntryFieldChange(
-                          index,
-                          "productable_type",
-                          e.target.value
-                        )
-                      }
-                      className={`w-full input-field ${
-                        entry.errors.productable_type
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
-                      disabled={isSubmitting}
-                    >
-                      <option value="">Select a product type</option>
-                      {productTypes.map((type) => (
-                        <option key={type.value} value={type.value}>
-                          {type.label}
-                        </option>
-                      ))}
-                    </select>
-                    {entry.errors.productable_type && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {entry.errors.productable_type}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Product<span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={entry.productable_id}
-                      onChange={(e) =>
-                        handleEntryFieldChange(
-                          index,
-                          "productable_id",
-                          e.target.value
-                        )
-                      }
-                      className={`w-full input-field ${
-                        entry.errors.productable_id
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
-                      disabled={
-                        isSubmitting ||
-                        entry.loadingOptions ||
-                        !entry.region ||
-                        !entry.productable_type
-                      }
-                    >
-                      <option value="">
-                        {!entry.region || !entry.productable_type
-                          ? "Select region and type first"
-                          : entry.loadingOptions
-                          ? "Loading products..."
-                          : "Select a product"}
-                      </option>
-                      {entry.options.map((option) => {
-                        const value = getOptionValue(option);
-                        const label = getOptionLabel(option);
-                        return (
-                          <option key={`${entry.id}-${value}`} value={value}>
-                            {label}
-                          </option>
-                        );
-                      })}
-                    </select>
-                    {entry.errors.productable_id && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {entry.errors.productable_id}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Provider
-                    </label>
-                    <input
-                      type="text"
-                      value={entry.provider}
-                      readOnly
-                      className={`w-full input-field bg-gray-100 ${
-                        entry.errors.provider ? "border-red-500" : "border-gray-300"
-                      }`}
-                      placeholder="Auto-filled from region"
-                    />
-                    {entry.errors.provider && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {entry.errors.provider}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </ModernCard>
-            ))}
-
-            <ModernButton
-              type="button"
-              variant="outline"
-              className="flex items-center gap-2"
-              onClick={addEntry}
-              isDisabled={isSubmitting}
-            >
-              <Plus className="w-4 h-4" />
-              Add Another Product
-            </ModernButton>
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-gray-500">
+                  Region automatically determines the provider. Select a type to load available products.
+                </p>
+                <ModernButton
+                  type="button"
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  onClick={addEntry}
+                  isDisabled={isSubmitting}
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Row
+                </ModernButton>
+              </div>
+            </ModernCard>
 
             <div className="flex items-center justify-end gap-3">
               <ModernButton

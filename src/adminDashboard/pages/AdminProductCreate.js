@@ -475,7 +475,7 @@ const AdminProductCreate = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <ModernCard>
-              <div className="overflow-x-auto">
+              <div className="hidden md:block overflow-x-auto">
                 <table className="min-w-[960px] w-full table-auto">
                   <thead>
                     <tr className="bg-gray-50">
@@ -665,6 +665,176 @@ const AdminProductCreate = () => {
                   </tbody>
                 </table>
               </div>
+
+              <div className="md:hidden space-y-4">
+                {entries.map((entry, index) => (
+                  <div key={entry.id} className="p-4 border rounded-lg">
+                    <div className="flex justify-between items-center mb-4">
+                      <p className="font-semibold">Product #{index + 1}</p>
+                      {entries.length > 1 && (
+                        <ModernButton
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeEntry(index)}
+                          type="button"
+                          isDisabled={isSubmitting}
+                          className="text-red-600"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </ModernButton>
+                      )}
+                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Product Name <span className="text-red-500">*</span></label>
+                        <input
+                          type="text"
+                          value={entry.name}
+                          onChange={(e) =>
+                            handleEntryFieldChange(index, "name", e.target.value)
+                          }
+                          placeholder="Product name"
+                          className={`w-full input-field mt-1 ${
+                            entry.errors.name ? "border-red-500" : "border-gray-300"
+                          }`}
+                          disabled={isSubmitting}
+                        />
+                        {entry.errors.name && (
+                          <p className="text-red-500 text-xs mt-1">{entry.errors.name}</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Region <span className="text-red-500">*</span></label>
+                        <select
+                          value={entry.region}
+                          onChange={(e) =>
+                            handleEntryFieldChange(index, "region", e.target.value)
+                          }
+                          className={`w-full input-field mt-1 ${
+                            entry.errors.region
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
+                          disabled={isSubmitting || isRegionsFetching}
+                        >
+                          <option value="">
+                            {isRegionsFetching ? "Loading regions..." : "Select region"}
+                          </option>
+                          {regions?.map((region) => (
+                            <option key={region.code} value={region.code}>
+                              {region.name}
+                            </option>
+                          ))}
+                        </select>
+                        {entry.errors.region && (
+                          <p className="text-red-500 text-xs mt-1">{entry.errors.region}</p>
+                        )}
+                        <p className="text-xs text-gray-400 mt-1">
+                          Provider: {entry.provider || "Auto-detected"}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Type <span className="text-red-500">*</span></label>
+                        <select
+                          value={entry.productable_type}
+                          onChange={(e) =>
+                            handleEntryFieldChange(
+                              index,
+                              "productable_type",
+                              e.target.value
+                            )
+                          }
+                          className={`w-full input-field mt-1 ${
+                            entry.errors.productable_type
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
+                          disabled={isSubmitting}
+                        >
+                          <option value="">Select type</option>
+                          {productTypes.map((type) => (
+                            <option key={type.value} value={type.value}>
+                              {type.label}
+                            </option>
+                          ))}
+                        </select>
+                        {entry.errors.productable_type && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {entry.errors.productable_type}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Product <span className="text-red-500">*</span></label>
+                        <select
+                          value={entry.productable_id}
+                          onChange={(e) =>
+                            handleEntryFieldChange(
+                              index,
+                              "productable_id",
+                              e.target.value
+                            )
+                          }
+                          className={`w-full input-field mt-1 ${
+                            entry.errors.productable_id
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
+                          disabled={
+                            isSubmitting ||
+                            entry.loadingOptions ||
+                            !entry.region ||
+                            !entry.productable_type
+                          }
+                        >
+                          <option value="">
+                            {!entry.region || !entry.productable_type
+                              ? "Select region & type"
+                              : entry.loadingOptions
+                              ? "Loading options..."
+                              : "Select product"}
+                          </option>
+                          {entry.options.map((option) => {
+                            const value = getOptionValue(option);
+                            const label = getOptionLabel(option);
+                            return (
+                              <option key={`${entry.id}-${value}`} value={value}>
+                                {label}
+                              </option>
+                            );
+                          })}
+                        </select>
+                        {entry.errors.productable_id && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {entry.errors.productable_id}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Price (USD) <span className="text-red-500">*</span></label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={entry.price}
+                          onChange={(e) =>
+                            handleEntryFieldChange(index, "price", e.target.value)
+                          }
+                          placeholder="0.00"
+                          className={`w-full input-field mt-1 ${
+                            entry.errors.price ? "border-red-500" : "border-gray-300"
+                          }`}
+                          disabled={isSubmitting}
+                        />
+                        {entry.errors.price && (
+                          <p className="text-red-500 text-xs mt-1">{entry.errors.price}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
 
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-gray-500">

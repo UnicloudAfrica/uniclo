@@ -43,7 +43,7 @@ class InstanceApiService {
     try {
       const queryString = new URLSearchParams(params).toString();
       const url = `${config.baseURL}/business/instances${queryString ? `?${queryString}` : ''}`;
-      
+
       const response = await fetch(url, {
         method: 'GET',
         headers: this.getAuthHeaders(),
@@ -188,12 +188,12 @@ class InstanceApiService {
   async executeInstanceAction(instanceId, action, params = {}) {
     console.warn('Instance actions are no longer available. This method is deprecated.');
     ToastUtils.warning(`Instance action '${action}' is no longer available. Use individual instance management operations instead.`);
-    
+
     // For delete action, redirect to the delete method
     if (action === 'destroy' || action === 'delete') {
       return this.deleteInstance(instanceId);
     }
-    
+
     return Promise.resolve({
       success: false,
       message: 'Instance actions have been disabled'
@@ -253,7 +253,7 @@ class InstanceApiService {
   async executeBulkAction(instanceIds, action) {
     console.warn('Bulk instance actions are no longer available.');
     ToastUtils.warning(`Bulk action '${action}' is no longer available. Please manage instances individually.`);
-    
+
     return Promise.resolve({
       success: false,
       message: 'Bulk actions have been disabled'
@@ -271,7 +271,7 @@ class InstanceApiService {
         ...options
       };
 
-      const response = await fetch(`${config.baseURL}/business/multi-instances`, {
+      const response = await fetch(`${config.baseURL}/business/instances/create`, {
         method: 'POST',
         headers: {
           ...this.getAuthHeaders(),

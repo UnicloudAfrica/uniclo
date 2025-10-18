@@ -948,7 +948,7 @@ export default function MultiInstanceCreation() {
         ...(configurations.some(c => (c.tags || []).length) ? { tags: Array.from(new Set((configurations.flatMap(c => c.tags || [])))) } : {})
       };
       const idempotencyKey = `multi-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      const response = await fetch(`${config.baseURL}/business/multi-instances`, {
+      const response = await fetch(`${config.baseURL}/business/instances/create`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

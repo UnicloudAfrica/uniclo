@@ -185,10 +185,6 @@ export default function InstanceDetails() {
 
   const { consoles, openConsole, closeConsole } = useConsoleManager();
 
-  useEffect(() => {
-    alert(`Admin API base: ${config.adminURL}`);
-  }, []);
-
   const fetchInstanceDetails = useCallback(
     async (identifier) => {
       if (!identifier) {
@@ -286,7 +282,6 @@ export default function InstanceDetails() {
     }
 
     setInstanceIdentifier(resolvedIdentifier);
-    alert(`Admin API base: ${config.adminURL}`);
     fetchInstanceDetails(resolvedIdentifier);
   }, [fetchInstanceDetails]);
 

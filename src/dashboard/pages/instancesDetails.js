@@ -278,17 +278,23 @@ const InstancesDetails = () => {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    const identifierParam = params.get("identifier");
     const encodedId = params.get("id");
     const nameFromUrl = params.get("name");
 
-    if (encodedId) {
+    if (identifierParam && identifierParam.trim()) {
+      setInstanceId(identifierParam.trim());
+    } else if (encodedId) {
       try {
-        const decodedId = atob(decodeURIComponent(encodedId));
-        setInstanceId(decodedId);
+        const decodedIdentifier = atob(decodeURIComponent(encodedId));
+        setInstanceId(decodedIdentifier);
       } catch (error) {
         ToastUtils.error("We could not load that instance. Please try again.");
         setInstanceId(null);
       }
+    } else {
+      ToastUtils.error("We could not load that instance. Please try again.");
+      setInstanceId(null);
     }
 
     if (nameFromUrl) {

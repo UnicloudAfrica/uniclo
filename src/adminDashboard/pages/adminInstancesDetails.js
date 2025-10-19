@@ -76,6 +76,7 @@ export default function AdminInstancesDetails() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [instanceId, setInstanceId] = useState(null);
   const [instanceNameFromUrl, setInstanceNameFromUrl] = useState("");
+  const [identifierError, setIdentifierError] = useState(null);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false); // State for success modal
   const [transactionReferenceForSuccess, setTransactionReferenceForSuccess] =
     useState(null); // To pass to success modal
@@ -83,25 +84,50 @@ export default function AdminInstancesDetails() {
   const [selectedTransactionForPayment, setSelectedTransactionForPayment] =
     useState(null); // To pass to PaymentModal
 
-  const { idFromUrl, nameFromUrl } = useMemo(() => {
+  const { identifierParam, encodedIdParam, nameParam } = useMemo(() => {
     const params = new URLSearchParams(window.location.search);
     return {
-      idFromUrl: params.get("identifier"),
-      nameFromUrl: params.get("name"),
+      identifierParam: params.get("identifier"),
+      encodedIdParam: params.get("id"),
+      nameParam: params.get("name"),
     };
   }, []);
 
   useEffect(() => {
-    setInstanceId(idFromUrl);
-    setInstanceNameFromUrl(nameFromUrl || "");
-  }, [idFromUrl]);
+    setIdentifierError(null);
+
+    if (identifierParam && identifierParam.trim()) {
+      setInstanceId(identifierParam.trim());
+    } else if (encodedIdParam) {
+      try {
+        const decodedIdentifier = atob(decodeURIComponent(encodedIdParam));
+        setInstanceId(decodedIdentifier);
+      } catch (err) {
+        console.error("Failed to decode instance identifier:", err);
+        ToastUtils.error("Invalid instance reference provided.");
+        setIdentifierError("Invalid instance reference provided.");
+        setInstanceId(null);
+      }
+    } else {
+      setIdentifierError("No instance identifier was provided in the URL.");
+      setInstanceId(null);
+    }
+
+    setInstanceNameFromUrl(nameParam || "");
+  }, [identifierParam, encodedIdParam, nameParam]);
+
+  const normalizedInstanceId = instanceId?.trim() ?? "";
+  const identifierProvided = useMemo(
+    () => Boolean((identifierParam && identifierParam.trim()) || encodedIdParam),
+    [identifierParam, encodedIdParam]
+  );
 
   const {
     data: instanceDetails,
     isFetching,
     isError,
     error,
-  } = useFetchInstanceRequestById(instanceId);
+  } = useFetchInstanceRequestById(normalizedInstanceId || null);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -138,7 +164,34 @@ export default function AdminInstancesDetails() {
     // queryClient.invalidateQueries(["instanceRequest", instanceId]);
   };
 
-  if (isFetching || instanceId === null) {
+  if (identifierError) {
+    return (
+      <>
+        <AdminHeadbar onMenuClick={toggleMobileMenu} />
+        <AdminSidebar
+          isMobileMenuOpen={isMobileMenuOpen}
+          onCloseMobileMenu={closeMobileMenu}
+        />
+        <AdminActiveTab />
+        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex flex-col items-center justify-center text-center">
+          <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
+          <p className="text-lg font-semibold text-gray-700 mb-4">
+            {identifierError}
+          </p>
+          <button
+            onClick={handleGoBack}
+            className="px-6 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors"
+          >
+            Go back
+          </button>
+        </main>
+      </>
+    );
+  }
+
+  const isResolvingIdentifier = identifierProvided && !normalizedInstanceId;
+
+  if (isFetching || isResolvingIdentifier) {
     return (
       <>
         <AdminHeadbar onMenuClick={toggleMobileMenu} />

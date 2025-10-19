@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { 
   Loader2, 
   AlertTriangle, 
@@ -173,8 +173,8 @@ const MetricCard = ({ title, value, unit, trend, icon: Icon, color = 'blue' }) =
 // Enhanced Instance Details Component
 export default function InstanceDetails() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [instanceId, setInstanceId] = useState(null);
-  const [instanceIdentifier, setInstanceIdentifier] = useState(null);
+  const [instanceId, setInstanceId] = useState(null); // canonical instance identifier used for API calls
+  const [instanceIdentifier, setInstanceIdentifier] = useState(null); // identifier to fetch (kept separately to trigger effects)
   const [instanceDetails, setInstanceDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
@@ -184,75 +184,114 @@ export default function InstanceDetails() {
 
   const { consoles, openConsole, closeConsole } = useConsoleManager();
 
+  const fetchInstanceDetails = useCallback(
+    async (identifier) => {
+      if (!identifier) {
+        return;
+      }
+
+      setIsLoading(true);
+      setIsError(false);
+      setError(null);
+
+      try {
+        const { token } = useAdminAuthStore.getState() || {};
+
+        if (!token) {
+          throw new Error("Your admin session has expired. Please sign in again.");
+        }
+
+        const authHeaders = {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        };
+
+        const fetchJson = async (path) => {
+          const response = await fetch(path, { headers: authHeaders });
+          const data = await response.json().catch(() => null);
+          return { response, data };
+        };
+
+        // Try direct show endpoint first
+        let url = `${config.baseURL}/business/instances/${encodeURIComponent(identifier)}`;
+        let { response, data } = await fetchJson(url);
+
+        if (!response.ok || !data?.success) {
+          // Fallback to legacy filter endpoint when identifier lookup fails
+          url = `${config.baseURL}/business/instances?identifier=${encodeURIComponent(identifier)}`;
+          ({ response, data } = await fetchJson(url));
+        }
+
+        if (!response.ok || !data?.success) {
+          const message = data?.error || `Unable to load instance ${identifier} (HTTP ${response.status})`;
+          throw new Error(message);
+        }
+
+        const detail = Array.isArray(data.data) ? data.data[0] : data.data;
+
+        if (!detail) {
+          throw new Error("Instance details are unavailable. The instance may have been deleted.");
+        }
+
+        setInstanceDetails(detail);
+
+        if (detail.identifier) {
+          setInstanceId((prev) =>
+            prev === detail.identifier ? prev : detail.identifier
+          );
+          setInstanceIdentifier((prev) =>
+            prev === detail.identifier ? prev : detail.identifier
+          );
+        } else if (detail.id) {
+          const fallbackId = String(detail.id);
+          setInstanceId((prev) => (prev === fallbackId ? prev : fallbackId));
+        }
+      } catch (err) {
+        console.error("Failed to load instance details:", err);
+        setIsError(true);
+        setError(err.message || "Unknown error while loading instance.");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
   // Fetch instance details
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const identifier = params.get("identifier");
     const encodedId = params.get("id");
 
-    if (identifier) {
-      setInstanceIdentifier(identifier);
-      fetchInstanceDetails(undefined, identifier);
+    if (identifier && identifier.trim()) {
+      setInstanceIdentifier(identifier.trim());
       return;
     }
 
     if (encodedId) {
       try {
         const decodedId = atob(decodeURIComponent(encodedId));
-        setInstanceId(decodedId);
         setInstanceIdentifier(decodedId);
-        fetchInstanceDetails(decodedId);
       } catch (error) {
         console.error("Failed to decode instance ID:", error);
         setIsError(true);
         setError("Invalid instance reference");
       }
+      return;
     }
+
+    setIsError(true);
+    setError("We could not determine which instance to load.");
+    setIsLoading(false);
   }, []);
 
-const fetchInstanceDetails = async (id, identifier) => {
-    setIsLoading(true);
-    setIsError(false);
-    
-    try {
-      const { token } = useAdminAuthStore.getState();
-      const reference = (identifier ?? id ?? "").toString().trim();
-
-      if (!reference) {
-        throw new Error("Missing instance reference");
-      }
-
-      const response = await fetch(`${config.baseURL}/business/instances/${encodeURIComponent(reference)}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-        },
-      });
-      
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok || !data?.success) {
-        const errorMessage = data?.error || `Failed to fetch instance details (${response.status})`;
-        throw new Error(errorMessage);
-      }
-
-      const detail = Array.isArray(data.data) ? data.data[0] : data.data;
-
-      if (!detail) {
-        throw new Error('Instance details are unavailable');
-      }
-
-      setInstanceDetails(detail);
-      const resolvedIdentifier = detail.identifier || reference;
-      setInstanceIdentifier(resolvedIdentifier);
-      setInstanceId(resolvedIdentifier);
-    } catch (err) {
-      setIsError(true);
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
+  useEffect(() => {
+    if (!instanceIdentifier) {
+      return;
     }
-  };
+
+    fetchInstanceDetails(instanceIdentifier);
+  }, [instanceIdentifier, fetchInstanceDetails]);
 
   // Execute instance action
   const executeAction = async (action, params = {}) => {
@@ -300,11 +339,11 @@ const fetchInstanceDetails = async (id, identifier) => {
 
   // Refresh status
   const refreshStatus = async () => {
-    if (!instanceId) return;
+    const reference = instanceIdentifier || instanceId;
+    if (!reference) return;
     
     try {
-      // Simply refetch the instance details since status refresh endpoint was removed
-      fetchInstanceDetails(instanceId);
+      await fetchInstanceDetails(reference);
       ToastUtils.success('Status refreshed');
     } catch (err) {
       ToastUtils.error('Failed to refresh status');

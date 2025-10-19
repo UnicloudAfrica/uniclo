@@ -200,6 +200,7 @@ export default function InstanceDetails() {
       try {
         const decodedId = atob(decodeURIComponent(encodedId));
         setInstanceId(decodedId);
+        setInstanceIdentifier(decodedId);
         fetchInstanceDetails(decodedId);
       } catch (error) {
         console.error("Failed to decode instance ID:", error);
@@ -215,32 +216,36 @@ const fetchInstanceDetails = async (id, identifier) => {
     
     try {
       const { token } = useAdminAuthStore.getState();
-      let response;
-      if (identifier) {
-        response = await fetch(`${config.baseURL}/business/instances?identifier=${encodeURIComponent(identifier)}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json',
-          },
-        });
-      } else {
-        response = await fetch(`${config.baseURL}/business/instances/${id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json',
-          },
-        });
+      const reference = (identifier ?? id ?? "").toString().trim();
+
+      if (!reference) {
+        throw new Error("Missing instance reference");
       }
+
+      const response = await fetch(`${config.baseURL}/business/instances/${encodeURIComponent(reference)}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
       
-      const data = await response.json();
-      
-      if (data.success) {
-        const detail = Array.isArray(data.data) ? data.data[0] : data.data;
-        setInstanceDetails(detail);
-        if (detail?.id) setInstanceId(detail.id);
-      } else {
-        throw new Error(data.error || 'Failed to fetch instance details');
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data?.success) {
+        const errorMessage = data?.error || `Failed to fetch instance details (${response.status})`;
+        throw new Error(errorMessage);
       }
+
+      const detail = Array.isArray(data.data) ? data.data[0] : data.data;
+
+      if (!detail) {
+        throw new Error('Instance details are unavailable');
+      }
+
+      setInstanceDetails(detail);
+      const resolvedIdentifier = detail.identifier || reference;
+      setInstanceIdentifier(resolvedIdentifier);
+      setInstanceId(resolvedIdentifier);
     } catch (err) {
       setIsError(true);
       setError(err.message);

@@ -213,12 +213,12 @@ export default function InstanceDetails() {
         };
 
         // Try direct show endpoint first
-        let url = `${config.baseURL}/business/instances/${encodeURIComponent(identifier)}`;
+        let url = `${config.adminURL}/instances/${encodeURIComponent(identifier)}`;
         let { response, data } = await fetchJson(url);
 
         if (!response.ok || !data?.success) {
           // Fallback to legacy filter endpoint when identifier lookup fails
-          url = `${config.baseURL}/business/instances?identifier=${encodeURIComponent(identifier)}`;
+          url = `${config.adminURL}/instances?identifier=${encodeURIComponent(identifier)}`;
           ({ response, data } = await fetchJson(url));
         }
 

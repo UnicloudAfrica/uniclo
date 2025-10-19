@@ -67,6 +67,16 @@ const fetchInstanceRequestById = async (id) => {
   return res.data;
 };
 
+const fetchInstanceManagementDetailsByIdentifier = async (identifier) => {
+  const res = await silentApi("GET", `/instance-management/${identifier}`);
+  if (!res?.data) {
+    throw new Error(
+      `Failed to fetch instance management details for ${identifier}`
+    );
+  }
+  return res.data;
+};
+
 // GET: Fetch instance lifecycle by ID
 const fetchInstanceLifecycleById = async (id) => {
   const res = await silentApi("GET", `/instances/${id}/console`);
@@ -145,6 +155,17 @@ export const useFetchInstanceLifeCycleById = (id, options = {}) => {
     queryKey: ["admin-instance-lifecycle", id],
     queryFn: () => fetchInstanceLifecycleById(id),
     enabled: !!id, // Only fetch if ID is provided
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+
+export const useFetchInstanceManagementDetails = (identifier, options = {}) => {
+  return useQuery({
+    queryKey: ["admin-instanceManagement", identifier],
+    queryFn: () => fetchInstanceManagementDetailsByIdentifier(identifier),
+    enabled: !!identifier,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,

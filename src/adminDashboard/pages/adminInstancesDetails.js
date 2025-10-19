@@ -12,12 +12,17 @@ import {
   Timer,
   Play,
   Square,
+  Pause,
+  Moon,
   RotateCw,
   RefreshCw,
+  Maximize,
+  Camera,
   Activity,
   Network,
   HardDrive,
   Wallet,
+  Trash2,
   Link,
   Download,
   Globe,
@@ -25,7 +30,10 @@ import {
   Layers,
 } from "lucide-react";
 
-import { useFetchInstanceRequestById } from "../../hooks/adminHooks/instancesHook";
+import {
+  useFetchInstanceRequestById,
+  useFetchInstanceManagementDetails,
+} from "../../hooks/adminHooks/instancesHook";
 import {
   useAdminFetchInstanceConsoleById,
   useAdminFetchInstanceLifecycleById,
@@ -122,6 +130,108 @@ const formatPercentage = (value) => {
 
   if (Math.abs(numeric) < 0.01) return "0%";
   return `${Math.abs(numeric) < 10 ? numeric.toFixed(1) : Math.round(numeric)}%`;
+};
+
+const ACTION_ICON_LIBRARY = {
+  play: Play,
+  start: Play,
+  stop: Square,
+  pause: Pause,
+  suspend: Pause,
+  hibernate: Moon,
+  resume: Play,
+  reboot: RotateCw,
+  refresh: RefreshCw,
+  "refresh-cw": RefreshCw,
+  resize: Maximize,
+  snapshot: Camera,
+  destroy: Trash2,
+  console: Terminal,
+};
+
+const ACTION_STYLES = {
+  start: {
+    label: "Start Instance",
+    description: "Power on and resume workloads",
+    tone:
+      "bg-green-50 border border-green-200 text-green-700 hover:bg-green-100 focus-visible:ring-green-200",
+    icon: Play,
+    disableOnStatus: (status) =>
+      ["running", "active", "spawning"].includes(status),
+  },
+  stop: {
+    label: "Stop Instance",
+    description: "Gracefully shut down the VM",
+    tone:
+      "bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 focus-visible:ring-amber-200",
+    icon: Square,
+    disableOnStatus: (status) => !["running", "active"].includes(status),
+  },
+  reboot: {
+    label: "Reboot",
+    description: "Restart to apply configuration changes",
+    tone:
+      "bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 focus-visible:ring-blue-200",
+    icon: RotateCw,
+    disableOnStatus: (status) => !["running", "active"].includes(status),
+  },
+  suspend: {
+    label: "Suspend",
+    description: "Pause workloads without shutting down",
+    tone:
+      "bg-purple-50 border border-purple-200 text-purple-700 hover:bg-purple-100 focus-visible:ring-purple-200",
+    icon: Pause,
+    disableOnStatus: (status) => !["running", "active"].includes(status),
+  },
+  hibernate: {
+    label: "Hibernate",
+    description: "Persist state and power down the VM",
+    tone:
+      "bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 focus-visible:ring-indigo-200",
+    icon: Moon,
+    disableOnStatus: (status) => !["running", "active"].includes(status),
+  },
+  resume: {
+    label: "Resume",
+    description: "Bring the instance back online",
+    tone:
+      "bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 focus-visible:ring-emerald-200",
+    icon: Play,
+    disableOnStatus: (status) =>
+      !["suspended", "paused", "hibernated"].includes(status),
+  },
+  snapshot: {
+    label: "Create Snapshot",
+    description: "Capture the current disk state",
+    tone:
+      "bg-cyan-50 border border-cyan-200 text-cyan-700 hover:bg-cyan-100 focus-visible:ring-cyan-200",
+    icon: Camera,
+    disableOnStatus: () => false,
+  },
+  resize: {
+    label: "Resize",
+    description: "Change compute resources for this VM",
+    tone:
+      "bg-sky-50 border border-sky-200 text-sky-700 hover:bg-sky-100 focus-visible:ring-sky-200",
+    icon: Maximize,
+    disableOnStatus: () => false,
+  },
+  destroy: {
+    label: "Destroy",
+    description: "Permanently delete this instance",
+    tone:
+      "bg-red-50 border border-red-200 text-red-700 hover:bg-red-100 focus-visible:ring-red-200",
+    icon: Trash2,
+    disableOnStatus: () => false,
+  },
+  refresh: {
+    label: "Refresh Status",
+    description: "Pull the latest data from the provider",
+    tone:
+      "bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100 focus-visible:ring-gray-200",
+    icon: RefreshCw,
+    disableOnStatus: () => false,
+  },
 };
 
 const Badge = ({ text }) => {
@@ -245,9 +355,50 @@ export default function AdminInstancesDetails() {
     refetch: refetchInstanceDetails,
   } = useFetchInstanceRequestById(instanceId);
 
-  const instanceIdentifier = instanceDetails?.identifier || instanceId;
+  const {
+    data: managementDetails,
+    isFetching: isManagementFetching,
+    isError: isManagementError,
+    error: managementError,
+  } = useFetchInstanceManagementDetails(instanceId, {
+    enabled: !!instanceId,
+  });
+
+  const managedInstance = managementDetails?.instance;
+  const effectiveInstance = managedInstance || instanceDetails || null;
+  const instanceIdentifier =
+    managedInstance?.identifier || instanceDetails?.identifier || instanceId;
   const consoleResourceId =
-    instanceDetails?.id || instanceDetails?.identifier || instanceId;
+    managedInstance?.id ||
+    managedInstance?.identifier ||
+    instanceDetails?.id ||
+    instanceDetails?.identifier ||
+    instanceId;
+
+  const providerDetails = managementDetails?.provider_details;
+  const availableActions = managementDetails?.available_actions;
+  const consoleInfo = managementDetails?.console_info;
+  const networkInfo = managementDetails?.network_info;
+  const securityInfo = managementDetails?.security_info;
+  const monitoringMetrics = managementDetails?.monitoring_metrics;
+
+  const displayInstance = effectiveInstance || {};
+  const rawMetadata = displayInstance?.metadata;
+  const effectiveMetadata = useMemo(() => {
+    if (!rawMetadata) return {};
+    return safeParseJson(rawMetadata, rawMetadata) || {};
+  }, [rawMetadata]);
+
+  const pricingBreakdownRaw = useMemo(
+    () =>
+      effectiveMetadata?.pricing_breakdown
+        ? safeParseJson(
+            effectiveMetadata.pricing_breakdown,
+            effectiveMetadata.pricing_breakdown
+          ) || effectiveMetadata.pricing_breakdown
+        : null,
+    [effectiveMetadata?.pricing_breakdown]
+  );
 
   const { data: lifecycleData, isLoading: isLifecycleLoading } =
     useAdminFetchInstanceLifecycleById(instanceIdentifier);
@@ -263,10 +414,10 @@ export default function AdminInstancesDetails() {
     typeof window !== "undefined" ? window.location.href : "";
 
   const handleCopyIdentifier = useCallback(() => {
-    if (!instanceDetails?.identifier) return;
-    navigator.clipboard.writeText(instanceDetails.identifier);
+    if (!displayInstance?.identifier) return;
+    navigator.clipboard.writeText(displayInstance.identifier);
     ToastUtils.success("Identifier copied to clipboard");
-  }, [instanceDetails?.identifier]);
+  }, [displayInstance?.identifier]);
 
   const handleCopyShareLink = useCallback(() => {
     if (!shareUrl) return;
@@ -281,19 +432,19 @@ export default function AdminInstancesDetails() {
   }, []);
 
   const handleExportJson = useCallback(() => {
-    if (!instanceDetails) return;
-    const blob = new Blob([JSON.stringify(instanceDetails, null, 2)], {
+    if (!effectiveInstance) return;
+    const blob = new Blob([JSON.stringify(effectiveInstance, null, 2)], {
       type: "application/json",
     });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${instanceDetails.identifier || "instance"}-details.json`;
+    link.download = `${displayInstance.identifier || "instance"}-details.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
-  }, [instanceDetails]);
+  }, [displayInstance.identifier, effectiveInstance]);
 
   const handleOpenConsole = useCallback(async () => {
     if (!consoleResourceId) {
@@ -391,39 +542,37 @@ export default function AdminInstancesDetails() {
   };
 
   const currency =
-    instanceDetails?.metadata?.pricing_breakdown?.currency || "NGN";
+    pricingBreakdownRaw?.currency || displayInstance?.currency || "NGN";
 
   const metricCards = useMemo(() => {
-    const totalCost =
-      instanceDetails?.metadata?.pricing_breakdown?.total;
-
+    const totalCost = pricingBreakdownRaw?.total;
     return [
       {
         label: "Compute Class",
         value:
-          instanceDetails?.compute?.productable_name ||
-          instanceDetails?.compute?.name ||
+          displayInstance?.compute?.productable_name ||
+          displayInstance?.compute?.name ||
           "N/A",
         icon: Server,
       },
       {
         label: "vCPUs",
-        value: instanceDetails?.compute?.vcpus
-          ? `${instanceDetails?.compute?.vcpus}`
+        value: displayInstance?.compute?.vcpus
+          ? `${displayInstance?.compute?.vcpus}`
           : "N/A",
         icon: Cpu,
       },
       {
         label: "Memory",
-        value: instanceDetails?.compute?.memory_mb
-          ? `${Math.round(Number(instanceDetails?.compute?.memory_mb) / 1024)} GiB`
+        value: displayInstance?.compute?.memory_mb
+          ? `${Math.round(Number(displayInstance?.compute?.memory_mb) / 1024)} GiB`
           : "N/A",
         icon: Gauge,
       },
       {
         label: "Primary Storage",
-        value: instanceDetails?.storage_size_gb
-          ? `${instanceDetails?.storage_size_gb} GiB`
+        value: displayInstance?.storage_size_gb
+          ? `${displayInstance?.storage_size_gb} GiB`
           : "N/A",
         icon: HardDrive,
       },
@@ -436,15 +585,18 @@ export default function AdminInstancesDetails() {
         icon: Wallet,
       },
     ];
-  }, [currency, instanceDetails]);
+  }, [currency, displayInstance, pricingBreakdownRaw]);
 
   const providerVm = useMemo(() => {
+    if (providerDetails && typeof providerDetails === "object") {
+      return providerDetails;
+    }
     const raw =
-      instanceDetails?.metadata?.provider_vm ??
-      instanceDetails?.metadata?.provider_vm_snapshot ??
+      effectiveMetadata?.provider_vm ??
+      effectiveMetadata?.provider_vm_snapshot ??
       null;
     return safeParseJson(raw, raw);
-  }, [instanceDetails]);
+  }, [effectiveMetadata, providerDetails]);
 
   const providerSnapshot = useMemo(() => {
     if (!providerVm || typeof providerVm !== "object") {
@@ -465,6 +617,27 @@ export default function AdminInstancesDetails() {
   }, [providerVm]);
 
   const networkTopology = useMemo(() => {
+    if (networkInfo && typeof networkInfo === "object") {
+      const normalizedNetworks = {};
+      if (Array.isArray(networkInfo.networks)) {
+        networkInfo.networks.forEach((network, idx) => {
+          const name =
+            network?.name || `Network ${Object.keys(normalizedNetworks).length + 1}`;
+          normalizedNetworks[name] = network?.addresses || [];
+        });
+      }
+      return {
+        networks: normalizedNetworks,
+        flatAddresses:
+          networkInfo.flat_addresses ||
+          networkInfo.flatAddresses ||
+          [],
+        publicIps: networkInfo.public_ips || networkInfo.publicIps || [],
+        privateIps: networkInfo.private_ips || networkInfo.privateIps || [],
+        primaryIp: networkInfo.primary_ip || networkInfo.primaryIp,
+      };
+    }
+
     if (!providerVm || typeof providerVm !== "object") {
       return null;
     }
@@ -476,26 +649,44 @@ export default function AdminInstancesDetails() {
       privateIps: providerVm.private_ips || [],
       primaryIp: providerVm.primary_ip,
     };
-  }, [providerVm]);
+  }, [networkInfo, providerVm]);
 
   const securitySummary = useMemo(() => {
-    const metadata = instanceDetails?.metadata || {};
+    if (securityInfo && typeof securityInfo === "object") {
+      return {
+        keyPair:
+          securityInfo.key_pair ||
+          securityInfo.keyPair ||
+          null,
+        securityGroups:
+          securityInfo.security_groups ||
+          securityInfo.securityGroups ||
+          [],
+        attachedVolumes:
+          securityInfo.volumes ||
+          securityInfo.volumes_attached ||
+          [],
+        createdVolumeIds: securityInfo.created_volume_ids || [],
+        createdElasticIps: securityInfo.created_eip_ids || [],
+      };
+    }
+
     return {
       keyPair:
         providerVm?.key_name ??
-        metadata.key_name ??
-        instanceDetails?.key_pair?.name ??
+        effectiveMetadata?.key_name ??
+        displayInstance?.key_pair?.name ??
         null,
       securityGroups:
         providerVm?.security_groups ??
-        metadata.security_groups ??
-        instanceDetails?.security_group_ids ??
+        effectiveMetadata?.security_groups ??
+        displayInstance?.security_group_ids ??
         [],
       attachedVolumes: providerVm?.volumes_attached || [],
-      createdVolumeIds: metadata?.created_volume_ids || [],
-      createdElasticIps: metadata?.created_eip_ids || [],
+      createdVolumeIds: effectiveMetadata?.created_volume_ids || [],
+      createdElasticIps: effectiveMetadata?.created_eip_ids || [],
     };
-  }, [instanceDetails, providerVm]);
+  }, [displayInstance, effectiveMetadata, providerVm, securityInfo]);
 
   const securitySummaryEntries = useMemo(() => {
     if (!securitySummary) return [];
@@ -684,7 +875,7 @@ export default function AdminInstancesDetails() {
       });
     });
 
-    if (!events.length && instanceDetails) {
+    if (!events.length && displayInstance) {
       const pushFallback = (label, value, description) => {
         if (!value) return;
         events.push({
@@ -697,14 +888,14 @@ export default function AdminInstancesDetails() {
         });
       };
 
-      pushFallback("Instance created", instanceDetails.created_at);
-      pushFallback("Lifecycle refreshed", instanceDetails.updated_at);
+      pushFallback("Instance created", displayInstance.created_at);
+      pushFallback("Lifecycle refreshed", displayInstance.updated_at);
       pushFallback(
         "Next billing",
-        instanceDetails.next_billing_date,
+        displayInstance.next_billing_date,
         "Next billing cycle"
       );
-      pushFallback("Expires", instanceDetails.expires_at);
+      pushFallback("Expires", displayInstance.expires_at);
     }
 
     return events.sort((a, b) => {
@@ -717,25 +908,30 @@ export default function AdminInstancesDetails() {
 
       return bTime - aTime;
     });
-  }, [instanceDetails, lifecycleData]);
+  }, [displayInstance, lifecycleData]);
 
   const telemetrySummary = useMemo(() => {
-    if (!instanceDetails) return [];
+    const metricsSource =
+      (monitoringMetrics && typeof monitoringMetrics === "object"
+        ? monitoringMetrics
+        : null) || {};
 
     const telemetry =
+      metricsSource.telemetry ||
       lifecycleData?.telemetry ||
       lifecycleData?.data?.telemetry ||
-      instanceDetails?.metadata?.telemetry ||
-      instanceDetails?.telemetry ||
-      {};
+      effectiveMetadata?.telemetry ||
+      displayInstance?.telemetry ||
+      metricsSource;
 
     const metrics = [];
 
     const healthStatus =
-      instanceDetails?.metadata?.health_status ||
+      metricsSource.health_status ||
       telemetry?.health ||
       telemetry?.status ||
-      instanceDetails?.status;
+      effectiveMetadata?.health_status ||
+      displayInstance?.status;
 
     if (healthStatus) {
       metrics.push({
@@ -749,8 +945,8 @@ export default function AdminInstancesDetails() {
       telemetry?.uptime ||
       telemetry?.uptime_seconds ||
       telemetry?.uptime_secs ||
-      instanceDetails?.metadata?.uptime_seconds ||
-      instanceDetails?.uptime_seconds;
+      effectiveMetadata?.uptime_seconds ||
+      displayInstance?.uptime_seconds;
     const formattedUptime = formatDuration(uptime);
     if (formattedUptime) {
       metrics.push({
@@ -763,7 +959,8 @@ export default function AdminInstancesDetails() {
       telemetry?.cpu_usage ??
       telemetry?.cpu_load ??
       telemetry?.cpu?.usage ??
-      telemetry?.cpu?.value;
+      telemetry?.cpu?.value ??
+      metricsSource?.cpu_usage;
     const cpuValue = formatPercentage(cpuUsage);
     if (cpuValue) {
       metrics.push({
@@ -772,12 +969,13 @@ export default function AdminInstancesDetails() {
       });
     }
 
-    const totalMemoryMb = Number(instanceDetails?.compute?.memory_mb);
+    const totalMemoryMb = Number(displayInstance?.compute?.memory_mb);
     const memoryUsageRaw =
       telemetry?.memory_used_mb ??
       telemetry?.memory_usage ??
       telemetry?.memory?.used_mb ??
-      telemetry?.memory?.usage;
+      telemetry?.memory?.usage ??
+      metricsSource?.memory_usage;
     const memoryUsage = Number(memoryUsageRaw);
     if (
       Number.isFinite(memoryUsage) &&
@@ -800,7 +998,8 @@ export default function AdminInstancesDetails() {
     const networkThroughput =
       telemetry?.network_throughput ??
       telemetry?.network?.throughput ??
-      telemetry?.network_transfer_rate;
+      telemetry?.network_transfer_rate ??
+      metricsSource?.network_io;
     if (networkThroughput !== undefined && networkThroughput !== null) {
       const throughput = Number(networkThroughput);
       let displayValue = null;
@@ -824,7 +1023,8 @@ export default function AdminInstancesDetails() {
     const lastHeartbeat =
       telemetry?.last_heartbeat ||
       telemetry?.last_check_in ||
-      telemetry?.updated_at;
+      telemetry?.updated_at ||
+      metricsSource?.last_updated;
     if (lastHeartbeat) {
       metrics.push({
         label: "Last heartbeat",
@@ -833,11 +1033,10 @@ export default function AdminInstancesDetails() {
     }
 
     return metrics;
-  }, [instanceDetails, lifecycleData]);
+  }, [displayInstance, effectiveMetadata, lifecycleData, monitoringMetrics]);
 
   const parsedPricingBreakdown = useMemo(() => {
-    const raw = instanceDetails?.metadata?.pricing_breakdown;
-    const pricing = safeParseJson(raw, raw);
+    const pricing = pricingBreakdownRaw;
     if (!pricing || typeof pricing !== "object") {
       return null;
     }
@@ -879,88 +1078,88 @@ export default function AdminInstancesDetails() {
         pricing?.facility_amount ??
         null,
     };
-  }, [instanceDetails, currency]);
+  }, [currency, pricingBreakdownRaw]);
 
   const subscriptionInsights = useMemo(() => {
-    if (!instanceDetails) return [];
+    if (!displayInstance) return [];
 
     return [
       {
         label: "Subscription Status",
-        value: formatStatusText(instanceDetails.status),
+        value: formatStatusText(displayInstance.status),
       },
       {
         label: "Billing Status",
-        value: formatStatusText(instanceDetails.billing_status),
+        value: formatStatusText(displayInstance.billing_status),
       },
       {
         label: "Term Length",
-        value: instanceDetails.months
-          ? `${instanceDetails.months} month${instanceDetails.months > 1 ? "s" : ""}`
+        value: displayInstance.months
+          ? `${displayInstance.months} month${displayInstance.months > 1 ? "s" : ""}`
           : "N/A",
       },
       {
         label: "Next Billing Date",
-        value: instanceDetails.next_billing_date
-          ? formatDate(instanceDetails.next_billing_date)
+        value: displayInstance.next_billing_date
+          ? formatDate(displayInstance.next_billing_date)
           : "N/A",
       },
       {
         label: "Offer Ends",
-        value: instanceDetails.offer_ends_at
-          ? formatDateTime(instanceDetails.offer_ends_at)
+        value: displayInstance.offer_ends_at
+          ? formatDateTime(displayInstance.offer_ends_at)
           : "N/A",
       },
       {
         label: "Grace Days",
         value:
-          instanceDetails.grace_days !== undefined &&
-          instanceDetails.grace_days !== null
-            ? `${instanceDetails.grace_days}`
+          displayInstance.grace_days !== undefined &&
+          displayInstance.grace_days !== null
+            ? `${displayInstance.grace_days}`
             : "N/A",
       },
       {
         label: "Provisioning Driver",
-        value: instanceDetails.provisioning_driver || "Manual",
+        value: displayInstance.provisioning_driver || "Manual",
       },
       {
         label: "Fast Track",
-        value: formatBoolean(instanceDetails.fast_track),
+        value: formatBoolean(displayInstance.fast_track),
       },
       {
         label: "Provisioned At",
-        value: instanceDetails.provisioned_at
-          ? formatDateTime(instanceDetails.provisioned_at)
+        value: displayInstance.provisioned_at
+          ? formatDateTime(displayInstance.provisioned_at)
           : "N/A",
       },
       {
         label: "Last Power Event",
-        value: instanceDetails.last_power_event_at
-          ? formatDateTime(instanceDetails.last_power_event_at)
+        value: displayInstance.last_power_event_at
+          ? formatDateTime(displayInstance.last_power_event_at)
           : "N/A",
       },
     ];
-  }, [instanceDetails]);
+  }, [displayInstance]);
 
   const relatedResources = useMemo(() => {
-    if (!instanceDetails) return [];
+    if (!displayInstance) return [];
 
     const resources = [];
 
-    if (instanceDetails.project?.name) {
+    if (displayInstance.project?.name) {
       resources.push({
         key: "project",
         label: "Project",
-        value: instanceDetails.project.name,
-        href: instanceDetails.project.id
-          ? `/admin-dashboard/projects/${instanceDetails.project.id}`
+        value: displayInstance.project.name,
+        href: displayInstance.project.id
+          ? `/admin-dashboard/projects/${displayInstance.project.id}`
           : null,
         icon: Layers,
       });
     }
 
-    if (instanceDetails.provider || instanceDetails.region) {
-      const combined = [instanceDetails.provider, instanceDetails.region]
+    if (displayInstance.provider || displayInstance.region) {
+      const combined = [displayInstance.provider, displayInstance.region]
         .filter(Boolean)
         .join(" · ");
 
@@ -972,8 +1171,8 @@ export default function AdminInstancesDetails() {
       });
     }
 
-    const floatingIp = instanceDetails.floating_ip?.ip_address;
-    const privateIp = instanceDetails.private_ip;
+    const floatingIp = displayInstance.floating_ip?.ip_address;
+    const privateIp = displayInstance.private_ip;
     if (floatingIp) {
       resources.push({
         key: "floating-ip",
@@ -992,94 +1191,94 @@ export default function AdminInstancesDetails() {
       });
     }
 
-    if (instanceDetails.metadata?.security_groups?.length) {
+    if (effectiveMetadata?.security_groups?.length) {
       resources.push({
         key: "security-groups",
         label: "Security Groups",
-        chips: instanceDetails.metadata.security_groups,
+        chips: effectiveMetadata.security_groups,
         icon: Shield,
       });
     }
 
-    if (instanceDetails.metadata?.data_volumes?.length) {
-      const volumes = instanceDetails.metadata.data_volumes.slice(0, 3).map(
-        (vol) => ({
-          id: vol?.id || vol?.name || vol?.volume_label,
-          name: vol?.name || vol?.volume_label || "Volume",
-          size:
-            vol?.size_gb ||
-            vol?.volume_size_gb ||
-            vol?.storage_size_gb ||
-            vol?.capacity_gb,
-        })
-      );
+    if (effectiveMetadata?.data_volumes?.length) {
+      const volumes = effectiveMetadata.data_volumes.slice(0, 3).map((vol) => ({
+        id: vol?.id || vol?.name || vol?.volume_label,
+        name: vol?.name || vol?.volume_label || "Volume",
+        size:
+          vol?.size_gb ||
+          vol?.volume_size_gb ||
+          vol?.storage_size_gb ||
+          vol?.capacity_gb,
+      }));
 
       resources.push({
         key: "data-volumes",
         label: "Data Volumes",
         volumes,
         extraCount:
-          instanceDetails.metadata.data_volumes.length > 3
-            ? instanceDetails.metadata.data_volumes.length - 3
+          effectiveMetadata.data_volumes.length > 3
+            ? effectiveMetadata.data_volumes.length - 3
             : 0,
         icon: HardDrive,
       });
     }
 
-    if (instanceDetails.tags?.length) {
+    if (Array.isArray(displayInstance.tags) && displayInstance.tags.length) {
       resources.push({
         key: "tags",
         label: "Tags",
-        chips: instanceDetails.tags,
+        chips: displayInstance.tags,
         icon: Server,
       });
     }
 
     return resources;
-  }, [instanceDetails]);
+  }, [displayInstance, effectiveMetadata]);
 
   const quickActions = useMemo(() => {
-    const status = (instanceDetails?.status || "").toLowerCase();
+    if (availableActions && Object.keys(availableActions).length > 0) {
+      return Object.entries(availableActions).map(([key, config]) => {
+        const style = ACTION_STYLES[key] || {};
+        const Icon =
+          (config?.icon && ACTION_ICON_LIBRARY[config.icon]) ||
+          ACTION_ICON_LIBRARY[key] ||
+          style.icon ||
+          Terminal;
 
-    return [
-      {
-        key: "start",
-        label: "Start Instance",
-        description: "Power on and resume workloads",
-        icon: Play,
+        return {
+          key,
+          label: config?.label || style.label || formatStatusText(key),
+          description: config?.description || style.description || "",
+          icon: Icon,
+          tone:
+            style.tone ||
+            "bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100 focus-visible:ring-gray-200",
+          disabled: config?.enabled === false,
+        };
+      });
+    }
+
+    const status = (displayInstance?.status || "").toLowerCase();
+
+    return Object.entries(ACTION_STYLES).map(([key, style]) => {
+      const Icon = style.icon || ACTION_ICON_LIBRARY[key] || Terminal;
+      const disabled =
+        typeof style.disableOnStatus === "function"
+          ? style.disableOnStatus(status)
+          : false;
+
+      return {
+        key,
+        label: style.label || formatStatusText(key),
+        description: style.description || "",
+        icon: Icon,
         tone:
-          "bg-green-50 border border-green-200 text-green-700 hover:bg-green-100 focus-visible:ring-green-200",
-        disabled: ["running", "active", "spawning"].includes(status),
-      },
-      {
-        key: "stop",
-        label: "Stop Instance",
-        description: "Gracefully shut down the VM",
-        icon: Square,
-        tone:
-          "bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 focus-visible:ring-amber-200",
-        disabled: !["running", "active"].includes(status),
-      },
-      {
-        key: "reboot",
-        label: "Reboot",
-        description: "Restart to apply configuration changes",
-        icon: RotateCw,
-        tone:
-          "bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 focus-visible:ring-blue-200",
-        disabled: !["running", "active"].includes(status),
-      },
-      {
-        key: "refresh",
-        label: "Refresh Status",
-        description: "Pull the latest data from the provider",
-        icon: RefreshCw,
-        tone:
+          style.tone ||
           "bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100 focus-visible:ring-gray-200",
-        disabled: false,
-      },
-    ];
-  }, [instanceDetails?.status]);
+        disabled,
+      };
+    });
+  }, [availableActions, displayInstance?.status]);
 
   const hasLifecycleEvents = lifecycleEvents.length > 0;
   const hasTelemetry = telemetrySummary.length > 0;
@@ -1112,11 +1311,11 @@ export default function AdminInstancesDetails() {
   };
 
   const enhancedTransactions = useMemo(() => {
-    if (!Array.isArray(instanceDetails?.transactions)) {
+    if (!Array.isArray(displayInstance?.transactions)) {
       return [];
     }
 
-    return instanceDetails.transactions.map((tx) => {
+    return displayInstance.transactions.map((tx) => {
       const parsedMetadata = safeParseJson(tx.metadata, tx.metadata);
       const parsedPaymentOptions = safeParseJson(
         tx.payment_gateway_options,
@@ -1147,7 +1346,7 @@ export default function AdminInstancesDetails() {
         _breakdownLines: breakdownLines,
       };
     });
-  }, [instanceDetails?.transactions]);
+  }, [displayInstance?.transactions]);
 
   if (identifierError) {
     return (

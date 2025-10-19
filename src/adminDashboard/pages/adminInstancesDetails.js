@@ -83,24 +83,18 @@ export default function AdminInstancesDetails() {
   const [selectedTransactionForPayment, setSelectedTransactionForPayment] =
     useState(null); // To pass to PaymentModal
 
-  useEffect(() => {
+  const { idFromUrl, nameFromUrl } = useMemo(() => {
     const params = new URLSearchParams(window.location.search);
-    const encodedId = params.get("id");
-    const nameFromUrl = params.get("name");
-
-    if (encodedId) {
-      try {
-        const decodedId = atob(decodeURIComponent(encodedId));
-        setInstanceId(decodedId);
-      } catch (error) {
-        console.error("Failed to decode instance ID:", error);
-        setInstanceId(null);
-      }
-    }
-    if (nameFromUrl) {
-      setInstanceNameFromUrl(nameFromUrl);
-    }
+    return {
+      idFromUrl: params.get("identifier"),
+      nameFromUrl: params.get("name"),
+    };
   }, []);
+
+  useEffect(() => {
+    setInstanceId(idFromUrl);
+    setInstanceNameFromUrl(nameFromUrl || "");
+  }, [idFromUrl]);
 
   const {
     data: instanceDetails,

@@ -1,13 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ToastUtils from "../../../utils/toastUtil";
 import {
   useFetchTenantNetworkInterfaces,
   useSyncTenantNetworkInterfaces,
   useDeleteTenantNetworkInterface,
 } from "../../../hooks/eni";
-import AddEniModal from "../eniComps/addEni";
-import DeleteEniModal from "../eniComps/deleteEni";
-import ManageEniSecurityGroupsModal from "../eniComps/manageSecurityGroups";
+import AddEniModal from "../ENIComps/addEni";
+import DeleteEniModal from "../ENIComps/deleteEni";
+import ManageEniSecurityGroupsModal from "../ENIComps/manageSecurityGroups";
 
 const ENIs = ({
   projectId = "",
@@ -31,7 +31,7 @@ const ENIs = ({
   const [manageModal, setManageModal] = useState(null);
   const itemsPerPage = 6;
 
-  const items = Array.isArray(enis) ? enis : [];
+  const items = useMemo(() => (Array.isArray(enis) ? enis : []), [enis]);
   const totalItems = items.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -59,7 +59,9 @@ const ENIs = ({
         },
         onError: (err) => {
           console.error("Failed to sync network interfaces:", err);
-          ToastUtils.error(err?.message || "Failed to sync network interfaces.");
+          ToastUtils.error(
+            err?.message || "Failed to sync network interfaces."
+          );
         },
       }
     );
@@ -85,7 +87,9 @@ const ENIs = ({
         },
         onError: (err) => {
           console.error("Failed to delete network interface:", err);
-          ToastUtils.error(err?.message || "Failed to delete network interface.");
+          ToastUtils.error(
+            err?.message || "Failed to delete network interface."
+          );
           setDeleteModal(null);
         },
       }
@@ -169,7 +173,7 @@ const ENIs = ({
                   <p>Private IP: {eni.private_ip_address || "N/A"}</p>
                   <p>Status: {eni.status || "unknown"}</p>
                   <p>
-                    Security Groups: {" "}
+                    Security Groups:{" "}
                     {Array.isArray(eni.security_groups)
                       ? eni.security_groups.length
                       : 0}

@@ -1,13 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ToastUtils from "../../../utils/toastUtil";
 import {
   useFetchTenantInternetGateways,
   useSyncTenantInternetGateways,
   useDeleteTenantInternetGateway,
 } from "../../../hooks/internetGatewayHooks";
-import AddIgwModal from "../igwComps/addIGW";
-import AttachIgwModal from "../igwComps/attachIGW";
-import DeleteIgwModal from "../igwComps/deleteIGW";
+import AddIgwModal from "../IGWComps/addIGW";
+import AttachIgwModal from "../IGWComps/attachIGW";
+import DeleteIgwModal from "../IGWComps/deleteIGW";
 
 const IGWs = ({
   projectId = "",
@@ -30,7 +30,7 @@ const IGWs = ({
   const [deleteModal, setDeleteModal] = useState(null); // { igw }
   const [attachModal, setAttachModal] = useState(null); // { igw, mode }
 
-  const items = igws || [];
+  const items = useMemo(() => igws || [], [igws]);
   const totalItems = items.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -246,7 +246,9 @@ const IGWs = ({
       <DeleteIgwModal
         isOpen={!!deleteModal}
         onClose={() => setDeleteModal(null)}
-        igwName={deleteModal?.igw?.name || deleteModal?.igw?.provider_resource_id || ""}
+        igwName={
+          deleteModal?.igw?.name || deleteModal?.igw?.provider_resource_id || ""
+        }
         onConfirm={handleDelete}
         isDeleting={isDeleting}
       />

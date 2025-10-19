@@ -34,6 +34,7 @@ import EmbeddedConsole, { useConsoleManager } from "../../components/Console/Emb
 import ToastUtils from "../../utils/toastUtil";
 import useAdminAuthStore from "../../stores/adminAuthStore";
 import config from "../../config";
+import silentAdminApi from "../../index/admin/silent";
 
 // Enhanced Status Badge Component
 const StatusBadge = ({ status, providerStatus, taskState }) => {
@@ -184,74 +185,73 @@ export default function InstanceDetails() {
 
   const { consoles, openConsole, closeConsole } = useConsoleManager();
 
-  const fetchInstanceDetails = useCallback(async (identifier) => {
-    if (!identifier) {
-      return;
-    }
-
-    setIsLoading(true);
-    setIsError(false);
-    setError(null);
-
-    try {
-      const { token } = useAdminAuthStore.getState() || {};
-
-      if (!token) {
-        throw new Error("Your admin session has expired. Please sign in again.");
+  const fetchInstanceDetails = useCallback(
+    async (identifier) => {
+      if (!identifier) {
+        return;
       }
 
-      const authHeaders = {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-      };
+      setIsLoading(true);
+      setIsError(false);
+      setError(null);
 
-      const fetchJson = async (path) => {
-        const response = await fetch(path, { headers: authHeaders });
-        const data = await response.json().catch(() => null);
-        return { response, data };
-      };
+      try {
+        const { token } = useAdminAuthStore.getState() || {};
 
-      // Try direct show endpoint first
-      let url = `${config.adminURL}/instances/${encodeURIComponent(identifier)}`;
-      let { response, data } = await fetchJson(url);
+        if (!token) {
+          throw new Error(
+            "Your admin session has expired. Please sign in again."
+          );
+        }
 
-      if (!response.ok || !data?.success) {
-        // Fallback to legacy filter endpoint when identifier lookup fails
-        url = `${config.adminURL}/instances?identifier=${encodeURIComponent(identifier)}`;
-        ({ response, data } = await fetchJson(url));
+        const directPath = `/instances/${encodeURIComponent(identifier)}`;
+
+        let response;
+
+        try {
+          response = await silentAdminApi("GET", directPath);
+        } catch (directError) {
+          // Try fallback using query param filter (legacy behavior)
+          const fallbackPath = `/instances?identifier=${encodeURIComponent(
+            identifier
+          )}`;
+          response = await silentAdminApi("GET", fallbackPath);
+        }
+
+        if (!response?.data) {
+          throw new Error(
+            `Unable to load instance ${identifier}. It may not exist or you may not have access.`
+          );
+        }
+
+        const detail = Array.isArray(response.data)
+          ? response.data[0]
+          : response.data;
+
+        if (!detail) {
+          throw new Error(
+            "Instance details are unavailable. The instance may have been deleted."
+          );
+        }
+
+        setInstanceDetails(detail);
+
+        if (detail.identifier) {
+          setInstanceId(detail.identifier);
+          setInstanceIdentifier(detail.identifier);
+        } else if (detail.id) {
+          setInstanceId(String(detail.id));
+        }
+      } catch (err) {
+        console.error("Failed to load instance details:", err);
+        setIsError(true);
+        setError(err.message || "Unknown error while loading instance.");
+      } finally {
+        setIsLoading(false);
       }
-
-      if (!response.ok || !data?.success) {
-        const message =
-          data?.error ||
-          `Unable to load instance ${identifier} (HTTP ${response.status})`;
-        throw new Error(message);
-      }
-
-      const detail = Array.isArray(data.data) ? data.data[0] : data.data;
-
-      if (!detail) {
-        throw new Error(
-          "Instance details are unavailable. The instance may have been deleted."
-        );
-      }
-
-      setInstanceDetails(detail);
-
-      if (detail.identifier) {
-        setInstanceId(detail.identifier);
-        setInstanceIdentifier(detail.identifier);
-      } else if (detail.id) {
-        setInstanceId(String(detail.id));
-      }
-    } catch (err) {
-      console.error("Failed to load instance details:", err);
-      setIsError(true);
-      setError(err.message || "Unknown error while loading instance.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    },
+    []
+  );
 
   // Parse URL params, resolve identifier, trigger initial fetch
   useEffect(() => {

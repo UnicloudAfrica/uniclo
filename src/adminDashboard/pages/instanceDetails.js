@@ -281,8 +281,8 @@ export default function InstanceDetails() {
       return;
     }
 
-
     setInstanceIdentifier(resolvedIdentifier);
+    alert(`Admin API base: ${config.adminURL}`);
     fetchInstanceDetails(resolvedIdentifier);
   }, [fetchInstanceDetails]);
 

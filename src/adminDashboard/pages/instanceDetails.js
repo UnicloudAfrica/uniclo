@@ -184,118 +184,113 @@ export default function InstanceDetails() {
 
   const { consoles, openConsole, closeConsole } = useConsoleManager();
 
-  const fetchInstanceDetails = useCallback(
-    async (identifier) => {
-      if (!identifier) {
-        return;
+  const fetchInstanceDetails = useCallback(async (identifier) => {
+    if (!identifier) {
+      return;
+    }
+
+    setIsLoading(true);
+    setIsError(false);
+    setError(null);
+
+    try {
+      const { token } = useAdminAuthStore.getState() || {};
+
+      if (!token) {
+        throw new Error("Your admin session has expired. Please sign in again.");
       }
 
-      setIsLoading(true);
-      setIsError(false);
-      setError(null);
+      const authHeaders = {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      };
 
-      try {
-        const { token } = useAdminAuthStore.getState() || {};
+      const fetchJson = async (path) => {
+        const response = await fetch(path, { headers: authHeaders });
+        const data = await response.json().catch(() => null);
+        return { response, data };
+      };
 
-        if (!token) {
-          throw new Error("Your admin session has expired. Please sign in again.");
-        }
+      // Try direct show endpoint first
+      let url = `${config.adminURL}/instances/${encodeURIComponent(identifier)}`;
+      let { response, data } = await fetchJson(url);
 
-        const authHeaders = {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        };
-
-        const fetchJson = async (path) => {
-          const response = await fetch(path, { headers: authHeaders });
-          const data = await response.json().catch(() => null);
-          return { response, data };
-        };
-
-        // Try direct show endpoint first
-        let url = `${config.adminURL}/instances/${encodeURIComponent(identifier)}`;
-        let { response, data } = await fetchJson(url);
-
-        if (!response.ok || !data?.success) {
-          // Fallback to legacy filter endpoint when identifier lookup fails
-          url = `${config.adminURL}/instances?identifier=${encodeURIComponent(identifier)}`;
-          ({ response, data } = await fetchJson(url));
-        }
-
-        if (!response.ok || !data?.success) {
-          const message = data?.error || `Unable to load instance ${identifier} (HTTP ${response.status})`;
-          throw new Error(message);
-        }
-
-        const detail = Array.isArray(data.data) ? data.data[0] : data.data;
-
-        if (!detail) {
-          throw new Error("Instance details are unavailable. The instance may have been deleted.");
-        }
-
-        setInstanceDetails(detail);
-
-        if (detail.identifier) {
-          setInstanceId((prev) =>
-            prev === detail.identifier ? prev : detail.identifier
-          );
-          setInstanceIdentifier((prev) =>
-            prev === detail.identifier ? prev : detail.identifier
-          );
-        } else if (detail.id) {
-          const fallbackId = String(detail.id);
-          setInstanceId((prev) => (prev === fallbackId ? prev : fallbackId));
-        }
-      } catch (err) {
-        console.error("Failed to load instance details:", err);
-        setIsError(true);
-        setError(err.message || "Unknown error while loading instance.");
-      } finally {
-        setIsLoading(false);
+      if (!response.ok || !data?.success) {
+        // Fallback to legacy filter endpoint when identifier lookup fails
+        url = `${config.adminURL}/instances?identifier=${encodeURIComponent(identifier)}`;
+        ({ response, data } = await fetchJson(url));
       }
-    },
-    []
-  );
 
-  // Fetch instance details
+      if (!response.ok || !data?.success) {
+        const message =
+          data?.error ||
+          `Unable to load instance ${identifier} (HTTP ${response.status})`;
+        throw new Error(message);
+      }
+
+      const detail = Array.isArray(data.data) ? data.data[0] : data.data;
+
+      if (!detail) {
+        throw new Error(
+          "Instance details are unavailable. The instance may have been deleted."
+        );
+      }
+
+      setInstanceDetails(detail);
+
+      if (detail.identifier) {
+        setInstanceId(detail.identifier);
+        setInstanceIdentifier(detail.identifier);
+      } else if (detail.id) {
+        setInstanceId(String(detail.id));
+      }
+    } catch (err) {
+      console.error("Failed to load instance details:", err);
+      setIsError(true);
+      setError(err.message || "Unknown error while loading instance.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Parse URL params, resolve identifier, trigger initial fetch
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const identifier = params.get("identifier");
     const encodedId = params.get("id");
+    let resolvedIdentifier = null;
 
     if (identifier && identifier.trim()) {
-      setInstanceIdentifier(identifier.trim());
-      return;
-    }
-
-    if (encodedId) {
+      resolvedIdentifier = identifier.trim();
+    } else if (encodedId) {
       try {
-        const decodedId = atob(decodeURIComponent(encodedId));
-        setInstanceIdentifier(decodedId);
+        resolvedIdentifier = atob(decodeURIComponent(encodedId));
       } catch (error) {
         console.error("Failed to decode instance ID:", error);
         setIsError(true);
         setError("Invalid instance reference");
+        setIsLoading(false);
+        return;
       }
+    }
+
+    if (!resolvedIdentifier) {
+      setIsError(true);
+      setError("We could not determine which instance to load.");
+      setIsLoading(false);
       return;
     }
 
-    setIsError(true);
-    setError("We could not determine which instance to load.");
-    setIsLoading(false);
-  }, []);
 
-  useEffect(() => {
-    if (!instanceIdentifier) {
-      return;
-    }
+    setInstanceIdentifier(resolvedIdentifier);
+    fetchInstanceDetails(resolvedIdentifier);
+  }, [fetchInstanceDetails]);
 
-    fetchInstanceDetails(instanceIdentifier);
-  }, [instanceIdentifier, fetchInstanceDetails]);
 
   // Execute instance action
   const executeAction = async (action, params = {}) => {
-    if (!instanceId) return;
+    const targetIdentifier = instanceIdentifier || instanceId;
+    if (!targetIdentifier) return;
     
     setActionLoading(prev => ({ ...prev, [action]: true }));
     
@@ -309,7 +304,7 @@ export default function InstanceDetails() {
       if (action === 'destroy') {
         const confirmed = window.confirm('Are you sure you want to delete this instance? This action cannot be undone.');
         if (confirmed) {
-          const response = await fetch(`${config.baseURL}/business/instances/${instanceId}`, {
+          const response = await fetch(`${config.adminURL}/instances/${encodeURIComponent(targetIdentifier)}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -352,8 +347,9 @@ export default function InstanceDetails() {
 
   // Handle console access
   const handleConsoleAccess = () => {
-    if (instanceId) {
-      openConsole(instanceId);
+    const reference = instanceIdentifier || instanceId;
+    if (reference) {
+      openConsole(reference);
     }
   };
 

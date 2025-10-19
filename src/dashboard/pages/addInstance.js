@@ -1391,7 +1391,7 @@ const AddInstancePage = () => {
       return request;
     });
 
-    const payload = { pricing_requests };
+    const payload = { pricing_requests: pricingRequests };
     if (derivedTags.length) {
       payload.tags = derivedTags;
     }

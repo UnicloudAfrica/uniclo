@@ -18,7 +18,7 @@
     "jspdf-autotable": "^5.0.2",
     "lodash.debounce": "^4.0.8",
     "lucide-react": "^0.511.0",
-    "papaparse": "^5.4.1",
+    "papaparse": "^5.5.3",
     "react": "^18.2.0",
     "react-datepicker": "^4.24.0",
     "react-dom": "^18.2.0",

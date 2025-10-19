@@ -1244,6 +1244,14 @@ export default function AdminInstancesDetails() {
           ACTION_ICON_LIBRARY[key] ||
           style.icon ||
           Terminal;
+        const status = (displayInstance?.status || "").toLowerCase();
+        const fallbackDisabled =
+          typeof style.disableOnStatus === "function"
+            ? style.disableOnStatus(status)
+            : false;
+        const disabled =
+          config?.enabled === false ||
+          (config?.enabled === undefined && fallbackDisabled);
 
         return {
           key,
@@ -1253,14 +1261,16 @@ export default function AdminInstancesDetails() {
           tone:
             style.tone ||
             "bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100 focus-visible:ring-gray-200",
-          disabled: config?.enabled === false,
+          disabled,
         };
       });
     }
 
     const status = (displayInstance?.status || "").toLowerCase();
+    const fallbackKeys = ["start", "stop", "reboot", "refresh"];
 
-    return Object.entries(ACTION_STYLES).map(([key, style]) => {
+    return fallbackKeys.map((key) => {
+      const style = ACTION_STYLES[key] || {};
       const Icon = style.icon || ACTION_ICON_LIBRARY[key] || Terminal;
       const disabled =
         typeof style.disableOnStatus === "function"
@@ -1279,6 +1289,23 @@ export default function AdminInstancesDetails() {
       };
     });
   }, [availableActions, displayInstance?.status]);
+
+  const combinedError = managementError || error;
+  const isLoadingDetails =
+    (isFetching || isManagementFetching) && !effectiveInstance;
+  const combinedIsError =
+    !effectiveInstance && (isError || isManagementError);
+
+  const hasConsoleAccess = useMemo(() => {
+    if (!consoleInfo) return true;
+    const types = Array.isArray(consoleInfo.available_types)
+      ? consoleInfo.available_types
+      : [];
+    if (types.some((type) => type?.available)) {
+      return true;
+    }
+    return Boolean(consoleInfo.default_type);
+  }, [consoleInfo]);
 
   const hasLifecycleEvents = lifecycleEvents.length > 0;
   const hasTelemetry = telemetrySummary.length > 0;
@@ -1375,7 +1402,7 @@ export default function AdminInstancesDetails() {
     );
   }
 
-  if (isFetching || instanceId === null) {
+  if (isLoadingDetails || (instanceId === null && !effectiveInstance)) {
     return (
       <>
         <AdminHeadbar onMenuClick={toggleMobileMenu} />
@@ -1394,7 +1421,7 @@ export default function AdminInstancesDetails() {
     );
   }
 
-  if (isError || !instanceDetails) {
+  if (combinedIsError) {
     return (
       <>
         <AdminHeadbar onMenuClick={toggleMobileMenu} />
@@ -1407,7 +1434,7 @@ export default function AdminInstancesDetails() {
           <div className="max-w-md text-center">
             <AlertTriangle className="mx-auto mb-4 h-12 w-12 text-red-500" />
             <p className="mb-4 text-lg font-semibold text-gray-700">
-              {error || "Instance couldn't be found"}
+              {combinedError?.message || combinedError || "Instance couldn't be found"}
             </p>
             <button
               onClick={handleGoBack}
@@ -1462,26 +1489,26 @@ export default function AdminInstancesDetails() {
             <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center gap-3">
-                  <Badge text={instanceDetails.status?.replace(/_/g, " ") || "Unknown"} />
-                  {instanceDetails.billing_status && (
-                    <Badge text={`Billing: ${instanceDetails.billing_status.replace(/_/g, " ")}`} />
+                  <Badge text={displayInstance.status?.replace(/_/g, " ") || "Unknown"} />
+                  {displayInstance.billing_status && (
+                    <Badge text={`Billing: ${displayInstance.billing_status.replace(/_/g, " ")}`} />
                   )}
                 </div>
                 <div>
                   <h1 className="text-3xl font-semibold text-gray-900">
-                    {instanceDetails.name || instanceNameFromUrl || "Instance"}
+                    {displayInstance.name || instanceNameFromUrl || "Instance"}
                   </h1>
                   <p className="mt-2 max-w-2xl text-sm text-gray-600">
-                    {instanceDetails.description ||
+                    {displayInstance.description ||
                       "Monitor configuration, networking, billing, and lifecycle information for this workload."}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Chip>
                     <span className="font-medium text-gray-700">
-                      {instanceDetails.identifier || "N/A"}
+                      {displayInstance.identifier || "N/A"}
                     </span>
-                    {instanceDetails.identifier && (
+                    {displayInstance.identifier && (
                       <button
                         onClick={handleCopyIdentifier}
                         className="text-gray-400 transition-colors hover:text-gray-600"
@@ -1491,22 +1518,22 @@ export default function AdminInstancesDetails() {
                       </button>
                     )}
                   </Chip>
-                  {instanceDetails.provider && (
+                  {displayInstance.provider && (
                     <Chip>
                       <Server className="h-3.5 w-3.5 text-blue-500" />
-                      {instanceDetails.provider}
+                      {displayInstance.provider}
                     </Chip>
                   )}
-                  {instanceDetails.region && (
+                  {displayInstance.region && (
                     <Chip>
                       <Globe className="h-3.5 w-3.5 text-blue-500" />
-                      {instanceDetails.region}
+                      {displayInstance.region}
                     </Chip>
                   )}
-                  {instanceDetails.months && (
+                  {displayInstance.months && (
                     <Chip>
                       <Timer className="h-3.5 w-3.5 text-indigo-500" />
-                      {instanceDetails.months} month term
+                      {displayInstance.months} month term
                     </Chip>
                   )}
                 </div>
@@ -1516,13 +1543,13 @@ export default function AdminInstancesDetails() {
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                   Lifecycle
                 </p>
-                <p>Created {formatDate(instanceDetails.created_at)}</p>
-                <p>Expires {formatDate(instanceDetails.expires_at)}</p>
+                <p>Created {formatDate(displayInstance.created_at)}</p>
+                <p>Expires {formatDate(displayInstance.expires_at)}</p>
                 <p>
-                  Next billing {formatDate(instanceDetails.next_billing_date)}
+                  Next billing {formatDate(displayInstance.next_billing_date)}
                 </p>
                 <p className="text-xs text-gray-500">
-                  Last updated {formatDate(instanceDetails.updated_at)}
+                  Last updated {formatDate(displayInstance.updated_at)}
                 </p>
               </div>
             </div>
@@ -1574,7 +1601,7 @@ export default function AdminInstancesDetails() {
               </div>
               <button
                 onClick={handleOpenConsole}
-                disabled={consoleLoading}
+                disabled={consoleLoading || !hasConsoleAccess}
                 className="inline-flex items-center gap-2 rounded-full bg-[#288DD1] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1976D2] disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {consoleLoading ? (
@@ -1582,7 +1609,9 @@ export default function AdminInstancesDetails() {
                 ) : (
                   <Terminal className="h-4 w-4" />
                 )}
-                <span>Open Console</span>
+                <span>
+                  {hasConsoleAccess ? "Open Console" : "Console Unavailable"}
+                </span>
                 <ArrowRight className="h-4 w-4" />
               </button>
             </div>
@@ -2044,202 +2073,35 @@ export default function AdminInstancesDetails() {
 
           <div className="bg-white rounded-[12px] p-6 shadow-sm">
             <h2 className="text-xl font-semibold text-[#575758] mb-4">
-              Overview
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <DetailRow label="Instance Name" value={instanceDetails.name || "N/A"} />
-                <DetailRow label="Identifier" value={instanceDetails.identifier} isCopyable />
-                <DetailRow
-                  label="Status"
-                  children={
-                    <Badge text={instanceDetails.status?.replace(/_/g, " ")} />
-                  }
-                />
-                <DetailRow label="Provider" value={instanceDetails.provider} />
-                <DetailRow label="Region" value={instanceDetails.region} />
-                <DetailRow label="Description" value={instanceDetails.description} />
-              </div>
-              <div>
-                <DetailRow label="Project" value={instanceDetails.project?.name || "N/A"} />
-                <DetailRow
-                  label="Created At"
-                  value={new Date(instanceDetails.created_at).toLocaleString()}
-                />
-                <DetailRow
-                  label="Expires At"
-                  value={
-                    instanceDetails.expires_at
-                      ? new Date(instanceDetails.expires_at).toLocaleString()
-                      : "N/A"
-                  }
-                />
-                <DetailRow label="Term" value={`${instanceDetails.months} month(s)`} />
-                <DetailRow
-                  label="Tags"
-                  children={
-                    <div className="flex flex-wrap gap-2">
-                      {instanceDetails.tags && instanceDetails.tags.length > 0 ? (
-                        instanceDetails.tags.map((tag, index) => (
-                          <Badge key={index} text={tag} />
-                        ))
-                      ) : (
-                        <span>N/A</span>
-                      )}
-                    </div>
-                  }
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-[12px] p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-[#575758] mb-4">
-              Configuration
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <DetailRow
-                label="Compute Class"
-                value={
-                  instanceDetails.compute?.productable_name ||
-                  instanceDetails.compute?.name ||
-                  "N/A"
-                }
-              />
-              <DetailRow
-                label="Operating System"
-                value={instanceDetails.os_image?.name || "N/A"}
-              />
-              <DetailRow
-                label="Boot Source"
-                value={
-                  instanceDetails.boot_from_volume ? "Volume" : "Image (Ephemeral)"
-                }
-              />
-              <DetailRow
-                label="vCPU"
-                value={
-                  instanceDetails.compute?.vcpus
-                    ? `${instanceDetails.compute?.vcpus} vCPU`
-                    : "N/A"
-                }
-              />
-              <DetailRow
-                label="Memory"
-                value={
-                  instanceDetails.compute?.memory_mb
-                    ? `${Math.round(Number(instanceDetails.compute?.memory_mb) / 1024)} GiB`
-                    : "N/A"
-                }
-              />
-              <DetailRow
-                label="Primary Storage"
-                value={
-                  instanceDetails.storage_size_gb
-                    ? `${instanceDetails.storage_size_gb} GiB`
-                    : "N/A"
-                }
-              />
-            </div>
-          </div>
-
-          <div className="bg-white rounded-[12px] p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-[#575758] mb-4">
-              Network & Security
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <DetailRow
-                label="Private IP"
-                value={instanceDetails.private_ip || "N/A"}
-                isCopyable
-              />
-              <DetailRow
-                label="Floating IP"
-                value={instanceDetails.floating_ip?.ip_address || "N/A"}
-                isCopyable
-              />
-              <DetailRow
-                label="Security Groups"
-                children={
-                  <div className="flex flex-wrap gap-2">
-                    {instanceDetails.metadata?.security_groups?.length ? (
-                      instanceDetails.metadata.security_groups.map((sg, idx) => (
-                        <Badge key={idx} text={sg} />
-                      ))
-                    ) : (
-                      <span>N/A</span>
-                    )}
-                  </div>
-                }
-              />
-              <DetailRow
-                label="Bandwidth"
-                value={instanceDetails.bandwidth?.name || "N/A"}
-              />
-            </div>
-          </div>
-
-          <div className="bg-white rounded-[12px] p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-[#575758] mb-4">
-              Storage & Data Volumes
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <DetailRow
-                label="Primary Storage"
-                value={
-                  instanceDetails.storage_size_gb
-                    ? `${instanceDetails.storage_size_gb} GiB`
-                    : "N/A"
-                }
-              />
-              <DetailRow
-                label="Volume Type"
-                value={instanceDetails.volume_type?.name || "N/A"}
-              />
-            </div>
-            {instanceDetails.metadata?.data_volumes?.length ? (
-              <div className="mt-4 space-y-2">
-                {instanceDetails.metadata.data_volumes.map((vol, index) => (
-                  <div
-                    key={vol?.id || vol?.name || index}
-                    className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700"
-                  >
-                    <p className="font-semibold">
-                      {vol?.name || vol?.volume_label || `Volume ${index + 1}`}
-                    </p>
-                    <p>
-                      Size: {vol?.size_gb || vol?.volume_size_gb || vol?.storage_size_gb || "—"} GiB
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </div>
-
-          <div className="bg-white rounded-[12px] p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-[#575758] mb-4">
               Billing Summary
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <DetailRow label="Currency" value={currency} />
-              <DetailRow label="Billing Term" value={`${instanceDetails.months} Months`} />
+              <DetailRow
+                label="Billing Term"
+                value={
+                  displayInstance.months
+                    ? `${displayInstance.months} Months`
+                    : "N/A"
+                }
+              />
               <DetailRow
                 label="Billing Status"
                 children={
-                  <Badge text={instanceDetails.billing_status?.replace(/_/g, " ")} />
+                  <Badge text={displayInstance.billing_status?.replace(/_/g, " ")} />
                 }
               />
-              {instanceDetails.metadata?.pricing_breakdown?.total && (
+              {typeof pricingBreakdownRaw?.total === "number" && (
                 <DetailRow
                   label="Total Cost"
-                  value={`${currency} ${instanceDetails.metadata.pricing_breakdown.total.toLocaleString()}`}
+                  value={`${currency} ${pricingBreakdownRaw.total.toLocaleString()}`}
                 />
               )}
               <DetailRow
                 label="Next Billing Date"
                 value={
-                  instanceDetails.next_billing_date
-                    ? new Date(instanceDetails.next_billing_date).toLocaleString()
+                  displayInstance.next_billing_date
+                    ? new Date(displayInstance.next_billing_date).toLocaleString()
                     : "N/A"
                 }
               />

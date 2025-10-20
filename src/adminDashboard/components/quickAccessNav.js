@@ -15,18 +15,18 @@ const QuickAccessNav = () => {
 
   const quickLinks = [
     {
-      title: "Projects",
-      description: "Manage projects and infrastructure",
+      title: "Multi-Instance Creation",
+      description: "Create and provision multiple instances",
       icon: Server,
-      path: "/admin-dashboard/projects",
+      path: "/admin-dashboard/multi-instance-creation",
       color: "bg-blue-50 text-blue-600",
       bgColor: "hover:bg-blue-100"
     },
     {
-      title: "Profile Settings",
-      description: "Comprehensive user profile management",
+      title: "Projects",
+      description: "Manage projects and infrastructure",
       icon: Settings,
-      path: "/admin-dashboard/enhanced-profile-settings",
+      path: "/admin-dashboard/projects",
       color: "bg-purple-50 text-purple-600",
       bgColor: "hover:bg-purple-100"
     },

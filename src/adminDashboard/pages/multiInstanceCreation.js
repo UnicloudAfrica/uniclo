@@ -24,7 +24,8 @@ import {
   X,
   ChevronDown,
   ChevronRight,
-  Info
+  Info,
+  CreditCard
 } from "lucide-react";
 
 import AdminHeadbar from "../components/adminHeadbar";
@@ -33,6 +34,7 @@ import AdminActiveTab from "../components/adminActiveTab";
 import ModernCard from "../components/ModernCard";
 import ModernButton from "../components/ModernButton";
 import ModernInput from "../components/ModernInput";
+import PaymentModal from "../components/PaymentModal";
 import ToastUtils from "../../utils/toastUtil";
 import { designTokens } from "../../styles/designTokens";
 import { useFetchProductPricing, useFetchGeneralRegions } from "../../hooks/resource";
@@ -675,6 +677,10 @@ export default function MultiInstanceCreation() {
   const [assignType, setAssignType] = useState(''); // '', 'tenant', 'user'
   const [selectedTenantId, setSelectedTenantId] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
+  
+  // Payment modal state
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentTransactionData, setPaymentTransactionData] = useState(null);
 
   // Fetch regions from API
   const { data: regions = [] } = useFetchGeneralRegions();
@@ -981,12 +987,22 @@ export default function MultiInstanceCreation() {
       const data = await response.json();
 
       if (data.success) {
-        ToastUtils.success(data.message);
-
-        // Redirect to instances page
-        setTimeout(() => {
-          window.location.href = '/admin-dashboard/instances';
-        }, 2000);
+        // Check if payment is required (non-fast-track)
+        if (data.data?.payment?.required && !data.data?.fast_track_completed) {
+          // Show payment modal
+          setPaymentTransactionData(data);
+          setShowPaymentModal(true);
+          setCreating(false);
+          ToastUtils.info('Payment required. Please complete payment to proceed.');
+        } else {
+          // Fast-track completed - redirect to instances page to see details
+          ToastUtils.success(data.message || 'Instances created successfully!');
+          
+          // Redirect to instances page
+          setTimeout(() => {
+            window.location.href = '/admin-dashboard/instances';
+          }, 2000);
+        }
       } else {
         if (data.errors) {
           setErrors(data.errors);
@@ -1008,6 +1024,23 @@ export default function MultiInstanceCreation() {
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
+  };
+  
+  // Handle payment completion
+  const handlePaymentComplete = (completedTransaction) => {
+    console.log('Payment completed:', completedTransaction);
+    setShowPaymentModal(false);
+    ToastUtils.success('Payment completed! Your instances are being provisioned.');
+    
+    // Redirect to instances page after a short delay
+    setTimeout(() => {
+      window.location.href = '/admin-dashboard/instances';
+    }, 2000);
+  };
+  
+  const handleClosePaymentModal = () => {
+    setShowPaymentModal(false);
+    setPaymentTransactionData(null);
   };
 
   const totalInstances = configurations.reduce((sum, config) => sum + (config.count || 0), 0);
@@ -1337,36 +1370,118 @@ export default function MultiInstanceCreation() {
                 Cancel
               </ModernButton>
 
-              <ModernButton
+              <button
                 onClick={createInstances}
                 disabled={creating || totalInstances === 0 || !pricing}
-                size="lg"
-                className="inline-flex items-center font-semibold text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 style={{
-                  backgroundColor: designTokens.colors.success[600],
-                  borderColor: designTokens.colors.success[600],
-                  background: `linear-gradient(135deg, ${designTokens.colors.success[500]} 0%, ${designTokens.colors.success[600]} 100%)`,
-                  boxShadow: `0 8px 25px -8px ${designTokens.colors.success[500]}80, 0 4px 12px -4px ${designTokens.colors.success[600]}40`,
-                  border: 'none'
+                  background: fastTrack
+                    ? `linear-gradient(135deg, ${designTokens.colors.success[400]} 0%, ${designTokens.colors.success[600]} 50%, ${designTokens.colors.success[700]} 100%)`
+                    : `linear-gradient(135deg, ${designTokens.colors.primary[400]} 0%, ${designTokens.colors.primary[600]} 50%, ${designTokens.colors.primary[700]} 100%)`,
+                  borderRadius: '16px',
+                  border: 'none',
+                  boxShadow: fastTrack
+                    ? `0 12px 35px -8px ${designTokens.colors.success[500]}60, 0 8px 20px -6px ${designTokens.colors.success[600]}40, inset 0 1px 0 rgba(255, 255, 255, 0.2)`
+                    : `0 12px 35px -8px ${designTokens.colors.primary[500]}60, 0 8px 20px -6px ${designTokens.colors.primary[600]}40, inset 0 1px 0 rgba(255, 255, 255, 0.2)`,
+                  focusRingColor: fastTrack ? designTokens.colors.success[300] : designTokens.colors.primary[300],
+                  minHeight: '64px',
+                  minWidth: '200px'
                 }}
               >
-                {creating ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-3 animate-spin" />
-                    <span className="animate-pulse">Creating Instances...</span>
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-5 h-5 mr-3 drop-shadow-sm" />
-                    <span className="tracking-wide">
-                      {totalInstances === 1 ? '🚀 Launch Instance' : `🚀 Launch ${totalInstances} Instances`}
-                    </span>
-                  </>
-                )}
-              </ModernButton>
+                {/* Animated background overlay */}
+                <div 
+                  className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  style={{
+                    background: fastTrack
+                      ? `linear-gradient(135deg, ${designTokens.colors.success[300]} 0%, ${designTokens.colors.success[500]} 100%)`
+                      : `linear-gradient(135deg, ${designTokens.colors.primary[300]} 0%, ${designTokens.colors.primary[500]} 100%)`,
+                    borderRadius: '16px'
+                  }}
+                />
+                
+                {/* Shimmer effect */}
+                <div className="absolute inset-0 rounded-2xl overflow-hidden">
+                  <div 
+                    className="absolute -top-2 -left-full w-full h-full opacity-30 group-hover:left-full transition-all duration-1000 ease-out"
+                    style={{
+                      background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)',
+                      transform: 'skewX(-15deg)'
+                    }}
+                  />
+                </div>
+
+                {/* Content */}
+                <div className="relative flex items-center justify-center space-x-3 z-10">
+                  {creating ? (
+                    <>
+                      <div className="relative">
+                        <Loader2 className="w-6 h-6 animate-spin drop-shadow-sm" />
+                        <div className="absolute inset-0 w-6 h-6 border-2 border-transparent border-t-white/30 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
+                      </div>
+                      <span className="animate-pulse font-bold tracking-wide">
+                        {fastTrack ? 'Launching Instances...' : 'Creating Order...'}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="relative">
+                        <div 
+                          className="absolute -inset-1 rounded-full opacity-75 group-hover:opacity-100 transition-opacity duration-300"
+                          style={{
+                            background: fastTrack
+                              ? `radial-gradient(circle, ${designTokens.colors.success[300]}40 0%, transparent 70%)`
+                              : `radial-gradient(circle, ${designTokens.colors.primary[300]}40 0%, transparent 70%)`
+                          }}
+                        />
+                        {fastTrack ? (
+                          <Play className="w-6 h-6 drop-shadow-sm relative z-10 group-hover:scale-110 transition-transform duration-300" />
+                        ) : (
+                          <CreditCard className="w-6 h-6 drop-shadow-sm relative z-10 group-hover:scale-110 transition-transform duration-300" />
+                        )}
+                      </div>
+                      
+                      <div className="flex flex-col items-start">
+                        <span className="font-bold tracking-wide text-lg leading-none mb-1">
+                          {fastTrack 
+                            ? '🚀 Launch Instance' + (totalInstances > 1 ? 's' : '')
+                            : '💳 Create Order'
+                          }
+                        </span>
+                        <span className="text-xs opacity-90 font-medium">
+                          {totalInstances} instance{totalInstances !== 1 ? 's' : ''} • {pricing?.currency} {pricing?.grand_total?.toLocaleString()}
+                        </span>
+                      </div>
+                      
+                      {/* Arrow indicator */}
+                      <div className="ml-2 opacity-80 group-hover:translate-x-1 transition-transform duration-300">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                      </div>
+                    </>
+                  )}
+                </div>
+                
+                {/* Pulse effect on hover */}
+                <div 
+                  className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-20 transition-all duration-300"
+                  style={{
+                    background: 'radial-gradient(circle at center, rgba(255, 255, 255, 0.8) 0%, transparent 70%)',
+                    animation: 'pulse 2s infinite'
+                  }}
+                />
+              </button>
             </div>
           </ModernCard>
         </div>
+        
+        {/* Payment Modal */}
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={handleClosePaymentModal}
+          transactionData={paymentTransactionData}
+          onPaymentComplete={handlePaymentComplete}
+        />
       </main>
     </>
   );

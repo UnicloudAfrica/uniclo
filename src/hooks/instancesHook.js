@@ -119,6 +119,24 @@ const executeInstanceAction = async (identifier, action, params = {}) => {
   return res.data;
 };
 
+// GET: Get transaction status
+const getTransactionStatus = async (transactionId) => {
+  const res = await silentApi("GET", `/business/transactions/${transactionId}/status`);
+  if (!res.success) {
+    throw new Error(res.message || "Failed to get transaction status");
+  }
+  return res.data;
+};
+
+// GET: Get transaction details with instances
+const getTransactionDetails = async (transactionId) => {
+  const res = await silentApi("GET", `/business/transactions/${transactionId}`);
+  if (!res.success) {
+    throw new Error(res.message || "Failed to get transaction details");
+  }
+  return res.data;
+};
+
 // PATCH: Update an instance request
 const updateInstanceRequest = async ({ id, instanceData }) => {
   const res = await tenantApi("PATCH", `/admin/instances/${id}`, instanceData);
@@ -253,6 +271,62 @@ export const useExecuteInstanceAction = () => {
     },
     onError: (error) => {
       console.error("Error executing instance action:", error);
+    },
+  });
+};
+
+// Hook to get transaction status
+export const useGetTransactionStatus = (transactionId, options = {}) => {
+  return useQuery({
+    queryKey: ["transactionStatus", transactionId],
+    queryFn: () => getTransactionStatus(transactionId),
+    enabled: !!transactionId,
+    staleTime: 1000 * 30, // Cache for 30 seconds
+    refetchInterval: options.autoRefresh ? 30000 : false, // Auto-refresh every 30s if enabled
+    refetchOnWindowFocus: true,
+    ...options,
+  });
+};
+
+// Hook to get transaction details
+export const useGetTransactionDetails = (transactionId, options = {}) => {
+  return useQuery({
+    queryKey: ["transactionDetails", transactionId],
+    queryFn: () => getTransactionDetails(transactionId),
+    enabled: !!transactionId,
+    staleTime: 1000 * 60 * 2, // Cache for 2 minutes
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+
+// Hook to poll transaction status until completion
+export const useTransactionPolling = (transactionId, onComplete) => {
+  const queryClient = useQueryClient();
+  
+  return useQuery({
+    queryKey: ["transactionPolling", transactionId],
+    queryFn: () => getTransactionStatus(transactionId),
+    enabled: !!transactionId,
+    refetchInterval: (data) => {
+      // Stop polling if transaction is completed, failed, or cancelled
+      if (data?.status && ['successful', 'failed', 'cancelled', 'expired'].includes(data.status)) {
+        if (data.status === 'successful' && onComplete) {
+          onComplete(data);
+        }
+        return false;
+      }
+      return 30000; // Poll every 30 seconds
+    },
+    onSuccess: (data) => {
+      if (data?.status === 'successful') {
+        // Invalidate related queries when payment is successful
+        queryClient.invalidateQueries(["instanceRequests"]);
+        queryClient.invalidateQueries(["transactionDetails", transactionId]);
+      }
+    },
+    onError: (error) => {
+      console.error("Error polling transaction status:", error);
     },
   });
 };

@@ -726,14 +726,22 @@ export default function MultiInstanceCreation() {
 
   // Set default region when regions are loaded and no region is set
   useEffect(() => {
-    if (regions.length > 0 && !configurations[0]?.region) {
+    if (regions.length === 0) {
+      return;
+    }
+
+    setConfigurations(prev => {
+      if (prev[0]?.region) {
+        return prev;
+      }
+
       const defaultRegion = regions[0].code;
-      setConfigurations(prev => [
+      return [
         { ...prev[0], region: defaultRegion },
         ...prev.slice(1)
-      ]);
-    }
-  }, [regions, configurations]);
+      ];
+    });
+  }, [regions]);
 
   // Update configuration
   const updateConfiguration = (index, updatedConfig) => {

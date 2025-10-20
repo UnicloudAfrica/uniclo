@@ -5,9 +5,9 @@ import {
   useSyncTenantInternetGateways,
   useDeleteTenantInternetGateway,
 } from "../../../hooks/internetGatewayHooks";
-import AddIgwModal from "../igwComps/addIGW";
-import AttachIgwModal from "../igwComps/attachIGW";
-import DeleteIgwModal from "../igwComps/deleteIGW";
+import AddIgwModal from "../IGWComps/addIGW";
+import AttachIgwModal from "../IGWComps/attachIGW";
+import DeleteIgwModal from "../IGWComps/deleteIGW";
 
 const IGWs = ({
   projectId = "",

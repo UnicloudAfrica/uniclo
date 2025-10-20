@@ -501,7 +501,7 @@ const Contact = () => {
               <div className=" space-y-2">
                 <p className=" font-medium text-xl">South Africa Office</p>
                 <p className=" text-sm lg:pr-10 text-[#676767]">
-                  78, Corltte Drive, Melrose Arch North, Johannesburg 2196,
+                  78, Corlett Drive, Melrose Arch North, Johannesburg 2196,
                   South Africa.
                 </p>
               </div>

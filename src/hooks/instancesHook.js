@@ -79,13 +79,44 @@ const createInstanceRequest = async (instanceData) => {
   return res.data;
 };
 
-// POST: multi initiate request
+// POST: multi initiate request with enhanced response handling
 const initiateMultiInstanceRequest = async (instanceData) => {
-  const res = await api("POST", "/business/multi-initiations", instanceData);
+  const res = await api("POST", "/business/instances/create", instanceData);
   if (!res) {
-    throw new Error("Failed to inotiate instance request");
+    throw new Error("Failed to initiate instance request");
   }
   return res;
+};
+
+// POST: Refresh instance status from provider
+const refreshInstanceStatus = async (identifier) => {
+  const res = await api("POST", `/business/instance-management/${identifier}/refresh-status`);
+  if (!res.success) {
+    throw new Error(res.message || "Failed to refresh instance status");
+  }
+  return res.data;
+};
+
+// GET: Get detailed instance information
+const getInstanceDetails = async (identifier) => {
+  const res = await api("GET", `/business/instance-management/${identifier}`);
+  if (!res.success) {
+    throw new Error(res.message || "Failed to get instance details");
+  }
+  return res.data;
+};
+
+// POST: Execute instance action (start, stop, reboot, etc.)
+const executeInstanceAction = async (identifier, action, params = {}) => {
+  const res = await api("POST", `/business/instance-management/${identifier}/actions`, {
+    action,
+    params,
+    confirmed: params.confirmed || false,
+  });
+  if (!res.success) {
+    throw new Error(res.message || `Failed to execute ${action} action`);
+  }
+  return res.data;
 };
 
 // PATCH: Update an instance request
@@ -175,6 +206,53 @@ export const useUpdateInstanceRequest = () => {
     },
     onError: (error) => {
       console.error("Error updating instance request:", error);
+    },
+  });
+};
+
+// Hook to refresh instance status
+export const useRefreshInstanceStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: refreshInstanceStatus,
+    onSuccess: (data, identifier) => {
+      // Invalidate instance queries to refresh the data
+      queryClient.invalidateQueries(["instanceRequests"]);
+      queryClient.invalidateQueries(["instanceRequest", identifier]);
+      queryClient.invalidateQueries(["instanceDetails", identifier]);
+    },
+    onError: (error) => {
+      console.error("Error refreshing instance status:", error);
+    },
+  });
+};
+
+// Hook to get detailed instance information
+export const useGetInstanceDetails = (identifier, options = {}) => {
+  return useQuery({
+    queryKey: ["instanceDetails", identifier],
+    queryFn: () => getInstanceDetails(identifier),
+    enabled: !!identifier,
+    staleTime: 1000 * 60 * 2, // Cache for 2 minutes
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+
+// Hook to execute instance actions
+export const useExecuteInstanceAction = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ identifier, action, params }) => 
+      executeInstanceAction(identifier, action, params),
+    onSuccess: (data, { identifier }) => {
+      // Invalidate queries to refresh instance data
+      queryClient.invalidateQueries(["instanceRequests"]);
+      queryClient.invalidateQueries(["instanceRequest", identifier]);
+      queryClient.invalidateQueries(["instanceDetails", identifier]);
+    },
+    onError: (error) => {
+      console.error("Error executing instance action:", error);
     },
   });
 };

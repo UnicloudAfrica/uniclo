@@ -68,22 +68,47 @@ const fetchInstanceRequestById = async (id) => {
 };
 
 const fetchInstanceManagementDetailsByIdentifier = async (identifier) => {
-  const res = await silentApi("GET", `/instance-management/${identifier}`);
-  if (!res?.data) {
+  const res = await silentApi("GET", `/instances/${identifier}`);
+  const instance = res?.data;
+
+  if (!instance) {
     throw new Error(
       `Failed to fetch instance management details for ${identifier}`
     );
   }
-  return res.data;
+
+  return {
+    instance,
+    provider_details:
+      instance.provider_details ||
+      instance.provider_details_snapshot ||
+      instance.provider_vm ||
+      null,
+    available_actions: instance.available_actions || null,
+    console_info: instance.console_info || null,
+    network_info: instance.network_info || null,
+    security_info: instance.security_info || null,
+    monitoring_metrics: instance.monitoring_metrics || null,
+    supports_instance_actions: Boolean(
+      instance.available_actions && Object.keys(instance.available_actions).length
+    ),
+  };
 };
 
 // GET: Fetch instance lifecycle by ID
-const fetchInstanceLifecycleById = async (id) => {
-  const res = await silentApi("GET", `/instances/${id}/console`);
-  if (!res.data) {
-    throw new Error(`Failed to fetch instance life cycle with ID ${id}`);
-  }
-  return res.data;
+const fetchInstanceLifecycleById = async (identifier) => {
+  const res = await silentApi("GET", `/instances/${identifier}`);
+  const instance = res?.data || {};
+  const candidateHistory =
+    instance.status_history ||
+    instance.lifecycle_history ||
+    instance.lifecycle_events ||
+    instance.history ||
+    [];
+
+  return {
+    events: Array.isArray(candidateHistory) ? candidateHistory : [],
+  };
 };
 
 // POST: Create a new instance request
@@ -150,11 +175,11 @@ export const useFetchInstanceRequestById = (id, options = {}) => {
   });
 };
 // Hook to fetch instance request by ID
-export const useFetchInstanceLifeCycleById = (id, options = {}) => {
+export const useFetchInstanceLifeCycleById = (identifier, options = {}) => {
   return useQuery({
-    queryKey: ["admin-instance-lifecycle", id],
-    queryFn: () => fetchInstanceLifecycleById(id),
-    enabled: !!id, // Only fetch if ID is provided
+    queryKey: ["admin-instance-lifecycle", identifier],
+    queryFn: () => fetchInstanceLifecycleById(identifier),
+    enabled: !!identifier, // Only fetch if identifier is provided
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
@@ -169,6 +194,127 @@ export const useFetchInstanceManagementDetails = (identifier, options = {}) => {
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
+  });
+};
+
+const executeInstanceManagementAction = async ({
+  identifier,
+  action,
+  params = {},
+  confirmed = false,
+}) => {
+  if (!identifier || !action) {
+    throw new Error("Instance identifier and action are required.");
+  }
+
+  const payload = {
+    action,
+    params,
+  };
+
+  if (confirmed) {
+    payload.confirmed = true;
+  }
+
+  throw new Error(
+    "Instance lifecycle actions are not available in the current environment."
+  );
+};
+
+const refreshInstanceManagementStatus = async (identifier) => {
+  if (!identifier) {
+    throw new Error("Instance identifier is required to refresh status.");
+  }
+
+  return { success: true };
+};
+
+const fetchInstanceUsageStats = async ({ identifier, period = "24h" }) => {
+  return null;
+};
+
+const fetchInstanceLogs = async ({ identifier, lines = 200, since }) => {
+  return {
+    lines: [],
+    last_updated: null,
+  };
+};
+
+const updateInstanceMetadata = async ({ identifier, payload }) => {
+  if (!identifier) {
+    throw new Error("Instance identifier is required to update metadata.");
+  }
+
+  const res = await silentApi("PUT", `/instances/${identifier}`, payload);
+
+  if (!res?.success) {
+    throw new Error(
+      res?.message || `Failed to update metadata for ${identifier}`
+    );
+  }
+
+  return res.data ?? res;
+};
+
+export const useInstanceManagementAction = () => {
+  return useMutation({
+    mutationFn: executeInstanceManagementAction,
+    onError: (error) => {
+      console.error("Error executing instance management action:", error);
+    },
+  });
+};
+
+export const useRefreshInstanceStatus = () => {
+  return useMutation({
+    mutationFn: refreshInstanceManagementStatus,
+    onError: (error) => {
+      console.error("Error refreshing instance status:", error);
+    },
+  });
+};
+
+export const useInstanceUsageStats = (
+  identifier,
+  period = "24h",
+  options = {}
+) => {
+  const { enabled = true, ...rest } = options;
+
+  return useQuery({
+    queryKey: ["admin-instance-usage", identifier, period],
+    queryFn: () => fetchInstanceUsageStats({ identifier, period }),
+    enabled: !!identifier && enabled,
+    staleTime: 1000 * 60,
+    refetchOnWindowFocus: false,
+    ...rest,
+  });
+};
+
+export const useInstanceLogs = (identifier, params = {}, options = {}) => {
+  const { enabled = true, ...rest } = options;
+
+  return useQuery({
+    queryKey: ["admin-instance-logs", identifier, params.lines, params.since],
+    queryFn: () =>
+      fetchInstanceLogs({
+        identifier,
+        lines: params.lines,
+        since: params.since,
+      }),
+    enabled: !!identifier && enabled,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    ...rest,
+  });
+};
+
+export const useUpdateInstanceMetadata = () => {
+  return useMutation({
+    mutationFn: updateInstanceMetadata,
+    onError: (error) => {
+      console.error("Error updating instance metadata:", error);
+    },
   });
 };
 

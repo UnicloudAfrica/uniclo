@@ -43,7 +43,6 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     // "/admin-dashboard/instance-management": "Instance Management",
     // "/admin-dashboard/instance-management/details": "Instance Details",
     "/admin-dashboard/enhanced-profile-settings": "Profile Settings",
-    "/admin-dashboard/multi-instance-creation": "Multi-Instance Creation",
     "/admin-dashboard/products": "Products",
     "/admin-dashboard/leads": "Leads",
     "/admin-dashboard/support-ticket": "Support Ticket",
@@ -133,12 +132,6 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       icon: Server,
       isLucide: true,
       path: "/admin-dashboard/instances",
-    },
-    {
-      name: "Multi-Instance Creation",
-      icon: Plus,
-      isLucide: true,
-      path: "/admin-dashboard/multi-instance-creation",
     },
     {
       name: "Regions",

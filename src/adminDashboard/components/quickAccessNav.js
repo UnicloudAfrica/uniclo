@@ -9,29 +9,7 @@ import {
   Activity,
   TrendingUp,
   Database,
-  Copy,
-  Plus
-} from "lucide-react";
-
-const QuickAccessNav = () => {
-  const navigate = useNavigate();
-
-  const quickLinks = [
     {
-      title: "Projects",
-      description: "Manage projects and infrastructure",
-      icon: Server,
-      path: "/admin-dashboard/projects",
-      color: "bg-blue-50 text-blue-600",
-      bgColor: "hover:bg-blue-100"
-    },
-    {
-      title: "Multi-Instance Creation",
-      description: "Create multiple instances in bulk",
-      icon: Copy,
-      path: "/admin-dashboard/multi-instance-creation",
-      color: "bg-orange-50 text-orange-600",
-      bgColor: "hover:bg-orange-100"
     },
     {
       title: "Profile Settings",

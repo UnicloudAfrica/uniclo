@@ -46,7 +46,6 @@ const ModernAdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/admin-dashboard/pricing": "Pricing",
     "/admin-dashboard/projects": "Projects",
     "/admin-dashboard/instances": "Instances",
-    "/admin-dashboard/multi-instance-creation": "Multi-Instance Creation",
     "/admin-dashboard/regions": "Regions",
     "/admin-dashboard/advanced-calculator": "Calculator",
     "/admin-dashboard/quote": "Generate Invoice",
@@ -109,12 +108,6 @@ const ModernAdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       name: "Instances",
       icon: Server,
       path: "/admin-dashboard/instances",
-      category: "management"
-    },
-    {
-      name: "Multi-Instance Creation",
-      icon: Server,
-      path: "/admin-dashboard/multi-instance-creation",
       category: "management"
     },
     {

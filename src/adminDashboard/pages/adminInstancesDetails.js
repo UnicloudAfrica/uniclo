@@ -31,8 +31,12 @@ import {
 } from "lucide-react";
 
 import {
-  useFetchInstanceRequestById,
   useFetchInstanceManagementDetails,
+  useInstanceManagementAction,
+  useRefreshInstanceStatus,
+  useInstanceUsageStats,
+  useInstanceLogs,
+  useUpdateInstanceMetadata,
 } from "../../hooks/adminHooks/instancesHook";
 import {
   useAdminFetchInstanceConsoleById,
@@ -49,10 +53,10 @@ const formatDate = (value) => {
   return Number.isNaN(date.getTime())
     ? "N/A"
     : date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
 };
 
 const formatDateTime = (value) => {
@@ -61,12 +65,12 @@ const formatDateTime = (value) => {
   return Number.isNaN(date.getTime())
     ? "N/A"
     : date.toLocaleString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-      });
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
 };
 
 const safeParseJson = (value, fallback = null) => {
@@ -234,6 +238,24 @@ const ACTION_STYLES = {
   },
 };
 
+const DETAIL_TABS = [
+  { key: "details", label: "Details" },
+  { key: "timeline", label: "Status History" },
+  { key: "usage", label: "Usage Metrics" },
+  { key: "logs", label: "Logs" },
+  { key: "metadata", label: "Metadata" },
+];
+
+const USAGE_PERIOD_OPTIONS = [
+  { value: "1h", label: "Last 1 hour" },
+  { value: "6h", label: "Last 6 hours" },
+  { value: "24h", label: "Last 24 hours" },
+  { value: "7d", label: "Last 7 days" },
+  { value: "30d", label: "Last 30 days" },
+];
+
+const LOG_LINE_OPTIONS = [50, 100, 200, 500];
+
 const Badge = ({ text }) => {
   if (!text) return null;
 
@@ -314,6 +336,14 @@ export default function AdminInstancesDetails() {
   const [identifierError, setIdentifierError] = useState(null);
   const [pendingAction, setPendingAction] = useState(null);
   const [isConsoleLoading, setIsConsoleLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("details");
+  const [usagePeriod, setUsagePeriod] = useState("24h");
+  const [logLines, setLogLines] = useState(200);
+  const [metadataForm, setMetadataForm] = useState({
+    name: "",
+    description: "",
+    tags: "",
+  });
 
   const { idFromUrl, nameFromUrl } = useMemo(() => {
     const params = new URLSearchParams(window.location.search);
@@ -348,65 +378,102 @@ export default function AdminInstancesDetails() {
   }, [idFromUrl, nameFromUrl]);
 
   const {
-    data: instanceDetails,
-    isFetching,
-    isError,
-    error,
-    refetch: refetchInstanceDetails,
-  } = useFetchInstanceRequestById(instanceId);
-
-  const {
     data: managementDetails,
     isFetching: isManagementFetching,
     isError: isManagementError,
     error: managementError,
+    refetch: refetchManagement,
   } = useFetchInstanceManagementDetails(instanceId, {
     enabled: !!instanceId,
   });
 
-  const managedInstance = managementDetails?.instance;
-  const effectiveInstance = managedInstance || instanceDetails || null;
-  const instanceIdentifier =
-    managedInstance?.identifier || instanceDetails?.identifier || instanceId;
+  const managedInstance = managementDetails?.instance || null;
+  const instanceIdentifier = managedInstance?.identifier || instanceId;
   const consoleResourceId =
-    managedInstance?.id ||
-    managedInstance?.identifier ||
-    instanceDetails?.id ||
-    instanceDetails?.identifier ||
-    instanceId;
+    managedInstance?.id || managedInstance?.identifier || instanceIdentifier;
 
   const providerDetails = managementDetails?.provider_details;
   const availableActions = managementDetails?.available_actions;
+  const supportsInstanceActions = Boolean(
+    managementDetails?.supports_instance_actions
+  );
   const consoleInfo = managementDetails?.console_info;
   const networkInfo = managementDetails?.network_info;
   const securityInfo = managementDetails?.security_info;
   const monitoringMetrics = managementDetails?.monitoring_metrics;
 
-  const displayInstance = effectiveInstance || {};
+  const displayInstance = managedInstance || {};
   const rawMetadata = displayInstance?.metadata;
   const effectiveMetadata = useMemo(() => {
     if (!rawMetadata) return {};
     return safeParseJson(rawMetadata, rawMetadata) || {};
   }, [rawMetadata]);
 
-  const pricingBreakdownRaw = useMemo(
-    () =>
-      effectiveMetadata?.pricing_breakdown
-        ? safeParseJson(
-            effectiveMetadata.pricing_breakdown,
-            effectiveMetadata.pricing_breakdown
-          ) || effectiveMetadata.pricing_breakdown
-        : null,
-    [effectiveMetadata?.pricing_breakdown]
-  );
+  useEffect(() => {
+    if (!managedInstance) {
+      setMetadataForm({ name: "", description: "", tags: "" });
+      return;
+    }
 
-  const { data: lifecycleData, isLoading: isLifecycleLoading } =
-    useAdminFetchInstanceLifecycleById(instanceIdentifier);
+    setMetadataForm({
+      name: managedInstance.name || "",
+      description: managedInstance.description || "",
+      tags: Array.isArray(managedInstance.tags)
+        ? managedInstance.tags.join(", ")
+        : managedInstance.tags || "",
+    });
+  }, [managedInstance]);
+
+  const pricingBreakdownRaw = useMemo(() => {
+    if (!effectiveMetadata?.pricing_breakdown) return null;
+    return (
+      safeParseJson(
+        effectiveMetadata.pricing_breakdown,
+        effectiveMetadata.pricing_breakdown
+      ) || effectiveMetadata.pricing_breakdown
+    );
+  }, [effectiveMetadata?.pricing_breakdown]);
+
+  const {
+    data: lifecycleData,
+    isLoading: isLifecycleLoading,
+    refetch: refetchLifecycle,
+  } = useAdminFetchInstanceLifecycleById(instanceIdentifier);
+
+  useEffect(() => {
+    if (activeTab === "timeline" && instanceIdentifier) {
+      refetchLifecycle();
+    }
+  }, [activeTab, instanceIdentifier, refetchLifecycle]);
 
   const { refetch: fetchConsoleUrl, isFetching: isConsoleFetching } =
     useAdminFetchInstanceConsoleById(consoleResourceId, {
       enabled: false,
     });
+
+  const { mutateAsync: executeActionMutation, isPending: isActionMutating } =
+    useInstanceManagementAction();
+  const { mutateAsync: refreshStatusMutation, isPending: isRefreshingStatus } =
+    useRefreshInstanceStatus();
+  const {
+    data: usageStats,
+    isFetching: isUsageLoading,
+  } = useInstanceUsageStats(instanceIdentifier, usagePeriod, {
+    enabled: activeTab === "usage" && !!instanceIdentifier,
+  });
+  const {
+    data: logsData,
+    isFetching: isLogsLoading,
+    refetch: refetchLogs,
+  } = useInstanceLogs(
+    instanceIdentifier,
+    { lines: logLines },
+    {
+      enabled: activeTab === "logs" && !!instanceIdentifier,
+    }
+  );
+  const { mutateAsync: updateMetadataMutation, isPending: isMetadataUpdating } =
+    useUpdateInstanceMetadata();
 
   const consoleLoading = isConsoleLoading || isConsoleFetching;
 
@@ -432,8 +499,8 @@ export default function AdminInstancesDetails() {
   }, []);
 
   const handleExportJson = useCallback(() => {
-    if (!effectiveInstance) return;
-    const blob = new Blob([JSON.stringify(effectiveInstance, null, 2)], {
+    if (!managedInstance) return;
+    const blob = new Blob([JSON.stringify(managedInstance, null, 2)], {
       type: "application/json",
     });
     const url = window.URL.createObjectURL(blob);
@@ -444,7 +511,7 @@ export default function AdminInstancesDetails() {
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
-  }, [displayInstance.identifier, effectiveInstance]);
+  }, [displayInstance.identifier, managedInstance]);
 
   const handleOpenConsole = useCallback(async () => {
     if (!consoleResourceId) {
@@ -483,16 +550,44 @@ export default function AdminInstancesDetails() {
 
   const handleInstanceAction = useCallback(
     async (actionKey) => {
-      if (!consoleResourceId) {
+      if (!supportsInstanceActions) {
+        ToastUtils.error("Instance lifecycle actions are not available.");
+        return;
+      }
+      if (!instanceIdentifier) {
         ToastUtils.error("Instance reference not available for this action.");
         return;
       }
 
+      const config = availableActions?.[actionKey];
+
+      if (isActionMutating && pendingAction && pendingAction !== actionKey) {
+        ToastUtils.info("Another action is currently in progress.");
+        return;
+      }
+      let confirmedFlag = false;
+
+      if (config?.requires_confirmation) {
+        const confirmationMessage =
+          config?.confirmation_message ||
+          `Are you sure you want to ${actionKey} this instance?`;
+        const confirmed = window.confirm(confirmationMessage);
+        if (!confirmed) {
+          return;
+        }
+        confirmedFlag = true;
+      }
+
       setPendingAction(actionKey);
       try {
-        ToastUtils.info(
-          `${actionKey} action will be wired to the backend in the next update.`
-        );
+        await executeActionMutation({
+          identifier: instanceIdentifier,
+          action: actionKey,
+          params: config?.default_params || {},
+          confirmed: confirmedFlag,
+        });
+        ToastUtils.success(`${formatStatusText(actionKey)} initiated.`);
+        await Promise.all([refetchManagement(), refetchLifecycle()]);
       } catch (err) {
         console.error(`Failed to trigger ${actionKey} action`, err);
         ToastUtils.error(
@@ -502,26 +597,39 @@ export default function AdminInstancesDetails() {
         setPendingAction(null);
       }
     },
-    [consoleResourceId]
+    [
+      availableActions,
+      executeActionMutation,
+      isActionMutating,
+      instanceIdentifier,
+      pendingAction,
+      refetchLifecycle,
+      refetchManagement,
+      supportsInstanceActions,
+    ]
   );
 
   const handleRefreshStatus = useCallback(async () => {
+    if (isRefreshingStatus) return;
+    if (!instanceIdentifier) return;
     setPendingAction("refresh");
     try {
-      const result = await refetchInstanceDetails();
-      if (result?.error) {
-        throw result.error;
-      }
-      if (result?.data) {
-        ToastUtils.success("Instance details refreshed");
-      }
+      await refreshStatusMutation(instanceIdentifier);
+      ToastUtils.success("Instance status refresh requested");
+      await Promise.all([refetchManagement(), refetchLifecycle()]);
     } catch (err) {
       console.error("Failed to refresh instance details:", err);
       ToastUtils.error(err?.message || "Failed to refresh instance status.");
     } finally {
       setPendingAction(null);
     }
-  }, [refetchInstanceDetails]);
+  }, [
+    instanceIdentifier,
+    isRefreshingStatus,
+    refreshStatusMutation,
+    refetchManagement,
+    refetchLifecycle,
+  ]);
 
   const handleQuickAction = useCallback(
     (actionKey) => {
@@ -620,7 +728,7 @@ export default function AdminInstancesDetails() {
     if (networkInfo && typeof networkInfo === "object") {
       const normalizedNetworks = {};
       if (Array.isArray(networkInfo.networks)) {
-        networkInfo.networks.forEach((network, idx) => {
+        networkInfo.networks.forEach((network) => {
           const name =
             network?.name || `Network ${Object.keys(normalizedNetworks).length + 1}`;
           normalizedNetworks[name] = network?.addresses || [];
@@ -1114,7 +1222,7 @@ export default function AdminInstancesDetails() {
         label: "Grace Days",
         value:
           displayInstance.grace_days !== undefined &&
-          displayInstance.grace_days !== null
+            displayInstance.grace_days !== null
             ? `${displayInstance.grace_days}`
             : "N/A",
       },
@@ -1236,7 +1344,11 @@ export default function AdminInstancesDetails() {
   }, [displayInstance, effectiveMetadata]);
 
   const quickActions = useMemo(() => {
-    if (availableActions && Object.keys(availableActions).length > 0) {
+    if (
+      supportsInstanceActions &&
+      availableActions &&
+      Object.keys(availableActions).length > 0
+    ) {
       return Object.entries(availableActions).map(([key, config]) => {
         const style = ACTION_STYLES[key] || {};
         const Icon =
@@ -1266,6 +1378,25 @@ export default function AdminInstancesDetails() {
       });
     }
 
+    if (!supportsInstanceActions) {
+      const refreshStyle = ACTION_STYLES.refresh;
+      const Icon = refreshStyle.icon || ACTION_ICON_LIBRARY.refresh || RefreshCw;
+      return [
+        {
+          key: "refresh",
+          label: refreshStyle.label || "Refresh Status",
+          description:
+            refreshStyle.description ||
+            "Pull the latest data from the provider",
+          icon: Icon,
+          tone:
+            refreshStyle.tone ||
+            "bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100 focus-visible:ring-gray-200",
+          disabled: false,
+        },
+      ];
+    }
+
     const status = (displayInstance?.status || "").toLowerCase();
     const fallbackKeys = ["start", "stop", "reboot", "refresh"];
 
@@ -1288,16 +1419,14 @@ export default function AdminInstancesDetails() {
         disabled,
       };
     });
-  }, [availableActions, displayInstance?.status]);
+  }, [availableActions, displayInstance?.status, supportsInstanceActions]);
 
-  const combinedError = managementError || error;
-  const isLoadingDetails =
-    (isFetching || isManagementFetching) && !effectiveInstance;
-  const combinedIsError =
-    !effectiveInstance && (isError || isManagementError);
+  const combinedError = managementError;
+  const isLoadingDetails = isManagementFetching && !managedInstance;
+  const combinedIsError = !managedInstance && isManagementError;
 
   const hasConsoleAccess = useMemo(() => {
-    if (!consoleInfo) return true;
+    if (!consoleInfo) return false;
     const types = Array.isArray(consoleInfo.available_types)
       ? consoleInfo.available_types
       : [];
@@ -1306,6 +1435,18 @@ export default function AdminInstancesDetails() {
     }
     return Boolean(consoleInfo.default_type);
   }, [consoleInfo]);
+
+  const logLinesArray = useMemo(() => {
+    if (Array.isArray(logsData?.lines)) {
+      return logsData.lines;
+    }
+
+    if (typeof logsData?.lines === "string") {
+      return logsData.lines.split("\n");
+    }
+
+    return [];
+  }, [logsData?.lines]);
 
   const hasLifecycleEvents = lifecycleEvents.length > 0;
   const hasTelemetry = telemetrySummary.length > 0;
@@ -1352,8 +1493,8 @@ export default function AdminInstancesDetails() {
       const paymentOptionsArray = Array.isArray(parsedPaymentOptions)
         ? parsedPaymentOptions
         : parsedPaymentOptions
-        ? [parsedPaymentOptions]
-        : [];
+          ? [parsedPaymentOptions]
+          : [];
 
       const breakdown =
         parsedMetadata?.breakdown ||
@@ -1402,7 +1543,7 @@ export default function AdminInstancesDetails() {
     );
   }
 
-  if (isLoadingDetails || (instanceId === null && !effectiveInstance)) {
+  if (isLoadingDetails || (instanceId === null && !managedInstance)) {
     return (
       <>
         <AdminHeadbar onMenuClick={toggleMobileMenu} />
@@ -1485,173 +1626,962 @@ export default function AdminInstancesDetails() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-              <div className="space-y-4">
-                <div className="flex flex-wrap items-center gap-3">
-                  <Badge text={displayInstance.status?.replace(/_/g, " ") || "Unknown"} />
-                  {displayInstance.billing_status && (
-                    <Badge text={`Billing: ${displayInstance.billing_status.replace(/_/g, " ")}`} />
-                  )}
-                </div>
-                <div>
-                  <h1 className="text-3xl font-semibold text-gray-900">
-                    {displayInstance.name || instanceNameFromUrl || "Instance"}
-                  </h1>
-                  <p className="mt-2 max-w-2xl text-sm text-gray-600">
-                    {displayInstance.description ||
-                      "Monitor configuration, networking, billing, and lifecycle information for this workload."}
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Chip>
-                    <span className="font-medium text-gray-700">
-                      {displayInstance.identifier || "N/A"}
-                    </span>
-                    {displayInstance.identifier && (
-                      <button
-                        onClick={handleCopyIdentifier}
-                        className="text-gray-400 transition-colors hover:text-gray-600"
-                        title="Copy identifier"
-                      >
-                        <Copy className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                  </Chip>
-                  {displayInstance.provider && (
-                    <Chip>
-                      <Server className="h-3.5 w-3.5 text-blue-500" />
-                      {displayInstance.provider}
-                    </Chip>
-                  )}
-                  {displayInstance.region && (
-                    <Chip>
-                      <Globe className="h-3.5 w-3.5 text-blue-500" />
-                      {displayInstance.region}
-                    </Chip>
-                  )}
-                  {displayInstance.months && (
-                    <Chip>
-                      <Timer className="h-3.5 w-3.5 text-indigo-500" />
-                      {displayInstance.months} month term
-                    </Chip>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-2 text-sm text-gray-600">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Lifecycle
-                </p>
-                <p>Created {formatDate(displayInstance.created_at)}</p>
-                <p>Expires {formatDate(displayInstance.expires_at)}</p>
-                <p>
-                  Next billing {formatDate(displayInstance.next_billing_date)}
-                </p>
-                <p className="text-xs text-gray-500">
-                  Last updated {formatDate(displayInstance.updated_at)}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            {metricCards.map((metric) => (
-              <MetricCard
-                key={metric.label}
-                icon={metric.icon}
-                label={metric.label}
-                value={metric.value}
-              />
-            ))}
-          </div>
-
-          {subscriptionInsights.length ? (
-            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-[#575758] mb-4">
-                Subscription &amp; Term
-              </h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {subscriptionInsights.map((item) => (
-                  <div
-                    key={item.label}
-                    className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3"
-                  >
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      {item.label}
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-gray-900">
-                      {item.value}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <h2 className="text-xl font-semibold text-[#575758]">
-                  Console & Actions
-                </h2>
-                <p className="mt-1 text-sm text-gray-500">
-                  Launch the remote console or run lifecycle operations for this instance.
-                </p>
-              </div>
-              <button
-                onClick={handleOpenConsole}
-                disabled={consoleLoading || !hasConsoleAccess}
-                className="inline-flex items-center gap-2 rounded-full bg-[#288DD1] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1976D2] disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {consoleLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Terminal className="h-4 w-4" />
-                )}
-                <span>
-                  {hasConsoleAccess ? "Open Console" : "Console Unavailable"}
-                </span>
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-              {quickActions.map((action) => {
-                const Icon = action.icon;
-                const isLoading = pendingAction === action.key;
-
+          <div className="rounded-2xl border border-gray-100 bg-white p-2 shadow-sm">
+            <div className="flex flex-wrap gap-2">
+              {DETAIL_TABS.map((tab) => {
+                const isActive = activeTab === tab.key;
                 return (
                   <button
-                    key={action.key}
-                    onClick={() => handleQuickAction(action.key)}
-                    disabled={action.disabled || isLoading}
-                    className={`group flex items-start gap-3 rounded-2xl px-4 py-3 text-left transition ${action.tone} disabled:cursor-not-allowed disabled:opacity-60`}
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${isActive
+                      ? "bg-[#288DD1] text-white shadow"
+                      : "bg-white text-gray-600 hover:bg-gray-100"
+                      }`}
                   >
-                    <span className="mt-1 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-inherit shadow-sm">
-                      <Icon className="h-5 w-5" />
-                    </span>
-                    <span className="flex-1">
-                      <span className="text-sm font-semibold text-gray-900">
-                        {action.label}
-                      </span>
-                      <span className="mt-1 block text-xs text-gray-500">
-                        {action.description}
-                      </span>
-                    </span>
-                    {isLoading ? (
-                      <Loader2 className="mt-1 h-4 w-4 animate-spin text-gray-500" />
-                    ) : (
-                      <ArrowRight className="mt-1 h-4 w-4 text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-gray-600" />
-                    )}
+                    {tab.label}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm xl:col-span-2">
+          {activeTab === "details" && (
+            <>
+              <div className="space-y-6">
+                {subscriptionInsights.length ? (
+                  <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                    <h2 className="text-xl font-semibold text-[#575758] mb-4">
+                      Subscription &amp; Term Details
+                    </h2>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {subscriptionInsights.map((item) => (
+                        <div
+                          key={item.label}
+                          className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3"
+                        >
+                          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            {item.label}
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-gray-900">
+                            {item.value}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                  <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="space-y-4">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Badge text={displayInstance.status?.replace(/_/g, " ") || "Unknown"} />
+                        {displayInstance.billing_status && (
+                          <Badge text={`Billing: ${displayInstance.billing_status.replace(/_/g, " ")}`} />
+                        )}
+                      </div>
+                      <div>
+                        <h1 className="text-3xl font-semibold text-gray-900">
+                          {displayInstance.name || instanceNameFromUrl || "Instance"}
+                        </h1>
+                        <p className="mt-2 max-w-2xl text-sm text-gray-600">
+                          {displayInstance.description ||
+                            "Monitor configuration, networking, billing, and lifecycle information for this workload."}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Chip>
+                          <span className="font-medium text-gray-700">
+                            {displayInstance.identifier || "N/A"}
+                          </span>
+                          {displayInstance.identifier && (
+                            <button
+                              onClick={handleCopyIdentifier}
+                              className="text-gray-400 transition-colors hover:text-gray-600"
+                              title="Copy identifier"
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </Chip>
+                        {displayInstance.provider && (
+                          <Chip>
+                            <Server className="h-3.5 w-3.5 text-blue-500" />
+                            {displayInstance.provider}
+                          </Chip>
+                        )}
+                        {displayInstance.region && (
+                          <Chip>
+                            <Globe className="h-3.5 w-3.5 text-blue-500" />
+                            {displayInstance.region}
+                          </Chip>
+                        )}
+                        {displayInstance.months && (
+                          <Chip>
+                            <Timer className="h-3.5 w-3.5 text-indigo-500" />
+                            {displayInstance.months} month term
+                          </Chip>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 text-sm text-gray-600">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        Lifecycle
+                      </p>
+                      <p>Created {formatDate(displayInstance.created_at)}</p>
+                      <p>Expires {formatDate(displayInstance.expires_at)}</p>
+                      <p>Next billing {formatDate(displayInstance.next_billing_date)}</p>
+                      <p className="text-xs text-gray-500">
+                        Last updated {formatDate(displayInstance.updated_at)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                  {metricCards.map((metric) => (
+                    <MetricCard
+                      key={metric.label}
+                      icon={metric.icon}
+                      label={metric.label}
+                      value={metric.value}
+                    />
+                  ))}
+                </div>
+
+                <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                      <h2 className="text-xl font-semibold text-[#575758]">
+                        Console & Actions
+                      </h2>
+                      <p className="mt-1 text-sm text-gray-500">
+                        Launch the remote console or run lifecycle operations for this instance.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleOpenConsole}
+                      disabled={consoleLoading || !hasConsoleAccess}
+                      className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-colors
+                      ${hasConsoleAccess
+                          ? "bg-[#288DD1] text-white hover:bg-[#1976D2]"
+                          : "bg-gray-200 text-gray-400 cursor-not-allowed"}
+                      disabled:cursor-not-allowed disabled:opacity-70`}
+                    >
+                      {consoleLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Terminal className="h-4 w-4" />
+                      )}
+                      <span>
+                        {hasConsoleAccess ? "Open Console" : "Console Unavailable"}
+                      </span>
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    {quickActions.map((action) => {
+                      const Icon = action.icon;
+                      const isLoading =
+                        pendingAction === action.key ||
+                        (action.key === "refresh" && isRefreshingStatus);
+                      const anotherActionInFlight =
+                        pendingAction && pendingAction !== action.key;
+
+                      return (
+                        <button
+                          key={action.key}
+                          onClick={() => handleQuickAction(action.key)}
+                          disabled={
+                            action.disabled ||
+                            isLoading ||
+                            anotherActionInFlight ||
+                            (action.key !== "refresh" && isRefreshingStatus)
+                          }
+                          className={`group flex items-start gap-3 rounded-2xl px-4 py-3 text-left transition ${action.tone} disabled:cursor-not-allowed disabled:opacity-60`}
+                        >
+                          <span className="mt-1 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-inherit shadow-sm">
+                            <Icon className="h-5 w-5" />
+                          </span>
+                          <span className="flex-1">
+                            <span className="text-sm font-semibold text-gray-900">
+                              {action.label}
+                            </span>
+                            <span className="mt-1 block text-xs text-gray-500">
+                              {action.description}
+                            </span>
+                          </span>
+                          {isLoading ? (
+                            <Loader2 className="mt-1 h-4 w-4 animate-spin text-gray-500" />
+                          ) : (
+                            <ArrowRight className="mt-1 h-4 w-4 text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-gray-600" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                  <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-xl font-semibold text-[#575758]">
+                        Health & Telemetry
+                      </h2>
+                      <Activity className="h-5 w-5 text-indigo-500" />
+                    </div>
+                    <div className="mt-4 space-y-3">
+                      {hasTelemetry ? (
+                        telemetrySummary.map(({ label, value }) => (
+                          <div
+                            key={label}
+                            className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3"
+                          >
+                            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                              {label}
+                            </span>
+                            <span className="text-sm font-semibold text-gray-900">
+                              {value}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500">
+                          We&apos;ll surface telemetry once monitoring data becomes available.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-xl font-semibold text-[#575758]">
+                        Related Resources
+                      </h2>
+                      <Layers className="h-5 w-5 text-sky-500" />
+                    </div>
+                    <div className="mt-4 space-y-4">
+                      {hasRelatedResources ? (
+                        relatedResources.map((resource) => (
+                          <div
+                            key={resource.key}
+                            className="rounded-xl border border-gray-100 bg-gray-50 p-4"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-center gap-2">
+                                {resource.icon ? (
+                                  <resource.icon className="h-4 w-4 text-gray-500" />
+                                ) : null}
+                                <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                  {resource.label}
+                                </span>
+                              </div>
+                              {resource.copyable && resource.value ? (
+                                <button
+                                  onClick={() =>
+                                    handleCopyResource(
+                                      resource.value,
+                                      `${resource.label} copied`
+                                    )
+                                  }
+                                  className="rounded-full p-1 text-gray-400 transition-colors hover:bg-white hover:text-gray-600"
+                                  title={`Copy ${resource.label}`}
+                                >
+                                  <Copy className="h-3.5 w-3.5" />
+                                </button>
+                              ) : null}
+                            </div>
+
+                            {resource.value ? (
+                              resource.href ? (
+                                <a
+                                  href={resource.href}
+                                  className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-[#288DD1] transition-colors hover:text-[#1976D2]"
+                                >
+                                  {resource.value}
+                                  <ArrowRight className="h-4 w-4" />
+                                </a>
+                              ) : (
+                                <p className="mt-2 text-sm font-semibold text-gray-900">
+                                  {resource.value}
+                                </p>
+                              )
+                            ) : null}
+
+                            {resource.chips?.length ? (
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {resource.chips.map((chip) => (
+                                  <span
+                                    key={chip}
+                                    className="inline-flex items-center rounded-full bg-white px-2 py-1 text-xs font-medium text-gray-600"
+                                  >
+                                    {chip}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : null}
+
+                            {resource.volumes?.length ? (
+                              <div className="mt-3 space-y-2 text-sm text-gray-600">
+                                {resource.volumes.map((vol) => (
+                                  <div
+                                    key={vol.id || vol.name}
+                                    className="flex items-center justify-between rounded-lg bg-white px-3 py-2"
+                                  >
+                                    <span className="font-medium text-gray-800">
+                                      {vol.name}
+                                    </span>
+                                    <span className="text-xs uppercase tracking-wide text-gray-500">
+                                      {vol.size !== undefined && vol.size !== null
+                                        ? typeof vol.size === "string"
+                                          ? vol.size
+                                          : `${vol.size} GiB`
+                                        : "—"}
+                                    </span>
+                                  </div>
+                                ))}
+                                {resource.extraCount ? (
+                                  <p className="text-xs text-gray-500">
+                                    +{resource.extraCount} more volume
+                                    {resource.extraCount > 1 ? "s" : ""}
+                                  </p>
+                                ) : null}
+                              </div>
+                            ) : null}
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500">
+                          Related resources will surface once additional services are linked to this instance.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {hasProviderSnapshot ? (
+                  <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                    <h2 className="text-xl font-semibold text-[#575758] mb-4">
+                      Provider Snapshot
+                    </h2>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {providerSnapshotEntries.map((entry) => (
+                        <div
+                          key={entry.label}
+                          className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                              {entry.label}
+                            </p>
+                            {entry.copyable && entry.value && entry.value !== "N/A" ? (
+                              <button
+                                onClick={() =>
+                                  handleCopyResource(entry.value, `${entry.label} copied`)
+                                }
+                                className="rounded-full p-1 text-gray-400 transition hover:bg-white hover:text-gray-600"
+                                title={`Copy ${entry.label}`}
+                              >
+                                <Copy className="h-3.5 w-3.5" />
+                              </button>
+                            ) : null}
+                          </div>
+                          <p className="mt-1 text-sm font-semibold text-gray-900">
+                            {entry.value}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {hasNetworkTopology ? (
+                  <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                    <h2 className="text-xl font-semibold text-[#575758] mb-4">
+                      Network Topology
+                    </h2>
+                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                      <div className="space-y-3">
+                        <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Primary IP
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-gray-900">
+                            {networkTopologySummary.primaryIp || "N/A"}
+                          </p>
+                        </div>
+                        <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Public IPs
+                          </p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {networkTopologySummary.publicIps.length ? (
+                              networkTopologySummary.publicIps.map((ip) => (
+                                <span
+                                  key={`public-${ip}`}
+                                  className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-700"
+                                >
+                                  {ip}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-sm text-gray-600">None</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Private IPs
+                          </p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {networkTopologySummary.privateIps.length ? (
+                              networkTopologySummary.privateIps.map((ip) => (
+                                <span
+                                  key={`private-${ip}`}
+                                  className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-700"
+                                >
+                                  {ip}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-sm text-gray-600">None</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                          Networks &amp; Interfaces
+                        </p>
+                        <div className="mt-3 space-y-3 text-sm text-gray-700">
+                          {networkTopologySummary.networks.length ? (
+                            networkTopologySummary.networks.map((network) => (
+                              <div
+                                key={network.name}
+                                className="rounded-lg border border-gray-200 bg-white p-3"
+                              >
+                                <p className="text-sm font-semibold text-gray-900">
+                                  {network.name}
+                                </p>
+                                <div className="mt-2 space-y-1 text-xs text-gray-600">
+                                  {network.addresses.length ? (
+                                    network.addresses.map((addr, idx) => (
+                                      <div
+                                        key={`${network.name}-${idx}-${addr.addr || idx}`}
+                                        className="flex flex-wrap items-center gap-2"
+                                      >
+                                        <span className="font-medium text-gray-800">
+                                          {addr.addr || "—"}
+                                        </span>
+                                        {addr["OS-EXT-IPS:type"] || addr.type ? (
+                                          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-600">
+                                            {addr["OS-EXT-IPS:type"] || addr.type}
+                                          </span>
+                                        ) : null}
+                                        {addr.version ? (
+                                          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600">
+                                            IPv{addr.version}
+                                          </span>
+                                        ) : null}
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <p>No addresses reported.</p>
+                                  )}
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <p>No network details reported by the provider.</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    {networkTopologySummary.flatAddresses.length ? (
+                      <div className="mt-6 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                          Normalized Addresses
+                        </p>
+                        <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                          {networkTopologySummary.flatAddresses.map((entry, index) => (
+                            <div
+                              key={`${entry.network}-${entry.addr || index}`}
+                              className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700"
+                            >
+                              <p className="font-semibold text-gray-900">
+                                {entry.addr || "—"}
+                              </p>
+                              <p className="text-[11px] uppercase tracking-wide text-gray-500">
+                                {entry.network || "Network"} ·{" "}
+                                {entry.type || "private"} · IPv{entry.version || 4}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {hasSecurityDetails ? (
+                  <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                    <h2 className="text-xl font-semibold text-[#575758] mb-4">
+                      Security &amp; Storage
+                    </h2>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      {securitySummaryEntries.map((entry) => (
+                        <div
+                          key={entry.label}
+                          className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3"
+                        >
+                          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            {entry.label}
+                          </p>
+                          {entry.value ? (
+                            <p className="mt-1 text-sm font-semibold text-gray-900">
+                              {entry.value}
+                            </p>
+                          ) : null}
+
+                          {entry.chips?.length ? (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {entry.chips.map((chip) => {
+                                const label =
+                                  typeof chip === "string"
+                                    ? chip
+                                    : chip?.name || chip?.id || "Security Group";
+                                return (
+                                  <span
+                                    key={label}
+                                    className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-700"
+                                  >
+                                    {label}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          ) : null}
+
+                          {entry.volumes?.length ? (
+                            <div className="mt-2 space-y-2 text-xs text-gray-600">
+                              {entry.volumes.map((vol, idx) => (
+                                <div
+                                  key={vol?.id || vol?.volumeId || idx}
+                                  className="rounded-lg border border-gray-200 bg-white px-3 py-2"
+                                >
+                                  <p className="font-semibold text-gray-900">
+                                    {vol?.id || vol?.volumeId || `Volume ${idx + 1}`}
+                                  </p>
+                                  <p>
+                                    Device:{" "}
+                                    {vol?.device || vol?.mountpoint || vol?.device_name || "—"}
+                                  </p>
+                                  {vol?.delete_on_termination !== undefined ? (
+                                    <p>
+                                      Delete on termination:{" "}
+                                      {formatBoolean(vol.delete_on_termination)}
+                                    </p>
+                                  ) : null}
+                                </div>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="bg-white rounded-[12px] p-6 shadow-sm">
+                  <h2 className="text-xl font-semibold text-[#575758] mb-4">
+                    Billing Summary
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <DetailRow label="Currency" value={currency} />
+                    <DetailRow
+                      label="Billing Term"
+                      value={
+                        displayInstance.months
+                          ? `${displayInstance.months} Months`
+                          : "N/A"
+                      }
+                    />
+                    <DetailRow
+                      label="Billing Status"
+                      children={
+                        <Badge text={formatStatusText(displayInstance.billing_status)} />
+                      }
+                    />
+                    {typeof pricingBreakdownRaw?.total === "number" && (
+                      <DetailRow
+                        label="Total Cost"
+                        value={`${currency} ${pricingBreakdownRaw.total.toLocaleString()}`}
+                      />
+                    )}
+                    <DetailRow
+                      label="Next Billing Date"
+                      value={
+                        displayInstance.next_billing_date
+                          ? new Date(displayInstance.next_billing_date).toLocaleString()
+                          : "N/A"
+                      }
+                    />
+                  </div>
+                  {parsedPricingBreakdown?.lines?.length ? (
+                    <div className="mt-6 space-y-3">
+                      <p className="text-sm font-semibold text-gray-700">
+                        Pricing Breakdown
+                      </p>
+                      <div className="overflow-x-auto rounded-xl border border-gray-100">
+                        <table className="min-w-full divide-y divide-gray-200 text-sm">
+                          <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                            <tr>
+                              <th className="px-4 py-2 text-left">Line Item</th>
+                              <th className="px-4 py-2 text-left">Frequency</th>
+                              <th className="px-4 py-2 text-left">Quantity</th>
+                              <th className="px-4 py-2 text-left">Unit Price</th>
+                              <th className="px-4 py-2 text-left">Line Total</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100 bg-white text-gray-700">
+                            {parsedPricingBreakdown.lines.map((line) => (
+                              <tr key={line.key}>
+                                <td className="px-4 py-2 font-medium text-gray-900">
+                                  {line.name}
+                                </td>
+                                <td className="px-4 py-2 capitalize text-gray-600">
+                                  {line.frequency?.replace(/_/g, " ") || "Recurring"}
+                                </td>
+                                <td className="px-4 py-2">{line.quantity}</td>
+                                <td className="px-4 py-2">
+                                  {formatMoney(line.unitAmount, line.currency)}
+                                </td>
+                                <td className="px-4 py-2 font-semibold text-gray-900">
+                                  {formatMoney(line.total, line.currency)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="grid gap-2 text-sm text-gray-700 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Subtotal
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-gray-900">
+                            {formatMoney(parsedPricingBreakdown.subtotal, currency)}
+                          </p>
+                        </div>
+                        {parsedPricingBreakdown.discount ? (
+                          <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                              Discount
+                            </p>
+                            <p className="mt-1 text-sm font-semibold text-red-600">
+                              −{formatMoney(parsedPricingBreakdown.discount, currency)}
+                            </p>
+                            {parsedPricingBreakdown.discountLabel ? (
+                              <p className="text-xs text-gray-500">
+                                {parsedPricingBreakdown.discountLabel}
+                              </p>
+                            ) : null}
+                          </div>
+                        ) : null}
+                        {parsedPricingBreakdown.colocationAmount ? (
+                          <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                              Facility / Colocation
+                            </p>
+                            <p className="mt-1 text-sm font-semibold text-gray-900">
+                              {formatMoney(parsedPricingBreakdown.colocationAmount, currency)}
+                            </p>
+                            {parsedPricingBreakdown.colocationPercentage ? (
+                              <p className="text-xs text-gray-500">
+                                {parsedPricingBreakdown.colocationPercentage}% applied
+                              </p>
+                            ) : null}
+                          </div>
+                        ) : null}
+                        <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Tax
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-gray-900">
+                            {formatMoney(parsedPricingBreakdown.tax, currency)}
+                          </p>
+                        </div>
+                        <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 sm:col-span-2 lg:col-span-1">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Total
+                          </p>
+                          <p className="mt-1 text-base font-semibold text-gray-900">
+                            {formatMoney(parsedPricingBreakdown.total, currency)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="bg-white rounded-[12px] p-6 shadow-sm">
+                  <h2 className="text-xl font-semibold text-[#575758] mb-4">
+                    Transactions
+                  </h2>
+                  <div className="overflow-x-auto">
+                    {enhancedTransactions.length ? (
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Identifier
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Type
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Amount
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Status
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Gateway
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Created At
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Action
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {enhancedTransactions.map((tx, index) => {
+                            const currencyCode = tx.currency || currency;
+                            const detailItems = [
+                              {
+                                label: "Reference",
+                                value: tx.reference || tx.reference_id,
+                              },
+                              {
+                                label: "Payment Type",
+                                value: tx.payment_type || tx.payment_gateway_method,
+                              },
+                              {
+                                label: "Payment Reference",
+                                value: tx.payment_reference || tx.client_reference_id,
+                              },
+                              {
+                                label: "Amount Paid",
+                                value:
+                                  tx.amount_paid !== undefined
+                                    ? formatMoney(tx.amount_paid, currencyCode)
+                                    : null,
+                              },
+                              {
+                                label: "Transaction Fee",
+                                value:
+                                  tx.transaction_fee !== undefined
+                                    ? formatMoney(tx.transaction_fee, currencyCode)
+                                    : null,
+                              },
+                              {
+                                label: "Third-party Fee",
+                                value:
+                                  tx.third_party_fee !== undefined
+                                    ? formatMoney(tx.third_party_fee, currencyCode)
+                                    : null,
+                              },
+                              {
+                                label: "Exchange Rate",
+                                value:
+                                  tx.exchange_rate && Number(tx.exchange_rate) !== 0
+                                    ? Number(tx.exchange_rate).toLocaleString()
+                                    : null,
+                              },
+                              {
+                                label: "Gateway Message",
+                                value: tx.payment_gateway_message,
+                              },
+                            ].filter((item) => item.value);
+
+                            const hasPaymentOptions = tx._paymentOptions.length > 0;
+                            const hasBreakdown = tx._breakdownLines.length > 0;
+                            const showDetails =
+                              detailItems.length || hasPaymentOptions || hasBreakdown;
+
+                            return (
+                              <React.Fragment
+                                key={
+                                  tx.id ||
+                                  tx.identifier ||
+                                  tx.reference ||
+                                  tx.created_at ||
+                                  index
+                                }
+                              >
+                                <tr>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {tx.identifier || "—"}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {tx.type?.replace(/_/g, " ") || "N/A"}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                                    {formatMoney(tx.amount, currencyCode)}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    <Badge text={tx.status?.replace(/_/g, " ")} />
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {tx.payment_gateway || "N/A"}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {tx.created_at
+                                      ? new Date(tx.created_at).toLocaleString()
+                                      : "N/A"}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    {tx.status === "pending" && tx.action === "initiate" ? (
+                                      <span className="text-[#288DD1]">Pending payment</span>
+                                    ) : null}
+                                  </td>
+                                </tr>
+                                {showDetails ? (
+                                  <tr className="bg-gray-50">
+                                    <td colSpan={7} className="px-6 py-4">
+                                      <div className="grid gap-4 text-sm text-gray-700 lg:grid-cols-2">
+                                        {detailItems.length ? (
+                                          <div className="space-y-2">
+                                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                              Transaction Details
+                                            </p>
+                                            <div className="grid gap-2 rounded-xl border border-gray-100 bg-white p-4">
+                                              {detailItems.map((item) => (
+                                                <div
+                                                  key={`${tx.identifier}-${item.label}`}
+                                                  className="flex items-start justify-between gap-3"
+                                                >
+                                                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                                    {item.label}
+                                                  </span>
+                                                  <span className="text-sm font-medium text-gray-900">
+                                                    {item.value}
+                                                  </span>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        ) : null}
+                                        {hasPaymentOptions ? (
+                                          <div className="space-y-2">
+                                            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                              Payment Instructions
+                                            </p>
+                                            <div className="space-y-2 rounded-xl border border-gray-100 bg-white p-4">
+                                              {tx._paymentOptions.map((option, idx) => (
+                                                <div
+                                                  key={`${tx.identifier}-option-${idx}`}
+                                                  className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm"
+                                                >
+                                                  <p className="font-semibold text-gray-900">
+                                                    {option?.name || option?.payment_type || "Payment Option"}
+                                                  </p>
+                                                  <p className="text-xs uppercase tracking-wide text-gray-500">
+                                                    {option?.payment_type || option?.type || "Gateway"}
+                                                  </p>
+                                                  <p className="mt-1 text-sm font-semibold text-gray-900">
+                                                    {option?.total
+                                                      ? formatMoney(option.total, currencyCode)
+                                                      : ""}
+                                                  </p>
+                                                  {option?.transaction_reference ? (
+                                                    <div className="mt-2 text-xs text-gray-600">
+                                                      Reference:{" "}
+                                                      <span className="font-semibold text-gray-900">
+                                                        {option.transaction_reference}
+                                                      </span>
+                                                    </div>
+                                                  ) : null}
+                                                  {option?.details ? (
+                                                    <div className="mt-2 space-y-1 text-xs text-gray-600">
+                                                      {Object.entries(option.details).map(
+                                                        ([key, value]) => (
+                                                          <div key={`${tx.identifier}-${idx}-${key}`}>
+                                                            <span className="font-semibold text-gray-900">
+                                                              {formatStatusText(key)}
+                                                            </span>
+                                                            : {value || "—"}
+                                                          </div>
+                                                        )
+                                                      )}
+                                                    </div>
+                                                  ) : null}
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        ) : null}
+                                      </div>
+                                      {hasBreakdown ? (
+                                        <div className="mt-4 space-y-2 rounded-xl border border-gray-100 bg-white p-4">
+                                          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                            Charge Breakdown
+                                          </p>
+                                          <div className="overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-gray-200 text-sm">
+                                              <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
+                                                <tr>
+                                                  <th className="px-3 py-2 text-left">Item</th>
+                                                  <th className="px-3 py-2 text-left">Qty</th>
+                                                  <th className="px-3 py-2 text-left">Amount</th>
+                                                </tr>
+                                              </thead>
+                                              <tbody className="divide-y divide-gray-100 bg-white text-gray-700">
+                                                {tx._breakdownLines.map((line, idx) => (
+                                                  <tr key={`txn-${tx.id}-line-${idx}`}>
+                                                    <td className="px-3 py-2 font-medium text-gray-900">
+                                                      {line?.name || `Line ${idx + 1}`}
+                                                    </td>
+                                                    <td className="px-3 py-2">{line?.quantity ?? 1}</td>
+                                                    <td className="px-3 py-2 font-semibold text-gray-900">
+                                                      {formatMoney(
+                                                        line?.total ?? line?.amount ?? 0,
+                                                        line?.currency || currencyCode
+                                                      )}
+                                                    </td>
+                                                  </tr>
+                                                ))}
+                                              </tbody>
+                                            </table>
+                                          </div>
+                                        </div>
+                                      ) : null}
+                                    </td>
+                                  </tr>
+                                ) : null}
+                              </React.Fragment>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <p className="text-gray-500 text-center py-4">
+                        No transactions found for this instance.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === "timeline" && (
+            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-[#575758]">
                   Lifecycle Timeline
@@ -1679,9 +2609,7 @@ export default function AdminInstancesDetails() {
                             {event.label}
                           </p>
                           {event.description ? (
-                            <p className="text-xs text-gray-500">
-                              {event.description}
-                            </p>
+                            <p className="text-xs text-gray-500">{event.description}</p>
                           ) : null}
                           {event.timestampLabel ? (
                             <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
@@ -1699,761 +2627,278 @@ export default function AdminInstancesDetails() {
                 )}
               </div>
             </div>
+          )}
 
-            <div className="space-y-4">
-              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-[#575758]">
-                    Health & Telemetry
-                  </h2>
-                  <Activity className="h-5 w-5 text-indigo-500" />
-                </div>
-                <div className="mt-4 space-y-3">
-                  {hasTelemetry ? (
-                    telemetrySummary.map(({ label, value }) => (
-                      <div
-                        key={label}
-                        className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3"
-                      >
-                        <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                          {label}
-                        </span>
-                        <span className="text-sm font-semibold text-gray-900">
-                          {value}
-                        </span>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-gray-500">
-                      We&apos;ll surface telemetry once monitoring data becomes available.
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-[#575758]">
-                    Related Resources
-                  </h2>
-                  <Layers className="h-5 w-5 text-sky-500" />
-                </div>
-                <div className="mt-4 space-y-4">
-                  {hasRelatedResources ? (
-                    relatedResources.map((resource) => (
-                      <div
-                        key={resource.key}
-                        className="rounded-xl border border-gray-100 bg-gray-50 p-4"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-center gap-2">
-                            {resource.icon ? (
-                              <resource.icon className="h-4 w-4 text-gray-500" />
-                            ) : null}
-                            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                              {resource.label}
-                            </span>
-                          </div>
-                          {resource.copyable && resource.value ? (
-                            <button
-                              onClick={() =>
-                                handleCopyResource(
-                                  resource.value,
-                                  `${resource.label} copied`
-                                )
-                              }
-                              className="rounded-full p-1 text-gray-400 transition-colors hover:bg-white hover:text-gray-600"
-                              title={`Copy ${resource.label}`}
-                            >
-                              <Copy className="h-3.5 w-3.5" />
-                            </button>
-                          ) : null}
-                        </div>
-
-                        {resource.value ? (
-                          resource.href ? (
-                            <a
-                              href={resource.href}
-                              className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-[#288DD1] transition-colors hover:text-[#1976D2]"
-                            >
-                              {resource.value}
-                              <ArrowRight className="h-4 w-4" />
-                            </a>
-                          ) : (
-                            <p className="mt-2 text-sm font-semibold text-gray-900">
-                              {resource.value}
-                            </p>
-                          )
-                        ) : null}
-
-                        {resource.chips?.length ? (
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {resource.chips.map((chip) => (
-                              <span
-                                key={chip}
-                                className="inline-flex items-center rounded-full bg-white px-2 py-1 text-xs font-medium text-gray-600"
-                              >
-                                {chip}
-                              </span>
-                            ))}
-                          </div>
-                        ) : null}
-
-                        {resource.volumes?.length ? (
-                          <div className="mt-3 space-y-2 text-sm text-gray-600">
-                            {resource.volumes.map((vol) => (
-                              <div
-                                key={vol.id || vol.name}
-                                className="flex items-center justify-between rounded-lg bg-white px-3 py-2"
-                              >
-                                <span className="font-medium text-gray-800">
-                                  {vol.name}
-                                </span>
-                                <span className="text-xs uppercase tracking-wide text-gray-500">
-                                  {vol.size !== undefined && vol.size !== null
-                                    ? typeof vol.size === "string"
-                                      ? vol.size
-                                      : `${vol.size} GiB`
-                                    : "—"}
-                                </span>
-                              </div>
-                            ))}
-                            {resource.extraCount ? (
-                              <p className="text-xs text-gray-500">
-                                +{resource.extraCount} more volume
-                                {resource.extraCount > 1 ? "s" : ""}
-                              </p>
-                            ) : null}
-                          </div>
-                        ) : null}
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-gray-500">
-                      Related resources will surface once additional services are linked to this instance.
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {hasProviderSnapshot ? (
+          {activeTab === "usage" && (
             <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-[#575758] mb-4">
-                Provider Snapshot
-              </h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {providerSnapshotEntries.map((entry) => (
-                  <div
-                    key={entry.label}
-                    className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3"
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-[#575758]">
+                    Usage Metrics
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    Aggregated resource consumption reported by the provider.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-gray-600" htmlFor="usage-period">
+                    Period
+                  </label>
+                  <select
+                    id="usage-period"
+                    value={usagePeriod}
+                    onChange={(event) => setUsagePeriod(event.target.value)}
+                    className="rounded-full border border-gray-200 bg-white px-3 py-1 text-sm text-gray-700 focus:border-[#288DD1] focus:outline-none"
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                        {entry.label}
-                      </p>
-                      {entry.copyable && entry.value && entry.value !== "N/A" ? (
-                        <button
-                          onClick={() =>
-                            handleCopyResource(entry.value, `${entry.label} copied`)
-                          }
-                          className="rounded-full p-1 text-gray-400 transition hover:bg-white hover:text-gray-600"
-                          title={`Copy ${entry.label}`}
-                        >
-                          <Copy className="h-3.5 w-3.5" />
-                        </button>
-                      ) : null}
-                    </div>
-                    <p className="mt-1 text-sm font-semibold text-gray-900">
-                      {entry.value}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          {hasNetworkTopology ? (
-            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-[#575758] mb-4">
-                Network Topology
-              </h2>
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <div className="space-y-3">
-                  <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      Primary IP
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-gray-900">
-                      {networkTopologySummary.primaryIp || "N/A"}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      Public IPs
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {networkTopologySummary.publicIps.length ? (
-                        networkTopologySummary.publicIps.map((ip) => (
-                          <span
-                            key={`public-${ip}`}
-                            className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-700"
-                          >
-                            {ip}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-sm text-gray-600">None</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      Private IPs
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {networkTopologySummary.privateIps.length ? (
-                        networkTopologySummary.privateIps.map((ip) => (
-                          <span
-                            key={`private-${ip}`}
-                            className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-700"
-                          >
-                            {ip}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-sm text-gray-600">None</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Networks &amp; Interfaces
-                  </p>
-                  <div className="mt-3 space-y-3 text-sm text-gray-700">
-                    {networkTopologySummary.networks.length ? (
-                      networkTopologySummary.networks.map((network) => (
-                        <div
-                          key={network.name}
-                          className="rounded-lg border border-gray-200 bg-white p-3"
-                        >
-                          <p className="text-sm font-semibold text-gray-900">
-                            {network.name}
-                          </p>
-                          <div className="mt-2 space-y-1 text-xs text-gray-600">
-                            {network.addresses.length ? (
-                              network.addresses.map((addr, idx) => (
-                                <div
-                                  key={`${network.name}-${idx}-${addr.addr || idx}`}
-                                  className="flex flex-wrap items-center gap-2"
-                                >
-                                  <span className="font-medium text-gray-800">
-                                    {addr.addr || "—"}
-                                  </span>
-                                  {addr["OS-EXT-IPS:type"] || addr.type ? (
-                                    <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-600">
-                                      {addr["OS-EXT-IPS:type"] || addr.type}
-                                    </span>
-                                  ) : null}
-                                  {addr.version ? (
-                                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600">
-                                      IPv{addr.version}
-                                    </span>
-                                  ) : null}
-                                </div>
-                              ))
-                            ) : (
-                              <p>No addresses reported.</p>
-                            )}
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <p>No network details reported by the provider.</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-              {networkTopologySummary.flatAddresses.length ? (
-                <div className="mt-6 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Normalized Addresses
-                  </p>
-                  <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                    {networkTopologySummary.flatAddresses.map((entry, index) => (
-                      <div
-                        key={`${entry.network}-${entry.addr || index}`}
-                        className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700"
-                      >
-                        <p className="font-semibold text-gray-900">
-                          {entry.addr || "—"}
-                        </p>
-                        <p className="text-[11px] uppercase tracking-wide text-gray-500">
-                          {entry.network || "Network"} ·{" "}
-                          {entry.type || "private"} · IPv{entry.version || 4}
-                        </p>
-                      </div>
+                    {USAGE_PERIOD_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
                     ))}
-                  </div>
+                  </select>
                 </div>
+              </div>
+
+              {isUsageLoading ? (
+                <div className="mt-6 flex h-32 items-center justify-center text-sm text-gray-500">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin text-[#288DD1]" />
+                  Loading usage metrics…
+                </div>
+              ) : usageStats ? (
+                <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {[
+                    {
+                      label: "CPU Average",
+                      value: usageStats.cpu_average
+                        ? formatPercentage(usageStats.cpu_average)
+                        : "N/A",
+                    },
+                    {
+                      label: "Memory Average",
+                      value: usageStats.memory_average
+                        ? `${usageStats.memory_average} MB`
+                        : "N/A",
+                    },
+                    {
+                      label: "Network In",
+                      value: usageStats.network_in
+                        ? `${usageStats.network_in} MB`
+                        : "N/A",
+                    },
+                    {
+                      label: "Network Out",
+                      value: usageStats.network_out
+                        ? `${usageStats.network_out} MB`
+                        : "N/A",
+                    },
+                    {
+                      label: "Disk Read",
+                      value: usageStats.disk_read
+                        ? `${usageStats.disk_read} MB`
+                        : "N/A",
+                    },
+                    {
+                      label: "Disk Write",
+                      value: usageStats.disk_write
+                        ? `${usageStats.disk_write} MB`
+                        : "N/A",
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3"
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        {item.label}
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-gray-900">
+                        {item.value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-6 text-sm text-gray-500">
+                  Usage metrics are not available for this instance yet.
+                </p>
+              )}
+              {usageStats?.period ? (
+                <p className="mt-4 text-xs uppercase tracking-wide text-gray-400">
+                  Reporting window: {usageStats.period}
+                </p>
               ) : null}
             </div>
-          ) : null}
+          )}
 
-          {hasSecurityDetails ? (
+          {activeTab === "logs" && (
             <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-semibold text-[#575758] mb-4">
-                Security &amp; Storage
-              </h2>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {securitySummaryEntries.map((entry) => (
-                  <div
-                    key={entry.label}
-                    className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3"
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-[#575758]">
+                    Provider Logs
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    Recent log lines gathered from the instance console stream.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="text-sm text-gray-600" htmlFor="log-lines">
+                    Lines
+                  </label>
+                  <select
+                    id="log-lines"
+                    value={logLines}
+                    onChange={(event) => setLogLines(Number(event.target.value))}
+                    className="rounded-full border border-gray-200 bg-white px-3 py-1 text-sm text-gray-700 focus:border-[#288DD1] focus:outline-none"
                   >
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      {entry.label}
-                    </p>
-                    {entry.value ? (
-                      <p className="mt-1 text-sm font-semibold text-gray-900">
-                        {entry.value}
-                      </p>
-                    ) : null}
-
-                    {entry.chips?.length ? (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {entry.chips.map((chip) => {
-                          const label =
-                            typeof chip === "string"
-                              ? chip
-                              : chip?.name || chip?.id || "Security Group";
-                          return (
-                            <span
-                              key={label}
-                              className="inline-flex items-center rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-700"
-                            >
-                              {label}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    ) : null}
-
-                    {entry.volumes?.length ? (
-                      <div className="mt-2 space-y-2 text-xs text-gray-600">
-                        {entry.volumes.map((vol, idx) => (
-                          <div
-                            key={vol?.id || vol?.volumeId || idx}
-                            className="rounded-lg border border-gray-200 bg-white px-3 py-2"
-                          >
-                            <p className="font-semibold text-gray-900">
-                              {vol?.id || vol?.volumeId || `Volume ${idx + 1}`}
-                            </p>
-                            <p>
-                              Device:{" "}
-                              {vol?.device || vol?.mountpoint || vol?.device_name || "—"}
-                            </p>
-                            {vol?.delete_on_termination !== undefined ? (
-                              <p>
-                                Delete on termination:{" "}
-                                {formatBoolean(vol.delete_on_termination)}
-                              </p>
-                            ) : null}
-                          </div>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          <div className="bg-white rounded-[12px] p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-[#575758] mb-4">
-              Billing Summary
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <DetailRow label="Currency" value={currency} />
-              <DetailRow
-                label="Billing Term"
-                value={
-                  displayInstance.months
-                    ? `${displayInstance.months} Months`
-                    : "N/A"
-                }
-              />
-              <DetailRow
-                label="Billing Status"
-                children={
-                  <Badge text={displayInstance.billing_status?.replace(/_/g, " ")} />
-                }
-              />
-              {typeof pricingBreakdownRaw?.total === "number" && (
-                <DetailRow
-                  label="Total Cost"
-                  value={`${currency} ${pricingBreakdownRaw.total.toLocaleString()}`}
-                />
-              )}
-              <DetailRow
-                label="Next Billing Date"
-                value={
-                  displayInstance.next_billing_date
-                    ? new Date(displayInstance.next_billing_date).toLocaleString()
-                    : "N/A"
-                }
-              />
-            </div>
-            {parsedPricingBreakdown?.lines?.length ? (
-              <div className="mt-6 space-y-3">
-                <p className="text-sm font-semibold text-gray-700">
-                  Pricing Breakdown
-                </p>
-                <div className="overflow-x-auto rounded-xl border border-gray-100">
-                  <table className="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
-                      <tr>
-                        <th className="px-4 py-2 text-left">Line Item</th>
-                        <th className="px-4 py-2 text-left">Frequency</th>
-                        <th className="px-4 py-2 text-left">Quantity</th>
-                        <th className="px-4 py-2 text-left">Unit Price</th>
-                        <th className="px-4 py-2 text-left">Line Total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 bg-white text-gray-700">
-                      {parsedPricingBreakdown.lines.map((line) => (
-                        <tr key={line.key}>
-                          <td className="px-4 py-2 font-medium text-gray-900">
-                            {line.name}
-                          </td>
-                          <td className="px-4 py-2 capitalize text-gray-600">
-                            {line.frequency?.replace(/_/g, " ") || "Recurring"}
-                          </td>
-                          <td className="px-4 py-2">{line.quantity}</td>
-                          <td className="px-4 py-2">
-                            {formatMoney(line.unitAmount, line.currency)}
-                          </td>
-                          <td className="px-4 py-2 font-semibold text-gray-900">
-                            {formatMoney(line.total, line.currency)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="grid gap-2 text-sm text-gray-700 sm:grid-cols-2 lg:grid-cols-4">
-                  <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      Subtotal
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-gray-900">
-                      {formatMoney(parsedPricingBreakdown.subtotal, currency)}
-                    </p>
-                  </div>
-                  {parsedPricingBreakdown.discount ? (
-                    <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                        Discount
-                      </p>
-                      <p className="mt-1 text-sm font-semibold text-red-600">
-                        −{formatMoney(parsedPricingBreakdown.discount, currency)}
-                      </p>
-                      {parsedPricingBreakdown.discountLabel ? (
-                        <p className="text-xs text-gray-500">
-                          {parsedPricingBreakdown.discountLabel}
-                        </p>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  {parsedPricingBreakdown.colocationAmount ? (
-                    <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                        Facility / Colocation
-                      </p>
-                      <p className="mt-1 text-sm font-semibold text-gray-900">
-                        {formatMoney(parsedPricingBreakdown.colocationAmount, currency)}
-                      </p>
-                      {parsedPricingBreakdown.colocationPercentage ? (
-                        <p className="text-xs text-gray-500">
-                          {parsedPricingBreakdown.colocationPercentage}% applied
-                        </p>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      Tax
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-gray-900">
-                      {formatMoney(parsedPricingBreakdown.tax, currency)}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 sm:col-span-2 lg:col-span-1">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                      Total
-                    </p>
-                    <p className="mt-1 text-base font-semibold text-gray-900">
-                      {formatMoney(parsedPricingBreakdown.total, currency)}
-                    </p>
-                  </div>
+                    {LOG_LINE_OPTIONS.map((linesOption) => (
+                      <option key={linesOption} value={linesOption}>
+                        {linesOption}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => refetchLogs()}
+                    className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-3 py-1.5 text-sm font-medium text-[#288DD1] transition-colors hover:bg-[#E1F0FA]"
+                    disabled={isLogsLoading}
+                  >
+                    {isLogsLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4" />
+                    )}
+                    Refresh
+                  </button>
                 </div>
               </div>
-            ) : null}
-          </div>
 
-          <div className="bg-white rounded-[12px] p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-[#575758] mb-4">
-              Transactions
-            </h2>
-            <div className="overflow-x-auto">
-              {enhancedTransactions.length ? (
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Identifier
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Type
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Amount
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Gateway
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Created At
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Action
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {enhancedTransactions.map((tx, index) => {
-                      const currencyCode = tx.currency || currency;
-                      const detailItems = [
-                        {
-                          label: "Reference",
-                          value: tx.reference || tx.reference_id,
-                        },
-                        {
-                          label: "Payment Type",
-                          value: tx.payment_type || tx.payment_gateway_method,
-                        },
-                        {
-                          label: "Payment Reference",
-                          value: tx.payment_reference || tx.client_reference_id,
-                        },
-                        {
-                          label: "Amount Paid",
-                          value:
-                            tx.amount_paid !== undefined
-                              ? formatMoney(tx.amount_paid, currencyCode)
-                              : null,
-                        },
-                        {
-                          label: "Transaction Fee",
-                          value:
-                            tx.transaction_fee !== undefined
-                              ? formatMoney(tx.transaction_fee, currencyCode)
-                              : null,
-                        },
-                        {
-                          label: "Third-party Fee",
-                          value:
-                            tx.third_party_fee !== undefined
-                              ? formatMoney(tx.third_party_fee, currencyCode)
-                              : null,
-                        },
-                        {
-                          label: "Exchange Rate",
-                          value:
-                            tx.exchange_rate && Number(tx.exchange_rate) !== 0
-                              ? Number(tx.exchange_rate).toLocaleString()
-                              : null,
-                        },
-                        {
-                          label: "Gateway Message",
-                          value: tx.payment_gateway_message,
-                        },
-                      ].filter((item) => item.value);
-
-                      const hasPaymentOptions = tx._paymentOptions.length > 0;
-                      const hasBreakdown = tx._breakdownLines.length > 0;
-                      const showDetails =
-                        detailItems.length || hasPaymentOptions || hasBreakdown;
-
-                      return (
-                        <React.Fragment
-                          key={
-                            tx.id ||
-                            tx.identifier ||
-                            tx.reference ||
-                            tx.created_at ||
-                            index
-                          }
-                        >
-                          <tr>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {tx.identifier || "—"}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {tx.type?.replace(/_/g, " ") || "N/A"}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                              {formatMoney(tx.amount, currencyCode)}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              <Badge text={tx.status?.replace(/_/g, " ")} />
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {tx.payment_gateway || "N/A"}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {tx.created_at
-                                ? new Date(tx.created_at).toLocaleString()
-                                : "N/A"}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              {tx.status === "pending" && tx.action === "initiate" ? (
-                                <span className="text-[#288DD1]">Pending payment</span>
-                              ) : null}
-                            </td>
-                          </tr>
-                          {showDetails ? (
-                            <tr className="bg-gray-50">
-                              <td colSpan={7} className="px-6 py-4">
-                                <div className="grid gap-4 text-sm text-gray-700 lg:grid-cols-2">
-                                  {detailItems.length ? (
-                                    <div className="space-y-2">
-                                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                        Transaction Details
-                                      </p>
-                                      <div className="grid gap-2 rounded-xl border border-gray-100 bg-white p-4">
-                                        {detailItems.map((item) => (
-                                          <div
-                                            key={`${tx.identifier}-${item.label}`}
-                                            className="flex items-start justify-between gap-3"
-                                          >
-                                            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                              {item.label}
-                                            </span>
-                                            <span className="text-sm font-medium text-gray-900">
-                                              {item.value}
-                                            </span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  ) : null}
-                                  {hasPaymentOptions ? (
-                                    <div className="space-y-2">
-                                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                        Payment Instructions
-                                      </p>
-                                      <div className="space-y-2 rounded-xl border border-gray-100 bg-white p-4">
-                                        {tx._paymentOptions.map((option, idx) => (
-                                          <div
-                                            key={`${tx.identifier}-option-${idx}`}
-                                            className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-sm"
-                                          >
-                                            <p className="font-semibold text-gray-900">
-                                              {option?.name || option?.payment_type || "Payment Option"}
-                                            </p>
-                                            <p className="text-xs uppercase tracking-wide text-gray-500">
-                                              {option?.payment_type || option?.type || "Gateway"}
-                                            </p>
-                                            <p className="mt-1 text-sm font-semibold text-gray-900">
-                                              {option?.total
-                                                ? formatMoney(option.total, currencyCode)
-                                                : ""}
-                                            </p>
-                                            {option?.transaction_reference ? (
-                                              <div className="mt-2 text-xs text-gray-600">
-                                                Reference:{" "}
-                                                <span className="font-semibold text-gray-900">
-                                                  {option.transaction_reference}
-                                                </span>
-                                              </div>
-                                            ) : null}
-                                            {option?.details ? (
-                                              <div className="mt-2 space-y-1 text-xs text-gray-600">
-                                                {Object.entries(option.details).map(
-                                                  ([key, value]) => (
-                                                    <div key={`${tx.identifier}-${idx}-${key}`}>
-                                                      <span className="font-semibold text-gray-900">
-                                                        {formatStatusText(key)}
-                                                      </span>
-                                                      : {value || "—"}
-                                                    </div>
-                                                  )
-                                                )}
-                                              </div>
-                                            ) : null}
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  ) : null}
-                                </div>
-                                {hasBreakdown ? (
-                                  <div className="mt-4 space-y-2 rounded-xl border border-gray-100 bg-white p-4">
-                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                      Charge Breakdown
-                                    </p>
-                                    <div className="overflow-x-auto">
-                                      <table className="min-w-full divide-y divide-gray-200 text-sm">
-                                        <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500">
-                                          <tr>
-                                            <th className="px-3 py-2 text-left">Item</th>
-                                            <th className="px-3 py-2 text-left">Qty</th>
-                                            <th className="px-3 py-2 text-left">Amount</th>
-                                          </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-100 bg-white text-gray-700">
-                                          {tx._breakdownLines.map((line, idx) => (
-                                            <tr key={`txn-${tx.id}-line-${idx}`}>
-                                              <td className="px-3 py-2 font-medium text-gray-900">
-                                                {line?.name || `Line ${idx + 1}`}
-                                              </td>
-                                              <td className="px-3 py-2">{line?.quantity ?? 1}</td>
-                                              <td className="px-3 py-2 font-semibold text-gray-900">
-                                                {formatMoney(
-                                                  line?.total ?? line?.amount ?? 0,
-                                                  line?.currency || currencyCode
-                                                )}
-                                              </td>
-                                            </tr>
-                                          ))}
-                                        </tbody>
-                                      </table>
-                                    </div>
-                                  </div>
-                                ) : null}
-                              </td>
-                            </tr>
-                          ) : null}
-                        </React.Fragment>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              ) : (
-                <p className="text-gray-500 text-center py-4">
-                  No transactions found for this instance.
-                </p>
-              )}
+              <div className="mt-6 rounded-xl border border-gray-200 bg-gray-900 p-4 text-xs text-gray-100">
+                {isLogsLoading ? (
+                  <div className="flex items-center gap-2 text-sm text-gray-300">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Loading logs…
+                  </div>
+                ) : logLinesArray.length ? (
+                  <pre className="whitespace-pre-wrap break-words font-mono">
+                    {logLinesArray.join("\n")}
+                  </pre>
+                ) : (
+                  <p className="text-sm text-gray-400">
+                    No logs returned for this instance.
+                  </p>
+                )}
+                {logsData?.last_updated || logsData?.lastUpdated ? (
+                  <p className="mt-3 text-right text-[11px] uppercase tracking-wide text-gray-500">
+                    Last updated {formatDateTime(logsData?.last_updated || logsData?.lastUpdated)}
+                  </p>
+                ) : null}
+              </div>
             </div>
-          </div>
-        </div>
-      </main>
+          )}
+
+          {activeTab === "metadata" && (
+            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+              <div className="mb-6 flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-[#575758]">
+                  Metadata &amp; Tags
+                </h2>
+                <p className="text-xs uppercase tracking-wide text-gray-500">
+                  Manage display information for this instance.
+                </p>
+              </div>
+              <form
+                className="space-y-4"
+                onSubmit={async (event) => {
+                  event.preventDefault();
+                  if (!instanceIdentifier) return;
+
+                  try {
+                    await updateMetadataMutation({
+                      identifier: instanceIdentifier,
+                      payload: {
+                        name: metadataForm.name || undefined,
+                        description: metadataForm.description || undefined,
+                        tags: metadataForm.tags
+                          ? metadataForm.tags
+                            .split(",")
+                            .map((tag) => tag.trim())
+                            .filter((tag) => tag.length > 0)
+                          : [],
+                      },
+                    });
+                    ToastUtils.success("Metadata updated successfully");
+                    await refetchManagement();
+                  } catch (err) {
+                    console.error("Failed to update metadata:", err);
+                    ToastUtils.error(err?.message || "Unable to update metadata right now.");
+                  }
+                }}
+              >
+                <div>
+                  <label className="block text-sm font-semibold text-gray-600" htmlFor="metadata-name">
+                    Name
+                  </label>
+                  <input
+                    id="metadata-name"
+                    type="text"
+                    value={metadataForm.name}
+                    onChange={(event) =>
+                      setMetadataForm((prev) => ({ ...prev, name: event.target.value }))
+                    }
+                    className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-[#288DD1] focus:outline-none"
+                    placeholder="Instance display name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-600" htmlFor="metadata-description">
+                    Description
+                  </label>
+                  <textarea
+                    id="metadata-description"
+                    value={metadataForm.description}
+                    onChange={(event) =>
+                      setMetadataForm((prev) => ({ ...prev, description: event.target.value }))
+                    }
+                    rows={4}
+                    className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-[#288DD1] focus:outline-none"
+                    placeholder="Add a short description for this instance"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-600" htmlFor="metadata-tags">
+                    Tags
+                  </label>
+                  <input
+                    id="metadata-tags"
+                    type="text"
+                    value={metadataForm.tags}
+                    onChange={(event) =>
+                      setMetadataForm((prev) => ({ ...prev, tags: event.target.value }))
+                    }
+                    className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-[#288DD1] focus:outline-none"
+                    placeholder="Comma separated tags (e.g. production, finance)"
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    className="inline-flex items-center gap-2 rounded-full bg-[#288DD1] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1976D2] disabled:cursor-not-allowed disabled:opacity-70"
+                    disabled={isMetadataUpdating}
+                  >
+                    {isMetadataUpdating ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Save Changes"
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+        </div >
+      </main >
     </>
   );
 }

@@ -280,7 +280,20 @@ export const useAdminCreateMultiInstancePreview = () => {
 export const useAdminFetchInstanceLifecycleById = (identifier, options = {}) => {
   return useQuery({
     queryKey: ["admin-instance-lifecycle", identifier],
-    queryFn: () => fetchInstanceLifecycleById(identifier, silentAdminApi),
+    queryFn: async () => {
+      const res = await silentAdminApi("GET", `/instances/${identifier}`);
+      const instance = res?.data || {};
+      const history =
+        instance.status_history ||
+        instance.lifecycle_history ||
+        instance.lifecycle_events ||
+        instance.history ||
+        [];
+
+      return {
+        events: Array.isArray(history) ? history : [],
+      };
+    },
     enabled: !!identifier,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,

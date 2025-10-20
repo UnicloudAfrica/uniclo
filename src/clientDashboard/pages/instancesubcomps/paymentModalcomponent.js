@@ -12,7 +12,14 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }) => {
   const paystackKey = process.env.REACT_APP_PAYSTACK_KEY;
   const { data: profile, isFetching: isProfileFetching } =
     useFetchClientProfile();
-  const popup = useMemo(() => new PaystackPop(), []);
+  const popup = useMemo(() => {
+    try {
+      return new PaystackPop();
+    } catch (error) {
+      console.error('Failed to initialize PaystackPop:', error);
+      return null;
+    }
+  }, []);
 
   useEffect(() => {
     if (isOpen && transaction?.payment_gateway_options?.length > 0) {

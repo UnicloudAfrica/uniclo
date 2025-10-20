@@ -11,7 +11,14 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }) => {
 
   const paystackKey = process.env.REACT_APP_PAYSTACK_KEY;
   const { data: profile, isFetching: isProfileFetching } = useFetchProfile();
-  const popup = useMemo(() => new PaystackPop(), []);
+  const popup = useMemo(() => {
+    try {
+      return new PaystackPop();
+    } catch (error) {
+      console.error('Failed to initialize PaystackPop:', error);
+      return null;
+    }
+  }, []);
 
   useEffect(() => {
     if (isOpen && transaction?.payment_gateway_options?.length > 0) {
@@ -43,13 +50,19 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }) => {
       !transaction?.amount ||
       !transaction?.identifier
     ) {
-      // alert("Payment cannot proceed due to missing configuration or details.");
+      alert("Payment cannot proceed due to missing configuration or details.");
+      return;
+    }
+
+    if (!popup) {
+      alert("Payment gateway not available. Please refresh the page and try again.");
       return;
     }
 
     setIsPaying(true);
 
-    popup.newTransaction({
+    try {
+      popup.newTransaction({
       key: paystackKey,
       email: profile.email,
       amount: transaction.amount * 100,
@@ -65,10 +78,16 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }) => {
         alert("Payment cancelled.");
       },
       onError: (error) => {
+        console.error('Paystack payment error:', error);
         alert(`Payment failed: ${error.message || "Unknown error"}`);
         setIsPaying(false);
       },
     });
+    } catch (error) {
+      console.error('Failed to initiate payment:', error);
+      alert(`Payment initialization failed: ${error.message || "Unknown error"}`);
+      setIsPaying(false);
+    }
   }, [
     paystackKey,
     profile?.email,

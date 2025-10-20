@@ -60,33 +60,44 @@ const InstanceConfigCard = ({
   isExpanded,
   onToggleExpand
 }) => {
-  const [localConfig, setLocalConfig] = useState(config);
-
-  // Keep local state in sync with parent updates
-  useEffect(() => {
-    setLocalConfig(config);
-  }, [config]);
+  const isEqualValue = (a, b) => {
+    if (Array.isArray(a) && Array.isArray(b)) {
+      if (a.length !== b.length) return false;
+      return a.every((item, idx) => item === b[idx]);
+    }
+    if (typeof a === "object" && typeof b === "object" && a && b) {
+      try {
+        return JSON.stringify(a) === JSON.stringify(b);
+      } catch (err) {
+        return false;
+      }
+    }
+    return a === b;
+  };
 
   const updateConfig = (field, value) => {
-    const updated = { ...localConfig, [field]: value };
-    setLocalConfig(updated);
+    if (isEqualValue(config[field], value)) {
+      return;
+    }
+
+    const updated = { ...config, [field]: value };
     onUpdate(index, updated);
   };
 
   const updateVolumeType = (volumeIndex, field, value) => {
-    const volumeTypes = [...(localConfig.volume_types || [])];
+    const volumeTypes = [...(config.volume_types || [])];
     volumeTypes[volumeIndex] = { ...volumeTypes[volumeIndex], [field]: value };
     updateConfig('volume_types', volumeTypes);
   };
 
   const addVolumeType = () => {
-    const volumeTypes = [...(localConfig.volume_types || [])];
+    const volumeTypes = [...(config.volume_types || [])];
     volumeTypes.push({ volume_type_id: '', storage_size_gb: 50 });
     updateConfig('volume_types', volumeTypes);
   };
 
   const removeVolumeType = (volumeIndex) => {
-    const volumeTypes = [...(localConfig.volume_types || [])];
+    const volumeTypes = [...(config.volume_types || [])];
     volumeTypes.splice(volumeIndex, 1);
     updateConfig('volume_types', volumeTypes);
   };
@@ -95,11 +106,11 @@ const InstanceConfigCard = ({
     return errors[`instances.${index}.${field}`]?.[0] || errors[field]?.[0];
   };
 
-  const selectedProduct = resources?.compute_instances?.find(p => p.id === localConfig.product_id);
+  const selectedProduct = resources?.compute_instances?.find(p => p.id === config.product_id);
 
   // Use the project identifier string directly (stored in project_id)
-  const projectIdentifier = localConfig.project_id || '';
-  const selectedRegion = localConfig.region;
+  const projectIdentifier = config.project_id || '';
+  const selectedRegion = config.region;
   const { data: securityGroups } = useFetchSecurityGroups(projectIdentifier, selectedRegion, { enabled: !!projectIdentifier && !!selectedRegion });
   const { data: keyPairs } = useFetchKeyPairs(projectIdentifier, selectedRegion, { enabled: !!projectIdentifier && !!selectedRegion });
   const { data: subnets } = useFetchSubnets(projectIdentifier, selectedRegion, { enabled: !!projectIdentifier && !!selectedRegion });
@@ -173,13 +184,13 @@ const InstanceConfigCard = ({
                 className="text-lg font-semibold"
                 style={{ color: designTokens.colors.neutral[900] }}
               >
-                Configuration #{index + 1}: {localConfig.name || 'Untitled'}
+                Configuration #{index + 1}: {config.name || 'Untitled'}
               </h3>
               <p
                 className="text-sm"
                 style={{ color: designTokens.colors.neutral[500] }}
               >
-                {localConfig.count || 1} instance(s) • {selectedProduct?.name || 'No product selected'}
+                {config.count || 1} instance(s) • {selectedProduct?.name || 'No product selected'}
               </p>
             </div>
           </div>
@@ -235,7 +246,7 @@ const InstanceConfigCard = ({
               </label>
               <input
                 type="text"
-                value={localConfig.name || ''}
+                value={config.name || ''}
                 onChange={(e) => updateConfig('name', e.target.value)}
                 placeholder="Enter instance name"
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${getErrorForField('name') ? 'border-red-300' : 'border-gray-300'
@@ -254,7 +265,7 @@ const InstanceConfigCard = ({
                 type="number"
                 min="1"
                 max="10"
-                value={localConfig.count || 1}
+                value={config.count || 1}
                 onChange={(e) => updateConfig('count', parseInt(e.target.value))}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${getErrorForField('count') ? 'border-red-300' : 'border-gray-300'
                   }`}
@@ -270,7 +281,7 @@ const InstanceConfigCard = ({
               Description
             </label>
             <textarea
-              value={localConfig.description || ''}
+              value={config.description || ''}
               onChange={(e) => updateConfig('description', e.target.value)}
               placeholder="Enter instance description"
               rows={3}
@@ -291,7 +302,7 @@ const InstanceConfigCard = ({
                   Region *
                 </label>
                 <select
-                  value={localConfig.region || ''}
+                  value={config.region || ''}
                   onChange={(e) => updateConfig('region', e.target.value)}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${getErrorForField('region') ? 'border-red-300' : 'border-gray-300'
                     }`}
@@ -322,7 +333,7 @@ const InstanceConfigCard = ({
                   Project (Optional)
                 </label>
                 <select
-                  value={localConfig.project_id || ''}
+                  value={config.project_id || ''}
                   onChange={(e) => updateConfig('project_id', e.target.value)}
                   disabled={!selectedRegion}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${getErrorForField('project_id') ? 'border-red-300' : 'border-gray-300'
@@ -348,7 +359,7 @@ const InstanceConfigCard = ({
                   type="number"
                   min="1"
                   max="36"
-                  value={localConfig.months || 1}
+                  value={config.months || 1}
                   onChange={(e) => updateConfig('months', parseInt(e.target.value))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
@@ -361,18 +372,18 @@ const InstanceConfigCard = ({
                   Instance Type *
                 </label>
                 <select
-                  value={localConfig.compute_instance_id || ''}
+                  value={config.compute_instance_id || ''}
                   onChange={(e) => updateConfig('compute_instance_id', e.target.value)}
                   disabled={!selectedRegion}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${getErrorForField('compute_instance_id') ? 'border-red-300' : 'border-gray-300'
                     } ${!selectedRegion ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                 >
                   <option value="">Select Instance Type</option>
-                  {(computeInstancesByRegion || []).map(item => {
+                  {(computeInstancesByRegion || []).map((item, optionIdx) => {
                     const value = item?.product?.productable_id || '';
                     const label = item?.product?.name || 'Compute';
                     return (
-                      <option key={value || label} value={value}>{label}</option>
+                      <option key={`${value}-${optionIdx}`} value={value}>{label}</option>
                     );
                   })}
                 </select>
@@ -386,18 +397,18 @@ const InstanceConfigCard = ({
                   OS Image *
                 </label>
                 <select
-                  value={localConfig.os_image_id || ''}
+                  value={config.os_image_id || ''}
                   onChange={(e) => updateConfig('os_image_id', e.target.value)}
                   disabled={!selectedRegion}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${getErrorForField('os_image_id') ? 'border-red-300' : 'border-gray-300'
                     } ${!selectedRegion ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                 >
                   <option value="">Select OS Image</option>
-                  {(osImagesByRegion || []).map(item => {
+                  {(osImagesByRegion || []).map((item, optionIdx) => {
                     const value = item?.product?.productable_id || '';
                     const label = item?.product?.name || 'OS Image';
                     return (
-                      <option key={value || label} value={value}>{label}</option>
+                      <option key={`${value}-${optionIdx}`} value={value}>{label}</option>
                     );
                   })}
                 </select>
@@ -415,7 +426,7 @@ const InstanceConfigCard = ({
               Storage Configuration
             </h4>
 
-            {(localConfig.volume_types || []).map((volume, volumeIndex) => (
+            {(config.volume_types || []).map((volume, volumeIndex) => (
               <div key={volumeIndex} className="p-4 border border-gray-200 rounded-lg">
                 <div className="flex items-center justify-between mb-3">
                   <h5 className="font-medium text-gray-900">
@@ -454,11 +465,11 @@ const InstanceConfigCard = ({
                       className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!selectedRegion ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                     >
                       <option value="">Select Volume Type</option>
-                      {(volumeTypesByRegion || []).map(item => {
+                      {(volumeTypesByRegion || []).map((item, optionIdx) => {
                         const value = item?.product?.productable_id || '';
                         const label = item?.product?.name || 'Volume Type';
                         return (
-                          <option key={value || label} value={value}>{label}</option>
+                          <option key={`${value}-${optionIdx}`} value={value}>{label}</option>
                         );
                       })}
                     </select>
@@ -513,7 +524,7 @@ const InstanceConfigCard = ({
                   Network (Optional)
                 </label>
                 <select
-                  value={localConfig.network_id || ''}
+                  value={config.network_id || ''}
                   onChange={(e) => updateConfig('network_id', e.target.value)}
                   disabled={!projectIdentifier || !selectedRegion}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${getErrorForField('network_id') ? 'border-red-300' : 'border-gray-300'
@@ -533,7 +544,7 @@ const InstanceConfigCard = ({
                   Subnet (Optional)
                 </label>
                 <select
-                  value={localConfig.subnet_id || ''}
+                  value={config.subnet_id || ''}
                   onChange={(e) => updateConfig('subnet_id', e.target.value)}
                   disabled={!projectIdentifier || !selectedRegion}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${getErrorForField('subnet_id') ? 'border-red-300' : 'border-gray-300'
@@ -556,7 +567,7 @@ const InstanceConfigCard = ({
                   type="number"
                   min="0"
                   max="5"
-                  value={localConfig.floating_ip_count || 0}
+                  value={config.floating_ip_count || 0}
                   onChange={(e) => updateConfig('floating_ip_count', parseInt(e.target.value))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
@@ -570,7 +581,7 @@ const InstanceConfigCard = ({
                 </label>
                 <select
                   multiple
-                  value={localConfig.security_group_ids || []}
+                  value={config.security_group_ids || []}
                   onChange={(e) => {
                     const values = Array.from(e.target.selectedOptions, option => option.value);
                     updateConfig('security_group_ids', values);
@@ -593,7 +604,7 @@ const InstanceConfigCard = ({
                   Key Pair
                 </label>
                 <select
-                  value={localConfig.keypair_name || ''}
+                  value={config.keypair_name || ''}
                   onChange={(e) => updateConfig('keypair_name', e.target.value)}
                   disabled={!projectIdentifier || !selectedRegion}
                   className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${(!projectIdentifier || !selectedRegion) ? 'bg-gray-50 cursor-not-allowed' : ''}`}
@@ -616,7 +627,7 @@ const InstanceConfigCard = ({
             </label>
             <input
               type="text"
-              value={(localConfig.tags || []).join(', ')}
+              value={(config.tags || []).join(', ')}
               onChange={(e) => {
                 const tags = e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag);
                 updateConfig('tags', tags);

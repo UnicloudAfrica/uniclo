@@ -530,13 +530,6 @@ export default function InstanceManagement() {
                 Refresh
               </button>
               
-              <button
-                onClick={() => window.location.href = '/admin-dashboard/multi-instance-creation'}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Instance
-              </button>
             </div>
           </div>
         </div>

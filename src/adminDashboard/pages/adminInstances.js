@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Loader2,
   Plus,
@@ -356,7 +356,8 @@ export default function AdminInstances() {
     refetch,
   } = useFetchPurchasedInstances();
 
-  const instances = instancesResponse?.data || [];
+  const emptyInstances = useMemo(() => [], []);
+  const instances = instancesResponse?.data || emptyInstances;
   const [filteredInstances, setFilteredInstances] = useState([]);
   const [selectedInstances, setSelectedInstances] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState('');

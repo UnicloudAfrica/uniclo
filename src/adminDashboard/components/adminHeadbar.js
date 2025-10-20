@@ -46,7 +46,6 @@ const AdminHeadbar = ({ onMenuClick }) => {
     quote: "Generate Invoice",
     projects: "Projects",
     regions: "Regions",
-    "multi-instance-creation": "Multi-Instance Creation",
     "purchased-modules": "Purchased Modules",
     "tax-configuration": "Tax Configuration",
     "admin-users": "Admin Users",

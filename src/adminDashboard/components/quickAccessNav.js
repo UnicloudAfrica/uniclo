@@ -7,9 +7,20 @@ import {
   Zap,
   Users,
   Activity,
-  TrendingUp,
-  Database,
+  TrendingUp
+} from "lucide-react";
+
+const QuickAccessNav = () => {
+  const navigate = useNavigate();
+
+  const quickLinks = [
     {
+      title: "Projects",
+      description: "Manage projects and infrastructure",
+      icon: Server,
+      path: "/admin-dashboard/projects",
+      color: "bg-blue-50 text-blue-600",
+      bgColor: "hover:bg-blue-100"
     },
     {
       title: "Profile Settings",
@@ -43,18 +54,18 @@ import {
           </span>
         </div>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {quickLinks.map((link, index) => (
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {quickLinks.map((link) => (
           <button
-            key={index}
+            key={link.title}
             onClick={() => navigate(link.path)}
             className={`text-left p-4 rounded-lg border border-gray-200 transition-all duration-200 ${link.bgColor} hover:shadow-md hover:border-gray-300`}
           >
             <div className={`inline-flex items-center justify-center w-10 h-10 rounded-lg mb-3 ${link.color}`}>
               <link.icon className="w-5 h-5" />
             </div>
-            
+
             <h3 className="font-medium text-gray-900 mb-1">{link.title}</h3>
             <p className="text-sm text-gray-500">{link.description}</p>
           </button>
@@ -70,7 +81,7 @@ import {
             </div>
             <div className="flex items-center">
               <Users className="w-4 h-4 mr-1" />
-              <span>Bulk operations</span>
+              <span>Collaboration ready</span>
             </div>
             <div className="flex items-center">
               <TrendingUp className="w-4 h-4 mr-1" />

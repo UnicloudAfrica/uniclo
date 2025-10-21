@@ -60,7 +60,7 @@ Purpose: Eliminate mismatches and accidental regressions when wiring frontend to
 ## 5) Projects (region filtering)
 
 - Fetch projects with `/projects` (admin). Optionally use `?region={code}` if supported.
-- In the UI, filter projects by `project.default_region || project.region === selectedRegion`.
+- In the UI, filter projects by `project.region || project.region === selectedRegion`.
 - Project selection is optional. If provided, infra lists must be fetched scoped to {project, region}.
 
 ---

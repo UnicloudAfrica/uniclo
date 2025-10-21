@@ -230,7 +230,7 @@ export default function ProjectDetails() {
     error: projectError,
   } = useFetchProjectById(projectId);
 
-  const projectRegion = projectDetails?.default_region || projectDetails?.region;
+  const projectRegion = projectDetails?.region || projectDetails?.region;
   const projectEnabled = !!projectId;
   const regionEnabled = projectEnabled && !!projectRegion;
 
@@ -463,7 +463,7 @@ export default function ProjectDetails() {
         {/* Edge Config Panel (Tenant view) */}
         <EdgeConfigPanel
           projectId={projectId}
-          region={projectDetails.default_region}
+          region={projectDetails.region}
           refreshSignal={edgeRefreshSignal}
         />
 
@@ -781,7 +781,7 @@ export default function ProjectDetails() {
               {ActiveInfraComponent && (
                 <ActiveInfraComponent
                   projectId={projectId}
-                  region={projectDetails.default_region}
+                  region={projectDetails.region}
                   actionRequest={infraActionRequest}
                   onActionHandled={handleInfraActionHandled}
                   onStatsUpdate={(count) =>

@@ -86,7 +86,7 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
   const [errors, setErrors] = useState({});
   const [generalError, setGeneralError] = useState(null);
   const [apiResponse, setApiResponse] = useState(null); // The selectedRegion is now derived from the project selected within the resource step
-  const selectedRegion = formData.selectedProject?.default_region || "";
+  const selectedRegion = formData.selectedProject?.region || "";
   const { data: keyPairs, isFetching: isKeyPairsFetching } = useFetchKeyPairs(
     selectedProjectId,
     selectedRegion,
@@ -283,7 +283,7 @@ const AddAdminInstance = ({ isOpen, onClose }) => {
     if (validateStep(1, "add")) {
       const newRequest = {
         project_id: formData.selectedProject.id,
-        region: formData.selectedProject.default_region,
+        region: formData.selectedProject.region,
         os_image_id: formData.selectedOsImage.id,
         compute_instance_id: formData.selectedComputeInstance.id,
         months: parseInt(formData.months),

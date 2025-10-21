@@ -248,12 +248,12 @@ export const ResourceAllocationStep = ({
           </label>
           <select
             id="region"
-            value={formData.selectedProject?.default_region || ""}
+            value={formData.selectedProject?.region || ""}
             disabled
             className="w-full bg-gray-100 rounded-md border-gray-300 text-gray-500 py-2 px-3"
           >
             <option value="">
-              {formData.selectedProject?.default_region || "Select a project"}
+              {formData.selectedProject?.region || "Select a project"}
             </option>
           </select>
 

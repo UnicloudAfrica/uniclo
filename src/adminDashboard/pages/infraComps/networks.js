@@ -122,18 +122,21 @@ const Networks = ({ projectId = "", region = "", provider = "" }) => {
                     </div>
                   </div>
                   <div className="space-y-1 text-sm text-gray-500">
-                    <p>Provider: {network.provider?.toUpperCase() || "N/A"}</p>
-                    <p>Region: {network.region || "N/A"}</p>
                     {network.provider_resource_id && (
                       <p title={network.provider_resource_id} className="truncate">
                         Resource ID: {network.provider_resource_id}
                       </p>
                     )}
-                    {network.cidr_block && (
-                      <p title={network.cidr_block}>CIDR: {network.cidr_block}</p>
+                    {network.cidr && (
+                      <p title={network.cidr}>CIDR: {network.cidr}</p>
                     )}
                     {network.type && (
                       <p>Type: <span className="capitalize">{network.type}</span></p>
+                    )}
+                    {network.vpc_id && (
+                      <p title={network.vpc_id} className="truncate">
+                        VPC: {network.vpc_id.substring(0, 8)}...
+                      </p>
                     )}
                   </div>
                 </div>
@@ -200,34 +203,44 @@ const Networks = ({ projectId = "", region = "", provider = "" }) => {
                   <p className="text-xs text-gray-500 uppercase">Status</p>
                   <Badge text={viewModal.status || "unknown"} />
                 </div>
-                <div>
-                  <p className="text-xs text-gray-500 uppercase">Provider</p>
-                  <p className="text-sm font-medium text-gray-800">
-                    {viewModal.provider?.toUpperCase() || "N/A"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 uppercase">Region</p>
-                  <p className="text-sm font-medium text-gray-800">{viewModal.region || "N/A"}</p>
-                </div>
                 {viewModal.provider_resource_id && (
                   <div className="col-span-2">
-                    <p className="text-xs text-gray-500 uppercase">Provider Resource ID</p>
+                    <p className="text-xs text-gray-500 uppercase">Resource ID (Net ID)</p>
                     <p className="text-sm font-medium text-gray-800 break-all">
                       {viewModal.provider_resource_id}
                     </p>
                   </div>
                 )}
-                {viewModal.cidr_block && (
+                {viewModal.vpc_id && (
+                  <div className="col-span-2">
+                    <p className="text-xs text-gray-500 uppercase">VPC ID</p>
+                    <p className="text-sm font-medium text-gray-800 break-all">
+                      {viewModal.vpc_id}
+                    </p>
+                  </div>
+                )}
+                {viewModal.cidr && (
                   <div>
                     <p className="text-xs text-gray-500 uppercase">CIDR Block</p>
-                    <p className="text-sm font-medium text-gray-800">{viewModal.cidr_block}</p>
+                    <p className="text-sm font-medium text-gray-800">{viewModal.cidr}</p>
+                  </div>
+                )}
+                {viewModal.gateway && (
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase">Gateway</p>
+                    <p className="text-sm font-medium text-gray-800">{viewModal.gateway}</p>
                   </div>
                 )}
                 {viewModal.type && (
                   <div>
                     <p className="text-xs text-gray-500 uppercase">Type</p>
                     <p className="text-sm font-medium text-gray-800 capitalize">{viewModal.type}</p>
+                  </div>
+                )}
+                {viewModal.is_default !== undefined && (
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase">Default Network</p>
+                    <p className="text-sm font-medium text-gray-800">{viewModal.is_default ? 'Yes' : 'No'}</p>
                   </div>
                 )}
               </div>

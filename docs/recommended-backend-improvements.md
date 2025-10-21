@@ -88,8 +88,8 @@ private function batchUserProvisioningJobs(Project $project, array $data, bool $
         return new SyncProjectUserJob(
             projectId: $project->id,
             userId: $userId,
-            provider: $project->default_provider,
-            region: $project->default_region,
+            provider: $project->provider,
+            region: $project->region,
             role: $this->determineUserRole($userId, $project),
             rotateOnLink: true,
         );

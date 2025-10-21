@@ -209,7 +209,7 @@ const ConfigurationCard = ({
     }
     return list.filter((project) => {
       const projectRegion =
-        project.default_region || project.region || project.provider_region;
+        project.region || project.region || project.provider_region;
       if (!projectRegion) {
         return true;
       }

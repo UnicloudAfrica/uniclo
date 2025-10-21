@@ -128,7 +128,7 @@ const InstanceConfigCard = ({
   const unfilteredProjects = projectsRespForRegion?.data || resources?.projects || [];
   const projectsForRegion = (unfilteredProjects || []).filter(p => {
     if (!selectedRegion) return true;
-    const projRegion = p?.default_region || p?.region;
+    const projRegion = p?.region || p?.region;
     return !projRegion || String(projRegion) === String(selectedRegion);
   });
 

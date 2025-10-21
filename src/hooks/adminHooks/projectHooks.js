@@ -132,7 +132,7 @@ export const useCreateProject = () => {
         name: newProject.name,
         description: newProject.description,
         type: newProject.type,
-        default_region: newProject.default_region,
+        region: newProject.region,
         status: "processing", // Show as processing until Zadara confirms
         provisioning_status: "processing",
         provisioning_progress: 5,

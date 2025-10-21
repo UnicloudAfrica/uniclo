@@ -258,7 +258,7 @@ export default function ClientProjectDetails() {
         {/* Edge Config Panel (Tenant view) */}
         <EdgeConfigPanel
           projectId={projectId}
-          region={projectDetails.default_region}
+          region={projectDetails.region}
         />
 
         {/* Top-Level Tab Navigation: Instances and Infrastructure */}
@@ -510,7 +510,7 @@ export default function ClientProjectDetails() {
               {ActiveInfraComponent && (
                 <ActiveInfraComponent
                   projectId={projectId}
-                  region={projectDetails.default_region}
+                  region={projectDetails.region}
                 />
               )}
             </div>

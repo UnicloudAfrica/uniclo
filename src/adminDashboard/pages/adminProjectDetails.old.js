@@ -307,7 +307,7 @@ export default function AdminProjectDetails() {
         payload: {
           region:
             infraStatus?.project?.region ||
-            projectDetails?.default_region ||
+            projectDetails?.region ||
             undefined,
           name: `main-vpc-${projectDetails?.identifier || projectId}`,
         },
@@ -451,15 +451,15 @@ export default function AdminProjectDetails() {
     ? [
         {
           label: "Region",
-          value: projectDetails.default_region
-            ? projectDetails.default_region.toUpperCase()
+          value: projectDetails.region
+            ? projectDetails.region.toUpperCase()
             : "N/A",
           description: "Deployment region",
           icon: <Network size={18} className="text-[#288DD1]" />,
         },
         {
           label: "Provider",
-          value: (projectDetails.default_provider || "zadara").toUpperCase(),
+          value: (projectDetails.provider || "zadara").toUpperCase(),
           description: "Cloud provider",
           icon: <Globe size={18} className="text-[#288DD1]" />,
         },
@@ -1087,7 +1087,7 @@ export default function AdminProjectDetails() {
           <VPCs
             projectId={projectDetails.identifier}
             projectName={projectDetails.name}
-            region={projectDetails.default_region}
+            region={projectDetails.region}
           />
         );
       case "create-key-pair":
@@ -1095,7 +1095,7 @@ export default function AdminProjectDetails() {
           <KeyPairs
             projectId={projectDetails.identifier}
             projectName={projectDetails.name}
-            region={projectDetails.default_region}
+            region={projectDetails.region}
           />
         );
       case "configure-edge-network":
@@ -1103,7 +1103,7 @@ export default function AdminProjectDetails() {
           <>
             <AdminEdgeConfigPanel
               projectId={projectId}
-              region={projectDetails.default_region}
+              region={projectDetails.region}
             />
             <div className="mt-4">
               <ModernButton
@@ -1120,7 +1120,7 @@ export default function AdminProjectDetails() {
           <SecurityGroup
             projectId={projectDetails.identifier}
             projectName={projectDetails.name}
-            region={projectDetails.default_region}
+            region={projectDetails.region}
           />
         );
       case "manage-subnets":
@@ -1128,7 +1128,7 @@ export default function AdminProjectDetails() {
           <Subnets
             projectId={projectDetails.identifier}
             projectName={projectDetails.name}
-            region={projectDetails.default_region}
+            region={projectDetails.region}
           />
         );
       case "configure-igw":
@@ -1136,7 +1136,7 @@ export default function AdminProjectDetails() {
           <IGWs
             projectId={projectDetails.identifier}
             projectName={projectDetails.name}
-            region={projectDetails.default_region}
+            region={projectDetails.region}
           />
         );
       case "route-tables":
@@ -1144,7 +1144,7 @@ export default function AdminProjectDetails() {
           <RouteTables
             projectId={projectDetails.identifier}
             projectName={projectDetails.name}
-            region={projectDetails.default_region}
+            region={projectDetails.region}
           />
         );
       case "enis":
@@ -1152,7 +1152,7 @@ export default function AdminProjectDetails() {
           <ENIs
             projectId={projectDetails.identifier}
             projectName={projectDetails.name}
-            region={projectDetails.default_region}
+            region={projectDetails.region}
           />
         );
       case "eips":
@@ -1160,7 +1160,7 @@ export default function AdminProjectDetails() {
           <EIPs
             projectId={projectDetails.identifier}
             projectName={projectDetails.name}
-            region={projectDetails.default_region}
+            region={projectDetails.region}
           />
         );
       default:
@@ -1337,7 +1337,7 @@ export default function AdminProjectDetails() {
         </div>
 
         {/* Admin Edge Config Panel */}
-        <AdminEdgeConfigPanel projectId={projectId} region={projectDetails.default_region} />
+        <AdminEdgeConfigPanel projectId={projectId} region={projectDetails.region} />
 
         {/* Top-Level Tab Navigation: Instances and Infrastructure */}
         <div className="w-full flex justify-start items-center border-b border-gray-300 mb-6 bg-white rounded-t-xl overflow-x-auto">
@@ -1583,7 +1583,7 @@ export default function AdminProjectDetails() {
             {/* Region badge for Infrastructure */}
             <div className="mb-3">
               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-gray-100 text-gray-700">
-                Region: {projectDetails.default_region}
+                Region: {projectDetails.region}
               </span>
             </div>
 
@@ -1813,7 +1813,7 @@ export default function AdminProjectDetails() {
                 <ActiveInfraComponent
                   projectId={projectDetails.identifier}
                   projectName={projectDetails.name}
-                  region={projectDetails.default_region}
+                  region={projectDetails.region}
                 />
               )}
             </div>
@@ -1839,7 +1839,7 @@ export default function AdminProjectDetails() {
         isOpen={isAssignEdgeOpen}
         onClose={() => setIsAssignEdgeOpen(false)}
         projectId={projectId}
-        region={projectDetails?.default_region}
+        region={projectDetails?.region}
       />
     </>
   );

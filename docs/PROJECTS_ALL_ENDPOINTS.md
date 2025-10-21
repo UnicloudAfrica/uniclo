@@ -95,7 +95,7 @@ const { data: project } = useFetchProjectById('F81401');
 
 // Create project
 const createMutation = useCreateProject();
-await createMutation.mutateAsync({ name, description, default_region });
+await createMutation.mutateAsync({ name, description, region });
 
 // Update project
 const updateMutation = useUpdateProject();
@@ -330,8 +330,8 @@ All mutations include:
         "description": "Main production infrastructure",
         "status": "active",
         "type": "vpc",
-        "default_provider": "zadara",
-        "default_region": "lagos-1",
+        "provider": "zadara",
+        "region": "lagos-1",
         "provider_resource_id": "3b015c5d...",
         "provisioning_progress": {
           "status": "completed",

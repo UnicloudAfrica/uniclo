@@ -17,7 +17,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
     type: "vpc", // Default to vpc
     tenant_id: "",
     client_ids: [],
-    default_region: "",
+    region: "",
   });
   const [errors, setErrors] = useState({});
   const [submitAttempts, setSubmitAttempts] = useState(0);
@@ -36,8 +36,8 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
     if (!formData.type) {
       newErrors.type = "Type is required";
     }
-    if (!formData.default_region) {
-      newErrors.default_region = "Default Region is required";
+    if (!formData.region) {
+      newErrors.region = "Default Region is required";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -74,7 +74,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
       type: formData.type,
       tenant_id: formData.tenant_id || null,
       client_ids: formData.client_ids,
-      default_region: formData.default_region,
+      region: formData.region,
       // provider omitted; derived server-side
     };
 
@@ -123,7 +123,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
       type: "vpc",
       tenant_id: "",
       client_ids: [],
-      default_region: "",
+      region: "",
       provider: "",
     });
   };
@@ -251,19 +251,19 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                 {/* Default Region */}
                 <div>
                   <label
-                    htmlFor="default_region"
+                    htmlFor="region"
                     className="block text-sm font-medium text-gray-700 mb-2"
                   >
                     Default Region<span className="text-red-500">*</span>
                   </label>
                   <select
-                    id="default_region"
-                    value={formData.default_region}
+                    id="region"
+                    value={formData.region}
                     onChange={(e) =>
-                      updateFormData("default_region", e.target.value)
+                      updateFormData("region", e.target.value)
                     }
                     className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
-                      errors.default_region
+                      errors.region
                         ? "border-red-500"
                         : "border-gray-300"
                     }`}
@@ -280,9 +280,9 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                       </option>
                     ))}
                   </select>
-                  {errors.default_region && (
+                  {errors.region && (
                     <p className="text-red-500 text-xs mt-1">
-                      {errors.default_region}
+                      {errors.region}
                     </p>
                   )}
                   {formData.provider && (

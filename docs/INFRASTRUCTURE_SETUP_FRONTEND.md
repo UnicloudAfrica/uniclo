@@ -115,7 +115,7 @@ import InfrastructureSetupFlow from '../components/InfrastructureSetupFlow';
 
 <InfrastructureSetupFlow 
   projectId={project.identifier}
-  region={project.default_region}
+  region={project.region}
 />
 ```
 

@@ -69,7 +69,7 @@ const AdminAddInstance = () => {
     user_id: null,
   });
 
-  const selectedRegion = formData.selectedProject?.default_region || "";
+  const selectedRegion = formData.selectedProject?.region || "";
 
   const { data: computerInstances, isFetching: isComputerInstancesFetching } =
     useFetchProductPricing(selectedRegion, "compute_instance", {
@@ -305,7 +305,7 @@ const AdminAddInstance = () => {
       const newRequest = {
         name: formData.instance_name,
         project_id: formData.selectedProject.id,
-        region: formData.selectedProject.default_region,
+        region: formData.selectedProject.region,
         os_image_id: formData.selectedOsImage.product.productable_id,
         compute_instance_id:
           formData.selectedComputeInstance.product.productable_id,

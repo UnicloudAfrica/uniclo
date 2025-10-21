@@ -17,7 +17,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    default_region: "",
+    region: "",
     type: "vpc",
     user_ids: [],
   });
@@ -44,8 +44,8 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
     if (!formData.name) {
       newErrors.name = "Project Name is required";
     }
-    if (!formData.default_region)
-      newErrors.default_region = "Default Region is required";
+    if (!formData.region)
+      newErrors.region = "Default Region is required";
     if (!formData.type) {
       newErrors.type = "Type is required";
     }
@@ -204,19 +204,19 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
             </div>
             <div>
               <label
-                htmlFor="default_region"
+                htmlFor="region"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
                 Region<span className="text-red-500">*</span>
               </label>
               <select
-                id="default_region"
-                value={formData.default_region}
+                id="region"
+                value={formData.region}
                 onChange={(e) =>
-                  updateFormData("default_region", e.target.value)
+                  updateFormData("region", e.target.value)
                 }
                 className={`w-full input-field ${
-                  errors.default_region ? "border-red-500" : "border-gray-300"
+                  errors.region ? "border-red-500" : "border-gray-300"
                 }`}
                 disabled={isRegionsFetching}
               >
@@ -229,9 +229,9 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                   </option>
                 ))}
               </select>
-              {errors.default_region && (
+              {errors.region && (
                 <p className="text-red-500 text-xs mt-1">
-                  {errors.default_region}
+                  {errors.region}
                 </p>
               )}
             </div>

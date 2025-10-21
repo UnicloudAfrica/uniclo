@@ -9,7 +9,7 @@ const generateUniquePayload = () => ({
   "type": "vpc",
   "tenant_id": null,
   "client_ids": [],
-  "default_region": "lagos-1"
+  "region": "lagos-1"
 });
 
 // API endpoint

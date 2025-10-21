@@ -178,7 +178,7 @@ export default function AdminProjects() {
     return Array.from(
       new Set(
         projectsData
-          .map((project) => project.default_region)
+          .map((project) => project.region)
           .filter(Boolean)
       )
     );
@@ -707,15 +707,15 @@ export default function AdminProjects() {
                       <div>
                         <p className="text-xs text-gray-500">Region</p>
                         <p className="font-medium text-gray-900">
-                          {project.default_region
-                            ? project.default_region.toUpperCase()
+                          {project.region
+                            ? project.region.toUpperCase()
                             : "N/A"}
                         </p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-500">Provider</p>
                         <p className="font-medium text-gray-900 capitalize">
-                          {project.default_provider || "zadara"}
+                          {project.provider || "zadara"}
                         </p>
                       </div>
                       <div>

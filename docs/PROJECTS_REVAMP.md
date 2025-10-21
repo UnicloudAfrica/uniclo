@@ -37,8 +37,8 @@ This document describes the newly revamped Projects management UI for the admin 
   "description": "string",
   "status": "active|inactive|pending|error",
   "type": "string",
-  "default_provider": "string",
-  "default_region": "string",
+  "provider": "string",
+  "region": "string",
   "provider_resource_id": "string",
   "provisioning_progress": {
     "status": "string",
@@ -218,8 +218,8 @@ The components are built to match these exact response structures from the backe
         "description": "string",
         "status": "active|inactive|pending|error",
         "type": "string",
-        "default_provider": "zadara",
-        "default_region": "lagos-1",
+        "provider": "zadara",
+        "region": "lagos-1",
         "provider_resource_id": "string",
         "provisioning_progress": {
           "status": "completed|provisioning|pending|failed",

@@ -24,6 +24,7 @@ import { useProjectInfrastructureStatus } from "../../hooks/adminHooks/projectIn
 import KeyPairs from "./infraComps/keyPairs";
 import SecurityGroup from "./infraComps/securityGroup";
 import VPCs from "./infraComps/vpcs";
+import Networks from "./infraComps/networks";
 import Subnets from "./infraComps/subNet";
 import IGWs from "./infraComps/igw";
 import RouteTables from "./infraComps/routetable";
@@ -255,6 +256,11 @@ export default function AdminProjectDetails() {
       key: "vpcs",
       label: "VPCs",
       icon: <Network size={16} />,
+    },
+    {
+      key: "networks",
+      label: "Networks",
+      icon: <Wifi size={16} />,
     },
     {
       key: "keypairs",
@@ -639,6 +645,14 @@ export default function AdminProjectDetails() {
       case "vpcs":
         return (
           <VPCs
+            projectId={resolvedProjectId}
+            region={project?.region}
+            provider={project?.provider}
+          />
+        );
+      case "networks":
+        return (
+          <Networks
             projectId={resolvedProjectId}
             region={project?.region}
             provider={project?.provider}

@@ -95,3 +95,34 @@ export const useDetachNetworkInterfaceSecurityGroup = () => {
 export const syncNetworkInterfacesFromProvider = async ({ project_id, region }) => {
   return fetchNetworkInterfgace({ project_id, region, refresh: true });
 };
+
+// Fetch networks for a project and region
+const fetchNetworks = async ({ project_id, region, refresh = false }) => {
+  const params = new URLSearchParams();
+  if (project_id) params.append("project_id", project_id);
+  if (region) params.append("region", region);
+  if (refresh) params.append("refresh", "true");
+
+  const queryString = params.toString();
+  const res = await adminSilentApiforUser(
+    "GET",
+    `/business/networks${queryString ? `?${queryString}` : ""}`
+  );
+  if (!res.data) throw new Error("Failed to fetch networks");
+  return res.data;
+};
+
+export const useFetchNetworks = (projectId, region, options = {}) => {
+  return useQuery({
+    queryKey: ["networks", { projectId, region }],
+    queryFn: () => fetchNetworks({ project_id: projectId, region }),
+    enabled: Boolean(projectId && region),
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+
+export const syncNetworksFromProvider = async ({ project_id, region }) => {
+  return fetchNetworks({ project_id, region, refresh: true });
+};

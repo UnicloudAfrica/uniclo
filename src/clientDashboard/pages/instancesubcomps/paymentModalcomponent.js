@@ -51,17 +51,34 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }) => {
       !transaction?.amount ||
       !transaction?.identifier
     ) {
-      // alert("Payment cannot proceed due to missing configuration or details.");
+      alert("Payment cannot proceed due to missing configuration or details.");
+      return;
+    }
+
+    if (!popup) {
+      alert("Payment gateway not available. Please refresh the page and try again.");
       return;
     }
 
     setIsPaying(true);
 
-    popup.newTransaction({
-      key: paystackKey,
-      email: profile.email,
-      amount: transaction.amount * 100,
-      reference: transaction.identifier,
+    try {
+      const amount = Math.round(parseFloat(transaction.amount) * 100);
+      console.log('Processing payment with amount:', {
+        original: transaction.amount,
+        converted: amount,
+        type: typeof amount
+      });
+      
+      if (!amount || isNaN(amount) || amount <= 0) {
+        throw new Error(`Invalid amount: ${transaction.amount}`);
+      }
+      
+      popup.newTransaction({
+        key: paystackKey,
+        email: profile.email,
+        amount: amount,
+        reference: transaction.identifier,
       channels: ["card"],
       onSuccess: (response) => {
         setIsPaying(false);
@@ -73,10 +90,16 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }) => {
         alert("Payment cancelled.");
       },
       onError: (error) => {
+        console.error('Paystack payment error:', error);
         alert(`Payment failed: ${error.message || "Unknown error"}`);
         setIsPaying(false);
       },
     });
+    } catch (error) {
+      console.error('Failed to initiate payment:', error);
+      alert(`Payment initialization failed: ${error.message || "Unknown error"}`);
+      setIsPaying(false);
+    }
   }, [
     paystackKey,
     profile?.email,

@@ -25,6 +25,8 @@ import KeyPairs from "./infraComps/keyPairs";
 import SecurityGroup from "./infraComps/securityGroup";
 import VPCs from "./infraComps/vpcs";
 import Networks from "./infraComps/networks";
+import { useFetchNetworks } from "../../hooks/adminHooks/networkHooks";
+import { useFetchKeyPairs } from "../../hooks/adminHooks/keyPairHooks";
 import Subnets from "./infraComps/subNet";
 import IGWs from "./infraComps/igw";
 import RouteTables from "./infraComps/routetable";
@@ -81,6 +83,20 @@ export default function AdminProjectDetails() {
   const edgeComponent = infrastructureComponents?.edge_networks ?? infrastructureComponents?.edge;
 
   const project = projectStatusData?.project;
+
+  // Fetch networks data to check if any exist (after project is defined)
+  const { data: networksData } = useFetchNetworks(
+    project?.identifier,
+    project?.region,
+    { enabled: Boolean(project?.identifier && project?.region) }
+  );
+
+  // Fetch key pairs data to check if any exist
+  const { data: keyPairsData } = useFetchKeyPairs(
+    project?.identifier,
+    project?.region,
+    { enabled: Boolean(project?.identifier && project?.region) }
+  );
   const summary = project?.summary ?? [];
   const resolvedProjectId = project?.identifier || projectId;
   const tenantAdminMissingUsers = project?.users?.tenant_admin_missing ?? [];
@@ -340,8 +356,49 @@ export default function AdminProjectDetails() {
 
           return summaryFlag ?? false;
         }
+      case "networks":
+        {
+          // Check if we have actual networks data fetched
+          if (Array.isArray(networksData) && networksData.length > 0) {
+            return true;
+          }
+
+          const summaryFlag = summaryCompleted(
+            "network",
+            "networks",
+            "subnet",
+            "subnets"
+          );
+
+          if (summaryFlag === true) {
+            return true;
+          }
+
+          // Check if networks component exists in infrastructure status
+          const networksComponent = infrastructureComponents?.networks;
+          if (networksComponent) {
+            if (networksComponent.status === "completed") {
+              return true;
+            }
+
+            if (Array.isArray(networksComponent.details) && networksComponent.details.length > 0) {
+              return true;
+            }
+
+            if (typeof networksComponent.count === "number" && networksComponent.count > 0) {
+              return true;
+            }
+          }
+
+          return summaryFlag ?? false;
+        }
       case "keypairs":
         {
+          // Check if we have actual key pairs data fetched
+          if (Array.isArray(keyPairsData) && keyPairsData.length > 0) {
+            return true;
+          }
+
           const summaryFlag = summaryCompleted("keypair", "keypairs", "createkeypair");
 
           if (summaryFlag === true) {

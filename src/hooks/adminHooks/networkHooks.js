@@ -101,7 +101,7 @@ const fetchNetworks = async ({ project_id, region, refresh = false }) => {
   const params = new URLSearchParams();
   if (project_id) params.append("project_id", project_id);
   if (region) params.append("region", region);
-  if (refresh) params.append("refresh", "true");
+  if (refresh) params.append("refresh", "1");
 
   const queryString = params.toString();
   const res = await adminSilentApiforUser(

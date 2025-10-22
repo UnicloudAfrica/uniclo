@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   ChevronLeft,
@@ -37,6 +37,7 @@ import { designTokens } from "../../styles/designTokens";
 import ToastUtils from "../../utils/toastUtil";
 import api from "../../index/admin/api";
 import { syncProjectEdgeConfigAdmin } from "../../hooks/adminHooks/edgeHooks";
+import useCloudAccess from "../../hooks/useCloudAccess";
 
 const decodeId = (encodedId) => {
   try {
@@ -57,6 +58,90 @@ export default function AdminProjectDetails() {
   const [userActionLoading, setUserActionLoading] = useState(null); // Track per-user provisioning actions
   const [isEdgeSyncing, setIsEdgeSyncing] = useState(false);
   const contentRef = useRef(null);
+  const { hasAbility } = useCloudAccess();
+
+  const abilityFromEndpoint = useCallback((endpoint = "") => {
+    const normalized = endpoint.toLowerCase();
+
+    if (normalized.includes("enable-vpc")) {
+      return "project.enable_vpc";
+    }
+    if (
+      normalized.includes("assign-user-policies") ||
+      normalized.includes("aws-policies") ||
+      normalized.includes("strato-policies")
+    ) {
+      return "project.assign_policy";
+    }
+    if (
+      normalized.includes("roles/tenant_admin") ||
+      normalized.includes("assign-tenant-admin")
+    ) {
+      return "project.assign_role";
+    }
+    if (
+      normalized.includes("/users/") && normalized.includes("/sync")
+    ) {
+      return "project.assign_role";
+    }
+    if (normalized.includes("authenticate-all-users")) {
+      return "project.assign_role";
+    }
+    if (normalized.includes("repair-cloud-link")) {
+      return "project.assign_role";
+    }
+    if (
+      normalized.includes("project-infrastructure") ||
+      normalized.includes("/domain")
+    ) {
+      return "project.create";
+    }
+    if (normalized.includes("edge-config")) {
+      return "infra.manage";
+    }
+    if (
+      normalized.includes("key-pairs") ||
+      normalized.includes("security-groups") ||
+      normalized.includes("networks") ||
+      normalized.includes("subnets") ||
+      normalized.includes("route-tables") ||
+      normalized.includes("elastic-ip") ||
+      normalized.includes("edge") ||
+      normalized.includes("sync")
+    ) {
+      return "infra.manage";
+    }
+
+    return "infra.manage";
+  }, []);
+
+  const ensureAbility = useCallback(
+    (abilityKey) => {
+      if (!abilityKey) {
+        return true;
+      }
+      if (hasAbility(abilityKey)) {
+        return true;
+      }
+      ToastUtils.error("You do not have permission to perform this action.");
+      return false;
+    },
+    [hasAbility]
+  );
+
+  const canPerformAction = useCallback(
+    (action) => {
+      if (!action) {
+        return true;
+      }
+      const abilityKey = abilityFromEndpoint(action.endpoint ?? "");
+      return hasAbility(abilityKey);
+    },
+    [abilityFromEndpoint, hasAbility]
+  );
+
+  const canAssignTenantAdmin = hasAbility("project.assign_role");
+  const canManageInfra = hasAbility("infra.manage");
 
   const queryParams = new URLSearchParams(location.search);
   const identifierParam = queryParams.get("identifier");
@@ -145,6 +230,10 @@ export default function AdminProjectDetails() {
     }
     if (isEdgeSyncing) return;
 
+     if (!ensureAbility('infra.manage')) {
+       return;
+     }
+
     try {
       setIsEdgeSyncing(true);
       await syncProjectEdgeConfigAdmin({
@@ -167,6 +256,10 @@ export default function AdminProjectDetails() {
 
     const method = (action.method || 'POST').toUpperCase();
     const endpoint = action.endpoint;
+    const abilityKey = abilityFromEndpoint(endpoint);
+    if (!ensureAbility(abilityKey)) {
+      return;
+    }
 
     try {
       setActionLoading(actionKey);
@@ -183,6 +276,10 @@ export default function AdminProjectDetails() {
 
   const handleAssignTenantAdmins = async () => {
     if (!tenantAdminMissingUsers.length || actionLoading) {
+      return;
+    }
+
+    if (!ensureAbility('project.assign_role')) {
       return;
     }
 
@@ -227,6 +324,11 @@ export default function AdminProjectDetails() {
       payload && typeof payload === "object" && Object.keys(payload).length > 0;
     const body = hasPayload ? payload : null;
     const loadingKey = `${user.id}-${actionKey}`;
+
+    const abilityKey = abilityFromEndpoint(endpoint);
+    if (!ensureAbility(abilityKey)) {
+      return;
+    }
 
     try {
       setUserActionLoading(loadingKey);
@@ -541,6 +643,7 @@ export default function AdminProjectDetails() {
                     normalizedTitle === tenantAdminSummaryKey &&
                     tenantAdminMissingUsers.length > 0;
                   const isBulkLoading = actionLoading === "tenant_admin_bulk";
+                  const summaryActionAllowed = canPerformAction(item.action);
 
                   return (
                     <div
@@ -571,7 +674,8 @@ export default function AdminProjectDetails() {
                           className="px-3 py-1 rounded text-xs font-medium text-white transition-opacity flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                           style={{ backgroundColor: designTokens.colors.primary[600] }}
                           onClick={() => handleSummaryAction(item.action, actionKey)}
-                          disabled={actionLoading !== null}
+                          disabled={actionLoading !== null || !summaryActionAllowed}
+                          title={summaryActionAllowed ? undefined : "Insufficient permissions"}
                         >
                           {isThisActionLoading && <Loader2 size={12} className="animate-spin" />}
                           {item.action.label}
@@ -582,7 +686,8 @@ export default function AdminProjectDetails() {
                           className="px-3 py-1 rounded text-xs font-medium text-white transition-opacity flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                           style={{ backgroundColor: designTokens.colors.primary[600] }}
                           onClick={handleAssignTenantAdmins}
-                          disabled={isBulkLoading}
+                          disabled={isBulkLoading || !canAssignTenantAdmin}
+                          title={canAssignTenantAdmin ? undefined : "Insufficient permissions"}
                         >
                           {isBulkLoading && <Loader2 size={12} className="animate-spin" />}
                           Assign Tenant Admin
@@ -671,6 +776,7 @@ export default function AdminProjectDetails() {
                               const loadingKey = `${user.id}-${actionKey}`;
                               const isLoading =
                                 userActionLoading === loadingKey;
+                              const actionAllowed = canPerformAction(action);
                               return (
                                 <button
                                   key={actionKey}
@@ -680,7 +786,8 @@ export default function AdminProjectDetails() {
                                       designTokens.colors.primary[600],
                                   }}
                                   onClick={() => handleUserAction(user, actionKey)}
-                                  disabled={userActionLoading !== null}
+                                  disabled={userActionLoading !== null || !actionAllowed}
+                                  title={actionAllowed ? undefined : "Insufficient permissions"}
                                 >
                                   {isLoading && (
                                     <Loader2 size={12} className="animate-spin" />
@@ -733,7 +840,12 @@ export default function AdminProjectDetails() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleEdgeSync}
-                  disabled={isEdgeSyncing || !resolvedProjectId || !project?.region}
+                  disabled={
+                    isEdgeSyncing ||
+                    !resolvedProjectId ||
+                    !project?.region ||
+                    !canManageInfra
+                  }
                   className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed border"
                   style={{
                     backgroundColor: designTokens.colors.neutral[50],
@@ -748,6 +860,8 @@ export default function AdminProjectDetails() {
                   onClick={() => setIsAssignEdgeOpen(true)}
                   className="px-4 py-2 rounded-lg font-medium text-white"
                   style={{ backgroundColor: designTokens.colors.primary[600] }}
+                  disabled={!canManageInfra}
+                  title={canManageInfra ? undefined : "Insufficient permissions"}
                 >
                   Assign Edge Config
                 </button>

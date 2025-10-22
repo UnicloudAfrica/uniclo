@@ -15,15 +15,26 @@ const useUnifiedAuthStore = create(
       tenant: null, // Current tenant context
       isAuthenticated: false,
       isLoading: false,
+      cloudRoles: [],
+      cloudAbilities: [],
 
       // Authentication Actions
       login: (authData) => {
-        const { token, user, role, tenant } = authData;
+        const {
+          token,
+          user,
+          role,
+          tenant,
+          cloudRoles = [],
+          cloudAbilities = [],
+        } = authData;
         set({
           token,
           user,
           role,
           tenant,
+          cloudRoles,
+          cloudAbilities,
           isAuthenticated: true,
           isLoading: false,
         });
@@ -37,6 +48,8 @@ const useUnifiedAuthStore = create(
           tenant: null,
           isAuthenticated: false,
           isLoading: false,
+          cloudRoles: [],
+          cloudAbilities: [],
         });
         // Clear all auth-related localStorage
         localStorage.removeItem('unicloud_admin_auth');
@@ -97,6 +110,27 @@ const useUnifiedAuthStore = create(
         return false;
       },
 
+      // Cloud-role helpers
+      hasCloudRole: (cloudRoleKey) => {
+        const { cloudRoles } = get();
+        return cloudRoles.includes(cloudRoleKey);
+      },
+
+      hasAnyCloudRole: (cloudRoleKeys) => {
+        const { cloudRoles } = get();
+        return cloudRoleKeys.some((role) => cloudRoles.includes(role));
+      },
+
+      hasCloudAbility: (abilityKey) => {
+        const { cloudAbilities } = get();
+        return cloudAbilities.includes(abilityKey);
+      },
+
+      hasAnyCloudAbility: (abilityKeys) => {
+        const { cloudAbilities } = get();
+        return abilityKeys.some((ability) => cloudAbilities.includes(ability));
+      },
+
       // Tenant Context Management
       setTenant: (tenantData) => {
         set({ tenant: tenantData });
@@ -113,9 +147,18 @@ const useUnifiedAuthStore = create(
 
       // User Profile Updates
       updateUser: (userData) => {
-        set((state) => ({
-          user: { ...state.user, ...userData }
-        }));
+        set((state) => {
+          const cloudRoles =
+            userData?.cloud_roles ?? userData?.cloudRoles ?? state.cloudRoles;
+          const cloudAbilities =
+            userData?.cloud_abilities ?? userData?.cloudAbilities ?? state.cloudAbilities;
+
+          return {
+            user: { ...state.user, ...userData },
+            cloudRoles: Array.isArray(cloudRoles) ? cloudRoles : state.cloudRoles,
+            cloudAbilities: Array.isArray(cloudAbilities) ? cloudAbilities : state.cloudAbilities,
+          };
+        });
       },
 
       // Token Management
@@ -218,6 +261,8 @@ const useUnifiedAuthStore = create(
         role: state.role,
         tenant: state.tenant,
         isAuthenticated: state.isAuthenticated,
+        cloudRoles: state.cloudRoles,
+        cloudAbilities: state.cloudAbilities,
       }),
       // Run migration on store initialization
       onRehydrateStorage: () => (state) => {
@@ -240,6 +285,8 @@ export const useAuth = () => useUnifiedAuthStore((state) => ({
   isAuthenticated: state.isAuthenticated,
   isLoading: state.isLoading,
   tenant: state.tenant,
+  cloudRoles: state.cloudRoles,
+  cloudAbilities: state.cloudAbilities,
 }));
 
 export const useAuthActions = () => useUnifiedAuthStore((state) => ({
@@ -260,6 +307,10 @@ export const usePermissions = () => useUnifiedAuthStore((state) => ({
   canCreateTenant: state.canCreateTenant,
   canCreateClient: state.canCreateClient,
   canManageProject: state.canManageProject,
+  hasCloudRole: state.hasCloudRole,
+  hasAnyCloudRole: state.hasAnyCloudRole,
+  hasCloudAbility: state.hasCloudAbility,
+  hasAnyCloudAbility: state.hasAnyCloudAbility,
 }));
 
 export default useUnifiedAuthStore;

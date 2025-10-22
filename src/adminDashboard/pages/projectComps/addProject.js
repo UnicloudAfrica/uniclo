@@ -7,9 +7,12 @@ import { useFetchTenants } from "../../../hooks/adminHooks/tenantHooks";
 import { useFetchClients } from "../../../hooks/adminHooks/clientHooks";
 import { DropdownSelect } from "./dropdownSelect"; // Ensure this path is correct
 import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
+import useCloudAccess from "../../../hooks/useCloudAccess";
 
 const CreateProjectModal = ({ isOpen, onClose }) => {
   const { mutate: createProject, isPending } = useCreateProject();
+  const { hasAbility } = useCloudAccess();
+  const canCreateProject = hasAbility("project.create");
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
@@ -49,6 +52,11 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
   };
 
   const handleSubmit = () => {
+    if (!canCreateProject) {
+      ToastUtils.error("You do not have permission to create projects.");
+      return;
+    }
+
     if (submitAttempts >= 3) {
       ToastUtils.error(
         "Maximum retry attempts reached. Please contact support if the issue persists."
@@ -163,6 +171,11 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
             </div>
             {/* Content */}
             <div className="px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start">
+              {!canCreateProject && (
+                <div className="w-full mb-4 p-3 rounded-md bg-red-50 text-red-600 text-sm text-center">
+                  You do not have permission to create projects. Please contact an administrator.
+                </div>
+              )}
               <div className="space-y-4 w-full">
                 {/* Project Name */}
                 <div>
@@ -374,9 +387,11 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                     disabled={
                       isRegionsFetching ||
                       isTenantsFetching ||
-                      isClientsFetching
+                      isClientsFetching ||
+                      !canCreateProject
                     }
                     className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    title={canCreateProject ? undefined : "Insufficient permissions"}
                   >
                     {submitAttempts > 0 && submitAttempts < 3
                       ? `Retry (${submitAttempts}/3)`

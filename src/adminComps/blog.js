@@ -34,7 +34,7 @@ const BlogAdmin = () => {
     const [loadValue, setLoadValue] = useState('No');
     const [deleteUser, setDeleteUser] = useState(false);
     const [docID, setDocID] =useState('');
-    const [blogArray, setBlogArray] = useContext(BlogContext);
+    const [blogArray] = useContext(BlogContext);
 
     const handleDeleteClick =(e)=>{
         deleteDoc(doc(db, "blog", docID))

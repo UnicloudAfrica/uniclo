@@ -22,6 +22,8 @@ const useMultiTenantAuthStore = create(
       // Authentication status
       isAuthenticated: false,
       isLoading: false,
+      cloudRoles: [],
+      cloudAbilities: [],
 
       // Initialize tenant context from URL
       initializeTenantContext: () => {
@@ -45,7 +47,15 @@ const useMultiTenantAuthStore = create(
 
       // Login with multi-tenant awareness
       login: (authData) => {
-        const { token, user, role, tenant, availableTenants = [] } = authData;
+        const {
+          token,
+          user,
+          role,
+          tenant,
+          availableTenants = [],
+          cloudRoles = [],
+          cloudAbilities = [],
+        } = authData;
         
         set({
           token,
@@ -54,6 +64,8 @@ const useMultiTenantAuthStore = create(
           isAuthenticated: true,
           isLoading: false,
           availableTenants,
+          cloudRoles,
+          cloudAbilities,
           // Set current tenant if provided or keep existing
           currentTenant: tenant || get().currentTenant,
         });
@@ -86,6 +98,8 @@ const useMultiTenantAuthStore = create(
           isAuthenticated: false,
           isLoading: false,
           availableTenants: [],
+          cloudRoles: [],
+          cloudAbilities: [],
         });
       },
 
@@ -158,6 +172,26 @@ const useMultiTenantAuthStore = create(
         const { role, isCentralDomain } = get();
         // Only tenant/admin users can provision infrastructure
         return ['admin', 'tenant'].includes(role) && !isCentralDomain;
+      },
+
+      hasCloudRole: (cloudRoleKey) => {
+        const { cloudRoles } = get();
+        return cloudRoles.includes(cloudRoleKey);
+      },
+
+      hasAnyCloudRole: (cloudRoleKeys) => {
+        const { cloudRoles } = get();
+        return cloudRoleKeys.some((role) => cloudRoles.includes(role));
+      },
+
+      hasCloudAbility: (abilityKey) => {
+        const { cloudAbilities } = get();
+        return cloudAbilities.includes(abilityKey);
+      },
+
+      hasAnyCloudAbility: (abilityKeys) => {
+        const { cloudAbilities } = get();
+        return abilityKeys.some((ability) => cloudAbilities.includes(ability));
       },
 
       // API Headers with tenant context
@@ -292,6 +326,8 @@ const useMultiTenantAuthStore = create(
         currentDomain: state.currentDomain,
         availableTenants: state.availableTenants,
         isAuthenticated: state.isAuthenticated,
+        cloudRoles: state.cloudRoles,
+        cloudAbilities: state.cloudAbilities,
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
@@ -319,6 +355,8 @@ export const useAuth = () => useMultiTenantAuthStore((state) => ({
   isLoading: state.isLoading,
   currentTenant: state.currentTenant,
   isCentralDomain: state.isCentralDomain,
+  cloudRoles: state.cloudRoles,
+  cloudAbilities: state.cloudAbilities,
 }));
 
 export const useAuthActions = () => useMultiTenantAuthStore((state) => ({
@@ -337,6 +375,10 @@ export const useMultiTenantPermissions = () => useMultiTenantAuthStore((state) =
   canManageTenantUsers: state.canManageTenantUsers,
   canAccessProject: state.canAccessProject,
   canProvisionInfrastructure: state.canProvisionInfrastructure,
+  hasCloudRole: state.hasCloudRole,
+  hasAnyCloudRole: state.hasAnyCloudRole,
+  hasCloudAbility: state.hasCloudAbility,
+  hasAnyCloudAbility: state.hasAnyCloudAbility,
 }));
 
 export const useTenantContext = () => useMultiTenantAuthStore((state) => ({

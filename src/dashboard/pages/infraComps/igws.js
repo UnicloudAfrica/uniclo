@@ -174,7 +174,12 @@ const IGWs = ({
                   >
                     {igw.name || igw.provider_resource_id || "Unnamed IGW"}
                   </h3>
-                  <p>Provider: {igw.provider?.toUpperCase() || "N/A"}</p>
+                  <p>
+                    Provider:{" "}
+                    {typeof igw.provider === "string" && igw.provider.trim() !== ""
+                      ? igw.provider.toUpperCase()
+                      : "N/A"}
+                  </p>
                   <p>Region: {igw.region || "N/A"}</p>
                   <p>Status: {igw.status || "unknown"}</p>
                   <p>VPC: {igw.attached_vpc_id || "Not attached"}</p>

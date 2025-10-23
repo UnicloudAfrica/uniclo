@@ -7,12 +7,9 @@ import { useFetchTenants } from "../../../hooks/adminHooks/tenantHooks";
 import { useFetchClients } from "../../../hooks/adminHooks/clientHooks";
 import { DropdownSelect } from "./dropdownSelect"; // Ensure this path is correct
 import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
-import useCloudAccess from "../../../hooks/useCloudAccess";
 
 const CreateProjectModal = ({ isOpen, onClose }) => {
   const { mutate: createProject, isPending } = useCreateProject();
-  const { hasAbility } = useCloudAccess();
-  const canCreateProject = hasAbility("project.create");
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
@@ -52,12 +49,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
   };
 
   const handleSubmit = () => {
-    if (!canCreateProject) {
-      ToastUtils.error("You do not have permission to create projects.");
-      return;
-    }
-
-    if (submitAttempts >= 3) {
+    if (submitAttempts >= 10) {
       ToastUtils.error(
         "Maximum retry attempts reached. Please contact support if the issue persists."
       );
@@ -120,7 +112,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
       },
     });
   };
-  
+
   const handleSuccess = () => {
     setSubmitAttempts(0);
     setProgressMessage("");
@@ -135,7 +127,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
       provider: "",
     });
   };
-  
+
   const redirectToProjectDetails = (project) => {
     const identifier = project?.identifier || project?.id;
     if (!identifier) {
@@ -150,7 +142,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
     navigate(`/admin-dashboard/projects/details?id=${encodedId}`);
     handleSuccess();
   };
-  
+
   return (
     <>
       {isOpen && (
@@ -171,11 +163,6 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
             </div>
             {/* Content */}
             <div className="px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start">
-              {!canCreateProject && (
-                <div className="w-full mb-4 p-3 rounded-md bg-red-50 text-red-600 text-sm text-center">
-                  You do not have permission to create projects. Please contact an administrator.
-                </div>
-              )}
               <div className="space-y-4 w-full">
                 {/* Project Name */}
                 <div>
@@ -191,9 +178,8 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                     value={formData.name}
                     onChange={(e) => updateFormData("name", e.target.value)}
                     placeholder="Enter project name"
-                    className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
-                      errors.name ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${errors.name ? "border-red-500" : "border-gray-300"
+                      }`}
                   />
                   {errors.name && (
                     <p className="text-red-500 text-xs mt-1">{errors.name}</p>
@@ -216,9 +202,8 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                     }
                     placeholder="Enter project description (optional)"
                     rows="3"
-                    className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
-                      errors.description ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${errors.description ? "border-red-500" : "border-gray-300"
+                      }`}
                   ></textarea>
                   {errors.description && (
                     <p className="text-red-500 text-xs mt-1">
@@ -275,11 +260,10 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                     onChange={(e) =>
                       updateFormData("region", e.target.value)
                     }
-                    className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
-                      errors.region
+                    className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${errors.region
                         ? "border-red-500"
                         : "border-gray-300"
-                    }`}
+                      }`}
                     disabled={isRegionsFetching}
                   >
                     <option value="" disabled>
@@ -300,7 +284,11 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                   )}
                   {formData.provider && (
                     <p className="text-sm text-gray-500 mt-1">
-                      Provider: {formData.provider.toUpperCase()}
+                      Provider:{" "}
+                      {typeof formData.provider === "string" &&
+                        formData.provider.trim() !== ""
+                        ? formData.provider.toUpperCase()
+                        : "N/A"}
                     </p>
                   )}
                 </div>
@@ -387,11 +375,9 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
                     disabled={
                       isRegionsFetching ||
                       isTenantsFetching ||
-                      isClientsFetching ||
-                      !canCreateProject
+                      isClientsFetching
                     }
                     className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                    title={canCreateProject ? undefined : "Insufficient permissions"}
                   >
                     {submitAttempts > 0 && submitAttempts < 3
                       ? `Retry (${submitAttempts}/3)`

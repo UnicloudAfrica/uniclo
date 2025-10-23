@@ -168,7 +168,12 @@ const ENIs = ({
                   >
                     {eni.provider_resource_id}
                   </h3>
-                  <p>Provider: {eni.provider?.toUpperCase() || "N/A"}</p>
+                  <p>
+                    Provider:{" "}
+                    {typeof eni.provider === "string" && eni.provider.trim() !== ""
+                      ? eni.provider.toUpperCase()
+                      : "N/A"}
+                  </p>
                   <p>Region: {eni.region || "N/A"}</p>
                   <p>Private IP: {eni.private_ip_address || "N/A"}</p>
                   <p>Status: {eni.status || "unknown"}</p>

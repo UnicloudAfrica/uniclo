@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   ChevronLeft,
@@ -25,8 +25,13 @@ import KeyPairs from "./infraComps/keyPairs";
 import SecurityGroup from "./infraComps/securityGroup";
 import VPCs from "./infraComps/vpcs";
 import Networks from "./infraComps/networks";
-import { useFetchNetworks } from "../../hooks/adminHooks/networkHooks";
+import { useFetchNetworks, useFetchNetworkInterfaces } from "../../hooks/adminHooks/networkHooks";
 import { useFetchKeyPairs } from "../../hooks/adminHooks/keyPairHooks";
+import { useFetchSecurityGroups } from "../../hooks/adminHooks/securityGroupHooks";
+import { useFetchSubnets } from "../../hooks/adminHooks/subnetHooks";
+import { useFetchIgws } from "../../hooks/adminHooks/igwHooks";
+import { useFetchRouteTables } from "../../hooks/adminHooks/routeTableHooks";
+import { useFetchElasticIps } from "../../hooks/adminHooks/eipHooks";
 import Subnets from "./infraComps/subNet";
 import IGWs from "./infraComps/igw";
 import RouteTables from "./infraComps/routetable";
@@ -37,7 +42,6 @@ import { designTokens } from "../../styles/designTokens";
 import ToastUtils from "../../utils/toastUtil";
 import api from "../../index/admin/api";
 import { syncProjectEdgeConfigAdmin } from "../../hooks/adminHooks/edgeHooks";
-import useCloudAccess from "../../hooks/useCloudAccess";
 
 const decodeId = (encodedId) => {
   try {
@@ -58,90 +62,7 @@ export default function AdminProjectDetails() {
   const [userActionLoading, setUserActionLoading] = useState(null); // Track per-user provisioning actions
   const [isEdgeSyncing, setIsEdgeSyncing] = useState(false);
   const contentRef = useRef(null);
-  const { hasAbility } = useCloudAccess();
 
-  const abilityFromEndpoint = useCallback((endpoint = "") => {
-    const normalized = endpoint.toLowerCase();
-
-    if (normalized.includes("enable-vpc")) {
-      return "project.enable_vpc";
-    }
-    if (
-      normalized.includes("assign-user-policies") ||
-      normalized.includes("aws-policies") ||
-      normalized.includes("strato-policies")
-    ) {
-      return "project.assign_policy";
-    }
-    if (
-      normalized.includes("roles/tenant_admin") ||
-      normalized.includes("assign-tenant-admin")
-    ) {
-      return "project.assign_role";
-    }
-    if (
-      normalized.includes("/users/") && normalized.includes("/sync")
-    ) {
-      return "project.assign_role";
-    }
-    if (normalized.includes("authenticate-all-users")) {
-      return "project.assign_role";
-    }
-    if (normalized.includes("repair-cloud-link")) {
-      return "project.assign_role";
-    }
-    if (
-      normalized.includes("project-infrastructure") ||
-      normalized.includes("/domain")
-    ) {
-      return "project.create";
-    }
-    if (normalized.includes("edge-config")) {
-      return "infra.manage";
-    }
-    if (
-      normalized.includes("key-pairs") ||
-      normalized.includes("security-groups") ||
-      normalized.includes("networks") ||
-      normalized.includes("subnets") ||
-      normalized.includes("route-tables") ||
-      normalized.includes("elastic-ip") ||
-      normalized.includes("edge") ||
-      normalized.includes("sync")
-    ) {
-      return "infra.manage";
-    }
-
-    return "infra.manage";
-  }, []);
-
-  const ensureAbility = useCallback(
-    (abilityKey) => {
-      if (!abilityKey) {
-        return true;
-      }
-      if (hasAbility(abilityKey)) {
-        return true;
-      }
-      ToastUtils.error("You do not have permission to perform this action.");
-      return false;
-    },
-    [hasAbility]
-  );
-
-  const canPerformAction = useCallback(
-    (action) => {
-      if (!action) {
-        return true;
-      }
-      const abilityKey = abilityFromEndpoint(action.endpoint ?? "");
-      return hasAbility(abilityKey);
-    },
-    [abilityFromEndpoint, hasAbility]
-  );
-
-  const canAssignTenantAdmin = hasAbility("project.assign_role");
-  const canManageInfra = hasAbility("infra.manage");
 
   const queryParams = new URLSearchParams(location.search);
   const identifierParam = queryParams.get("identifier");
@@ -166,6 +87,12 @@ export default function AdminProjectDetails() {
   const vpcComponent = infrastructureComponents?.vpc;
   const keypairComponent = infrastructureComponents?.keypairs ?? infrastructureComponents?.keypair;
   const edgeComponent = infrastructureComponents?.edge_networks ?? infrastructureComponents?.edge;
+  const securityGroupComponent = infrastructureComponents?.security_groups ?? infrastructureComponents?.securitygroup;
+  const subnetComponent = infrastructureComponents?.subnets ?? infrastructureComponents?.subnet;
+  const igwComponent = infrastructureComponents?.internet_gateways ?? infrastructureComponents?.igws ?? infrastructureComponents?.igw;
+  const routeTableComponent = infrastructureComponents?.route_tables ?? infrastructureComponents?.routetables ?? infrastructureComponents?.route_table;
+  const eniComponent = infrastructureComponents?.network_interfaces ?? infrastructureComponents?.enis ?? infrastructureComponents?.eni;
+  const eipComponent = infrastructureComponents?.elastic_ips ?? infrastructureComponents?.eips ?? infrastructureComponents?.eip;
 
   const project = projectStatusData?.project;
 
@@ -178,6 +105,36 @@ export default function AdminProjectDetails() {
 
   // Fetch key pairs data to check if any exist
   const { data: keyPairsData } = useFetchKeyPairs(
+    project?.identifier,
+    project?.region,
+    { enabled: Boolean(project?.identifier && project?.region) }
+  );
+  const { data: securityGroupsData } = useFetchSecurityGroups(
+    project?.identifier,
+    project?.region,
+    { enabled: Boolean(project?.identifier && project?.region) }
+  );
+  const { data: subnetsData } = useFetchSubnets(
+    project?.identifier,
+    project?.region,
+    { enabled: Boolean(project?.identifier && project?.region) }
+  );
+  const { data: igwsData } = useFetchIgws(
+    project?.identifier,
+    project?.region,
+    { enabled: Boolean(project?.identifier && project?.region) }
+  );
+  const { data: routeTablesData } = useFetchRouteTables(
+    project?.identifier,
+    project?.region,
+    { enabled: Boolean(project?.identifier && project?.region) }
+  );
+  const { data: networkInterfacesData } = useFetchNetworkInterfaces(
+    project?.identifier,
+    project?.region,
+    { enabled: Boolean(project?.identifier && project?.region) }
+  );
+  const { data: elasticIpsData } = useFetchElasticIps(
     project?.identifier,
     project?.region,
     { enabled: Boolean(project?.identifier && project?.region) }
@@ -230,10 +187,6 @@ export default function AdminProjectDetails() {
     }
     if (isEdgeSyncing) return;
 
-     if (!ensureAbility('infra.manage')) {
-       return;
-     }
-
     try {
       setIsEdgeSyncing(true);
       await syncProjectEdgeConfigAdmin({
@@ -256,11 +209,6 @@ export default function AdminProjectDetails() {
 
     const method = (action.method || 'POST').toUpperCase();
     const endpoint = action.endpoint;
-    const abilityKey = abilityFromEndpoint(endpoint);
-    if (!ensureAbility(abilityKey)) {
-      return;
-    }
-
     try {
       setActionLoading(actionKey);
       await api(method, endpoint);
@@ -278,11 +226,6 @@ export default function AdminProjectDetails() {
     if (!tenantAdminMissingUsers.length || actionLoading) {
       return;
     }
-
-    if (!ensureAbility('project.assign_role')) {
-      return;
-    }
-
     try {
       setActionLoading("tenant_admin_bulk");
       for (const entry of tenantAdminMissingUsers) {
@@ -324,11 +267,6 @@ export default function AdminProjectDetails() {
       payload && typeof payload === "object" && Object.keys(payload).length > 0;
     const body = hasPayload ? payload : null;
     const loadingKey = `${user.id}-${actionKey}`;
-
-    const abilityKey = abilityFromEndpoint(endpoint);
-    if (!ensureAbility(abilityKey)) {
-      return;
-    }
 
     try {
       setUserActionLoading(loadingKey);
@@ -424,6 +362,58 @@ export default function AdminProjectDetails() {
 
   // Setup is complete only when ALL summary items are complete
   const areAllSummaryItemsComplete = summary.length > 0 && summary.every(item => item.completed === true);
+
+  const componentIndicatesComplete = (component) => {
+    if (!component) {
+      return false;
+    }
+
+    if (component.status === "completed") {
+      return true;
+    }
+
+    if (typeof component.count === "number" && component.count > 0) {
+      return true;
+    }
+
+    const details = component.details;
+    if (Array.isArray(details) && details.length > 0) {
+      return true;
+    }
+    if (details && !Array.isArray(details) && typeof details === "object" && Object.keys(details).length > 0) {
+      return true;
+    }
+
+    return false;
+  };
+
+  const hasCollectionItems = (payload) => {
+    if (!payload) {
+      return false;
+    }
+
+    if (Array.isArray(payload)) {
+      return payload.length > 0;
+    }
+
+    if (typeof payload === "object") {
+      if (Array.isArray(payload.data)) {
+        return payload.data.length > 0;
+      }
+      if (Array.isArray(payload.items)) {
+        return payload.items.length > 0;
+      }
+
+      const firstArray = Object.values(payload).find(
+        (value) => Array.isArray(value) && value.length > 0
+      );
+      if (firstArray) {
+        return true;
+      }
+    }
+
+    return false;
+  };
 
   const getStatusForSection = (sectionKey) => {
     switch (sectionKey) {
@@ -558,38 +548,107 @@ export default function AdminProjectDetails() {
           return summaryFlag ?? false;
         }
       case "security-groups":
-        return summaryCompleted(
-          "securitygroup",
-          "securitygroups",
-          "create security groups"
-        ) ?? false;
+        {
+          if (hasCollectionItems(securityGroupsData)) {
+            return true;
+          }
+
+          if (componentIndicatesComplete(securityGroupComponent)) {
+            return true;
+          }
+
+          return (
+            summaryCompleted(
+              "securitygroup",
+              "securitygroups",
+              "create security groups"
+            ) ?? false
+          );
+        }
       case "subnets":
-        return summaryCompleted("subnet", "subnets", "manage subnets") ?? false;
+        {
+          if (hasCollectionItems(subnetsData)) {
+            return true;
+          }
+
+          if (componentIndicatesComplete(subnetComponent)) {
+            return true;
+          }
+
+          return summaryCompleted("subnet", "subnets", "manage subnets") ?? false;
+        }
       case "igws":
-        return summaryCompleted(
-          "igw",
-          "igws",
-          "internetgateway",
-          "internet gateways",
-          "configure igw"
-        ) ?? false;
+        {
+          if (hasCollectionItems(igwsData)) {
+            return true;
+          }
+
+          if (componentIndicatesComplete(igwComponent)) {
+            return true;
+          }
+
+          return (
+            summaryCompleted(
+              "igw",
+              "igws",
+              "internetgateway",
+              "internet gateways",
+              "configure igw"
+            ) ?? false
+          );
+        }
       case "route-tables":
-        return summaryCompleted("routetable", "routetables") ?? false;
+        {
+          const routeTableHasItems = hasCollectionItems(routeTablesData);
+          if (routeTableHasItems) {
+            return true;
+          }
+
+          if (componentIndicatesComplete(routeTableComponent)) {
+            return true;
+          }
+
+          return summaryCompleted("routetable", "routetables") ?? false;
+        }
       case "enis":
-        return summaryCompleted(
-          "eni",
-          "enis",
-          "networkinterface",
-          "networkinterfaces"
-        ) ?? false;
+        {
+          if (hasCollectionItems(networkInterfacesData)) {
+            return true;
+          }
+
+          if (componentIndicatesComplete(eniComponent)) {
+            return true;
+          }
+
+          return (
+            summaryCompleted(
+              "eni",
+              "enis",
+              "networkinterface",
+              "networkinterfaces"
+            ) ?? false
+          );
+        }
       case "eips":
-        return summaryCompleted(
-          "eip",
-          "eips",
-          "elasticip",
-          "elasticips",
-          "elastic ip"
-        ) ?? false;
+        {
+          if (hasCollectionItems(elasticIpsData)) {
+            return true;
+          }
+
+          if (componentIndicatesComplete(eipComponent)) {
+            return true;
+          }
+
+          return (
+            summaryCompleted(
+              "eip",
+              "eips",
+              "elasticip",
+              "elasticips",
+              "elastic ip"
+            ) ?? false
+          );
+        }
       default:
         return false;
     }
@@ -643,8 +702,6 @@ export default function AdminProjectDetails() {
                     normalizedTitle === tenantAdminSummaryKey &&
                     tenantAdminMissingUsers.length > 0;
                   const isBulkLoading = actionLoading === "tenant_admin_bulk";
-                  const summaryActionAllowed = canPerformAction(item.action);
-
                   return (
                     <div
                       key={index}
@@ -674,8 +731,7 @@ export default function AdminProjectDetails() {
                           className="px-3 py-1 rounded text-xs font-medium text-white transition-opacity flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                           style={{ backgroundColor: designTokens.colors.primary[600] }}
                           onClick={() => handleSummaryAction(item.action, actionKey)}
-                          disabled={actionLoading !== null || !summaryActionAllowed}
-                          title={summaryActionAllowed ? undefined : "Insufficient permissions"}
+                          disabled={actionLoading !== null}
                         >
                           {isThisActionLoading && <Loader2 size={12} className="animate-spin" />}
                           {item.action.label}
@@ -686,8 +742,7 @@ export default function AdminProjectDetails() {
                           className="px-3 py-1 rounded text-xs font-medium text-white transition-opacity flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                           style={{ backgroundColor: designTokens.colors.primary[600] }}
                           onClick={handleAssignTenantAdmins}
-                          disabled={isBulkLoading || !canAssignTenantAdmin}
-                          title={canAssignTenantAdmin ? undefined : "Insufficient permissions"}
+                          disabled={isBulkLoading}
                         >
                           {isBulkLoading && <Loader2 size={12} className="animate-spin" />}
                           Assign Tenant Admin
@@ -776,7 +831,6 @@ export default function AdminProjectDetails() {
                               const loadingKey = `${user.id}-${actionKey}`;
                               const isLoading =
                                 userActionLoading === loadingKey;
-                              const actionAllowed = canPerformAction(action);
                               return (
                                 <button
                                   key={actionKey}
@@ -786,8 +840,7 @@ export default function AdminProjectDetails() {
                                       designTokens.colors.primary[600],
                                   }}
                                   onClick={() => handleUserAction(user, actionKey)}
-                                  disabled={userActionLoading !== null || !actionAllowed}
-                                  title={actionAllowed ? undefined : "Insufficient permissions"}
+                                  disabled={userActionLoading !== null}
                                 >
                                   {isLoading && (
                                     <Loader2 size={12} className="animate-spin" />
@@ -843,8 +896,7 @@ export default function AdminProjectDetails() {
                   disabled={
                     isEdgeSyncing ||
                     !resolvedProjectId ||
-                    !project?.region ||
-                    !canManageInfra
+                    !project?.region
                   }
                   className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed border"
                   style={{
@@ -860,8 +912,6 @@ export default function AdminProjectDetails() {
                   onClick={() => setIsAssignEdgeOpen(true)}
                   className="px-4 py-2 rounded-lg font-medium text-white"
                   style={{ backgroundColor: designTokens.colors.primary[600] }}
-                  disabled={!canManageInfra}
-                  title={canManageInfra ? undefined : "Insufficient permissions"}
                 >
                   Assign Edge Config
                 </button>

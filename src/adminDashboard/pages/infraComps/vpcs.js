@@ -174,7 +174,12 @@ const VPCs = ({ projectId = "", region = "", provider = "" }) => {
                     </div>
                   </div>
                   <div className="space-y-1 text-sm text-gray-500">
-                    <p>Provider: {vpc.provider.toUpperCase()}</p>
+                    <p>
+                      Provider:{" "}
+                      {typeof vpc.provider === "string" && vpc.provider.trim() !== ""
+                        ? vpc.provider.toUpperCase()
+                        : "N/A"}
+                    </p>
                     <p>Region: {vpc.region}</p>
                     <p title={vpc.cidr_block}>CIDR Block: {vpc.cidr_block}</p>
                     <p>Default: {vpc.is_default ? "Yes" : "No"}</p>

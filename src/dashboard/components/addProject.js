@@ -1,15 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import { X, Loader2, Search, ChevronDown, Check } from "lucide-react";
 import { useCreateProject } from "../../hooks/projectHooks";
-import ToastUtils from "../../utils/toastUtil";
 import { useFetchGeneralRegions } from "../../hooks/resource";
 import { useFetchClients } from "../../hooks/clientHooks";
-import useCloudAccess from "../../hooks/useCloudAccess";
 
 const CreateProjectModal = ({ isOpen, onClose }) => {
   const { mutate: createProject, isPending } = useCreateProject();
-  const { hasAbility } = useCloudAccess();
-  const canCreateProject = hasAbility("project.create");
   const { isFetching: isRegionsFetching, data: regions } =
     useFetchGeneralRegions();
   const {
@@ -109,16 +105,10 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
   };
 
   const handleSubmit = () => {
-    if (!canCreateProject) {
-      ToastUtils.error("You do not have permission to create projects.");
-      return;
-    }
-
     if (validateForm()) {
       const payload = { ...formData, user_ids: formData.user_ids };
       createProject(payload, {
         onSuccess: () => {
-          // ToastUtils.success("Project Created Successfully");
           onClose();
         },
         onError: (error) => {
@@ -165,11 +155,6 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
           </button>
         </div>
         <div className="px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start">
-          {!canCreateProject && (
-            <div className="w-full mb-4 p-3 rounded-md bg-red-50 text-red-600 text-sm text-center">
-              You do not have permission to create projects. Please contact an administrator.
-            </div>
-          )}
           <div className="space-y-4 w-full">
             <div>
               <label
@@ -435,9 +420,8 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
             </button>
             <button
               onClick={handleSubmit}
-              disabled={isPending || !canCreateProject}
+              disabled={isPending}
               className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-              title={canCreateProject ? undefined : "Insufficient permissions"}
             >
               Create Project
               {isPending && (

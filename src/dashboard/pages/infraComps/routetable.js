@@ -11,6 +11,30 @@ import AddRouteModal from "../routeTableComps/addRoute";
 import DeleteRouteTableModal from "../routeTableComps/deleteRouteTable";
 import AssociateRouteTableModal from "../routeTableComps/associateRouteTable";
 
+const formatAssociationLabel = (assoc) => {
+  if (assoc == null) {
+    return "unknown";
+  }
+
+  if (typeof assoc === "string" || typeof assoc === "number") {
+    return String(assoc);
+  }
+
+  if (typeof assoc === "object") {
+    if (assoc.subnet_id) return assoc.subnet_id;
+    if (assoc.network_id) return assoc.network_id;
+    if (assoc.route_table_association_id) return assoc.route_table_association_id;
+    if (assoc.main) {
+      return `main${assoc.route_table_id ? ` (${assoc.route_table_id})` : ""}`;
+    }
+    if (assoc.gateway_id) return assoc.gateway_id;
+    if (assoc.network_interface_id) return assoc.network_interface_id;
+    return JSON.stringify(assoc);
+  }
+
+  return "unknown";
+};
+
 const RouteTables = ({
   projectId = "",
   region = "",
@@ -193,7 +217,12 @@ const RouteTables = ({
                   >
                     {rt.name || rt.provider_resource_id || "Unnamed Route Table"}
                   </h3>
-                  <p>Provider: {rt.provider?.toUpperCase() || "N/A"}</p>
+                  <p>
+                    Provider:{" "}
+                    {typeof rt.provider === "string" && rt.provider.trim() !== ""
+                      ? rt.provider.toUpperCase()
+                      : "N/A"}
+                  </p>
                   <p>Region: {rt.region || "N/A"}</p>
                   <div>
                     <p className="font-medium text-xs text-gray-600 mb-1">
@@ -228,14 +257,17 @@ const RouteTables = ({
                       Associations
                     </p>
                     <div className="space-y-1 max-h-20 overflow-y-auto pr-1 text-xs">
-                      {(rt.associations || []).map((assoc, idx) => (
-                        <div
-                          key={`${assoc.subnet_id || assoc.network_id || idx}`}
-                          className="bg-gray-50 border border-gray-200 rounded px-2 py-1 text-gray-600"
-                        >
-                          {assoc.subnet_id || assoc.network_id || "unknown"}
-                        </div>
-                      ))}
+                      {(rt.associations || []).map((assoc, idx) => {
+                        const label = formatAssociationLabel(assoc);
+                        return (
+                          <div
+                            key={`${label}-${idx}`}
+                            className="bg-gray-50 border border-gray-200 rounded px-2 py-1 text-gray-600"
+                          >
+                            {label}
+                          </div>
+                        );
+                      })}
                       {(!rt.associations || rt.associations.length === 0) && (
                         <p className="text-xs text-gray-500">No associations</p>
                       )}

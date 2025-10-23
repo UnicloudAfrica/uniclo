@@ -8,6 +8,30 @@ import { RefreshCw } from "lucide-react";
 import AddRouteTable from "../routeTableComps/addRouteTable";
 import AddRoute from "../routeTableComps/addRoute";
 
+const formatAssociationLabel = (assoc) => {
+  if (assoc == null) {
+    return "unknown";
+  }
+
+  if (typeof assoc === "string" || typeof assoc === "number") {
+    return String(assoc);
+  }
+
+  if (typeof assoc === "object") {
+    if (assoc.subnet_id) return assoc.subnet_id;
+    if (assoc.network_id) return assoc.network_id;
+    if (assoc.route_table_association_id) return assoc.route_table_association_id;
+    if (assoc.main) {
+      return `main${assoc.route_table_id ? ` (${assoc.route_table_id})` : ""}`;
+    }
+    if (assoc.gateway_id) return assoc.gateway_id;
+    if (assoc.network_interface_id) return assoc.network_interface_id;
+    return JSON.stringify(assoc);
+  }
+
+  return "unknown";
+};
+
 const RouteTables = ({ projectId = "", region = "" }) => {
   const { data: routeTables, isFetching } = useFetchRouteTables(projectId, region);
   const queryClient = useQueryClient();
@@ -140,9 +164,10 @@ const RouteTables = ({ projectId = "", region = "" }) => {
                 {((rt.associations || rt.route_table?.associations) || []).length === 0 && (
                   <li className="text-gray-500">No associations</li>
                 )}
-                {((rt.associations || rt.route_table?.associations) || []).map((a, i) => (
-                  <li key={i}>{a.subnet_id || a.network_id || a}</li>
-                ))}
+                {((rt.associations || rt.route_table?.associations) || []).map((a, i) => {
+                  const label = formatAssociationLabel(a);
+                  return <li key={`${label}-${i}`}>{label}</li>;
+                })}
               </ul>
             </div>
 

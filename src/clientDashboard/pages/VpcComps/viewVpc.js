@@ -74,7 +74,9 @@ const ViewVpcModal = ({ isOpen, onClose, vpc }) => {
               </div>
               <div>
                 <span className="font-medium text-gray-700">Provider:</span>{" "}
-                {vpc.provider.toUpperCase()}
+                {typeof vpc.provider === "string" && vpc.provider.trim() !== ""
+                  ? vpc.provider.toUpperCase()
+                  : "N/A"}
               </div>
               <div className="col-span-2">
                 <span className="font-medium text-gray-700">UUID:</span>{" "}

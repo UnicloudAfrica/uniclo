@@ -185,7 +185,12 @@ const EIPs = ({
                       </button>
                     </div>
                     <div className="space-y-1 text-sm text-gray-500">
-                      <p>Provider: {eip.provider.toUpperCase()}</p>
+                      <p>
+                        Provider:{" "}
+                        {typeof eip.provider === "string" && eip.provider.trim() !== ""
+                          ? eip.provider.toUpperCase()
+                          : "N/A"}
+                      </p>
                       <p>Region: {eip.region}</p>
                       <p>Pool ID: {eip.pool_id}</p>
                       <p>

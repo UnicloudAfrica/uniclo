@@ -188,7 +188,10 @@ const SecurityGroup = ({
                       </p>
                       <p>
                         Provider:{" "}
-                        {securityGroup.provider?.toUpperCase() || "N/A"}
+                        {typeof securityGroup.provider === "string" &&
+                        securityGroup.provider.trim() !== ""
+                          ? securityGroup.provider.toUpperCase()
+                          : "N/A"}
                       </p>
                       <p>Region: {securityGroup.region}</p>
                       <p

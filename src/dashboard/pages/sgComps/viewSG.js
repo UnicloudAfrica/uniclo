@@ -58,7 +58,12 @@ const ViewSGModal = ({ isOpen, onClose, securityGroup }) => {
             <DetailRow label="Description" value={securityGroup.description} />
             <DetailRow
               label="Provider"
-              value={securityGroup.provider?.toUpperCase()}
+              value={
+                typeof securityGroup.provider === "string" &&
+                securityGroup.provider.trim() !== ""
+                  ? securityGroup.provider.toUpperCase()
+                  : "N/A"
+              }
             />
             <DetailRow label="Region" value={securityGroup.region} />
             <DetailRow label="Project ID" value={securityGroup.project_id} />

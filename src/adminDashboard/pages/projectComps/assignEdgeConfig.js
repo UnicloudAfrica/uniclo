@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useFetchEdgeNetworks, useFetchIpPools, useAssignProjectEdge, useFetchProjectEdgeConfigAdmin } from "../../../hooks/adminHooks/edgeHooks";
 import { useFetchGeneralRegions } from "../../../hooks/resource";
 
-const AssignEdgeConfigModal = ({ isOpen, onClose, projectId, region }) => {
+const AssignEdgeConfigModal = ({ isOpen, onClose, onSuccess, projectId, region }) => {
   const [selectedRegion, setSelectedRegion] = useState(region || "");
   const [formData, setFormData] = useState({
     edge_network_id: "",
@@ -19,6 +19,26 @@ const AssignEdgeConfigModal = ({ isOpen, onClose, projectId, region }) => {
   const { mutate: assignEdge, isPending } = useAssignProjectEdge();
   const [manualMode, setManualMode] = useState(false);
 
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+    if (region && selectedRegion === "") {
+      setSelectedRegion(region);
+    }
+  }, [region, selectedRegion, isOpen]);
+
+  useEffect(() => {
+    if (currentConfig && isOpen) {
+      setFormData((prev) => ({
+        ...prev,
+        edge_network_id: currentConfig.edge_network_id || "",
+        ip_pool_id: currentConfig.ip_pool_id || "",
+        flowlogs_enabled: Boolean(currentConfig.flowlogs_enabled),
+      }));
+    }
+  }, [currentConfig, isOpen]);
+
   const handleRefreshFromProvider = async () => {
     try {
       await refetchNetworks();
@@ -33,6 +53,10 @@ const AssignEdgeConfigModal = ({ isOpen, onClose, projectId, region }) => {
   const updateForm = (field, value) => setFormData((p) => ({ ...p, [field]: value }));
 
   const handleAssign = () => {
+    if (!projectId || !selectedRegion || !formData.edge_network_id || !formData.ip_pool_id) {
+      return;
+    }
+
     const payload = {
       project_id: projectId,
       region: selectedRegion,
@@ -44,7 +68,38 @@ const AssignEdgeConfigModal = ({ isOpen, onClose, projectId, region }) => {
     assignEdge(
       { payload },
       {
-        onSuccess: () => onClose(),
+        onSuccess: () => {
+          if (typeof onSuccess === "function") {
+            onSuccess();
+          } else {
+            onClose();
+          }
+        },
+      }
+    );
+  };
+
+  const handleAutoAssign = () => {
+    if (!projectId || !selectedRegion) {
+      return;
+    }
+
+    const payload = {
+      project_id: projectId,
+      region: selectedRegion,
+      auto_assign: true,
+    };
+
+    assignEdge(
+      { payload },
+      {
+        onSuccess: () => {
+          if (typeof onSuccess === "function") {
+            onSuccess();
+          } else {
+            onClose();
+          }
+        },
       }
     );
   };
@@ -199,15 +254,28 @@ const AssignEdgeConfigModal = ({ isOpen, onClose, projectId, region }) => {
           </div>
         </div>
         <div className="flex items-center justify-end px-6 py-4 border-t rounded-b-[24px]">
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <button onClick={onClose} className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium">Cancel</button>
             <button
               onClick={handleAssign}
-              disabled={isPending || !selectedRegion || !formData.edge_network_id || !formData.ip_pool_id}
+              disabled={
+                isPending ||
+                !selectedRegion ||
+                !formData.edge_network_id ||
+                !formData.ip_pool_id
+              }
               className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Assign
               {isPending && <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />}
+            </button>
+            <button
+              onClick={handleAutoAssign}
+              disabled={isPending || !selectedRegion}
+              className="px-6 py-3 border border-[#288DD1] text-[#288DD1] font-medium rounded-[30px] hover:bg-[#E8F4FB] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            >
+              Auto Assign Defaults
+              {isPending && <Loader2 className="w-4 h-4 ml-2 text-[#288DD1] animate-spin" />}
             </button>
           </div>
         </div>

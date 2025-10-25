@@ -41,7 +41,7 @@ import AssignEdgeConfigModal from "./projectComps/assignEdgeConfig";
 import { designTokens } from "../../styles/designTokens";
 import ToastUtils from "../../utils/toastUtil";
 import api from "../../index/admin/api";
-import { syncProjectEdgeConfigAdmin } from "../../hooks/adminHooks/edgeHooks";
+import { syncProjectEdgeConfigAdmin, useFetchProjectEdgeConfigAdmin } from "../../hooks/adminHooks/edgeHooks";
 
 const decodeId = (encodedId) => {
   try {
@@ -141,6 +141,14 @@ export default function AdminProjectDetails() {
   );
   const summary = project?.summary ?? [];
   const resolvedProjectId = project?.identifier || projectId;
+
+  const {
+    data: edgeConfig,
+    isFetching: isEdgeConfigLoading,
+    refetch: refetchEdgeConfig,
+  } = useFetchProjectEdgeConfigAdmin(resolvedProjectId, project?.region, {
+    enabled: Boolean(resolvedProjectId && project?.region),
+  });
   const tenantAdminMissingUsers = project?.users?.tenant_admin_missing ?? [];
 
   const normalizeSummaryKey = (value = "") =>
@@ -195,6 +203,7 @@ export default function AdminProjectDetails() {
       });
       ToastUtils.success("Edge network configuration synced successfully");
       await refetchProjectStatus();
+      await refetchEdgeConfig();
     } catch (error) {
       console.error("Edge sync failed:", error);
       ToastUtils.error(error?.message || "Failed to sync edge configuration");
@@ -522,6 +531,10 @@ export default function AdminProjectDetails() {
           );
 
           if (summaryFlag === true) {
+            return true;
+          }
+
+          if (edgeConfig?.edge_network_id && edgeConfig?.ip_pool_id) {
             return true;
           }
 
@@ -920,6 +933,67 @@ export default function AdminProjectDetails() {
             <p style={{ color: designTokens.colors.neutral[600] }}>
               Configure edge network settings for enhanced connectivity and performance.
             </p>
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              {isEdgeConfigLoading ? (
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Loader2 size={16} className="animate-spin" />
+                  Loading edge configuration...
+                </div>
+              ) : edgeConfig ? (
+                <div className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                        Edge Network ID
+                      </div>
+                      <div className="mt-1 text-sm font-semibold text-gray-900 break-all">
+                        {edgeConfig.edge_network_id || "—"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                        Edge IP Pool ID
+                      </div>
+                      <div className="mt-1 text-sm font-semibold text-gray-900 break-all">
+                        {edgeConfig.ip_pool_id || "—"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                        Flow Logs
+                      </div>
+                      <div
+                        className="mt-1 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold"
+                        style={{
+                          backgroundColor: edgeConfig.flowlogs_enabled
+                            ? designTokens.colors.success[50]
+                            : designTokens.colors.neutral[200],
+                          color: edgeConfig.flowlogs_enabled
+                            ? designTokens.colors.success[600]
+                            : designTokens.colors.neutral[700],
+                        }}
+                      >
+                        {edgeConfig.flowlogs_enabled ? "Enabled" : "Disabled"}
+                      </div>
+                    </div>
+                  </div>
+                  {edgeConfig.metadata && Object.keys(edgeConfig.metadata || {}).length > 0 && (
+                    <details className="rounded-lg border border-gray-200 bg-white">
+                      <summary className="cursor-pointer select-none px-4 py-2 text-sm font-medium text-gray-700">
+                        View provider metadata
+                      </summary>
+                      <pre className="max-h-64 overflow-y-auto whitespace-pre-wrap px-4 pb-4 text-xs text-gray-600">
+                        {JSON.stringify(edgeConfig.metadata, null, 2)}
+                      </pre>
+                    </details>
+                  )}
+                </div>
+              ) : (
+                <div className="text-sm text-gray-600">
+                  No edge configuration assigned yet. Use <span className="font-medium">Assign Edge Config</span> to attach an edge network and IP pool.
+                </div>
+              )}
+            </div>
           </div>
         );
       case "security-groups":
@@ -1130,8 +1204,11 @@ export default function AdminProjectDetails() {
           isOpen={isAssignEdgeOpen}
           onClose={() => setIsAssignEdgeOpen(false)}
           projectId={resolvedProjectId}
+          region={project?.region}
           onSuccess={() => {
+            ToastUtils.success("Edge configuration assigned successfully");
             refetchProjectStatus();
+            refetchEdgeConfig();
             setIsAssignEdgeOpen(false);
           }}
         />

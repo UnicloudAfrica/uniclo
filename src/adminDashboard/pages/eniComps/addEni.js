@@ -76,11 +76,15 @@ const AddEni = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) => {
               disabled={!form.region}
             >
               <option value="" disabled>{!form.region ? "Select region first" : "Select VPC"}</option>
-              {(vpcs?.data || vpcs || []).map((v) => (
-                <option key={v.id || v.uuid || v.provider_resource_id} value={String(v.id || v.uuid || v.provider_resource_id)}>
-                  {v.name || v.identifier || v.id}
-                </option>
-              ))}
+              {(vpcs?.data || vpcs || []).map((v) => {
+                const providerId = v.provider_resource_id || v.uuid || v.meta?.provider_resource_id;
+                const localId = v.id || v.uuid || v.identifier;
+                return (
+                  <option key={localId} value={providerId || localId}>
+                    {v.name || v.identifier || providerId || localId}
+                  </option>
+                );
+              })}
             </select>
             {errors.network_id && <p className="text-xs text-red-500 mt-1">{errors.network_id}</p>}
           </div>

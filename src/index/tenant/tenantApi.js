@@ -53,7 +53,20 @@ const tenantApi = async (method, uri, body = null) => {
 
       return res;
     } else {
+      const errorMessage =
+        res?.data?.error || res?.error || res?.message || "An error occurred";
       if (response.status === 401) {
+        const preventRedirectHeader =
+          response.headers.get("X-Prevent-Login-Redirect") || "";
+        const preventRedirectBody =
+          res?.prevent_redirect === true || res?.data?.prevent_redirect === true;
+        const shouldPreventRedirect =
+          preventRedirectHeader.toLowerCase() === "true" || preventRedirectBody;
+
+        if (shouldPreventRedirect) {
+          throw new Error(errorMessage || "Unauthorized");
+        }
+
         if (!isRedirecting) {
           isRedirecting = true; // Prevent multiple redirects
           clearToken(); // Clear Zustand token
@@ -76,8 +89,6 @@ const tenantApi = async (method, uri, body = null) => {
         return;
       }
 
-      const errorMessage =
-        res?.data?.error || res?.error || res?.message || "An error occurred";
       throw new Error(errorMessage);
     }
   } catch (err) {

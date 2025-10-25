@@ -4,7 +4,15 @@ import { useCreateRoute } from "../../../hooks/adminHooks/routeTableHooks";
 import { useFetchIgws } from "../../../hooks/adminHooks/igwHooks";
 import { useFetchNetworkInterfaces } from "../../../hooks/adminHooks/networkHooks";
 
-const AddRoute = ({ isOpen, onClose, projectId, region: defaultRegion = "", routeTableId = "", routeTables = [] }) => {
+const AddRoute = ({
+  isOpen,
+  onClose,
+  projectId,
+  region: defaultRegion = "",
+  routeTableId = "",
+  routeTables = [],
+  defaultGatewayId = "",
+}) => {
   const [form, setForm] = useState({
     region: defaultRegion || "",
     route_table_id: routeTableId || "",
@@ -24,6 +32,12 @@ const AddRoute = ({ isOpen, onClose, projectId, region: defaultRegion = "", rout
   useEffect(() => {
     if (routeTableId && !form.route_table_id) setForm((p) => ({ ...p, route_table_id: routeTableId }));
   }, [routeTableId]);
+
+  useEffect(() => {
+    if (defaultGatewayId && !form.target_id && form.target_type === "gateway_id") {
+      setForm((p) => ({ ...p, target_id: defaultGatewayId }));
+    }
+  }, [defaultGatewayId, form.target_type]);
 
   if (!isOpen) return null;
 

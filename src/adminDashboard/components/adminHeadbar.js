@@ -1,29 +1,29 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Search, 
-  Bell, 
-  Settings, 
-  User, 
+import React, { useState, useRef, useEffect } from "react";
+import {
+  Search,
+  Bell,
+  Settings,
+  User,
   ChevronDown,
   Moon,
   Sun,
   HelpCircle,
   LogOut,
-  Menu
-} from 'lucide-react';
+  Menu,
+} from "lucide-react";
 import logo from "./assets/logo.png";
 import { useLocation } from "react-router-dom";
-import { designTokens } from '../../styles/designTokens';
-import useAuthStore from '../../stores/userAuthStore';
+import { designTokens } from "../../styles/designTokens";
+import useAuthStore from "../../stores/userAuthStore";
 
 const AdminHeadbar = ({ onMenuClick }) => {
   const location = useLocation();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  
+
   const profileRef = useRef(null);
   const notificationRef = useRef(null);
   const { clearToken } = useAuthStore();
@@ -54,7 +54,7 @@ const AdminHeadbar = ({ onMenuClick }) => {
     "support-ticket": "Support Ticket",
     "enhanced-profile-settings": "Profile Settings",
     overview: "Overview",
-    details: "Details"
+    details: "Details",
   };
 
   // Get the active page name
@@ -66,7 +66,8 @@ const AdminHeadbar = ({ onMenuClick }) => {
     const lastSegment = pathSegments[pathSegments.length - 1];
     return (
       pathMap[lastSegment] ||
-      lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1).replace(/-/g, ' ')
+      lastSegment.charAt(0).toUpperCase() +
+        lastSegment.slice(1).replace(/-/g, " ")
     );
   };
 
@@ -78,64 +79,71 @@ const AdminHeadbar = ({ onMenuClick }) => {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setIsProfileOpen(false);
       }
-      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target)
+      ) {
         setIsNotificationOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleLogout = () => {
     clearToken();
-    window.location.href = '/admin-signin';
+    window.location.href = "/admin-signin";
   };
 
   // Dummy notifications for demo
   const notifications = [
     {
       id: 1,
-      title: 'New lead created',
-      message: 'John Doe submitted a new lead request',
-      time: '2 minutes ago',
-      unread: true
+      title: "New lead created",
+      message: "John Doe submitted a new lead request",
+      time: "2 minutes ago",
+      unread: true,
     },
     {
       id: 2,
-      title: 'Instance deployed',
-      message: 'Instance i-1234567 has been successfully deployed',
-      time: '1 hour ago',
-      unread: true
+      title: "Instance deployed",
+      message: "Instance i-1234567 has been successfully deployed",
+      time: "1 hour ago",
+      unread: true,
     },
     {
       id: 3,
-      title: 'Payment received',
-      message: 'Payment of $299.99 has been processed',
-      time: '3 hours ago',
-      unread: false
-    }
+      title: "Payment received",
+      message: "Payment of $299.99 has been processed",
+      time: "3 hours ago",
+      unread: false,
+    },
   ];
 
-  const unreadCount = notifications.filter(n => n.unread).length;
-  const user = { name: 'Admin User', email: 'admin@unicloudafrica.com', avatar: null };
+  const unreadCount = notifications.filter((n) => n.unread).length;
+  const user = {
+    name: "Admin User",
+    email: "admin@unicloudafrica.com",
+    avatar: null,
+  };
 
   return (
     <>
       {/* Desktop Layout */}
-      <div 
+      <div
         className="w-full fixed top-0 left-0 h-[74px] px-6 md:px-8 py-3 z-[999] border-b bg-white hidden md:flex justify-between items-center font-Outfit"
         style={{
           borderColor: designTokens.colors.neutral[200],
-          boxShadow: designTokens.shadows.xs
+          boxShadow: designTokens.shadows.xs,
         }}
       >
         {/* Left Section - Logo and Search */}
         <div className="flex items-center gap-6 flex-1">
           <img src={logo} className="w-[71px] h-[54px]" alt="UniCloud Logo" />
-          
+
           {/* Search Bar - Hidden on smaller screens */}
-          <div className="relative max-w-md flex-1 hidden lg:block">
+          {/* <div className="relative max-w-md flex-1 hidden lg:block">
             <Search 
               size={18} 
               className="absolute left-3 top-1/2 transform -translate-y-1/2 transition-colors duration-200"
@@ -157,23 +165,26 @@ const AdminHeadbar = ({ onMenuClick }) => {
                 backgroundColor: designTokens.colors.neutral[50]
               }}
             />
-          </div>
+          </div> */}
         </div>
 
         {/* Right Section */}
         <div className="flex items-center gap-2">
           {/* Theme Toggle */}
-          <button
+          {/* <button
             className="p-2 rounded-lg transition-colors duration-200 hover:bg-gray-100"
             onClick={() => setIsDarkMode(!isDarkMode)}
           >
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-          </button>
+          </button> */}
 
           {/* Help Button */}
-          <button className="p-2 rounded-lg transition-colors duration-200 hover:bg-gray-100">
+          <a
+            href="/admin-dashboard/support-ticket"
+            className="p-2 rounded-lg transition-colors duration-200 hover:bg-gray-100"
+          >
             <HelpCircle size={20} />
-          </button>
+          </a>
 
           {/* Notifications */}
           <div className="relative" ref={notificationRef}>
@@ -183,7 +194,7 @@ const AdminHeadbar = ({ onMenuClick }) => {
             >
               <Bell size={20} />
               {unreadCount > 0 && (
-                <div 
+                <div
                   className="absolute -top-1 -right-1 w-5 h-5 rounded-full text-white text-xs font-medium flex items-center justify-center border-2 border-white"
                   style={{ backgroundColor: designTokens.colors.error[500] }}
                 >
@@ -193,35 +204,46 @@ const AdminHeadbar = ({ onMenuClick }) => {
             </button>
 
             {isNotificationOpen && (
-              <div 
+              <div
                 className="absolute top-full right-0 mt-2 w-80 bg-white border shadow-lg z-[1000] overflow-hidden"
                 style={{
                   borderColor: designTokens.colors.neutral[200],
                   borderRadius: designTokens.borderRadius.xl,
-                  boxShadow: designTokens.shadows.lg
+                  boxShadow: designTokens.shadows.lg,
                 }}
               >
-                <div className="p-4 border-b" style={{ borderColor: designTokens.colors.neutral[200] }}>
+                <div
+                  className="p-4 border-b"
+                  style={{ borderColor: designTokens.colors.neutral[200] }}
+                >
                   <h3 className="font-semibold text-sm">Notifications</h3>
                 </div>
-                
+
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
                     className="p-4 border-b cursor-pointer transition-colors duration-200 hover:bg-gray-50"
                     style={{
                       borderColor: designTokens.colors.neutral[100],
-                      backgroundColor: notification.unread ? designTokens.colors.primary[25] : 'transparent'
+                      backgroundColor: notification.unread
+                        ? designTokens.colors.primary[25]
+                        : "transparent",
                     }}
                   >
-                    <div className="font-medium text-sm mb-1">{notification.title}</div>
-                    <div className="text-xs text-gray-600 mb-1">{notification.message}</div>
-                    <div className="text-xs text-gray-500">{notification.time}</div>
+                    <div className="font-medium text-sm mb-1">
+                      {notification.title}
+                    </div>
+                    <div className="text-xs text-gray-600 mb-1">
+                      {notification.message}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {notification.time}
+                    </div>
                   </div>
                 ))}
-                
+
                 <div className="p-3 text-center">
-                  <button 
+                  <button
                     className="text-sm font-medium transition-colors duration-200"
                     style={{ color: designTokens.colors.primary[600] }}
                   >
@@ -238,62 +260,77 @@ const AdminHeadbar = ({ onMenuClick }) => {
               className="flex items-center gap-3 p-2 rounded-xl transition-colors duration-200 hover:bg-gray-50"
               onClick={() => setIsProfileOpen(!isProfileOpen)}
             >
-              <div 
+              <div
                 className="w-8 h-8 rounded-full font-semibold text-sm text-white flex items-center justify-center"
                 style={{ backgroundColor: designTokens.colors.primary[500] }}
               >
                 {user.avatar ? (
-                  <img src={user.avatar} alt={user.name} className="w-full h-full rounded-full" />
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-full h-full rounded-full"
+                  />
                 ) : (
-                  'AD'
+                  "AD"
                 )}
               </div>
               <div className="text-left hidden xl:block">
-                <div className="text-sm font-semibold text-gray-900">{user.name}</div>
+                <div className="text-sm font-semibold text-gray-900">
+                  {user.name}
+                </div>
                 <div className="text-xs text-gray-600">{user.email}</div>
               </div>
-              <ChevronDown 
-                size={16} 
+              <ChevronDown
+                size={16}
                 className="text-gray-500 transition-transform duration-200"
                 style={{
-                  transform: isProfileOpen ? 'rotate(180deg)' : 'rotate(0deg)'
+                  transform: isProfileOpen ? "rotate(180deg)" : "rotate(0deg)",
                 }}
               />
             </button>
 
             {isProfileOpen && (
-              <div 
+              <div
                 className="absolute top-full right-0 mt-2 w-64 bg-white border shadow-lg z-[1000] overflow-hidden"
                 style={{
                   borderColor: designTokens.colors.neutral[200],
                   borderRadius: designTokens.borderRadius.xl,
-                  boxShadow: designTokens.shadows.lg
+                  boxShadow: designTokens.shadows.lg,
                 }}
               >
-                <button className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 transition-colors duration-200">
+                <a
+                  href="/admin-dashboard/profile-settings"
+                  className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 transition-colors duration-200"
+                >
                   <User size={18} />
                   Profile Settings
-                </button>
-                
-                <button className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 transition-colors duration-200">
+                </a>
+
+                <a
+                  href="/admin-dashboard/profile-settings"
+                  className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 transition-colors duration-200"
+                >
                   <Settings size={18} />
                   Account Settings
-                </button>
-                
+                </a>
+
                 <hr style={{ borderColor: designTokens.colors.neutral[200] }} />
-                
+
                 <button
                   className="w-full flex items-center gap-3 p-3 text-left transition-colors duration-200"
                   onClick={handleLogout}
-                  style={{ 
+                  style={{
                     color: designTokens.colors.error[600],
-                    ':hover': { backgroundColor: designTokens.colors.error[50] }
+                    ":hover": {
+                      backgroundColor: designTokens.colors.error[50],
+                    },
                   }}
                   onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = designTokens.colors.error[50];
+                    e.target.style.backgroundColor =
+                      designTokens.colors.error[50];
                   }}
                   onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = 'transparent';
+                    e.target.style.backgroundColor = "transparent";
                   }}
                 >
                   <LogOut size={18} />
@@ -306,16 +343,16 @@ const AdminHeadbar = ({ onMenuClick }) => {
       </div>
 
       {/* Mobile Layout */}
-      <div 
+      <div
         className="w-full fixed top-0 left-0 h-[74px] px-6 py-3 z-[999] border-b bg-white flex md:hidden justify-between items-center font-Outfit"
         style={{
           borderColor: designTokens.colors.neutral[200],
-          boxShadow: designTokens.shadows.xs
+          boxShadow: designTokens.shadows.xs,
         }}
       >
         <div className="flex items-center gap-3">
           {/* Menu Button */}
-          <button 
+          <button
             onClick={onMenuClick}
             className="p-2 rounded-lg transition-colors duration-200 hover:bg-gray-100"
           >
@@ -325,22 +362,22 @@ const AdminHeadbar = ({ onMenuClick }) => {
             {activePageName}
           </h1>
         </div>
-        
+
         {/* Mobile Actions */}
         <div className="flex items-center gap-2">
           {/* Mobile Notifications */}
-          <button 
+          <button
             className="relative p-2 rounded-lg border transition-colors duration-200 hover:bg-gray-50"
             style={{ borderColor: designTokens.colors.neutral[200] }}
             onClick={() => setIsNotificationOpen(!isNotificationOpen)}
           >
             <Bell size={16} />
             {unreadCount > 0 && (
-              <div 
+              <div
                 className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white text-xs font-medium flex items-center justify-center"
                 style={{ backgroundColor: designTokens.colors.error[500] }}
               >
-                {unreadCount > 9 ? '9+' : unreadCount}
+                {unreadCount > 9 ? "9+" : unreadCount}
               </div>
             )}
           </button>

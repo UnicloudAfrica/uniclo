@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { 
-  LogOut, 
-  X, 
+import {
+  LogOut,
+  X,
   Home,
   Users,
   UserPlus,
@@ -21,7 +21,7 @@ import {
   User,
   UserCog,
   CheckSquare,
-  Server
+  Server,
 } from "lucide-react";
 
 const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
@@ -173,14 +173,14 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       name: "Profile Settings",
       icon: User,
       isLucide: true,
-      path: "/admin-dashboard/enhanced-profile-settings",
+      path: "/admin-dashboard/profile-settings",
     },
   ];
 
   const handleItemClick = (itemName, path) => {
     setActiveItem(itemName);
     navigate(path);
-    if (onCloseMobileMenu && typeof onCloseMobileMenu === 'function') {
+    if (onCloseMobileMenu && typeof onCloseMobileMenu === "function") {
       onCloseMobileMenu(); // Close mobile menu after navigation
     }
   };
@@ -192,17 +192,18 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       <li key={item.name} className={isBottom ? "mt-auto" : ""}>
         <button
           onClick={() => handleItemClick(item.name, item.path)}
-          className={`w-full flex items-center py-2 px-3.5 space-x-2 text-left transition-all duration-200 hover:bg-gray-50 ${isActive ? "text-[#1C1C1C]" : "text-[#676767] hover:text-[#1C1C1C]"
-            }`}
+          className={`w-full flex items-center py-2 px-3.5 space-x-2 text-left transition-all duration-200 hover:bg-gray-50 ${
+            isActive ? "text-[#1C1C1C]" : "text-[#676767] hover:text-[#1C1C1C]"
+          }`}
         >
           <div className="relative flex items-center justify-center w-5 h-5 flex-shrink-0">
             {isActive && (
               <div className="absolute left-[-14px] w-1 h-4 bg-black rounded-[3px]" />
             )}
             {item.isLucide ? (
-              <item.icon 
-                size={16} 
-                className={`${isActive ? 'text-[#1C1C1C]' : 'text-[#676767]'}`}
+              <item.icon
+                size={16}
+                className={`${isActive ? "text-[#1C1C1C]" : "text-[#676767]"}`}
               />
             ) : (
               <img
@@ -227,17 +228,15 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       <li key={item.name}>
         <button
           onClick={() => handleItemClick(item.name, item.path)}
-          className={`w-full flex items-center py-2 px-4 space-x-3 text-left transition-all duration-200 rounded-lg ${isActive
+          className={`w-full flex items-center py-2 px-4 space-x-3 text-left transition-all duration-200 rounded-lg ${
+            isActive
               ? "bg-[#ffffff15] text-white"
               : "text-gray-200 hover:bg-[#ffffff15] hover:text-white"
-            }`}
+          }`}
         >
           <div className="flex items-center justify-center w-4 h-4 flex-shrink-0">
             {item.isLucide ? (
-              <item.icon 
-                size={16} 
-                className="text-white"
-              />
+              <item.icon size={16} className="text-white" />
             ) : (
               <img
                 src={isActive ? item.activeIcon : item.icon}
@@ -257,11 +256,11 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       {/* Desktop Sidebar */}
       <div className="hidden md:block fixed top-[74px] left-0 z-[999] w-[80%] md:w-20 lg:w-[20%] h-full border-r border-[#C8CBD9] bg-[#fff] font-Outfit">
         <div className="flex flex-col h-full">
-          <div className="px-3 py-4 md:px-3.5 md:py-6 w-full border-b border-[#ECEDF0]">
+          <div className="px-3 py-4 md:px-0 md:pl-3.5  md:py-6 w-full border-b border-[#ECEDF0]">
             <button className="py-1 px-2 text-[#676767] font-normal text-sm lg:text-sm">
               ADMIN
             </button>
-            <nav className="flex-1 overflow-y-auto w-full mt-3 px-2">
+            <nav className="flex-1 ov w-full mt-3 px-2 max-h-[80vh] overflow-y-auto">
               <ul className="flex flex-col h-full w-full">
                 {menuItems.map((item) => renderMenuItem(item))}
               </ul>
@@ -274,16 +273,18 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       <div className="md:hidden">
         {/* Overlay Background */}
         <div
-          className={`fixed inset-0 bg-black z-[999] transition-all duration-300 ease-in-out ${isMobileMenuOpen
+          className={`fixed inset-0 bg-black z-[999] transition-all duration-300 ease-in-out ${
+            isMobileMenuOpen
               ? "bg-opacity-50 pointer-events-auto"
               : "bg-opacity-0 pointer-events-none"
-            }`}
+          }`}
           onClick={onCloseMobileMenu}
         >
           {/* Sidebar Panel */}
           <div
-            className={`fixed top-0 left-0 h-full w-[280px] bg-[#14547F] text-white flex flex-col transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-              }`}
+            className={`fixed top-0 left-0 h-full w-[280px] bg-[#14547F] text-white flex flex-col transform transition-transform duration-300 ease-in-out ${
+              isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header with Close Button */}

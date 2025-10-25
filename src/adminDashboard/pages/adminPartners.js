@@ -7,7 +7,7 @@ import {
   Users,
   Building2,
   Phone,
-  Calendar
+  Calendar,
 } from "lucide-react";
 import AdminActiveTab from "../components/adminActiveTab";
 import AdminHeadbar from "../components/adminHeadbar";
@@ -43,7 +43,8 @@ const AdminPartners = () => {
   const { isLoading } = useAuthRedirect();
   const [isAddPartnerOpen, setAddPartner] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { data: tenants = [], isFetching: isTenantsFetching } = useFetchTenants();
+  const { data: tenants = [], isFetching: isTenantsFetching } =
+    useFetchTenants();
   const [isDeleteTenantModalOpen, setIsDeleteTenantModalOpen] = useState(false);
   const [selectedTenantToDelete, setSelectedTenantToDelete] = useState(null);
 
@@ -68,81 +69,90 @@ const AdminPartners = () => {
 
   // Stats calculations
   const totalPartners = tenants.length;
-  const activePartners = tenants.filter(tenant => tenant.status === 'active').length;
+  const activePartners = tenants.filter(
+    (tenant) => tenant.status === "active"
+  ).length;
   const companyTypes = {
-    RC: tenants.filter(t => t.company_type === 'RC').length,
-    BN: tenants.filter(t => t.company_type === 'BN').length,
-    IT: tenants.filter(t => t.company_type === 'IT').length,
-    Other: tenants.filter(t => !['RC', 'BN', 'IT'].includes(t.company_type)).length
+    RC: tenants.filter((t) => t.company_type === "RC").length,
+    BN: tenants.filter((t) => t.company_type === "BN").length,
+    IT: tenants.filter((t) => t.company_type === "IT").length,
+    Other: tenants.filter((t) => !["RC", "BN", "IT"].includes(t.company_type))
+      .length,
   };
 
   // Define columns for ModernTable
   const columns = [
     {
-      key: 'serialNumber',
-      header: 'S/N',
-      render: (value, row, index) => index + 1
+      key: "serialNumber",
+      header: "S/N",
+      render: (value, row, index) => index + 1,
     },
     {
-      key: 'id',
-      header: 'Partner ID'
+      key: "id",
+      header: "Partner ID",
     },
     {
-      key: 'name',
-      header: 'Name',
+      key: "name",
+      header: "Name",
       render: (value) => (
         <div className="flex items-center gap-2">
-          <Building2 size={16} style={{ color: designTokens.colors.primary[500] }} />
+          <Building2
+            size={16}
+            style={{ color: designTokens.colors.primary[500] }}
+          />
           <span className="font-medium">{value}</span>
         </div>
-      )
+      ),
     },
     {
-      key: 'phone',
-      header: 'Phone Number',
+      key: "phone",
+      header: "Phone Number",
       render: (value) => (
         <div className="flex items-center gap-2">
-          <Phone size={14} style={{ color: designTokens.colors.neutral[500] }} />
+          <Phone
+            size={14}
+            style={{ color: designTokens.colors.neutral[500] }}
+          />
           {value}
         </div>
-      )
+      ),
     },
     {
-      key: 'company_type',
-      header: 'Type',
+      key: "company_type",
+      header: "Type",
       render: (value) => (
-        <span 
+        <span
           className="px-2 py-1 rounded-full text-xs font-medium"
           style={{
             backgroundColor: designTokens.colors.primary[50],
-            color: designTokens.colors.primary[700]
+            color: designTokens.colors.primary[700],
           }}
         >
           {formatCompanyType(value)}
         </span>
-      )
-    }
+      ),
+    },
   ];
 
   // Define actions for ModernTable
   const actions = [
     {
       icon: <Eye size={16} />,
-      label: '',
-      onClick: handleViewDetails
+      label: "",
+      onClick: handleViewDetails,
     },
     {
       icon: <Trash2 size={16} />,
-      label: '',
-      onClick: handleDeleteClick
-    }
+      label: "",
+      onClick: handleDeleteClick,
+    },
   ];
 
   if (isLoading) {
     return (
       <div className="w-full h-svh flex items-center justify-center">
-        <Loader2 
-          className="w-12 animate-spin" 
+        <Loader2
+          className="w-12 animate-spin"
           style={{ color: designTokens.colors.primary[500] }}
         />
       </div>
@@ -157,36 +167,33 @@ const AdminPartners = () => {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main 
-        className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8 flex flex-col lg:flex-row"
-        style={{ backgroundColor: designTokens.colors.neutral[25] }}
-      >
+      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] bg-[#FAFAFA] lg:w-[80%] min-h-full p-6 md:p-8 flex flex-col lg:flex-row">
         <TenantClientsSideMenu />
 
         <div className="flex-1 lg:w-[76%] space-y-6">
           {/* Page Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 
+              <h1
                 className="text-2xl font-bold"
                 style={{ color: designTokens.colors.neutral[900] }}
               >
                 Partners Management
               </h1>
-              <p 
+              <p
                 className="mt-1 text-sm"
                 style={{ color: designTokens.colors.neutral[600] }}
               >
                 Manage and monitor your business partners
               </p>
             </div>
-            <ModernButton
+
+            <button
               onClick={openAddPartner}
-              className="flex items-center gap-2"
+              className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base "
             >
-              <Plus size={18} />
               Add Partner
-            </ModernButton>
+            </button>
           </div>
 
           {/* Stats Cards */}
@@ -194,7 +201,7 @@ const AdminPartners = () => {
             <ModernStatsCard
               title="Total Partners"
               value={totalPartners}
-              icon={<Users size={24} />}
+              icon={<Users width={20} height={20} />}
               change={12}
               trend="up"
               color="primary"
@@ -202,22 +209,22 @@ const AdminPartners = () => {
             <ModernStatsCard
               title="Active Partners"
               value={activePartners}
-              icon={<Building2 size={24} />}
+              icon={<Building2 width={20} height={20} />}
               change={8}
               trend="up"
-              color="success"
+              color="primary"
             />
             <ModernStatsCard
               title="LLC Companies"
               value={companyTypes.RC}
-              icon={<Building2 size={24} />}
-              color="info"
+              icon={<Building2 width={20} height={20} />}
+              color="primary"
             />
             <ModernStatsCard
               title="Business Names"
               value={companyTypes.BN}
-              icon={<Building2 size={24} />}
-              color="warning"
+              icon={<Building2 width={20} height={20} />}
+              color="primary"
             />
           </div>
 
@@ -237,8 +244,6 @@ const AdminPartners = () => {
               emptyMessage="No partners found"
             />
           </ModernCard>
-
-
         </div>
       </main>
       <AddPartner isOpen={isAddPartnerOpen} onClose={closeAddPartner} />

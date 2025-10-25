@@ -7,7 +7,7 @@ import {
   Zap,
   Users,
   Activity,
-  TrendingUp
+  TrendingUp,
 } from "lucide-react";
 
 const QuickAccessNav = () => {
@@ -19,25 +19,25 @@ const QuickAccessNav = () => {
       description: "Create and provision multiple instances",
       icon: Server,
       path: "/admin-dashboard/multi-instance-creation",
-      color: "bg-blue-50 text-blue-600",
-      bgColor: "hover:bg-blue-100"
+      color: "bg-unicloud-blue/10 text-unicloud-blue",
+      bgColor: "hover:bg-unicloud-blue/20",
     },
     {
       title: "Projects",
       description: "Manage projects and infrastructure",
       icon: Settings,
       path: "/admin-dashboard/projects",
-      color: "bg-purple-50 text-purple-600",
-      bgColor: "hover:bg-purple-100"
+      color: "bg-unicloud-blue/10 text-unicloud-blue",
+      bgColor: "hover:bg-unicloud-blue/20",
     },
     {
       title: "Advanced Calculator",
       description: "Calculate pricing and generate quotes",
       icon: Terminal,
       path: "/admin-dashboard/advanced-calculator",
-      color: "bg-green-50 text-green-600",
-      bgColor: "hover:bg-green-100"
-    }
+      color: "bg-unicloud-blue/10 text-unicloud-blue",
+      bgColor: "hover:bg-unicloud-blue/20",
+    },
   ];
 
   return (
@@ -45,10 +45,12 @@ const QuickAccessNav = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Quick Access</h2>
-          <p className="text-sm text-gray-500 mt-1">Enhanced features and tools</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Enhanced features and tools
+          </p>
         </div>
         <div className="flex items-center space-x-2">
-          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-unicloud-blue/10 text-unicloud-blue">
             <Zap className="w-3 h-3 mr-1" />
             New Features
           </span>
@@ -60,9 +62,11 @@ const QuickAccessNav = () => {
           <button
             key={link.title}
             onClick={() => navigate(link.path)}
-            className={`text-left p-4 rounded-lg border border-gray-200 transition-all duration-200 ${link.bgColor} hover:shadow-md hover:border-gray-300`}
+            className={`text-left p-4 rounded-lg border border-gray-200 transition-all duration-200 ${link.bgColor} hover:border-gray-300`}
           >
-            <div className={`inline-flex items-center justify-center w-10 h-10 rounded-lg mb-3 ${link.color}`}>
+            <div
+              className={`inline-flex items-center justify-center w-10 h-10 rounded-lg mb-3 ${link.color}`}
+            >
               <link.icon className="w-5 h-5" />
             </div>
 
@@ -90,7 +94,7 @@ const QuickAccessNav = () => {
           </div>
           <button
             onClick={() => navigate("/admin-dashboard/projects")}
-            className="text-blue-600 hover:text-blue-800 font-medium"
+            className="text-unicloud-blue font-medium"
           >
             Get Started →
           </button>

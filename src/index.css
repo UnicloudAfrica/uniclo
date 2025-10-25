@@ -3,10 +3,10 @@
 @tailwind utilities;
 
 /* Import modern animations and micro-interactions */
-@import './styles/animations.css';
+@import "./styles/animations.css";
 
 /* Import responsive utilities */
-@import './styles/responsive.css';
+@import "./styles/responsive.css";
 
 @media only screen and (max-width: 767px) {
   .centered {
@@ -58,6 +58,7 @@ textarea {
 }
 :root {
   --bar-bg: #121212;
+  --unicloud-blue: #288dd1;
   font-family: "Outfit", "Inter", "SF Pro Display", system-ui, sans-serif;
 }
 
@@ -142,12 +143,12 @@ body {
   background-repeat: repeat;
 }
 .gradient-text {
-  background: linear-gradient(45deg, #288dd1, #3fe0c8);
+  background: linear-gradient(45deg, var(--unicloud-blue), #3fe0c8);
   -webkit-background-clip: text;
   color: transparent;
 }
 .gradient-txt {
-  background: linear-gradient(45deg, #288dd1cc, #3fe0c8);
+  background: linear-gradient(45deg, var(--unicloud-blue) cc, #3fe0c8);
   -webkit-background-clip: text;
   color: transparent;
 }
@@ -239,7 +240,7 @@ img {
 }
 
 .input-field:focus {
-  box-shadow: 0 0 0 1px #288dd1;
+  box-shadow: 0 0 0 1px var(--unicloud-blue);
 }
 ::-webkit-scrollbar {
   -webkit-appearance: none;
@@ -248,8 +249,8 @@ img {
 }
 
 ::-webkit-scrollbar-thumb {
-  border-radius: 4px;
-  background-color: #288dd1;
+  border-radius: 4px; /* Consider using a CSS variable for border-radius if it's a common value */
+  background-color: var(--unicloud-blue);
   -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, 0.5);
 }
 .sub-input {

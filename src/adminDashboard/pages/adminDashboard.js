@@ -19,7 +19,7 @@ import {
   HelpCircle,
   Eye,
   Edit,
-  Trash2
+  Trash2,
 } from "lucide-react";
 import useAuthRedirect from "../../utils/adminAuthRedirect";
 
@@ -160,7 +160,7 @@ export default function AdminDashboard() {
           <ModernStatsCard
             title="Total Active Partners"
             value="0"
-            icon={<Building />}
+            icon={<Building width={20} height={20} />}
             color="primary"
             trend="neutral"
             description="Partners registered in the system"
@@ -168,24 +168,24 @@ export default function AdminDashboard() {
           <ModernStatsCard
             title="Total Active Clients"
             value="0"
-            icon={<Users />}
-            color="success"
+            icon={<Users width={20} height={20} />}
+            color="primary"
             trend="neutral"
             description="Active client accounts"
           />
           <ModernStatsCard
             title="Total Modules"
             value="0"
-            icon={<Package />}
-            color="info"
+            icon={<Package width={20} height={20} />}
+            color="primary"
             trend="neutral"
             description="Available service modules"
           />
           <ModernStatsCard
             title="Pending Tickets"
             value="0"
-            icon={<HelpCircle />}
-            color="warning"
+            icon={<HelpCircle width={20} height={20} />}
+            color="primary"
             trend="neutral"
             description="Support tickets awaiting response"
           />
@@ -203,37 +203,37 @@ export default function AdminDashboard() {
             data={recentPartners}
             columns={[
               {
-                key: 'id',
-                header: 'Partner ID'
+                key: "id",
+                header: "Partner ID",
               },
               {
-                key: 'name',
-                header: 'Name'
+                key: "name",
+                header: "Name",
               },
               {
-                key: 'email',
-                header: 'Email'
+                key: "email",
+                header: "Email",
               },
               {
-                key: 'phone',
-                header: 'Phone Number'
+                key: "phone",
+                header: "Phone Number",
               },
               {
-                key: 'clients',
-                header: 'Number of Clients'
-              }
+                key: "clients",
+                header: "Number of Clients",
+              },
             ]}
             actions={[
               {
-                label: 'View',
+                label: "View",
                 icon: <Eye size={16} />,
-                onClick: (partner) => console.log('View partner:', partner)
+                onClick: (partner) => console.log("View partner:", partner),
               },
               {
-                label: 'Edit',
+                label: "Edit",
                 icon: <Edit size={16} />,
-                onClick: (partner) => console.log('Edit partner:', partner)
-              }
+                onClick: (partner) => console.log("Edit partner:", partner),
+              },
             ]}
             searchable={true}
             exportable={true}
@@ -250,42 +250,42 @@ export default function AdminDashboard() {
             data={recentClients}
             columns={[
               {
-                key: 'id',
-                header: 'Client ID'
+                key: "id",
+                header: "Client ID",
               },
               {
-                key: 'name',
-                header: 'Name'
+                key: "name",
+                header: "Name",
               },
               {
-                key: 'email',
-                header: 'Email'
+                key: "email",
+                header: "Email",
               },
               {
-                key: 'phone',
-                header: 'Phone Number'
+                key: "phone",
+                header: "Phone Number",
               },
               {
-                key: 'module',
-                header: 'Current Module',
+                key: "module",
+                header: "Current Module",
                 render: (value) => (
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     {value}
                   </span>
-                )
-              }
+                ),
+              },
             ]}
             actions={[
               {
-                label: 'View',
+                label: "View",
                 icon: <Eye size={16} />,
-                onClick: (client) => console.log('View client:', client)
+                onClick: (client) => console.log("View client:", client),
               },
               {
-                label: 'Edit',
+                label: "Edit",
                 icon: <Edit size={16} />,
-                onClick: (client) => console.log('Edit client:', client)
-              }
+                onClick: (client) => console.log("Edit client:", client),
+              },
             ]}
             searchable={true}
             exportable={true}

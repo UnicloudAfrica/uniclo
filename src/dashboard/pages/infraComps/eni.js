@@ -5,9 +5,9 @@ import {
   useSyncTenantNetworkInterfaces,
   useDeleteTenantNetworkInterface,
 } from "../../../hooks/eni";
-import AddEniModal from "../eniComps/addEni";
-import DeleteEniModal from "../eniComps/deleteEni";
-import ManageEniSecurityGroupsModal from "../eniComps/manageSecurityGroups";
+import AddEniModal from "../ENIComps/addEni";
+import DeleteEniModal from "../ENIComps/deleteEni";
+import ManageEniSecurityGroupsModal from "../ENIComps/manageSecurityGroups";
 
 const ENIs = ({
   projectId = "",
@@ -170,7 +170,8 @@ const ENIs = ({
                   </h3>
                   <p>
                     Provider:{" "}
-                    {typeof eni.provider === "string" && eni.provider.trim() !== ""
+                    {typeof eni.provider === "string" &&
+                    eni.provider.trim() !== ""
                       ? eni.provider.toUpperCase()
                       : "N/A"}
                   </p>

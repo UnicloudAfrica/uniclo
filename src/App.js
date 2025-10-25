@@ -182,10 +182,7 @@ function App() {
           <Route path="/verify-mail" element={<VerifyMail />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/dashboard/modules" element={<Modules />} />
-          <Route
-            path="/dashboard/instances"
-            element={<PurchasedModules />}
-          />
+          <Route path="/dashboard/instances" element={<PurchasedModules />} />
           <Route path="/dashboard/clients" element={<Clients />} />
           <Route path="/dashboard/requests" element={<Requests />} />
           <Route path="/dashboard/projects" element={<Project />} />
@@ -202,13 +199,28 @@ function App() {
 
           {/* Tenant Leads Routes */}
           <Route path="/tenant-dashboard/leads" element={<TenantLeads />} />
-          <Route path="/tenant-dashboard/leads/details" element={<TenantLeadDetails />} />
+          <Route
+            path="/tenant-dashboard/leads/details"
+            element={<TenantLeadDetails />}
+          />
 
           {/* Tenant Region Marketplace Routes */}
-          <Route path="/tenant-dashboard/region-requests" element={<RegionRequests />} />
-          <Route path="/tenant-dashboard/region-requests/new" element={<NewRegionRequest />} />
-          <Route path="/tenant-dashboard/region-requests/:id" element={<RegionRequestDetail />} />
-          <Route path="/tenant-dashboard/revenue" element={<RevenueDashboard />} />
+          <Route
+            path="/tenant-dashboard/region-requests"
+            element={<RegionRequests />}
+          />
+          <Route
+            path="/tenant-dashboard/region-requests/new"
+            element={<NewRegionRequest />}
+          />
+          <Route
+            path="/tenant-dashboard/region-requests/:id"
+            element={<RegionRequestDetail />}
+          />
+          <Route
+            path="/tenant-dashboard/revenue"
+            element={<RevenueDashboard />}
+          />
           <Route path="/dashboard/account-settings" element={<Settings />} />
           <Route
             path="/dashboard/tax-configurations"
@@ -252,7 +264,10 @@ function App() {
           />
           <Route path="/admin-dashboard/payment" element={<AdminPayment />} />
           <Route path="/admin-dashboard/products" element={<AdminProducts />} />
-          <Route path="/admin-dashboard/products/add" element={<AdminProductCreate />} />
+          <Route
+            path="/admin-dashboard/products/add"
+            element={<AdminProductCreate />}
+          />
           <Route
             path="/admin-dashboard/colocation"
             element={<AdminColocation />}
@@ -264,12 +279,30 @@ function App() {
           <Route path="/admin-dashboard/projects" element={<AdminProjects />} />
           <Route path="/admin-dashboard/leads" element={<AdminLeads />} />
           <Route path="/admin-dashboard/regions" element={<AdminRegion />} />
-          <Route path="/admin-dashboard/regions/:id" element={<RegionDetail />} />
-          <Route path="/admin-dashboard/regions/:id/edit" element={<RegionEdit />} />
-          <Route path="/admin-dashboard/region-approvals" element={<RegionApprovals />} />
-          <Route path="/admin-dashboard/region-approvals/create" element={<RegionApprovalCreate />} />
-          <Route path="/admin-dashboard/region-approvals/:id" element={<RegionApprovalDetail />} />
-          <Route path="/admin-dashboard/region-approvals/:id/edit" element={<RegionApprovalEdit />} />
+          <Route
+            path="/admin-dashboard/regions/:id"
+            element={<RegionDetail />}
+          />
+          <Route
+            path="/admin-dashboard/regions/:id/edit"
+            element={<RegionEdit />}
+          />
+          <Route
+            path="/admin-dashboard/region-approvals"
+            element={<RegionApprovals />}
+          />
+          <Route
+            path="/admin-dashboard/region-approvals/create"
+            element={<RegionApprovalCreate />}
+          />
+          <Route
+            path="/admin-dashboard/region-approvals/:id"
+            element={<RegionApprovalDetail />}
+          />
+          <Route
+            path="/admin-dashboard/region-approvals/:id/edit"
+            element={<RegionApprovalEdit />}
+          />
           <Route
             path="/admin-dashboard/leads/details"
             element={<AdminLeadDetails />}
@@ -303,14 +336,29 @@ function App() {
             element={<AdminCalculatorOptions />}
           /> */}
           <Route path="/admin-dashboard/quote" element={<AdminMultiQuote />} />
-          <Route path="/admin-dashboard/advanced-calculator" element={<AdminAdvancedCalculator />} />
+          <Route
+            path="/admin-dashboard/advanced-calculator"
+            element={<AdminAdvancedCalculator />}
+          />
           {/* Instance Management routes removed - functionality moved to standard instances */}
           {/* <Route path="/admin-dashboard/instance-management" element={<InstanceManagement />} /> */}
           {/* <Route path="/admin-dashboard/instance-management/details" element={<InstanceDetails />} /> */}
-          <Route path="/admin-dashboard/enhanced-profile-settings" element={<EnhancedProfileSettings />} />
-          <Route path="/admin-dashboard/multi-instance-creation" element={<MultiInstanceCreation />} />
-          <Route path="/admin-dashboard/instances" element={<AdminInstances />} />
-          <Route path="/admin-dashboard/instances/details" element={<AdminInstancesDetails />} />
+          <Route
+            path="/admin-dashboard/profile-settings"
+            element={<EnhancedProfileSettings />}
+          />
+          <Route
+            path="/admin-dashboard/multi-instance-creation"
+            element={<MultiInstanceCreation />}
+          />
+          <Route
+            path="/admin-dashboard/instances"
+            element={<AdminInstances />}
+          />
+          <Route
+            path="/admin-dashboard/instances/details"
+            element={<AdminInstancesDetails />}
+          />
           {/* <Route
             path="/admin-dashboard/quote-calculator"
             element={<AdminQuoteCalculator />}
@@ -367,8 +415,8 @@ function App() {
               element={<ClientSupport />}
             />
           </Route>
-        </Routes >
-      </AnimatePresence >
+        </Routes>
+      </AnimatePresence>
     </>
   );
 }

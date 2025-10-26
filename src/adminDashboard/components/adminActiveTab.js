@@ -63,7 +63,7 @@ const AdminActiveTab = () => {
         <div key={index} className="flex items-center">
           {index > 0 && <ChevronRight className="text-[#1C1C1C80] mx-2 w-4" />}
           <button
-            className={`font-Outfit text-sm ${
+            className={`font-Outfit text-sm capitalize ${
               index === breadcrumbItems.length - 1
                 ? "text-[#288DD1] font-medium"
                 : "text-[#288DD1]/50 font-normal"

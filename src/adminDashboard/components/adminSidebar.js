@@ -115,12 +115,12 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       isLucide: true,
       path: "/admin-dashboard/pricing",
     },
-    {
-      name: "Purchased Modules",
-      icon: ShoppingCart,
-      isLucide: true,
-      path: "/admin-dashboard/purchased-modules",
-    },
+    // {
+    //   name: "Purchased Modules",
+    //   icon: ShoppingCart,
+    //   isLucide: true,
+    //   path: "/admin-dashboard/purchased-modules",
+    // },
     {
       name: "Projects",
       icon: FolderOpen,

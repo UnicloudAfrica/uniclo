@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { Download, CreditCard, Calendar, DollarSign, TrendingUp, FileText, Shield } from "lucide-react";
+import {
+  Download,
+  CreditCard,
+  Calendar,
+  DollarSign,
+  TrendingUp,
+  FileText,
+  Shield,
+} from "lucide-react";
 import jsPDF from "jspdf";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
@@ -75,123 +83,143 @@ export default function AdminPayment() {
       paymentMethod: "Stripe (Visa)",
       status: "Completed",
       receiptId: "RCP-005-2024",
-    }
+    },
   ];
 
   // Calculate payment statistics
   const totalRevenue = data.reduce((sum, payment) => {
-    const amount = parseFloat(payment.amount.replace(/[₦,]/g, ''));
-    return sum + (payment.status === 'Completed' ? amount : 0);
+    const amount = parseFloat(payment.amount.replace(/[₦,]/g, ""));
+    return sum + (payment.status === "Completed" ? amount : 0);
   }, 0);
 
-  const completedPayments = data.filter(p => p.status === 'Completed').length;
-  const processingPayments = data.filter(p => p.status === 'Processing').length;
-  const failedPayments = data.filter(p => p.status === 'Failed').length;
+  const completedPayments = data.filter((p) => p.status === "Completed").length;
+  const processingPayments = data.filter(
+    (p) => p.status === "Processing"
+  ).length;
+  const failedPayments = data.filter((p) => p.status === "Failed").length;
 
   // Define columns for ModernTable
   const columns = [
     {
-      key: 'date',
-      header: 'Date',
+      key: "date",
+      header: "Date",
       render: (value) => (
         <div className="flex items-center gap-2">
-          <Calendar size={16} style={{ color: designTokens.colors.neutral[500] }} />
+          <Calendar
+            size={16}
+            style={{ color: designTokens.colors.neutral[500] }}
+          />
           <span>{value}</span>
         </div>
-      )
+      ),
     },
     {
-      key: 'module',
-      header: 'Service',
+      key: "module",
+      header: "Service",
       render: (value) => (
         <div className="flex items-center gap-2">
-          <Shield size={16} style={{ color: designTokens.colors.primary[500] }} />
+          <Shield
+            size={16}
+            style={{ color: designTokens.colors.primary[500] }}
+          />
           <span className="font-medium">{value}</span>
         </div>
-      )
+      ),
     },
     {
-      key: 'plan',
-      header: 'Plan'
+      key: "plan",
+      header: "Plan",
     },
     {
-      key: 'amount',
-      header: 'Amount',
+      key: "amount",
+      header: "Amount",
       render: (value) => (
         <div className="flex items-center gap-2">
-          <DollarSign size={16} style={{ color: designTokens.colors.success[500] }} />
-          <span className="font-semibold" style={{ color: designTokens.colors.success[700] }}>
+          <DollarSign
+            size={16}
+            style={{ color: designTokens.colors.success[500] }}
+          />
+          <span
+            className="font-semibold"
+            style={{ color: designTokens.colors.success[700] }}
+          >
             {value}
           </span>
         </div>
-      )
+      ),
     },
     {
-      key: 'paymentMethod',
-      header: 'Payment Method',
+      key: "paymentMethod",
+      header: "Payment Method",
       render: (value) => (
         <div className="flex items-center gap-2">
-          <CreditCard size={16} style={{ color: designTokens.colors.neutral[500] }} />
+          <CreditCard
+            size={16}
+            style={{ color: designTokens.colors.neutral[500] }}
+          />
           <span>{value}</span>
         </div>
-      )
+      ),
     },
     {
-      key: 'status',
-      header: 'Status',
+      key: "status",
+      header: "Status",
       render: (value) => {
         const statusConfig = {
-          'Completed': {
+          Completed: {
             bg: designTokens.colors.success[50],
             text: designTokens.colors.success[700],
-            border: designTokens.colors.success[200]
+            border: designTokens.colors.success[200],
           },
-          'Processing': {
+          Processing: {
             bg: designTokens.colors.warning[50],
             text: designTokens.colors.warning[700],
-            border: designTokens.colors.warning[200]
+            border: designTokens.colors.warning[200],
           },
-          'Failed': {
+          Failed: {
             bg: designTokens.colors.error[50],
             text: designTokens.colors.error[700],
-            border: designTokens.colors.error[200]
-          }
+            border: designTokens.colors.error[200],
+          },
         };
-        const config = statusConfig[value] || statusConfig['Processing'];
-        
+        const config = statusConfig[value] || statusConfig["Processing"];
+
         return (
-          <span 
+          <span
             className="px-3 py-1 rounded-full text-xs font-medium"
             style={{
               backgroundColor: config.bg,
               color: config.text,
-              border: `1px solid ${config.border}`
+              border: `1px solid ${config.border}`,
             }}
           >
             {value}
           </span>
         );
-      }
+      },
     },
     {
-      key: 'receiptId',
-      header: 'Receipt ID',
+      key: "receiptId",
+      header: "Receipt ID",
       render: (value) => (
         <div className="flex items-center gap-2">
-          <FileText size={16} style={{ color: designTokens.colors.neutral[500] }} />
+          <FileText
+            size={16}
+            style={{ color: designTokens.colors.neutral[500] }}
+          />
           <span className="font-mono text-sm">{value}</span>
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   // Define actions for ModernTable
   const actions = [
     {
       icon: <Download size={16} />,
-      label: '',
-      onClick: (item) => downloadReceipt(item, { preventDefault: () => {} })
-    }
+      label: "",
+      onClick: (item) => downloadReceipt(item, { preventDefault: () => {} }),
+    },
   ];
 
   const generatePDFReceipt = async (item) => {
@@ -309,7 +337,7 @@ export default function AdminPayment() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main 
+      <main
         className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8"
         style={{ backgroundColor: designTokens.colors.neutral[25] }}
       >
@@ -317,13 +345,13 @@ export default function AdminPayment() {
           {/* Page Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 
+              <h1
                 className="text-2xl font-bold"
                 style={{ color: designTokens.colors.neutral[900] }}
               >
                 Payment Management
               </h1>
-              <p 
+              <p
                 className="mt-1 text-sm"
                 style={{ color: designTokens.colors.neutral[600] }}
               >
@@ -337,10 +365,10 @@ export default function AdminPayment() {
             <ModernStatsCard
               title="Total Revenue"
               value={`₦${totalRevenue.toLocaleString()}`}
-              icon={<DollarSign size={24} />}
+              icon={<DollarSign width={20} height={20} />}
               change={15}
               trend="up"
-              color="success"
+              color="primary"
               description="This month"
               animateOnMount={true}
               staggerDelay={0}
@@ -348,7 +376,7 @@ export default function AdminPayment() {
             <ModernStatsCard
               title="Completed Payments"
               value={completedPayments}
-              icon={<CreditCard size={24} />}
+              icon={<CreditCard width={20} height={20} />}
               change={8}
               trend="up"
               color="primary"
@@ -359,8 +387,8 @@ export default function AdminPayment() {
             <ModernStatsCard
               title="Processing"
               value={processingPayments}
-              icon={<TrendingUp size={24} />}
-              color="warning"
+              icon={<TrendingUp width={20} height={20} />}
+              color="primary"
               description="Pending transactions"
               animateOnMount={true}
               staggerDelay={300}
@@ -368,8 +396,8 @@ export default function AdminPayment() {
             <ModernStatsCard
               title="Failed Payments"
               value={failedPayments}
-              icon={<FileText size={24} />}
-              color="error"
+              icon={<FileText width={20} height={20} />}
+              color="primary"
               description="Requires attention"
               animateOnMount={true}
               staggerDelay={450}
@@ -377,21 +405,20 @@ export default function AdminPayment() {
           </div>
 
           {/* Payment Transactions Table */}
-          <ModernCard>
-            <ModernTable
-              title="Payment Transactions"
-              data={data}
-              columns={columns}
-              actions={actions}
-              searchable={true}
-              filterable={true}
-              exportable={true}
-              sortable={true}
-              loading={false}
-              emptyMessage="No payment transactions found"
-              enableAnimations={true}
-            />
-          </ModernCard>
+
+          <ModernTable
+            title="Payment Transactions"
+            data={data}
+            columns={columns}
+            actions={actions}
+            searchable={true}
+            filterable={true}
+            exportable={true}
+            sortable={true}
+            loading={false}
+            emptyMessage="No payment transactions found"
+            enableAnimations={true}
+          />
         </div>
       </main>
     </>

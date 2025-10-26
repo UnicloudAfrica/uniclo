@@ -85,7 +85,8 @@ const AdminPartners = () => {
     {
       key: "serialNumber",
       header: "S/N",
-      render: (value, row, index) => index + 1,
+      render: (value, row, index, currentPage, pageSize) =>
+        (currentPage - 1) * pageSize + index + 1,
     },
     {
       key: "id",
@@ -229,21 +230,20 @@ const AdminPartners = () => {
           </div>
 
           {/* Partners Table */}
-          <ModernCard>
-            <ModernTable
-              title="Partners List"
-              data={tenants}
-              columns={columns}
-              actions={actions}
-              searchable={true}
-              filterable={true}
-              exportable={true}
-              sortable={true}
-              loading={isTenantsFetching}
-              onRowClick={handleViewDetails}
-              emptyMessage="No partners found"
-            />
-          </ModernCard>
+
+          <ModernTable
+            title="Partners List"
+            data={tenants}
+            columns={columns}
+            actions={actions}
+            searchable={true}
+            filterable={true}
+            exportable={true}
+            sortable={true}
+            loading={isTenantsFetching}
+            onRowClick={handleViewDetails}
+            emptyMessage="No partners found"
+          />
         </div>
       </main>
       <AddPartner isOpen={isAddPartnerOpen} onClose={closeAddPartner} />

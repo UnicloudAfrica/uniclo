@@ -59,9 +59,10 @@ const ModernTable = ({
 
   // Filter and search data
   const filteredData = useMemo(() => {
-    if (!searchQuery) return data;
+    const sourceData = Array.isArray(data) ? data : [];
+    if (!searchQuery) return sourceData;
 
-    return data.filter((row) =>
+    return sourceData.filter((row) =>
       columns.some((column) => {
         const value = row[column.key];
         return (
@@ -102,7 +103,7 @@ const ModernTable = ({
 
   // Effect for table load animation
   useEffect(() => {
-    if (!loading && paginatedData.length > 0) {
+    if (!loading) {
       const timer = setTimeout(() => setTableLoaded(true), 100);
       return () => clearTimeout(timer);
     }
@@ -159,7 +160,7 @@ const ModernTable = ({
         : "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
     },
     header: {
-      padding: "20px 0px",
+      padding: "20px 24px",
       borderBottom: `1px solid ${designTokens.colors.neutral[200]}`,
       display: "flex",
       justifyContent: "space-between",
@@ -279,7 +280,7 @@ const ModernTable = ({
     <div
       ref={tableRef}
       style={tableStyles.container}
-      className={enableAnimations && !prefersReducedMotion ? "fade-in-up" : ""}
+      className="shadow-sm border border-gray-200"
     >
       {/* Header */}
       {(title || searchable || filterable || exportable) && (
@@ -343,7 +344,7 @@ const ModernTable = ({
       )}
 
       {/* Table */}
-      <div style={{ overflowX: "auto" }}>
+      <div style={{ overflowX: "auto" }} className="">
         <table style={tableStyles.table}>
           <thead style={tableStyles.thead}>
             <tr>
@@ -401,11 +402,7 @@ const ModernTable = ({
                       transition: prefersReducedMotion
                         ? "background-color 0.2s ease"
                         : "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                      opacity: !enableAnimations || tableLoaded ? 1 : 0,
-                      animationDelay:
-                        enableAnimations && !prefersReducedMotion
-                          ? `${animationDelay}ms`
-                          : "0ms",
+
                       borderLeft:
                         isHovered && onRowClick
                           ? `3px solid ${designTokens.colors.primary[400]}`
@@ -423,7 +420,13 @@ const ModernTable = ({
                     {columns.map((column) => (
                       <td key={column.key} style={tableStyles.td}>
                         {column.render
-                          ? column.render(row[column.key], row)
+                          ? column.render(
+                              row[column.key],
+                              row,
+                              index,
+                              currentPage,
+                              pageSize
+                            )
                           : row[column.key]}
                       </td>
                     ))}

@@ -13,7 +13,17 @@ import {
   useExportProductPricingTemplate,
 } from "../../hooks/adminHooks/adminproductPricingHook";
 import { useFetchProducts } from "../../hooks/adminHooks/adminProductHooks";
-import { ChevronDown, Loader2, DollarSign, TrendingUp, Package, Globe, Plus, Upload, Download } from "lucide-react";
+import {
+  ChevronDown,
+  Loader2,
+  DollarSign,
+  TrendingUp,
+  Package,
+  Globe,
+  Plus,
+  Upload,
+  Download,
+} from "lucide-react";
 import AddProductPricing from "./productPricingComps/addProductPricing";
 import ToastUtils from "../../utils/toastUtil";
 import UploadPricingFileModal from "./productPricingComps/uploadPricingFile";
@@ -80,60 +90,79 @@ export default function AdminPricing() {
   // Calculate pricing statistics
   const pricingStats = {
     totalProducts: pricingWithNames?.length || 0,
-    averagePrice: pricingWithNames?.length > 0 
-      ? (pricingWithNames.reduce((sum, item) => sum + parseFloat(item.price_usd || 0), 0) / pricingWithNames.length).toFixed(2)
-      : 0,
-    highestPrice: pricingWithNames?.length > 0 
-      ? Math.max(...pricingWithNames.map(item => parseFloat(item.price_usd || 0))).toFixed(2)
-      : 0,
-    uniqueRegions: [...new Set(pricingWithNames?.map(item => item.region))].length || 0
+    averagePrice:
+      pricingWithNames?.length > 0
+        ? (
+            pricingWithNames.reduce(
+              (sum, item) => sum + parseFloat(item.price_usd || 0),
+              0
+            ) / pricingWithNames.length
+          ).toFixed(2)
+        : 0,
+    highestPrice:
+      pricingWithNames?.length > 0
+        ? Math.max(
+            ...pricingWithNames.map((item) => parseFloat(item.price_usd || 0))
+          ).toFixed(2)
+        : 0,
+    uniqueRegions:
+      [...new Set(pricingWithNames?.map((item) => item.region))].length || 0,
   };
 
   // Define columns for ModernTable
   const columns = [
     {
-      key: 'product_name',
-      header: 'Product Name',
+      key: "product_name",
+      header: "Product Name",
       render: (value) => (
         <div className="flex items-center gap-2">
-          <Package size={16} style={{ color: designTokens.colors.primary[500] }} />
+          <Package
+            size={16}
+            style={{ color: designTokens.colors.primary[500] }}
+          />
           <span className="font-medium">{value}</span>
         </div>
-      )
+      ),
     },
     {
-      key: 'price_usd',
-      header: 'Price (USD)',
+      key: "price_usd",
+      header: "Price (USD)",
       render: (value) => (
         <div className="flex items-center gap-2">
-          <DollarSign size={16} style={{ color: designTokens.colors.success[500] }} />
-          <span 
+          <DollarSign
+            size={16}
+            style={{ color: designTokens.colors.success[500] }}
+          />
+          <span
             className="font-semibold"
             style={{ color: designTokens.colors.success[700] }}
           >
             ${parseFloat(value).toFixed(2) || "N/A"}
           </span>
         </div>
-      )
+      ),
     },
     {
-      key: 'region',
-      header: 'Region',
+      key: "region",
+      header: "Region",
       render: (value) => (
         <div className="flex items-center gap-2">
-          <Globe size={16} style={{ color: designTokens.colors.neutral[500] }} />
-          <span 
+          <Globe
+            size={16}
+            style={{ color: designTokens.colors.neutral[500] }}
+          />
+          <span
             className="px-2 py-1 rounded-full text-xs font-medium"
             style={{
               backgroundColor: designTokens.colors.primary[50],
-              color: designTokens.colors.primary[700]
+              color: designTokens.colors.primary[700],
             }}
           >
             {value}
           </span>
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   return (
@@ -144,31 +173,31 @@ export default function AdminPricing() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main 
-        className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8"
+      <main
+        className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] bg-[#fafafa] lg:w-[80%] min-h-full p-6 md:p-8"
         style={{ backgroundColor: designTokens.colors.neutral[25] }}
       >
         <div className="space-y-6">
           {/* Page Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 
+              <h1
                 className="text-2xl font-bold"
                 style={{ color: designTokens.colors.neutral[900] }}
               >
                 Pricing Management
               </h1>
-              <p 
+              <p
                 className="mt-1 text-sm"
                 style={{ color: designTokens.colors.neutral[600] }}
               >
                 Configure and manage product pricing across regions
               </p>
             </div>
-            
+
             {/* Region Selector */}
             <div className="relative w-full max-w-[200px]">
-              <label 
+              <label
                 className="block text-sm font-medium mb-2"
                 style={{ color: designTokens.colors.neutral[700] }}
               >
@@ -182,7 +211,7 @@ export default function AdminPricing() {
                   style={{
                     backgroundColor: designTokens.colors.neutral[0],
                     borderColor: designTokens.colors.neutral[300],
-                    color: designTokens.colors.neutral[900]
+                    color: designTokens.colors.neutral[900],
                   }}
                   disabled={isRegionsFetching}
                 >
@@ -199,7 +228,7 @@ export default function AdminPricing() {
                     ))
                   )}
                 </select>
-                <ChevronDown 
+                <ChevronDown
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4"
                   style={{ color: designTokens.colors.neutral[400] }}
                 />
@@ -212,46 +241,46 @@ export default function AdminPricing() {
             <ModernStatsCard
               title="Total Products"
               value={pricingStats.totalProducts}
-              icon={<Package size={24} />}
+              icon={<Package width={20} height={20} />}
               color="primary"
               description="Products with pricing"
             />
             <ModernStatsCard
               title="Average Price"
               value={`$${pricingStats.averagePrice}`}
-              icon={<DollarSign size={24} />}
-              color="success"
+              icon={<DollarSign width={20} height={20} />}
+              color="primary"
               description="Average USD price"
             />
             <ModernStatsCard
               title="Highest Price"
               value={`$${pricingStats.highestPrice}`}
-              icon={<TrendingUp size={24} />}
-              color="warning"
+              icon={<TrendingUp width={20} height={20} />}
+              color="primary"
               description="Maximum product price"
             />
             <ModernStatsCard
               title="Regions"
               value={pricingStats.uniqueRegions}
-              icon={<Globe size={24} />}
-              color="info"
+              icon={<Globe width={20} height={20} />}
+              color="primary"
               description="Regions covered"
             />
           </div>
 
           {/* Pricing Management Interface */}
-          <div className="w-full flex flex-col lg:flex-row gap-6">
+          <div className="w-full flex flex-col lg:flex-row">
             <PricingSideMenu />
             <ModernCard className="flex-1 lg:w-[76%]">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                 <div>
-                  <h2 
+                  <h2
                     className="text-xl font-semibold"
                     style={{ color: designTokens.colors.neutral[900] }}
                   >
                     Platform Pricing
                   </h2>
-                  <p 
+                  <p
                     className="text-sm mt-1"
                     style={{ color: designTokens.colors.neutral[600] }}
                   >
@@ -300,11 +329,15 @@ export default function AdminPricing() {
                 filterable={true}
                 exportable={true}
                 sortable={true}
-                loading={isRegionsFetching || isPricingFetching || isProductsFetching}
+                loading={
+                  isRegionsFetching || isPricingFetching || isProductsFetching
+                }
                 emptyMessage={
-                  error 
+                  error
                     ? "Error loading pricing data. Please try again."
-                    : `No pricing data found${selectedRegion ? " for this region" : ""}. Add pricing configurations to get started.`
+                    : `No pricing data found${
+                        selectedRegion ? " for this region" : ""
+                      }. Add pricing configurations to get started.`
                 }
               />
             </ModernCard>

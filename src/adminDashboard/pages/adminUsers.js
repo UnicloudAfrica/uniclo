@@ -1,13 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import { useFetchAdmins } from "../../hooks/adminHooks/adminHooks";
-import { PlusCircle, SquarePen, Trash2, Loader2 } from "lucide-react";
+import { SquarePen, Trash2, Loader2, User, Mail, Phone } from "lucide-react";
 import { AddAdminModal } from "./adminComps/addAdmin";
 import { EditAdminModal } from "./adminComps/editAdmin";
 import { DeleteAdminModal } from "./adminComps/deleteAdmin";
-import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
+import ModernTable from "../components/ModernTable";
+import { designTokens } from "../../styles/designTokens";
 
 export default function AdminUsers() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -54,6 +55,55 @@ export default function AdminUsers() {
     setSelectedAdmin(null); // Clear selected admin
   };
 
+  const columns = useMemo(
+    () => [
+      {
+        key: "serialNumber",
+        header: "S/N",
+        render: (value, row, index, currentPage, pageSize) =>
+          (currentPage - 1) * pageSize + index + 1,
+      },
+      {
+        key: "first_name",
+        header: "Name",
+        render: (value, row) => (
+          <div className="flex items-center gap-2">
+            <User size={16} className="text-gray-500" />
+            <span className="font-medium">
+              {row.first_name} {row.last_name}
+            </span>
+          </div>
+        ),
+      },
+      {
+        key: "email",
+        header: "Email",
+        render: (value) => (
+          <div className="flex items-center gap-2">
+            <Mail size={16} className="text-gray-500" />
+            <span>{value}</span>
+          </div>
+        ),
+      },
+      {
+        key: "phone",
+        header: "Phone",
+        render: (value) => (
+          <div className="flex items-center gap-2">
+            <Phone size={16} className="text-gray-500" />
+            <span>{value}</span>
+          </div>
+        ),
+      },
+    ],
+    []
+  );
+
+  const actions = [
+    { icon: <SquarePen size={16} />, onClick: handleEditAdmin },
+    { icon: <Trash2 size={16} />, onClick: handleDeleteAdmin },
+  ];
+
   return (
     <>
       <AdminHeadbar onMenuClick={toggleMobileMenu} />
@@ -62,11 +112,23 @@ export default function AdminUsers() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex flex-col lg:flex-row">
-        <TenantClientsSideMenu />
-
-        <div className="flex-1 bg-white rounded-lg shadow-sm p-4 lg:p-6 lg:w-[76%]">
-          <div className="flex justify-between items-center mb-6">
+      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1
+                className="text-2xl font-bold"
+                style={{ color: designTokens.colors.neutral[900] }}
+              >
+                Admin Users
+              </h1>
+              <p
+                className="mt-1 text-sm"
+                style={{ color: designTokens.colors.neutral[600] }}
+              >
+                Manage platform administrators
+              </p>
+            </div>
             <button
               onClick={handleAddAdmin}
               className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base "
@@ -75,133 +137,19 @@ export default function AdminUsers() {
             </button>
           </div>
 
-          {isUsersFetching ? (
-            <div className="flex justify-center items-center h-64">
-              <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
-              <p className="ml-3 text-gray-600">Loading admin users...</p>
-            </div>
-          ) : adminUsers && adminUsers.length > 0 ? (
-            <>
-              {/* Desktop Table View */}
-              <div className="hidden md:block bg-white rounded-lg shadow-sm overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-[#F2F2F2]">
-                    <tr>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        First Name
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        Last Name
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        Phone
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        Email
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {adminUsers.map((admin) => (
-                      <tr key={admin.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {admin.first_name || "N/A"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {admin.last_name || "N/A"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {admin.phone || "N/A"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {admin.email || "N/A"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button
-                            onClick={() => handleEditAdmin(admin)}
-                            className="text-[#288DD1] hover:text-[#1976D2] mr-3"
-                            title="Edit Admin"
-                          >
-                            <SquarePen className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteAdmin(admin)}
-                            className="text-red-600 hover:text-red-900"
-                            title="Delete Admin"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Mobile Card View */}
-              <div className="md:hidden grid grid-cols-1 gap-4">
-                {adminUsers.map((admin) => (
-                  <div
-                    key={admin.id}
-                    className="bg-white rounded-lg shadow-sm p-4 border border-gray-200"
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="text-md font-semibold text-gray-800">
-                        {admin.first_name || "N/A"} {admin.middle_name || ""}{" "}
-                        {admin.last_name || "N/A"}
-                      </h3>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleEditAdmin(admin)}
-                          className="text-[#288DD1] hover:text-[#1976D2]"
-                          title="Edit Admin"
-                        >
-                          <SquarePen className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteAdmin(admin)}
-                          className="text-red-600 hover:text-red-900"
-                          title="Delete Admin"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      <span className="font-medium">Email:</span>{" "}
-                      {admin.email || "N/A"}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      <span className="font-medium">Phone:</span>{" "}
-                      {admin.phone || "N/A"}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-10 text-gray-500">
-              No admin users found.
-            </div>
-          )}
+          <ModernTable
+            title="Admin Users List"
+            data={adminUsers || []}
+            columns={columns}
+            actions={actions}
+            searchable={true}
+            filterable={true}
+            exportable={true}
+            sortable={true}
+            paginated={true}
+            loading={isUsersFetching}
+            emptyMessage="No admin users found."
+          />
         </div>
       </main>
 

@@ -10,7 +10,7 @@ import {
   Server,
   Globe,
   Activity,
-  Zap
+  Zap,
 } from "lucide-react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
@@ -128,87 +128,115 @@ export default function AdminProducts() {
   // Calculate product statistics
   const totalProducts = filteredData.length;
   const productTypes = {
-    compute_instance: filteredData.filter(p => p.productable_type === 'compute_instance').length,
-    cross_connect: filteredData.filter(p => p.productable_type === 'cross_connect').length,
-    os_image: filteredData.filter(p => p.productable_type === 'os_image').length,
-    bandwidth: filteredData.filter(p => p.productable_type === 'bandwidth').length,
-    other: filteredData.filter(p => !['compute_instance', 'cross_connect', 'os_image', 'bandwidth'].includes(p.productable_type)).length
+    compute_instance: filteredData.filter(
+      (p) => p.productable_type === "compute_instance"
+    ).length,
+    cross_connect: filteredData.filter(
+      (p) => p.productable_type === "cross_connect"
+    ).length,
+    os_image: filteredData.filter((p) => p.productable_type === "os_image")
+      .length,
+    bandwidth: filteredData.filter((p) => p.productable_type === "bandwidth")
+      .length,
+    other: filteredData.filter(
+      (p) =>
+        ![
+          "compute_instance",
+          "cross_connect",
+          "os_image",
+          "bandwidth",
+        ].includes(p.productable_type)
+    ).length,
   };
 
-  const providers = [...new Set(filteredData.map(p => p.provider).filter(Boolean))];
+  const providers = [
+    ...new Set(filteredData.map((p) => p.provider).filter(Boolean)),
+  ];
   const uniqueProviders = providers.length;
 
   // Define columns for ModernTable
   const columns = [
     {
-      key: 'serialNumber',
-      header: 'S/N',
-      render: (value, row, index) => index + 1
+      key: "serialNumber",
+      header: "S/N",
+      render: (value, row, index) => index + 1,
     },
     {
-      key: 'name',
-      header: 'Product Name',
+      key: "name",
+      header: "Product Name",
       render: (value) => (
         <div className="flex items-center gap-2">
-          <Package size={16} style={{ color: designTokens.colors.primary[500] }} />
+          <Package
+            size={16}
+            style={{ color: designTokens.colors.primary[500] }}
+          />
           <span className="font-medium">{value}</span>
         </div>
-      )
+      ),
     },
     {
-      key: 'productable_type',
-      header: 'Type',
+      key: "productable_type",
+      header: "Type",
       render: (value) => {
         const typeConfig = {
-          compute_instance: { icon: Server, color: designTokens.colors.primary[500] },
-          cross_connect: { icon: Globe, color: designTokens.colors.success[500] },
+          compute_instance: {
+            icon: Server,
+            color: designTokens.colors.primary[500],
+          },
+          cross_connect: {
+            icon: Globe,
+            color: designTokens.colors.success[500],
+          },
           os_image: { icon: Activity, color: designTokens.colors.warning[500] },
           bandwidth: { icon: Zap, color: designTokens.colors.error[500] },
-          default: { icon: Package, color: designTokens.colors.neutral[500] }
+          default: { icon: Package, color: designTokens.colors.neutral[500] },
         };
         const config = typeConfig[value] || typeConfig.default;
         const Icon = config.icon;
-        
+
         return (
           <div className="flex items-center gap-2">
             <Icon size={16} style={{ color: config.color }} />
-            <span 
+            <span
               className="px-2 py-1 rounded-full text-xs font-medium"
               style={{
                 backgroundColor: `${config.color}15`,
-                color: config.color
+                color: config.color,
               }}
             >
               {formatProductType(value)}
             </span>
           </div>
         );
-      }
+      },
     },
     {
-      key: 'provider',
-      header: 'Provider',
+      key: "provider",
+      header: "Provider",
       render: (value) => (
         <div className="flex items-center gap-2">
-          <Globe size={16} style={{ color: designTokens.colors.neutral[500] }} />
-          <span>{value || 'N/A'}</span>
+          <Globe
+            size={16}
+            style={{ color: designTokens.colors.neutral[500] }}
+          />
+          <span>{value || "N/A"}</span>
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   // Define actions for ModernTable
   const actions = [
     {
       icon: <Edit size={16} />,
-      label: '',
-      onClick: (item) => openEditModal(item)
+      label: "",
+      onClick: (item) => openEditModal(item),
     },
     {
       icon: <Trash2 size={16} />,
-      label: '',
-      onClick: (item) => openDeleteModal(item)
-    }
+      label: "",
+      onClick: (item) => openDeleteModal(item),
+    },
   ];
 
   // Log state changes for debugging
@@ -226,8 +254,8 @@ export default function AdminProducts() {
   if (isLoading) {
     return (
       <div className="w-full h-svh flex items-center justify-center">
-        <Loader2 
-          className="w-12 animate-spin" 
+        <Loader2
+          className="w-12 animate-spin"
           style={{ color: designTokens.colors.primary[500] }}
         />
       </div>
@@ -242,7 +270,7 @@ export default function AdminProducts() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main 
+      <main
         className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8"
         style={{ backgroundColor: designTokens.colors.neutral[25] }}
       >
@@ -250,33 +278,33 @@ export default function AdminProducts() {
           {/* Page Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 
+              <h1
                 className="text-2xl font-bold"
                 style={{ color: designTokens.colors.neutral[900] }}
               >
                 Product Management
               </h1>
-              <p 
+              <p
                 className="mt-1 text-sm"
                 style={{ color: designTokens.colors.neutral[600] }}
               >
                 Manage cloud service products and configurations
               </p>
             </div>
-            <ModernButton
+
+            <button
               onClick={() => navigate("/admin-dashboard/products/add")}
-              className="flex items-center gap-2"
+              className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base "
             >
-              <Plus size={18} />
               Add Product
-            </ModernButton>
+            </button>
           </div>
 
           {/* Filter Controls */}
           <ModernCard>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="relative">
-                <label 
+                <label
                   className="block text-sm font-medium mb-2"
                   style={{ color: designTokens.colors.neutral[700] }}
                 >
@@ -290,7 +318,7 @@ export default function AdminProducts() {
                     style={{
                       backgroundColor: designTokens.colors.neutral[0],
                       borderColor: designTokens.colors.neutral[300],
-                      color: designTokens.colors.neutral[900]
+                      color: designTokens.colors.neutral[900],
                     }}
                     disabled={isCountriesFetching}
                   >
@@ -307,15 +335,15 @@ export default function AdminProducts() {
                       ))
                     )}
                   </select>
-                  <ChevronDown 
+                  <ChevronDown
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4"
                     style={{ color: designTokens.colors.neutral[400] }}
                   />
                 </div>
               </div>
-              
+
               <div className="relative">
-                <label 
+                <label
                   className="block text-sm font-medium mb-2"
                   style={{ color: designTokens.colors.neutral[700] }}
                 >
@@ -329,7 +357,7 @@ export default function AdminProducts() {
                     style={{
                       backgroundColor: designTokens.colors.neutral[0],
                       borderColor: designTokens.colors.neutral[300],
-                      color: designTokens.colors.neutral[900]
+                      color: designTokens.colors.neutral[900],
                     }}
                     disabled={
                       isRegionsFetching ||
@@ -358,7 +386,7 @@ export default function AdminProducts() {
                         ))
                     )}
                   </select>
-                  <ChevronDown 
+                  <ChevronDown
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4"
                     style={{ color: designTokens.colors.neutral[400] }}
                   />
@@ -366,7 +394,7 @@ export default function AdminProducts() {
               </div>
 
               <div>
-                <label 
+                <label
                   className="block text-sm font-medium mb-2"
                   style={{ color: designTokens.colors.neutral[700] }}
                 >
@@ -387,7 +415,7 @@ export default function AdminProducts() {
             <ModernStatsCard
               title="Total Products"
               value={totalProducts}
-              icon={<Package size={24} />}
+              icon={<Package width={20} height={20} />}
               change={5}
               trend="up"
               color="primary"
@@ -396,42 +424,42 @@ export default function AdminProducts() {
             <ModernStatsCard
               title="Compute Instances"
               value={productTypes.compute_instance}
-              icon={<Server size={24} />}
-              color="success"
+              icon={<Server width={20} height={20} />}
+              color="primary"
               description="Server products"
             />
             <ModernStatsCard
               title="Network Services"
               value={productTypes.cross_connect + productTypes.bandwidth}
-              icon={<Globe size={24} />}
-              color="warning"
+              icon={<Globe width={20} height={20} />}
+              color="primary"
               description="Network products"
             />
             <ModernStatsCard
               title="Providers"
               value={uniqueProviders}
-              icon={<Activity size={24} />}
-              color="info"
+              icon={<Activity width={20} height={20} />}
+              color="primary"
               description="Service providers"
             />
           </div>
 
           {/* Products Table */}
-          <ModernCard>
-            <ModernTable
-              title="Products Catalog"
-              data={filteredData}
-              columns={columns}
-              actions={actions}
-              searchable={false}
-              filterable={false}
-              exportable={true}
-              sortable={true}
-              loading={isProductsFetching || isRegionsFetching || isCountriesFetching}
-              emptyMessage="No products found. Try adjusting your filters."
-            />
-          </ModernCard>
 
+          <ModernTable
+            title="Products Catalog"
+            data={filteredData}
+            columns={columns}
+            actions={actions}
+            searchable={false}
+            filterable={false}
+            exportable={true}
+            sortable={true}
+            loading={
+              isProductsFetching || isRegionsFetching || isCountriesFetching
+            }
+            emptyMessage="No products found. Try adjusting your filters."
+          />
         </div>
       </main>
 

@@ -14,7 +14,15 @@ import CrossConnect from "./inventoryComponents/crossConnect";
 import ColocationSetting from "./inventoryComponents/colocation";
 import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
 import { useLocation } from "react-router-dom";
-import { ChevronDown, Server, HardDrive, Globe, Cpu, Database, Wifi } from "lucide-react";
+import {
+  ChevronDown,
+  Server,
+  HardDrive,
+  Globe,
+  Cpu,
+  Database,
+  Wifi,
+} from "lucide-react";
 import { designTokens } from "../../styles/designTokens";
 
 export default function AdminInventory() {
@@ -36,54 +44,54 @@ export default function AdminInventory() {
   }, [isRegionsFetching, regions, selectedRegion]);
 
   const productComponents = [
-    { 
-      id: "bandwidth", 
-      name: "Bandwidth Management", 
+    {
+      id: "bandwidth",
+      name: "Bandwidth Management",
       Component: BandWidth,
       icon: Wifi,
-      description: "Manage network bandwidth allocations"
+      description: "Manage network bandwidth allocations",
     },
-    { 
-      id: "os-image", 
-      name: "OS Images Management", 
+    {
+      id: "os-image",
+      name: "OS Images Management",
       Component: OSImages,
       icon: HardDrive,
-      description: "Manage operating system images"
+      description: "Manage operating system images",
     },
-    { 
-      id: "ebs-volumes", 
-      name: "EBS Volumes Management", 
+    {
+      id: "ebs-volumes",
+      name: "EBS Volumes Management",
       Component: EBSImages,
       icon: Database,
-      description: "Manage elastic block storage volumes"
+      description: "Manage elastic block storage volumes",
     },
-    { 
-      id: "vms", 
-      name: "VMs Management", 
+    {
+      id: "vms",
+      name: "VMs Management",
       Component: Vms,
       icon: Server,
-      description: "Manage virtual machine instances"
+      description: "Manage virtual machine instances",
     },
     {
       id: "colocation",
       name: "Colocation Management",
       Component: ColocationSetting,
       icon: Cpu,
-      description: "Manage colocation services"
+      description: "Manage colocation services",
     },
-    { 
-      id: "ips", 
-      name: "Floating IP Management", 
+    {
+      id: "ips",
+      name: "Floating IP Management",
       Component: FloatingIP,
       icon: Globe,
-      description: "Manage floating IP addresses"
+      description: "Manage floating IP addresses",
     },
     {
       id: "cross-connect",
       name: "Cross Connect Management",
       Component: CrossConnect,
       icon: Globe,
-      description: "Manage network cross connections"
+      description: "Manage network cross connections",
     },
   ];
 
@@ -107,7 +115,7 @@ export default function AdminInventory() {
     storageVolumes: 67,
     totalBandwidth: "2.5TB",
     osImages: 24,
-    crossConnections: 15
+    crossConnections: 15,
   };
 
   const toggleMobileMenu = () => {
@@ -138,31 +146,31 @@ export default function AdminInventory() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main 
-        className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8"
+      <main
+        className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit bg-[#fafafa] w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8"
         style={{ backgroundColor: designTokens.colors.neutral[25] }}
       >
         <div className="space-y-6">
           {/* Page Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 
+              <h1
                 className="text-2xl font-bold"
                 style={{ color: designTokens.colors.neutral[900] }}
               >
                 Inventory Management
               </h1>
-              <p 
+              <p
                 className="mt-1 text-sm"
                 style={{ color: designTokens.colors.neutral[600] }}
               >
                 Monitor and manage infrastructure resources across regions
               </p>
             </div>
-            
+
             {/* Region Selector */}
             <div className="relative w-full max-w-[200px]">
-              <label 
+              <label
                 className="block text-sm font-medium mb-2"
                 style={{ color: designTokens.colors.neutral[700] }}
               >
@@ -176,7 +184,7 @@ export default function AdminInventory() {
                   style={{
                     backgroundColor: designTokens.colors.neutral[0],
                     borderColor: designTokens.colors.neutral[300],
-                    color: designTokens.colors.neutral[900]
+                    color: designTokens.colors.neutral[900],
                   }}
                   disabled={isRegionsFetching}
                 >
@@ -192,7 +200,7 @@ export default function AdminInventory() {
                     ))
                   )}
                 </select>
-                <ChevronDown 
+                <ChevronDown
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4"
                   style={{ color: designTokens.colors.neutral[400] }}
                 />
@@ -205,7 +213,7 @@ export default function AdminInventory() {
             <ModernStatsCard
               title="Virtual Machines"
               value={inventoryStats.totalVMs}
-              icon={<Server size={24} />}
+              icon={<Server width={20} height={20} />}
               change={12}
               trend="up"
               color="primary"
@@ -214,32 +222,32 @@ export default function AdminInventory() {
             <ModernStatsCard
               title="Floating IPs"
               value={inventoryStats.activeIPs}
-              icon={<Globe size={24} />}
+              icon={<Globe width={20} height={20} />}
               change={3}
               trend="up"
-              color="success"
+              color="primary"
               description="Available IPs"
             />
             <ModernStatsCard
               title="Storage Volumes"
               value={inventoryStats.storageVolumes}
-              icon={<Database size={24} />}
+              icon={<Database width={20} height={20} />}
               change={-2}
               trend="down"
-              color="warning"
+              color="primary"
               description="EBS volumes"
             />
             <ModernStatsCard
               title="Total Bandwidth"
               value={inventoryStats.totalBandwidth}
-              icon={<Wifi size={24} />}
-              color="info"
+              icon={<Wifi width={20} height={20} />}
+              color="primary"
               description="Monthly allocation"
             />
           </div>
 
           {/* Inventory Management Interface */}
-          <div className="flex flex-col lg:flex-row w-full gap-6">
+          <div className="flex flex-col lg:flex-row w-full ga">
             <ProductSideMenu
               activeTab={activeProductTab}
               onTabChange={handleProductTabChange}
@@ -248,23 +256,23 @@ export default function AdminInventory() {
               {ActiveComponent && !isRegionsFetching ? (
                 <div>
                   <div className="flex items-center gap-3 mb-6">
-                    <div 
+                    <div
                       className="p-2 rounded-lg"
                       style={{
                         backgroundColor: designTokens.colors.primary[50],
-                        color: designTokens.colors.primary[600]
+                        color: designTokens.colors.primary[600],
                       }}
                     >
                       <ActiveComponent.icon size={20} />
                     </div>
                     <div>
-                      <h2 
+                      <h2
                         className="text-xl font-semibold"
                         style={{ color: designTokens.colors.neutral[900] }}
                       >
                         {ActiveComponent.name}
                       </h2>
-                      <p 
+                      <p
                         className="text-sm"
                         style={{ color: designTokens.colors.neutral[600] }}
                       >
@@ -277,15 +285,15 @@ export default function AdminInventory() {
               ) : (
                 <div className="text-center py-16">
                   <div className="mb-4">
-                    <Server 
-                      size={48} 
-                      style={{ 
+                    <Server
+                      size={48}
+                      style={{
                         color: designTokens.colors.neutral[400],
-                        margin: '0 auto'
-                      }} 
+                        margin: "0 auto",
+                      }}
                     />
                   </div>
-                  <p 
+                  <p
                     className="text-lg font-medium"
                     style={{ color: designTokens.colors.neutral[500] }}
                   >

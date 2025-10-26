@@ -66,21 +66,8 @@ const ModernStatsCard = ({
 
   // Effect for value change animation
   useEffect(() => {
-    if (prevValue !== value && prevValue !== "" && !loading) {
-      // Trigger success flash when value increases, error when decreases
-      const prevNum = parseFloat(prevValue.toString().replace(/[^0-9.-]/g, ""));
-      const currentNum = parseFloat(value.toString().replace(/[^0-9.-]/g, ""));
-
-      if (!isNaN(prevNum) && !isNaN(currentNum)) {
-        if (currentNum > prevNum) {
-          triggerSuccess();
-        } else if (currentNum < prevNum) {
-          triggerError();
-        }
-      }
-    }
     setPrevValue(value);
-  }, [value, prevValue, loading, triggerSuccess, triggerError]);
+  }, [value, loading]);
   const colors = {
     primary: {
       bg: designTokens.colors.primary[50],
@@ -279,12 +266,6 @@ const ModernStatsCard = ({
       classes.push("stats-card-hover");
     }
 
-    if (flashState === "success") {
-      classes.push("success-flash");
-    } else if (flashState === "error") {
-      classes.push("error-flash");
-    }
-
     if (showLoadingAnimation) {
       classes.push("stats-card-loading");
     }
@@ -481,11 +462,8 @@ const ModernStatsCard = ({
           <div
             style={{
               ...valueStyles,
-              transform: flashState ? "scale(1.02)" : "scale(1)",
             }}
-            className={`value-display ${
-              flashState ? `flash-${flashState}` : ""
-            }`}
+            className="value-display"
           >
             {value}
           </div>

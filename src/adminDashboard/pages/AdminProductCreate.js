@@ -78,14 +78,14 @@ const AdminProductCreate = () => {
     const value = String(raw).trim().toLowerCase();
     const aliases = {
       "compute instance": "compute_instance",
-      "compute": "compute_instance",
+      compute: "compute_instance",
       "cross connect": "cross_connect",
       "cross-connect": "cross_connect",
       "os image": "os_image",
       "operating system": "os_image",
       bandwidth: "bandwidth",
       "floating ip": "ip",
-      "floating_ip": "ip",
+      floating_ip: "ip",
       ip: "ip",
       "volume type": "volume_type",
       volume: "volume_type",
@@ -108,11 +108,24 @@ const AdminProductCreate = () => {
     const region = coerceTrimmedString(
       row.region ?? row.region_code ?? row.Region ?? row["Region"]
     );
-    const rawType = row.productable_type ?? row.type ?? row.ProductType ?? row["Product Type"];
+    const rawType =
+      row.productable_type ??
+      row.type ??
+      row.ProductType ??
+      row["Product Type"];
     const productableType = normalizeType(rawType);
-    const rawProductId = row.productable_id ?? row.product_id ?? row.ProductID ?? row["Product ID"];
+    const rawProductId =
+      row.productable_id ??
+      row.product_id ??
+      row.ProductID ??
+      row["Product ID"];
     const productableIdNumber = Number(rawProductId);
-    const rawPrice = row.price ?? row.price_usd ?? row.Price ?? row["Price"] ?? row["priceUSD"];
+    const rawPrice =
+      row.price ??
+      row.price_usd ??
+      row.Price ??
+      row["Price"] ??
+      row["priceUSD"];
     const priceNumber = Number(rawPrice);
 
     if (!name) {
@@ -190,7 +203,11 @@ const AdminProductCreate = () => {
       return;
     }
 
-    updateEntry(index, { loadingOptions: true, options: [], productable_id: "" });
+    updateEntry(index, {
+      loadingOptions: true,
+      options: [],
+      productable_id: "",
+    });
 
     try {
       const params = new URLSearchParams();
@@ -233,18 +250,23 @@ const AdminProductCreate = () => {
       } else if (extension === "xlsx" || extension === "xls") {
         rows = await parseExcelFile(file);
       } else {
-        ToastUtils.error("Unsupported file type. Please upload a CSV or Excel file.");
+        ToastUtils.error(
+          "Unsupported file type. Please upload a CSV or Excel file."
+        );
         return;
       }
 
       const nonEmptyRows = rows.filter((row) =>
-        Object.values(row || {}).some((value) =>
-          value !== null && value !== undefined && String(value).trim() !== ""
+        Object.values(row || {}).some(
+          (value) =>
+            value !== null && value !== undefined && String(value).trim() !== ""
         )
       );
 
       if (!nonEmptyRows.length) {
-        ToastUtils.error("The uploaded file does not contain any rows to import.");
+        ToastUtils.error(
+          "The uploaded file does not contain any rows to import."
+        );
         return;
       }
 
@@ -286,10 +308,16 @@ const AdminProductCreate = () => {
         }, 0);
       });
 
-      ToastUtils.success(`Imported ${newEntries.length} product${newEntries.length > 1 ? "s" : ""}.`);
+      ToastUtils.success(
+        `Imported ${newEntries.length} product${
+          newEntries.length > 1 ? "s" : ""
+        }.`
+      );
     } catch (error) {
       console.error("Failed to import products:", error);
-      ToastUtils.error("Failed to import products. Please verify the file and try again.");
+      ToastUtils.error(
+        "Failed to import products. Please verify the file and try again."
+      );
     } finally {
       setIsImporting(false);
       if (event.target) {
@@ -302,8 +330,7 @@ const AdminProductCreate = () => {
     const entry = entries[index];
     if (!entry) return;
 
-    const nextRegion =
-      field === "region" ? value : entry.region;
+    const nextRegion = field === "region" ? value : entry.region;
     const nextType =
       field === "productable_type" ? value : entry.productable_type;
 
@@ -430,7 +457,7 @@ const AdminProductCreate = () => {
 
   if (isLoading) {
     return null;
-    }
+  }
 
   return (
     <>
@@ -445,17 +472,6 @@ const AdminProductCreate = () => {
         style={{ backgroundColor: designTokens.colors.neutral[25] }}
       >
         <div className="space-y-6">
-          <ModernButton
-            variant="outline"
-            size="sm"
-            className="flex items-center gap-2"
-            onClick={() => navigate("/admin-dashboard/products")}
-            isDisabled={isSubmitting}
-          >
-            <ArrowLeft size={16} />
-            Back to Products
-          </ModernButton>
-
           <div className="space-y-2">
             <h1
               className="text-2xl font-bold"
@@ -479,7 +495,9 @@ const AdminProductCreate = () => {
                 <table className="min-w-[960px] w-full table-auto">
                   <thead>
                     <tr className="bg-gray-50">
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">#</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                        #
+                      </th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
                         Product Name<span className="text-red-500">*</span>
                       </th>
@@ -503,29 +521,43 @@ const AdminProductCreate = () => {
                   <tbody className="divide-y divide-gray-100">
                     {entries.map((entry, index) => (
                       <tr key={entry.id} className="align-top">
-                        <td className="px-4 py-3 text-sm text-gray-500">{index + 1}</td>
+                        <td className="px-4 py-3 text-sm text-gray-500">
+                          {index + 1}
+                        </td>
                         <td className="px-4 py-3">
                           <input
                             type="text"
                             value={entry.name}
                             onChange={(e) =>
-                              handleEntryFieldChange(index, "name", e.target.value)
+                              handleEntryFieldChange(
+                                index,
+                                "name",
+                                e.target.value
+                              )
                             }
                             placeholder="Product name"
                             className={`w-full input-field ${
-                              entry.errors.name ? "border-red-500" : "border-gray-300"
+                              entry.errors.name
+                                ? "border-red-500"
+                                : "border-gray-300"
                             }`}
                             disabled={isSubmitting}
                           />
                           {entry.errors.name && (
-                            <p className="text-red-500 text-xs mt-1">{entry.errors.name}</p>
+                            <p className="text-red-500 text-xs mt-1">
+                              {entry.errors.name}
+                            </p>
                           )}
                         </td>
                         <td className="px-4 py-3">
                           <select
                             value={entry.region}
                             onChange={(e) =>
-                              handleEntryFieldChange(index, "region", e.target.value)
+                              handleEntryFieldChange(
+                                index,
+                                "region",
+                                e.target.value
+                              )
                             }
                             className={`w-full input-field ${
                               entry.errors.region
@@ -535,7 +567,9 @@ const AdminProductCreate = () => {
                             disabled={isSubmitting || isRegionsFetching}
                           >
                             <option value="">
-                              {isRegionsFetching ? "Loading regions..." : "Select region"}
+                              {isRegionsFetching
+                                ? "Loading regions..."
+                                : "Select region"}
                             </option>
                             {regions?.map((region) => (
                               <option key={region.code} value={region.code}>
@@ -543,9 +577,11 @@ const AdminProductCreate = () => {
                               </option>
                             ))}
                           </select>
-                            {entry.errors.region && (
-                              <p className="text-red-500 text-xs mt-1">{entry.errors.region}</p>
-                            )}
+                          {entry.errors.region && (
+                            <p className="text-red-500 text-xs mt-1">
+                              {entry.errors.region}
+                            </p>
+                          )}
                           <p className="text-xs text-gray-400 mt-1">
                             Provider: {entry.provider || "Auto-detected"}
                           </p>
@@ -613,7 +649,10 @@ const AdminProductCreate = () => {
                               const value = getOptionValue(option);
                               const label = getOptionLabel(option);
                               return (
-                                <option key={`${entry.id}-${value}`} value={value}>
+                                <option
+                                  key={`${entry.id}-${value}`}
+                                  value={value}
+                                >
                                   {label}
                                 </option>
                               );
@@ -632,11 +671,17 @@ const AdminProductCreate = () => {
                             step="0.01"
                             value={entry.price}
                             onChange={(e) =>
-                              handleEntryFieldChange(index, "price", e.target.value)
+                              handleEntryFieldChange(
+                                index,
+                                "price",
+                                e.target.value
+                              )
                             }
                             placeholder="0.00"
                             className={`w-full input-field ${
-                              entry.errors.price ? "border-red-500" : "border-gray-300"
+                              entry.errors.price
+                                ? "border-red-500"
+                                : "border-gray-300"
                             }`}
                             disabled={isSubmitting}
                           />
@@ -686,29 +731,45 @@ const AdminProductCreate = () => {
                     </div>
                     <div className="space-y-4">
                       <div>
-                        <label className="text-sm font-medium text-gray-700">Product Name <span className="text-red-500">*</span></label>
+                        <label className="text-sm font-medium text-gray-700">
+                          Product Name <span className="text-red-500">*</span>
+                        </label>
                         <input
                           type="text"
                           value={entry.name}
                           onChange={(e) =>
-                            handleEntryFieldChange(index, "name", e.target.value)
+                            handleEntryFieldChange(
+                              index,
+                              "name",
+                              e.target.value
+                            )
                           }
                           placeholder="Product name"
                           className={`w-full input-field mt-1 ${
-                            entry.errors.name ? "border-red-500" : "border-gray-300"
+                            entry.errors.name
+                              ? "border-red-500"
+                              : "border-gray-300"
                           }`}
                           disabled={isSubmitting}
                         />
                         {entry.errors.name && (
-                          <p className="text-red-500 text-xs mt-1">{entry.errors.name}</p>
+                          <p className="text-red-500 text-xs mt-1">
+                            {entry.errors.name}
+                          </p>
                         )}
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-700">Region <span className="text-red-500">*</span></label>
+                        <label className="text-sm font-medium text-gray-700">
+                          Region <span className="text-red-500">*</span>
+                        </label>
                         <select
                           value={entry.region}
                           onChange={(e) =>
-                            handleEntryFieldChange(index, "region", e.target.value)
+                            handleEntryFieldChange(
+                              index,
+                              "region",
+                              e.target.value
+                            )
                           }
                           className={`w-full input-field mt-1 ${
                             entry.errors.region
@@ -718,7 +779,9 @@ const AdminProductCreate = () => {
                           disabled={isSubmitting || isRegionsFetching}
                         >
                           <option value="">
-                            {isRegionsFetching ? "Loading regions..." : "Select region"}
+                            {isRegionsFetching
+                              ? "Loading regions..."
+                              : "Select region"}
                           </option>
                           {regions?.map((region) => (
                             <option key={region.code} value={region.code}>
@@ -727,14 +790,18 @@ const AdminProductCreate = () => {
                           ))}
                         </select>
                         {entry.errors.region && (
-                          <p className="text-red-500 text-xs mt-1">{entry.errors.region}</p>
+                          <p className="text-red-500 text-xs mt-1">
+                            {entry.errors.region}
+                          </p>
                         )}
                         <p className="text-xs text-gray-400 mt-1">
                           Provider: {entry.provider || "Auto-detected"}
                         </p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-700">Type <span className="text-red-500">*</span></label>
+                        <label className="text-sm font-medium text-gray-700">
+                          Type <span className="text-red-500">*</span>
+                        </label>
                         <select
                           value={entry.productable_type}
                           onChange={(e) =>
@@ -765,7 +832,9 @@ const AdminProductCreate = () => {
                         )}
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-700">Product <span className="text-red-500">*</span></label>
+                        <label className="text-sm font-medium text-gray-700">
+                          Product <span className="text-red-500">*</span>
+                        </label>
                         <select
                           value={entry.productable_id}
                           onChange={(e) =>
@@ -798,7 +867,10 @@ const AdminProductCreate = () => {
                             const value = getOptionValue(option);
                             const label = getOptionLabel(option);
                             return (
-                              <option key={`${entry.id}-${value}`} value={value}>
+                              <option
+                                key={`${entry.id}-${value}`}
+                                value={value}
+                              >
                                 {label}
                               </option>
                             );
@@ -811,23 +883,33 @@ const AdminProductCreate = () => {
                         )}
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-700">Price (USD) <span className="text-red-500">*</span></label>
+                        <label className="text-sm font-medium text-gray-700">
+                          Price (USD) <span className="text-red-500">*</span>
+                        </label>
                         <input
                           type="number"
                           min="0"
                           step="0.01"
                           value={entry.price}
                           onChange={(e) =>
-                            handleEntryFieldChange(index, "price", e.target.value)
+                            handleEntryFieldChange(
+                              index,
+                              "price",
+                              e.target.value
+                            )
                           }
                           placeholder="0.00"
                           className={`w-full input-field mt-1 ${
-                            entry.errors.price ? "border-red-500" : "border-gray-300"
+                            entry.errors.price
+                              ? "border-red-500"
+                              : "border-gray-300"
                           }`}
                           disabled={isSubmitting}
                         />
                         {entry.errors.price && (
-                          <p className="text-red-500 text-xs mt-1">{entry.errors.price}</p>
+                          <p className="text-red-500 text-xs mt-1">
+                            {entry.errors.price}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -835,15 +917,16 @@ const AdminProductCreate = () => {
                 ))}
               </div>
 
-
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-gray-500">
-                  Region automatically determines the provider. Select a type to load available products.
+                  Region automatically determines the provider. Select a type to
+                  load available products.
                 </p>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
                   <ModernButton
                     type="button"
                     variant="outline"
+                    size="sm"
                     className="flex items-center gap-2"
                     onClick={handleImportClick}
                     isDisabled={isSubmitting}
@@ -854,6 +937,7 @@ const AdminProductCreate = () => {
                   <ModernButton
                     type="button"
                     variant="outline"
+                    size="sm"
                     className="flex items-center gap-2"
                     onClick={addEntry}
                     isDisabled={isSubmitting}
@@ -877,46 +961,18 @@ const AdminProductCreate = () => {
               <ModernButton
                 variant="outline"
                 type="button"
+                size="sm"
                 onClick={() => navigate("/admin-dashboard/products")}
                 isDisabled={isSubmitting}
               >
                 Cancel
               </ModernButton>
+
               <button
                 type="submit"
-                className="modern-button modern-button--primary modern-button--sm flex items-center gap-2"
+                className="rounded-[30px] py-2 px-4 bg-[#288DD1] text-white font-normal text-sm"
                 disabled={isSubmitting}
                 aria-busy={isSubmitting}
-                style={{
-                  fontFamily: 'Outfit, Inter, "SF Pro Display", system-ui, sans-serif',
-                  fontWeight: 600,
-                  borderRadius: '12px',
-                  transition: '200ms cubic-bezier(0.4, 0, 0.2, 1)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  outline: 'none',
-                  textDecoration: 'none',
-                  padding: '8px 12px',
-                  fontSize: '14px',
-                  lineHeight: '20px',
-                  minHeight: '32px',
-                  opacity: isSubmitting ? 0.6 : 1,
-                  pointerEvents: isSubmitting ? 'none' : 'auto',
-                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                  backgroundColor: '#06b6d4',
-                  color: '#ffffff',
-                  border: '1px solid transparent',
-                  boxShadow: '0 10px 18px -10px #06b6d4',
-                  '--btn-bg': '#06b6d4',
-                  '--btn-color': '#ffffff',
-                  '--btn-border': '1px solid transparent',
-                  '--btn-shadow': '0 10px 18px -10px #06b6d4',
-                  '--btn-hover-bg': '#0891b2',
-                  '--btn-hover-shadow': '0 14px 24px -12px #06b6d4',
-                  '--btn-active-bg': '#0e7490',
-                }}
               >
                 {isSubmitting ? (
                   <>
@@ -975,10 +1031,7 @@ function getOptionValue(option) {
 
 function getOptionLabel(option) {
   return (
-    option?.name ??
-    option?.product?.name ??
-    option?.label ??
-    "Unnamed Product"
+    option?.name ?? option?.product?.name ?? option?.label ?? "Unnamed Product"
   );
 }
 

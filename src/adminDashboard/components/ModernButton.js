@@ -39,7 +39,7 @@ const ModernButton = ({
             border: "1px solid transparent",
           },
           hover: {
-            backgroundColor: primary[600],
+            // backgroundColor: primary[600],
           },
           active: {
             backgroundColor: primary[700],

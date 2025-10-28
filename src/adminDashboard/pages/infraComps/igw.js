@@ -1,51 +1,69 @@
-import { useState } from "react";
-import { Eye, Trash2, RefreshCw } from "lucide-react";
-import { useFetchIgws, useDeleteIgw, syncIgwsFromProvider } from "../../../hooks/adminHooks/igwHooks";
-import AddIgw from "../igwComps/addIGW";
+import { useMemo, useState } from "react";
+import { Eye, Trash2, RefreshCw, Plus, Link2, Link2Off } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  useFetchIgws,
+  useDeleteIgw,
+  syncIgwsFromProvider,
+} from "../../../hooks/adminHooks/igwHooks";
+import AddIgw from "../igwComps/addIgw";
 import DeleteIgwModal from "../igwComps/deleteIGW";
 import ViewIgwModal from "../igwComps/viewIGW";
-import { useQueryClient } from "@tanstack/react-query";
-import ToastUtils from "../../../utils/toastUtil";
+import AttachIgwModal from "../igwComps/attachIGW";
 import ResourceSection from "../../components/ResourceSection";
 import ResourceEmptyState from "../../components/ResourceEmptyState";
+import ResourceListCard from "../../components/ResourceListCard";
+import ModernButton from "../../components/ModernButton";
+import StatusPill from "../../components/StatusPill";
+import ToastUtils from "../../../utils/toastUtil";
 
-const Badge = ({ text }) => {
-  const badgeClasses = {
-    attached: "bg-green-100 text-green-800",
-    detached: "bg-gray-100 text-gray-800",
-    pending: "bg-yellow-100 text-yellow-800",
-    available: "bg-blue-100 text-blue-800",
-    default: "bg-gray-100 text-gray-800",
-  };
-  const badgeClass = badgeClasses[text?.toLowerCase()] || badgeClasses.default;
+const ITEMS_PER_PAGE = 6;
 
-  return (
-    <span
-      className={`px-2 py-1 text-xs font-medium rounded-full capitalize ${badgeClass}`}
-    >
-      {text}
-    </span>
-  );
+const getToneForStatus = (status = "") => {
+  const normalized = status.toString().toLowerCase();
+  if (["available", "attached"].includes(normalized)) return "success";
+  if (["pending", "attaching", "detaching"].includes(normalized))
+    return "warning";
+  if (["error", "failed"].includes(normalized)) return "danger";
+  return "neutral";
 };
 
 const IGWs = ({ projectId = "", region = "" }) => {
   const selectedRegion = region;
+  const queryClient = useQueryClient();
   const { data: igws, isFetching: isFetchingIgws } = useFetchIgws(
     projectId,
     selectedRegion,
     {
-      enabled: !!selectedRegion,
+      enabled: Boolean(selectedRegion),
     }
   );
   const { mutate: deleteIgw, isPending: isDeleting } = useDeleteIgw();
 
   const [isCreateModalOpen, setCreateModal] = useState(false);
-  const queryClient = useQueryClient();
-  const [deleteModal, setDeleteModal] = useState(null); // { igw }
-  const [viewModal, setViewModal] = useState(null); // igw object
+  const [deleteModal, setDeleteModal] = useState(null);
+  const [viewModal, setViewModal] = useState(null);
+  const [attachModal, setAttachModal] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
   const [isSyncing, setIsSyncing] = useState(false);
+
+  const totalItems = igws?.length || 0;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const currentIgws = (igws || []).slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const attachedCount = (igws || []).filter((igw) => igw.attached_vpc_id).length;
+
+  const stats = [
+    { label: "Total IGWs", value: totalItems, tone: "primary" },
+    {
+      label: "Attached",
+      value: attachedCount,
+      tone: attachedCount ? "success" : "neutral",
+    },
+    selectedRegion
+      ? { label: "Region", value: selectedRegion, tone: "info" }
+      : null,
+  ].filter(Boolean);
 
   const openCreateModal = () => setCreateModal(true);
   const closeCreateModal = () => setCreateModal(false);
@@ -53,13 +71,8 @@ const IGWs = ({ projectId = "", region = "" }) => {
   const closeDeleteModal = () => setDeleteModal(null);
   const openViewModal = (igw) => setViewModal(igw);
   const closeViewModal = () => setViewModal(null);
-
-  // Pagination
-  const totalItems = igws?.length || 0;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentIgws = igws?.slice(startIndex, endIndex) || [];
+  const openAttachModal = (igw, mode) => setAttachModal({ igw, mode });
+  const closeAttachModal = () => setAttachModal(null);
 
   const handlePreviousPage = () => {
     if (currentPage > 1) setCurrentPage((prev) => prev - 1);
@@ -70,172 +83,226 @@ const IGWs = ({ projectId = "", region = "" }) => {
   };
 
   const handleDelete = () => {
-    if (!deleteModal) return;
+    if (!deleteModal?.igw) return;
 
     const { igw } = deleteModal;
-    // The delete hook expects a payload. We'll assume it needs project_id and region.
     const payload = { project_id: projectId, region: igw.region };
 
     deleteIgw(
       { id: igw.id, payload },
       {
-        onSuccess: () => { ToastUtils.success("Internet Gateway deleted"); closeDeleteModal(); },
-        onError: (err) => { ToastUtils.error(err?.message || "Failed to delete Internet Gateway"); closeDeleteModal(); },
+        onSuccess: () => {
+          ToastUtils.success("Internet Gateway deleted");
+          closeDeleteModal();
+        },
+        onError: (err) => {
+          ToastUtils.error(err?.message || "Failed to delete Internet Gateway");
+          closeDeleteModal();
+        },
       }
     );
   };
 
-  const syncButton = (
-    <button
-      onClick={async () => {
-        if (!projectId || !selectedRegion) {
-          ToastUtils.error("Project and region are required to sync IGWs");
-          return;
-        }
-        setIsSyncing(true);
-        try {
-          await syncIgwsFromProvider({ project_id: projectId, region: selectedRegion });
-          await queryClient.invalidateQueries({ queryKey: ["igws", { projectId, region: selectedRegion }] });
-          ToastUtils.success("Internet Gateways synced successfully!");
-        } catch (error) {
-          console.error("Failed to sync IGWs:", error);
-          ToastUtils.error(error?.message || "Failed to sync Internet Gateways.");
-        } finally {
-          setIsSyncing(false);
-        }
-      }}
-      disabled={isSyncing || !projectId || !selectedRegion}
-      className="flex items-center gap-2 rounded-full py-2.5 px-5 bg-white border border-[#288DD1] text-[#288DD1] text-sm hover:bg-[#288DD1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      title="Sync Internet Gateways from cloud provider"
-    >
-      <RefreshCw className={`w-4 h-4 ${isSyncing ? "animate-spin" : ""}`} />
-      {isSyncing ? "Syncing..." : "Sync IGWs"}
-    </button>
-  );
+  const handleSyncIgws = async () => {
+    if (!projectId || !selectedRegion) {
+      ToastUtils.error("Project and region are required to sync IGWs");
+      return;
+    }
+    setIsSyncing(true);
+    try {
+      await syncIgwsFromProvider({ project_id: projectId, region: selectedRegion });
+      await queryClient.invalidateQueries({
+        queryKey: ["igws", { projectId, region: selectedRegion }],
+      });
+      ToastUtils.success("Internet Gateways synced successfully!");
+    } catch (error) {
+      ToastUtils.error(error?.message || "Failed to sync Internet Gateways.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
-  const addButton = (
-    <button
+  const actions = [
+    <ModernButton
+      key="sync"
+      onClick={handleSyncIgws}
+      variant="outline"
+      size="sm"
+      leftIcon={<RefreshCw size={16} />}
+      isDisabled={isSyncing || !projectId || !selectedRegion}
+      isLoading={isSyncing}
+    >
+      {isSyncing ? "Syncing..." : "Sync IGWs"}
+    </ModernButton>,
+    <ModernButton
+      key="add"
       onClick={openCreateModal}
-      className="rounded-full py-3 px-9 bg-[#288DD1] text-white font-medium text-sm hover:bg-[#1976D2] transition-colors"
+      variant="primary"
+      size="sm"
+      leftIcon={<Plus size={16} />}
+      isDisabled={!projectId}
     >
       Add IGW
-    </button>
-  );
+    </ModernButton>,
+  ];
+
+  const renderGatewayCard = (igw) => {
+    const displayName =
+      igw.name ||
+      igw.label ||
+      (igw.id ? `Gateway ${igw.id}` : "Internet Gateway");
+    const status = igw.status || igw.state || "unknown";
+    const attachedVpc = igw.attached_vpc_id || "None";
+    const publicIp =
+      igw.public_ip || igw.meta?.public_ip || igw.meta?.router_ip || null;
+
+    return (
+      <ResourceListCard
+        key={igw.id}
+        title={displayName}
+        subtitle={igw.id}
+        metadata={[
+          { label: "Region", value: igw.region || selectedRegion || "—" },
+          { label: "Attached VPC", value: attachedVpc },
+          publicIp
+            ? {
+                label: "Edge Public IP",
+                value: publicIp,
+              }
+            : null,
+        ]}
+        statuses={[
+          { label: status, tone: getToneForStatus(status) },
+        ]}
+        actions={[
+          {
+            key: "inspect",
+            label: "Inspect",
+            icon: <Eye size={16} />,
+            variant: "ghost",
+            onClick: () => openViewModal(igw),
+          },
+          {
+            key: "remove",
+            label: "Remove",
+            icon: <Trash2 size={16} />,
+            variant: "danger",
+            onClick: () => openDeleteModal(igw),
+            disabled: isDeleting,
+          },
+        ]}
+        footer={
+          <div className="flex flex-wrap gap-2">
+            <ModernButton
+              variant="outline"
+              size="sm"
+              leftIcon={<Link2 size={14} />}
+              onClick={() => openAttachModal(igw, "attach")}
+              isDisabled={!projectId || !region}
+            >
+              Attach
+            </ModernButton>
+            <ModernButton
+              variant="outline"
+              size="sm"
+              leftIcon={<Link2Off size={14} />}
+              onClick={() => openAttachModal(igw, "detach")}
+              isDisabled={!projectId || !region || !igw.attached_vpc_id}
+            >
+              Detach
+            </ModernButton>
+          </div>
+        }
+      />
+    );
+  };
 
   return (
-    <ResourceSection
-      title="Internet Gateways"
-      description="Manage gateways that expose your VPC resources to the internet."
-      actions={[syncButton, addButton]}
-      isLoading={Boolean(selectedRegion && isFetchingIgws)}
-    >
-      {currentIgws && currentIgws.length > 0 ? (
-        <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {currentIgws.map((igw) => {
-              const displayName =
-                igw.name ||
-                igw.provider_resource_id ||
-                `igw-${igw.id}`;
-              const status = igw.status || igw.state || "unknown";
-              const attachedVpc = igw.attached_vpc_id || "None";
-              const tags = Array.isArray(igw.tags) ? igw.tags : [];
-
-              return (
-                <div
-                  key={igw.id}
-                  className="p-4 bg-gray-50 rounded-xl border border-gray-200 flex flex-col justify-between"
-                >
-                  <div className="flex-grow">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3
-                        className="font-medium text-gray-800 truncate pr-2"
-                        title={displayName}
-                      >
-                        {displayName}
-                      </h3>
-                      <div className="flex-shrink-0 flex items-center space-x-2">
-                        <button
-                          onClick={() => openViewModal(igw)}
-                          className="text-gray-400 hover:text-[#288DD1] transition-colors"
-                          title="View IGW Details"
-                        >
-                          <Eye className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => openDeleteModal(igw)}
-                          disabled={isDeleting}
-                          className="text-gray-400 hover:text-red-500 transition-colors"
-                          title="Delete IGW"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="space-y-1 text-sm text-gray-500">
-                      <p>Region: {igw.region || selectedRegion || "—"}</p>
-                      <p title={attachedVpc}>
-                        VPC Attached: {attachedVpc}
-                      </p>
-                      <p>
-                        Provider ID: {igw.provider_resource_id || "—"}
-                      </p>
-                      {tags.length > 0 && (
-                        <p className="truncate" title={tags.join(", ")}>
-                          Tags: {tags.join(", ")}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="mt-4 flex items-center justify-between border-t pt-3">
-                    <span className="text-sm text-gray-500">State:</span>
-                    <Badge text={status} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6">
-              <button
-                onClick={handlePreviousPage}
-                disabled={currentPage === 1}
-                className="px-4 py-2 bg-[#288DD1] text-white rounded-[30px] font-medium text-sm hover:bg-[#1976D2] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-              <div className="text-sm text-gray-600">
-                Page {currentPage} of {totalPages}
-              </div>
-              <button
-                onClick={handleNextPage}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 bg-[#288DD1] text-white rounded-[30px] font-medium text-sm hover:bg-[#1976D2] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
+    <>
+      <ResourceSection
+        title="Internet Gateways"
+        description="Manage gateways that expose your VPC resources to the internet."
+        actions={actions}
+        meta={stats}
+        isLoading={Boolean(selectedRegion && isFetchingIgws)}
+      >
+        {currentIgws && currentIgws.length > 0 ? (
+          <>
+            <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+              {currentIgws.map(renderGatewayCard)}
             </div>
-          )}
-        </>
-      ) : (
-        <ResourceEmptyState
-          title="No Internet Gateways"
-          message="Sync from the provider or create one to allow outbound connectivity."
-          action={addButton}
-        />
-      )}
 
-      <AddIgw isOpen={isCreateModalOpen} onClose={closeCreateModal} projectId={projectId} region={selectedRegion} />
+            {totalPages > 1 && (
+              <div className="mt-6 flex items-center justify-between text-sm text-gray-500">
+                <ModernButton
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePreviousPage}
+                  isDisabled={currentPage === 1}
+                >
+                  Previous
+                </ModernButton>
+                <span>
+                  Page {currentPage} of {totalPages}
+                </span>
+                <ModernButton
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNextPage}
+                  isDisabled={currentPage === totalPages}
+                >
+                  Next
+                </ModernButton>
+              </div>
+            )}
+          </>
+        ) : (
+          <ResourceEmptyState
+            title="No Internet Gateways"
+            message="Sync from your cloud account or create a new attachment to expose network resources."
+            action={
+              <ModernButton
+                variant="primary"
+                onClick={handleSyncIgws}
+                isDisabled={isSyncing || !projectId || !selectedRegion}
+                isLoading={isSyncing}
+              >
+                Sync IGWs
+              </ModernButton>
+            }
+          />
+        )}
+      </ResourceSection>
+
+      <AddIgw
+        isOpen={isCreateModalOpen}
+        onClose={closeCreateModal}
+        projectId={projectId}
+        region={region}
+      />
       <DeleteIgwModal
-        isOpen={!!deleteModal}
+        isOpen={Boolean(deleteModal)}
         onClose={closeDeleteModal}
-        igwName={deleteModal?.igw?.name || `igw-${deleteModal?.igw?.id}`}
+        igwName={
+          deleteModal?.igw?.name || deleteModal?.igw?.id || ""
+        }
         onConfirm={handleDelete}
         isDeleting={isDeleting}
       />
-      <ViewIgwModal isOpen={!!viewModal} onClose={closeViewModal} igw={viewModal} />
-    </ResourceSection>
+      <ViewIgwModal
+        isOpen={Boolean(viewModal)}
+        onClose={closeViewModal}
+        igw={viewModal}
+      />
+      <AttachIgwModal
+        isOpen={Boolean(attachModal)}
+        onClose={closeAttachModal}
+        projectId={projectId}
+        region={region}
+        igw={attachModal?.igw}
+        mode={attachModal?.mode}
+      />
+    </>
   );
 };
 

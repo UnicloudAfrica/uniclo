@@ -1,14 +1,30 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   useFetchElasticIps,
   useDeleteElasticIp,
   syncElasticIpsFromProvider,
 } from "../../../hooks/adminHooks/eipHooks";
 import AddEip from "../eipComps/addEip";
-import { Trash2, RefreshCw } from "lucide-react";
+import { Trash2, RefreshCw, MapPin, Activity } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import DeleteEipModal from "../eipComps/deleteEip";
 import ToastUtils from "../../../utils/toastUtil";
+import ResourceSection from "../../components/ResourceSection";
+import ResourceEmptyState from "../../components/ResourceEmptyState";
+import ResourceListCard from "../../components/ResourceListCard";
+import ModernButton from "../../components/ModernButton";
+
+const ITEMS_PER_PAGE = 6;
+
+const getToneForStatus = (status = "") => {
+  const normalized = status.toString().toLowerCase();
+  if (["available", "released"].includes(normalized)) return "info";
+  if (["in-use", "associated", "allocated"].includes(normalized))
+    return "success";
+  if (["pending", "allocating"].includes(normalized)) return "warning";
+  if (["error", "failed"].includes(normalized)) return "danger";
+  return "neutral";
+};
 
 const EIPs = ({ projectId = "", region = "" }) => {
   const { data: eips, isFetching } = useFetchElasticIps(projectId, region);
@@ -24,7 +40,7 @@ const EIPs = ({ projectId = "", region = "" }) => {
 
   const handleDelete = () => {
     if (!deleteModal) return;
-    const { id, name } = deleteModal;
+    const { id } = deleteModal;
     const payload = {
       project_id: projectId,
       region: region,
@@ -46,15 +62,95 @@ const EIPs = ({ projectId = "", region = "" }) => {
   };
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // Pagination logic
-  const totalItems = eips?.length || 0;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentEips = eips?.slice(startIndex, endIndex) || [];
+  const totalItems = eips?.length ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const currentEips = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return (eips ?? []).slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [eips, currentPage]);
+
+  const availableCount = useMemo(
+    () =>
+      (eips || []).filter(
+        (eip) => (eip.status || "").toString().toLowerCase() === "available"
+      ).length,
+    [eips]
+  );
+  const allocatedCount = totalItems - availableCount;
+
+  const stats = useMemo(() => {
+    const summary = [
+      {
+        label: "Elastic IPs",
+        value: totalItems,
+        tone: totalItems ? "primary" : "neutral",
+        icon: <Activity size={16} />,
+      },
+      {
+        label: "Allocated",
+        value: allocatedCount,
+        tone: allocatedCount ? "success" : "neutral",
+      },
+      {
+        label: "Available",
+        value: availableCount,
+        tone: availableCount ? "info" : "neutral",
+      },
+    ];
+    if (region) {
+      summary.push({
+        label: "Region",
+        value: region,
+        tone: "info",
+        icon: <MapPin size={16} />,
+      });
+    }
+    return summary;
+  }, [totalItems, allocatedCount, availableCount, region]);
+
+  const handleSync = async () => {
+    if (!projectId || !region) {
+      ToastUtils.error("Project and region are required to sync Elastic IPs");
+      return;
+    }
+    setIsSyncing(true);
+    try {
+      await syncElasticIpsFromProvider({ project_id: projectId, region });
+      await queryClient.invalidateQueries({
+        queryKey: ["elasticIps", { projectId, region }],
+      });
+      ToastUtils.success("Elastic IPs synced successfully!");
+    } catch (error) {
+      console.error("Failed to sync Elastic IPs:", error);
+      ToastUtils.error(error?.message || "Failed to sync Elastic IPs.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const actions = [
+    <ModernButton
+      key="sync"
+      variant="outline"
+      size="sm"
+      leftIcon={<RefreshCw size={16} />}
+      onClick={handleSync}
+      isDisabled={isSyncing || !projectId || !region}
+      isLoading={isSyncing}
+    >
+      {isSyncing ? "Syncing..." : "Sync Elastic IPs"}
+    </ModernButton>,
+    <ModernButton
+      key="add"
+      variant="primary"
+      size="sm"
+      onClick={openCreateModal}
+    >
+      Allocate Elastic IP
+    </ModernButton>,
+  ];
 
   const handlePreviousPage = () => {
     if (currentPage > 1) setCurrentPage((prev) => prev - 1);
@@ -64,119 +160,103 @@ const EIPs = ({ projectId = "", region = "" }) => {
     if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
   };
 
-  if (isFetching) {
+  const renderCard = (eip) => {
+    const status = eip.status || "unknown";
+    const allocationId = eip.allocation_id || eip.id;
+    const association =
+      eip.association_id ||
+      eip.instance_id ||
+      eip.network_interface_id ||
+      eip.resource_id ||
+      null;
+    const attachedLabel = association ? association : "Not assigned";
+
     return (
-      <div className="flex items-center justify-center p-6 bg-gray-50 rounded-lg">
-        <p>Loading EIPs...</p>
-      </div>
+      <ResourceListCard
+        key={eip.id}
+        title={eip.address || "Elastic IP"}
+        subtitle={allocationId}
+        metadata={[
+          { label: "Region", value: eip.region || region || "—" },
+          { label: "Pool", value: eip.pool_id || "—" },
+          { label: "Attached To", value: attachedLabel },
+          eip.created_at
+            ? {
+                label: "Allocated",
+                value: new Date(eip.created_at).toLocaleString(),
+              }
+            : null,
+        ].filter(Boolean)}
+        statuses={[
+          {
+            label: status,
+            tone: getToneForStatus(status),
+          },
+        ]}
+        actions={[
+          {
+            key: "delete",
+            label: "Release",
+            icon: <Trash2 size={16} />,
+            variant: "danger",
+            onClick: () => openDeleteModal(eip.id, eip.address),
+            disabled: isDeleting,
+          },
+        ]}
+      />
     );
-  }
+  };
 
   return (
     <>
-      <div className="bg-gray-50 rounded-[10px] font-Outfit">
-        <div className="flex justify-between items-center mb-6">
-          <button
-            onClick={async () => {
-              if (!projectId || !region) {
-                ToastUtils.error("Project and region are required to sync EIPs");
-                return;
-              }
-              setIsSyncing(true);
-              try {
-                await syncElasticIpsFromProvider({ project_id: projectId, region });
-                await queryClient.invalidateQueries({ queryKey: ["elasticIps", { projectId, region }] });
-                ToastUtils.success("Elastic IPs synced successfully!");
-              } catch (error) {
-                console.error("Failed to sync Elastic IPs:", error);
-                ToastUtils.error(error?.message || "Failed to sync Elastic IPs.");
-              } finally {
-                setIsSyncing(false);
-              }
-            }}
-            disabled={isSyncing || !projectId || !region}
-            className="flex items-center gap-2 rounded-[30px] py-2 px-4 bg-white border border-[#288DD1] text-[#288DD1] text-sm hover:bg-[#288DD1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Sync Elastic IPs from cloud provider"
-          >
-            <RefreshCw className={`w-4 h-4 ${isSyncing ? "animate-spin" : ""}`} /> {isSyncing ? "Syncing..." : "Sync EIPs"}
-          </button>
-          <button
-            onClick={openCreateModal}
-            className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
-          >
-            Add EIP
-          </button>
-        </div>
-        {currentEips && currentEips.length > 0 ? (
+      <ResourceSection
+        title="Elastic IPs"
+        description="Allocate and manage public IPv4 addresses for workloads that require stable internet reachability."
+        actions={actions}
+        meta={stats}
+        isLoading={isFetching}
+      >
+        {currentEips.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {currentEips.map((eip) => (
-                <div
-                  key={eip.id}
-                  className="p-4 bg-white rounded-[10px] shadow-sm border border-gray-200 flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex justify-between items-start mb-2">
-                      <h3
-                        className="font-medium text-gray-800 truncate pr-2"
-                        title={eip.address}
-                      >
-                        {eip.address}
-                      </h3>
-                      <button
-                        onClick={() => openDeleteModal(eip.id, eip.address)}
-                        disabled={isDeleting}
-                        className="text-gray-400 hover:text-red-500 transition-colors"
-                        title="Delete Elastic IP"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                    <div className="space-y-1 text-sm text-gray-500">
-                      <p>
-                        Provider:{" "}
-                        {typeof eip.provider === "string" && eip.provider.trim() !== ""
-                          ? eip.provider.toUpperCase()
-                          : "N/A"}
-                      </p>
-                      <p>Region: {eip.region}</p>
-                      <p>Pool ID: {eip.pool_id}</p>
-                      <p>
-                        Status: <span className="capitalize">{eip.status}</span>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+              {currentEips.map(renderCard)}
             </div>
             {totalPages > 1 && (
-              <div className="flex items-center justify-between mt-6">
-                <button
+              <div className="mt-6 flex items-center justify-between text-sm text-slate-500">
+                <ModernButton
+                  variant="outline"
+                  size="sm"
                   onClick={handlePreviousPage}
-                  disabled={currentPage === 1}
-                  className="px-4 py-2 bg-[#288DD1] text-white rounded-[30px] font-medium text-sm hover:bg-[#1976D2] disabled:opacity-50 disabled:cursor-not-allowed"
+                  isDisabled={currentPage === 1}
                 >
                   Previous
-                </button>
-                <div className="text-sm text-gray-600">
+                </ModernButton>
+                <span>
                   Page {currentPage} of {totalPages}
-                </div>
-                <button
+                </span>
+                <ModernButton
+                  variant="outline"
+                  size="sm"
                   onClick={handleNextPage}
-                  disabled={currentPage === totalPages}
-                  className="px-4 py-2 bg-[#288DD1] text-white rounded-[30px] font-medium text-sm hover:bg-[#1976D2] disabled:opacity-50 disabled:cursor-not-allowed"
+                  isDisabled={currentPage === totalPages}
                 >
                   Next
-                </button>
+                </ModernButton>
               </div>
             )}
           </>
         ) : (
-          <p className="text-gray-500">
-            No Elastic IPs found for this project.
-          </p>
+          <ResourceEmptyState
+            title="No Elastic IPs"
+            message="Sync from your cloud account or allocate a new Elastic IP address."
+            action={
+              <ModernButton variant="primary" onClick={openCreateModal}>
+                Allocate Elastic IP
+              </ModernButton>
+            }
+          />
         )}
-      </div>
+      </ResourceSection>
       <AddEip
         isOpen={isCreateModalOpen}
         onClose={closeCreateModal}

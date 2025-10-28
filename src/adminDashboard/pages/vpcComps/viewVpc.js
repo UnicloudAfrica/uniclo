@@ -1,197 +1,284 @@
-import { X, Copy } from "lucide-react";
+import { Copy } from "lucide-react";
+import ModernModal from "../../components/ModernModal";
 import ToastUtils from "../../../utils/toastUtil";
+import { designTokens } from "../../../styles/designTokens";
+import StatusPill from "../../components/StatusPill";
 
-const Badge = ({ text }) => {
-  const badgeClasses = {
-    pending: "bg-yellow-100 text-yellow-800",
-    active: "bg-green-100 text-green-800",
-    available: "bg-green-100 text-green-800",
-    inactive: "bg-red-100 text-red-800",
-    associated: "bg-blue-100 text-blue-800",
-    default: "bg-gray-100 text-gray-800",
-  };
-  const badgeClass = badgeClasses[text?.toLowerCase()] || badgeClasses.default;
-
-  return (
-    <span
-      className={`px-2 py-1 text-xs font-medium rounded-full capitalize ${badgeClass}`}
-    >
-      {text}
-    </span>
-  );
+const copyButtonStyles = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "6px",
+  borderRadius: designTokens.borderRadius.lg,
+  border: `1px solid ${designTokens.colors.neutral[200]}`,
+  backgroundColor: designTokens.colors.neutral[0],
+  color: designTokens.colors.neutral[400],
+  transition: "all 0.2s ease",
 };
 
-const DetailRow = ({ label, value, children, isCopyable = false }) => {
-  const handleCopy = () => {
-    navigator.clipboard.writeText(value);
-    ToastUtils.success("Copied to clipboard!");
+const getToneForStatus = (status) => {
+  if (!status) return "neutral";
+  const normalized = status.toLowerCase();
+  if (["available", "active", "attached", "ready", "synced"].includes(normalized)) {
+    return "success";
+  }
+  if (["pending", "associating", "updating", "syncing"].includes(normalized)) {
+    return "warning";
+  }
+  if (["error", "failed", "detached", "inactive"].includes(normalized)) {
+    return "danger";
+  }
+  return "neutral";
+};
+
+const DetailRow = ({ label, value, copyable }) => {
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      ToastUtils.success("Copied to clipboard");
+    } catch (error) {
+      ToastUtils.error("Copy failed");
+    }
   };
 
   return (
-    <div className="py-3 sm:grid sm:grid-cols-3 sm:gap-4">
-      <dt className="text-sm font-medium text-gray-600">{label}</dt>
-      <dd className="mt-1 flex items-center text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-        <span className="flex-grow break-words">
-          {value || children || "N/A"}
+    <div className="flex flex-col gap-1.5">
+      <span
+        className="text-xs font-semibold uppercase tracking-wide"
+        style={{ color: designTokens.colors.neutral[500] }}
+      >
+        {label}
+      </span>
+      <div className="flex items-center justify-between gap-3">
+        <span
+          className="flex-1 break-words text-sm"
+          style={{ color: designTokens.colors.neutral[800] }}
+        >
+          {value ?? "—"}
         </span>
-        {isCopyable && value && (
+        {copyable && value && (
           <button
+            type="button"
             onClick={handleCopy}
-            className="ml-2 p-1 rounded-md hover:bg-gray-200 text-gray-400 hover:text-gray-600 transition-colors"
+            style={copyButtonStyles}
+            onMouseEnter={(event) => {
+              event.currentTarget.style.color = designTokens.colors.primary[500];
+              event.currentTarget.style.borderColor = designTokens.colors.primary[200];
+            }}
+            onMouseLeave={(event) => {
+              event.currentTarget.style.color = designTokens.colors.neutral[400];
+              event.currentTarget.style.borderColor = designTokens.colors.neutral[200];
+            }}
           >
-            <Copy className="w-4 h-4" />
+            <Copy size={16} />
           </button>
         )}
-      </dd>
+      </div>
     </div>
   );
 };
 
 const ViewVpcModal = ({ isOpen, onClose, vpc }) => {
-  if (!isOpen || !vpc) return null;
+  const actions = [
+    {
+      label: "Close",
+      variant: "ghost",
+      onClick: onClose,
+    },
+  ];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
-      <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full">
-        <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
-          <h2 className="text-lg font-semibold text-[#575758]">
-            VPC Details: {vpc.name}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-[#1E1E1EB2] transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="px-6 py-6 max-h-[400px] overflow-y-auto">
-          <div className="space-y-6 text-sm">
-            {/* General Details */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
-              <div>
-                <span className="font-medium text-gray-700">ID:</span> {vpc.id}
+    <ModernModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={vpc ? `VPC • ${vpc.name}` : "VPC details"}
+      size="xl"
+      actions={actions}
+      contentClassName="space-y-8 overflow-y-auto"
+    >
+      {vpc ? (
+        <>
+          <section className="grid gap-6 lg:grid-cols-2">
+            <div className="space-y-4 rounded-2xl border p-5">
+              <h3
+                className="text-sm font-semibold"
+                style={{ color: designTokens.colors.neutral[700] }}
+              >
+                Overview
+              </h3>
+              <div className="space-y-4">
+                <DetailRow label="VPC Name" value={vpc.name} />
+                <DetailRow label="Identifier" value={vpc.id} copyable />
+                <DetailRow label="UUID" value={vpc.uuid} copyable />
+                <DetailRow label="Provider" value={vpc.provider?.toUpperCase?.()} />
+                <DetailRow label="Region" value={vpc.region} />
+                <DetailRow label="CIDR Block" value={vpc.cidr_block} copyable />
+                <DetailRow
+                  label="Default VPC"
+                  value={vpc.is_default ? "Yes" : "No"}
+                />
               </div>
-              <div>
-                <span className="font-medium text-gray-700">Provider:</span>{" "}
-                {typeof vpc.provider === "string" && vpc.provider.trim() !== ""
-                  ? vpc.provider.toUpperCase()
-                  : "N/A"}
-              </div>
-              <div className="col-span-2">
-                <span className="font-medium text-gray-700">UUID:</span>{" "}
-                {vpc.uuid}
-              </div>
-              <div>
-                <span className="font-medium text-gray-700">Region:</span>{" "}
-                {vpc.region}
-              </div>
-              <div>
-                <span className="font-medium text-gray-700">CIDR Block:</span>{" "}
-                {vpc.cidr_block}
-              </div>
-              <div>
-                <span className="font-medium text-gray-700">Default:</span>{" "}
-                {vpc.is_default ? "Yes" : "No"}
-              </div>
-              <div className="flex items-center">
-                <span className="font-medium text-gray-700 mr-2">State:</span>{" "}
-                <Badge text={vpc.state} />
-              </div>
-              <div className="flex items-center">
-                <span className="font-medium text-gray-700 mr-2">Status:</span>{" "}
-                <Badge text={vpc.status} />
-              </div>
-              <div>
-                <span className="font-medium text-gray-700">Created At:</span>{" "}
-                {new Date(vpc.created_at).toLocaleString()}
-              </div>
-              <div>
-                <span className="font-medium text-gray-700">Updated At:</span>{" "}
-                {new Date(vpc.updated_at).toLocaleString()}
-              </div>
-              {vpc.description && (
-                <div className="col-span-2">
-                  <span className="font-medium text-gray-700">
-                    Description:
-                  </span>{" "}
-                  {vpc.description}
-                </div>
-              )}
             </div>
 
-            {/* Metadata Section */}
-            {vpc.metadata && (
-              <div className="border-t pt-4">
-                <h3 className="text-md font-semibold text-gray-800 mb-3">
-                  Metadata
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
-                  <div>
-                    <span className="font-medium text-gray-700">
-                      Enable DNS Support:
-                    </span>{" "}
-                    {vpc.metadata.enable_dns_support ? "Yes" : "No"}
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">
-                      Enable DNS Hostnames:
-                    </span>{" "}
-                    {vpc.metadata.enable_dns_hostnames ? "Yes" : "No"}
-                  </div>
-                  <div className="col-span-2">
-                    <span className="font-medium text-gray-700">
-                      DHCP Options ID:
-                    </span>{" "}
-                    {vpc.metadata.dhcp_options_id}
-                  </div>
-
-                  {/* CIDR Associations */}
-                  {vpc.metadata.cidr_assocs_set?.length > 0 && (
-                    <div className="col-span-2">
-                      <h4 className="font-medium text-gray-700 mt-2 mb-1">
-                        CIDR Associations:
-                      </h4>
-                      <ul className="list-disc list-inside pl-2 space-y-1">
-                        {vpc.metadata.cidr_assocs_set.map((assoc) => (
-                          <li key={assoc.cidr_assoc_id}>
-                            {assoc.cidr_block} - <Badge text={assoc.state} />
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Service VMs */}
-                  {vpc.metadata.service_vms?.length > 0 && (
-                    <div className="col-span-2">
-                      <h4 className="font-medium text-gray-700 mt-2 mb-1">
-                        Service VMs:
-                      </h4>
-                      <ul className="list-disc list-inside pl-2 space-y-1">
-                        {vpc.metadata.service_vms.map((vm) => (
-                          <li key={vm.id}>
-                            {vm.vm_type} ({vm.id.substring(0, 8)}...) -{" "}
-                            <Badge text={vm.status} />
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+            <div className="space-y-4 rounded-2xl border p-5">
+              <h3
+                className="text-sm font-semibold"
+                style={{ color: designTokens.colors.neutral[700] }}
+              >
+                Status
+              </h3>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <span
+                    className="text-sm font-medium"
+                    style={{ color: designTokens.colors.neutral[600] }}
+                  >
+                    Provisioning State
+                  </span>
+                  <StatusPill
+                    label={vpc.state || "unknown"}
+                    tone={getToneForStatus(vpc.state)}
+                  />
                 </div>
+                <div className="flex items-center justify-between">
+                  <span
+                    className="text-sm font-medium"
+                    style={{ color: designTokens.colors.neutral[600] }}
+                  >
+                    Lifecycle Status
+                  </span>
+                  <StatusPill
+                    label={vpc.status || "unknown"}
+                    tone={getToneForStatus(vpc.status)}
+                  />
+                </div>
+                <DetailRow
+                  label="Created"
+                  value={
+                    vpc.created_at
+                      ? new Date(vpc.created_at).toLocaleString()
+                      : "—"
+                  }
+                />
+                <DetailRow
+                  label="Last Updated"
+                  value={
+                    vpc.updated_at
+                      ? new Date(vpc.updated_at).toLocaleString()
+                      : "—"
+                  }
+                />
               </div>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center justify-end px-6 py-4 border-t rounded-b-[24px]">
-          <button
-            onClick={onClose}
-            className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
+            </div>
+          </section>
+
+          {vpc.metadata && (
+            <section className="space-y-4 rounded-2xl border p-5">
+              <h3
+                className="text-sm font-semibold"
+                style={{ color: designTokens.colors.neutral[700] }}
+              >
+                Provider Metadata
+              </h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <DetailRow
+                  label="DNS Support"
+                  value={vpc.metadata.enable_dns_support ? "Enabled" : "Disabled"}
+                />
+                <DetailRow
+                  label="DNS Hostnames"
+                  value={
+                    vpc.metadata.enable_dns_hostnames ? "Enabled" : "Disabled"
+                  }
+                />
+                <DetailRow
+                  label="DHCP Options ID"
+                  value={vpc.metadata.dhcp_options_id}
+                  copyable
+                />
+              </div>
+
+              {Array.isArray(vpc.metadata.cidr_assocs_set) &&
+                vpc.metadata.cidr_assocs_set.length > 0 && (
+                  <div className="space-y-3">
+                    <h4
+                      className="text-xs font-semibold uppercase tracking-wide"
+                      style={{ color: designTokens.colors.neutral[500] }}
+                    >
+                      CIDR Associations
+                    </h4>
+                    <div className="space-y-2 rounded-xl border border-dashed p-4">
+                      {vpc.metadata.cidr_assocs_set.map((assoc) => (
+                        <div
+                          key={assoc.cidr_assoc_id}
+                          className="flex flex-wrap items-center justify-between gap-2"
+                        >
+                          <span
+                            className="text-sm font-medium"
+                            style={{ color: designTokens.colors.neutral[700] }}
+                          >
+                            {assoc.cidr_block}
+                          </span>
+                          <StatusPill
+                            label={assoc.state}
+                            tone={getToneForStatus(assoc.state)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+              {Array.isArray(vpc.metadata.service_vms) &&
+                vpc.metadata.service_vms.length > 0 && (
+                  <div className="space-y-3">
+                    <h4
+                      className="text-xs font-semibold uppercase tracking-wide"
+                      style={{ color: designTokens.colors.neutral[500] }}
+                    >
+                      Service VMs
+                    </h4>
+                    <div className="space-y-2 rounded-xl border border-dashed p-4">
+                      {vpc.metadata.service_vms.map((vm) => (
+                        <div
+                          key={vm.id}
+                          className="flex flex-wrap items-center justify-between gap-2"
+                        >
+                          <div>
+                            <p
+                              className="text-sm font-medium"
+                              style={{ color: designTokens.colors.neutral[700] }}
+                            >
+                              {vm.vm_type}
+                            </p>
+                            <p
+                              className="text-xs"
+                              style={{ color: designTokens.colors.neutral[500] }}
+                            >
+                              {vm.id}
+                            </p>
+                          </div>
+                          <StatusPill
+                            label={vm.status}
+                            tone={getToneForStatus(vm.status)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+            </section>
+          )}
+        </>
+      ) : (
+        <p
+          className="text-sm"
+          style={{ color: designTokens.colors.neutral[500] }}
+        >
+          VPC details are not available.
+        </p>
+      )}
+    </ModernModal>
   );
 };
 

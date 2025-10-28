@@ -1,4 +1,5 @@
-import { X, Loader2 } from "lucide-react";
+import ModernModal from "../../components/ModernModal";
+import { designTokens } from "../../../styles/designTokens";
 
 const DeleteVpcModal = ({
   isOpen,
@@ -7,48 +8,49 @@ const DeleteVpcModal = ({
   onConfirm,
   isDeleting,
 }) => {
-  if (!isOpen) return null;
+  const actions = [
+    {
+      label: "Cancel",
+      variant: "ghost",
+      onClick: onClose,
+      disabled: isDeleting,
+    },
+    {
+      label: isDeleting ? "Deleting..." : "Delete VPC",
+      variant: "danger",
+      onClick: onConfirm,
+      disabled: isDeleting,
+    },
+  ];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
-      <div className="bg-white rounded-[24px] max-w-[500px] mx-4 w-full">
-        <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
-          <h2 className="text-lg font-semibold text-[#575758]">
-            Confirm Delete
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-[#1E1E1EB2] transition-colors"
-            disabled={isDeleting}
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="px-6 py-6">
-          <p className="text-sm text-gray-700">
-            Are you sure you want to delete the VPC &quot;{vpcName}&quot;? This
-            action cannot be undone.
-          </p>
-        </div>
-        <div className="flex items-center justify-end px-6 py-4 border-t rounded-b-[24px]">
-          <button
-            onClick={onClose}
-            className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
-            disabled={isDeleting}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            disabled={isDeleting}
-            className="ml-3 px-6 py-2 bg-red-500 text-white font-medium rounded-[30px] hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-          >
-            Delete
-            {isDeleting && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
-          </button>
-        </div>
+    <ModernModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Delete VPC"
+      actions={actions}
+      loading={isDeleting}
+      contentClassName="space-y-4"
+    >
+      <p
+        className="text-sm leading-relaxed"
+        style={{ color: designTokens.colors.neutral[600] }}
+      >
+        Removing this VPC will detach all associated networking resources. This
+        action cannot be undone.
+      </p>
+      <div
+        className="rounded-xl border px-4 py-3 text-sm"
+        style={{
+          borderColor: designTokens.colors.warning[200],
+          backgroundColor: designTokens.colors.warning[50],
+          color: designTokens.colors.warning[700],
+        }}
+      >
+        Confirm you want to remove{" "}
+        <span className="font-semibold">&ldquo;{vpcName}&rdquo;</span>.
       </div>
-    </div>
+    </ModernModal>
   );
 };
 

@@ -1,38 +1,74 @@
-import React, { useState, useEffect } from "react";
-import { Loader2, X, Clipboard, Download } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Clipboard, Download } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
-import ToastUtils from "../../../utils/toastUtil";
 import { useCreateKeyPair } from "../../../hooks/adminHooks/keyPairHooks";
+import ModernModal from "../../components/ModernModal";
+import ModernInput from "../../components/ModernInput";
+import ModernButton from "../../components/ModernButton";
+import { designTokens } from "../../../styles/designTokens";
+import ToastUtils from "../../../utils/toastUtil";
 
-const AddKeyPair = ({ isOpen, onClose, projectId = "", region: projectRegion = "" }) => {
+const selectStyles = {
+  width: "100%",
+  height: "52px",
+  borderRadius: designTokens.borderRadius.lg,
+  border: `1px solid ${designTokens.colors.neutral[300]}`,
+  padding: "0 16px",
+  fontSize: designTokens.typography.fontSize.base[0],
+  fontFamily: designTokens.typography.fontFamily.sans.join(", "),
+  color: designTokens.colors.neutral[800],
+  backgroundColor: designTokens.colors.neutral[0],
+  outline: "none",
+  transition: "all 0.2s ease",
+};
+
+const helperTextStyles = {
+  fontSize: designTokens.typography.fontSize.xs[0],
+  marginTop: "6px",
+  color: designTokens.colors.error[600],
+  fontFamily: designTokens.typography.fontFamily.sans.join(", "),
+};
+
+const AddKeyPair = ({
+  isOpen,
+  onClose,
+  projectId = "",
+  region: projectRegion = "",
+}) => {
   const queryClient = useQueryClient();
   const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
   const { mutate, isPending } = useCreateKeyPair();
+
   const [formData, setFormData] = useState({
     name: "",
     region: "",
     public_key: "",
   });
+
   const [errors, setErrors] = useState({});
   const [successState, setSuccessState] = useState({
     isSuccess: false,
     material: "",
   });
 
-  // Debug state changes
   useEffect(() => {
     if (isOpen && projectRegion && !formData.region) {
       setFormData((prev) => ({ ...prev, region: projectRegion }));
     }
+    if (!isOpen) {
+      setFormData({ name: "", region: "", public_key: "" });
+      setErrors({});
+      setSuccessState({ isSuccess: false, material: "" });
+    }
   }, [isOpen, projectRegion, formData.region]);
 
   const validateForm = () => {
-    const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = "Name is required";
-    if (!formData.region) newErrors.region = "Region is required";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const validationErrors = {};
+    if (!formData.name.trim()) validationErrors.name = "Enter a key pair name.";
+    if (!formData.region) validationErrors.region = "Choose a region.";
+    setErrors(validationErrors);
+    return Object.keys(validationErrors).length === 0;
   };
 
   const updateFormData = (field, value) => {
@@ -40,61 +76,31 @@ const AddKeyPair = ({ isOpen, onClose, projectId = "", region: projectRegion = "
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(successState.material);
-      ToastUtils.success("Private key copied to clipboard!");
-    } catch (err) {
-      ToastUtils.error("Failed to copy private key.");
-      // console.error("Copy error:", err);
-    }
-  };
-
-  const handleDownload = () => {
-    try {
-      const blob = new Blob([successState.material], { type: "text/plain" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${
-        formData.name.replace(/[^a-zA-Z0-9]/g, "_") || "keypair"
-      }.txt`;
-      a.click();
-      URL.revokeObjectURL(url);
-      ToastUtils.success("Private key downloaded!");
-    } catch (err) {
-      ToastUtils.error("Failed to download private key.");
-      // console.error("Download error:", err);
-    }
-  };
-
-  const handleSubmit = (e) => {
-    if (e) e.preventDefault();
+  const handleSubmit = () => {
     if (!validateForm()) return;
 
-    const keyPairData = {
-      project_id: projectId,
-      region: formData.region,
-      name: formData.name,
-      public_key: formData.public_key.trim() || null,
-    };
-
-    // console.log("Submitting KeyPair Payload:", keyPairData);
-
-    mutate(keyPairData, {
-      onSuccess: (response) => {
-        // console.log("Success Response:", response);
-        setSuccessState({
-          isSuccess: true,
-          material: response.material || "No private key provided",
-        });
-        // ToastUtils.success("Key Pair created successfully!");
+    mutate(
+      {
+        project_id: projectId,
+        region: formData.region,
+        name: formData.name,
+        public_key: formData.public_key.trim() || null,
       },
-      onError: (err) => {
-        // console.error("Failed to create key pair:", err);
-        // ToastUtils.error("Failed to add key pair. Please try again.");
-      },
-    });
+      {
+        onSuccess: (response) => {
+          setSuccessState({
+            isSuccess: true,
+            material: response.material || "",
+          });
+          ToastUtils.success("Key pair generated successfully.");
+        },
+        onError: (error) => {
+          ToastUtils.error(
+            error?.message || "Failed to create key pair. Try again."
+          );
+        },
+      }
+    );
   };
 
   const handleDone = () => {
@@ -104,169 +110,171 @@ const AddKeyPair = ({ isOpen, onClose, projectId = "", region: projectRegion = "
     onClose();
   };
 
-  if (!isOpen) return null;
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(successState.material);
+      ToastUtils.success("Private key copied to clipboard.");
+    } catch (error) {
+      ToastUtils.error("Unable to copy the private key.");
+    }
+  };
+
+  const handleDownload = () => {
+    if (!successState.material) return;
+    try {
+      const blob = new Blob([successState.material], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${
+        formData.name.replace(/[^a-zA-Z0-9-_]/g, "_") || "keypair"
+      }.pem`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      ToastUtils.error("Unable to download the private key.");
+    }
+  };
+
+  const handleCancel = () => {
+    setFormData({ name: "", region: "", public_key: "" });
+    setErrors({});
+    setSuccessState({ isSuccess: false, material: "" });
+    onClose();
+  };
+
+  const actions = successState.isSuccess
+    ? [
+        {
+          label: "Done",
+          variant: "primary",
+          onClick: handleDone,
+        },
+      ]
+    : [
+        {
+          label: "Cancel",
+          variant: "ghost",
+          onClick: handleCancel,
+          disabled: isPending,
+        },
+        {
+          label: isPending ? "Creating..." : "Create Key Pair",
+          variant: "primary",
+          onClick: handleSubmit,
+          disabled: isPending || isRegionsFetching,
+        },
+      ];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
-      <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full">
-        <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] w-full">
-          <h2 className="text-lg font-semibold text-[#575758]">
-            {successState.isSuccess ? "Key Pair Created" : "Add New Key Pair"}
-          </h2>
-          <button
-            onClick={handleDone}
-            className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
-            disabled={isPending}
+    <ModernModal
+      isOpen={isOpen}
+      onClose={handleCancel}
+      title={
+        successState.isSuccess ? "Key Pair Created" : "Add Project Key Pair"
+      }
+      actions={actions}
+      size="lg"
+      loading={isPending}
+      contentClassName="space-y-6"
+    >
+      {successState.isSuccess ? (
+        <div className="space-y-4">
+          <p
+            className="text-sm leading-relaxed"
+            style={{ color: designTokens.colors.neutral[600] }}
           >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start">
-          <div className="space-y-4 w-full">
-            {successState.isSuccess ? (
-              <>
-                <p className="text-green-600 text-sm mb-4">
-                  Your key pair has been created successfully. Please copy or
-                  download the private key and keep it in a safe place.
-                </p>
-                <div>
-                  <label
-                    htmlFor="material"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Private Key
-                  </label>
-                  <textarea
-                    id="material"
-                    value={successState.material}
-                    readOnly
-                    className="w-full rounded-[10px] border border-gray-300 px-3 py-2 text-sm input-field resize-y min-h-[150px] bg-gray-100 cursor-not-allowed"
-                  />
-                </div>
-                <div className="flex gap-3 mt-4">
-                  <button
-                    onClick={handleCopy}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors"
-                  >
-                    <Clipboard className="w-4 h-4" />
-                    Copy
-                  </button>
-                  <button
-                    onClick={handleDownload}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors"
-                  >
-                    <Download className="w-4 h-4" />
-                    Download
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div>
-                  <label
-                    htmlFor="name"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Name<span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="name"
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => updateFormData("name", e.target.value)}
-                    placeholder="e.g., MyKeyPair"
-                    className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
-                      errors.name ? "border-red-500" : "border-gray-300"
-                    }`}
-                  />
-                  {errors.name && (
-                    <p className="text-red-500 text-xs mt-1">{errors.name}</p>
-                  )}
-                </div>
-                <div>
-                  <label
-                    htmlFor="region"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Region<span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    id="region"
-                    value={formData.region}
-                    onChange={(e) => updateFormData("region", e.target.value)}
-                    className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
-                      errors.region ? "border-red-500" : "border-gray-300"
-                    }`}
-                    disabled={isRegionsFetching}
-                  >
-                    <option value="" disabled>
-                      {isRegionsFetching
-                        ? "Loading regions..."
-                        : "Select a region"}
-                    </option>
-                    {regions?.map((region) => (
-                      <option key={region.code} value={region.code}>
-                        {region.name}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.region && (
-                    <p className="text-red-500 text-xs mt-1">{errors.region}</p>
-                  )}
-                </div>
-                <div>
-                  <label
-                    htmlFor="public_key"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Public Key
-                  </label>
-                  <textarea
-                    id="public_key"
-                    value={formData.public_key}
-                    onChange={(e) =>
-                      updateFormData("public_key", e.target.value)
-                    }
-                    placeholder="e.g., ssh-rsa AAAAB3NzaC1yc2E..."
-                    className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field resize-y min-h-[100px] ${
-                      errors.public_key ? "border-red-500" : "border-gray-300"
-                    }`}
-                  />
-                  {errors.public_key && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.public_key}
-                    </p>
-                  )}
-                </div>
-              </>
-            )}
+            Store this private key securely. UniCloud cannot display it again.
+            Copy it to your clipboard or download it as a PEM file.
+          </p>
+          <div className="rounded-2xl border border-dashed px-4 py-4">
+            <textarea
+              value={successState.material}
+              readOnly
+              className="min-h-[180px] w-full resize-y rounded-xl bg-slate-900/90 px-4 py-3 text-xs font-mono text-slate-100"
+            />
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <ModernButton
+              variant="outline"
+              leftIcon={<Clipboard size={16} />}
+              onClick={handleCopy}
+            >
+              Copy Private Key
+            </ModernButton>
+            <ModernButton
+              variant="primary"
+              leftIcon={<Download size={16} />}
+              onClick={handleDownload}
+              isDisabled={!successState.material}
+            >
+              Download PEM
+            </ModernButton>
           </div>
         </div>
-
-        <div className="flex items-center justify-end px-6 py-4 border-t rounded-b-[24px]">
-          <button
-            onClick={handleDone}
-            className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
-            disabled={isPending}
-          >
-            {successState.isSuccess ? "Done" : "Close"}
-          </button>
-          {!successState.isSuccess && (
-            <button
-              onClick={handleSubmit}
-              disabled={isPending || isRegionsFetching}
-              className="ml-3 px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+      ) : (
+        <div className="space-y-5">
+          <ModernInput
+            label="Key Pair Name"
+            placeholder="production-admin"
+            value={formData.name}
+            onChange={(event) => updateFormData("name", event.target.value)}
+            error={errors.name}
+            required
+          />
+          <div>
+            <label
+              htmlFor="keypair-region"
+              className="block text-sm font-medium"
+              style={{ color: designTokens.colors.neutral[700] }}
             >
-              Create Key Pair
-              {isPending && (
-                <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-              )}
-            </button>
-          )}
+              Region <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="keypair-region"
+              value={formData.region}
+              onChange={(event) =>
+                updateFormData("region", event.target.value)
+              }
+              disabled={isRegionsFetching}
+              style={selectStyles}
+              onFocus={(event) => {
+                event.target.style.borderColor =
+                  designTokens.colors.primary[500];
+                event.target.style.boxShadow = `0 0 0 3px ${designTokens.colors.primary[100]}`;
+              }}
+              onBlur={(event) => {
+                event.target.style.borderColor =
+                  designTokens.colors.neutral[300];
+                event.target.style.boxShadow = "none";
+              }}
+            >
+              <option value="" disabled>
+                {isRegionsFetching ? "Loading regions..." : "Select a region"}
+              </option>
+              {regions?.map((region) => (
+                <option key={region.code} value={region.code}>
+                  {region.name}
+                </option>
+              ))}
+            </select>
+            {errors.region && (
+              <p style={helperTextStyles}>{errors.region}</p>
+            )}
+          </div>
+          <ModernInput
+            label="Public Key (optional)"
+            placeholder="Paste an existing public key"
+            value={formData.public_key}
+            onChange={(event) =>
+              updateFormData("public_key", event.target.value)
+            }
+            variant="filled"
+            helper="Leave empty to generate a key pair and download the private material."
+          />
         </div>
-      </div>
-    </div>
+      )}
+    </ModernModal>
   );
 };
 

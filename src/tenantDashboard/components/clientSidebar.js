@@ -4,8 +4,6 @@ import home from "./assets/home.png";
 import activeHome from "./assets/activeHome.png";
 import modules from "./assets/module.png";
 import activemodules from "./assets/activeModule.png";
-import purchasedModules from "./assets/purchased_modules.png";
-import activePurchasedModules from "./assets/activePurchased.png";
 import clients from "./assets/clients.png";
 import activeClients from "./assets/activeClients.png";
 import paymentHistory from "./assets/history.png";
@@ -26,7 +24,6 @@ const Sidebar = ({ tenantData, activeTab, setActiveTab }) => {
   const pathToItemMap = {
     "/dashboard": "Home",
     "/dashboard/modules": "Modules",
-    "/dashboard/purchased-modules": "Purchased Modules",
     "/dashboard/instances-request": "Instances Request",
     "/tenant-dashboard/leads": "Leads",
     "/tenant-dashboard/region-requests": "Region Requests",
@@ -50,12 +47,6 @@ const Sidebar = ({ tenantData, activeTab, setActiveTab }) => {
       icon: modules,
       activeIcon: activemodules,
       path: "/dashboard/modules",
-    },
-    {
-      name: "Purchased Modules",
-      icon: purchasedModules,
-      activeIcon: activePurchasedModules,
-      path: "/dashboard/purchased-modules",
     },
     {
       name: "Instances Request",

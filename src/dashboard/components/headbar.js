@@ -11,7 +11,6 @@ const Headbar = ({ onMenuClick }) => {
   const pathMap = {
     dashboard: "Home",
     modules: "Modules",
-    "purchased-modules": "Purchased Modules",
     clients: "Clients",
     "payment-history": "Payment History",
     "support-ticket": "Support Ticket",

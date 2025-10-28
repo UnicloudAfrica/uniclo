@@ -14,6 +14,7 @@ const AssignEdgeConfigModal = ({ isOpen, onClose, onSuccess, projectId, region }
   const { data: regions, isFetching: isFetchingRegions } = useFetchGeneralRegions();
 
   const { data: currentConfig } = useFetchProjectEdgeConfigAdmin(projectId, selectedRegion, { enabled: isOpen && !!selectedRegion });
+  const metadata = currentConfig?.metadata || {};
   const { data: edgeNetworks, isFetching: isFetchingNetworks, error: networksError, refetch: refetchNetworks } = useFetchEdgeNetworks(projectId, selectedRegion, { enabled: isOpen && !!selectedRegion });
   const { data: ipPools, isFetching: isFetchingPools, error: poolsError, refetch: refetchPools } = useFetchIpPools(projectId, selectedRegion, formData.edge_network_id, { enabled: isOpen && !!selectedRegion && !!formData.edge_network_id });
   const { mutate: assignEdge, isPending } = useAssignProjectEdge();
@@ -219,8 +220,11 @@ const AssignEdgeConfigModal = ({ isOpen, onClose, onSuccess, projectId, region }
                   >
                     <option value="">{isFetchingPools ? "Loading IP pools..." : "Select an IP pool"}</option>
                     {(ipPools || []).map((p) => (
-                      <option key={p.id || p.uuid || p.identifier} value={p.id || p.uuid || p.identifier}>
-                        {p.name || p.label || p.id}
+                      <option
+                        key={p.edge_network_ip_pool_id || p.id || p.uuid}
+                        value={p.edge_network_ip_pool_id || p.id || p.uuid}
+                      >
+                        {p.label || p.name || p.edge_network_ip_pool_id || p.id}
                       </option>
                     ))}
                   </select>
@@ -228,7 +232,13 @@ const AssignEdgeConfigModal = ({ isOpen, onClose, onSuccess, projectId, region }
                     <p className="text-xs text-red-600 mt-1">{poolsError.message || "Failed to load IP pools."}</p>
                   )}
                   {!isFetchingPools && formData.edge_network_id && (ipPools || []).length === 0 && !poolsError && (
-                    <p className="text-xs text-yellow-700 mt-1">No IP pools found for the selected edge network.</p>
+                    <p className="text-xs text-yellow-700 mt-1">
+                      No IP pools found for the selected edge network.
+                      {metadata?.edge_network_ip_pools?.[formData.edge_network_id]?.length === 0 &&
+                        metadata?.default_edgenet_ip_pool && (
+                          <> Using cached default pool: {metadata.default_edgenet_ip_pool}</>
+                        )}
+                    </p>
                   )}
                 </>
               ) : (

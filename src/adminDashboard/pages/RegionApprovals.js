@@ -5,12 +5,12 @@ import adminRegionApi from '../../services/adminRegionApi';
 import ToastUtils from '../../utils/toastUtil';
 import AdminSidebar from '../components/adminSidebar';
 import AdminHeadbar from '../components/adminHeadbar';
-import AdminActiveTab from '../components/adminActiveTab';
 import ModernCard from '../components/ModernCard';
 import ModernTable from '../components/ModernTable';
 import ModernStatsCard from '../components/ModernStatsCard';
 import ModernButton from '../components/ModernButton';
 import { designTokens } from '../../styles/designTokens';
+import AdminPageShell from "../components/AdminPageShell";
 
 const RegionApprovals = () => {
   const [regions, setRegions] = useState([]);
@@ -190,12 +190,21 @@ const RegionApprovals = () => {
 
   if (loading) {
     return (
-      <div className="w-full h-svh flex items-center justify-center">
-        <Loader2 
-          className="w-12 animate-spin" 
-          style={{ color: designTokens.colors.primary[500] }}
+      <>
+        <AdminHeadbar onMenuClick={toggleMobileMenu} />
+        <AdminSidebar
+          isMobileMenuOpen={isMobileMenuOpen}
+          onCloseMobileMenu={closeMobileMenu}
         />
-      </div>
+        <AdminPageShell
+          contentClassName="p-6 md:p-8 flex items-center justify-center"
+        >
+          <Loader2
+            className="w-12 animate-spin"
+            style={{ color: designTokens.colors.primary[500] }}
+          />
+        </AdminPageShell>
+      </>
     );
   }
 
@@ -206,88 +215,68 @@ const RegionApprovals = () => {
         isMobileMenuOpen={isMobileMenuOpen}
         onCloseMobileMenu={closeMobileMenu}
       />
-      <AdminActiveTab />
-      <main 
-        className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8"
-        style={{ backgroundColor: designTokens.colors.neutral[25] }}
+      <AdminPageShell
+        title="Region Approvals"
+        description="Review and manage region requests"
+        actions={
+          <Link to="/admin-dashboard/region-approvals/create">
+            <ModernButton className="flex items-center gap-2">
+              <Plus size={18} />
+              Create Platform Region
+            </ModernButton>
+          </Link>
+        }
+        contentClassName="space-y-6"
       >
-        <div className="space-y-6">
-          {/* Page Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 
-                className="text-2xl font-bold"
-                style={{ color: designTokens.colors.neutral[900] }}
-              >
-                Region Approvals
-              </h1>
-              <p 
-                className="mt-1 text-sm"
-                style={{ color: designTokens.colors.neutral[600] }}
-              >
-                Review and manage region requests
-              </p>
-            </div>
-            <Link to="/admin-dashboard/region-approvals/create">
-              <ModernButton className="flex items-center gap-2">
-                <Plus size={18} />
-                Create Platform Region
-              </ModernButton>
-            </Link>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <ModernStatsCard
-              title="Total Requests"
-              value={stats.total}
-              icon={<Clock size={24} />}
-              color="primary"
-              description="All region requests"
-            />
-            <ModernStatsCard
-              title="Pending"
-              value={stats.pending}
-              icon={<Clock size={24} />}
-              color="warning"
-              description="Awaiting approval"
-            />
-            <ModernStatsCard
-              title="Approved"
-              value={stats.approved}
-              icon={<CheckCircle size={24} />}
-              color="success"
-              description="Active regions"
-            />
-            <ModernStatsCard
-              title="Rejected"
-              value={stats.rejected}
-              icon={<XCircle size={24} />}
-              color="error"
-              description="Declined requests"
-            />
-          </div>
-
-          {/* Regions Table */}
-          <ModernCard>
-            <ModernTable
-              title="Region Approval Requests"
-              data={filteredRegions}
-              columns={columns}
-              actions={actions}
-              searchable={true}
-              filterable={true}
-              exportable={true}
-              sortable={true}
-              loading={loading}
-              onRowClick={(region) => window.location.href = `/admin-dashboard/region-approvals/${region.id}`}
-              emptyMessage="No region requests found"
-            />
-          </ModernCard>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <ModernStatsCard
+            title="Total Requests"
+            value={stats.total}
+            icon={<Clock size={24} />}
+            color="primary"
+            description="All region requests"
+          />
+          <ModernStatsCard
+            title="Pending"
+            value={stats.pending}
+            icon={<Clock size={24} />}
+            color="warning"
+            description="Awaiting approval"
+          />
+          <ModernStatsCard
+            title="Approved"
+            value={stats.approved}
+            icon={<CheckCircle size={24} />}
+            color="success"
+            description="Active regions"
+          />
+          <ModernStatsCard
+            title="Rejected"
+            value={stats.rejected}
+            icon={<XCircle size={24} />}
+            color="error"
+            description="Declined requests"
+          />
         </div>
 
-      </main>
+        <ModernCard>
+          <ModernTable
+            title="Region Approval Requests"
+            data={filteredRegions}
+            columns={columns}
+            actions={actions}
+            searchable
+            filterable
+            exportable
+            sortable
+            loading={loading}
+            onRowClick={(region) =>
+              (window.location.href = `/admin-dashboard/region-approvals/${region.id}`)
+            }
+            emptyMessage="No region requests found"
+          />
+        </ModernCard>
+      </AdminPageShell>
     </>
   );
 };

@@ -63,7 +63,7 @@ export const useCreateNetworkInterface = () => {
     mutationFn: createNetworkInterface,
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["networkInterfaces", { projectId: variables.project_id }],
+        queryKey: ["networkInterfaces", { projectId: variables.project_id, region: variables.region }],
       });
     },
     onError: (error) => {
@@ -77,7 +77,9 @@ export const useAttachNetworkInterfaceSecurityGroup = () => {
   return useMutation({
     mutationFn: attachNetworkInterfaceSecurityGroup,
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["networkInterfaces", { projectId: variables.project_id }] });
+      queryClient.invalidateQueries({
+        queryKey: ["networkInterfaces", { projectId: variables.project_id, region: variables.region }],
+      });
     },
   });
 };
@@ -87,7 +89,9 @@ export const useDetachNetworkInterfaceSecurityGroup = () => {
   return useMutation({
     mutationFn: detachNetworkInterfaceSecurityGroup,
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["networkInterfaces", { projectId: variables.project_id }] });
+      queryClient.invalidateQueries({
+        queryKey: ["networkInterfaces", { projectId: variables.project_id, region: variables.region }],
+      });
     },
   });
 };

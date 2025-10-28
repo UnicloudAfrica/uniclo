@@ -479,7 +479,7 @@ export default function Instances() {
       />
       <ActiveTab />
 
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full">
+      <main className="dashboard-content-shell">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 px-6 md:px-8 py-6">
           <div className="flex items-center justify-between">

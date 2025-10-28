@@ -49,7 +49,7 @@ export default function Products() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <ActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex flex-col lg:flex-row">
+      <main className="dashboard-content-shell p-6 md:p-8 flex flex-col lg:flex-row">
         <ProductSideMenu
           activeTab={activeProductTab}
           activeProductType={activeProductType}

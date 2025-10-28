@@ -78,7 +78,7 @@ export default function ClientSupport() {
         onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
       />
       <ClientActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
+      <main className="dashboard-content-shell p-6 md:p-8">
         <div className="bg-white rounded-lg+ p-6 border border-[#ECEDF0] max-w- mx-auto">
           <h2 className="text-xl font-semibold text-gray-800 mb-2">
             Contact Support

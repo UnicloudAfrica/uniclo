@@ -35,11 +35,13 @@ const Networks = ({ projectId = "", region = "", provider = "" }) => {
   const closeViewModal = () => setViewModal(null);
 
   // Pagination logic
-  const totalItems = networks?.length || 0;
+  const filteredNetworks = (networks || []).filter((net) => (net.type || net?.meta?.network_type) === "vpc_network");
+
+  const totalItems = filteredNetworks.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentNetworks = networks?.slice(startIndex, endIndex) || [];
+  const currentNetworks = filteredNetworks.slice(startIndex, endIndex);
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
@@ -95,7 +97,7 @@ const Networks = ({ projectId = "", region = "", provider = "" }) => {
         </button>
       </div>
 
-      {networks && networks.length > 0 ? (
+      {filteredNetworks.length > 0 ? (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {currentNetworks.map((network) => (

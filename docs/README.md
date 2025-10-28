@@ -120,3 +120,31 @@ If your backend routes differ, update only these files:
 
 - Admin detection is based on the presence of an admin token in `useAdminAuthStore`.
 - Subnet creation is disabled when edge config is missing and validates subnet CIDR against the VPC CIDR.
+
+---
+
+## Network Infrastructure Enhancements
+
+Recent work focused on tightening the edge + IGW + ENI flows so they behave exactly like the backend expects (Zadara parity).
+
+### Internet Gateways
+
+- **Edge prerequisite**: Admins can no longer create an IGW unless the project already has an edge network assigned. The backend returns the `edge_network_required` error, and the UI surfaces it next to the “Add IGW” button.
+- **Filtered sync**: IGW reconciliation now passes the project’s provider UUID to `/api/v2/vpcs/internet-gateways`, so cached rows only include gateways that belong to the current project.
+
+### Edge IP Pools
+
+- When MSP/driver calls fail, the controller now falls back to the pools cached in `ProjectEdgeConfig`. Users still see previously-discovered pools instead of the “No pools found” error, which keeps the assignment modal usable even during provider hiccups.
+
+### Elastic Network Interfaces (ENI)
+
+Frontend:
+- `src/adminDashboard/pages/infraComps/enis.js` was rebuilt on the new `ResourceSection` pattern. It lists ENIs with status badges, IP blocks, attachments, and SG controls; it also offers consistent Sync/Create/Empty states.
+- The “Create ENI” modal now posts the provider’s network UUID (preferring `provider_resource_id` wherever available).
+
+Backend:
+- `NetworkInterfaceController@store` converts any numeric `network_id` coming from the UI into the provider UUID before calling Zadara, so MSP endpoints always receive a valid value.
+
+### Shared UI Components
+
+- `src/adminDashboard/components/ResourceSection.jsx` and `ResourceEmptyState.jsx` provide a common header/action/empty-state wrapper that’s now used by IGW, Subnets, Key Pairs, ENIs, Route Tables, and Edge Config. To wire up a new infra tab, import `ResourceSection`, feed it `title`, `description`, `actions`, and render your cards inside.

@@ -22,6 +22,7 @@ import QuoteBreakdownStep from "./quoteComps/quoteBreakdownStep";
 import ProductSummaryStep from "./quoteComps/quoteProductSummaryStep";
 import QuoteFinalReviewStep from "./quoteComps/quoteFinalReviewStep";
 import ToastUtils from "../../utils/toastUtil";
+import AdminPageShell from "../components/AdminPageShell";
 
 const AdminMultiQuote = () => {
   const navigate = useNavigate();
@@ -375,20 +376,21 @@ const AdminMultiQuote = () => {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex justify-between items-center pb-4 border-b">
-            <h2 className="text-lg font-semibold text-[#575758]">
-              Create Multi-Quote
-            </h2>
-            <button
-              onClick={() => navigate("/admin-dashboard/quote")}
-              className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          <div className="sticky top-0 z-10 bg-white pt-6 pb-4 border-b mb-6">
+      <AdminPageShell
+        title="Create Multi-Quote"
+        description="Build complex product quotes, assign them to tenants or users, and generate pricing breakdowns."
+        actions={
+          <button
+            onClick={() => navigate("/admin-dashboard/quote")}
+            className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        }
+        contentClassName="space-y-6"
+      >
+        <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
+          <div className="sticky top-0 z-10 bg-white pt-2 pb-4 border-b">
             <StepProgress currentStep={currentStep} steps={steps} />
           </div>
 
@@ -500,7 +502,7 @@ const AdminMultiQuote = () => {
             </button>
           </div>
         </div>
-      </main>
+            </AdminPageShell>
     </>
   );
 };

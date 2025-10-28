@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { X, Loader2 } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { FileInput } from "../../../utils/fileInput";
 import { useUpdateTenant } from "../../../hooks/adminHooks/tenantHooks";
 import { useFetchCountries, useFetchIndustries } from "../../../hooks/resource"; // Import the resource hooks
 import ToastUtils from "../../../utils/toastUtil";
+import FormLayout, {
+  formAccent,
+  getAccentRgba,
+} from "../../components/FormLayout";
 
 const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
   const [formData, setFormData] = useState({
@@ -202,34 +206,302 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
     }
   };
 
+  const toTitle = (value, fallback = "—") =>
+    value
+      ? value
+          .toString()
+          .replace(/[_-]+/g, " ")
+          .replace(/\b\w/g, (char) => char.toUpperCase())
+      : fallback;
+
+  const accent = formAccent.primary;
+  const formId = "edit-partner-form";
+  const docKeys = [
+    "national_id_document",
+    "registration_document",
+    "utility_bill_document",
+    "logo",
+  ];
+  const uploadedDocs = docKeys.filter((key) => !!formData[key]).length;
+  const statusText = toTitle(
+    partnerDetails?.status ||
+      (partnerDetails?.verified ? "verified" : "pending verification"),
+    "Draft"
+  );
+  const lastUpdated = partnerDetails?.updated_at
+    ? new Date(partnerDetails.updated_at).toLocaleDateString()
+    : null;
+  const dependantLabel = partnerDetails?.dependant_tenant
+    ? "Dependant tenant"
+    : "Primary tenant";
+
+  const summarySections = useMemo(
+    () => [
+      {
+        title: "Business overview",
+        items: [
+          {
+            label: "Legal name",
+            value: formData.name || partnerDetails?.name || "—",
+          },
+          {
+            label: "Industry",
+            value: formData.industry || partnerDetails?.industry || "—",
+          },
+          {
+            label: "Type",
+            value: formData.type || partnerDetails?.type || "—",
+          },
+          {
+            label: "Registration No.",
+            value:
+              formData.registration_number ||
+              partnerDetails?.registration_number ||
+              "—",
+          },
+        ],
+      },
+      {
+        title: "Key contacts",
+        items: [
+          { label: "Email", value: formData.email || partnerDetails?.email },
+          { label: "Phone", value: formData.phone || partnerDetails?.phone },
+          {
+            label: "Website",
+            value: formData.website || partnerDetails?.website || "—",
+          },
+        ],
+      },
+      {
+        title: "Branding colours",
+        items: [
+          {
+            label: "Theme",
+            value: formData.theme_color || partnerDetails?.theme_color || "—",
+          },
+          {
+            label: "Secondary",
+            value:
+              formData.secondary_color || partnerDetails?.secondary_color || "—",
+          },
+          {
+            label: "Links",
+            value:
+              formData.ahref_link_color ||
+              partnerDetails?.ahref_link_color ||
+              "—",
+          },
+        ],
+      },
+    ],
+    [
+      formData.name,
+      partnerDetails?.name,
+      formData.industry,
+      partnerDetails?.industry,
+      formData.type,
+      partnerDetails?.type,
+      formData.registration_number,
+      partnerDetails?.registration_number,
+      formData.email,
+      partnerDetails?.email,
+      formData.phone,
+      partnerDetails?.phone,
+      formData.website,
+      partnerDetails?.website,
+      formData.theme_color,
+      partnerDetails?.theme_color,
+      formData.secondary_color,
+      partnerDetails?.secondary_color,
+      formData.ahref_link_color,
+      partnerDetails?.ahref_link_color,
+    ]
+  );
+
+  const guidanceItems = [
+    "Keep statutory information aligned with provided documents.",
+    "Colour palette updates reflect instantly across tenant experiences.",
+    "Upload fresh documents if there have been compliance changes.",
+  ];
+
+  const asideContent = (
+    <>
+      <div className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm backdrop-blur">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Partner status
+            </p>
+            <p className="text-lg font-semibold text-slate-800">
+              {statusText}
+            </p>
+          </div>
+          <span
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold"
+            style={{
+              backgroundColor: getAccentRgba(accent.color, 0.12),
+              color: accent.color,
+            }}
+          >
+            {uploadedDocs}/{docKeys.length}
+          </span>
+        </div>
+        <dl className="mt-4 space-y-2 text-sm text-slate-600">
+          <div className="flex items-center justify-between">
+            <dt>Tenant type</dt>
+            <dd className="font-medium text-slate-800">{dependantLabel}</dd>
+          </div>
+          <div className="flex items-center justify-between">
+            <dt>Country</dt>
+            <dd className="font-medium text-slate-800">
+              {formData.country || partnerDetails?.country || "—"}
+            </dd>
+          </div>
+          {lastUpdated && (
+            <div className="flex items-center justify-between">
+              <dt>Last updated</dt>
+              <dd className="font-medium text-slate-800">{lastUpdated}</dd>
+            </div>
+          )}
+        </dl>
+        <p className="mt-3 text-xs text-slate-500">
+          Files uploaded count includes all supporting brand and compliance
+          documents currently attached to the partner.
+        </p>
+      </div>
+
+      {summarySections.map((section) => (
+        <div
+          key={section.title}
+          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+        >
+          <h3 className="text-sm font-semibold text-slate-800">
+            {section.title}
+          </h3>
+          <dl className="mt-3 space-y-3 text-sm">
+            {section.items.map((item) => (
+              <div
+                key={`${section.title}-${item.label}`}
+                className="flex items-start justify-between gap-3"
+              >
+                <dt className="text-slate-500">{item.label}</dt>
+                <dd className="max-w-[160px] text-right font-medium text-slate-800">
+                  {item.value || "—"}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      ))}
+
+      <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-100 p-5 shadow-sm">
+        <h3 className="text-sm font-semibold text-slate-800">Update tips</h3>
+        <ul className="mt-3 space-y-2 text-sm text-slate-600">
+          {guidanceItems.map((tip) => (
+            <li key={tip} className="flex items-start gap-2">
+              <span
+                className="mt-1 h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: accent.color }}
+              />
+              <span>{tip}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </>
+  );
+
+  const footer = (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+      <button
+        type="button"
+        onClick={onClose}
+        disabled={isPending}
+        className="w-full rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-slate-400 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        form={formId}
+        disabled={isPending}
+        className="inline-flex w-full items-center justify-center rounded-full bg-[#047857] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#036149] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#047857] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+      >
+        {isPending ? (
+          <>
+            Saving
+            <Loader2 className="ml-2 h-4 w-4 animate-spin text-white" />
+          </>
+        ) : (
+          "Save changes"
+        )}
+      </button>
+    </div>
+  );
+
+  const meta = [
+    {
+      label: "Status",
+      value: statusText,
+    },
+    {
+      label: "Industry",
+      value: formData.industry || partnerDetails?.industry || "Not set",
+    },
+    {
+      label: "Documents",
+      value: `${uploadedDocs}/${docKeys.length} uploaded`,
+    },
+  ];
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
-      <div className="bg-white rounded-[24px] max-w-[800px] mx-4 w-full h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
-          <h2 className="text-lg font-semibold text-[#575758]">
-            Edit Partner Details
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
-            disabled={isPending}
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        {/* Content */}
-        <div className="px-6 py-6 w-full overflow-y-auto flex-1">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Text Inputs */}
+    <FormLayout
+      mode="modal"
+      onClose={onClose}
+      isProcessing={isPending}
+      title={`Edit Partner${partnerDetails?.name ? ` • ${partnerDetails.name}` : ""}`}
+      description="Refresh partner company details, metadata and attachments to keep the workspace current."
+      accentGradient={accent.gradient}
+      accentColor={accent.color}
+      meta={meta}
+      aside={asideContent}
+      footer={footer}
+      maxWidthClass="max-w-6xl"
+    >
+      <form
+        id={formId}
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit();
+        }}
+        className="space-y-8"
+      >
+        {isError && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error?.message || "Failed to save changes. Please try again."}
+          </div>
+        )}
+
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <header className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900">
+                Business identity
+              </h3>
+              <p className="text-sm text-slate-500">
+                Legal name, industry alignment and company classifications.
+              </p>
+            </div>
+          </header>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
             <div>
               <label
                 htmlFor="name"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Partner Name<span className="text-red-500">*</span>
+                Partner name<span className="text-red-500">*</span>
               </label>
               <input
                 id="name"
@@ -238,71 +510,27 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 onChange={(e) => updateFormData("name", e.target.value)}
                 placeholder="Enter partner name"
                 className={`w-full input-field ${
-                  errors.name ? "border-red-500" : "border-gray-300"
+                  errors.name ? "border-red-500" : "border-slate-300"
                 }`}
                 disabled={isPending}
               />
               {errors.name && (
-                <p className="text-red-500 text-xs mt-1">{errors.name}</p>
-              )}
-            </div>
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Email Address<span className="text-red-500">*</span>
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => updateFormData("email", e.target.value)}
-                placeholder="Enter email address"
-                className={`w-full input-field ${
-                  errors.email ? "border-red-500" : "border-gray-300"
-                }`}
-                disabled={isPending}
-              />
-              {errors.email && (
-                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-              )}
-            </div>
-            <div>
-              <label
-                htmlFor="phone"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Phone Number<span className="text-red-500">*</span>
-              </label>
-              <input
-                id="phone"
-                type="text"
-                value={formData.phone}
-                onChange={(e) => updateFormData("phone", e.target.value)}
-                placeholder="Enter phone number"
-                className={`w-full input-field ${
-                  errors.phone ? "border-red-500" : "border-gray-300"
-                }`}
-                disabled={isPending}
-              />
-              {errors.phone && (
-                <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+                <p className="mt-1 text-xs text-red-500">{errors.name}</p>
               )}
             </div>
             <div>
               <label
                 htmlFor="type"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Type
+                Entity type
               </label>
               <select
                 id="type"
                 value={formData.type}
                 onChange={(e) => updateFormData("type", e.target.value)}
                 className={`w-full input-field ${
-                  errors.type ? "border-red-500" : "border-gray-300"
+                  errors.type ? "border-red-500" : "border-slate-300"
                 }`}
                 disabled={isPending}
               >
@@ -314,13 +542,13 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 ))}
               </select>
               {errors.type && (
-                <p className="text-red-500 text-xs mt-1">{errors.type}</p>
+                <p className="mt-1 text-xs text-red-500">{errors.type}</p>
               )}
             </div>
             <div>
               <label
                 htmlFor="industry"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
                 Industry
               </label>
@@ -329,7 +557,7 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 value={formData.industry}
                 onChange={(e) => updateFormData("industry", e.target.value)}
                 className={`w-full input-field ${
-                  errors.industry ? "border-red-500" : "border-gray-300"
+                  errors.industry ? "border-red-500" : "border-slate-300"
                 }`}
                 disabled={isPending || isIndustriesFetching}
               >
@@ -345,15 +573,150 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 ))}
               </select>
               {errors.industry && (
-                <p className="text-red-500 text-xs mt-1">{errors.industry}</p>
+                <p className="mt-1 text-xs text-red-500">{errors.industry}</p>
               )}
             </div>
             <div>
               <label
-                htmlFor="address"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                htmlFor="registration_number"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Address
+                Registration number
+              </label>
+              <input
+                id="registration_number"
+                type="text"
+                value={formData.registration_number}
+                onChange={(e) =>
+                  updateFormData("registration_number", e.target.value)
+                }
+                placeholder="Enter registration number"
+                className={`w-full input-field ${
+                  errors.registration_number
+                    ? "border-red-500"
+                    : "border-slate-300"
+                }`}
+                disabled={isPending}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="tin_number"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                TIN number
+              </label>
+              <input
+                id="tin_number"
+                type="text"
+                value={formData.tin_number}
+                onChange={(e) => updateFormData("tin_number", e.target.value)}
+                placeholder="Enter TIN number"
+                className={`w-full input-field ${
+                  errors.tin_number ? "border-red-500" : "border-slate-300"
+                }`}
+                disabled={isPending}
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <header className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900">
+                Contact & communication
+              </h3>
+              <p className="text-sm text-slate-500">
+                Primary communication channels with the partner team.
+              </p>
+            </div>
+          </header>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <div>
+              <label
+                htmlFor="email"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                Email address<span className="text-red-500">*</span>
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => updateFormData("email", e.target.value)}
+                placeholder="name@company.com"
+                className={`w-full input-field ${
+                  errors.email ? "border-red-500" : "border-slate-300"
+                }`}
+                disabled={isPending}
+              />
+              {errors.email && (
+                <p className="mt-1 text-xs text-red-500">{errors.email}</p>
+              )}
+            </div>
+            <div>
+              <label
+                htmlFor="phone"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                Phone number<span className="text-red-500">*</span>
+              </label>
+              <input
+                id="phone"
+                type="text"
+                value={formData.phone}
+                onChange={(e) => updateFormData("phone", e.target.value)}
+                placeholder="+234 801 234 5678"
+                className={`w-full input-field ${
+                  errors.phone ? "border-red-500" : "border-slate-300"
+                }`}
+                disabled={isPending}
+              />
+              {errors.phone && (
+                <p className="mt-1 text-xs text-red-500">{errors.phone}</p>
+              )}
+            </div>
+            <div className="md:col-span-2">
+              <label
+                htmlFor="website"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                Website
+              </label>
+              <input
+                id="website"
+                type="url"
+                value={formData.website}
+                onChange={(e) => updateFormData("website", e.target.value)}
+                placeholder="https://example.com"
+                className={`w-full input-field ${
+                  errors.website ? "border-red-500" : "border-slate-300"
+                }`}
+                disabled={isPending}
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <header className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900">
+                Address & regions
+              </h3>
+              <p className="text-sm text-slate-500">
+                Physical location details used across invoices and compliance.
+              </p>
+            </div>
+          </header>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <div className="md:col-span-2">
+              <label
+                htmlFor="address"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
+                Street address
               </label>
               <input
                 id="address"
@@ -362,7 +725,7 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 onChange={(e) => updateFormData("address", e.target.value)}
                 placeholder="Enter street address"
                 className={`w-full input-field ${
-                  errors.address ? "border-red-500" : "border-gray-300"
+                  errors.address ? "border-red-500" : "border-slate-300"
                 }`}
                 disabled={isPending}
               />
@@ -370,7 +733,7 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
             <div>
               <label
                 htmlFor="city"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
                 City
               </label>
@@ -381,7 +744,7 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 onChange={(e) => updateFormData("city", e.target.value)}
                 placeholder="Enter city"
                 className={`w-full input-field ${
-                  errors.city ? "border-red-500" : "border-gray-300"
+                  errors.city ? "border-red-500" : "border-slate-300"
                 }`}
                 disabled={isPending}
               />
@@ -389,9 +752,9 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
             <div>
               <label
                 htmlFor="state"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
-                State
+                State / province
               </label>
               <input
                 id="state"
@@ -400,7 +763,7 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 onChange={(e) => updateFormData("state", e.target.value)}
                 placeholder="Enter state"
                 className={`w-full input-field ${
-                  errors.state ? "border-red-500" : "border-gray-300"
+                  errors.state ? "border-red-500" : "border-slate-300"
                 }`}
                 disabled={isPending}
               />
@@ -408,9 +771,9 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
             <div>
               <label
                 htmlFor="zip"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Zip Code
+                Zip / postal code
               </label>
               <input
                 id="zip"
@@ -419,7 +782,7 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 onChange={(e) => updateFormData("zip", e.target.value)}
                 placeholder="Enter zip code"
                 className={`w-full input-field ${
-                  errors.zip ? "border-red-500" : "border-gray-300"
+                  errors.zip ? "border-red-500" : "border-slate-300"
                 }`}
                 disabled={isPending}
               />
@@ -427,7 +790,7 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
             <div>
               <label
                 htmlFor="country"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
                 Country
               </label>
@@ -436,7 +799,7 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 value={formData.country}
                 onChange={(e) => updateFormData("country", e.target.value)}
                 className={`w-full input-field ${
-                  errors.country ? "border-red-500" : "border-gray-300"
+                  errors.country ? "border-red-500" : "border-slate-300"
                 }`}
                 disabled={isPending || isCountriesFetching}
               >
@@ -452,78 +815,30 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 ))}
               </select>
               {errors.country && (
-                <p className="text-red-500 text-xs mt-1">{errors.country}</p>
+                <p className="mt-1 text-xs text-red-500">{errors.country}</p>
               )}
             </div>
-            <div>
-              <label
-                htmlFor="registration_number"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Registration Number
-              </label>
-              <input
-                id="registration_number"
-                type="text"
-                value={formData.registration_number}
-                onChange={(e) =>
-                  updateFormData("registration_number", e.target.value)
-                }
-                placeholder="Enter registration number"
-                className={`w-full input-field ${
-                  errors.registration_number
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
-                disabled={isPending}
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="tin_number"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                TIN Number
-              </label>
-              <input
-                id="tin_number"
-                type="text"
-                value={formData.tin_number}
-                onChange={(e) => updateFormData("tin_number", e.target.value)}
-                placeholder="Enter TIN number"
-                className={`w-full input-field ${
-                  errors.tin_number ? "border-red-500" : "border-gray-300"
-                }`}
-                disabled={isPending}
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="website"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Website
-              </label>
-              <input
-                id="website"
-                type="url"
-                value={formData.website}
-                onChange={(e) => updateFormData("website", e.target.value)}
-                placeholder="Enter website URL"
-                className={`w-full input-field ${
-                  errors.website ? "border-red-500" : "border-gray-300"
-                }`}
-                disabled={isPending}
-              />
-            </div>
+          </div>
+        </section>
 
-            {/* New Business-related URL fields */}
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <header className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900">
+                Digital touchpoints
+              </h3>
+              <p className="text-sm text-slate-500">
+                URLs and colour palette surfaced across branded experiences.
+              </p>
+            </div>
+          </header>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
             <div>
               <label
                 htmlFor="privacy_policy_url"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Privacy Policy URL
+                Privacy policy URL
               </label>
               <input
                 id="privacy_policy_url"
@@ -532,16 +847,16 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 onChange={(e) =>
                   updateFormData("privacy_policy_url", e.target.value)
                 }
-                placeholder="Enter Privacy Policy URL"
+                placeholder="https://..."
                 className={`w-full input-field ${
                   errors.privacy_policy_url
                     ? "border-red-500"
-                    : "border-gray-300"
+                    : "border-slate-300"
                 }`}
                 disabled={isPending}
               />
               {errors.privacy_policy_url && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="mt-1 text-xs text-red-500">
                   {errors.privacy_policy_url}
                 </p>
               )}
@@ -549,7 +864,7 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
             <div>
               <label
                 htmlFor="unsubscription_url"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
                 Unsubscription URL
               </label>
@@ -560,16 +875,16 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 onChange={(e) =>
                   updateFormData("unsubscription_url", e.target.value)
                 }
-                placeholder="Enter Unsubscription URL"
+                placeholder="https://..."
                 className={`w-full input-field ${
                   errors.unsubscription_url
                     ? "border-red-500"
-                    : "border-gray-300"
+                    : "border-slate-300"
                 }`}
                 disabled={isPending}
               />
               {errors.unsubscription_url && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="mt-1 text-xs text-red-500">
                   {errors.unsubscription_url}
                 </p>
               )}
@@ -577,9 +892,9 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
             <div>
               <label
                 htmlFor="help_center_url"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Help Center URL
+                Help centre URL
               </label>
               <input
                 id="help_center_url"
@@ -588,14 +903,16 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 onChange={(e) =>
                   updateFormData("help_center_url", e.target.value)
                 }
-                placeholder="Enter Help Center URL"
+                placeholder="https://..."
                 className={`w-full input-field ${
-                  errors.help_center_url ? "border-red-500" : "border-gray-300"
+                  errors.help_center_url
+                    ? "border-red-500"
+                    : "border-slate-300"
                 }`}
                 disabled={isPending}
               />
               {errors.help_center_url && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="mt-1 text-xs text-red-500">
                   {errors.help_center_url}
                 </p>
               )}
@@ -603,35 +920,35 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
             <div>
               <label
                 htmlFor="logo_href"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Business Logo Href
+                Logo hyperlink
               </label>
               <input
                 id="logo_href"
                 type="url"
                 value={formData.logo_href}
                 onChange={(e) => updateFormData("logo_href", e.target.value)}
-                placeholder="Enter Business Logo Href URL"
+                placeholder="https://..."
                 className={`w-full input-field ${
-                  errors.logo_href ? "border-red-500" : "border-gray-300"
+                  errors.logo_href ? "border-red-500" : "border-slate-300"
                 }`}
                 disabled={isPending}
               />
               {errors.logo_href && (
-                <p className="text-red-500 text-xs mt-1">{errors.logo_href}</p>
+                <p className="mt-1 text-xs text-red-500">{errors.logo_href}</p>
               )}
             </div>
-
-            {/* Color Pickers */}
-            <div className="flex flex-col">
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <div>
               <label
                 htmlFor="theme_color"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Theme Color
+                Theme colour
               </label>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2">
                 <input
                   id="theme_color"
                   type="color"
@@ -639,9 +956,9 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                   onChange={(e) =>
                     updateFormData("theme_color", e.target.value)
                   }
-                  className="w-10 h-10 rounded-md cursor-pointer border border-gray-300"
+                  className="h-10 w-10 cursor-pointer rounded-md border border-slate-300"
                   disabled={isPending}
-                  title="Select Theme Color"
+                  title="Select theme colour"
                 />
                 <input
                   type="text"
@@ -655,14 +972,14 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 />
               </div>
             </div>
-            <div className="flex flex-col">
+            <div>
               <label
                 htmlFor="secondary_color"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Secondary Color
+                Secondary colour
               </label>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2">
                 <input
                   id="secondary_color"
                   type="color"
@@ -670,9 +987,9 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                   onChange={(e) =>
                     updateFormData("secondary_color", e.target.value)
                   }
-                  className="w-10 h-10 rounded-md cursor-pointer border border-gray-300"
+                  className="h-10 w-10 cursor-pointer rounded-md border border-slate-300"
                   disabled={isPending}
-                  title="Select Secondary Color"
+                  title="Select secondary colour"
                 />
                 <input
                   type="text"
@@ -686,14 +1003,14 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 />
               </div>
             </div>
-            <div className="flex flex-col">
+            <div>
               <label
                 htmlFor="ahref_link_color"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Ahref Link Color
+                Link colour
               </label>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2">
                 <input
                   id="ahref_link_color"
                   type="color"
@@ -701,9 +1018,9 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                   onChange={(e) =>
                     updateFormData("ahref_link_color", e.target.value)
                   }
-                  className="w-10 h-10 rounded-md cursor-pointer border border-gray-300"
+                  className="h-10 w-10 cursor-pointer rounded-md border border-slate-300"
                   disabled={isPending}
-                  title="Select Ahref Link Color"
+                  title="Select link colour"
                 />
                 <input
                   type="text"
@@ -717,79 +1034,63 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 />
               </div>
             </div>
+          </div>
+        </section>
 
-            {/* File Inputs */}
-            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FileInput
-                id="national_id_document"
-                label="National ID Document"
-                onChange={(e) =>
-                  handleFileChange("national_id_document", e.target.files)
-                }
-                selectedFile={formData.national_id_document}
-                error={errors.national_id_document}
-                accept=".pdf,.jpg,.png"
-              />
-              <FileInput
-                id="registration_document"
-                label="Registration Document"
-                onChange={(e) =>
-                  handleFileChange("registration_document", e.target.files)
-                }
-                selectedFile={formData.registration_document}
-                error={errors.registration_document}
-                accept=".pdf,.jpg,.png"
-              />
-              <FileInput
-                id="utility_bill_document"
-                label="Utility Bill Document"
-                onChange={(e) =>
-                  handleFileChange("utility_bill_document", e.target.files)
-                }
-                selectedFile={formData.utility_bill_document}
-                error={errors.utility_bill_document}
-                accept=".pdf,.jpg,.png"
-              />
-              <FileInput
-                id="logo"
-                label="Company Logo"
-                onChange={(e) => handleFileChange("logo", e.target.files)}
-                selectedFile={formData.logo}
-                error={errors.logo}
-                accept=".jpg,.png"
-              />
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <header className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900">
+                Compliance documents
+              </h3>
+              <p className="text-sm text-slate-500">
+                Upload up-to-date verification documents in PDF, JPG or PNG.
+              </p>
             </div>
+          </header>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <FileInput
+              id="national_id_document"
+              label="National ID document"
+              onChange={(e) =>
+                handleFileChange("national_id_document", e.target.files)
+              }
+              selectedFile={formData.national_id_document}
+              error={errors.national_id_document}
+              accept=".pdf,.jpg,.png"
+            />
+            <FileInput
+              id="registration_document"
+              label="Registration document"
+              onChange={(e) =>
+                handleFileChange("registration_document", e.target.files)
+              }
+              selectedFile={formData.registration_document}
+              error={errors.registration_document}
+              accept=".pdf,.jpg,.png"
+            />
+            <FileInput
+              id="utility_bill_document"
+              label="Utility bill"
+              onChange={(e) =>
+                handleFileChange("utility_bill_document", e.target.files)
+              }
+              selectedFile={formData.utility_bill_document}
+              error={errors.utility_bill_document}
+              accept=".pdf,.jpg,.png"
+            />
+            <FileInput
+              id="logo"
+              label="Company logo"
+              onChange={(e) => handleFileChange("logo", e.target.files)}
+              selectedFile={formData.logo}
+              error={errors.logo}
+              accept=".jpg,.png"
+            />
           </div>
-          {/* {isError && (
-            <p className="text-red-500 text-sm mt-4 text-center">
-              Error: {error?.message || "Failed to save changes."}
-            </p>
-          )} */}
-        </div>
-        {/* Footer */}
-        <div className="flex items-center justify-end px-6 py-4 border-t rounded-b-[24px]">
-          <div className="flex gap-3">
-            <button
-              onClick={onClose}
-              className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
-              disabled={isPending}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={isPending}
-              className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              Save Changes
-              {isPending && (
-                <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+        </section>
+      </form>
+    </FormLayout>
   );
 };
 

@@ -87,7 +87,7 @@ const NewRegionRequest = () => {
       <BreadcrumbNav tenantData={tenantData} activeTab={activeTab} />
       <main
         ref={contentRef}
-        className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 overflow-y-auto"
+        className="dashboard-content-shell p-6 md:p-8 overflow-y-auto"
       >
         <div className="max-w-3xl mx-auto">
         {/* Header */}

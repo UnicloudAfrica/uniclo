@@ -10,15 +10,16 @@ import {
   MapPin,
   Building,
   Server,
-  Activity
+  Activity,
+  ChevronRight
 } from "lucide-react";
-import AdminSidebar from "../components/adminSidebar";
-import AdminActiveTab from "../components/adminActiveTab";
-import AdminHeadbar from "../components/adminHeadbar";
 import ModernTable from "../components/ModernTable";
 import ModernCard from "../components/ModernCard";
 import ModernStatsCard from "../components/ModernStatsCard";
 import ModernButton from "../components/ModernButton";
+import AdminHeadbar from "../components/adminHeadbar";
+import AdminSidebar from "../components/adminSidebar";
+import AdminPageShell from "../components/AdminPageShell";
 import { designTokens } from "../../styles/designTokens";
 import DeleteRegionModal from "./regionComps/deleteRegion";
 import {
@@ -57,8 +58,6 @@ const AdminRegion = () => {
     uniqueCities: uniqueCities.size,
   };
 
-  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
-  const closeMobileMenu = () => setIsMobileMenuOpen(false);
   const openDeleteModal = (item) => {
     setSelectedRegion(item);
     setDeleteModalOpen(true);
@@ -67,6 +66,9 @@ const AdminRegion = () => {
     setDeleteModalOpen(false);
     setSelectedRegion(null);
   };
+
+  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   // Define columns for ModernTable
   const columns = [
@@ -206,90 +208,73 @@ const AdminRegion = () => {
         isMobileMenuOpen={isMobileMenuOpen}
         onCloseMobileMenu={closeMobileMenu}
       />
-      <AdminActiveTab />
-      <main 
-        className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8"
-        style={{ backgroundColor: designTokens.colors.neutral[25] }}
+      <AdminPageShell
+        title="Region Management"
+        description="Manage cloud infrastructure regions and locations"
+        breadcrumbs={[
+          { label: "Home", href: "/admin-dashboard" },
+          { label: "Regions" },
+        ]}
+        actions={
+          <Link to="/admin-dashboard/region-approvals/create">
+            <ModernButton className="flex items-center gap-2">
+              <Plus size={18} />
+              Add Region
+            </ModernButton>
+          </Link>
+        }
       >
-        <div className="space-y-6">
-          {/* Page Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1 
-                className="text-2xl font-bold"
-                style={{ color: designTokens.colors.neutral[900] }}
-              >
-                Region Management
-              </h1>
-              <p 
-                className="mt-1 text-sm"
-                style={{ color: designTokens.colors.neutral[600] }}
-              >
-                Manage cloud infrastructure regions and locations
-              </p>
-            </div>
-            <Link to="/admin-dashboard/region-approvals/create">
-              <ModernButton className="flex items-center gap-2">
-                <Plus size={18} />
-                Add Region
-              </ModernButton>
-            </Link>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <ModernStatsCard
-              title="Total Regions"
-              value={regionStats.totalRegions}
-              icon={<MapPin size={24} />}
-              change={2}
-              trend="up"
-              color="primary"
-              description="Available regions"
-            />
-            <ModernStatsCard
-              title="Active Regions"
-              value={regionStats.activeRegions}
-              icon={<Activity size={24} />}
-              color="success"
-              description="Currently enabled"
-            />
-            <ModernStatsCard
-              title="Countries"
-              value={regionStats.uniqueCountries}
-              icon={<Globe size={24} />}
-              color="warning"
-              description="Geographic coverage"
-            />
-            <ModernStatsCard
-              title="Locations"
-              value={regionStats.uniqueCities}
-              icon={<Building size={24} />}
-              color="info"
-              description="Active cities"
-            />
-          </div>
-
-          {/* Regions Table */}
-          <ModernCard>
-            <ModernTable
-              title={`Infrastructure Regions · Providers: ${regionStats.uniqueProviders}`}
-              data={regionList}
-              columns={columns}
-              actions={actions}
-              searchable={true}
-              filterable={true}
-              exportable={true}
-              sortable={true}
-              loading={isRegionsFetching}
-              onRowClick={(region) => window.location.href = `/admin-dashboard/regions/${region.code}`}
-              emptyMessage="No regions configured. Add regions to manage your infrastructure."
-            />
-          </ModernCard>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <ModernStatsCard
+            title="Total Regions"
+            value={regionStats.totalRegions}
+            icon={<MapPin size={24} />}
+            change={2}
+            trend="up"
+            color="primary"
+            description="Available regions"
+          />
+          <ModernStatsCard
+            title="Active Regions"
+            value={regionStats.activeRegions}
+            icon={<Activity size={24} />}
+            color="success"
+            description="Currently enabled"
+          />
+          <ModernStatsCard
+            title="Countries"
+            value={regionStats.uniqueCountries}
+            icon={<Globe size={24} />}
+            color="warning"
+            description="Geographic coverage"
+          />
+          <ModernStatsCard
+            title="Locations"
+            value={regionStats.uniqueCities}
+            icon={<Building size={24} />}
+            color="info"
+            description="Active cities"
+          />
         </div>
 
-      </main>
+        <ModernCard>
+          <ModernTable
+            title={`Infrastructure Regions · Providers: ${regionStats.uniqueProviders}`}
+            data={regionList}
+            columns={columns}
+            actions={actions}
+            searchable={true}
+            filterable={true}
+            exportable={true}
+            sortable={true}
+            loading={isRegionsFetching}
+            onRowClick={(region) =>
+              (window.location.href = `/admin-dashboard/regions/${region.code}`)
+            }
+            emptyMessage="No regions configured. Add regions to manage your infrastructure."
+          />
+        </ModernCard>
+      </AdminPageShell>
 
       <DeleteRegionModal
         isOpen={isDeleteModalOpen}

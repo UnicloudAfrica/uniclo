@@ -35,6 +35,7 @@ import { EditLeadStage } from "./leadComps/editLeadStage";
 import AddLeadDocument from "./leadComps/addLeadDoc";
 import UpdateLeadDoc from "./leadComps/updateLeadDoc";
 import DocumentViewerModal from "./leadComps/documentViewer";
+import AdminPageShell from "../components/AdminPageShell";
 // import { DocumentViewerModal } from "./leadComps/documentViewer";
 
 const formatStatusForDisplay = (status) => {
@@ -251,10 +252,10 @@ export default function AdminLeadDetails() {
           onCloseMobileMenu={() => updateUiState({ isMobileMenuOpen: false })}
         />
         <AdminActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center">
+                <AdminPageShell contentClassName="p-6 md:p-8 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
           <p className="ml-2 text-gray-700">Loading lead details...</p>
-        </main>
+                </AdminPageShell>
       </>
     );
   }
@@ -273,7 +274,7 @@ export default function AdminLeadDetails() {
           onCloseMobileMenu={() => updateUiState({ isMobileMenuOpen: false })}
         />
         <AdminActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex flex-col items-center justify-center text-center">
+                <AdminPageShell contentClassName="p-6 md:p-8 flex flex-col items-center justify-center text-center">
           <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
           <p className="text-lg font-semibold text-gray-700 mb-4">
             This lead couldn't be found.
@@ -286,7 +287,7 @@ export default function AdminLeadDetails() {
             <ArrowLeft className="w-4 h-4" />
             Go back
           </ModernButton>
-        </main>
+                </AdminPageShell>
       </>
     );
   }

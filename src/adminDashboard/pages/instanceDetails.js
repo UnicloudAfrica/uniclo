@@ -35,6 +35,7 @@ import ToastUtils from "../../utils/toastUtil";
 import useAdminAuthStore from "../../stores/adminAuthStore";
 import config from "../../config";
 import silentAdminApi from "../../index/admin/silent";
+import AdminPageShell from "../components/AdminPageShell";
 
 // Enhanced Status Badge Component
 const StatusBadge = ({ status, providerStatus, taskState }) => {
@@ -369,12 +370,12 @@ export default function InstanceDetails() {
           onCloseMobileMenu={closeMobileMenu}
         />
         <AdminActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center">
+                <AdminPageShell contentClassName="p-6 md:p-8 flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin text-[#288DD1] mx-auto mb-2" />
             <p className="text-gray-700">Loading instance details...</p>
           </div>
-        </main>
+                </AdminPageShell>
       </>
     );
   }
@@ -388,7 +389,7 @@ export default function InstanceDetails() {
           onCloseMobileMenu={closeMobileMenu}
         />
         <AdminActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex flex-col items-center justify-center text-center">
+                <AdminPageShell contentClassName="p-6 md:p-8 flex flex-col items-center justify-center text-center">
           <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
           <p className="text-lg font-semibold text-gray-700 mb-4">
             {error || "Instance couldn't be found"}
@@ -399,13 +400,49 @@ export default function InstanceDetails() {
           >
             Go back to instances
           </button>
-        </main>
+                </AdminPageShell>
       </>
     );
   }
 
   const { instance = {}, provider_details = {}, available_actions = {}, network_info = {}, monitoring_metrics = {} } = instanceDetails || {};
   const actions = available_actions;
+  const instanceReference = instance?.identifier || instanceId || instanceIdentifier;
+  const instanceDisplayName =
+    instance?.name || `Instance ${instanceReference || ""}`.trim();
+  const instanceSubtitle = [
+    instanceReference,
+    instance?.provider || "N/A",
+    instance?.region || "N/A",
+  ]
+    .filter(Boolean)
+    .join(" • ");
+
+  const headerActions = (
+    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-end">
+      <StatusBadge
+        status={instance?.status}
+        providerStatus={provider_details?.provider_status}
+        taskState={provider_details?.task_state}
+      />
+      <div className="flex items-center space-x-2">
+        <button
+          onClick={refreshStatus}
+          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          title="Refresh Status"
+        >
+          <RefreshCw className="w-5 h-5" />
+        </button>
+        <button
+          onClick={() => setActiveTab("settings")}
+          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          title="Settings"
+        >
+          <Settings className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -416,45 +453,11 @@ export default function InstanceDetails() {
       />
       <AdminActiveTab />
       
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 md:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {instance?.name || `Instance ${instance?.identifier || instanceId || instanceIdentifier}`}
-                </h1>
-                <p className="text-sm text-gray-500 mt-1">
-                  {(instance?.identifier || instanceId || instanceIdentifier)} • {(instance?.provider || 'N/A')} • {(instance?.region || 'N/A')}
-                </p>
-              </div>
-              <StatusBadge 
-                status={instance?.status} 
-                providerStatus={provider_details?.provider_status}
-                taskState={provider_details?.task_state}
-              />
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={refreshStatus}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
-                title="Refresh Status"
-              >
-                <RefreshCw className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setActiveTab('settings')}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
-                title="Settings"
-              >
-                <Settings className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-
+      <AdminPageShell
+        title={instanceDisplayName}
+        description={instanceSubtitle}
+        actions={headerActions}
+      >
         {/* Action Bar */}
         <div className="bg-white border-b border-gray-200 px-6 md:px-8 py-4">
           <div className="flex flex-wrap gap-3">
@@ -691,7 +694,7 @@ export default function InstanceDetails() {
             initialSize={console.size}
           />
         ))}
-      </main>
+            </AdminPageShell>
     </>
   );
 }

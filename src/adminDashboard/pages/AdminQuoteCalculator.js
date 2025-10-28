@@ -6,6 +6,7 @@ import QuoteCalculatorWizard from "../../dashboard/pages/QuoteCalculatorWizard";
 import useAdminAuthStore from "../../stores/adminAuthStore";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import AdminPageShell from "../components/AdminPageShell";
 
 export default function AdminQuoteCalculator() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
@@ -28,10 +29,10 @@ export default function AdminQuoteCalculator() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
+            <AdminPageShell contentClassName="p-6 md:p-8">
         {/* Embed the wizard without public Navbar/Footer */}
         <QuoteCalculatorWizard embedded />
-      </main>
+            </AdminPageShell>
     </>
   );
 }

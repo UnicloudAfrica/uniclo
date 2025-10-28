@@ -36,6 +36,7 @@ import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import ToastUtils from "../../utils/toastUtil";
+import AdminPageShell from "../components/AdminPageShell";
 
 // Profile Avatar Component
 const ProfileAvatar = ({ user, onAvatarChange }) => {
@@ -566,6 +567,26 @@ export default function EnhancedProfileSettings() {
     { id: 'preferences', label: 'Preferences', icon: Settings },
   ];
 
+  const headerActions = (
+    <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+      <button
+        onClick={exportSettings}
+        className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+      >
+        <Download className="w-4 h-4 mr-2" />
+        Export Settings
+      </button>
+
+      <button
+        onClick={fetchProfileSettings}
+        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
+      >
+        <RefreshCw className="w-4 h-4 mr-2" />
+        Refresh
+      </button>
+    </div>
+  );
+
   if (loading) {
     return (
       <>
@@ -575,12 +596,12 @@ export default function EnhancedProfileSettings() {
           onCloseMobileMenu={closeMobileMenu}
         />
         <AdminActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center">
+                <AdminPageShell contentClassName="p-6 md:p-8 flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-2" />
             <p className="text-gray-700">Loading profile settings...</p>
           </div>
-        </main>
+                </AdminPageShell>
       </>
     );
   }
@@ -594,37 +615,11 @@ export default function EnhancedProfileSettings() {
       />
       <AdminActiveTab />
 
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 md:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Manage your account settings and preferences
-              </p>
-            </div>
-            
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={exportSettings}
-                className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Export Settings
-              </button>
-              
-              <button
-                onClick={fetchProfileSettings}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh
-              </button>
-            </div>
-          </div>
-        </div>
-
+      <AdminPageShell
+        title="Profile Settings"
+        description="Manage your account settings and preferences"
+        actions={headerActions}
+      >
         {/* Tabs */}
         <div className="bg-white border-b border-gray-200 px-6 md:px-8">
           <nav className="-mb-px flex space-x-8">
@@ -997,7 +992,7 @@ export default function EnhancedProfileSettings() {
             </div>
           )}
         </div>
-      </main>
+            </AdminPageShell>
     </>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Loader2,
@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
-import AdminActiveTab from "../components/adminActiveTab";
+import AdminPageShell from "../components/AdminPageShell";
 import ModernTable from "../components/ModernTable";
 import ModernCard from "../components/ModernCard";
 import ModernStatsCard from "../components/ModernStatsCard";
@@ -23,18 +23,13 @@ import ModernInput from "../components/ModernInput";
 import { designTokens } from "../../styles/designTokens";
 import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
 import { useFetchCountries } from "../../hooks/resource";
-import {
-  useFetchProducts,
-  useUpdateProduct,
-  useDeleteProduct,
-} from "../../hooks/adminHooks/adminProductHooks";
+import { useFetchProducts } from "../../hooks/adminHooks/adminProductHooks";
 import EditProduct from "./productComps/editProduct";
 import DeleteProduct from "./productComps/deleteProduct";
 import useAuthRedirect from "../../utils/adminAuthRedirect";
 
 export default function AdminProducts() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("");
   const [selectedCountryCode, setSelectedCountryCode] = useState("");
@@ -42,51 +37,55 @@ export default function AdminProducts() {
   const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+
   const navigate = useNavigate();
   const { isLoading } = useAuthRedirect();
   const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
-  const { isFetching: isCountriesFetching, data: countries } =
-    useFetchCountries();
+  const { isFetching: isCountriesFetching, data: countries } = useFetchCountries();
   const {
     isFetching: isProductsFetching,
     data: products,
-    error,
     refetch,
   } = useFetchProducts(selectedCountryCode, selectedProvider, {
     enabled: Boolean(!isRegionsFetching && !isCountriesFetching),
   });
 
-  const itemsPerPage = 10;
+  useEffect(() => {
+    if (
+      selectedRegion &&
+      regions &&
+      regions.length > 0
+    ) {
+      const region = regions.find((r) => r.code === selectedRegion);
+      setSelectedProvider(region ? region.provider : "");
+    }
+  }, [selectedRegion, regions]);
 
-  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+  const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
   const openEditModal = (item) => {
     if (item && typeof item === "object" && item.id && item.name) {
       setSelectedProduct(item);
       setEditModalOpen(true);
-    } else {
-      console.error("Invalid item for edit:", item);
     }
   };
 
   const closeEditModal = () => {
-    console.log("Closing Edit Modal, selectedProduct:", selectedProduct);
     setEditModalOpen(false);
-    setTimeout(() => setSelectedProduct(null), 0); // Delay clearing to avoid race condition
+    setTimeout(() => setSelectedProduct(null), 0);
   };
 
   const openDeleteModal = (item) => {
     if (item && typeof item === "object" && item.id && item.name) {
       setSelectedProduct(item);
       setDeleteModalOpen(true);
-    } else {
-      console.error("Invalid item for delete:", item);
     }
   };
 
   const closeDeleteModal = () => {
     setDeleteModalOpen(false);
-    setTimeout(() => setSelectedProduct(null), 0); // Delay clearing to avoid race condition
+    setTimeout(() => setSelectedProduct(null), 0);
   };
 
   const handleCountryChange = (countryCode) => {
@@ -113,21 +112,20 @@ export default function AdminProducts() {
     return typeMap[type] || type;
   };
 
-  // Validate and filter products
-  const filteredData = products
-    ? products.filter(
-        (item) =>
-          item &&
-          typeof item === "object" &&
-          item.id &&
-          item.name &&
-          item.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : [];
+  const filteredData = useMemo(() => {
+    if (!Array.isArray(products)) return [];
+    return products.filter(
+      (item) =>
+        item &&
+        item.id &&
+        item.name &&
+        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [products, searchQuery]);
 
-  // Calculate product statistics
   const totalProducts = filteredData.length;
   const productTypes = {
+<<<<<<< HEAD
     compute_instance: filteredData.filter(
       (p) => p.productable_type === "compute_instance"
     ).length,
@@ -153,8 +151,21 @@ export default function AdminProducts() {
     ...new Set(filteredData.map((p) => p.provider).filter(Boolean)),
   ];
   const uniqueProviders = providers.length;
+=======
+    compute_instance: filteredData.filter((p) => p.productable_type === "compute_instance").length,
+    cross_connect: filteredData.filter((p) => p.productable_type === "cross_connect").length,
+    os_image: filteredData.filter((p) => p.productable_type === "os_image").length,
+    bandwidth: filteredData.filter((p) => p.productable_type === "bandwidth").length,
+    other: filteredData.filter((p) =>
+      !["compute_instance", "cross_connect", "os_image", "bandwidth"].includes(
+        p.productable_type
+      )
+    ).length,
+  };
 
-  // Define columns for ModernTable
+  const providers = [...new Set(filteredData.map((p) => p.provider).filter(Boolean))];
+>>>>>>> b587e2a (web)
+
   const columns = [
     {
       key: "serialNumber",
@@ -193,7 +204,10 @@ export default function AdminProducts() {
         };
         const config = typeConfig[value] || typeConfig.default;
         const Icon = config.icon;
+<<<<<<< HEAD
 
+=======
+>>>>>>> b587e2a (web)
         return (
           <div className="flex items-center gap-2">
             <Icon size={16} style={{ color: config.color }} />
@@ -215,45 +229,48 @@ export default function AdminProducts() {
       header: "Provider",
       render: (value) => (
         <div className="flex items-center gap-2">
+<<<<<<< HEAD
           <Globe
             size={16}
             style={{ color: designTokens.colors.neutral[500] }}
           />
+=======
+          <Globe size={16} style={{ color: designTokens.colors.neutral[500] }} />
+>>>>>>> b587e2a (web)
           <span>{value || "N/A"}</span>
         </div>
       ),
     },
   ];
 
-  // Define actions for ModernTable
   const actions = [
     {
       icon: <Edit size={16} />,
+<<<<<<< HEAD
       label: "",
+=======
+      label: "Edit",
+>>>>>>> b587e2a (web)
       onClick: (item) => openEditModal(item),
     },
     {
       icon: <Trash2 size={16} />,
+<<<<<<< HEAD
       label: "",
+=======
+      label: "Delete",
+>>>>>>> b587e2a (web)
       onClick: (item) => openDeleteModal(item),
     },
   ];
 
-  // Log state changes for debugging
-  useEffect(() => {
-    console.log(
-      "State Update - selectedProduct:",
-      selectedProduct,
-      "isEditModalOpen:",
-      isEditModalOpen,
-      "isDeleteModalOpen:",
-      isDeleteModalOpen
-    );
-  }, [selectedProduct, isEditModalOpen, isDeleteModalOpen]);
-
   if (isLoading) {
     return (
+<<<<<<< HEAD
       <div className="w-full h-svh flex items-center justify-center">
+=======
+      <div className="flex h-svh w-full items-center justify-center">
+>>>>>>> b587e2a (web)
         <Loader2
           className="w-12 animate-spin"
           style={{ color: designTokens.colors.primary[500] }}
@@ -262,6 +279,16 @@ export default function AdminProducts() {
     );
   }
 
+  const headerActions = (
+    <ModernButton
+      onClick={() => navigate("/admin-dashboard/products/add")}
+      className="flex items-center gap-2"
+    >
+      <Plus size={18} />
+      Add Product
+    </ModernButton>
+  );
+
   return (
     <>
       <AdminHeadbar onMenuClick={toggleMobileMenu} />
@@ -269,6 +296,7 @@ export default function AdminProducts() {
         isMobileMenuOpen={isMobileMenuOpen}
         onCloseMobileMenu={closeMobileMenu}
       />
+<<<<<<< HEAD
       <AdminActiveTab />
       <main
         className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8"
@@ -405,11 +433,56 @@ export default function AdminProducts() {
                   placeholder="Search by name..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+=======
+      <AdminPageShell
+        title="Product Management"
+        description="Manage cloud service products and configurations."
+        actions={headerActions}
+        contentClassName="space-y-6"
+      >
+        <ModernCard>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="relative">
+              <label
+                className="mb-2 block text-sm font-medium"
+                style={{ color: designTokens.colors.neutral[700] }}
+              >
+                Country Filter
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedCountryCode}
+                  onChange={(e) => handleCountryChange(e.target.value)}
+                  className="w-full appearance-none rounded-lg border px-4 py-2 pr-8"
+                  style={{
+                    backgroundColor: designTokens.colors.neutral[0],
+                    borderColor: designTokens.colors.neutral[300],
+                    color: designTokens.colors.neutral[900],
+                  }}
+                  disabled={isCountriesFetching}
+                >
+                  <option value="">All Countries</option>
+                  {isCountriesFetching ? (
+                    <option value="" disabled>
+                      Loading countries...
+                    </option>
+                  ) : (
+                    countries?.map((country) => (
+                      <option key={country.iso2} value={country.iso2}>
+                        {country.name}
+                      </option>
+                    ))
+                  )}
+                </select>
+                <ChevronDown
+                  className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2"
+                  style={{ color: designTokens.colors.neutral[400] }}
+>>>>>>> b587e2a (web)
                 />
               </div>
             </div>
-          </ModernCard>
 
+<<<<<<< HEAD
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <ModernStatsCard
@@ -442,8 +515,75 @@ export default function AdminProducts() {
               color="primary"
               description="Service providers"
             />
-          </div>
+=======
+            <div className="relative">
+              <label
+                className="mb-2 block text-sm font-medium"
+                style={{ color: designTokens.colors.neutral[700] }}
+              >
+                Region Filter
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedRegion}
+                  onChange={(e) => handleRegionChange(e.target.value)}
+                  className="w-full appearance-none rounded-lg border px-4 py-2 pr-8"
+                  style={{
+                    backgroundColor: designTokens.colors.neutral[0],
+                    borderColor: designTokens.colors.neutral[300],
+                    color: designTokens.colors.neutral[900],
+                  }}
+                  disabled={
+                    isRegionsFetching ||
+                    (selectedCountryCode &&
+                      regions?.every((r) => r.country_code !== selectedCountryCode))
+                  }
+                >
+                  <option value="">All Regions</option>
+                  {isRegionsFetching ? (
+                    <option value="" disabled>
+                      Loading regions...
+                    </option>
+                  ) : (
+                    regions
+                      ?.filter(
+                        (region) =>
+                          !selectedCountryCode ||
+                          region.country_code === selectedCountryCode
+                      )
+                      .map((region) => (
+                        <option key={region.code} value={region.code}>
+                          {region.name}
+                        </option>
+                      ))
+                  )}
+                </select>
+                <ChevronDown
+                  className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2"
+                  style={{ color: designTokens.colors.neutral[400] }}
+                />
+              </div>
+            </div>
 
+            <div>
+              <label
+                className="mb-2 block text-sm font-medium"
+                style={{ color: designTokens.colors.neutral[700] }}
+              >
+                Search Products
+              </label>
+              <ModernInput
+                type="search"
+                placeholder="Search by name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+>>>>>>> b587e2a (web)
+          </div>
+        </ModernCard>
+
+<<<<<<< HEAD
           {/* Products Table */}
 
           <ModernTable
@@ -459,18 +599,65 @@ export default function AdminProducts() {
               isProductsFetching || isRegionsFetching || isCountriesFetching
             }
             emptyMessage="No products found. Try adjusting your filters."
+=======
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <ModernStatsCard
+            title="Total Products"
+            value={totalProducts}
+            icon={<Package size={24} />}
+            change={5}
+            trend="up"
+            color="primary"
+            description="Available products"
+          />
+          <ModernStatsCard
+            title="Compute Instances"
+            value={productTypes.compute_instance}
+            icon={<Server size={24} />}
+            color="success"
+            description="Server products"
+          />
+          <ModernStatsCard
+            title="Network Services"
+            value={productTypes.cross_connect + productTypes.bandwidth}
+            icon={<Globe size={24} />}
+            color="warning"
+            description="Network products"
+          />
+          <ModernStatsCard
+            title="Providers"
+            value={providers.length}
+            icon={<Activity size={24} />}
+            color="info"
+            description="Service providers"
+>>>>>>> b587e2a (web)
           />
         </div>
-      </main>
 
-      {isEditModalOpen && selectedProduct && selectedProduct.id && (
+        <ModernCard>
+          <ModernTable
+            title="Products Catalog"
+            data={filteredData}
+            columns={columns}
+            actions={actions}
+            searchable={false}
+            filterable={false}
+            exportable
+            sortable
+            loading={isProductsFetching || isRegionsFetching || isCountriesFetching}
+            emptyMessage="No products found. Try adjusting your filters."
+          />
+        </ModernCard>
+      </AdminPageShell>
+
+      {isEditModalOpen && selectedProduct?.id && (
         <EditProduct
           isOpen={isEditModalOpen}
           onClose={closeEditModal}
           product={selectedProduct}
         />
       )}
-      {isDeleteModalOpen && selectedProduct && selectedProduct.id && (
+      {isDeleteModalOpen && selectedProduct?.id && (
         <DeleteProduct
           isOpen={isDeleteModalOpen}
           onClose={closeDeleteModal}

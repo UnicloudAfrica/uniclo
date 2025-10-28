@@ -1,4 +1,3 @@
-// src/components/admin/AdminPartners.jsx
 import {
   Loader2,
   Eye,
@@ -7,16 +6,17 @@ import {
   Users,
   Building2,
   Phone,
+<<<<<<< HEAD
   Calendar,
+=======
+>>>>>>> b587e2a (web)
 } from "lucide-react";
-import AdminActiveTab from "../components/adminActiveTab";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import ModernTable from "../components/ModernTable";
 import ModernButton from "../components/ModernButton";
 import ModernCard from "../components/ModernCard";
 import ModernStatsCard from "../components/ModernStatsCard";
-import AddPartner from "../components/partnersComponent/addPartner";
 import { useState } from "react";
 import useAuthRedirect from "../../utils/adminAuthRedirect";
 import { useFetchTenants } from "../../hooks/adminHooks/tenantHooks";
@@ -24,6 +24,7 @@ import { useNavigate } from "react-router-dom";
 import DeleteTenantModal from "./tenantComps/deleteTenant";
 import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
 import { designTokens } from "../../styles/designTokens";
+import AdminPageShell from "../components/AdminPageShell";
 
 const encodeId = (id) => encodeURIComponent(btoa(id));
 
@@ -41,25 +42,20 @@ const formatCompanyType = (type) => companyTypeMap[type] || "Unknown";
 const AdminPartners = () => {
   const navigate = useNavigate();
   const { isLoading } = useAuthRedirect();
-  const [isAddPartnerOpen, setAddPartner] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { data: tenants = [], isFetching: isTenantsFetching } =
     useFetchTenants();
   const [isDeleteTenantModalOpen, setIsDeleteTenantModalOpen] = useState(false);
   const [selectedTenantToDelete, setSelectedTenantToDelete] = useState(null);
 
-  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+  const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
-  const openAddPartner = () => setAddPartner(true);
-  const closeAddPartner = () => setAddPartner(false);
 
   const handleViewDetails = (item) => {
     const encodedId = encodeId(item.identifier);
-    navigate(
-      `/admin-dashboard/partners/details?id=${encodedId}&name=${encodeURIComponent(
-        item.name
-      )}`
-    );
+    navigate(`/admin-dashboard/partners/details?id=${encodedId}&name=${encodeURIComponent(
+      item.name
+    )}`);
   };
 
   const handleDeleteClick = (item) => {
@@ -67,26 +63,36 @@ const AdminPartners = () => {
     setIsDeleteTenantModalOpen(true);
   };
 
-  // Stats calculations
   const totalPartners = tenants.length;
+<<<<<<< HEAD
   const activePartners = tenants.filter(
     (tenant) => tenant.status === "active"
   ).length;
+=======
+  const activePartners = tenants.filter((tenant) => tenant.status === "active").length;
+>>>>>>> b587e2a (web)
   const companyTypes = {
     RC: tenants.filter((t) => t.company_type === "RC").length,
     BN: tenants.filter((t) => t.company_type === "BN").length,
     IT: tenants.filter((t) => t.company_type === "IT").length,
+<<<<<<< HEAD
     Other: tenants.filter((t) => !["RC", "BN", "IT"].includes(t.company_type))
       .length,
+=======
+    Other: tenants.filter((t) => !["RC", "BN", "IT"].includes(t.company_type)).length,
+>>>>>>> b587e2a (web)
   };
 
-  // Define columns for ModernTable
   const columns = [
     {
       key: "serialNumber",
       header: "S/N",
+<<<<<<< HEAD
       render: (value, row, index, currentPage, pageSize) =>
         (currentPage - 1) * pageSize + index + 1,
+=======
+      render: (value, row, index) => index + 1,
+>>>>>>> b587e2a (web)
     },
     {
       key: "id",
@@ -135,7 +141,6 @@ const AdminPartners = () => {
     },
   ];
 
-  // Define actions for ModernTable
   const actions = [
     {
       icon: <Eye size={16} />,
@@ -160,21 +165,72 @@ const AdminPartners = () => {
     );
   }
 
+  const headerActions = (
+    <ModernButton
+      onClick={() => navigate("/admin-dashboard/partners/create")}
+      className="flex items-center gap-2"
+    >
+      <Plus size={18} />
+      Add Partner
+    </ModernButton>
+  );
+
   return (
     <>
       <AdminHeadbar onMenuClick={toggleMobileMenu} />
+<<<<<<< HEAD
       <AdminSidebar
         isMobileMenuOpen={isMobileMenuOpen}
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
       <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] bg-[#FAFAFA] lg:w-[80%] min-h-full p-6 md:p-8 flex flex-col lg:flex-row">
+=======
+      <AdminSidebar isMobileMenuOpen={isMobileMenuOpen} onCloseMobileMenu={closeMobileMenu} />
+      <AdminPageShell
+        title="Partners Management"
+        description="Manage and monitor your business partners"
+        actions={headerActions}
+        contentClassName="space-y-6"
+      >
+>>>>>>> b587e2a (web)
         <TenantClientsSideMenu />
 
-        <div className="flex-1 lg:w-[76%] space-y-6">
-          {/* Page Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <ModernStatsCard
+            title="Total Partners"
+            value={totalPartners}
+            icon={<Users size={24} />}
+            change={12}
+            trend="up"
+            color="primary"
+          />
+          <ModernStatsCard
+            title="Active Partners"
+            value={activePartners}
+            icon={<Building2 size={24} />}
+            change={8}
+            trend="up"
+            color="success"
+          />
+          <ModernStatsCard
+            title="LLC Companies"
+            value={companyTypes.RC}
+            icon={<Building2 size={24} />}
+            color="info"
+          />
+          <ModernStatsCard
+            title="Business Names"
+            value={companyTypes.BN}
+            icon={<Building2 size={24} />}
+            color="warning"
+          />
+        </div>
+
+        <ModernCard>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
+<<<<<<< HEAD
               <h1
                 className="text-2xl font-bold"
                 style={{ color: designTokens.colors.neutral[900] }}
@@ -240,13 +296,44 @@ const AdminPartners = () => {
             filterable={true}
             exportable={true}
             sortable={true}
+=======
+              <h2 className="text-xl font-semibold" style={{ color: designTokens.colors.neutral[900] }}>
+                Partner Directory
+              </h2>
+              <p className="text-sm mt-1" style={{ color: designTokens.colors.neutral[600] }}>
+                View partner details, track activity, and manage lifecycle.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <ModernButton variant="outline" size="sm">
+                Export Data
+              </ModernButton>
+              <ModernButton variant="outline" size="sm">
+                Refresh
+              </ModernButton>
+            </div>
+          </div>
+          <ModernTable
+            data={tenants}
+            columns={columns}
+            actions={actions}
+            searchable
+            filterable
+            exportable
+            sortable
+>>>>>>> b587e2a (web)
             loading={isTenantsFetching}
             onRowClick={handleViewDetails}
             emptyMessage="No partners found"
           />
+<<<<<<< HEAD
         </div>
       </main>
       <AddPartner isOpen={isAddPartnerOpen} onClose={closeAddPartner} />
+=======
+        </ModernCard>
+      </AdminPageShell>
+>>>>>>> b587e2a (web)
       <DeleteTenantModal
         isOpen={isDeleteTenantModalOpen}
         onClose={() => setIsDeleteTenantModalOpen(false)}

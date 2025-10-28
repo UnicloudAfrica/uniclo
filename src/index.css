@@ -8,6 +8,17 @@
 /* Import responsive utilities */
 @import "./styles/responsive.css";
 
+@layer components {
+  .dashboard-content-shell {
+    @apply absolute top-[126px] left-0 md:left-20 lg:left-[20%] w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full;
+    font-family: "Outfit", "Inter", "SF Pro Display", system-ui, sans-serif;
+  }
+
+  .dashboard-content-shell.admin-dashboard-shell {
+    top: 74px;
+  }
+}
+
 @media only screen and (max-width: 767px) {
   .centered {
     position: absolute;

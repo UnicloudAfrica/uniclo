@@ -119,7 +119,7 @@ const RegionRequestDetail = () => {
         />
         <HeaderBar tenantData={tenantData} onMenuClick={toggleMobileMenu} />
         <BreadcrumbNav tenantData={tenantData} activeTab={activeTab} />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 overflow-y-auto">
+        <main className="dashboard-content-shell p-6 md:p-8 overflow-y-auto">
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
@@ -143,7 +143,7 @@ const RegionRequestDetail = () => {
         />
         <HeaderBar tenantData={tenantData} onMenuClick={toggleMobileMenu} />
         <BreadcrumbNav tenantData={tenantData} activeTab={activeTab} />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 overflow-y-auto">
+        <main className="dashboard-content-shell p-6 md:p-8 overflow-y-auto">
           <div className="max-w-4xl mx-auto">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Region not found</h3>
@@ -172,7 +172,7 @@ const RegionRequestDetail = () => {
       <BreadcrumbNav tenantData={tenantData} activeTab={activeTab} />
       <main
         ref={contentRef}
-        className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 overflow-y-auto"
+        className="dashboard-content-shell p-6 md:p-8 overflow-y-auto"
       >
         <div className="max-w-4xl mx-auto">
         {/* Header */}

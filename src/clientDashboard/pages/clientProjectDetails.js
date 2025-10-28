@@ -151,7 +151,7 @@ export default function ClientProjectDetails() {
           onCloseMobileMenu={closeMobileMenu}
         />
         <ClientActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center flex-col">
+        <main className="dashboard-content-shell p-6 md:p-8 flex items-center justify-center flex-col">
           <Loader2 className="w-8 h-8 animate-spin text-[--theme-color]" />
           <p className="ml-2 text-gray-700 mt-2">Loading project details...</p>
         </main>
@@ -169,7 +169,7 @@ export default function ClientProjectDetails() {
           onCloseMobileMenu={closeMobileMenu}
         />
         <ClientActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center flex-col text-center">
+        <main className="dashboard-content-shell p-6 md:p-8 flex items-center justify-center flex-col text-center">
           <p className=" text-sm md:text-base font-normal text-gray-700 mb-4">
             This project could not be found.
           </p>
@@ -197,7 +197,7 @@ export default function ClientProjectDetails() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <ClientActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
+      <main className="dashboard-content-shell p-6 md:p-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-[#1E1E1EB2]">
             Project Details

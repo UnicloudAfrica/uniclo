@@ -135,7 +135,7 @@ const ClientCalculator = () => {
         onCloseMobileMenu={closeMobileMenu}
       />
       <ClientActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
+      <main className="dashboard-content-shell p-6 md:p-8">
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex justify-between items-center pb-2 ">
             <div className="flex items-center">

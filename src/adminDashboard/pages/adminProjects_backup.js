@@ -6,6 +6,7 @@ import { useFetchProjects } from "../../hooks/adminHooks/projectHooks";
 import { ChevronLeft, ChevronRight, Eye, Loader2 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import CreateProjectModal from "./projectComps/addProject";
+import AdminPageShell from "../components/AdminPageShell";
 
 // Function to encode the ID for URL
 const encodeId = (id) => {
@@ -99,10 +100,10 @@ if (isProjectsFetching) {
           onCloseMobileMenu={closeMobileMenu}
         />
         <AdminActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center">
+                <AdminPageShell contentClassName="p-6 md:p-8 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
           <p className="ml-2 text-gray-700">Loading projects...</p>
-        </main>
+                </AdminPageShell>
       </>
     );
   }
@@ -116,7 +117,7 @@ if (isProjectsFetching) {
           onCloseMobileMenu={closeMobileMenu}
         />
         <AdminActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center">
+                <AdminPageShell contentClassName="p-6 md:p-8 flex items-center justify-center">
           <div className="max-w-xl w-full bg-white border border-red-200 rounded-md p-4">
             <div className="text-red-700 font-medium">Failed to load projects</div>
             <div className="text-sm text-red-600 mt-1">{projectsError?.message || "An unexpected error occurred."}</div>
@@ -135,7 +136,7 @@ if (isProjectsFetching) {
               </button>
             </div>
           </div>
-        </main>
+                </AdminPageShell>
         <CreateProjectModal isOpen={isAddProjectOpen} onClose={closeAddProject} />
       </>
     );
@@ -149,7 +150,7 @@ if (isProjectsFetching) {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-<main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
+<AdminPageShell contentClassName="p-6 md:p-8">
         <div className="flex items-center justify-between mt-5">
           <button
             onClick={openAddProject}
@@ -344,7 +345,7 @@ if (isProjectsFetching) {
             </div>
           </div>
         )}
-      </main>
+      </AdminPageShell>
 
       <CreateProjectModal isOpen={isAddProjectOpen} onClose={closeAddProject} />
     </>

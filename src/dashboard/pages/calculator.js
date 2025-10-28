@@ -87,7 +87,7 @@ export default function TenantCalculator() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <ActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
+      <main className="dashboard-content-shell p-6 md:p-8">
         <div className="flex flex-col items-start">
           <p className="text- font-normal mt-3 text-[#676767] max-w-[700px] text-sm md:text-base">
             Create your cloud setup, select instances, storage, and networking,

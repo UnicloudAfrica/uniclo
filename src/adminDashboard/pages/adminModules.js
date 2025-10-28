@@ -4,6 +4,7 @@ import AdminActiveTab from "../components/adminActiveTab";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AddModules from "../components/modulesComp/addModules";
+import AdminPageShell from "../components/AdminPageShell";
 
 const AdminModules = () => {
   const [activeTab, setActiveTab] = useState("Z2 Compute Instances");
@@ -186,14 +187,19 @@ const AdminModules = () => {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
-        {/* Add Module Button */}
-        <button
-          onClick={openAddModules}
-          className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base mb-6"
-        >
-          Add module
-        </button>
+      <AdminPageShell
+        title="Modules"
+        description="Manage catalog pricing, resources, and availability across all module tiers."
+        actions={
+          <button
+            onClick={openAddModules}
+            className="inline-flex items-center rounded-full bg-[#288DD1] px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#1976D2] transition-colors"
+          >
+            Add Module
+          </button>
+        }
+        contentClassName="space-y-6"
+      >
 
         {/* Tabs */}
         <div className="flex space-x-4 mb-6 border-b">
@@ -410,7 +416,7 @@ const AdminModules = () => {
             </button>
           </div>
         </div>
-      </main>
+            </AdminPageShell>
       <AddModules isOpen={isAddModulesOpen} onClose={closeAddModules} />
     </>
   );

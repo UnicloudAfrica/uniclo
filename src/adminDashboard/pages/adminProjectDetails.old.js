@@ -4,7 +4,7 @@ import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useFetchProjectById, useProjectStatus } from "../../hooks/adminHooks/projectHooks";
-import { useProjectInfrastructureStatus, useProvisionVpc, useEnableProjectVpc } from "../../hooks/adminHooks/projectInfrastructureHooks";
+import { useProjectInfrastructureStatus } from "../../hooks/adminHooks/projectInfrastructureHooks";
 import {
   ChevronLeft,
   ChevronRight,
@@ -15,14 +15,9 @@ import {
   Info,
   CheckCircle,
   AlertCircle,
-  XCircle,
   Network,
   Globe,
   Server,
-  Key,
-  Wifi,
-  GitBranch,
-  RadioTower,
   HardDrive,
 } from "lucide-react";
 import EditProjectModal from "./projectComps/editProject";
@@ -41,6 +36,18 @@ import ModernButton from "../components/ModernButton";
 import ModernCard from "../components/ModernCard";
 import ToastUtils from "../../utils/toastUtil";
 import api from "../../index/admin/api";
+import AdminPageShell from "../components/AdminPageShell";
+
+const INFRA_MENU_ITEMS = [
+  { name: "VPCs", component: VPCs },
+  { name: "Key Pairs", component: KeyPairs },
+  { name: "SGs", component: SecurityGroup },
+  { name: "Subnets", component: Subnets },
+  { name: "IGWs", component: IGWs },
+  { name: "Route Tables", component: RouteTables },
+  { name: "ENIs", component: ENIs },
+  { name: "EIPs", component: EIPs },
+];
 
 // Function to decode the ID from URL
 const decodeId = (encodedId) => {
@@ -68,7 +75,6 @@ export default function AdminProjectDetails() {
   const [isAssignEdgeOpen, setIsAssignEdgeOpen] = useState(false);
 
   const [summaryActionEndpoint, setSummaryActionEndpoint] = useState(null);
-  const [activeChecklistSection, setActiveChecklistSection] = useState("setup");
 
   const queryParams = new URLSearchParams(location.search);
   const identifierParam = queryParams.get("identifier");
@@ -99,29 +105,6 @@ export default function AdminProjectDetails() {
 
   const summaryItems = projectStatusData?.project?.summary ?? [];
 
-  const normalizeSummaryKey = (text = "") =>
-    text.toLowerCase().replace(/[^a-z0-9]/g, "");
-
-  const summaryStatusMap = useMemo(() => {
-    const map = new Map();
-    summaryItems.forEach((item) => {
-      if (!item?.title) return;
-      map.set(normalizeSummaryKey(item.title), item);
-    });
-    return map;
-  }, [summaryItems]);
-
-  const summaryCompleted = (...keys) => {
-    for (const key of keys) {
-      const normalizedKey = normalizeSummaryKey(key);
-      if (summaryStatusMap.has(normalizedKey)) {
-        const item = summaryStatusMap.get(normalizedKey);
-        return item?.completed ?? false;
-      }
-    }
-    return undefined;
-  };
-
 
   const {
     data: projectDetails,
@@ -133,7 +116,9 @@ export default function AdminProjectDetails() {
 
   const [lastRefreshedAt, setLastRefreshedAt] = useState(null);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
-  const contentSectionRef = useRef(null);
+  const [activeTopLevelTab, setActiveTopLevelTab] = useState("Instances");
+  const [activeInfraTab, setActiveInfraTab] = useState("VPCs");
+  const infrastructureSectionRef = useRef(null);
 
 
   useEffect(() => {
@@ -181,8 +166,6 @@ export default function AdminProjectDetails() {
   };
 
   const handleRowClick = (item) => {
-    const encodedId = encodeURIComponent(btoa(item.identifier));
-    const instanceName = item.name;
     // Note: Instance management details have been moved to standard instances
     // For now, show a message instead of navigating to removed route
     alert('Instance details functionality will be available in the updated instances interface');
@@ -200,9 +183,26 @@ export default function AdminProjectDetails() {
     : null;
 
   const navigateToSection = (sectionKey) => {
-    setActiveChecklistSection(sectionKey);
+    setActiveTopLevelTab("Infrastructure");
+    if (sectionKey) {
+      const sectionToTab = {
+        vpcs: "VPCs",
+        "create-key-pair": "Key Pairs",
+        "configure-edge-network": "VPCs",
+        "create-security-groups": "SGs",
+        "manage-subnets": "Subnets",
+        "configure-igw": "IGWs",
+        "route-tables": "Route Tables",
+        enis: "ENIs",
+        eips: "EIPs",
+      };
+      const targetTab = sectionToTab[sectionKey];
+      if (targetTab) {
+        setActiveInfraTab(targetTab);
+      }
+    }
     setTimeout(() => {
-      contentSectionRef.current?.scrollIntoView({
+      infrastructureSectionRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
@@ -243,20 +243,11 @@ export default function AdminProjectDetails() {
   const infraData = infraStatus?.data ?? infraStatus ?? {};
   const infraComponents = infraData?.components ?? {};
 
-  const { mutate: provisionVpc, isPending: isProvisioningVpc } =
-    useProvisionVpc();
-
-  const { mutate: enableVpc, isPending: isEnablingVpc } =
-    useEnableProjectVpc();
-
-  const [activeInfraAction, setActiveInfraAction] = useState(null);
-
   const hasVpcConfigured =
     infraComponents?.vpc?.status === "completed";
 
   // Check if project is VPC-enabled (use status API data which includes fallback logic)
   const isVpcEnabled = projectStatusData?.project?.vpc_enabled ?? projectDetails?.provisioning_progress?.vpc_enabled === true;
-  const needsVpcEnabling = !isVpcEnabled && projectDetails?.status === 'pending';
 
   const handleManualRefresh = async () => {
     if (!projectId) {
@@ -287,112 +278,15 @@ export default function AdminProjectDetails() {
     }
   };
 
-  const handleProvisionVpc = () => {
-    if (!projectId) {
-      ToastUtils.error(
-        "Project identifier is missing. Unable to request VPC provisioning."
-      );
-      return;
-    }
-
-    if (hasVpcConfigured) {
-      ToastUtils.info("Zadara has already provisioned the VPC for this project.");
-      return;
-    }
-
-    setActiveInfraAction("vpc");
-    provisionVpc(
-      {
-        projectId,
-        payload: {
-          region:
-            infraStatus?.project?.region ||
-            projectDetails?.region ||
-            undefined,
-          name: `main-vpc-${projectDetails?.identifier || projectId}`,
-        },
-      },
-      {
-        onSuccess: (response) => {
-          const successMessage =
-            response?.message ||
-            "Requested VPC provisioning. Zadara will update the project once the VPC is ready.";
-          ToastUtils.success(successMessage);
-          Promise.all([refetchInfraStatus(), refetchProject(), refetchProjectStatus()]).then(() => {
-            setLastRefreshedAt(new Date());
-          });
-        },
-        onError: (error) => {
-          console.error("Failed to request VPC provisioning:", error);
-          ToastUtils.error(
-            error?.message ||
-            "Failed to request VPC provisioning. Please try again."
-          );
-        },
-        onSettled: () => {
-          setActiveInfraAction(null);
-        },
-      }
-    );
-  };
-
-  const handleEnableVpc = () => {
-    if (!projectId) {
-      ToastUtils.error(
-        "Project identifier is missing. Unable to enable VPC."
-      );
-      return;
-    }
-
-    if (isVpcEnabled) {
-      ToastUtils.info("VPC is already enabled for this project.");
-      return;
-    }
-
-    setActiveInfraAction("enable-vpc");
-    enableVpc(
-      { projectId },
-      {
-        onSuccess: (response) => {
-          const successMessage =
-            response?.message ||
-            "VPC has been enabled successfully! The project can now use VPC features.";
-          ToastUtils.success(successMessage);
-          Promise.all([refetchInfraStatus(), refetchProject(), refetchProjectStatus()]).then(() => {
-            setLastRefreshedAt(new Date());
-          });
-        },
-        onError: (error) => {
-          console.error("Failed to enable VPC:", error);
-          ToastUtils.error(
-            error?.message ||
-            "Failed to enable VPC. Please try again."
-          );
-        },
-        onSettled: () => {
-          setActiveInfraAction(null);
-        },
-      }
-    );
-  };
-
-  const handleNavigateToInventory = () => {
-    navigate("/admin-dashboard/inventory?tab=ebs-volumes");
-  };
-
   const canDeleteProject = instances.length === 0;
 
   // Array of menu items and their corresponding components
-  const infraMenuItems = [
-    { name: "VPCs", component: VPCs },
-    { name: "Key Pairs", component: KeyPairs },
-    { name: "SGs", component: SecurityGroup },
-    { name: "Subnets", component: Subnets },
-    { name: "IGWs", component: IGWs },
-    { name: "Route Tables", component: RouteTables },
-    { name: "ENIs", component: ENIs },
-    { name: "EIPs", component: EIPs },
-  ];
+  const infraMenuItems = INFRA_MENU_ITEMS;
+
+  const ActiveInfraComponent = useMemo(() => {
+    const match = infraMenuItems.find((item) => item.name === activeInfraTab);
+    return match?.component || null;
+  }, [infraMenuItems, activeInfraTab]);
 
   // Open edge modal automatically if requested via query param
   useEffect(() => {
@@ -411,10 +305,16 @@ export default function AdminProjectDetails() {
           onCloseMobileMenu={closeMobileMenu}
         />
         <AdminActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center flex-col">
-          <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
-          <p className="ml-2 text-gray-700 mt-2">Loading project details...</p>
-        </main>
+        <AdminPageShell
+          title="Project Details"
+          description="Loading project insights..."
+          contentClassName="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-center"
+        >
+          <Loader2 className="h-8 w-8 animate-spin text-[#288DD1]" />
+          <p className="text-sm text-gray-700 md:text-base">
+            Loading project details...
+          </p>
+        </AdminPageShell>
       </>
     );
   }
@@ -432,17 +332,21 @@ export default function AdminProjectDetails() {
           onCloseMobileMenu={closeMobileMenu}
         />
         <AdminActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center flex-col text-center">
-          <p className="text-sm md:text-base font-normal text-gray-700 mb-4">
-            {projectErrorMessage}
+        <AdminPageShell
+          title="Project Details"
+          description={projectErrorMessage}
+          actions={
+            <ModernButton variant="outline" onClick={() => navigate(backToProjectsPath)}>
+              Back to Projects
+            </ModernButton>
+          }
+          contentClassName="flex min-h-[40vh] flex-col items-center justify-center gap-4 text-center"
+        >
+          <p className="max-w-md text-sm md:text-base text-gray-600">
+            Check the project identifier and try again. If the issue persists, verify that the project is still
+            available in your workspace.
           </p>
-          <button
-            onClick={() => navigate(backToProjectsPath)}
-            className="px-6 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors"
-          >
-            Go to Projects Page
-          </button>
-        </main>
+        </AdminPageShell>
       </>
     );
   }
@@ -478,702 +382,55 @@ export default function AdminProjectDetails() {
       ]
     : [];
 
-  const quickActions = [
-    // Add Enable VPC action if needed
-    ...(needsVpcEnabling ? [{
-      key: "enable-vpc",
-      label: activeInfraAction === "enable-vpc" || isEnablingVpc
-        ? "Enabling VPC..."
-        : "Enable VPC",
-      onClick: handleEnableVpc,
-      icon: <Network size={16} />,
-      disabled: activeInfraAction === "enable-vpc" || isEnablingVpc,
-      loading: activeInfraAction === "enable-vpc" || isEnablingVpc,
-      priority: true, // Show this first if needed
-    }] : []),
-    {
-      key: "vpc",
-      label: hasVpcConfigured
-        ? "VPC Provisioned"
-        : activeInfraAction === "vpc" || isProvisioningVpc
-          ? "Provisioning VPC..."
-          : "Provision VPC",
-      onClick: () => {
-        navigateToSection("vpcs");
-        handleProvisionVpc();
-      },
-      icon: <Network size={16} />,
-      disabled:
-        hasVpcConfigured || activeInfraAction === "vpc" || isProvisioningVpc || !isVpcEnabled,
-      loading: activeInfraAction === "vpc" || isProvisioningVpc,
-    },
-    {
-      key: "edge",
-      label: "Configure Edge",
-      onClick: handleConfigureEdge,
-      icon: <Globe size={16} />,
-    },
-    {
-      key: "keypairs",
-      label: "Create Key Pair",
-      onClick: () => navigateToSection("create-key-pair"),
-      icon: <Key size={16} />,
-    },
-    {
-      key: "eips",
-      label: "Manage Elastic IPs",
-      onClick: () => navigateToSection("eips"),
-      icon: <Wifi size={16} />,
-    },
-    {
-      key: "subnets",
-      label: "Manage Subnets",
-      onClick: () => navigateToSection("manage-subnets"),
-      icon: <GitBranch size={16} />,
-    },
-    {
-      key: "igw",
-      label: "Configure IGW",
-      onClick: () => navigateToSection("configure-igw"),
-      icon: <RadioTower size={16} />,
-    },
-    {
-      key: "storage",
-      label: "Volumes & Storage",
-      onClick: handleNavigateToInventory,
-      icon: <HardDrive size={16} />,
-    },
-  ];
-
-  const isComponentComplete = (componentKey) =>
-    infraComponents?.[componentKey]?.status === "completed";
-
-  const checklistItems = useMemo(() => {
-    const setupComplete =
-      summaryCompleted("setup", "projectsetup", "initialsetup") ??
-      (isVpcEnabled && hasVpcConfigured) ??
-      false;
-    const vpcComplete =
-      summaryCompleted("vpc", "vpcs", "virtualprivatecloud") ??
-      hasVpcConfigured ??
-      false;
-    const keyPairComplete =
-      summaryCompleted("keypairs", "keypair", "createkeypair") ?? false;
-    const edgeComplete =
-      summaryCompleted(
-        "edgenetwork",
-        "edge",
-        "configureedgenetwork",
-        "edge networking"
-      ) ?? isComponentComplete("edge_networks");
-    const securityGroupComplete =
-      summaryCompleted("securitygroups", "securitygroup", "sgs") ??
-      isComponentComplete("security_groups");
-    const subnetComplete =
-      summaryCompleted("subnets", "subnet", "managesubnets") ??
-      isComponentComplete("subnets");
-    const igwComplete =
-      summaryCompleted(
-        "igw",
-        "igws",
-        "internetgateway",
-        "internetgateways",
-        "configureigw"
-      ) ?? false;
-    const routeTableComplete =
-      summaryCompleted("routetables", "routetable", "routes") ?? false;
-    const eniComplete =
-      summaryCompleted(
-        "enis",
-        "eni",
-        "networkinterfaces",
-        "networkinterface"
-      ) ?? false;
-    const eipComplete =
-      summaryCompleted(
-        "eips",
-        "eip",
-        "elasticips",
-        "elasticip",
-        "elastic ip"
-      ) ?? false;
-
-    return [
-      { key: "setup", label: "Setup", completed: !!setupComplete },
-      { key: "vpcs", label: "VPCs", completed: !!vpcComplete },
-      {
-        key: "create-key-pair",
-        label: "Create Key Pair",
-        completed: !!keyPairComplete,
-      },
-      {
-        key: "configure-edge-network",
-        label: "Configure Edge Network",
-        completed: !!edgeComplete,
-      },
-      {
-        key: "create-security-groups",
-        label: "Create Security Groups",
-        completed: !!securityGroupComplete,
-      },
-      {
-        key: "manage-subnets",
-        label: "Manage Subnets",
-        completed: !!subnetComplete,
-      },
-      {
-        key: "configure-igw",
-        label: "Configure IGW",
-        completed: !!igwComplete,
-      },
-      {
-        key: "route-tables",
-        label: "Route Tables",
-        completed: !!routeTableComplete,
-      },
-      { key: "enis", label: "ENIs", completed: !!eniComplete },
-      { key: "eips", label: "EIPs", completed: !!eipComplete },
-    ];
-  }, [
-    summaryStatusMap,
-    summaryCompleted,
-    isVpcEnabled,
-    hasVpcConfigured,
-    infraComponents,
-  ]);
-
-  const renderQuickActionsCard = () => (
-    <div
-      className={`mb-6 p-4 rounded-xl border ${hasVpcConfigured ? "bg-green-50 border-green-200" : "bg-blue-50 border-blue-200"
-        }`}
-    >
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <Info
-            className={`w-5 h-5 mt-0.5 ${hasVpcConfigured ? "text-green-600" : "text-blue-600"
-              }`}
-          />
-          <div>
-            <h2 className="text-sm font-semibold text-gray-900">
-              Provisioning checklist
-            </h2>
-            <p className="text-sm text-gray-700">
-              {hasVpcConfigured
-                ? "Continue configuring edge networking and infrastructure resources to activate this project."
-                : !isVpcEnabled
-                  ? "Enable VPC for this project first, then request VPC provisioning to activate it."
-                  : "Request VPC provisioning and complete the networking resources below to activate it."}
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {quickActions.map((action) => (
-            <button
-              key={action.key}
-              onClick={action.onClick}
-              disabled={action.disabled}
-              type="button"
-              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors border ${action.disabled
-                ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                : "bg-white text-[#288DD1] border-[#B3E5FC] hover:bg-[#E0F2FF]"
-                }`}
-            >
-              {action.loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                action.icon
-              )}
-              <span>{action.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderProvisioningSummary = () => (
-    <ModernCard className="mb-6">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Info className="w-4 h-4 text-[#288DD1]" />
-          <span className="font-semibold text-gray-800">Provisioning Checklist</span>
-        </div>
-        {isProjectStatusFetching && (
-          <Loader2 className="w-4 h-4 animate-spin text-[#288DD1]" />
-        )}
-      </div>
-      <div className="space-y-3">
-        {summaryItems.length === 0 ? (
-          <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <div className="text-sm font-medium text-amber-900">Checklist data unavailable</div>
-                <div className="text-xs text-amber-700 mt-1">
-                  {isProjectStatusFetching ? 'Loading checklist...' : 'No checklist data returned from backend'}
-                </div>
-                {!isProjectStatusFetching && (
-                  <button
-                    onClick={() => refetchProjectStatus()}
-                    className="mt-2 text-xs text-amber-600 hover:text-amber-800 underline"
-                  >
-                    Retry loading checklist
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        ) : (
-          summaryItems.map((item, index) => (
-            <div
-              key={`${item.title}-${index}`}
-              className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 p-3"
-            >
-              <div className="flex items-start gap-3 flex-1">
-                {item.completed ? (
-                  <CheckCircle className="w-4 h-4 text-emerald-500 mt-1 flex-shrink-0" />
-                ) : (
-                  <AlertCircle className="w-4 h-4 text-amber-500 mt-1 flex-shrink-0" />
-                )}
-                <div className="space-y-1 flex-1">
-                  <div className="text-sm font-medium text-gray-800">{item.title}</div>
-                  {typeof item.count === 'number' && (
-                    <div className="text-xs text-gray-500">Total: {item.count}</div>
-                  )}
-                  {!item.completed && typeof item.missing_count === 'number' && item.missing_count > 0 && (
-                    <div className="text-xs text-amber-600 font-medium">{item.missing_count} pending</div>
-                  )}
-                  {item.updated_at && (
-                    <div className="text-xs text-gray-400">Completed {new Date(item.updated_at).toLocaleString()}</div>
-                  )}
-                </div>
-              </div>
-              <div className="flex-shrink-0">
-                {item.action ? (
-                  <ModernButton
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleChecklistAction(item.action)}
-                    isLoading={summaryActionEndpoint === (item.action.endpoint.startsWith('/') ? item.action.endpoint : `/${item.action.endpoint}`)}
-                  >
-                    {item.action.label || 'Fix'}
-                  </ModernButton>
-                ) : null}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      {projectStatusData?.project?.users && (
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <h3 className="text-sm font-semibold text-gray-800 mb-4">Project Users ({projectStatusData.project.users.total})</h3>
-
-          {projectStatusData.project.users.local && projectStatusData.project.users.local.length > 0 && (
-            <div className="mb-4">
-              <div className="text-xs font-medium text-gray-600 mb-2">All Local Users</div>
-              <div className="space-y-2">
-                {projectStatusData.project.users.local.map((user) => (
-                  <div key={user.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg text-xs">
-                    <div>
-                      <div className="font-medium text-gray-900">{user.name}</div>
-                      <div className="text-gray-500">{user.email}</div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-1 rounded text-[10px] ${user.status.provider_account ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'}`}>
-                        {projectStatusData.project.region_name || 'Region'}
-                      </span>
-                      <span className={`px-2 py-1 rounded text-[10px] ${user.status.aws_policy ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'}`}>
-                        Storage
-                      </span>
-                      <span className={`px-2 py-1 rounded text-[10px] ${user.status.symp_policy ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'}`}>
-                        Network
-                      </span>
-                      <span className={`px-2 py-1 rounded text-[10px] ${user.status.tenant_admin ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'}`}>
-                        Admin
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {projectStatusData.project.users.provider_missing && projectStatusData.project.users.provider_missing.length > 0 && (
-            <div className="mb-4">
-              <div className="text-xs font-medium text-amber-600 mb-2">Missing {projectStatusData.project.region_name || 'Provider'} Accounts ({projectStatusData.project.users.provider_missing.length})</div>
-              <div className="space-y-2">
-                {projectStatusData.project.users.provider_missing.map((user) => (
-                  <div key={user.id} className="flex items-center justify-between p-2 bg-amber-50 rounded-lg text-xs">
-                    <div>
-                      <div className="font-medium text-gray-900">{user.name}</div>
-                    </div>
-                    {user.sync_endpoint && (
-                      <ModernButton
-                        size="xs"
-                        variant="outline"
-                        onClick={() => handleChecklistAction({ method: 'POST', endpoint: user.sync_endpoint, label: 'Sync User' })}
-                      >
-                        Sync
-                      </ModernButton>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {projectStatusData.project.users.aws_policy_missing && projectStatusData.project.users.aws_policy_missing.length > 0 && (
-            <div className="mb-4">
-              <div className="text-xs font-medium text-amber-600 mb-2">Missing Storage Policies ({projectStatusData.project.users.aws_policy_missing.length})</div>
-              <div className="space-y-2">
-                {projectStatusData.project.users.aws_policy_missing.map((user) => (
-                  <div key={user.id} className="flex items-center justify-between p-2 bg-amber-50 rounded-lg text-xs">
-                    <div>
-                      <div className="font-medium text-gray-900">{user.name}</div>
-                    </div>
-                    {user.assign_endpoint && (
-                      <ModernButton
-                        size="xs"
-                        variant="outline"
-                        onClick={() => handleChecklistAction({ method: 'POST', endpoint: user.assign_endpoint, label: 'Attach Storage Policy' })}
-                      >
-                        Attach Storage Policy
-                      </ModernButton>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {projectStatusData.project.users.symp_policy_missing && projectStatusData.project.users.symp_policy_missing.length > 0 && (
-            <div className="mb-4">
-              <div className="text-xs font-medium text-amber-600 mb-2">Missing Network Policies ({projectStatusData.project.users.symp_policy_missing.length})</div>
-              <div className="space-y-2">
-                {projectStatusData.project.users.symp_policy_missing.map((user) => (
-                  <div key={user.id} className="flex items-center justify-between p-2 bg-amber-50 rounded-lg text-xs">
-                    <div>
-                      <div className="font-medium text-gray-900">{user.name}</div>
-                    </div>
-                    {user.assign_endpoint && (
-                      <ModernButton
-                        size="xs"
-                        variant="outline"
-                        onClick={() => handleChecklistAction({ method: 'POST', endpoint: user.assign_endpoint, label: 'Attach Network Policy' })}
-                      >
-                        Attach Network Policy
-                      </ModernButton>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-    </ModernCard>
-  );
-
-  const renderInstancesSection = () => (
-    <div className="mt-8">
-      <div className="w-full flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-[#575758]">
-          Instances
-        </h2>
-        <button
-          onClick={() =>
-            navigate("/admin-dashboard/add-instance", {
-              state: { project: projectDetails },
-            })
-          }
-          className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
-        >
-          Add Instance
-        </button>
-      </div>
-      <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px] border border-gray-200">
-        <table className="w-full">
-          <thead className="bg-[#F5F5F5]">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Disk
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                EBS Volume
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Operating System
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Action
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-[#E8E6EA]">
-            {currentData.length > 0 ? (
-              currentData.map((item) => (
-                <tr
-                  key={item.id}
-                  onClick={() => handleRowClick(item)}
-                  className="hover:bg-gray-50 cursor-pointer"
-                >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {item.name || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {item.storage_size_gb
-                      ? `${item.storage_size_gb} GiB`
-                      : "N/A"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {item.ebs_volume?.name || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {item.os_image?.name || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${item.status === "Running"
-                        ? "bg-green-100 text-green-800"
-                        : item.status === "Stopped"
-                          ? "bg-red-100 text-red-800"
-                          : item.status === "spawning"
-                            ? "bg-blue-100 text-blue-800"
-                            : item.status === "payment_pending"
-                              ? "bg-orange-100 text-orange-800"
-                              : "bg-gray-100 text-gray-800"
-                        }`}
-                    >
-                      {item.status?.replace(/_/g, " ") || "N/A"}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRowClick(item);
-                      }}
-                      className="text-[#288DD1] hover:underline text-sm font-medium"
-                    >
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td
-                  colSpan={6}
-                  className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center"
-                >
-                  No instances found for this project.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 md:hidden mt-6">
-        {currentData.length > 0 ? (
-          currentData.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => handleRowClick(item)}
-              className="bg-white rounded-[12px] shadow-sm p-4 cursor-pointer border border-gray-200"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-base font-semibold text-gray-900">
-                  {item.name || "N/A"}
-                </h3>
-                <span
-                  className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${item.status === "Running"
-                    ? "bg-green-100 text-green-800"
-                    : item.status === "Stopped"
-                      ? "bg-red-100 text-red-800"
-                      : item.status === "spawning"
-                        ? "bg-blue-100 text-blue-800"
-                        : item.status === "payment_pending"
-                          ? "bg-orange-100 text-orange-800"
-                          : "bg-gray-100 text-gray-800"
-                    }`}
-                >
-                  {item.status?.replace(/_/g, " ") || "N/A"}
-                </span>
-              </div>
-              <div className="space-y-1 text-sm text-gray-600">
-                <div className="flex justify-between">
-                  <span className="font-medium">Disk:</span>
-                  <span>
-                    {item.storage_size_gb
-                      ? `${item.storage_size_gb} GiB`
-                      : "N/A"}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">EBS Volume:</span>
-                  <span>{item.ebs_volume?.name || "N/A"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">OS:</span>
-                  <span>{item.os_image?.name || "N/A"}</span>
-                </div>
-              </div>
-              <div className="mt-4 text-right">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRowClick(item);
-                  }}
-                  className="text-[#288DD1] hover:underline text-sm font-medium"
-                >
-                  View Details
-                </button>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="bg-white rounded-[12px] shadow-sm p-4 text-center text-gray-500">
-            No instances found for this project.
-          </div>
-        )}
-      </div>
-
-      {instances.length > itemsPerPage && (
-        <div className="flex items-center justify-center px-4 py-3 border-t border-gray-200 bg-white rounded-b-[12px] mt-6">
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="text-sm text-gray-700">{currentPage}</span>
-            <span className="text-sm text-gray-700">of</span>
-            <span className="text-sm text-gray-700">{totalPages}</span>
-            <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
-  const renderSectionContent = () => {
-    switch (activeChecklistSection) {
-      case "setup":
-        return (
-          <>
-            {renderQuickActionsCard()}
-            {renderProvisioningSummary()}
-            {renderInstancesSection()}
-          </>
-        );
-      case "vpcs":
-        return (
-          <VPCs
-            projectId={projectDetails.identifier}
-            projectName={projectDetails.name}
-            region={projectDetails.region}
-          />
-        );
-      case "create-key-pair":
-        return (
-          <KeyPairs
-            projectId={projectDetails.identifier}
-            projectName={projectDetails.name}
-            region={projectDetails.region}
-          />
-        );
-      case "configure-edge-network":
-        return (
-          <>
-            <AdminEdgeConfigPanel
-              projectId={projectId}
-              region={projectDetails.region}
-            />
-            <div className="mt-4">
-              <ModernButton
-                variant="primary"
-                onClick={() => setIsAssignEdgeOpen(true)}
-              >
-                Assign Edge Configuration
-              </ModernButton>
-            </div>
-          </>
-        );
-      case "create-security-groups":
-        return (
-          <SecurityGroup
-            projectId={projectDetails.identifier}
-            projectName={projectDetails.name}
-            region={projectDetails.region}
-          />
-        );
-      case "manage-subnets":
-        return (
-          <Subnets
-            projectId={projectDetails.identifier}
-            projectName={projectDetails.name}
-            region={projectDetails.region}
-          />
-        );
-      case "configure-igw":
-        return (
-          <IGWs
-            projectId={projectDetails.identifier}
-            projectName={projectDetails.name}
-            region={projectDetails.region}
-          />
-        );
-      case "route-tables":
-        return (
-          <RouteTables
-            projectId={projectDetails.identifier}
-            projectName={projectDetails.name}
-            region={projectDetails.region}
-          />
-        );
-      case "enis":
-        return (
-          <ENIs
-            projectId={projectDetails.identifier}
-            projectName={projectDetails.name}
-            region={projectDetails.region}
-          />
-        );
-      case "eips":
-        return (
-          <EIPs
-            projectId={projectDetails.identifier}
-            projectName={projectDetails.name}
-            region={projectDetails.region}
-          />
-        );
-      default:
-        return null;
-    }
-  };
-
   const isRefreshing =
     isManualRefreshing ||
     (isProjectFetching && !isProjectLoading) ||
-    isInfraFetching ||
-    isProvisioningVpc ||
-    isEnablingVpc;
+    isInfraFetching;
+
+  const pageTitle = "Project Details";
+  const pageDescription =
+    "Monitor provisioning progress, infrastructure resources, and automation tasks for this project.";
+  const breadcrumbs = [
+    { label: "Home", href: "/admin-dashboard" },
+    { label: "Projects", href: backToProjectsPath },
+    { label: projectDetails?.name || "Project Details" },
+  ];
+  const headerActions = (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <ModernButton
+        variant="ghost"
+        onClick={() => navigate(backToProjectsPath)}
+        leftIcon={<ChevronLeft size={16} />}
+      >
+        Back to Projects
+      </ModernButton>
+      <ModernButton
+        variant="outline"
+        onClick={handleManualRefresh}
+        isDisabled={isRefreshing}
+        isLoading={isRefreshing}
+        leftIcon={!isRefreshing ? <RefreshCw size={16} /> : undefined}
+      >
+        {isRefreshing ? "Refreshing" : "Refresh"}
+      </ModernButton>
+      <ModernButton
+        variant="primary"
+        onClick={handleConfigureEdge}
+        leftIcon={<Globe size={16} />}
+      >
+        Configure Edge
+      </ModernButton>
+      {canDeleteProject && (
+        <ModernButton
+          variant="danger"
+          onClick={() => setIsDeleteConfirmModalOpen(true)}
+          leftIcon={<Trash2 size={16} />}
+        >
+          Delete Project
+        </ModernButton>
+      )}
+    </div>
+  );
 
   return (
     <>
@@ -1183,64 +440,21 @@ export default function AdminProjectDetails() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
-        <button
-          type="button"
-          onClick={() => navigate(backToProjectsPath)}
-          className="mb-4 inline-flex items-center gap-2 text-sm text-[#288DD1] hover:text-[#1976D2] transition-colors"
-        >
-          <ChevronLeft size={16} />
-          Back to Projects
-        </button>
-
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-[#1E1E1EB2]">
-              Project Details
-            </h1>
-            {formattedLastRefreshed && (
-              <p className="text-xs text-gray-500 mt-1">
-                Last refreshed {formattedLastRefreshed}
-              </p>
-            )}
+      <AdminPageShell
+        title={pageTitle}
+        description={pageDescription}
+        breadcrumbs={breadcrumbs}
+        actions={headerActions}
+        contentClassName="space-y-6"
+      >
+        {formattedLastRefreshed && (
+          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+            Last refreshed {formattedLastRefreshed}
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={handleManualRefresh}
-              className="flex items-center gap-2 px-4 py-2 border border-[#288DD1] text-[#288DD1] rounded-lg hover:bg-[#E0F2FF] transition-colors text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-              disabled={isRefreshing}
-              title="Refresh project details"
-              type="button"
-            >
-              <RefreshCw
-                className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
-              />
-              {isRefreshing ? "Refreshing..." : "Refresh"}
-            </button>
-            <button
-              onClick={handleConfigureEdge}
-              className="flex items-center gap-2 px-4 py-2 bg-[#288DD1] text-white rounded-lg hover:bg-[#1976D2] transition-colors text-sm"
-              title="Configure Edge"
-              type="button"
-            >
-              Configure Edge
-            </button>
-            {canDeleteProject && (
-              <button
-                onClick={() => setIsDeleteConfirmModalOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm"
-                title="Delete Project"
-                type="button"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete Project
-              </button>
-            )}
-          </div>
-        </div>
+        )}
 
         {overviewMetrics.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {overviewMetrics.map((metric) => (
               <ModernCard
                 key={metric.label}
@@ -1265,8 +479,7 @@ export default function AdminProjectDetails() {
           </div>
         )}
 
-        {/* Project Details Section */}
-        <div className="bg-white rounded-[12px] p-6 shadow-sm mb-4">
+        <div className="rounded-[12px] bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-[#575758]">Overview</h2>
             <button
@@ -1340,7 +553,7 @@ export default function AdminProjectDetails() {
         <AdminEdgeConfigPanel projectId={projectId} region={projectDetails.region} />
 
         {/* Top-Level Tab Navigation: Instances and Infrastructure */}
-        <div className="w-full flex justify-start items-center border-b border-gray-300 mb-6 bg-white rounded-t-xl overflow-x-auto">
+        <div className="flex w-full items-center justify-start overflow-x-auto border-b border-gray-300 bg-white rounded-t-xl">
           <button
             onClick={() => setActiveTopLevelTab("Instances")}
             className={`px-8 py-4 text-sm font-medium transition-colors border-b-2
@@ -1819,13 +1032,12 @@ export default function AdminProjectDetails() {
             </div>
           </div>
         )}
-      </main >
+      </AdminPageShell>
 
       {/* Modals are unchanged */}
-      < EditProjectModal
+      <EditProjectModal
         isOpen={isEditDescriptionModalOpen}
-        onClose={() => setIsEditDescriptionModalOpen(false)
-        }
+        onClose={() => setIsEditDescriptionModalOpen(false)}
         projectId={projectId}
         projectDetails={projectDetails}
       />

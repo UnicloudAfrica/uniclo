@@ -4,8 +4,6 @@ import home from "./assets/home.png";
 import activeHome from "./assets/activeHome.png";
 import modules from "./assets/module.png";
 import activemodules from "./assets/activeModule.png";
-import purchasedModules from "./assets/purchased_modules.png";
-import activePurchasedModules from "./assets/activePurchased.png";
 import clients from "./assets/clients.png";
 import activeClients from "./assets/activeClients.png";
 import paymentHistory from "./assets/history.png";
@@ -18,37 +16,34 @@ import useAuthStore from "../../stores/userAuthStore";
 import { useFetchProfile } from "../../hooks/resource";
 import { useFetchProjects } from "../../hooks/projectHooks";
 
+const PATH_TO_ITEM_MAP = {
+  "/dashboard": "Home",
+  "/dashboard/modules": "Modules",
+  "/dashboard/products": "Products",
+  "/dashboard/projects": "Projects",
+  "/dashboard/instances": "Instances",
+  "/dashboard/quotes": "Quotes",
+  "/dashboard/quote-calculator": "Quote Calculator",
+  "/dashboard/payment-history": "Payment History",
+  "/dashboard/support-ticket": "Support Ticket",
+  "/dashboard/app-settings": "App Settings",
+  "/dashboard/account-settings": "Account Settings",
+  "/dashboard/admin-users": "Admin Users",
+  "/dashboard/tax-configurations": "Tax Configurations",
+};
+
 const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   const [activeItem, setActiveItem] = useState("Home");
   const navigate = useNavigate();
   const location = useLocation();
   const { clearToken } = useAuthStore.getState();
-  const { data: profile, isFetching: isProfileFetching } = useFetchProfile();
-  const { data: projects = [], isFetching: isProjectsFetching } =
-    useFetchProjects();
-
-  // Map of paths to menu item names
-  const pathToItemMap = {
-    "/dashboard": "Home",
-    "/dashboard/modules": "Modules",
-    "/dashboard/products": "Products",
-    "/dashboard/purchased-modules": "Purchased Modules",
-    "/dashboard/projects": "Projects",
-    "/dashboard/instances": "Instances",
-    "/dashboard/quotes": "Quotes",
-    "/dashboard/quote-calculator": "Quote Calculator",
-    "/dashboard/payment-history": "Payment History",
-    "/dashboard/support-ticket": "Support Ticket",
-    "/dashboard/app-settings": "App Settings",
-    "/dashboard/account-settings": "Account Settings",
-    "/dashboard/admin-users": "Admin Users",
-    "/dashboard/tax-configurations": "Tax Configurations",
-  };
+  const { data: profile } = useFetchProfile();
+  const { data: projects = [] } = useFetchProjects();
 
   // Update activeItem based on the current path
   useEffect(() => {
     const currentPath = location.pathname;
-    const itemName = pathToItemMap[currentPath] || "Home";
+    const itemName = PATH_TO_ITEM_MAP[currentPath] || "Home";
     setActiveItem(itemName);
   }, [location.pathname]);
 
@@ -79,12 +74,6 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
           name: "Instances",
           icon: clients,
           activeIcon: activeClients,
-          path: "/dashboard/instances",
-        },
-        {
-          name: "Purchased Instances",
-          icon: purchasedModules,
-          activeIcon: activePurchasedModules,
           path: "/dashboard/instances",
         },
       ]
@@ -146,13 +135,6 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       path: "/dashboard/account-settings",
     },
   ];
-
-  const settingsItem = {
-    name: "App Settings",
-    icon: appSettings,
-    activeIcon: appSettings,
-    path: "/dashboard/app-settings",
-  };
 
   const handleItemClick = (itemName, path) => {
     setActiveItem(itemName);

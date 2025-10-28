@@ -11,6 +11,7 @@ import ToastUtils from "../../utils/toastUtil";
 import { useSharedCalculatorPricing, useSharedClients } from "../../hooks/sharedCalculatorHooks";
 import { useFetchTenants } from "../../hooks/adminHooks/tenantHooks";
 import { useFetchClients } from "../../hooks/adminHooks/clientHooks";
+import AdminPageShell from "../components/AdminPageShell";
 
 const AdminAdvancedCalculator = () => {
   const navigate = useNavigate();
@@ -230,30 +231,22 @@ const AdminAdvancedCalculator = () => {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex justify-between items-center pb-4 border-b">
-            <div className="flex items-center">
-              <Calculator className="w-6 h-6 mr-3 text-[#288DD1]" />
-              <h2 className="text-lg font-semibold text-[#575758]">
-                Advanced Calculator
-              </h2>
-            </div>
-            <button
-              onClick={() => navigate("/admin-dashboard")}
-              className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
-            >
-              Back to Dashboard
-            </button>
-          </div>
-
-          <div className="mb-4">
-            <p className="text-sm text-gray-600">
-              Configure your infrastructure, calculate pricing with discounts, and optionally generate invoices and create leads.
-            </p>
-          </div>
-
-          <div className="sticky top-0 z-10 bg-white pt-6 pb-4 border-b mb-6">
+            <AdminPageShell
+        title="Advanced Calculator"
+        description="Configure infrastructure, calculate pricing with discounts, and optionally generate invoices or leads."
+        actions={
+          <button
+            onClick={() => navigate("/admin-dashboard")}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <Calculator className="w-4 h-4" />
+            Dashboard
+          </button>
+        }
+        contentClassName="space-y-6"
+      >
+        <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
+          <div className="sticky top-0 z-10 bg-white pt-2 pb-4 border-b">
             <StepProgress currentStep={currentStep} steps={steps} />
           </div>
 
@@ -367,7 +360,7 @@ const AdminAdvancedCalculator = () => {
             )}
           </div>
         </div>
-      </main>
+            </AdminPageShell>
     </>
   );
 };

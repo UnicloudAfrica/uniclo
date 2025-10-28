@@ -11,7 +11,7 @@ import {
 import jsPDF from "jspdf";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
-import AdminActiveTab from "../components/adminActiveTab";
+import AdminPageShell from "../components/AdminPageShell";
 import ModernTable from "../components/ModernTable";
 import ModernCard from "../components/ModernCard";
 import ModernStatsCard from "../components/ModernStatsCard";
@@ -19,20 +19,11 @@ import ModernButton from "../components/ModernButton";
 import { designTokens } from "../../styles/designTokens";
 
 export default function AdminPayment() {
-  // State to control mobile menu visibility
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Function to toggle mobile menu
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
+  const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
-  // Function to close mobile menu
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-  };
-
-  // Sample payment data
   const data = [
     {
       id: 1,
@@ -86,19 +77,21 @@ export default function AdminPayment() {
     },
   ];
 
-  // Calculate payment statistics
   const totalRevenue = data.reduce((sum, payment) => {
     const amount = parseFloat(payment.amount.replace(/[₦,]/g, ""));
     return sum + (payment.status === "Completed" ? amount : 0);
   }, 0);
 
   const completedPayments = data.filter((p) => p.status === "Completed").length;
+<<<<<<< HEAD
   const processingPayments = data.filter(
     (p) => p.status === "Processing"
   ).length;
+=======
+  const processingPayments = data.filter((p) => p.status === "Processing").length;
+>>>>>>> b587e2a (web)
   const failedPayments = data.filter((p) => p.status === "Failed").length;
 
-  // Define columns for ModernTable
   const columns = [
     {
       key: "date",
@@ -135,10 +128,14 @@ export default function AdminPayment() {
       header: "Amount",
       render: (value) => (
         <div className="flex items-center gap-2">
+<<<<<<< HEAD
           <DollarSign
             size={16}
             style={{ color: designTokens.colors.success[500] }}
           />
+=======
+          <DollarSign size={16} style={{ color: designTokens.colors.success[500] }} />
+>>>>>>> b587e2a (web)
           <span
             className="font-semibold"
             style={{ color: designTokens.colors.success[700] }}
@@ -182,7 +179,11 @@ export default function AdminPayment() {
             border: designTokens.colors.error[200],
           },
         };
+<<<<<<< HEAD
         const config = statusConfig[value] || statusConfig["Processing"];
+=======
+        const config = statusConfig[value] || statusConfig.Processing;
+>>>>>>> b587e2a (web)
 
         return (
           <span
@@ -213,7 +214,6 @@ export default function AdminPayment() {
     },
   ];
 
-  // Define actions for ModernTable
   const actions = [
     {
       icon: <Download size={16} />,
@@ -224,26 +224,16 @@ export default function AdminPayment() {
 
   const generatePDFReceipt = async (item) => {
     const doc = new jsPDF();
-
-    // Set font
     doc.setFont("helvetica");
-
-    // Header - Company Name
     doc.setFontSize(24);
-    doc.setTextColor(40, 141, 209); // #288DD1
+    doc.setTextColor(40, 141, 209);
     doc.text("UniCloud Africa", 20, 30);
-
-    // Receipt Title
     doc.setFontSize(16);
     doc.setTextColor(85, 85, 85);
     doc.text("Payment Receipt", 20, 45);
-
-    // Line separator
     doc.setDrawColor(40, 141, 209);
     doc.setLineWidth(1);
     doc.line(20, 50, 190, 50);
-
-    // Receipt Details
     doc.setFontSize(12);
     doc.setTextColor(51, 51, 51);
 
@@ -263,35 +253,28 @@ export default function AdminPayment() {
       yPos += 15;
     });
 
-    // Service Details Header
     yPos += 20;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
     doc.text("Service Details", 20, yPos);
 
-    // Service table
     yPos += 20;
     doc.setFontSize(12);
-
-    // Table headers
     doc.setFont("helvetica", "bold");
     doc.text("Service", 20, yPos);
     doc.text("Plan", 80, yPos);
     doc.text("Amount", 140, yPos);
 
-    // Table line
     yPos += 5;
     doc.setDrawColor(200, 200, 200);
     doc.line(20, yPos, 190, yPos);
 
-    // Table data
     yPos += 15;
     doc.setFont("helvetica", "normal");
     doc.text(item.module, 20, yPos);
     doc.text(item.plan, 80, yPos);
     doc.text(item.amount, 140, yPos);
 
-    // Total section
     yPos += 30;
     doc.setDrawColor(200, 200, 200);
     doc.line(20, yPos, 190, yPos);
@@ -303,18 +286,6 @@ export default function AdminPayment() {
     doc.setTextColor(40, 141, 209);
     doc.text(item.amount, 140, yPos);
 
-    // Footer
-    yPos += 40;
-    doc.setFontSize(10);
-    doc.setTextColor(102, 102, 102);
-    doc.setFont("helvetica", "normal");
-    doc.text("Thank you for your business!", 20, yPos);
-
-    yPos += 15;
-    doc.text("UniCloud Africa - Cloud Computing Solutions", 20, yPos);
-    doc.text("support@unicloudafrica.com | +234-xxx-xxx-xxxx", 20, yPos + 10);
-
-    // Save the PDF
     doc.save(`Receipt-${item.receiptId}.pdf`);
   };
 
@@ -324,10 +295,36 @@ export default function AdminPayment() {
       await generatePDFReceipt(item);
     } catch (error) {
       console.error("Error generating PDF:", error);
-      // Fallback to simple alert
-      //   alert("PDF generation temporarily unavailable. Please try again later.");
     }
   };
+
+  const handleExportSummary = () => {
+    const csvContent = [
+      ["Date", "Service", "Plan", "Amount", "Status", "Payment Method", "Receipt"].join(","),
+      ...data.map((item) =>
+        [item.date, item.module, item.plan, item.amount, item.status, item.paymentMethod, item.receiptId].join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "payment-summary.csv";
+    anchor.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const headerActions = (
+    <ModernButton
+      variant="outline"
+      className="flex items-center gap-2"
+      onClick={handleExportSummary}
+    >
+      <Download size={16} />
+      Export Summary
+    </ModernButton>
+  );
 
   return (
     <>
@@ -336,6 +333,7 @@ export default function AdminPayment() {
         isMobileMenuOpen={isMobileMenuOpen}
         onCloseMobileMenu={closeMobileMenu}
       />
+<<<<<<< HEAD
       <AdminActiveTab />
       <main
         className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8"
@@ -418,9 +416,72 @@ export default function AdminPayment() {
             loading={false}
             emptyMessage="No payment transactions found"
             enableAnimations={true}
+=======
+      <AdminPageShell
+        title="Payment Management"
+        description="Monitor and manage all payment transactions."
+        actions={headerActions}
+        contentClassName="space-y-6"
+      >
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 stats-cards-stagger">
+          <ModernStatsCard
+            title="Total Revenue"
+            value={`₦${totalRevenue.toLocaleString()}`}
+            icon={<DollarSign size={24} />}
+            change={15}
+            trend="up"
+            color="success"
+            description="This month"
+            animateOnMount
+          />
+          <ModernStatsCard
+            title="Completed Payments"
+            value={completedPayments}
+            icon={<CreditCard size={24} />}
+            change={8}
+            trend="up"
+            color="primary"
+            description="Successfully processed"
+            animateOnMount
+            staggerDelay={150}
+          />
+          <ModernStatsCard
+            title="Processing"
+            value={processingPayments}
+            icon={<TrendingUp size={24} />}
+            color="warning"
+            description="Pending transactions"
+            animateOnMount
+            staggerDelay={300}
+          />
+          <ModernStatsCard
+            title="Failed Payments"
+            value={failedPayments}
+            icon={<FileText size={24} />}
+            color="error"
+            description="Requires attention"
+            animateOnMount
+            staggerDelay={450}
+>>>>>>> b587e2a (web)
           />
         </div>
-      </main>
+
+        <ModernCard>
+          <ModernTable
+            title="Payment Transactions"
+            data={data}
+            columns={columns}
+            actions={actions}
+            searchable
+            filterable
+            exportable
+            sortable
+            loading={false}
+            emptyMessage="No payment transactions found"
+            enableAnimations
+          />
+        </ModernCard>
+      </AdminPageShell>
     </>
   );
 }

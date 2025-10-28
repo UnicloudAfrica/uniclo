@@ -29,6 +29,7 @@ import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import { useFetchNetworkInterfaces } from "../../hooks/adminHooks/networkHooks";
+import AdminPageShell from "../components/AdminPageShell";
 
 const AdminAddInstance = () => {
   const location = useLocation();
@@ -551,21 +552,22 @@ const AdminAddInstance = () => {
         onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
       />
       <AdminActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex justify-between items-center pb-4 border-b">
-            <h2 className="text-lg font-semibold text-[#575758]">
-              Add New Instance
-            </h2>
-            <button
-              onClick={handleClose}
-              className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
-              disabled={isSubmissionPending}
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          <div className="sticky top-0 z-10 bg-white pt-6 pb-4 border-b mb-6">
+      <AdminPageShell
+        title="Add New Instance"
+        description="Provision cloud resources by selecting workloads, networking, and storage options."
+        actions={
+          <button
+            onClick={handleClose}
+            className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+            disabled={isSubmissionPending}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        }
+        contentClassName="space-y-6"
+      >
+        <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
+          <div className="sticky top-0 z-10 bg-white pt-2 pb-4 border-b">
             <StepProgress currentStep={currentStep} steps={steps} />
           </div>
           <div
@@ -617,7 +619,7 @@ const AdminAddInstance = () => {
             </button>
           </div>
         </div>
-      </main>
+      </AdminPageShell>
     </>
   );
 };

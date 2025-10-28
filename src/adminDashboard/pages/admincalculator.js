@@ -5,6 +5,7 @@ import AdminActiveTab from "../components/adminActiveTab";
 
 import Step1Configuration from "../../components/calcComps/step1";
 import { Step2Summary } from "./calcComp/breakdownCalculator";
+import AdminPageShell from "../components/AdminPageShell";
 
 const STEPS = ["Configuration", "Breakdown"];
 
@@ -85,19 +86,16 @@ export default function Admincalculator() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
-        <div className="flex flex-col items-start">
-          <p className="text- font-normal mt-3 text-[#676767] max-w-[700px] text-sm md:text-base">
-            Create your cloud setup, select instances, storage, and networking,
-            and get an instant price estimate with discounts. Download or email
-            your summary.
-          </p>
-        </div>
-        <div className=" w-full mt-6 ">
+      <AdminPageShell
+        title="Cloud Cost Calculator"
+        description="Create your cloud setup, select instances, storage, and networking, and get an instant price estimate with discounts."
+        contentClassName="space-y-6"
+      >
+        <div className="w-full">
           <StepProgress currentStep={currentStep} steps={STEPS} />
           {renderStep()}
         </div>
-      </main>
+      </AdminPageShell>
     </>
   );
 }

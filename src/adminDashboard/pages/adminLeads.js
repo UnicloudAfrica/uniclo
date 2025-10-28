@@ -1,21 +1,21 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useRef, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  ChevronLeft,
-  ChevronRight,
   Eye,
   Loader2,
-  ArrowUpRight,
-  ArrowDownRight,
   Users,
   UserPlus,
   Phone,
   Mail,
   Target,
+<<<<<<< HEAD
   TrendingUp,
   Calendar,
   Filter,
   Search,
+=======
+  TrendingUp
+>>>>>>> b587e2a (web)
 } from "lucide-react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
@@ -23,11 +23,12 @@ import AdminActiveTab from "../components/adminActiveTab";
 import ModernStatsCard from "../components/ModernStatsCard";
 import ModernTable from "../components/ModernTable";
 import ModernButton from "../components/ModernButton";
+import ModernCard from "../components/ModernCard";
 import {
   useFetchLeads,
   useFetchLeadStats,
 } from "../../hooks/adminHooks/leadsHook";
-import CreateLead from "./leadComps/createLead";
+import AdminPageShell from "../components/AdminPageShell";
 
 const formatCreatedAt = (dateString) => {
   const date = new Date(dateString);
@@ -49,13 +50,12 @@ const formatStatusForDisplay = (status) => {
 
 export default function AdminLeads() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [activeSegment, setActiveSegment] = useState("all");
   const itemsPerPage = 10;
   const contentRef = useRef(null);
-  const [isCreateLeadsModalVisible, setCreateLeadsModal] = useState(false);
+  const navigate = useNavigate();
 
-  const openCreateLead = () => setCreateLeadsModal(true);
-  const closeCreateLead = () => setCreateLeadsModal(false);
+  const openCreateLead = () => navigate("/admin-dashboard/leads/create");
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -65,27 +65,29 @@ export default function AdminLeads() {
     setIsMobileMenuOpen(false);
   };
 
-  const { data: leads, isFetching: isLeadsFetching } = useFetchLeads();
+  const { data: leads = [], isFetching: isLeadsFetching } = useFetchLeads();
   const { data: leadStats, isFetching: isLeadStatsFetching } =
     useFetchLeadStats();
 
-  const totalPages = Math.ceil((leads?.length || 0) / itemsPerPage);
-  const currentLeads = leads?.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+  const leadsByStatus = useMemo(
+    () => leadStats?.message?.leads_by_status || {},
+    [leadStats]
   );
+  const totalLeadCount = leadStats?.message?.leads ?? leads.length;
 
-  const handlePageChange = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
+  const filteredLeads = useMemo(() => {
+    if (!Array.isArray(leads)) return [];
+    if (activeSegment === "all") {
+      return leads;
     }
-  };
+    return leads.filter((lead) => lead.status === activeSegment);
+  }, [leads, activeSegment]);
 
   useEffect(() => {
     if (contentRef.current) {
       contentRef.current.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }, [currentPage]);
+  }, [activeSegment]);
 
   const getStatusColorClass = (status) => {
     switch (status) {
@@ -108,6 +110,32 @@ export default function AdminLeads() {
     }
   };
 
+  const headerActions = (
+    <ModernButton
+      onClick={openCreateLead}
+      variant="primary"
+      size="lg"
+      className="inline-flex items-center gap-2"
+    >
+      <UserPlus className="w-5 h-5" />
+      Create New Lead
+    </ModernButton>
+  );
+
+  const leadSegments = useMemo(() => {
+    const baseSegments = [
+      { id: "all", label: "All leads", count: totalLeadCount },
+      { id: "new", label: "New", count: leadsByStatus.new ?? 0 },
+      { id: "contacted", label: "Contacted", count: leadsByStatus.contacted ?? 0 },
+      { id: "qualified", label: "Qualified", count: leadsByStatus.qualified ?? 0 },
+      { id: "proposal_sent", label: "Proposal Sent", count: leadsByStatus.proposal_sent ?? 0 },
+      { id: "negotiating", label: "Negotiating", count: leadsByStatus.negotiating ?? 0 },
+      { id: "closed_won", label: "Closed Won", count: leadsByStatus.closed_won ?? 0 },
+      { id: "closed_lost", label: "Closed Lost", count: leadsByStatus.closed_lost ?? 0 },
+    ];
+    return baseSegments.filter(Boolean);
+  }, [leadsByStatus, totalLeadCount]);
+
   return (
     <>
       <AdminHeadbar onMenuClick={toggleMobileMenu} />
@@ -116,18 +144,73 @@ export default function AdminLeads() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main
+      <AdminPageShell
         ref={contentRef}
-        className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 overflow-y-auto"
+        title="Leads"
+        description="Monitor lead acquisition and pipeline performance"
+        actions={headerActions}
+        contentClassName="space-y-8 overflow-y-auto"
       >
+<<<<<<< HEAD
         <div className="">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">Leads</h2>
+=======
+        <ModernCard className="space-y-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Pipeline overview
+              </p>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Manage people segments
+              </h2>
+              <p className="text-sm text-gray-500">
+                Filter the funnel to focus on specific lead stages and outcomes.
+              </p>
+            </div>
+            <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+              Live pipeline
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {leadSegments.map((segment) => {
+              const isActive = activeSegment === segment.id;
+              return (
+                <button
+                  key={segment.id}
+                  type="button"
+                  onClick={() => setActiveSegment(segment.id)}
+                  className={[
+                    "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition",
+                    isActive
+                      ? "border-cyan-200 bg-cyan-50 text-cyan-700 shadow-sm"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-cyan-200 hover:text-cyan-700",
+                  ].join(" ")}
+                >
+                  <span>{segment.label}</span>
+                  <span
+                    className={[
+                      "inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold",
+                      isActive ? "bg-cyan-100 text-cyan-700" : "bg-gray-100 text-gray-600",
+                    ].join(" ")}
+                  >
+                    {segment.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </ModernCard>
+
+        <div className="space-y-8">
+>>>>>>> b587e2a (web)
           {isLeadStatsFetching ? (
             <div className="flex justify-center items-center h-48">
               <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <ModernStatsCard
                 title="Total Leads"
                 value={leadStats?.message?.leads || 0}
@@ -179,6 +262,7 @@ export default function AdminLeads() {
                 )}
             </div>
           )}
+<<<<<<< HEAD
 
           <button
             onClick={openCreateLead}
@@ -186,9 +270,11 @@ export default function AdminLeads() {
           >
             Create New Lead
           </button>
+=======
+>>>>>>> b587e2a (web)
           <ModernTable
             title="Leads Management"
-            data={leads || []}
+            data={filteredLeads}
             loading={isLeadsFetching}
             columns={[
               {
@@ -253,11 +339,7 @@ export default function AdminLeads() {
             emptyMessage="No leads found."
           />
         </div>
-      </main>
-      <CreateLead
-        isOpen={isCreateLeadsModalVisible}
-        onClose={closeCreateLead}
-      />
+      </AdminPageShell>
     </>
   );
 }

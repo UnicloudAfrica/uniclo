@@ -39,6 +39,7 @@ import EmbeddedConsole, { useConsoleManager } from "../../components/Console/Emb
 import ToastUtils from "../../utils/toastUtil";
 import useAdminAuthStore from "../../stores/adminAuthStore";
 import config from "../../config";
+import AdminPageShell from "../components/AdminPageShell";
 
 // Enhanced Status Badge Component
 const StatusBadge = ({ status, size = 'sm' }) => {
@@ -500,6 +501,21 @@ export default function InstanceManagement() {
 
   const uniqueStatuses = [...new Set(instances.map(i => i.status))].filter(Boolean);
 
+  const headerActions = (
+    <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+      <button
+        onClick={() => fetchInstances(false)}
+        disabled={refreshing}
+        className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+      >
+        <RefreshCw
+          className={`w-4 h-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
+        />
+        Refresh
+      </button>
+    </div>
+  );
+
   return (
     <>
       <AdminHeadbar onMenuClick={toggleMobileMenu} />
@@ -509,31 +525,11 @@ export default function InstanceManagement() {
       />
       <AdminActiveTab />
 
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 md:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Instance Management</h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Manage and monitor your cloud instances
-              </p>
-            </div>
-            
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => fetchInstances(false)}
-                disabled={refreshing}
-                className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-                Refresh
-              </button>
-              
-            </div>
-          </div>
-        </div>
-
+      <AdminPageShell
+        title="Instance Management"
+        description="Manage and monitor your cloud instances"
+        actions={headerActions}
+      >
         {/* Search and Filters */}
         <div className="bg-white border-b border-gray-200 px-6 md:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
@@ -718,7 +714,7 @@ onNavigateToDetails={(idOrIdentifier) => navigateToInstanceDetails(idOrIdentifie
             initialSize={console.size}
           />
         ))}
-      </main>
+            </AdminPageShell>
     </>
   );
 }

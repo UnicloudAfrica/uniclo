@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { X, Loader2 } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { useUpdateClient } from "../../../hooks/adminHooks/clientHooks";
 import ToastUtils from "../../../utils/toastUtil";
 import { useFetchCountries } from "../../../hooks/resource"; // Import the resource hook
+import FormLayout, {
+  formAccent,
+  getAccentRgba,
+} from "../../components/FormLayout";
 
 export const EditClientModal = ({ client, onClose, onClientUpdated }) => {
   const [formData, setFormData] = useState({
@@ -105,32 +109,240 @@ export const EditClientModal = ({ client, onClose, onClientUpdated }) => {
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
-      <div className="bg-white rounded-[24px] max-w-[800px] mx-4 w-full flex flex-col">
-        {/* Header */}
-        <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
-          <h2 className="text-lg font-semibold text-[#575758]">
-            Edit Client Details
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
-            disabled={isPending}
+  const accent = formAccent.primary;
+  const formId = "edit-client-form";
+  const contactName = [
+    formData.first_name,
+    formData.middle_name,
+    formData.last_name,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  const locationSnapshot = [formData.city, formData.state, formData.country]
+    .filter(Boolean)
+    .join(", ");
+  const meta = [
+    {
+      label: "Client",
+      value: contactName || client?.first_name || "Unnamed",
+    },
+    {
+      label: "Country",
+      value: formData.country || client?.country || "Not set",
+    },
+    {
+      label: "Verified",
+      value: client?.verified ? "Yes" : "No",
+    },
+  ];
+
+  const summarySections = useMemo(
+    () => [
+      {
+        title: "Personal",
+        items: [
+          { label: "First name", value: formData.first_name || "—" },
+          { label: "Last name", value: formData.last_name || "—" },
+          { label: "Phone", value: formData.phone || "—" },
+        ],
+      },
+      {
+        title: "Address",
+        items: [
+          { label: "Street", value: formData.address || "—" },
+          { label: "City", value: formData.city || "—" },
+          { label: "State", value: formData.state || "—" },
+        ],
+      },
+      {
+        title: "Compliance",
+        items: [
+          { label: "ZIP", value: formData.zip || "—" },
+          { label: "Country", value: formData.country || "—" },
+          {
+            label: "Email",
+            value: formData.email || "Not provided",
+          },
+        ],
+      },
+    ],
+    [
+      formData.first_name,
+      formData.last_name,
+      formData.phone,
+      formData.address,
+      formData.city,
+      formData.state,
+      formData.zip,
+      formData.country,
+      formData.email,
+    ]
+  );
+
+  const guidanceItems = [
+    "Keep personal details aligned with the client's identification.",
+    "Country selection drives applicable tax rules for billing.",
+    "Phone number is used for notification workflows and MFA.",
+  ];
+
+  const asideContent = (
+    <>
+      <div className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm backdrop-blur">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Client summary
+            </p>
+            <p className="text-lg font-semibold text-slate-800">
+              {contactName || "Incomplete record"}
+            </p>
+          </div>
+          <span
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold"
+            style={{
+              backgroundColor: getAccentRgba(accent.color, 0.12),
+              color: accent.color,
+            }}
           >
-            <X className="w-5 h-5" />
-          </button>
+            {formData.email ? "✓" : "•"}
+          </span>
         </div>
-        {/* Content */}
-        <div className="px-6 py-6 w-full overflow-y-auto max-h-[400px] flex-1">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* First Name Input */}
+        <dl className="mt-4 space-y-2 text-sm text-slate-600">
+          <div className="flex items-center justify-between">
+            <dt>Email</dt>
+            <dd className="max-w-[150px] text-right font-medium text-slate-800">
+              {formData.email || "Not set"}
+            </dd>
+          </div>
+          <div className="flex items-center justify-between">
+            <dt>Phone</dt>
+            <dd className="font-medium text-slate-800">
+              {formData.phone || "—"}
+            </dd>
+          </div>
+          <div className="flex items-center justify-between">
+            <dt>Location</dt>
+            <dd className="max-w-[150px] text-right font-medium text-slate-800">
+              {locationSnapshot || "Pending"}
+            </dd>
+          </div>
+        </dl>
+        <p className="mt-3 text-xs text-slate-500">
+          Ensure the client’s contact information stays current to keep support
+          workflows smooth.
+        </p>
+      </div>
+
+      {summarySections.map((section) => (
+        <div
+          key={section.title}
+          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+        >
+          <h3 className="text-sm font-semibold text-slate-800">
+            {section.title}
+          </h3>
+          <dl className="mt-3 space-y-3 text-sm">
+            {section.items.map((item) => (
+              <div
+                key={`${section.title}-${item.label}`}
+                className="flex items-start justify-between gap-3"
+              >
+                <dt className="text-slate-500">{item.label}</dt>
+                <dd className="max-w-[160px] text-right font-medium text-slate-800">
+                  {item.value || "—"}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      ))}
+
+      <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-100 p-5 shadow-sm">
+        <h3 className="text-sm font-semibold text-slate-800">Update checklist</h3>
+        <ul className="mt-3 space-y-2 text-sm text-slate-600">
+          {guidanceItems.map((tip) => (
+            <li key={tip} className="flex items-start gap-2">
+              <span
+                className="mt-1 h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: accent.color }}
+              />
+              <span>{tip}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </>
+  );
+
+  const footer = (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+      <button
+        type="button"
+        onClick={onClose}
+        disabled={isPending}
+        className="w-full rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-slate-400 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        form={formId}
+        disabled={isPending}
+        className="inline-flex w-full items-center justify-center rounded-full bg-[#047857] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#036149] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#047857] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+      >
+        {isPending ? (
+          <>
+            Saving
+            <Loader2 className="ml-2 h-4 w-4 animate-spin text-white" />
+          </>
+        ) : (
+          "Save changes"
+        )}
+      </button>
+    </div>
+  );
+
+  return (
+    <FormLayout
+      mode="modal"
+      onClose={onClose}
+      isProcessing={isPending}
+      title={`Edit Client${client?.first_name ? ` • ${client.first_name}` : ""}`}
+      description="Update client contact information and address records to keep your directory accurate."
+      accentGradient={accent.gradient}
+      accentColor={accent.color}
+      meta={meta}
+      aside={asideContent}
+      footer={footer}
+      maxWidthClass="max-w-4xl"
+    >
+      <form
+        id={formId}
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit();
+        }}
+        className="space-y-8"
+      >
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <header className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900">
+                Personal details
+              </h3>
+              <p className="text-sm text-slate-500">
+                Core information used across authentication and communications.
+              </p>
+            </div>
+          </header>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
             <div>
               <label
                 htmlFor="first_name"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
-                First Name<span className="text-red-500">*</span>
+                First name<span className="text-red-500">*</span>
               </label>
               <input
                 id="first_name"
@@ -139,22 +351,20 @@ export const EditClientModal = ({ client, onClose, onClientUpdated }) => {
                 onChange={(e) => updateFormData("first_name", e.target.value)}
                 placeholder="Enter first name"
                 className={`w-full input-field ${
-                  errors.first_name ? "border-red-500" : "border-gray-300"
+                  errors.first_name ? "border-red-500" : "border-slate-300"
                 }`}
                 disabled={isPending}
               />
               {errors.first_name && (
-                <p className="text-red-500 text-xs mt-1">{errors.first_name}</p>
+                <p className="mt-1 text-xs text-red-500">{errors.first_name}</p>
               )}
             </div>
-
-            {/* Middle Name Input */}
             <div>
               <label
                 htmlFor="middle_name"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Middle Name
+                Middle name
               </label>
               <input
                 id="middle_name"
@@ -162,18 +372,16 @@ export const EditClientModal = ({ client, onClose, onClientUpdated }) => {
                 value={formData.middle_name}
                 onChange={(e) => updateFormData("middle_name", e.target.value)}
                 placeholder="Enter middle name"
-                className="w-full input-field border-gray-300"
+                className="w-full input-field border-slate-300"
                 disabled={isPending}
               />
             </div>
-
-            {/* Last Name Input */}
             <div>
               <label
                 htmlFor="last_name"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Last Name<span className="text-red-500">*</span>
+                Last name<span className="text-red-500">*</span>
               </label>
               <input
                 id="last_name"
@@ -182,70 +390,79 @@ export const EditClientModal = ({ client, onClose, onClientUpdated }) => {
                 onChange={(e) => updateFormData("last_name", e.target.value)}
                 placeholder="Enter last name"
                 className={`w-full input-field ${
-                  errors.last_name ? "border-red-500" : "border-gray-300"
+                  errors.last_name ? "border-red-500" : "border-slate-300"
                 }`}
                 disabled={isPending}
               />
               {errors.last_name && (
-                <p className="text-red-500 text-xs mt-1">{errors.last_name}</p>
+                <p className="mt-1 text-xs text-red-500">{errors.last_name}</p>
               )}
             </div>
-
-            {/* Email Input */}
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Email Address<span className="text-red-500">*</span>
+                Email address<span className="text-red-500">*</span>
               </label>
               <input
                 id="email"
                 type="email"
                 value={formData.email}
                 onChange={(e) => updateFormData("email", e.target.value)}
-                placeholder="Enter email address"
+                placeholder="name@company.com"
                 className={`w-full input-field ${
-                  errors.email ? "border-red-500" : "border-gray-300"
+                  errors.email ? "border-red-500" : "border-slate-300"
                 }`}
                 disabled={isPending}
               />
               {errors.email && (
-                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                <p className="mt-1 text-xs text-red-500">{errors.email}</p>
               )}
             </div>
-
-            {/* Phone Input */}
             <div>
               <label
                 htmlFor="phone"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Phone Number<span className="text-red-500">*</span>
+                Phone number<span className="text-red-500">*</span>
               </label>
               <input
                 id="phone"
                 type="text"
                 value={formData.phone}
                 onChange={(e) => updateFormData("phone", e.target.value)}
-                placeholder="Enter phone number"
+                placeholder="+234 801 234 5678"
                 className={`w-full input-field ${
-                  errors.phone ? "border-red-500" : "border-gray-300"
+                  errors.phone ? "border-red-500" : "border-slate-300"
                 }`}
                 disabled={isPending}
               />
               {errors.phone && (
-                <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+                <p className="mt-1 text-xs text-red-500">{errors.phone}</p>
               )}
             </div>
+          </div>
+        </section>
 
-            {/* Address Input */}
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <header className="flex flex-wrap items-center justify-between gap-3">
             <div>
+              <h3 className="text-base font-semibold text-slate-900">
+                Address information
+              </h3>
+              <p className="text-sm text-slate-500">
+                Physical mailing and billing details for the client.
+              </p>
+            </div>
+          </header>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <div className="md:col-span-2">
               <label
                 htmlFor="address"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Address
+                Street address
               </label>
               <input
                 id="address"
@@ -253,16 +470,14 @@ export const EditClientModal = ({ client, onClose, onClientUpdated }) => {
                 value={formData.address}
                 onChange={(e) => updateFormData("address", e.target.value)}
                 placeholder="Enter street address"
-                className="w-full input-field border-gray-300"
+                className="w-full input-field border-slate-300"
                 disabled={isPending}
               />
             </div>
-
-            {/* City Input */}
             <div>
               <label
                 htmlFor="city"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
                 City
               </label>
@@ -272,18 +487,16 @@ export const EditClientModal = ({ client, onClose, onClientUpdated }) => {
                 value={formData.city}
                 onChange={(e) => updateFormData("city", e.target.value)}
                 placeholder="Enter city"
-                className="w-full input-field border-gray-300"
+                className="w-full input-field border-slate-300"
                 disabled={isPending}
               />
             </div>
-
-            {/* State Input */}
             <div>
               <label
                 htmlFor="state"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
-                State
+                State / province
               </label>
               <input
                 id="state"
@@ -291,35 +504,31 @@ export const EditClientModal = ({ client, onClose, onClientUpdated }) => {
                 value={formData.state}
                 onChange={(e) => updateFormData("state", e.target.value)}
                 placeholder="Enter state"
-                className="w-full input-field border-gray-300"
+                className="w-full input-field border-slate-300"
                 disabled={isPending}
               />
             </div>
-
-            {/* Zip Code Input */}
             <div>
               <label
                 htmlFor="zip"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
-                Zip Code
+                ZIP / postal code
               </label>
               <input
                 id="zip"
                 type="text"
                 value={formData.zip}
                 onChange={(e) => updateFormData("zip", e.target.value)}
-                placeholder="Enter zip code"
-                className="w-full input-field border-gray-300"
+                placeholder="Enter ZIP code"
+                className="w-full input-field border-slate-300"
                 disabled={isPending}
               />
             </div>
-
-            {/* Country Dropdown */}
             <div>
               <label
                 htmlFor="country"
-                className="block text-sm font-medium text-gray-700 mb-2"
+                className="mb-2 block text-sm font-medium text-slate-700"
               >
                 Country
               </label>
@@ -328,7 +537,7 @@ export const EditClientModal = ({ client, onClose, onClientUpdated }) => {
                 value={formData.country}
                 onChange={(e) => updateFormData("country", e.target.value)}
                 className={`w-full input-field ${
-                  errors.country ? "border-red-500" : "border-gray-300"
+                  errors.country ? "border-red-500" : "border-slate-300"
                 }`}
                 disabled={isPending || isCountriesFetching}
               >
@@ -344,35 +553,13 @@ export const EditClientModal = ({ client, onClose, onClientUpdated }) => {
                 ))}
               </select>
               {errors.country && (
-                <p className="text-red-500 text-xs mt-1">{errors.country}</p>
+                <p className="mt-1 text-xs text-red-500">{errors.country}</p>
               )}
             </div>
           </div>
-        </div>
-        {/* Footer */}
-        <div className="flex items-center justify-end px-6 py-4 border-t rounded-b-[24px]">
-          <div className="flex gap-3">
-            <button
-              onClick={onClose}
-              className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
-              disabled={isPending}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={isPending}
-              className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              Save Changes
-              {isPending && (
-                <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+        </section>
+      </form>
+    </FormLayout>
   );
 };
 

@@ -6,9 +6,9 @@ import { read as readWorkbook, utils as xlsxUtils } from "xlsx";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
+import AdminPageShell from "../components/AdminPageShell";
 import ModernCard from "../components/ModernCard";
 import ModernButton from "../components/ModernButton";
-import { designTokens } from "../../styles/designTokens";
 import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
 import { useCreateProducts } from "../../hooks/adminHooks/adminProductHooks";
 import ToastUtils from "../../utils/toastUtil";
@@ -467,6 +467,7 @@ const AdminProductCreate = () => {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
+<<<<<<< HEAD
       <main
         className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8"
         style={{ backgroundColor: designTokens.colors.neutral[25] }}
@@ -476,24 +477,32 @@ const AdminProductCreate = () => {
             <h1
               className="text-2xl font-bold"
               style={{ color: designTokens.colors.neutral[900] }}
+=======
+      <AdminPageShell
+        title="Add Products"
+        description="Capture multiple products in one submission. Region determines the provider automatically and product options update based on the selected type."
+        actions={
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+            <ModernButton
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+              onClick={() => navigate("/admin-dashboard/products")}
+              isDisabled={isSubmitting}
+>>>>>>> b587e2a (web)
             >
-              Add Products
-            </h1>
-            <p
-              className="text-sm"
-              style={{ color: designTokens.colors.neutral[600] }}
-            >
-              Capture multiple products in one submission. Region determines the
-              provider automatically and product options update based on the
-              selected type.
-            </p>
+              <ArrowLeft size={16} />
+              Back to Products
+            </ModernButton>
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <ModernCard>
-              <div className="hidden md:block overflow-x-auto">
-                <table className="min-w-[960px] w-full table-auto">
-                  <thead>
+        }
+        contentClassName="space-y-6"
+      >
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <ModernCard>
+            <div className="hidden md:block overflow-x-auto">
+              <table className="min-w-[960px] w-full table-auto">
+                <thead>
                     <tr className="bg-gray-50">
                       <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
                         #
@@ -985,8 +994,7 @@ const AdminProductCreate = () => {
               </button>
             </div>
           </form>
-        </div>
-      </main>
+      </AdminPageShell>
     </>
   );
 };

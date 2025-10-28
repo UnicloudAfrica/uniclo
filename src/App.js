@@ -39,8 +39,10 @@ import Clients from "./dashboard/pages/clients";
 import ClientsOverview from "./dashboard/pages/clientsOverview";
 import AdminDashboard from "./adminDashboard/pages/adminDashboard";
 import AdminPartners from "./adminDashboard/pages/adminPartners";
+import AdminPartnerCreate from "./adminDashboard/pages/adminPartnerCreate";
 import AdminPartnerDetails from "./adminDashboard/pages/adminPartnerDetails";
 import AdminClients from "./adminDashboard/pages/adminClients";
+import AdminClientCreate from "./adminDashboard/pages/adminClientCreate";
 import AdminClientDetails from "./adminDashboard/pages/adminClientDetails";
 import AdminModules from "./adminDashboard/pages/adminModules";
 import AdminPayment from "./adminDashboard/pages/adminPayment";
@@ -64,6 +66,7 @@ import DashboardLoginV2 from "./dashboard/pages/loginV2";
 import TenantRegister from "./tenantDashboard/pages/tenant-signup";
 import TenantLogin from "./tenantDashboard/pages/tenant-signin";
 import AdminUsers from "./adminDashboard/pages/adminUsers";
+import AdminUserCreate from "./adminDashboard/pages/adminUserCreate";
 import AdminProjects from "./adminDashboard/pages/adminProjects";
 import AdminProjectDetails from "./adminDashboard/pages/adminProjectDetails";
 import AdminAddInstance from "./adminDashboard/pages/adminAddInstance";
@@ -73,6 +76,7 @@ import Products from "./dashboard/pages/products";
 import TenantAdmin from "./dashboard/pages/tenantAdmin";
 import Calculator from "./pages/calculator";
 import AdminLeads from "./adminDashboard/pages/adminLeads";
+import AdminLeadCreate from "./adminDashboard/pages/adminLeadCreate";
 import AdminLeadDetails from "./adminDashboard/pages/adminLeadDetails";
 import TenantCalculator from "./dashboard/pages/calculator";
 import AdminSupportTicket from "./adminDashboard/pages/adminSupport";
@@ -246,13 +250,25 @@ function App() {
           <Route path="/verify-admin-mail" element={<VerifyAdminMail />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/admin-dashboard/admin-users" element={<AdminUsers />} />
+          <Route
+            path="/admin-dashboard/admin-users/create"
+            element={<AdminUserCreate />}
+          />
           <Route path="/admin-dashboard/admins" element={<AdminUsers />} />
           <Route path="/admin-dashboard/partners" element={<AdminPartners />} />
+          <Route
+            path="/admin-dashboard/partners/create"
+            element={<AdminPartnerCreate />}
+          />
           <Route
             path="/admin-dashboard/partners/details"
             element={<AdminPartnerDetails />}
           />
           <Route path="/admin-dashboard/clients" element={<AdminClients />} />
+          <Route
+            path="/admin-dashboard/clients/create"
+            element={<AdminClientCreate />}
+          />
           <Route
             path="/admin-dashboard/clients/details"
             element={<AdminClientDetails />}
@@ -278,6 +294,7 @@ function App() {
           />
           <Route path="/admin-dashboard/projects" element={<AdminProjects />} />
           <Route path="/admin-dashboard/leads" element={<AdminLeads />} />
+          <Route path="/admin-dashboard/leads/create" element={<AdminLeadCreate />} />
           <Route path="/admin-dashboard/regions" element={<AdminRegion />} />
           <Route
             path="/admin-dashboard/regions/:id"

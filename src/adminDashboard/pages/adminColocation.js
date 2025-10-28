@@ -10,6 +10,7 @@ import {
   useFetchColocationSettings,
 } from "../../hooks/adminHooks/colocationHooks";
 import ToastUtils from "../../utils/toastUtil";
+import AdminPageShell from "../components/AdminPageShell";
 
 const AdminColocation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -135,7 +136,7 @@ const AdminColocation = () => {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
+            <AdminPageShell contentClassName="p-6 md:p-8">
         <div className="flex justify-end mb-4">
           <div className="relative w-full max-w-[200px]">
             <select
@@ -233,7 +234,7 @@ const AdminColocation = () => {
             </div>
           </div>
         </div>
-      </main>
+            </AdminPageShell>
     </>
   );
 };

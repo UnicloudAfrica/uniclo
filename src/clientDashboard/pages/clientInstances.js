@@ -49,7 +49,7 @@ export default function ClientInstances() {
           onCloseMobileMenu={closeMobileMenu}
         />
         <ClientActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center">
+        <main className="dashboard-content-shell p-6 md:p-8 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-[--theme-color]" />
           <p className="ml-2 text-[--theme-color] mt-2">Loading instances...</p>
         </main>
@@ -65,7 +65,7 @@ export default function ClientInstances() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <ClientActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
+      <main className="dashboard-content-shell p-6 md:p-8">
         <div className="flex items-center justify-between">
           <button
             onClick={() => navigate("/client-dashboard/add-instance")}

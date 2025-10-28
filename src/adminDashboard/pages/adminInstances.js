@@ -39,6 +39,7 @@ import EmbeddedConsole, { useConsoleManager } from "../../components/Console/Emb
 import ToastUtils from "../../utils/toastUtil";
 import useAdminAuthStore from "../../stores/adminAuthStore";
 import { useFetchPurchasedInstances } from "../../hooks/adminHooks/instancesHook";
+import AdminPageShell from "../components/AdminPageShell";
 
 // Enhanced Status Badge Component
 const StatusBadge = ({ status, size = 'sm' }) => {
@@ -474,6 +475,31 @@ export default function AdminInstances() {
 
   const uniqueStatuses = [...new Set(instances.map(i => i.status))].filter(Boolean);
 
+  const headerActions = (
+    <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+      <button
+        onClick={() => refetch()}
+        disabled={isInstancesFetching}
+        className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+      >
+        <RefreshCw
+          className={`w-4 h-4 mr-2 ${isInstancesFetching ? "animate-spin" : ""}`}
+        />
+        Refresh
+      </button>
+
+      <button
+        onClick={() =>
+          (window.location.href = "/admin-dashboard/multi-instance-creation")
+        }
+        className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm"
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Create Instance
+      </button>
+    </div>
+  );
+
   return (
     <>
       <AdminHeadbar onMenuClick={toggleMobileMenu} />
@@ -483,38 +509,11 @@ export default function AdminInstances() {
       />
       <AdminActiveTab />
 
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 md:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Instance Management</h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Manage and monitor your cloud instances
-              </p>
-            </div>
-            
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => refetch()}
-                disabled={isInstancesFetching}
-                className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isInstancesFetching ? 'animate-spin' : ''}`} />
-                Refresh
-              </button>
-              
-              <button
-                onClick={() => window.location.href = '/admin-dashboard/multi-instance-creation'}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Instance
-              </button>
-            </div>
-          </div>
-        </div>
-
+      <AdminPageShell
+        title="Instance Management"
+        description="Manage and monitor your cloud instances"
+        actions={headerActions}
+      >
         {/* Search and Filters */}
         <div className="bg-white border-b border-gray-200 px-6 md:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
@@ -699,7 +698,7 @@ onNavigateToDetails={(idOrIdentifier) => navigateToInstanceDetails(idOrIdentifie
             initialSize={console.size}
           />
         ))}
-      </main>
+            </AdminPageShell>
     </>
   );
 }

@@ -5,9 +5,10 @@ import AdminSidebar from "../components/adminSidebar";
 import OverviewPartner from "../components/partnersComponent/overviewPartner";
 import PartnerModules from "../components/partnersComponent/partnerModules";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Loader2, AlertTriangle } from "lucide-react";
 import { useFetchTenantById } from "../../hooks/adminHooks/tenantHooks";
 import PartnerClients from "../components/partnersComponent/partnerClients";
+import AdminPageShell from "../components/AdminPageShell";
 
 // Function to decode the ID from URL (re-used from other files)
 const decodeId = (encodedId) => {
@@ -96,10 +97,10 @@ export default function AdminPartnerDetails() {
           onCloseMobileMenu={closeMobileMenu}
         />
         <AdminActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center flex-col">
+                <AdminPageShell contentClassName="p-6 md:p-8 flex items-center justify-center flex-col">
           <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
           <p className="ml-2 text-gray-700 mt-2">Loading partner details...</p>
-        </main>
+                </AdminPageShell>
       </>
     );
   }
@@ -114,18 +115,21 @@ export default function AdminPartnerDetails() {
           onCloseMobileMenu={closeMobileMenu}
         />
         <AdminActiveTab />
-        <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex flex-col items-center justify-center text-center">
+                <AdminPageShell contentClassName="p-6 md:p-8 flex flex-col items-center justify-center text-center">
           <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
-          <p className="text-lg font-semibold text-gray-700 mb-4">
+          <p className="text-lg font-semibold text-gray-700 mb-2">
             Partner details not found.
           </p>
+          {partnerError?.message && (
+            <p className="text-sm text-gray-500 mb-4">{partnerError.message}</p>
+          )}
           <button
             onClick={() => navigate("/admin-dashboard/partners")}
             className="px-6 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors"
           >
             Go back to Partners List
           </button>
-        </main>
+                </AdminPageShell>
       </>
     );
   }
@@ -138,10 +142,20 @@ export default function AdminPartnerDetails() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
-        <h1 className="text-2xl font-bold text-[#1E1E1EB2] mb-6">
-          {tenantName} Details
-        </h1>
+      <AdminPageShell
+        title={`${tenantName} Details`}
+        description="Review partner account activity and compliance documents."
+        actions={
+          <button
+            onClick={() => navigate("/admin-dashboard/partners")}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Partners
+          </button>
+        }
+        contentClassName="space-y-6"
+      >
         <div className="flex border-b w-full border-[#EAECF0]">
           {buttons.map((button) => (
             <button
@@ -163,7 +177,7 @@ export default function AdminPartnerDetails() {
           {/* Render the component based on activeButton */}
           {buttons.find((button) => button.value === activeButton).component}
         </div>
-      </main>
+      </AdminPageShell>
     </>
   );
 }

@@ -9,7 +9,6 @@ const BreadcrumbNav = ({ tenantData }) => {
   const pathMap = {
     dashboard: "Home",
     modules: "Modules",
-    "purchased-modules": "Purchased Modules",
     "instances-request": "Instances Request",
     "payment-history": "Payment History",
     "support-ticket": "Support Ticket",

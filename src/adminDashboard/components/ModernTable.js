@@ -257,6 +257,10 @@ const ModernTable = ({
     },
   };
 
+  const isCardView = responsive && isMobile;
+  const renderCellValue = (column, row) =>
+    column.render ? column.render(row[column.key], row) : row[column.key];
+
   if (loading) {
     return (
       <div
@@ -496,7 +500,6 @@ const ModernTable = ({
         </table>
       </div>
 
-      {/* Pagination */}
       {paginated && totalPages > 1 && (
         <div style={tableStyles.pagination}>
           <div

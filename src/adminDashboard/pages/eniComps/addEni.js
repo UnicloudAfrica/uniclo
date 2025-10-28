@@ -1,14 +1,20 @@
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
-import { useFetchVpcs } from "../../../hooks/adminHooks/vcpHooks";
+import { useFetchNetworks, syncNetworksFromProvider } from "../../../hooks/adminHooks/networkHooks";
 import { useCreateNetworkInterface } from "../../../hooks/adminHooks/networkHooks";
+import ToastUtils from "../../../utils/toastUtil";
 
 const AddEni = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) => {
   const [form, setForm] = useState({ name: "", network_id: "", region: defaultRegion || "" });
   const [errors, setErrors] = useState({});
+  const [isSyncingVpcs, setIsSyncingVpcs] = useState(false);
 
-  const { data: vpcs } = useFetchVpcs(projectId, form.region, { enabled: !!projectId && !!form.region });
+  const { data: networks, isFetching: isFetchingNetworks } = useFetchNetworks(projectId, form.region, {
+    enabled: !!projectId && !!form.region,
+  });
   const { mutate: createEni, isPending } = useCreateNetworkInterface();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (defaultRegion && !form.region) {
@@ -24,6 +30,23 @@ const AddEni = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) => {
     if (!form.region) e.region = "Region is required";
     setErrors(e);
     return Object.keys(e).length === 0;
+  };
+
+  const handleRefreshNetworks = async () => {
+    if (!projectId || !form.region) {
+      ToastUtils.error("Select a region before refreshing networks.");
+      return;
+    }
+    setIsSyncingVpcs(true);
+    try {
+      await syncNetworksFromProvider({ project_id: projectId, region: form.region });
+      await queryClient.invalidateQueries({ queryKey: ["networks", { projectId, region: form.region }] });
+      ToastUtils.success("Network list refreshed.");
+    } catch (error) {
+      ToastUtils.error(error?.message || "Failed to refresh networks.");
+    } finally {
+      setIsSyncingVpcs(false);
+    }
   };
 
   const submit = (e) => {
@@ -67,8 +90,20 @@ const AddEni = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) => {
 
           <div className="text-sm text-gray-500">Region: {form.region}</div>
 
-          <div>
-            <label className="block text-sm text-gray-700 mb-1">VPC (Network)</label>
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm text-gray-700">VPC (Network)</label>
+                {Boolean(networks?.length) && (
+                  <button
+                    type="button"
+                    onClick={handleRefreshNetworks}
+                    disabled={isSyncingVpcs || !form.region}
+                    className="text-xs text-[#288DD1] hover:text-[#1a6aa5] underline disabled:no-underline disabled:text-gray-400 disabled:cursor-not-allowed bg-transparent border-none p-0"
+                  >
+                    {isSyncingVpcs ? "Refreshing..." : "Refresh list"}
+                  </button>
+                )}
+              </div>
             <select
               value={form.network_id}
               onChange={(e) => setForm((p) => ({ ...p, network_id: e.target.value }))}
@@ -76,17 +111,32 @@ const AddEni = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) => {
               disabled={!form.region}
             >
               <option value="" disabled>{!form.region ? "Select region first" : "Select VPC"}</option>
-              {(vpcs?.data || vpcs || []).map((v) => {
-                const providerId = v.provider_resource_id || v.uuid || v.meta?.provider_resource_id;
-                const localId = v.id || v.uuid || v.identifier;
-                return (
-                  <option key={localId} value={providerId || localId}>
-                    {v.name || v.identifier || providerId || localId}
-                  </option>
-                );
-              })}
+              {(networks || [])
+                .filter((net) => (net.type || net?.meta?.network_type) === "vpc_network")
+                .map((v) => {
+                  const providerId = v.provider_resource_id || v.meta?.provider_resource_id || v.id;
+                  const localId = v.id || providerId;
+                  return (
+                    <option key={localId} value={providerId || localId}>
+                      {v.name || v.identifier || providerId || localId}
+                    </option>
+                  );
+                })}
             </select>
             {errors.network_id && <p className="text-xs text-red-500 mt-1">{errors.network_id}</p>}
+            {!isFetchingNetworks && (!networks || networks.length === 0) && form.region && (
+              <div className="text-xs text-gray-500 mt-2 flex items-center justify-between">
+                <span>No networks found for this region. Sync from provider?</span>
+                <button
+                  type="button"
+                  onClick={handleRefreshNetworks}
+                  disabled={isSyncingVpcs}
+                  className="text-[#288DD1] hover:text-[#1a6aa5] underline disabled:no-underline disabled:text-gray-400 disabled:cursor-not-allowed bg-transparent border-none p-0"
+                >
+                  {isSyncingVpcs ? "Refreshing..." : "Refresh list"}
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-end gap-2">

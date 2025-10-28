@@ -1,6 +1,6 @@
 // src/components/AddPartner.jsx
-import React, { useState } from "react";
-import { Loader2, X } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { Loader2 } from "lucide-react";
 import {
   useFetchCountries,
   useFetchIndustries,
@@ -14,8 +14,13 @@ import BusinessAddress from "../../pages/tenantComps/businessAddress";
 import UploadFiles from "../../pages/tenantComps/uploadFiles";
 import StepNavigation from "../../pages/tenantComps/stepNavigation";
 import ToastUtils from "../../../utils/toastUtil";
+import FormLayout, {
+  formAccent,
+  getAccentRgba,
+} from "../../components/FormLayout";
 
-const AddPartner = ({ isOpen, onClose }) => {
+const AddPartner = ({ isOpen, onClose, mode = "modal" }) => {
+  const isPageMode = mode === "page";
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({
     email: "",
@@ -78,6 +83,7 @@ const AddPartner = ({ isOpen, onClose }) => {
     {
       component: CreateAccount,
       label: "Create Account",
+      description: "Set the account owner and authentication details.",
       validate: CreateAccount.validate,
     },
     {
@@ -90,6 +96,7 @@ const AddPartner = ({ isOpen, onClose }) => {
         />
       ),
       label: "Business Info",
+      description: "Capture the partner’s organisation and industry details.",
       validate: BusinessInfo.validate,
     },
     {
@@ -106,6 +113,7 @@ const AddPartner = ({ isOpen, onClose }) => {
         />
       ),
       label: "Business Address",
+      description: "Confirm geographic information and statutory identifiers.",
       validate: BusinessAddress.validate,
     },
     {
@@ -116,6 +124,7 @@ const AddPartner = ({ isOpen, onClose }) => {
         />
       ),
       label: "Upload Document",
+      description: "Attach supporting documentation to complete onboarding.",
       validate: UploadFiles.validate,
     },
   ];
@@ -233,73 +242,261 @@ const AddPartner = ({ isOpen, onClose }) => {
     }
   };
 
-  return (
+  const accent = formAccent.primary;
+  const docKeys = [
+    "registration_document",
+    "utility_bill_document",
+    "tinCertificate",
+    "nationalIdDocument",
+    "businessLogo",
+  ];
+
+  const uploadedDocs = docKeys.filter(
+    (key) => formData.business[key]
+  ).length;
+  const progress = Math.round(((currentStep + 1) / steps.length) * 100);
+  const domainPreview = formData.domain
+    ? `${formData.domain}.unicloudafrica.com`
+    : "Not assigned";
+  const contactName = [formData.first_name, formData.last_name]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  const toTitle = (value) =>
+    value
+      ? value
+          .toString()
+          .replace(/[_-]+/g, " ")
+          .replace(/\b\w/g, (char) => char.toUpperCase())
+      : "Not provided";
+
+  const ActiveStep = steps[currentStep].component;
+  const activeStepContent = ActiveStep({
+    formData,
+    setFormData,
+    errors,
+    setErrors,
+  });
+
+  const summarySections = useMemo(
+    () => [
+      {
+        title: "Account Contact",
+        items: [
+          { label: "Full name", value: contactName || "Pending contact" },
+          { label: "Email", value: formData.email || "Pending email" },
+          { label: "Status", value: toTitle(formData.status) },
+          { label: "Domain", value: domainPreview },
+        ],
+      },
+      {
+        title: "Business Profile",
+        items: [
+          {
+            label: "Legal name",
+            value: formData.business.name || "Not captured",
+          },
+          {
+            label: "Industry",
+            value: formData.business.industry || "Select industry",
+          },
+          {
+            label: "Company type",
+            value: formData.business.company_type || "Pending selection",
+          },
+          {
+            label: "Phone",
+            value: formData.business.phone || "Not provided",
+          },
+        ],
+      },
+      {
+        title: "Compliance & Docs",
+        items: [
+          {
+            label: "Registration No.",
+            value: formData.business.registration_number || "—",
+          },
+          { label: "TIN number", value: formData.business.tin_number || "—" },
+          {
+            label: "Attachments",
+            value: `${uploadedDocs}/${docKeys.length} uploaded`,
+          },
+          {
+            label: "Website",
+            value: formData.business.website || "Not provided",
+          },
+        ],
+      },
+    ],
+    [
+      contactName,
+      domainPreview,
+      formData.email,
+      formData.business.name,
+      formData.business.industry,
+      formData.business.company_type,
+      formData.business.phone,
+      formData.business.registration_number,
+      formData.business.tin_number,
+      formData.business.website,
+      uploadedDocs,
+      docKeys.length,
+      formData.status,
+    ]
+  );
+
+  const asideContent = (
     <>
-      {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
-          <div className="bg-white rounded-[24px] w-full max-w-[650px] mx-4">
-            <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
-              <h2 className="text-lg font-semibold text-[#575758]">
-                Add Partner
-              </h2>
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
-                disabled={isPending}
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="px-6 py-6 max-h-[400px] w-full overflow-y-auto">
-              <StepNavigation
-                steps={steps}
-                currentStep={currentStep}
-                setCurrentStep={setCurrentStep}
-                validateStep={validateStep}
-              />
-              {steps[currentStep].component({
-                formData,
-                setFormData,
-                errors,
-                setErrors,
-              })}
-            </div>
-            <div className="flex items-center justify-between px-6 py-4 border-t rounded-b-[24px]">
-              <button
-                onClick={currentStep > 0 ? handleBack : onClose}
-                className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
-                disabled={isPending}
-              >
-                {currentStep > 0 ? "Back" : "Close"}
-              </button>
-              {currentStep < steps.length - 1 ? (
-                <button
-                  onClick={handleNext}
-                  disabled={isPending}
-                  className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                >
-                  Next
-                  {isPending && (
-                    <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-                  )}
-                </button>
-              ) : (
-                <button
-                  onClick={handleSubmit}
-                  disabled={isPending}
-                  className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                >
-                  Submit
-                  {isPending && (
-                    <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-                  )}
-                </button>
-              )}
-            </div>
+      <StepNavigation
+        steps={steps}
+        currentStep={currentStep}
+        setCurrentStep={setCurrentStep}
+        validateStep={validateStep}
+        orientation="vertical"
+        accentColor={accent.color}
+      />
+      <div className="rounded-2xl border border-slate-200 bg-white/70 p-5 shadow-sm backdrop-blur">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Completion
+            </p>
+            <p className="text-lg font-semibold text-slate-800">
+              {progress}% complete
+            </p>
           </div>
+          <span
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold"
+            style={{
+              backgroundColor: getAccentRgba(accent.color, 0.12),
+              color: accent.color,
+            }}
+          >
+            {currentStep + 1}
+          </span>
         </div>
-      )}
+        <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-200">
+          <div
+            className="h-full rounded-full transition-all"
+            style={{
+              width: `${progress}%`,
+              background: `linear-gradient(90deg, ${getAccentRgba(
+                accent.color,
+                0.6
+              )} 0%, ${accent.color} 100%)`,
+            }}
+          />
+        </div>
+        <p className="mt-3 text-xs text-slate-500">
+          You can revisit earlier sections at any time without losing the
+          captured data.
+        </p>
+      </div>
+      {summarySections.map((section) => (
+        <div
+          key={section.title}
+          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+        >
+          <h3 className="text-sm font-semibold text-slate-800">
+            {section.title}
+          </h3>
+          <dl className="mt-3 space-y-3">
+            {section.items.map((item) => (
+              <div
+                key={`${section.title}-${item.label}`}
+                className="flex items-start justify-between gap-3 text-sm"
+              >
+                <dt className="text-slate-500">{item.label}</dt>
+                <dd className="max-w-[160px] text-right font-medium text-slate-800">
+                  {item.value || "—"}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      ))}
     </>
+  );
+
+  const footer = (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <button
+        type="button"
+        onClick={currentStep > 0 ? handleBack : onClose}
+        disabled={isPending}
+        className="w-full rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-slate-400 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+      >
+        {currentStep > 0 ? "Previous step" : "Cancel"}
+      </button>
+      {currentStep < steps.length - 1 ? (
+        <button
+          type="button"
+          onClick={handleNext}
+          disabled={isPending}
+          className="inline-flex w-full items-center justify-center rounded-full bg-[#0F62FE] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0b51d3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0F62FE] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+        >
+          Continue
+          {isPending && (
+            <Loader2 className="ml-2 h-4 w-4 animate-spin text-white" />
+          )}
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={isPending}
+          className="inline-flex w-full items-center justify-center rounded-full bg-[#047857] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#036149] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#047857] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+        >
+          {isPending ? (
+            <>
+              Creating
+              <Loader2 className="ml-2 h-4 w-4 animate-spin text-white" />
+            </>
+          ) : (
+            "Create partner"
+          )}
+        </button>
+      )}
+    </div>
+  );
+
+  const meta = [
+    {
+      label: "Current stage",
+      value: `${currentStep + 1} / ${steps.length}`,
+      hint: steps[currentStep].label,
+    },
+    {
+      label: "Subdomain",
+      value: domainPreview,
+    },
+    {
+      label: "Documents",
+      value: `${uploadedDocs}/${docKeys.length} uploaded`,
+    },
+  ];
+
+  const shouldRender = isPageMode || isOpen;
+  if (!shouldRender) return null;
+
+  return (
+    <FormLayout
+      mode={mode}
+      onClose={onClose}
+      isProcessing={isPending}
+      title="Add Partner"
+      description="Capture partner profile, regional presence, and supporting documentation to complete onboarding."
+      accentGradient={accent.gradient}
+      accentColor={accent.color}
+      meta={meta}
+      aside={asideContent}
+      footer={footer}
+      maxWidthClass="max-w-6xl"
+    >
+      {activeStepContent}
+    </FormLayout>
   );
 };
 

@@ -10,16 +10,13 @@ import {
   Package,
   Layers,
   DollarSign,
-  ShoppingCart,
   FolderOpen,
-  Plus,
   MapPin,
   Calculator,
   FileText,
   Settings,
   HelpCircle,
   User,
-  UserCog,
   CheckSquare,
   Server,
 } from "lucide-react";
@@ -33,7 +30,6 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   const pathToItemMap = {
     "/admin-dashboard": "Home",
     "/admin-dashboard/partners": "Partners",
-    "/admin-dashboard/admins": "Admins",
     "/admin-dashboard/modules": "Modules",
     "/admin-dashboard/clients": "Clients",
     "/admin-dashboard/payment": "Payment",
@@ -80,12 +76,6 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       path: "/admin-dashboard/partners",
     },
     {
-      name: "Admins",
-      icon: UserCog,
-      isLucide: true,
-      path: "/admin-dashboard/admins",
-    },
-    {
       name: "Leads",
       icon: UserPlus,
       isLucide: true,
@@ -115,12 +105,15 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       isLucide: true,
       path: "/admin-dashboard/pricing",
     },
+<<<<<<< HEAD
     // {
     //   name: "Purchased Modules",
     //   icon: ShoppingCart,
     //   isLucide: true,
     //   path: "/admin-dashboard/purchased-modules",
     // },
+=======
+>>>>>>> b587e2a (web)
     {
       name: "Projects",
       icon: FolderOpen,

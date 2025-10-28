@@ -8,14 +8,7 @@ import {
   Phone,
   Mail,
   Target,
-<<<<<<< HEAD
-  TrendingUp,
-  Calendar,
-  Filter,
-  Search,
-=======
   TrendingUp
->>>>>>> b587e2a (web)
 } from "lucide-react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
@@ -151,10 +144,6 @@ export default function AdminLeads() {
         actions={headerActions}
         contentClassName="space-y-8 overflow-y-auto"
       >
-<<<<<<< HEAD
-        <div className="">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Leads</h2>
-=======
         <ModernCard className="space-y-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -204,7 +193,6 @@ export default function AdminLeads() {
         </ModernCard>
 
         <div className="space-y-8">
->>>>>>> b587e2a (web)
           {isLeadStatsFetching ? (
             <div className="flex justify-center items-center h-48">
               <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
@@ -214,7 +202,7 @@ export default function AdminLeads() {
               <ModernStatsCard
                 title="Total Leads"
                 value={leadStats?.message?.leads || 0}
-                icon={<Users width={20} height={20} />}
+                icon={<Users />}
                 color="primary"
                 trend="neutral"
                 description="All leads in the system"
@@ -225,26 +213,26 @@ export default function AdminLeads() {
                     const getStatusConfig = (status) => {
                       switch (status) {
                         case "new":
-                          return { icon: <UserPlus />, color: "primary" };
+                          return { icon: <UserPlus />, color: "info" };
                         case "contacted":
-                          return { icon: <Phone />, color: "primary" };
+                          return { icon: <Phone />, color: "warning" };
                         case "qualified":
-                          return { icon: <Target />, color: "primary" };
+                          return { icon: <Target />, color: "success" };
                         case "proposal_sent":
                           return { icon: <Mail />, color: "primary" };
                         case "negotiating":
-                          return { icon: <TrendingUp />, color: "primary" };
+                          return { icon: <TrendingUp />, color: "warning" };
                         case "closed_won":
-                          return { icon: <Target />, color: "primary" };
+                          return { icon: <Target />, color: "success" };
                         case "closed_lost":
                           return { icon: <Users />, color: "error" };
                         default:
-                          return { icon: <Users />, color: "primary" };
+                          return { icon: <Users />, color: "info" };
                       }
                     };
-
+                    
                     const config = getStatusConfig(status);
-
+                    
                     return (
                       <ModernStatsCard
                         key={status}
@@ -253,83 +241,73 @@ export default function AdminLeads() {
                         icon={config.icon}
                         color={config.color}
                         trend="neutral"
-                        description={`Leads in ${formatStatusForDisplay(
-                          status
-                        ).toLowerCase()} stage`}
+                        description={`Leads in ${formatStatusForDisplay(status).toLowerCase()} stage`}
                       />
                     );
                   }
                 )}
             </div>
           )}
-<<<<<<< HEAD
-
-          <button
-            onClick={openCreateLead}
-            className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base mb-6"
-          >
-            Create New Lead
-          </button>
-=======
->>>>>>> b587e2a (web)
           <ModernTable
             title="Leads Management"
             data={filteredLeads}
             loading={isLeadsFetching}
             columns={[
               {
-                key: "id",
-                header: "ID",
-                render: (value, row, index) => index + 1,
+                key: 'id',
+                header: 'ID',
+                render: (value, row, index) => index + 1
               },
               {
-                key: "name",
-                header: "Name",
-                render: (_, row) => `${row.first_name} ${row.last_name}`,
+                key: 'name',
+                header: 'Name',
+                render: (_, row) => `${row.first_name} ${row.last_name}`
               },
               {
-                key: "email",
-                header: "Email",
+                key: 'email',
+                header: 'Email'
               },
               {
-                key: "lead_type",
-                header: "Lead Type",
-                render: (value) => <span className="capitalize">{value}</span>,
+                key: 'lead_type',
+                header: 'Lead Type',
+                render: (value) => (
+                  <span className="capitalize">{value}</span>
+                )
               },
               {
-                key: "status",
-                header: "Status",
+                key: 'status',
+                header: 'Status',
                 render: (value) => (
                   <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColorClass(
-                      value
-                    )}`}
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColorClass(value)}`}
                   >
                     {formatStatusForDisplay(value)}
                   </span>
-                ),
+                )
               },
               {
-                key: "source",
-                header: "Source",
-                render: (value) => <span className="capitalize">{value}</span>,
+                key: 'source',
+                header: 'Source',
+                render: (value) => (
+                  <span className="capitalize">{value}</span>
+                )
               },
               {
-                key: "created_at",
-                header: "Created At",
-                render: (value) => formatCreatedAt(value),
-              },
+                key: 'created_at',
+                header: 'Created At',
+                render: (value) => formatCreatedAt(value)
+              }
             ]}
             actions={[
               {
-                label: "View Details",
+                label: 'View Details',
                 icon: <Eye size={16} />,
                 onClick: (lead) => {
                   window.location.href = `/admin-dashboard/leads/details?name=${encodeURIComponent(
                     `${lead.first_name} ${lead.last_name}`
                   )}&id=${encodeId(lead.id)}`;
-                },
-              },
+                }
+              }
             ]}
             searchable={true}
             exportable={true}

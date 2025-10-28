@@ -1,4 +1,5 @@
 import { useLocation } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
 
 const AdminActiveTab = () => {
   const location = useLocation();

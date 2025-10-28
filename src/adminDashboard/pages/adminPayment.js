@@ -12,6 +12,7 @@ import jsPDF from "jspdf";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminPageShell from "../components/AdminPageShell";
+import AdminActiveTab from "../components/adminActiveTab";
 import ModernTable from "../components/ModernTable";
 import ModernCard from "../components/ModernCard";
 import ModernStatsCard from "../components/ModernStatsCard";
@@ -83,13 +84,9 @@ export default function AdminPayment() {
   }, 0);
 
   const completedPayments = data.filter((p) => p.status === "Completed").length;
-<<<<<<< HEAD
   const processingPayments = data.filter(
     (p) => p.status === "Processing"
   ).length;
-=======
-  const processingPayments = data.filter((p) => p.status === "Processing").length;
->>>>>>> b587e2a (web)
   const failedPayments = data.filter((p) => p.status === "Failed").length;
 
   const columns = [
@@ -128,14 +125,10 @@ export default function AdminPayment() {
       header: "Amount",
       render: (value) => (
         <div className="flex items-center gap-2">
-<<<<<<< HEAD
           <DollarSign
             size={16}
             style={{ color: designTokens.colors.success[500] }}
           />
-=======
-          <DollarSign size={16} style={{ color: designTokens.colors.success[500] }} />
->>>>>>> b587e2a (web)
           <span
             className="font-semibold"
             style={{ color: designTokens.colors.success[700] }}
@@ -179,11 +172,7 @@ export default function AdminPayment() {
             border: designTokens.colors.error[200],
           },
         };
-<<<<<<< HEAD
         const config = statusConfig[value] || statusConfig["Processing"];
-=======
-        const config = statusConfig[value] || statusConfig.Processing;
->>>>>>> b587e2a (web)
 
         return (
           <span
@@ -218,7 +207,7 @@ export default function AdminPayment() {
     {
       icon: <Download size={16} />,
       label: "",
-      onClick: (item) => downloadReceipt(item, { preventDefault: () => {} }),
+      onClick: (item) => downloadReceipt(item, { preventDefault: () => { } }),
     },
   ];
 
@@ -333,111 +322,29 @@ export default function AdminPayment() {
         isMobileMenuOpen={isMobileMenuOpen}
         onCloseMobileMenu={closeMobileMenu}
       />
-<<<<<<< HEAD
       <AdminActiveTab />
-      <main
-        className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8"
-        style={{ backgroundColor: designTokens.colors.neutral[25] }}
-      >
-        <div className="space-y-6">
-          {/* Page Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1
-                className="text-2xl font-bold"
-                style={{ color: designTokens.colors.neutral[900] }}
-              >
-                Payment Management
-              </h1>
-              <p
-                className="mt-1 text-sm"
-                style={{ color: designTokens.colors.neutral[600] }}
-              >
-                Monitor and manage all payment transactions
-              </p>
-            </div>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 stats-cards-stagger">
-            <ModernStatsCard
-              title="Total Revenue"
-              value={`₦${totalRevenue.toLocaleString()}`}
-              icon={<DollarSign width={20} height={20} />}
-              change={15}
-              trend="up"
-              color="primary"
-              description="This month"
-              animateOnMount={true}
-              staggerDelay={0}
-            />
-            <ModernStatsCard
-              title="Completed Payments"
-              value={completedPayments}
-              icon={<CreditCard width={20} height={20} />}
-              change={8}
-              trend="up"
-              color="primary"
-              description="Successfully processed"
-              animateOnMount={true}
-              staggerDelay={150}
-            />
-            <ModernStatsCard
-              title="Processing"
-              value={processingPayments}
-              icon={<TrendingUp width={20} height={20} />}
-              color="primary"
-              description="Pending transactions"
-              animateOnMount={true}
-              staggerDelay={300}
-            />
-            <ModernStatsCard
-              title="Failed Payments"
-              value={failedPayments}
-              icon={<FileText width={20} height={20} />}
-              color="primary"
-              description="Requires attention"
-              animateOnMount={true}
-              staggerDelay={450}
-            />
-          </div>
-
-          {/* Payment Transactions Table */}
-
-          <ModernTable
-            title="Payment Transactions"
-            data={data}
-            columns={columns}
-            actions={actions}
-            searchable={true}
-            filterable={true}
-            exportable={true}
-            sortable={true}
-            loading={false}
-            emptyMessage="No payment transactions found"
-            enableAnimations={true}
-=======
       <AdminPageShell
         title="Payment Management"
         description="Monitor and manage all payment transactions."
         actions={headerActions}
         contentClassName="space-y-6"
       >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 stats-cards-stagger">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 stats-cards-stagger">
           <ModernStatsCard
             title="Total Revenue"
             value={`₦${totalRevenue.toLocaleString()}`}
-            icon={<DollarSign size={24} />}
+            icon={<DollarSign width={20} height={20} />}
             change={15}
             trend="up"
-            color="success"
+            color="primary"
             description="This month"
             animateOnMount
+            staggerDelay={0}
           />
           <ModernStatsCard
             title="Completed Payments"
             value={completedPayments}
-            icon={<CreditCard size={24} />}
+            icon={<CreditCard width={20} height={20} />}
             change={8}
             trend="up"
             color="primary"
@@ -448,8 +355,8 @@ export default function AdminPayment() {
           <ModernStatsCard
             title="Processing"
             value={processingPayments}
-            icon={<TrendingUp size={24} />}
-            color="warning"
+            icon={<TrendingUp width={20} height={20} />}
+            color="primary"
             description="Pending transactions"
             animateOnMount
             staggerDelay={300}
@@ -457,12 +364,11 @@ export default function AdminPayment() {
           <ModernStatsCard
             title="Failed Payments"
             value={failedPayments}
-            icon={<FileText size={24} />}
-            color="error"
+            icon={<FileText width={20} height={20} />}
+            color="primary"
             description="Requires attention"
             animateOnMount
             staggerDelay={450}
->>>>>>> b587e2a (web)
           />
         </div>
 

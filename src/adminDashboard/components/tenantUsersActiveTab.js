@@ -5,7 +5,7 @@ const ManagementSideMenu = () => {
   const tabs = [
     { id: "partners", name: "Partners", path: "/admin-dashboard/partners" },
     { id: "clients", name: "Clients", path: "/admin-dashboard/clients" },
-    // { id: "admins", name: "Admin Users", path: "/admin-dashboard/admin-users" },
+    { id: "admin-users", name: "Admin Users", path: "/admin-dashboard/admin-users" },
   ];
 
   return (

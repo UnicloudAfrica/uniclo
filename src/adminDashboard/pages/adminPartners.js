@@ -6,10 +6,6 @@ import {
   Users,
   Building2,
   Phone,
-<<<<<<< HEAD
-  Calendar,
-=======
->>>>>>> b587e2a (web)
 } from "lucide-react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
@@ -43,8 +39,7 @@ const AdminPartners = () => {
   const navigate = useNavigate();
   const { isLoading } = useAuthRedirect();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { data: tenants = [], isFetching: isTenantsFetching } =
-    useFetchTenants();
+  const { data: tenants = [], isFetching: isTenantsFetching } = useFetchTenants();
   const [isDeleteTenantModalOpen, setIsDeleteTenantModalOpen] = useState(false);
   const [selectedTenantToDelete, setSelectedTenantToDelete] = useState(null);
 
@@ -64,35 +59,19 @@ const AdminPartners = () => {
   };
 
   const totalPartners = tenants.length;
-<<<<<<< HEAD
-  const activePartners = tenants.filter(
-    (tenant) => tenant.status === "active"
-  ).length;
-=======
   const activePartners = tenants.filter((tenant) => tenant.status === "active").length;
->>>>>>> b587e2a (web)
   const companyTypes = {
     RC: tenants.filter((t) => t.company_type === "RC").length,
     BN: tenants.filter((t) => t.company_type === "BN").length,
     IT: tenants.filter((t) => t.company_type === "IT").length,
-<<<<<<< HEAD
-    Other: tenants.filter((t) => !["RC", "BN", "IT"].includes(t.company_type))
-      .length,
-=======
     Other: tenants.filter((t) => !["RC", "BN", "IT"].includes(t.company_type)).length,
->>>>>>> b587e2a (web)
   };
 
   const columns = [
     {
       key: "serialNumber",
       header: "S/N",
-<<<<<<< HEAD
-      render: (value, row, index, currentPage, pageSize) =>
-        (currentPage - 1) * pageSize + index + 1,
-=======
       render: (value, row, index) => index + 1,
->>>>>>> b587e2a (web)
     },
     {
       key: "id",
@@ -103,10 +82,7 @@ const AdminPartners = () => {
       header: "Name",
       render: (value) => (
         <div className="flex items-center gap-2">
-          <Building2
-            size={16}
-            style={{ color: designTokens.colors.primary[500] }}
-          />
+          <Building2 size={16} style={{ color: designTokens.colors.primary[500] }} />
           <span className="font-medium">{value}</span>
         </div>
       ),
@@ -116,10 +92,7 @@ const AdminPartners = () => {
       header: "Phone Number",
       render: (value) => (
         <div className="flex items-center gap-2">
-          <Phone
-            size={14}
-            style={{ color: designTokens.colors.neutral[500] }}
-          />
+          <Phone size={14} style={{ color: designTokens.colors.neutral[500] }} />
           {value}
         </div>
       ),
@@ -178,14 +151,6 @@ const AdminPartners = () => {
   return (
     <>
       <AdminHeadbar onMenuClick={toggleMobileMenu} />
-<<<<<<< HEAD
-      <AdminSidebar
-        isMobileMenuOpen={isMobileMenuOpen}
-        onCloseMobileMenu={closeMobileMenu}
-      />
-      <AdminActiveTab />
-      <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] bg-[#FAFAFA] lg:w-[80%] min-h-full p-6 md:p-8 flex flex-col lg:flex-row">
-=======
       <AdminSidebar isMobileMenuOpen={isMobileMenuOpen} onCloseMobileMenu={closeMobileMenu} />
       <AdminPageShell
         title="Partners Management"
@@ -193,7 +158,6 @@ const AdminPartners = () => {
         actions={headerActions}
         contentClassName="space-y-6"
       >
->>>>>>> b587e2a (web)
         <TenantClientsSideMenu />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -230,73 +194,6 @@ const AdminPartners = () => {
         <ModernCard>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-<<<<<<< HEAD
-              <h1
-                className="text-2xl font-bold"
-                style={{ color: designTokens.colors.neutral[900] }}
-              >
-                Partners Management
-              </h1>
-              <p
-                className="mt-1 text-sm"
-                style={{ color: designTokens.colors.neutral[600] }}
-              >
-                Manage and monitor your business partners
-              </p>
-            </div>
-
-            <button
-              onClick={openAddPartner}
-              className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base "
-            >
-              Add Partner
-            </button>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <ModernStatsCard
-              title="Total Partners"
-              value={totalPartners}
-              icon={<Users width={20} height={20} />}
-              change={12}
-              trend="up"
-              color="primary"
-            />
-            <ModernStatsCard
-              title="Active Partners"
-              value={activePartners}
-              icon={<Building2 width={20} height={20} />}
-              change={8}
-              trend="up"
-              color="primary"
-            />
-            <ModernStatsCard
-              title="LLC Companies"
-              value={companyTypes.RC}
-              icon={<Building2 width={20} height={20} />}
-              color="primary"
-            />
-            <ModernStatsCard
-              title="Business Names"
-              value={companyTypes.BN}
-              icon={<Building2 width={20} height={20} />}
-              color="primary"
-            />
-          </div>
-
-          {/* Partners Table */}
-
-          <ModernTable
-            title="Partners List"
-            data={tenants}
-            columns={columns}
-            actions={actions}
-            searchable={true}
-            filterable={true}
-            exportable={true}
-            sortable={true}
-=======
               <h2 className="text-xl font-semibold" style={{ color: designTokens.colors.neutral[900] }}>
                 Partner Directory
               </h2>
@@ -321,19 +218,12 @@ const AdminPartners = () => {
             filterable
             exportable
             sortable
->>>>>>> b587e2a (web)
             loading={isTenantsFetching}
             onRowClick={handleViewDetails}
             emptyMessage="No partners found"
           />
-<<<<<<< HEAD
-        </div>
-      </main>
-      <AddPartner isOpen={isAddPartnerOpen} onClose={closeAddPartner} />
-=======
         </ModernCard>
       </AdminPageShell>
->>>>>>> b587e2a (web)
       <DeleteTenantModal
         isOpen={isDeleteTenantModalOpen}
         onClose={() => setIsDeleteTenantModalOpen(false)}

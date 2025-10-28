@@ -108,24 +108,11 @@ const AdminProductCreate = () => {
     const region = coerceTrimmedString(
       row.region ?? row.region_code ?? row.Region ?? row["Region"]
     );
-    const rawType =
-      row.productable_type ??
-      row.type ??
-      row.ProductType ??
-      row["Product Type"];
+    const rawType = row.productable_type ?? row.type ?? row.ProductType ?? row["Product Type"];
     const productableType = normalizeType(rawType);
-    const rawProductId =
-      row.productable_id ??
-      row.product_id ??
-      row.ProductID ??
-      row["Product ID"];
+    const rawProductId = row.productable_id ?? row.product_id ?? row.ProductID ?? row["Product ID"];
     const productableIdNumber = Number(rawProductId);
-    const rawPrice =
-      row.price ??
-      row.price_usd ??
-      row.Price ??
-      row["Price"] ??
-      row["priceUSD"];
+    const rawPrice = row.price ?? row.price_usd ?? row.Price ?? row["Price"] ?? row["priceUSD"];
     const priceNumber = Number(rawPrice);
 
     if (!name) {
@@ -203,11 +190,7 @@ const AdminProductCreate = () => {
       return;
     }
 
-    updateEntry(index, {
-      loadingOptions: true,
-      options: [],
-      productable_id: "",
-    });
+    updateEntry(index, { loadingOptions: true, options: [], productable_id: "" });
 
     try {
       const params = new URLSearchParams();
@@ -215,167 +198,45 @@ const AdminProductCreate = () => {
       params.append("region", regionCode);
 
       const response = await silentApi(
-        "GET",
-        `${endpoint}?${params.toString()}`
-      );
-      const options = response?.data || [];
-
-      updateEntry(index, { options, loadingOptions: false });
-    } catch (error) {
-      console.error("Failed to load product options:", error);
-      ToastUtils.error("Unable to load products for the selected type/region.");
-      updateEntry(index, { loadingOptions: false, options: [] });
-    }
-  };
-
-  const handleImportClick = () => {
-    if (isImporting || isPending || isLoading) return;
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
-
-    setIsImporting(true);
-
-    try {
-      const extension = file.name.split(".").pop()?.toLowerCase();
-
-      let rows = [];
-      if (extension === "csv") {
-        rows = await parseCsvFile(file);
-      } else if (extension === "xlsx" || extension === "xls") {
-        rows = await parseExcelFile(file);
-      } else {
-        ToastUtils.error(
-          "Unsupported file type. Please upload a CSV or Excel file."
-        );
-        return;
-      }
-
-      const nonEmptyRows = rows.filter((row) =>
-        Object.values(row || {}).some(
-          (value) =>
-            value !== null && value !== undefined && String(value).trim() !== ""
-        )
-      );
-
-      if (!nonEmptyRows.length) {
-        ToastUtils.error(
-          "The uploaded file does not contain any rows to import."
-        );
-        return;
-      }
-
-      const parseErrors = [];
-      const newEntries = [];
-      const existingLength = entries.length;
-
-      nonEmptyRows.forEach((row, rowIndex) => {
-        const mapped = mapRowToEntry(row, rowIndex, regionLookup);
-        if (mapped.error) {
-          parseErrors.push(mapped.error);
-        } else if (mapped.entry) {
-          newEntries.push(mapped.entry);
+        `${endpoint}?${params.toString()}`,
+        {
+          method: "GET",
         }
-      });
-
-      if (parseErrors.length) {
-        const summary = parseErrors
-          .slice(0, 5)
-          .map((error) => `Row ${error.row}: ${error.message}`)
-          .join("\n");
-        const more = parseErrors.length > 5 ? "\n..." : "";
-        ToastUtils.error(`Some rows could not be imported:\n${summary}${more}`);
-      }
-
-      if (!newEntries.length) {
-        if (!parseErrors.length) {
-          ToastUtils.error("No valid rows were found in the uploaded file.");
-        }
-        return;
-      }
-
-      setEntries((prev) => [...prev, ...newEntries]);
-
-      newEntries.forEach((entry, idx) => {
-        const targetIndex = existingLength + idx;
-        setTimeout(() => {
-          loadProductOptions(targetIndex, entry.region, entry.productable_type);
-        }, 0);
-      });
-
-      ToastUtils.success(
-        `Imported ${newEntries.length} product${
-          newEntries.length > 1 ? "s" : ""
-        }.`
       );
+
+      const records = Array.isArray(response?.data)
+        ? response.data
+        : Array.isArray(response?.message)
+        ? response.message
+        : [];
+
+      updateEntry(index, {
+        options: records.map((record) => ({
+          id: record.productable_id,
+          name: record.name || record.product?.name || "Unnamed",
+        })),
+        loadingOptions: false,
+      });
     } catch (error) {
-      console.error("Failed to import products:", error);
-      ToastUtils.error(
-        "Failed to import products. Please verify the file and try again."
-      );
-    } finally {
-      setIsImporting(false);
-      if (event.target) {
-        event.target.value = "";
-      }
+      console.error("Failed to load product options", error);
+      updateEntry(index, { options: [], loadingOptions: false });
+      ToastUtils.error("Failed to load product options.");
     }
   };
 
   const handleEntryFieldChange = (index, field, value) => {
-    const entry = entries[index];
-    if (!entry) return;
+    updateEntry(index, { [field]: value, errors: { ...entries[index].errors, [field]: null } });
 
-    const nextRegion = field === "region" ? value : entry.region;
-    const nextType =
-      field === "productable_type" ? value : entry.productable_type;
+    if (field === "productable_type") {
+      loadProductOptions(index, entries[index].region, value);
+    }
 
-    setEntries((prev) => {
-      const next = [...prev];
-      const current = { ...next[index] };
-      current.errors = { ...current.errors, [field]: null };
-
-      if (field === "name") {
-        current.name = value;
-      } else if (field === "region") {
-        current.region = value;
-        const regionInfo = regionLookup[value];
-        current.provider = regionInfo?.provider ?? "";
-        current.productable_id = "";
-        current.options = [];
-      } else if (field === "productable_type") {
-        current.productable_type = value;
-        current.productable_id = "";
-        current.options = [];
-      } else if (field === "productable_id") {
-        current.productable_id = value;
-
-        if (!current.name) {
-          const option = current.options.find(
-            (opt) => String(getOptionValue(opt)) === String(value)
-          );
-          if (option) {
-            current.name = getOptionLabel(option);
-          }
-        }
-      } else if (field === "price") {
-        current.price = value;
+    if (field === "region") {
+      const regionInfo = regionLookup[value];
+      updateEntry(index, { provider: regionInfo?.provider ?? "" });
+      if (entries[index].productable_type) {
+        loadProductOptions(index, value, entries[index].productable_type);
       }
-
-      next[index] = current;
-      return next;
-    });
-
-    if (
-      (field === "region" || field === "productable_type") &&
-      nextRegion &&
-      nextType
-    ) {
-      loadProductOptions(index, nextRegion, nextType);
     }
   };
 
@@ -387,36 +248,95 @@ const AdminProductCreate = () => {
     setEntries((prev) => prev.filter((_, idx) => idx !== index));
   };
 
-  const validateEntries = () => {
-    let hasErrors = false;
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
 
-    const next = entries.map((entry) => {
-      const entryErrors = {};
+  const handleFileChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-      if (!entry.name.trim()) entryErrors.name = "Name is required";
-      if (!entry.region) entryErrors.region = "Region is required";
-      if (!entry.productable_type)
-        entryErrors.productable_type = "Product type is required";
-      if (!entry.productable_id)
-        entryErrors.productable_id = "Product selection is required";
-      const priceValue = Number(entry.price);
-      if (!Number.isFinite(priceValue) || priceValue < 0) {
-        entryErrors.price = "Valid price is required";
+    const extension = file.name.split(".").pop()?.toLowerCase();
+    setIsImporting(true);
+
+    try {
+      let rows = [];
+      if (extension === "csv") {
+        rows = await parseCsvFile(file);
+      } else if (extension === "xlsx" || extension === "xls") {
+        rows = await parseExcelFile(file);
+      } else {
+        ToastUtils.error("Unsupported file type. Please upload CSV or Excel.");
+        return;
       }
 
-      if (Object.keys(entryErrors).length > 0) {
+      const regionMap = regionLookup;
+      const nextEntries = [];
+      const errors = [];
+
+      rows.forEach((row, index) => {
+        const result = mapRowToEntry(row, index, regionMap);
+        if (result.error) {
+          errors.push(result.error);
+        } else if (result.entry) {
+          nextEntries.push(result.entry);
+        }
+      });
+
+      if (errors.length > 0) {
+        ToastUtils.error(
+          `Import completed with ${errors.length} errors. Check console for details.`
+        );
+        console.table(errors);
+      }
+
+      if (nextEntries.length > 0) {
+        setEntries(nextEntries);
+        ToastUtils.success("Products imported successfully!");
+      } else {
+        ToastUtils.warning("No valid rows found in the file.");
+      }
+    } catch (error) {
+      console.error("Failed to import products:", error);
+      ToastUtils.error("Failed to import products. Please try again.");
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const validateEntries = () => {
+    let hasErrors = false;
+    const nextEntries = entries.map((entry) => {
+      const errors = {};
+
+      if (!entry.name.trim()) {
+        errors.name = "Product name is required.";
+      }
+      if (!entry.region) {
+        errors.region = "Region is required.";
+      }
+      if (!entry.productable_type) {
+        errors.productable_type = "Product type is required.";
+      }
+      if (!entry.productable_id) {
+        errors.productable_id = "Product is required.";
+      }
+      const priceNumber = Number(entry.price);
+      if (!Number.isFinite(priceNumber) || priceNumber < 0) {
+        errors.price = "Price must be a positive number.";
+      }
+
+      if (Object.keys(errors).length > 0) {
         hasErrors = true;
       }
 
-      return { ...entry, errors: entryErrors };
+      return { ...entry, errors };
     });
 
-    setEntries(next);
-
-    if (hasErrors) {
-      ToastUtils.error("Please fix the highlighted issues before submitting.");
-    }
-
+    setEntries(nextEntries);
     return !hasErrors;
   };
 
@@ -467,34 +387,20 @@ const AdminProductCreate = () => {
         onCloseMobileMenu={closeMobileMenu}
       />
       <AdminActiveTab />
-<<<<<<< HEAD
-      <main
-        className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8"
-        style={{ backgroundColor: designTokens.colors.neutral[25] }}
-      >
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <h1
-              className="text-2xl font-bold"
-              style={{ color: designTokens.colors.neutral[900] }}
-=======
       <AdminPageShell
         title="Add Products"
         description="Capture multiple products in one submission. Region determines the provider automatically and product options update based on the selected type."
         actions={
-          <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-            <ModernButton
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-              onClick={() => navigate("/admin-dashboard/products")}
-              isDisabled={isSubmitting}
->>>>>>> b587e2a (web)
-            >
-              <ArrowLeft size={16} />
-              Back to Products
-            </ModernButton>
-          </div>
+          <ModernButton
+            type="button"
+            variant="outline"
+            className="flex items-center gap-2"
+            onClick={() => navigate("/admin-dashboard/products")}
+            isDisabled={isSubmitting}
+          >
+            <ArrowLeft size={16} />
+            Back to Products
+          </ModernButton>
         }
         contentClassName="space-y-6"
       >
@@ -503,294 +409,66 @@ const AdminProductCreate = () => {
             <div className="hidden md:block overflow-x-auto">
               <table className="min-w-[960px] w-full table-auto">
                 <thead>
-                    <tr className="bg-gray-50">
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
-                        #
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
-                        Product Name<span className="text-red-500">*</span>
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
-                        Region<span className="text-red-500">*</span>
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
-                        Type<span className="text-red-500">*</span>
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
-                        Product<span className="text-red-500">*</span>
-                      </th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
-                        Price (USD)<span className="text-red-500">*</span>
-                      </th>
-                      <th className="px-4 py-3 text-right text-sm font-semibold text-gray-600">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {entries.map((entry, index) => (
-                      <tr key={entry.id} className="align-top">
-                        <td className="px-4 py-3 text-sm text-gray-500">
-                          {index + 1}
-                        </td>
-                        <td className="px-4 py-3">
-                          <input
-                            type="text"
-                            value={entry.name}
-                            onChange={(e) =>
-                              handleEntryFieldChange(
-                                index,
-                                "name",
-                                e.target.value
-                              )
-                            }
-                            placeholder="Product name"
-                            className={`w-full input-field ${
-                              entry.errors.name
-                                ? "border-red-500"
-                                : "border-gray-300"
-                            }`}
-                            disabled={isSubmitting}
-                          />
-                          {entry.errors.name && (
-                            <p className="text-red-500 text-xs mt-1">
-                              {entry.errors.name}
-                            </p>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <select
-                            value={entry.region}
-                            onChange={(e) =>
-                              handleEntryFieldChange(
-                                index,
-                                "region",
-                                e.target.value
-                              )
-                            }
-                            className={`w-full input-field ${
-                              entry.errors.region
-                                ? "border-red-500"
-                                : "border-gray-300"
-                            }`}
-                            disabled={isSubmitting || isRegionsFetching}
-                          >
-                            <option value="">
-                              {isRegionsFetching
-                                ? "Loading regions..."
-                                : "Select region"}
-                            </option>
-                            {regions?.map((region) => (
-                              <option key={region.code} value={region.code}>
-                                {region.name}
-                              </option>
-                            ))}
-                          </select>
-                          {entry.errors.region && (
-                            <p className="text-red-500 text-xs mt-1">
-                              {entry.errors.region}
-                            </p>
-                          )}
-                          <p className="text-xs text-gray-400 mt-1">
-                            Provider: {entry.provider || "Auto-detected"}
-                          </p>
-                        </td>
-                        <td className="px-4 py-3">
-                          <select
-                            value={entry.productable_type}
-                            onChange={(e) =>
-                              handleEntryFieldChange(
-                                index,
-                                "productable_type",
-                                e.target.value
-                              )
-                            }
-                            className={`w-full input-field ${
-                              entry.errors.productable_type
-                                ? "border-red-500"
-                                : "border-gray-300"
-                            }`}
-                            disabled={isSubmitting}
-                          >
-                            <option value="">Select type</option>
-                            {productTypes.map((type) => (
-                              <option key={type.value} value={type.value}>
-                                {type.label}
-                              </option>
-                            ))}
-                          </select>
-                          {entry.errors.productable_type && (
-                            <p className="text-red-500 text-xs mt-1">
-                              {entry.errors.productable_type}
-                            </p>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <select
-                            value={entry.productable_id}
-                            onChange={(e) =>
-                              handleEntryFieldChange(
-                                index,
-                                "productable_id",
-                                e.target.value
-                              )
-                            }
-                            className={`w-full input-field ${
-                              entry.errors.productable_id
-                                ? "border-red-500"
-                                : "border-gray-300"
-                            }`}
-                            disabled={
-                              isSubmitting ||
-                              entry.loadingOptions ||
-                              !entry.region ||
-                              !entry.productable_type
-                            }
-                          >
-                            <option value="">
-                              {!entry.region || !entry.productable_type
-                                ? "Select region & type"
-                                : entry.loadingOptions
-                                ? "Loading options..."
-                                : "Select product"}
-                            </option>
-                            {entry.options.map((option) => {
-                              const value = getOptionValue(option);
-                              const label = getOptionLabel(option);
-                              return (
-                                <option
-                                  key={`${entry.id}-${value}`}
-                                  value={value}
-                                >
-                                  {label}
-                                </option>
-                              );
-                            })}
-                          </select>
-                          {entry.errors.productable_id && (
-                            <p className="text-red-500 text-xs mt-1">
-                              {entry.errors.productable_id}
-                            </p>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={entry.price}
-                            onChange={(e) =>
-                              handleEntryFieldChange(
-                                index,
-                                "price",
-                                e.target.value
-                              )
-                            }
-                            placeholder="0.00"
-                            className={`w-full input-field ${
-                              entry.errors.price
-                                ? "border-red-500"
-                                : "border-gray-300"
-                            }`}
-                            disabled={isSubmitting}
-                          />
-                          {entry.errors.price && (
-                            <p className="text-red-500 text-xs mt-1">
-                              {entry.errors.price}
-                            </p>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          {entries.length > 1 && (
-                            <ModernButton
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeEntry(index)}
-                              type="button"
-                              isDisabled={isSubmitting}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </ModernButton>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="md:hidden space-y-4">
-                {entries.map((entry, index) => (
-                  <div key={entry.id} className="p-4 border rounded-lg">
-                    <div className="flex justify-between items-center mb-4">
-                      <p className="font-semibold">Product #{index + 1}</p>
-                      {entries.length > 1 && (
-                        <ModernButton
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeEntry(index)}
-                          type="button"
-                          isDisabled={isSubmitting}
-                          className="text-red-600"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </ModernButton>
-                      )}
-                    </div>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">
-                          Product Name <span className="text-red-500">*</span>
-                        </label>
+                  <tr className="bg-gray-50">
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                      #
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                      Product Name<span className="text-red-500">*</span>
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                      Region<span className="text-red-500">*</span>
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                      Type<span className="text-red-500">*</span>
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                      Product<span className="text-red-500">*</span>
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">
+                      Price (USD)<span className="text-red-500">*</span>
+                    </th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-600">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {entries.map((entry, index) => (
+                    <tr key={entry.id} className="align-top">
+                      <td className="px-4 py-3 text-sm text-gray-500">
+                        {index + 1}
+                      </td>
+                      <td className="px-4 py-3">
                         <input
                           type="text"
                           value={entry.name}
                           onChange={(e) =>
-                            handleEntryFieldChange(
-                              index,
-                              "name",
-                              e.target.value
-                            )
+                            handleEntryFieldChange(index, "name", e.target.value)
                           }
                           placeholder="Product name"
-                          className={`w-full input-field mt-1 ${
-                            entry.errors.name
-                              ? "border-red-500"
-                              : "border-gray-300"
+                          className={`w-full input-field ${
+                            entry.errors.name ? "border-red-500" : "border-gray-300"
                           }`}
                           disabled={isSubmitting}
                         />
                         {entry.errors.name && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {entry.errors.name}
-                          </p>
+                          <p className="text-red-500 text-xs mt-1">{entry.errors.name}</p>
                         )}
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">
-                          Region <span className="text-red-500">*</span>
-                        </label>
+                      </td>
+                      <td className="px-4 py-3">
                         <select
                           value={entry.region}
                           onChange={(e) =>
-                            handleEntryFieldChange(
-                              index,
-                              "region",
-                              e.target.value
-                            )
+                            handleEntryFieldChange(index, "region", e.target.value)
                           }
-                          className={`w-full input-field mt-1 ${
-                            entry.errors.region
-                              ? "border-red-500"
-                              : "border-gray-300"
+                          className={`w-full input-field ${
+                            entry.errors.region ? "border-red-500" : "border-gray-300"
                           }`}
                           disabled={isSubmitting || isRegionsFetching}
                         >
                           <option value="">
-                            {isRegionsFetching
-                              ? "Loading regions..."
-                              : "Select region"}
+                            {isRegionsFetching ? "Loading regions..." : "Select region"}
                           </option>
                           {regions?.map((region) => (
                             <option key={region.code} value={region.code}>
@@ -799,31 +477,20 @@ const AdminProductCreate = () => {
                           ))}
                         </select>
                         {entry.errors.region && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {entry.errors.region}
-                          </p>
+                          <p className="text-red-500 text-xs mt-1">{entry.errors.region}</p>
                         )}
                         <p className="text-xs text-gray-400 mt-1">
                           Provider: {entry.provider || "Auto-detected"}
                         </p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">
-                          Type <span className="text-red-500">*</span>
-                        </label>
+                      </td>
+                      <td className="px-4 py-3">
                         <select
                           value={entry.productable_type}
                           onChange={(e) =>
-                            handleEntryFieldChange(
-                              index,
-                              "productable_type",
-                              e.target.value
-                            )
+                            handleEntryFieldChange(index, "productable_type", e.target.value)
                           }
-                          className={`w-full input-field mt-1 ${
-                            entry.errors.productable_type
-                              ? "border-red-500"
-                              : "border-gray-300"
+                          className={`w-full input-field ${
+                            entry.errors.productable_type ? "border-red-500" : "border-gray-300"
                           }`}
                           disabled={isSubmitting}
                         >
@@ -839,24 +506,15 @@ const AdminProductCreate = () => {
                             {entry.errors.productable_type}
                           </p>
                         )}
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">
-                          Product <span className="text-red-500">*</span>
-                        </label>
+                      </td>
+                      <td className="px-4 py-3">
                         <select
                           value={entry.productable_id}
                           onChange={(e) =>
-                            handleEntryFieldChange(
-                              index,
-                              "productable_id",
-                              e.target.value
-                            )
+                            handleEntryFieldChange(index, "productable_id", e.target.value)
                           }
-                          className={`w-full input-field mt-1 ${
-                            entry.errors.productable_id
-                              ? "border-red-500"
-                              : "border-gray-300"
+                          className={`w-full input-field ${
+                            entry.errors.productable_id ? "border-red-500" : "border-gray-300"
                           }`}
                           disabled={
                             isSubmitting ||
@@ -872,128 +530,289 @@ const AdminProductCreate = () => {
                               ? "Loading options..."
                               : "Select product"}
                           </option>
-                          {entry.options.map((option) => {
-                            const value = getOptionValue(option);
-                            const label = getOptionLabel(option);
-                            return (
-                              <option
-                                key={`${entry.id}-${value}`}
-                                value={value}
-                              >
-                                {label}
-                              </option>
-                            );
-                          })}
+                          {entry.options.map((option) => (
+                            <option key={`${entry.id}-${option.id}`} value={option.id}>
+                              {option.name}
+                            </option>
+                          ))}
                         </select>
                         {entry.errors.productable_id && (
                           <p className="text-red-500 text-xs mt-1">
                             {entry.errors.productable_id}
                           </p>
                         )}
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-gray-700">
-                          Price (USD) <span className="text-red-500">*</span>
-                        </label>
+                      </td>
+                      <td className="px-4 py-3">
                         <input
                           type="number"
                           min="0"
                           step="0.01"
                           value={entry.price}
                           onChange={(e) =>
-                            handleEntryFieldChange(
-                              index,
-                              "price",
-                              e.target.value
-                            )
+                            handleEntryFieldChange(index, "price", e.target.value)
                           }
                           placeholder="0.00"
-                          className={`w-full input-field mt-1 ${
-                            entry.errors.price
-                              ? "border-red-500"
-                              : "border-gray-300"
+                          className={`w-full input-field ${
+                            entry.errors.price ? "border-red-500" : "border-gray-300"
                           }`}
                           disabled={isSubmitting}
                         />
                         {entry.errors.price && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {entry.errors.price}
-                          </p>
+                          <p className="text-red-500 text-xs mt-1">{entry.errors.price}</p>
                         )}
-                      </div>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {entries.length > 1 && (
+                          <ModernButton
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeEntry(index)}
+                            type="button"
+                            isDisabled={isSubmitting}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </ModernButton>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="md:hidden space-y-4">
+              {entries.map((entry, index) => (
+                <div key={entry.id} className="p-4 border rounded-lg">
+                  <div className="flex justify-between items-center mb-4">
+                    <p className="font-semibold">Product #{index + 1}</p>
+                    {entries.length > 1 && (
+                      <ModernButton
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeEntry(index)}
+                        type="button"
+                        isDisabled={isSubmitting}
+                        className="text-red-600"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </ModernButton>
+                    )}
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">
+                        Product Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={entry.name}
+                        onChange={(e) =>
+                          handleEntryFieldChange(index, "name", e.target.value)
+                        }
+                        placeholder="Product name"
+                        className={`w-full input-field mt-1 ${
+                          entry.errors.name ? "border-red-500" : "border-gray-300"
+                        }`}
+                        disabled={isSubmitting}
+                      />
+                      {entry.errors.name && (
+                        <p className="text-red-500 text-xs mt-1">{entry.errors.name}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">
+                        Region <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={entry.region}
+                        onChange={(e) =>
+                          handleEntryFieldChange(index, "region", e.target.value)
+                        }
+                        className={`w-full input-field mt-1 ${
+                          entry.errors.region ? "border-red-500" : "border-gray-300"
+                        }`}
+                        disabled={isSubmitting || isRegionsFetching}
+                      >
+                        <option value="">
+                          {isRegionsFetching ? "Loading regions..." : "Select region"}
+                        </option>
+                        {regions?.map((region) => (
+                          <option key={region.code} value={region.code}>
+                            {region.name}
+                          </option>
+                        ))}
+                      </select>
+                      {entry.errors.region && (
+                        <p className="text-red-500 text-xs mt-1">{entry.errors.region}</p>
+                      )}
+                      <p className="text-xs text-gray-400 mt-1">
+                        Provider: {entry.provider || "Auto-detected"}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">
+                        Type <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={entry.productable_type}
+                        onChange={(e) =>
+                          handleEntryFieldChange(index, "productable_type", e.target.value)
+                        }
+                        className={`w-full input-field mt-1 ${
+                          entry.errors.productable_type ? "border-red-500" : "border-gray-300"
+                        }`}
+                        disabled={isSubmitting}
+                      >
+                        <option value="">Select type</option>
+                        {productTypes.map((type) => (
+                          <option key={type.value} value={type.value}>
+                            {type.label}
+                          </option>
+                        ))}
+                      </select>
+                      {entry.errors.productable_type && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {entry.errors.productable_type}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">
+                        Product <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={entry.productable_id}
+                        onChange={(e) =>
+                          handleEntryFieldChange(index, "productable_id", e.target.value)
+                        }
+                        className={`w-full input-field mt-1 ${
+                          entry.errors.productable_id ? "border-red-500" : "border-gray-300"
+                        }`}
+                        disabled={
+                          isSubmitting ||
+                          entry.loadingOptions ||
+                          !entry.region ||
+                          !entry.productable_type
+                        }
+                      >
+                        <option value="">
+                          {!entry.region || !entry.productable_type
+                            ? "Select region & type"
+                            : entry.loadingOptions
+                            ? "Loading options..."
+                            : "Select product"}
+                        </option>
+                        {entry.options.map((option) => (
+                          <option key={`${entry.id}-${option.id}`} value={option.id}>
+                            {option.name}
+                          </option>
+                        ))}
+                      </select>
+                      {entry.errors.productable_id && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {entry.errors.productable_id}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">
+                        Price (USD) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={entry.price}
+                        onChange={(e) =>
+                          handleEntryFieldChange(index, "price", e.target.value)
+                        }
+                        placeholder="0.00"
+                        className={`w-full input-field mt-1 ${
+                          entry.errors.price ? "border-red-500" : "border-gray-300"
+                        }`}
+                        disabled={isSubmitting}
+                      />
+                      {entry.errors.price && (
+                        <p className="text-red-500 text-xs mt-1">{entry.errors.price}</p>
+                      )}
                     </div>
                   </div>
-                ))}
-              </div>
-
-              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-gray-500">
-                  Region automatically determines the provider. Select a type to
-                  load available products.
-                </p>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
-                  <ModernButton
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-2"
-                    onClick={handleImportClick}
-                    isDisabled={isSubmitting}
-                  >
-                    <Upload className="w-4 h-4" />
-                    Import CSV/Excel
-                  </ModernButton>
-                  <ModernButton
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-2"
-                    onClick={addEntry}
-                    isDisabled={isSubmitting}
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Row
-                  </ModernButton>
                 </div>
-              </div>
-            </ModernCard>
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv,.xlsx,.xls"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-
-            <div className="flex items-center justify-end gap-3">
-              <ModernButton
-                variant="outline"
-                type="button"
-                size="sm"
-                onClick={() => navigate("/admin-dashboard/products")}
-                isDisabled={isSubmitting}
-              >
-                Cancel
-              </ModernButton>
-
-              <button
-                type="submit"
-                className="rounded-[30px] py-2 px-4 bg-[#288DD1] text-white font-normal text-sm"
-                disabled={isSubmitting}
-                aria-busy={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>Save Products</>
-                )}
-              </button>
+              ))}
             </div>
-          </form>
+
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-gray-500">
+                Region automatically determines the provider. Select a type to load available products.
+              </p>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
+                <ModernButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={handleImportClick}
+                  isDisabled={isSubmitting}
+                >
+                  {isImporting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Upload className="w-4 h-4" />
+                  )}
+                  {isImporting ? "Importing..." : "Import CSV/Excel"}
+                </ModernButton>
+                <ModernButton
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={addEntry}
+                  isDisabled={isSubmitting}
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Row
+                </ModernButton>
+              </div>
+            </div>
+          </ModernCard>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,.xlsx,.xls"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+
+          <div className="flex items-center justify-end gap-3">
+            <ModernButton
+              variant="outline"
+              type="button"
+              size="sm"
+              onClick={() => navigate("/admin-dashboard/products")}
+              isDisabled={isSubmitting}
+            >
+              Cancel
+            </ModernButton>
+
+            <button
+              type="submit"
+              className="rounded-[30px] py-2 px-4 bg-[#288DD1] text-white font-normal text-sm"
+              disabled={isSubmitting}
+              aria-busy={isSubmitting}
+            >
+              {isSubmitting ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving...
+                </span>
+              ) : (
+                "Save Products"
+              )}
+            </button>
+          </div>
+        </form>
       </AdminPageShell>
     </>
   );
@@ -1026,21 +845,5 @@ const coerceTrimmedString = (value) => {
   if (value === null || value === undefined) return "";
   return String(value).trim();
 };
-
-function getOptionValue(option) {
-  if (option?.id !== undefined) return option.id;
-  if (option?.productable_id !== undefined) return option.productable_id;
-  if (option?.product?.productable_id !== undefined) {
-    return option.product.productable_id;
-  }
-  if (option?.product?.id !== undefined) return option.product.id;
-  return option?.value ?? "";
-}
-
-function getOptionLabel(option) {
-  return (
-    option?.name ?? option?.product?.name ?? option?.label ?? "Unnamed Product"
-  );
-}
 
 export default AdminProductCreate;

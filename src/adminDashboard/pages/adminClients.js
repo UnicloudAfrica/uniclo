@@ -5,36 +5,16 @@ import {
   Trash2,
   Settings2,
   Loader2,
-<<<<<<< HEAD
-  User,
-  Mail,
-=======
   Users,
   ShieldCheck,
   Building2,
   UserPlus,
   Plus,
->>>>>>> b587e2a (web)
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
-<<<<<<< HEAD
-import { useState, useMemo } from "react";
-import { useFetchClients } from "../../hooks/adminHooks/clientHooks";
-import AddClientModal from "./clientComps/addClient";
-import DeleteClientModal from "./clientComps/deleteClient";
-import { useNavigate } from "react-router-dom";
-import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
-import { designTokens } from "../../styles/designTokens";
-import ModernTable from "../components/ModernTable";
-
-const encodeId = (id) => {
-  if (id === null || id === undefined) return "";
-  return encodeURIComponent(btoa(id));
-};
-=======
 import AdminPageShell from "../components/AdminPageShell";
 import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
 import ModernStatsCard from "../components/ModernStatsCard";
@@ -44,36 +24,18 @@ import { useFetchClients } from "../../hooks/adminHooks/clientHooks";
 import DeleteClientModal from "./clientComps/deleteClient";
 
 const encodeId = (id) => encodeURIComponent(btoa(id));
->>>>>>> b587e2a (web)
 
 const AdminClients = () => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-<<<<<<< HEAD
-  const [isAddClientOpen, setAddClient] = useState(false);
-=======
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTenantId, setSelectedTenantId] = useState("");
->>>>>>> b587e2a (web)
   const [isDeleteClientModalOpen, setIsDeleteClientModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { data: clients, isFetching: isClientsFetching } = useFetchClients();
 
-<<<<<<< HEAD
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-  };
-
-  const openAddClient = () => setAddClient(true);
-  const closeAddClient = () => setAddClient(false);
-
-=======
   const clientData = clients || [];
 
   const uniqueTenants = [
@@ -131,7 +93,6 @@ const AdminClients = () => {
     }
   };
 
->>>>>>> b587e2a (web)
   const handleViewDetails = (client) => {
     const encodedId = encodeId(client.identifier);
     const clientFullName = encodeURIComponent(`${client.first_name} ${client.last_name}`);
@@ -152,53 +113,6 @@ const AdminClients = () => {
     closeDeleteClientModal();
   };
 
-<<<<<<< HEAD
-  // Define columns for ModernTable
-  const columns = useMemo(
-    () => [
-      {
-        key: "serialNumber",
-        header: "S/N",
-        render: (value, row, index, currentPage, pageSize) =>
-          (currentPage - 1) * pageSize + index + 1,
-      },
-      {
-        key: "first_name",
-        header: "Name",
-        render: (value, row) => (
-          <div className="flex items-center gap-2">
-            <User size={16} className="text-gray-500" />
-            <span className="font-medium">
-              {row.first_name} {row.last_name}
-            </span>
-          </div>
-        ),
-      },
-      {
-        key: "email",
-        header: "Email Address",
-        render: (value) => (
-          <div className="flex items-center gap-2">
-            <Mail size={16} className="text-gray-500" />
-            <span>{value}</span>
-          </div>
-        ),
-      },
-      {
-        key: "tenant_name",
-        header: "Tenant Name",
-        render: (value, row) => row.tenant?.name || "N/A",
-      },
-    ],
-    []
-  );
-
-  // Define actions for ModernTable
-  const actions = [
-    { icon: <Eye size={16} />, onClick: handleViewDetails },
-    { icon: <Trash2 size={16} />, onClick: handleDeleteClient },
-  ];
-=======
   const filterBar = (
     <div className="flex flex-col md:flex-row items-center gap-4">
       <div className="w-full md:flex-1">
@@ -321,13 +235,15 @@ const AdminClients = () => {
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleViewDetails(item)}
-                    className="text-[#288DD1]"
+                    className="inline-flex items-center justify-center rounded-full border border-gray-200 p-2 text-[#288DD1] hover:bg-gray-50"
+                    title="View details"
                   >
                     <Eye className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDeleteClient(item)}
-                    className="text-red-500"
+                    className="inline-flex items-center justify-center rounded-full border border-gray-200 p-2 text-red-500 hover:bg-red-50"
+                    title="Delete client"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -371,7 +287,6 @@ const AdminClients = () => {
       </p>
     </div>
   );
->>>>>>> b587e2a (web)
 
   return (
     <>
@@ -388,47 +303,6 @@ const AdminClients = () => {
       >
         <TenantClientsSideMenu />
 
-<<<<<<< HEAD
-        <div className="flex-1 lg:w-[76%] space-y-6">
-          {/* Page Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h1
-                className="text-2xl font-bold"
-                style={{ color: designTokens.colors.neutral[900] }}
-              >
-                Clients Management
-              </h1>
-              <p
-                className="mt-1 text-sm"
-                style={{ color: designTokens.colors.neutral[600] }}
-              >
-                Manage and monitor your clients
-              </p>
-            </div>
-
-            <button
-              onClick={openAddClient}
-              className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base "
-            >
-              Add client
-            </button>
-          </div>
-          <ModernTable
-            title="Clients List"
-            data={clients || []}
-            columns={columns}
-            actions={actions}
-            searchable={true}
-            filterable={true}
-            exportable={true}
-            sortable={true}
-            paginated={true}
-            pageSize={itemsPerPage}
-            loading={isClientsFetching}
-            onRowClick={handleViewDetails}
-            emptyMessage="No clients found."
-=======
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           <ModernStatsCard
             title="Total Clients"
@@ -457,7 +331,6 @@ const AdminClients = () => {
             value={pendingClients}
             icon={<UserPlus size={24} />}
             color="warning"
->>>>>>> b587e2a (web)
           />
         </div>
 

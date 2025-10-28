@@ -6,7 +6,7 @@ import {
   useDeleteIgw,
   syncIgwsFromProvider,
 } from "../../../hooks/adminHooks/igwHooks";
-import AddIgw from "../igwComps/addIgw";
+import AddIgw from "../igwComps/addIGW";
 import DeleteIgwModal from "../igwComps/deleteIGW";
 import ViewIgwModal from "../igwComps/viewIGW";
 import AttachIgwModal from "../igwComps/attachIGW";

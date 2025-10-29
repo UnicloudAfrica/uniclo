@@ -106,11 +106,11 @@ export default function VerificationCodeInput({
 
   // Check if code is complete and notify parent
   useEffect(() => {
-    onCodeChange(code); // Sync state on every change
     if (code.every((digit) => digit !== "")) {
       onComplete(code.join(""));
     }
-  }, [code]);
+    onCodeChange(code); // Sync state on every change
+  }, [code, onCodeChange, onComplete]);
 
   return (
     <div className="flex flex-col items-center space-y-6 p-4 font-Outfit">

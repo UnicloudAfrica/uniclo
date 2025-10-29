@@ -2,7 +2,7 @@ import { useState, useContext, useRef } from 'react';
 import load from './assets/load.gif';
 import { initializeApp } from "firebase/app";
 import { Editor } from '@tinymce/tinymce-react';
-import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, deleteDoc} from "firebase/firestore";
+import { getFirestore, collection, addDoc, doc, deleteDoc} from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { PageContext, BoardContext } from '../contexts/contextprovider';
 
@@ -30,9 +30,9 @@ const Board = () => {
     const storage = getStorage(app);
 
     //states
-    const [page, setPage] = useContext(PageContext);
+    // const [page, setPage] = useContext(PageContext);
     const [name, setname] = useState(null);
-    const [position, setPosition] = useState(null);
+    // const [position, setPosition] = useState(null);
     const [fileName, setFileName] = useState(null);
     const [about, setAbout] = useState(null);
     const [file, setFile] = useState(null);

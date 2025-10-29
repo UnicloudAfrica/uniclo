@@ -27,8 +27,8 @@ import Management from "./pages/management";
 import DetailedManage from "./pages/detailedmanage";
 import ExtResouce from "./pages/extResource";
 import ExtResouce1 from "./pages/extResource1";
-import DashboardLogin from "./dashboard/pages/login";
-import DashboardSignUp from "./dashboard/pages/sign-up";
+// import DashboardLogin from "./dashboard/pages/login";
+// import DashboardSignUp from "./dashboard/pages/sign-up";
 import VerifyMail from "./dashboard/pages/verifyMail";
 import Dashboard from "./dashboard/pages/dashboard";
 import { Modules } from "./dashboard/pages/modules";
@@ -48,7 +48,7 @@ import AdminModules from "./adminDashboard/pages/adminModules";
 import AdminPayment from "./adminDashboard/pages/adminPayment";
 import ForgotPassword from "./dashboard/pages/forgotPassword";
 import ResetPassword from "./dashboard/pages/resetPassword";
-import AdminSignup from "./adminDashboard/pages/adminSignup";
+// import AdminSignup from "./adminDashboard/pages/adminSignup";
 import VerifyAdminMail from "./adminDashboard/pages/adminVerify";
 import Requests from "./dashboard/pages/requests";
 import AdminLogin from "./adminDashboard/pages/adminSignin";
@@ -128,7 +128,7 @@ import Press from "./pages/press";
 function App() {
   const location = useLocation();
   const subdomain = getSubdomain();
-  const isTenant = !!subdomain; // True for xyz.unicloudafrica.com, false for unicloudafrica.com
+  // const isTenant = !!subdomain; // True for xyz.unicloudafrica.com, false for unicloudafrica.com
 
   useEffect(() => {
     window.scrollTo(0, 0);

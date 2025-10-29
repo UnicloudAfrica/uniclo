@@ -2,7 +2,7 @@ import { useState, useContext, useRef } from 'react';
 import load from './assets/load.gif';
 import { initializeApp } from "firebase/app";
 import { Editor } from '@tinymce/tinymce-react';
-import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, deleteDoc} from "firebase/firestore";
+import { getFirestore, collection, addDoc, doc, deleteDoc} from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { PageContext, BlogContext } from '../contexts/contextprovider';
 
@@ -24,7 +24,7 @@ const BlogAdmin = () => {
     
 
     //states
-    const [page, setPage] = useContext(PageContext);
+    // const [page, setPage] = useContext(PageContext);
     const [blogTitle, setBlogTitle] = useState(null);
     const [fileName, setFileName] = useState(null);
     const [blogTag, setBlogTag] = useState(null);
@@ -52,13 +52,13 @@ const BlogAdmin = () => {
         setDeleteUser(true);
         const parent = e.target.parentElement;
         const parentParent = parent.parentElement;
-        const parentParentParent = parentParent.parentElement;
+        // const parentParentParent = parentParent.parentElement;
         setDocID(parentParent.id);
     };
 
     //date and time
     // For todays date;
-    Date.prototype.today = function () {
+    /* Date.prototype.today = function () {
         const months = [
             "January", "February", "March", "April",
             "May", "June", "July", "August",
@@ -70,12 +70,12 @@ const BlogAdmin = () => {
         const year = this.getFullYear();
     
         return `${month} ${day}, ${year}`;
-    };
+    }; */
 
     // For the time now
-    Date.prototype.timeNow = function () {
+    /* Date.prototype.timeNow = function () {
         return ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes() +":"+ ((this.getSeconds() < 10)?"0":"") + this.getSeconds();
-    }
+    } */
     
     const newDate = new Date();
     const date =  newDate.today();

@@ -6,7 +6,7 @@ import {
 } from "../../../hooks/elasticIPHooks";
 // import AddEip from "../eipComps/addEip";
 import { Trash2 } from "lucide-react";
-import AddEip from "../eipComps/addEIp";
+import AddEip from "../eipComps/addEip";
 import DeleteEipModal from "../eipComps/deleteEip";
 import AssociateEipModal from "../eipComps/associateEip";
 import DisassociateEipModal from "../eipComps/disassociateEip";

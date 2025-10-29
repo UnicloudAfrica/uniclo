@@ -4,8 +4,8 @@ import {
   useFetchClientElasticIps,
 } from "../../../hooks/clientHooks/elasticIPHooks";
 import { Trash2 } from "lucide-react";
-import AddEip from "../eipComps/addEip";
-import DeleteEipModal from "../eipComps/deleteEip";
+import AddEip from "../eipComponents/addEip";
+import DeleteEipModal from "../eipComponents/deleteEip";
 
 const EIPs = ({ projectId = "", region = "" }) => {
   const { data: eips, isFetching } = useFetchClientElasticIps(

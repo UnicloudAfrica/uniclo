@@ -4,15 +4,12 @@ import {
   useFetchTenantElasticIps,
   useSyncTenantElasticIps,
 } from "../../../hooks/elasticIPHooks";
-// import AddEip from "../eipComps/addEip";
 import { Trash2 } from "lucide-react";
-// import AddEip from "../eipComps/addEip";
-import DeleteEipModal from "../eipComps/deleteEip";
-import AssociateEipModal from "../eipComps/associateEip";
-import DisassociateEipModal from "../eipComps/disassociateEip";
-// import DeleteEipModal from "../eipComps/deleteEip";
 import ToastUtils from "../../../utils/toastUtil";
-import AddEip from "../eipComps/addEip";
+import AddEip from "../eipComponents/addEip";
+import DeleteEipModal from "../eipComponents/deleteEip";
+import AssociateEipModal from "../eipComponents/associateEip";
+import DisassociateEipModal from "../eipComponents/disassociateEip";
 
 const EIPs = ({
   projectId = "",

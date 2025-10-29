@@ -3,29 +3,29 @@ name: Build Check
 on:
   push:
     branches:
-      - '**'  # This will run on all branches
+      - "**" # This will run on all branches
   pull_request:
-    branches: 
-      - main  # This will run on PRs targeting main
+    branches:
+      - main # This will run on PRs targeting main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'  # You can adjust this version as needed
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm install
-      
-    - name: Build project
-      run: npm run build
-      
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18" # You can adjust this version as needed
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
     # If build succeeds, the action will pass
     # If build fails, the action will fail and notify you

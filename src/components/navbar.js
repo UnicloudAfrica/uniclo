@@ -1,8 +1,8 @@
 import arrowDown from "./assets/arrow-down.svg";
 import outline from "./assets/outline.svg";
 import { Link } from "react-router-dom";
-import { useState } from "react";
-import { GeneralContext } from "../contexts/contextprovider";
+import { useState, useEffect, useRef } from "react";
+import { GeneralContext } from "../contexts/contextprovider"; // This seems unused, but I'll leave it.
 import logo from "./assets/logo.png";
 import { useContext } from "react";
 
@@ -23,6 +23,23 @@ const Navbar = () => {
   const [aboutDropdown, setAboutDropdown] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
   const [generalitem, setGeneralItem] = useContext(GeneralContext);
+
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setServiceDropdown(false);
+        setResourceDropdown(false);
+        setCommunityDropdown(false);
+        setAboutDropdown(false);
+        setOpenDropdown(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const toggleDropdown = (dropdownName) => {
     // Close any open dropdowns
@@ -148,6 +165,9 @@ const Navbar = () => {
               <Link to="/blog">
                 <p className=" mt-3 text-sm text-[#12121299]">Our Blog</p>
               </Link>
+              <Link to="/press">
+                <p className=" mt-3 text-sm text-[#12121299]">Press</p>
+              </Link>
             </CollapsibleSection>
             <CollapsibleSection
               title="Community"
@@ -185,7 +205,10 @@ const Navbar = () => {
           </div>
         </div>
 
-        <span className="hidden lg:flex items-center space-x-8 font-Outfit text-sm">
+        <span
+          ref={dropdownRef}
+          className="hidden lg:flex items-center space-x-8 font-Outfit text-sm"
+        >
           <Link to="/">
             <span className=" flex items-center space-x-2">
               <p>Home</p>
@@ -317,6 +340,15 @@ const Navbar = () => {
                     className=" flex items-center mt-3 space-x-4"
                   >
                     <p>Our Blog</p>
+                    <img src={outline} className=" w-3 h-3" alt="" />
+                  </span>
+                </Link>
+                <Link to="/press" className="">
+                  <span
+                    onClick={closeResourceDropdown}
+                    className=" flex items-center mt-3 space-x-4"
+                  >
+                    <p>Press</p>
                     <img src={outline} className=" w-3 h-3" alt="" />
                   </span>
                 </Link>

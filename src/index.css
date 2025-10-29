@@ -270,3 +270,8 @@ img {
   border-bottom-right-radius: 0px;
   border-top-right-radius: 0px;
 }
+.text-unicloud {
+  background: linear-gradient(84.45deg, #288dd1 2.78%, #3fe0c8 91.98%);
+  -webkit-background-clip: text;
+  color: transparent;
+}

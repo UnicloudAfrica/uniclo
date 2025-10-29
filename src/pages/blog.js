@@ -15,6 +15,7 @@ const Blog = () => {
   const [selectedTag, setSelectedTag] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [processedArray, setProcessedArray] = useState([]);
+  const [visibleBlogs, setVisibleBlogs] = useState(2);
 
   useEffect(() => {
     const processedBlogArray = blogArray.map((item) => ({
@@ -42,7 +43,7 @@ const Blog = () => {
       <motion.div>
         <div className="mt-[10em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
           <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">
-            Our Blog
+            Unicloud in the Press
           </p>
           <p className=" text-center font-normal mt-3 md:px-[15%] text-[#676767] text-lg md:text-xl ">
             Explore Our Blog for insightful articles on cloud trends, best
@@ -77,7 +78,7 @@ const Blog = () => {
           </div>
 
           <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-6">
-            {filteredBlogs.map((item, index) => (
+            {filteredBlogs.slice(0, visibleBlogs).map((item, index) => (
               <Link to={`/blogs/${item.processedName}`}>
                 <div key={index} className="w-full text-center">
                   <div
@@ -104,6 +105,16 @@ const Blog = () => {
               </Link>
             ))}
           </div>
+          {filteredBlogs.length > visibleBlogs && (
+            <div className="w-full flex justify-center mt-8">
+              <button
+                onClick={() => setVisibleBlogs(filteredBlogs.length)}
+                className=" bg-gradient-to-r from-[#288DD1] via-[#3fd0e0] to-[#3FE0C8] text-sm md:text-xl font-normal text-white py-3 px-9 rounded-[30px] text-center"
+              >
+                View more
+              </button>
+            </div>
+          )}
 
           <div className=" py-[3em] w-full font-Outfit text-[#fff] mt-16">
             <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center text-black">
@@ -115,9 +126,9 @@ const Blog = () => {
 
             <div className=" grid grid-cols-1 md:grid-cols-2 gap-8 items-center justify-center w-full mt-8">
               <Link to="/Africa-Data-Centres-and-Onix-Data-Centre-announce-partnership">
-                <div className=" w-full md:w-[500px] text-center">
+                <div className=" w-full  text-center">
                   <div
-                    className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]"
+                    className=" w-full h-[400px] bg-[#F5F5F4] rounded-[20px]"
                     style={{
                       backgroundImage: `url(${data24})`,
                       backgroundSize: "cover",
@@ -140,16 +151,16 @@ const Blog = () => {
                   </p>
 
                   <p className="text-left mt-3 text-[#121212] font-medium text-base">
-                    June 08, 24
+                    June 08, 2024
                   </p>
                 </div>
               </Link>
 
               {/* link 2 */}
               <Link to="/Benue-State-to-build-modern-data-center-and-cloud-system-with-UniCloud-Africa">
-                <div className=" w-full md:w-[500px] text-center">
+                <div className=" w-full  text-center">
                   <div
-                    className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]"
+                    className=" w-full h-[400px] bg-[#F5F5F4] rounded-[20px]"
                     style={{
                       backgroundImage: `url(${dsc})`,
                       backgroundSize: "cover",
@@ -173,7 +184,7 @@ const Blog = () => {
                   </p>
 
                   <p className="text-left mt-3 text-[#121212] font-medium text-base">
-                    July 10, 24
+                    July 10, 2024
                   </p>
                 </div>
               </Link>

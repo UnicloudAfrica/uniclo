@@ -124,6 +124,7 @@ import NewRegionRequest from "./tenantDashboard/pages/NewRegionRequest";
 import RevenueDashboard from "./tenantDashboard/pages/RevenueDashboard";
 
 import ClientDashboardLayout from "./clientDashboard/components/ClientDashboardLayout";
+import Press from "./pages/press";
 function App() {
   const location = useLocation();
   const subdomain = getSubdomain();
@@ -156,6 +157,7 @@ function App() {
           <Route path="/solutions" element={<Solutions />} />
           <Route path="/events" element={<Events />} />
           <Route path="/blog" element={<Blog />} />
+          <Route path="/press" element={<Press />} />
           <Route path="/calculator" element={<Calculator />} />
           <Route
             path="/dashboard/quote-calculator"
@@ -294,7 +296,10 @@ function App() {
           />
           <Route path="/admin-dashboard/projects" element={<AdminProjects />} />
           <Route path="/admin-dashboard/leads" element={<AdminLeads />} />
-          <Route path="/admin-dashboard/leads/create" element={<AdminLeadCreate />} />
+          <Route
+            path="/admin-dashboard/leads/create"
+            element={<AdminLeadCreate />}
+          />
           <Route path="/admin-dashboard/regions" element={<AdminRegion />} />
           <Route
             path="/admin-dashboard/regions/:id"

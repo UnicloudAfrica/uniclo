@@ -6,10 +6,10 @@ import {
 } from "../../../hooks/elasticIPHooks";
 // import AddEip from "../eipComps/addEip";
 import { Trash2 } from "lucide-react";
-import AddEip from "../EIPComps/addEIp";
-import DeleteEipModal from "../EIPComps/deleteEip";
-import AssociateEipModal from "../EIPComps/associateEip";
-import DisassociateEipModal from "../EIPComps/disassociateEip";
+import AddEip from "../eipComps/addEIp";
+import DeleteEipModal from "../eipComps/deleteEip";
+import AssociateEipModal from "../eipComps/associateEip";
+import DisassociateEipModal from "../eipComps/disassociateEip";
 // import DeleteEipModal from "../eipComps/deleteEip";
 import ToastUtils from "../../../utils/toastUtil";
 
@@ -176,7 +176,7 @@ const EIPs = ({
                         {eip.address}
                       </h3>
                       <button
-                    onClick={() => openDeleteModal(eip)}
+                        onClick={() => openDeleteModal(eip)}
                         disabled={isDeleting}
                         className="text-gray-400 hover:text-red-500 transition-colors"
                         title="Delete Elastic IP"
@@ -187,7 +187,8 @@ const EIPs = ({
                     <div className="space-y-1 text-sm text-gray-500">
                       <p>
                         Provider:{" "}
-                        {typeof eip.provider === "string" && eip.provider.trim() !== ""
+                        {typeof eip.provider === "string" &&
+                        eip.provider.trim() !== ""
                           ? eip.provider.toUpperCase()
                           : "N/A"}
                       </p>
@@ -197,24 +198,29 @@ const EIPs = ({
                         Status: <span className="capitalize">{eip.status}</span>
                       </p>
                     </div>
-              </div>
-              <div className="mt-4 pt-3 border-t flex flex-wrap gap-2 text-xs">
-                <button
-                  onClick={() => setAssociateModal({ eip })}
-                  className="px-3 py-1 rounded-full border border-[#288DD1] text-[#288DD1] hover:bg-[#E6F2FA] transition-colors"
-                >
-                  Associate
-                </button>
-                <button
-                  onClick={() => setDisassociateModal({ eip })}
-                  disabled={!(eip.associated_network_interface_id || eip.associated_instance_id)}
-                  className="px-3 py-1 rounded-full border border-amber-500 text-amber-600 hover:bg-amber-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Disassociate
-                </button>
-              </div>
-            </div>
-          ))}
+                  </div>
+                  <div className="mt-4 pt-3 border-t flex flex-wrap gap-2 text-xs">
+                    <button
+                      onClick={() => setAssociateModal({ eip })}
+                      className="px-3 py-1 rounded-full border border-[#288DD1] text-[#288DD1] hover:bg-[#E6F2FA] transition-colors"
+                    >
+                      Associate
+                    </button>
+                    <button
+                      onClick={() => setDisassociateModal({ eip })}
+                      disabled={
+                        !(
+                          eip.associated_network_interface_id ||
+                          eip.associated_instance_id
+                        )
+                      }
+                      className="px-3 py-1 rounded-full border border-amber-500 text-amber-600 hover:bg-amber-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Disassociate
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-6">

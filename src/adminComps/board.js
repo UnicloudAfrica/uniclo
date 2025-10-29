@@ -37,7 +37,7 @@ const Board = () => {
   //states
   // const [page, setPage] = useContext(PageContext);
   const [name, setname] = useState(null);
-  // const [position, setPosition] = useState(null);
+  const [position, setPosition] = useState(null);
   const [fileName, setFileName] = useState(null);
   const [about, setAbout] = useState(null);
   const [file, setFile] = useState(null);

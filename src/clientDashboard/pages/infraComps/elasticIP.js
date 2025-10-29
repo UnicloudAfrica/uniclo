@@ -4,8 +4,8 @@ import {
   useFetchClientElasticIps,
 } from "../../../hooks/clientHooks/elasticIPHooks";
 import { Trash2 } from "lucide-react";
-import AddEip from "../EIPComps/addEIp";
-import DeleteEipModal from "../EIPComps/deleteEip";
+import AddEip from "../eipComps/addEip";
+import DeleteEipModal from "../eipComps/deleteEip";
 
 const EIPs = ({ projectId = "", region = "" }) => {
   const { data: eips, isFetching } = useFetchClientElasticIps(
@@ -109,7 +109,8 @@ const EIPs = ({ projectId = "", region = "" }) => {
                     <div className="space-y-1 text-sm text-gray-500">
                       <p>
                         Provider:{" "}
-                        {typeof eip.provider === "string" && eip.provider.trim() !== ""
+                        {typeof eip.provider === "string" &&
+                        eip.provider.trim() !== ""
                           ? eip.provider.toUpperCase()
                           : "N/A"}
                       </p>

@@ -1,20 +1,37 @@
 import { Link } from "react-router-dom";
 import Footer from "../components/footer";
 import Navbar from "../components/navbar";
-import press1 from "./assets/press1.svg";
-import press2 from "./assets/press2.svg";
-import press3 from "./assets/press3.svg";
-import press4 from "./assets/press4.svg";
-import press5 from "./assets/press5.svg";
+import press1 from "./assets/press1.png";
+import press2 from "./assets/press2.png";
+import press3 from "./assets/press3.png";
+import press4 from "./assets/press4.png";
+import press5 from "./assets/press5.png";
+import press6 from "./assets/press6.png";
+import press7 from "./assets/press7.svg";
 
 export default function Press() {
   const pressNews = [
     {
       title:
         "UniCloud Africa Launches Pan-African Cloud Platform with Billings in Local Currency, Data Sovereignty and 99.999% Uptime",
+      source: "Independent",
+      link: "https://independent.ng/unicloud-africa-debuts-sovereign-cloud-platform-with-99-999-uptime-sla-zero-egress-fees-local-currency-billing/",
+      image: press1,
+      action: "Read More",
+    },
+    {
+      title: "Pan-African AI cloud debuts across 6 countries",
+      source: "The Sun",
+      link: "https://businessday.ng/technology/article/unicloud-africa-redefines-cloud-computing-with-local-currency-billing-ai-driven-infrastructure/",
+      image: press2,
+      action: "Read More",
+    },
+    {
+      title:
+        "UniCloud Africa Launches Pan-African Cloud Platform with Billings in Local Currency, Data Sovereignty and 99.999% Uptime",
       source: "Techeconomy",
       link: "https://techeconomy.ng/unicloud-africa-launches-pan-african-cloud-platform/",
-      image: press1,
+      image: press3,
       action: "Read More",
     },
     {
@@ -22,28 +39,28 @@ export default function Press() {
         "UniCloud Africa redefines cloud computing with local currency billing, AI-driven infrastructure",
       source: "Business Day",
       link: "https://businessday.ng/technology/article/unicloud-africa-redefines-cloud-computing-with-local-currency-billing-ai-driven-infrastructure/",
-      image: press2,
+      image: press4,
       action: "Read More",
     },
     {
       title: "Why Africa needs own cloud solutions – Experts",
       source: "Daily Trust",
       link: "https://dailytrust.com/why-africa-needs-own-cloud-solutions-experts/",
-      image: press3,
+      image: press5,
       action: "Read More",
     },
     {
       title: "UniCloud Africa Launches Localized Cloud Solution In Lagos",
       source: "CIO Africa",
       link: "https://cioafrica.co/unicloud-africa-launches-localized-cloud-solution-in-lagos/",
-      image: press4,
+      image: press6,
       action: "Read More",
     },
     {
       title: "UNICLOUD Africa Provides Home-Grown Digital Data Protection",
       source: "TVC News",
       link: "https://youtu.be/I44hd18k5_w?si=GNHWlByXpCwveTNp",
-      image: press5,
+      image: press7,
       action: "Watch Video",
     },
   ];
@@ -51,7 +68,7 @@ export default function Press() {
   return (
     <>
       <Navbar />
-      <div className="mt-[10em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
+      <div className="mt-[10em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212] max-w-[1300px] mx-auto">
         <div className=" flex items-center justify-center flex-col">
           <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">
             Press & Media
@@ -67,7 +84,7 @@ export default function Press() {
           </Link>
         </div>
 
-        <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-12 md:mt-16 pb-[10em]">
+        <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] w-full mt-12 md:mt-16 pb-[6em]">
           {pressNews.map((item, index) => (
             <a
               href={item.link}
@@ -79,7 +96,7 @@ export default function Press() {
               <div className="w-full ">
                 {/* image container */}
                 <div
-                  className="w-full h-[290px] border border-[#EAEBF0] rounded-[15px]"
+                  className="w-full h-[290px]  border-[#EAEBF0] rounded-[15px]"
                   style={{
                     backgroundImage: `url(${item.image})`,
                     backgroundSize: "cover",

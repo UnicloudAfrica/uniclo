@@ -31,15 +31,43 @@ const defaultStatusMeta = { label: "Draft", tone: "bg-slate-100 text-slate-700" 
 const OnboardingDashboard = () => {
   const { data: state, isLoading: isStateLoading } = useOnboardingState();
   const persona = state?.persona ?? state?.target ?? "tenant";
-  const definitions = useMemo(() => getStepsForTarget(persona), [persona]);
+  const hasTenantAssociation = Boolean(
+    state?.tenant_id ??
+      state?.tenant?.id ??
+      state?.account?.tenant_id ??
+      state?.workspace?.tenant_id ??
+      state?.relationships?.tenant_id ??
+      state?.context?.tenant_id
+  );
 
-  const initialStep = useMemo(() => {
-    if (!state?.steps?.length) {
-      return definitions[0]?.id ?? null;
+  const definitions = useMemo(() => {
+    const baseDefinitions = getStepsForTarget(persona);
+
+    if (
+      !hasTenantAssociation &&
+      ["client", "crm", "internal_client_business"].includes(persona)
+    ) {
+      const excludedStepIds = new Set([
+        "billing",
+        "branding",
+        "partner_region_qualification",
+      ]);
+      return baseDefinitions.filter((step) => !excludedStepIds.has(step.id));
     }
 
-    const stepFromState = state.current_step || state.steps[0]?.id;
-    return stepFromState;
+    return baseDefinitions;
+  }, [persona, hasTenantAssociation]);
+
+  const initialStep = useMemo(() => {
+    if (!definitions?.length) {
+      return null;
+    }
+
+    const allowedIds = new Set(definitions.map((item) => item.id));
+    const candidateOrder = [state?.current_step, ...(state?.steps ?? []).map((step) => step.id)];
+    const matchingStep = candidateOrder.find((id) => id && allowedIds.has(id));
+
+    return matchingStep ?? definitions[0]?.id ?? null;
   }, [state?.current_step, state?.steps, definitions]);
 
   const [activeStep, setActiveStep] = useState(initialStep);

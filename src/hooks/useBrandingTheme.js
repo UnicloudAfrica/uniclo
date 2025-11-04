@@ -33,20 +33,40 @@ const mapBrandingPayload = (payload = {}) => {
   };
 };
 
+const isMissingBrandingRoute = (error) => {
+  if (!error) return false;
+  const message = String(error.message || error).toLowerCase();
+  return message.includes("could not be found") || message.includes("not found");
+};
+
 const fetchTenantBrandingTheme = async () => {
-  const res = await silentApi("GET", "/settings/profile/branding");
-  if (!res?.data?.branding) {
-    throw new Error("Unable to resolve tenant branding payload.");
+  try {
+    const res = await silentApi("GET", "/settings/profile/branding");
+    if (!res?.data?.branding) {
+      return mapBrandingPayload();
+    }
+    return mapBrandingPayload(res.data.branding);
+  } catch (error) {
+    if (isMissingBrandingRoute(error)) {
+      return mapBrandingPayload();
+    }
+    throw error;
   }
-  return mapBrandingPayload(res.data.branding);
 };
 
 const fetchClientBrandingTheme = async () => {
-  const res = await clientSilentApi("GET", "/settings/profile/branding");
-  if (!res?.data?.branding) {
-    throw new Error("Unable to resolve client branding payload.");
+  try {
+    const res = await clientSilentApi("GET", "/settings/profile/branding");
+    if (!res?.data?.branding) {
+      return mapBrandingPayload();
+    }
+    return mapBrandingPayload(res.data.branding);
+  } catch (error) {
+    if (isMissingBrandingRoute(error)) {
+      return mapBrandingPayload();
+    }
+    throw error;
   }
-  return mapBrandingPayload(res.data.branding);
 };
 
 export const useTenantBrandingTheme = (options = {}) => {
@@ -160,4 +180,3 @@ export const useApplyBrandingTheme = (theme, options = {}) => {
     applyBrandingToCss(theme, { fallbackLogo });
   }, [theme, fallbackLogo]);
 };
-

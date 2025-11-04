@@ -9,6 +9,7 @@ import {
   Key,
   Loader2,
   Network,
+  Plus,
   Radio,
   RefreshCw,
   Route,
@@ -272,23 +273,98 @@ export default function AdminProjectDetails() {
 
   const projectDetailsPayload =
     projectDetailsResponse?.data ?? projectDetailsResponse;
-  const projectDetails = projectDetailsPayload || project;
+const projectDetails = projectDetailsPayload || project;
 
-  const projectInstances = useMemo(() => {
-    if (Array.isArray(projectDetails?.instances)) {
-      return projectDetails.instances;
+const projectInstances = useMemo(() => {
+  if (Array.isArray(projectDetails?.instances)) {
+    return projectDetails.instances;
+  }
+  if (Array.isArray(project?.instances)) {
+    return project.instances;
+  }
+  if (Array.isArray(projectDetails?.pending_instances)) {
+    return projectDetails.pending_instances;
+  }
+  return [];
+}, [projectDetails, project]);
+
+  const coerceCount = (value) => {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (Array.isArray(value)) return value.length;
+    if (value && typeof value === "object") {
+      if (typeof value.count === "number") return value.count;
+      if (Array.isArray(value.data)) return value.data.length;
+      if (Array.isArray(value.items)) return value.items.length;
     }
-    if (Array.isArray(project?.instances)) {
-      return project.instances;
-    }
-    if (Array.isArray(projectDetails?.pending_instances)) {
-      return projectDetails.pending_instances;
-    }
-    return [];
-  }, [projectDetails, project]);
+    return 0;
+  };
+
+  const mergeCounts = (...values) => {
+    const coerced = values.map(coerceCount);
+    return Math.max(0, ...coerced, 0);
+  };
+
+  const vpcCount = mergeCounts(
+    projectDetails?.resources_count?.vpcs,
+    project?.resources_count?.vpcs,
+    projectDetails?.vpcs,
+    infrastructureComponents?.vpc?.details,
+    infraStatusData?.data?.counts?.vpcs
+  );
+
+  const subnetCount = mergeCounts(
+    projectDetails?.resources_count?.subnets,
+    project?.resources_count?.subnets,
+    projectDetails?.subnets,
+    subnetsData,
+    infrastructureComponents?.subnets?.details,
+    infrastructureComponents?.subnet?.details,
+    infraStatusData?.data?.counts?.subnets
+  );
+
+  const sgCount = mergeCounts(
+    projectDetails?.resources_count?.security_groups,
+    project?.resources_count?.security_groups,
+    projectDetails?.security_groups,
+    securityGroupsData,
+    infrastructureComponents?.security_groups?.details,
+    infrastructureComponents?.securitygroup?.details,
+    infraStatusData?.data?.counts?.security_groups
+  );
+
+  const keyPairCount = mergeCounts(
+    projectDetails?.resources_count?.keypairs,
+    project?.resources_count?.keypairs,
+    projectDetails?.key_pairs,
+    keyPairsData,
+    infrastructureComponents?.keypairs?.details,
+    infrastructureComponents?.keypair?.details,
+    infraStatusData?.data?.counts?.keypairs
+  );
+
+  const eniCount = mergeCounts(
+    projectDetails?.resources_count?.network_interfaces,
+    project?.resources_count?.network_interfaces,
+    networkInterfacesData,
+    infrastructureComponents?.network_interfaces?.details,
+    infrastructureComponents?.enis?.details,
+    infraStatusData?.data?.counts?.network_interfaces
+  );
 
   const normalizeStatusValue = (value) =>
     (value || "").toString().toLowerCase().replace(/\s+/g, "_");
+
+  const missingInstancePrereqs = useMemo(() => {
+    const missing = [];
+    if (!vpcCount) missing.push("VPC");
+    if (!subnetCount) missing.push("Subnet");
+    if (!sgCount) missing.push("Security Group");
+    if (!keyPairCount) missing.push("Key Pair");
+    if (!eniCount) missing.push("Network Interface");
+    return missing;
+  }, [vpcCount, subnetCount, sgCount, keyPairCount, eniCount]);
+
+  const canCreateInstances = missingInstancePrereqs.length === 0;
 
   const transactionPendingKeywords = ["pending", "awaiting", "requires", "processing"];
 
@@ -579,6 +655,26 @@ export default function AdminProjectDetails() {
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
+  const handleNavigateAddInstance = () => {
+    navigate("/admin-dashboard/multi-instance-creation", {
+      state: {
+        project: {
+          identifier: resolvedProjectId,
+          name: project?.name,
+          region: project?.region,
+        },
+      },
+    });
+  };
+
+  const handleViewInstanceDetails = (instance) => {
+    if (!instance?.identifier) return;
+    navigate(
+      `/admin-dashboard/instances/details?identifier=${encodeURIComponent(
+        instance.identifier
+      )}`
+    );
+  };
 
   const handleSectionClick = (sectionKey) => {
     setActiveSection(sectionKey);
@@ -610,6 +706,69 @@ export default function AdminProjectDetails() {
       setIsEdgeSyncing(false);
     }
   };
+  const instanceStatusPalette = (status) => {
+    const normalized = normalizeStatusValue(status);
+    if (["running", "active", "ready"].includes(normalized)) {
+      return { bg: designTokens.colors.success[50], text: designTokens.colors.success[700] };
+    }
+    if (["stopped", "terminated", "decommissioned"].includes(normalized)) {
+      return { bg: designTokens.colors.neutral[100], text: designTokens.colors.neutral[700] };
+    }
+    if (
+      ["pending", "processing", "provisioning", "initializing", "creating"].some((token) =>
+        normalized.includes(token)
+      )
+    ) {
+      return { bg: designTokens.colors.warning[50], text: designTokens.colors.warning[700] };
+    }
+    if (["payment_pending", "awaiting_payment", "payment_required"].some((token) =>
+      normalized.includes(token)
+    )) {
+      return { bg: designTokens.colors.warning[100], text: designTokens.colors.warning[700] };
+    }
+    if (["error", "failed", "unhealthy"].some((token) => normalized.includes(token))) {
+      return { bg: designTokens.colors.error[50], text: designTokens.colors.error[700] };
+    }
+    return { bg: designTokens.colors.neutral[100], text: designTokens.colors.neutral[700] };
+  };
+
+  const instanceStats = useMemo(() => {
+    const base = {
+      total: projectInstances.length,
+      running: 0,
+      provisioning: 0,
+      paymentPending: 0,
+      stopped: 0,
+    };
+
+    projectInstances.forEach((instance) => {
+      const normalized = normalizeStatusValue(instance?.status);
+      if (["running", "active", "ready"].includes(normalized)) {
+        base.running += 1;
+      } else if (
+        ["pending", "processing", "provisioning", "initializing", "creating"].some((token) =>
+          normalized.includes(token)
+        )
+      ) {
+        base.provisioning += 1;
+      } else if (
+        ["payment_pending", "awaiting_payment", "payment_required"].some((token) =>
+          normalized.includes(token)
+        )
+      ) {
+        base.paymentPending += 1;
+      } else if (["stopped", "terminated", "decommissioned"].includes(normalized)) {
+        base.stopped += 1;
+      }
+    });
+
+    return base;
+  }, [projectInstances]);
+
+  const recentInstances = useMemo(
+    () => projectInstances.slice(0, 5),
+    [projectInstances]
+  );
 
   const handleSummaryAction = async (action, actionKey) => {
     if (!action || !action.endpoint || actionLoading) return;
@@ -2042,6 +2201,170 @@ export default function AdminProjectDetails() {
               </div>
             </div>
           </div>
+          {!canCreateInstances && (
+            <div className="mt-4 rounded-lg border border-dashed border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              Complete the following before provisioning new instances:{" "}
+              {missingInstancePrereqs.join(", ")}.
+            </div>
+          )}
+        </ModernCard>
+
+        <ModernCard padding="lg" variant="outlined">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Instances overview</h2>
+              <p className="mt-1 text-sm text-gray-600">
+                Review instance activity before jumping into the detailed tabs below.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <ModernButton
+                size="sm"
+                variant="outline"
+                className="flex items-center gap-2"
+                onClick={() => navigate(`/admin-dashboard/instances?project=${encodeURIComponent(resolvedProjectId)}`)}
+                disabled={!resolvedProjectId}
+              >
+                View all instances
+              </ModernButton>
+              <ModernButton
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={handleNavigateAddInstance}
+                disabled={!resolvedProjectId}
+              >
+                <Plus size={16} />
+                Add Instance
+              </ModernButton>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div
+              className="rounded-xl border p-4"
+              style={{
+                borderColor: designTokens.colors.primary[100],
+                backgroundColor: designTokens.colors.primary[50],
+              }}
+            >
+              <p
+                className="text-xs font-semibold uppercase"
+                style={{ color: designTokens.colors.primary[700] }}
+              >
+                Total
+              </p>
+              <p
+                className="mt-2 text-2xl font-semibold"
+                style={{ color: designTokens.colors.primary[700] }}
+              >
+                {instanceStats.total}
+              </p>
+              <p
+                className="text-xs"
+                style={{ color: designTokens.colors.primary[600] }}
+              >
+                Instances discovered
+              </p>
+            </div>
+            <div className="rounded-xl border p-4" style={{ borderColor: designTokens.colors.success[100] }}>
+              <p className="text-xs font-semibold uppercase" style={{ color: designTokens.colors.success[700] }}>
+                Running
+              </p>
+              <p className="mt-2 text-2xl font-semibold" style={{ color: designTokens.colors.success[700] }}>
+                {instanceStats.running}
+              </p>
+            </div>
+            <div className="rounded-xl border p-4" style={{ borderColor: designTokens.colors.warning[100] }}>
+              <p className="text-xs font-semibold uppercase" style={{ color: designTokens.colors.warning[700] }}>
+                Provisioning
+              </p>
+              <p className="mt-2 text-2xl font-semibold" style={{ color: designTokens.colors.warning[700] }}>
+                {instanceStats.provisioning}
+              </p>
+            </div>
+            <div className="rounded-xl border p-4" style={{ borderColor: designTokens.colors.warning[100] }}>
+              <p className="text-xs font-semibold uppercase" style={{ color: designTokens.colors.warning[700] }}>
+                Payment pending
+              </p>
+              <p className="mt-2 text-2xl font-semibold" style={{ color: designTokens.colors.warning[700] }}>
+                {instanceStats.paymentPending}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-gray-900">Most recent instances</p>
+              <span className="text-xs text-gray-500">Showing {recentInstances.length} of {projectInstances.length}</span>
+            </div>
+            {recentInstances.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
+                No instances have been provisioned yet. Use the button above to start a deployment.
+              </div>
+            ) : (
+              <div className="overflow-hidden rounded-lg border border-gray-200">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="px-4 py-3">Instance</th>
+                      <th className="px-4 py-3">Type</th>
+                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3">Created</th>
+                      <th className="px-4 py-3 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 bg-white text-sm">
+                    {recentInstances.map((instance) => {
+                      const palette = instanceStatusPalette(instance.status);
+                      return (
+                        <tr key={instance.id || instance.identifier}>
+                          <td className="px-4 py-3">
+                            <div className="space-y-1">
+                              <p className="font-medium text-gray-900">
+                                {instance.name || instance.identifier || "Unnamed Instance"}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {instance.identifier || "—"}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-gray-700">
+                            {instance.flavor || instance.instance_type || "—"}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium capitalize"
+                              style={{
+                                backgroundColor: palette.bg,
+                                color: palette.text,
+                              }}
+                            >
+                              {instance.status?.replace(/_/g, " ") || "Unknown"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-gray-700">
+                            {instance.created_at
+                              ? new Date(instance.created_at).toLocaleString()
+                              : "—"}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <ModernButton
+                              size="sm"
+                              variant="outline"
+                              className="text-xs"
+                              onClick={() => handleViewInstanceDetails(instance)}
+                            >
+                              View
+                            </ModernButton>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </ModernCard>
 
         <div className="grid gap-6 xl:grid-cols-[320px,1fr]">
@@ -2065,13 +2388,18 @@ export default function AdminProjectDetails() {
                   active={componentIndicatesComplete(edgeComponent)}
                   tone={componentIndicatesComplete(edgeComponent) ? "success" : "neutral"}
                 />
-                <StatusBadge
-                  label="Tenant admin present"
-                  active={hasTenantAdmin}
-                  tone={hasTenantAdmin ? "success" : "danger"}
-                />
-              </div>
+              <StatusBadge
+                label="Tenant admin present"
+                active={hasTenantAdmin}
+                tone={hasTenantAdmin ? "success" : "danger"}
+              />
+              <StatusBadge
+                label="Instance prerequisites ready"
+                active={canCreateInstances}
+                tone={canCreateInstances ? "success" : "danger"}
+              />
             </div>
+          </div>
 
             <div>
               <h3 className="text-sm font-semibold mb-3" style={{ color: designTokens.colors.neutral[800] }}>

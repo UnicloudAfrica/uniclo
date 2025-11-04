@@ -1,14 +1,20 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  Calculator,
   ChevronRight,
-  Loader2,
-  ArrowUpRight,
-  ArrowDownRight,
-  Cloud,
+  Clock,
+  Cloud as CloudIcon,
+  Gauge,
+  HardDrive,
+  LifeBuoy,
+  Rocket,
+  Server,
+  UserCheck,
+  Users,
 } from "lucide-react";
-import mobile from "./assets/mobile.svg";
-import cloud from "./assets/cloud-connection.svg";
-import monitor from "./assets/monitor.svg";
+import mobileIllustration from "./assets/mobile.svg";
+import cloudIllustration from "./assets/cloud-connection.svg";
+import monitorIllustration from "./assets/monitor.svg";
 import { Link } from "react-router-dom";
 import { useFetchClientProfile } from "../../hooks/clientHooks/resources";
 import VerifyAccountPromptModal from "../components/verifyAccountPrompt";
@@ -32,12 +38,175 @@ const useFetchTenantDashboard = () => {
   };
 };
 
+const ICON_MAP = {
+  mobile: mobileIllustration,
+  storage: cloudIllustration,
+};
+
+const METRIC_ICON_MAP = {
+  Partners: Users,
+  Clients: UserCheck,
+  "Active Instances": Server,
+  "Pending Instances": Clock,
+  "Support Tickets": LifeBuoy,
+};
+
+const HIGHLIGHT_METRICS = [
+  "Active Instances",
+  "Pending Instances",
+  "Support Tickets",
+];
+
+const QUICK_ACTIONS = [
+  {
+    title: "Launch Compute",
+    description: "Deploy a new virtual machine or container workload.",
+    to: "/client-dashboard/add-instance",
+    Icon: Rocket,
+  },
+  {
+    title: "Manage Instances",
+    description: "Track health, scaling, and lifecycle for existing nodes.",
+    to: "/client-dashboard/instances",
+    Icon: Server,
+  },
+  {
+    title: "Object Storage",
+    description: "Store and retrieve assets securely with high durability.",
+    to: "/client-dashboard/object-storage",
+    Icon: HardDrive,
+  },
+  {
+    title: "Cost Calculator",
+    description: "Model projected spend before you provision resources.",
+    to: "/client-dashboard/calculator",
+    Icon: Calculator,
+  },
+];
+
+const OFFER_SECTIONS = [
+  {
+    key: "trial",
+    title: "Trial Offers",
+    description: "Spin up resources with zero commitment for quick testing.",
+    ctaLabel: "Start Trial",
+  },
+  {
+    key: "discount",
+    title: "Discounted Plans",
+    description: "Lock in savings on long-running workloads and storage.",
+    ctaLabel: "Unlock Offer",
+  },
+];
+
+const DEFAULT_OFFERS = { trial: [], discount: [] };
+
+const formatAmount = (amount) => {
+  const numericValue = Number(amount) || 0;
+  return numericValue.toLocaleString("en-NG", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+const formatPercentage = (value) =>
+  new Intl.NumberFormat("en-NG", {
+    maximumFractionDigits: 1,
+    minimumFractionDigits: 0,
+  }).format(Number(value) || 0);
+
+const periodLabel = (days) => {
+  if (!days) return "period";
+  return `${days} day${days > 1 ? "s" : ""}`;
+};
+
 const MetricCardSkeleton = () => (
-  <div className="flex-1 p-4 w-full rounded-[12px] bg-gray-100 border border-gray-200 animate-pulse">
-    <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-    <div className="h-6 bg-gray-300 rounded w-3/4"></div>
+  <div className="w-full rounded-2xl border border-[--theme-border-color] bg-white/60 p-4 shadow-sm animate-pulse">
+    <div className="h-4 w-24 rounded bg-gray-200/90 mb-3" />
+    <div className="h-6 w-20 rounded bg-gray-300/80" />
   </div>
 );
+
+const OfferSkeleton = () => (
+  <div className="relative w-full overflow-hidden rounded-2xl border border-[--theme-border-color] bg-white/80 p-6 shadow-sm animate-pulse">
+    <div className="h-5 w-40 rounded bg-gray-200/80" />
+    <div className="mt-3 h-4 w-24 rounded bg-gray-200/70" />
+    <div className="mt-6 h-7 w-32 rounded bg-gray-300/70" />
+    <div className="mt-3 h-4 w-full rounded bg-gray-100/80" />
+    <div className="mt-4 h-10 w-32 rounded-full bg-gray-200/70" />
+    <div className="absolute right-6 top-10 h-16 w-16 rounded-full bg-gray-100/80" />
+  </div>
+);
+
+const OfferCard = ({ offer, type, ctaLabel }) => {
+  const product = offer?.productable ?? {};
+  const isTrial = type === "trial";
+  const basePrice = isTrial
+    ? Number(offer?.fixed_price ?? 0)
+    : Number(product?.price_per_month ?? offer?.fixed_price ?? 0);
+  const discountPercentage = Number(offer?.discount_percentage ?? 0);
+  const computedPrice = isTrial
+    ? basePrice
+    : basePrice * (1 - discountPercentage / 100);
+
+  const spec = isTrial
+    ? `${product?.vcpus ?? "--"} vCPU • ${product?.memory_gib ?? "--"} GiB Memory`
+    : `${product?.media_type || product?.storage_class || "Flexible"} Storage`;
+
+  const description = product?.description || offer?.description || "";
+  const imageSrc =
+    ICON_MAP[product?.icon] || (isTrial ? mobileIllustration : cloudIllustration);
+
+  return (
+    <div className="relative w-full overflow-hidden rounded-2xl border border-[--theme-border-color] bg-white/90 p-6 shadow-sm transition-all duration-200 hover:border-[--theme-color] hover:shadow-lg">
+      <div className="relative z-10 flex flex-col gap-4">
+        <div className="space-y-2">
+          <p className="text-xs font-medium uppercase tracking-wide text-[--theme-muted-color]">
+            {isTrial ? "Limited Time Trial" : "Exclusive Discount"}
+          </p>
+          <h3 className="text-lg font-semibold text-[--theme-heading-color]">
+            {offer?.name}
+          </h3>
+        </div>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2 text-sm text-[#1E1E1EB2]">
+            <img
+              src={monitorIllustration}
+              alt=""
+              className="h-5 w-5 shrink-0 text-[--theme-color]"
+            />
+            <span>{spec}</span>
+          </div>
+          <p className="text-2xl font-semibold text-[--theme-color]">
+            ₦{formatAmount(Number.isFinite(computedPrice) ? computedPrice : 0)}{" "}
+            <span className="text-sm font-medium text-[#6B7280]">
+              / {periodLabel(offer?.period_days)}
+            </span>
+          </p>
+          {description ? (
+            <p className="text-sm leading-relaxed text-[#676767]">{description}</p>
+          ) : null}
+          <button
+            type="button"
+            className="inline-flex w-fit items-center justify-center rounded-full bg-[--theme-color-10] px-6 py-2.5 text-sm font-medium text-[--theme-color] transition-colors duration-200 hover:bg-[--theme-color] hover:text-white"
+          >
+            {ctaLabel}
+          </button>
+        </div>
+      </div>
+      <img
+        src={imageSrc}
+        alt=""
+        className="pointer-events-none absolute -right-6 bottom-0 h-32 w-auto opacity-70 md:-right-4"
+      />
+      {!isTrial && discountPercentage ? (
+        <span className="absolute right-4 top-4 rounded-full bg-[--theme-color-10] px-3 py-1 text-xs font-semibold text-[--theme-color]">
+          Save {formatPercentage(discountPercentage)}%
+        </span>
+      ) : null}
+    </div>
+  );
+};
 
 export default function ClientDashboard() {
   const { data: profile, isFetching: isProfileFetching } =
@@ -45,9 +214,10 @@ export default function ClientDashboard() {
   const { data: dashboard, isFetching: isDashboardFetching } =
     useFetchTenantDashboard();
   const {
-    data: offers = { trial: [], discount: [] },
+    data: offers = DEFAULT_OFFERS,
     isFetching: isOffersFetching,
   } = useFetchClientProductOffers();
+  const { data: theme } = useClientTheme();
 
   const [showVerifyModal, setShowVerifyModal] = useState(false);
 
@@ -65,18 +235,6 @@ export default function ClientDashboard() {
     setShowVerifyModal(false);
   };
 
-  const iconMap = {
-    mobile: mobile,
-    storage: cloud,
-  };
-
-  const formatAmount = (amount) => {
-    return amount.toLocaleString("en-NG", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  };
-
   // Prepare metrics data from dashboard.message
   const metrics = useMemo(() => {
     if (!dashboard?.message) return [];
@@ -91,192 +249,271 @@ export default function ClientDashboard() {
     ];
   }, [dashboard]);
 
-  const OfferSkeleton = () => (
-    <div className="relative w-full mt-4 border border-[#E9EAF4] py-6 px-5 rounded-[10px] animate-pulse">
-      <div className="max-w-[300px]">
-        <div className="h-5 bg-gray-200 rounded w-3/4 mb-4"></div>
-        <div className="flex items-center space-x-2 mt-4">
-          <div className="flex items-center space-x-1">
-            <div className="w-5 h-5 bg-gray-200 rounded"></div>
-            <div className="h-4 bg-gray-200 rounded w-32"></div>
-          </div>
-        </div>
-        <div className="h-6 bg-gray-200 rounded w-1/2 mt-4"></div>
-        <div className="h-4 bg-gray-200 rounded w-full mt-4"></div>
-        <div className="h-10 bg-gray-200 rounded-[30px] w-32 mt-4"></div>
-      </div>
-      <div className="absolute top-1/3 right-8 lg:right-[60px] w-10 h-10 bg-gray-200 rounded"></div>
-    </div>
+  const metricsWithIcons = useMemo(
+    () =>
+      metrics.map((metric) => {
+        const Icon = METRIC_ICON_MAP[metric.label] || Gauge;
+        return { ...metric, Icon };
+      }),
+    [metrics]
   );
+
+  const highlightMetrics = useMemo(
+    () =>
+      metricsWithIcons.filter((metric) =>
+        HIGHLIGHT_METRICS.includes(metric.label)
+      ),
+    [metricsWithIcons]
+  );
+
+  const accentGradient = useMemo(() => {
+    const start = theme?.themeColor || "var(--theme-color)";
+    const end = theme?.secondaryColor || "var(--secondary-color)";
+    return `linear-gradient(135deg, ${start} 0%, ${end} 100%)`;
+  }, [theme?.themeColor, theme?.secondaryColor]);
+
+  const welcomeName =
+    profile?.first_name || profile?.business_name || profile?.company_name;
 
   return (
     <>
       <ClientActiveTab />
-      <main className="dashboard-content-shell p-6 md:p-8">
-        <p className="text-[#7e7e7e] font-Outfit text-sm font-normal">
-          Welcome, {profile?.first_name} 👋🏽
-        </p>
-
-        <div className="w-full md:w-[352px] mt-4 bg-[--theme-color-10] py-6 px-5 rounded-[10px]">
-          <div className="flex items-center space-x-1">
-            <Cloud className="text-[--theme-color]" />
-            <p className="font-medium text-base text-[--theme-color]">
-              Current Module
-            </p>
-          </div>
-          <p className="mt-2 text-[#676767] font-normal text-sm">
-            Explore all Unicloud African modules that you have purchased
-          </p>
-          <Link
-            to="/dashboard/purchased-modules"
-            className="mt-2 space-x-2 flex items-center"
+      <main className="dashboard-content-shell">
+        <div className="p-6 md:p-8 space-y-8">
+          <section
+            className="overflow-hidden rounded-3xl border border-transparent bg-[--theme-color] text-white shadow-lg"
+            style={{ background: accentGradient }}
           >
-            <p className="font-Outfit font-normal text-xs text-[--theme-color]">
-              SEE PURCHASED MODULES
-            </p>
-            <ChevronRight className="w-4 text-[--theme-color]" />
-          </Link>
-        </div>
-
-        {/* New Metrics Section */}
-        <div className="flex w-full flex-col md:flex-row justify-between items-center gap-4 mb-6 mt-6">
-          {isDashboardFetching ? (
-            <>
-              <MetricCardSkeleton />
-              <MetricCardSkeleton />
-              <MetricCardSkeleton />
-              <MetricCardSkeleton />
-              <MetricCardSkeleton />
-            </>
-          ) : metrics.length > 0 ? (
-            metrics.map((metric, index) => (
-              <div
-                key={index}
-                className="flex-1 p-4 w-full rounded-[12px] border bg-[--theme-color-10] border-[--theme-color-20]"
-              >
-                <p className="text-xs text-[#676767] capitalize">
-                  {metric.label}
+            <div className="relative z-10 flex flex-col gap-8 p-6 md:p-10">
+              <div className="max-w-3xl space-y-3">
+                <p className="text-sm font-medium uppercase tracking-wide text-white/80">
+                  Welcome back
                 </p>
-                <div className="flex items-center mt-4 space-x-1.5">
-                  <p className="text-lg md:text-2xl font-medium text-[--secondary-color]">
-                    {metric.value}
+                <h1 className="text-2xl font-semibold leading-tight md:text-3xl">
+                  {isProfileFetching ? "Loading your workspace..." : `Hi ${welcomeName || "there"} 👋🏽`}
+                </h1>
+                <p className="text-base text-white/80 md:text-lg">
+                  Monitor your cloud footprint, launch new resources, and keep
+                  your projects moving without friction.
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                {isDashboardFetching ? (
+                  <>
+                    <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
+                      <div className="h-4 w-24 rounded bg-white/20 mb-2" />
+                      <div className="h-6 w-12 rounded bg-white/30" />
+                    </div>
+                    <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
+                      <div className="h-4 w-24 rounded bg-white/20 mb-2" />
+                      <div className="h-6 w-12 rounded bg-white/30" />
+                    </div>
+                    <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
+                      <div className="h-4 w-24 rounded bg-white/20 mb-2" />
+                      <div className="h-6 w-12 rounded bg-white/30" />
+                    </div>
+                  </>
+                ) : highlightMetrics.length ? (
+                  highlightMetrics.map(({ label, value, Icon }) => (
+                    <div
+                      key={label}
+                      className="rounded-2xl bg-white/10 p-4 backdrop-blur transition hover:bg-white/15"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-xs font-medium uppercase tracking-wide text-white/70">
+                            {label}
+                          </p>
+                          <p className="mt-2 text-2xl font-semibold text-white">
+                            {value}
+                          </p>
+                        </div>
+                        <Icon className="h-9 w-9 text-white/80" />
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="col-span-full text-sm text-white/80">
+                    We will surface useful insight here once your activity
+                    begins to populate.
                   </p>
-                  {/* Removed upward/downward conditional rendering as per request */}
+                )}
+              </div>
+            </div>
+            <div className="absolute inset-y-0 right-0 z-0 hidden w-1/3 translate-x-12 bg-white/10 blur-3xl md:block" />
+          </section>
+
+          <section className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr]">
+            <Link
+              to="/dashboard/purchased-modules"
+              className="group flex flex-col justify-between gap-4 rounded-2xl border border-[--theme-border-color] bg-white/90 p-5 shadow-sm transition hover:border-[--theme-color] hover:shadow-md"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[--theme-color-10] text-[--theme-color]">
+                  <CloudIcon className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="text-sm font-medium text-[--theme-muted-color]">
+                    Purchased Modules
+                  </p>
+                  <h2 className="text-lg font-semibold text-[--theme-heading-color]">
+                    Explore what’s already available to you
+                  </h2>
                 </div>
               </div>
-            ))
-          ) : (
-            <div className="flex-1 p-4 w-full rounded-[12px] bg-gray-100 border border-gray-200 text-center text-gray-500">
-              No metrics available.
+              <div className="flex items-center gap-2 text-sm font-medium text-[--theme-color]">
+                <span>See modules</span>
+                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </div>
+            </Link>
+
+            <Link
+              to="/client-dashboard/support"
+              className="group flex flex-col justify-between gap-4 rounded-2xl border border-[--theme-border-color] bg-white/90 p-5 shadow-sm transition hover:border-[--theme-color] hover:shadow-md"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[--theme-color-10] text-[--theme-color]">
+                  <LifeBuoy className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="text-sm font-medium text-[--theme-muted-color]">
+                    Need a hand?
+                  </p>
+                  <h2 className="text-lg font-semibold text-[--theme-heading-color]">
+                    Connect with support or view open tickets
+                  </h2>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-sm font-medium text-[--theme-color]">
+                <span>Go to support</span>
+                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </div>
+            </Link>
+          </section>
+
+          <section className="space-y-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-[--theme-heading-color]">
+                  Platform snapshot
+                </h2>
+                <p className="text-sm text-[--theme-muted-color]">
+                  Keep tabs on adoption across your projects and teams.
+                </p>
+              </div>
             </div>
-          )}
-        </div>
-
-        <div className="mt-6 w-full">
-          <p className="text-[#7e7e7e] font-Outfit text-base font-normal">
-            For you
-          </p>
-          {/* Trial Offers */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-            {isOffersFetching ? (
-              <OfferSkeleton />
-            ) : offers?.trial?.length > 0 ? (
-              offers?.trial?.map((offer) => (
-                <div
-                  className="relative w-full mt-4 border border-[#E9EAF4] py-6 px-5 rounded-[10px]"
-                  key={offer.id}
-                >
-                  <div className="max-w-[300px]">
-                    <h3 className="text-[#31373D] font-Outfit font-medium text-base">
-                      {offer.name}
-                    </h3>
-                    <div className="flex items-center space-x-2 mt-4">
-                      <div className="flex items-center space-x-1">
-                        <img src={monitor} className="" alt="" />
-                        <p className="font-medium text-sm text-[#1E1E1EB2]">
-                          {offer.productable.vcpus} vCPU •{" "}
-                          {offer.productable.memory_gib} GiB Memory
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5">
+              {isDashboardFetching ? (
+                Array.from({ length: 5 }).map((_, index) => (
+                  <MetricCardSkeleton key={`metric-skeleton-${index}`} />
+                ))
+              ) : metricsWithIcons.length ? (
+                metricsWithIcons.map(({ label, value, Icon }) => (
+                  <div
+                    key={label}
+                    className="rounded-2xl border border-[--theme-border-color] bg-white p-4 shadow-sm transition hover:border-[--theme-color] hover:shadow-md"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-[--theme-muted-color]">
+                          {label}
+                        </p>
+                        <p className="mt-2 text-2xl font-semibold text-[--theme-heading-color]">
+                          {value}
                         </p>
                       </div>
+                      <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[--theme-color-10] text-[--theme-color]">
+                        <Icon className="h-5 w-5" />
+                      </span>
                     </div>
-                    <p className="mt-4 text-2xl font-semibold text-[--theme-color]">
-                      ₦{formatAmount(offer.fixed_price)}/{offer.period_days}{" "}
-                      days
-                    </p>
-                    <p className="mt-4 text-[#676767] font-normal text-sm">
-                      {offer.productable.description}
-                    </p>
-                    <button className="rounded-[30px] py-3 px-8 mt-4 font-normal text-base bg-[--theme-color-10] text-[--theme-color]">
-                      Use Now
-                    </button>
                   </div>
-                  <img
-                    src={iconMap[offer.productable.icon] || mobile}
-                    className="absolute top-1/3 right-8 lg:right-[60px] w-10 lg:w-auto"
-                    alt=""
-                  />
+                ))
+              ) : (
+                <div className="rounded-2xl border border-dashed border-[--theme-border-color] bg-white/60 p-6 text-center text-sm text-[--theme-muted-color]">
+                  Metrics will appear once activity data is available.
                 </div>
-              ))
-            ) : (
-              <p className="text-[#676767] font-normal text-sm">
-                No trial offers available.
-              </p>
-            )}
-          </div>
+              )}
+            </div>
+          </section>
 
-          {/* Discount Offers */}
-          <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
-            {isOffersFetching ? (
-              <>
-                <OfferSkeleton />
-                <OfferSkeleton />
-              </>
-            ) : offers?.discount?.length > 0 ? (
-              offers?.discount?.map((offer) => (
-                <div
-                  className="relative w-full mt-4 border border-[#E9EAF4] py-6 px-5 rounded-[10px]"
-                  key={offer.id}
+          <section className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {QUICK_ACTIONS.map(({ title, description, to, Icon }) => (
+                <Link
+                  key={title}
+                  to={to}
+                  className="group flex flex-col justify-between gap-4 rounded-2xl border border-[--theme-border-color] bg-white p-5 shadow-sm transition hover:border-[--theme-color] hover:shadow-md"
                 >
-                  <div className="max-w-[300px]">
-                    <h3 className="text-[#31373D] font-Outfit font-medium text-base">
-                      {offer.name}
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[--theme-color-10] text-[--theme-color] transition-colors group-hover:bg-[--theme-color] group-hover:text-white">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <h3 className="text-base font-semibold text-[--theme-heading-color]">
+                      {title}
                     </h3>
-                    <div className="flex items-center space-x-2 mt-4">
-                      <div className="flex items-center space-x-1">
-                        <img src={monitor} className="" alt="" />
-                        <p className="font-medium text-sm text-[#1E1E1EB2]">
-                          {offer.productable.media_type} Storage
-                        </p>
-                      </div>
-                    </div>
-                    <p className="mt-4 text-2xl font-semibold text-[--theme-color]">
-                      ₦
-                      {formatAmount(
-                        offer.productable.price_per_month *
-                          (1 - offer.discount_percentage / 100)
-                      )}
-                      /{offer.period_days} days
-                    </p>
-                    <p className="mt-4 text-[#676767] font-normal text-sm">
-                      {offer.productable.description}
-                    </p>
-                    <button className="rounded-[30px] py-3 px-8 mt-4 font-normal text-base bg-[--theme-color-10] text-[--theme-color]">
-                      Purchase
-                    </button>
                   </div>
-                  <img
-                    src={iconMap[offer.productable.icon] || cloud}
-                    className="absolute top-1/3 right-8 lg:right-[60px] w-10 lg:w-auto"
-                    alt=""
-                  />
-                </div>
-              ))
-            ) : (
-              <p className="text-[#676767] font-normal text-sm">
-                No discount offers available.
+                  <p className="text-sm text-[--theme-muted-color] leading-relaxed">
+                    {description}
+                  </p>
+                  <span className="text-sm font-medium text-[--theme-color] group-hover:underline">
+                    Open
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          <section className="space-y-6">
+            <div>
+              <h2 className="text-xl font-semibold text-[--theme-heading-color]">
+                Offers picked for you
+              </h2>
+              <p className="text-sm text-[--theme-muted-color]">
+                Try new services or scale for less with curated incentives.
               </p>
-            )}
-          </div>
+            </div>
+
+            {OFFER_SECTIONS.map(({ key, title, description, ctaLabel }) => {
+              const items = offers?.[key] ?? [];
+              const skeletonCount = key === "discount" ? 2 : 1;
+
+              return (
+                <div key={key} className="space-y-4">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-[--theme-heading-color]">
+                        {title}
+                      </h3>
+                      <p className="text-sm text-[--theme-muted-color]">
+                        {description}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {isOffersFetching ? (
+                      Array.from({ length: skeletonCount }).map((_, index) => (
+                        <OfferSkeleton key={`${key}-skeleton-${index}`} />
+                      ))
+                    ) : items.length ? (
+                      items.map((offer) => (
+                        <OfferCard
+                          key={`${key}-${offer?.id}`}
+                          offer={offer}
+                          type={key}
+                          ctaLabel={ctaLabel}
+                        />
+                      ))
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-[--theme-border-color] bg-white/80 p-6 text-sm text-[--theme-muted-color]">
+                        No {key} offers available right now. Check back soon as
+                        we refresh incentives regularly.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </section>
         </div>
       </main>
       <VerifyAccountPromptModal

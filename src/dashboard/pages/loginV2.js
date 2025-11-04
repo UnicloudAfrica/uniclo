@@ -11,7 +11,6 @@ export default function DashboardLoginV2() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [activeTab, setActiveTab] = useState("partner");
   const [errors, setErrors] = useState({});
   const { mutate, isPending } = useLoginAccount();
   const navigate = useNavigate();
@@ -47,7 +46,6 @@ export default function DashboardLoginV2() {
     const userData = {
       email,
       password,
-      role: activeTab === "partner" ? "tenant" : "client", // Include role based on tab
     };
 
     mutate(userData, {
@@ -93,29 +91,9 @@ export default function DashboardLoginV2() {
             </p>
           </div>
 
-          {/* Tab Buttons */}
-          <div className="mb-6 bg-[#FAFAFA] border border-[#ECEDF0] rounded-[50px] p-3">
-            <button
-              onClick={() => setActiveTab("partner")}
-              className={`flex-1 py-2 px-4 rounded-[30px] w-[50%] text-sm font-normal whitespace-nowrap transition-colors ${
-                activeTab === "partner"
-                  ? "bg-[#288DD1] text-white shadow-sm font-semibold"
-                  : "text-[#676767] hover:text-gray-800 font-normal"
-              }`}
-            >
-              Partner
-            </button>
-            <button
-              onClick={() => setActiveTab("client")}
-              className={`flex-1 py-2 px-4 rounded-[30px] w-[50%] text-sm font-normal whitespace-nowrap transition-colors ${
-                activeTab === "client"
-                  ? "bg-[#288DD1] text-white shadow-sm font-semibold"
-                  : "text-[#676767] hover:text-gray-800 font-normal"
-              }`}
-            >
-              Client
-            </button>
-          </div>
+          <p className="mb-6 text-center text-sm text-[#676767]">
+            Log in to your workspace.
+          </p>
 
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -169,10 +147,10 @@ export default function DashboardLoginV2() {
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
-              {errors.password && (
-                <p className="text-red-500 text-xs mt-1">{errors.password}</p>
-              )}
-            </div>
+            {errors.password && (
+              <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+            )}
+          </div>
 
             {/* Forgot Password */}
             <div className="text-right">
@@ -194,7 +172,11 @@ export default function DashboardLoginV2() {
                 <Loader2 className="w-4 h-4 text-white animate-spin" />
               ) : (
                 "Login"
-              )}
+            )}
+
+            {errors.general && (
+              <p className="text-red-500 text-xs text-center">{errors.general}</p>
+            )}
             </button>
 
             {/* Sign Up Link */}

@@ -2,10 +2,9 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminPageShell from "../components/AdminPageShell";
-import ModernTable from "../components/ModernTable";
 import ModernCard from "../components/ModernCard";
-import ModernStatsCard from "../components/ModernStatsCard";
 import ModernButton from "../components/ModernButton";
+import ProjectsPageContent from "../../shared/projects/ProjectsPageContent";
 import { useFetchProjects } from "../../hooks/adminHooks/projectHooks";
 import {
   Eye,
@@ -19,7 +18,6 @@ import {
   AlertCircle,
   Clock,
   RefreshCw,
-  Search,
   Server
 } from "lucide-react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -355,8 +353,7 @@ export default function AdminProjects() {
     }
   };
 
-  const handlePerPageChange = (e) => {
-    const value = Number(e.target.value);
+  const handlePerPageChange = (value) => {
     setItemsPerPage(value);
     setCurrentPage(1);
     updateSearchParams({
@@ -561,244 +558,61 @@ export default function AdminProjects() {
         subHeaderContent={subHeaderMeta}
         contentClassName="space-y-6"
       >
-        <ModernCard padding="sm" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="md:col-span-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => handleSearchInputChange(e.target.value)}
-                  placeholder="Search projects by name, identifier or description"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#288DD1] focus:border-[#288DD1] transition-all text-sm"
-                />
-              </div>
-            </div>
-            <div>
-              <select
-                value={filterStatus}
-                onChange={(e) => handleStatusFilterChange(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#288DD1] focus:border-[#288DD1] bg-white text-sm"
-              >
-                {STATUS_OPTIONS.map((option) => (
-                  <option key={option.value || "all"} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <select
-                value={filterRegion}
-                onChange={(e) => handleRegionFilterChange(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#288DD1] focus:border-[#288DD1] bg-white text-sm"
-              >
-                <option value="">All Regions</option>
-                {availableRegions.map((region) => (
-                  <option key={region} value={region}>
-                    {region.toUpperCase()}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          {(filterStatus || filterRegion || searchQuery) && (
-            <div className="flex justify-end">
-              <button
-                onClick={handleResetFilters}
-                className="text-sm text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                type="button"
-              >
-                Clear filters
-              </button>
-            </div>
-          )}
-        </ModernCard>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <ModernStatsCard
-            title="Total Projects"
-            value={projectStats.totalProjects}
-            icon={<FolderOpen size={24} />}
-            change={0}
-            trend="up"
-            color="primary"
-            description="Tracked across tenants"
-          />
-          <ModernStatsCard
-            title="Active Projects"
-            value={projectStats.activeProjects}
-            icon={<Activity size={24} />}
-            color="success"
-            description="Available for workloads"
-          />
-          <ModernStatsCard
-            title="Provisioning"
-            value={projectStats.provisioningProjects}
-            icon={<Settings size={24} />}
-            color="warning"
-            description="In progress with Zadara"
-          />
-          <ModernStatsCard
-            title="Instances"
-            value={projectStats.totalInstances}
-            icon={<Server size={24} />}
-            color="info"
-            description="Instances discovered"
-          />
-        </div>
-
-        <div className="space-y-4 md:hidden">
-          {filteredProjects.length === 0 ? (
-            <ModernCard padding="sm">
-              <p className="text-sm text-gray-600">
-                No projects found. Create your first project to get started.
-              </p>
-            </ModernCard>
-          ) : (
-            filteredProjects.map((project) => {
-              const statusStyle = getStatusDisplayConfig(project.status);
-              return (
-                <ModernCard
-                  key={project.id || project.identifier}
-                  padding="sm"
-                  hover
-                  onClick={() => handleRowClick(project)}
-                  className="cursor-pointer"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h3 className="text-base font-semibold text-gray-900">
-                        {project.name}
-                      </h3>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {project.identifier}
-                      </p>
-                      {project.description && (
-                        <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                          {project.description}
-                        </p>
-                      )}
-                    </div>
-                    <span
-                      className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium"
-                      style={{
-                        backgroundColor: statusStyle.backgroundColor,
-                        color: statusStyle.color,
-                      }}
-                    >
-                      {statusStyle.icon}
-                      <span className="capitalize">{statusStyle.label}</span>
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 mt-4 text-sm text-gray-600">
-                    <div>
-                      <p className="text-xs text-gray-500">Region</p>
-                      <p className="font-medium text-gray-900">
-                        {project.region ? project.region.toUpperCase() : "N/A"}
-                      </p>
-                    </div>
-                    {project.provider ? (
-                      <div>
-                        <p className="text-xs text-gray-500">Provider</p>
-                        <p className="font-medium text-gray-900 capitalize">
-                          {project.provider}
-                        </p>
-                      </div>
-                    ) : null}
-                    <div>
-                      <p className="text-xs text-gray-500">Instances</p>
-                      <p className="font-medium text-gray-900">
-                        {project.resources_count?.instances || 0}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Created</p>
-                      <p className="font-medium text-gray-900">
-                        {project.created_at
-                          ? new Date(project.created_at).toLocaleDateString()
-                          : "N/A"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRowClick(project);
-                      }}
-                      className="text-sm text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                    >
-                      View details →
-                    </button>
-                  </div>
-                </ModernCard>
-              );
-            })
-          )}
-        </div>
-
-        <div className="hidden md:block">
-          <ModernCard>
-            <ModernTable
-              title={`Projects (${totalProjects} total)`}
-              data={filteredProjects}
-              columns={columns}
-              actions={actions}
-              searchable={false}
-              filterable={false}
-              exportable
-              sortable
-              loading={isProjectsFetching}
-              onRowClick={handleRowClick}
-              emptyMessage="No projects found. Create your first project to get started."
-            />
-          </ModernCard>
-        </div>
-
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Rows per page:</span>
-            <select
-              value={itemsPerPage}
-              onChange={handlePerPageChange}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#288DD1] focus:border-[#288DD1]"
-            >
-              {[10, 15, 20, 30].map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex items-center gap-4 text-sm text-gray-600">
-            <span>
-              Page {currentPage} of {totalPages}
-            </span>
-            <div className="flex items-center gap-2">
-              <ModernButton
-                variant="outline"
-                size="sm"
-                isDisabled={currentPage === 1}
-                onClick={() => handlePageChange(currentPage - 1)}
-              >
-                Previous
-              </ModernButton>
-              <ModernButton
-                variant="outline"
-                size="sm"
-                isDisabled={currentPage === totalPages || totalPages === 0}
-                onClick={() => handlePageChange(currentPage + 1)}
-              >
-                Next
-              </ModernButton>
-            </div>
-          </div>
-        </div>
+        <ProjectsPageContent
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchInputChange}
+          statusOptions={STATUS_OPTIONS}
+          statusFilter={filterStatus}
+          onStatusChange={handleStatusFilterChange}
+          availableRegions={availableRegions}
+          regionFilter={filterRegion}
+          onRegionChange={handleRegionFilterChange}
+          onResetFilters={handleResetFilters}
+          statsCards={[
+            {
+              title: "Total Projects",
+              value: projectStats.totalProjects,
+              icon: <FolderOpen size={24} />,
+              change: 0,
+              trend: "up",
+              color: "primary",
+              description: "Tracked across tenants",
+            },
+            {
+              title: "Active Projects",
+              value: projectStats.activeProjects,
+              icon: <Activity size={24} />,
+              color: "success",
+              description: "Available for workloads",
+            },
+            {
+              title: "Provisioning",
+              value: projectStats.provisioningProjects,
+              icon: <Settings size={24} />,
+              color: "warning",
+              description: "In progress with Zadara",
+            },
+            {
+              title: "Instances",
+              value: projectStats.totalInstances,
+              icon: <Server size={24} />,
+              color: "info",
+              description: "Instances discovered",
+            },
+          ]}
+          filteredProjects={filteredProjects}
+          totalProjects={totalProjects}
+          isFetching={isProjectsFetching}
+          onRowClick={handleRowClick}
+          itemsPerPage={itemsPerPage}
+          onItemsPerPageChange={handlePerPageChange}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          statusDisplayConfig={getStatusDisplayConfig}
+          renderColumns={() => columns}
+          tableActions={actions}
+        />
       </AdminPageShell>
       <CreateProjectModal isOpen={isAddProjectOpen} onClose={closeAddProject} />
     </>

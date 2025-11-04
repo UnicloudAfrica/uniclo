@@ -7,7 +7,7 @@ import {
   Trash2,
   Plus,
 } from "lucide-react";
-import { useFetchFloatingIPs } from "../../../hooks/adminHooks/floatingIpHooks";
+import { useFetchFloatingIPs } from "../../../hooks/adminHooks/floatingIPHooks";
 import ResourceDataExplorer from "../../components/ResourceDataExplorer";
 import AddFloatingIP from "./ipSubs/addFloatingIP";
 import EditFloatingIP from "./ipSubs/editFloatingIP";

@@ -19,6 +19,7 @@ import { Link } from "react-router-dom";
 import { useFetchClientProfile } from "../../hooks/clientHooks/resources";
 import VerifyAccountPromptModal from "../components/verifyAccountPrompt";
 import ClientActiveTab from "../components/clientActiveTab";
+import ClientPageShell from "../components/ClientPageShell";
 import { useFetchClientProductOffers } from "../../hooks/clientHooks/productsHook";
 import useClientTheme from "../../hooks/clientHooks/useClientTheme";
 
@@ -278,8 +279,12 @@ export default function ClientDashboard() {
   return (
     <>
       <ClientActiveTab />
-      <main className="dashboard-content-shell">
-        <div className="p-6 md:p-8 space-y-8">
+      <ClientPageShell
+        title="Dashboard"
+        description="Monitor your services, launch new workloads, and explore curated offers."
+        breadcrumbs={[{ label: "Home", href: "/client-dashboard" }]}
+      >
+        <div className="space-y-8">
           <section
             className="overflow-hidden rounded-3xl border border-transparent bg-[--theme-color] text-white shadow-lg"
             style={{ background: accentGradient }}
@@ -515,7 +520,7 @@ export default function ClientDashboard() {
             })}
           </section>
         </div>
-      </main>
+      </ClientPageShell>
       <VerifyAccountPromptModal
         isOpen={showVerifyModal}
         onClose={handleCloseVerifyModal}

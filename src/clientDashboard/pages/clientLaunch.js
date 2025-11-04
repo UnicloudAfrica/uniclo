@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import ClientActiveTab from "../components/clientActiveTab";
 import Headbar from "../components/clientHeadbar";
 import Sidebar from "../components/clientSidebar";
 import LaunchSideMenu from "./launchComps/launchSideMenu";
+import ClientPageShell from "../components/ClientPageShell";
 
 export default function ClientLaunch() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -22,14 +23,22 @@ export default function ClientLaunch() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <ClientActiveTab />
-      <main className="dashboard-content-shell p-6 md:p-8">
-        <div className="flex flex-col lg:flex-row w-full">
+      <ClientPageShell
+        title="Launch Center"
+        description="Configure and orchestrate your provisioning workflow."
+        breadcrumbs={[
+          { label: "Home", href: "/client-dashboard" },
+          { label: "Launch" },
+        ]}
+        contentWrapper="div"
+      >
+        <div className="flex w-full flex-col gap-6 lg:flex-row">
           <LaunchSideMenu />
-          <div className="flex-1 bg-white rounded-lg shadow-sm p-4 lg:p-6 lg:w-[76%]">
-            {/* active component goes here  */}
+          <div className="flex-1 rounded-lg bg-white p-4 shadow-sm lg:w-[76%] lg:p-6">
+            {/* active component goes here */}
           </div>
         </div>
-      </main>
+      </ClientPageShell>
     </>
   );
 }

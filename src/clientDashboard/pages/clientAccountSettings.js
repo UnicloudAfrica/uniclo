@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import ClientActiveTab from "../components/clientActiveTab";
 import UserProfileSettings from "./settingsComp/userProfileSettings";
 import TwoFactorAuth from "./settingsComp/twoFactorAuth";
+import ClientPageShell from "../components/ClientPageShell";
 
 export default function ClientSettings() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -40,18 +41,22 @@ export default function ClientSettings() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <ClientActiveTab />
-      <main className="dashboard-content-shell p-6 md:p-8 pb-20">
-        {/* {authLoading ? (
-          <div className="w-full min-h-[calc(100vh-200px)] flex items-center justify-center">
-            <Loader2 className="w-12 text-[#288DD1] animate-spin" />
-          </div>
-        ) : ( */}
-        <div className="w-full mx-auto">
-          <div className="flex border-b w-full border-[#EAECF0] mb-6 overflow-x-auto whitespace-nowrap">
+      <ClientPageShell
+        title="Account Settings"
+        description="Manage your profile, authentication, and security preferences."
+        breadcrumbs={[
+          { label: "Home", href: "/client-dashboard" },
+          { label: "Settings" },
+        ]}
+        contentWrapper="div"
+        contentClassName="pb-20 space-y-6"
+      >
+        <div className="mx-auto w-full">
+          <div className="mb-6 flex w-full overflow-x-auto whitespace-nowrap border-b border-[#EAECF0]">
             {tabs.map((tab) => (
               <button
                 key={tab.value}
-                className={`font-medium text-sm pb-4 px-4 transition-all ${
+                className={`px-4 pb-4 text-sm font-medium transition-all ${
                   activeTab === tab.value
                     ? "border-b-2 border-[--theme-color] text-[--theme-color]"
                     : "text-[#1C1C1C] hover:text-[--theme-color]"
@@ -63,12 +68,11 @@ export default function ClientSettings() {
             ))}
           </div>
 
-          <div className="w-full mt-6">
+          <div className="mt-6 w-full">
             {tabs.find((tab) => tab.value === activeTab).component}
           </div>
         </div>
-        {/* )} */}
-      </main>
+      </ClientPageShell>
     </>
   );
 }

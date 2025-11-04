@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
-import AdminPageShell from "../components/AdminPageShell";
+import DashboardPageShell from "../../shared/layouts/DashboardPageShell";
 import ModernCard from "../components/ModernCard";
 import ModernButton from "../components/ModernButton";
 import ProjectsPageContent from "../../shared/projects/ProjectsPageContent";
@@ -473,12 +473,14 @@ export default function AdminProjects() {
           isMobileMenuOpen={isMobileMenuOpen}
           onCloseMobileMenu={closeMobileMenu}
         />
-        <AdminPageShell
+        <DashboardPageShell
           title="Project Management"
           description="Manage and track your infrastructure projects"
           actions={headerActions}
           subHeaderContent={subHeaderMeta}
           contentClassName="flex min-h-[60vh] flex-col items-center justify-center gap-3"
+          mainClassName="admin-dashboard-shell"
+          homeHref="/admin-dashboard"
         >
           <Loader2
             className="w-8 h-8 animate-spin"
@@ -487,7 +489,7 @@ export default function AdminProjects() {
           <p style={{ color: designTokens.colors.neutral[700] }}>
             Loading projects...
           </p>
-        </AdminPageShell>
+        </DashboardPageShell>
         <CreateProjectModal
           isOpen={isAddProjectOpen}
           onClose={closeAddProject}
@@ -504,12 +506,13 @@ export default function AdminProjects() {
           isMobileMenuOpen={isMobileMenuOpen}
           onCloseMobileMenu={closeMobileMenu}
         />
-        <AdminPageShell
+        <DashboardPageShell
           title="Project Management"
           description="Manage and track your infrastructure projects"
           actions={headerActions}
           subHeaderContent={subHeaderMeta}
           contentClassName="flex min-h-[60vh] items-center justify-center"
+          homeHref="/admin-dashboard"
         >
           <ModernCard className="max-w-xl w-full">
             <div className="text-center space-y-4">
@@ -538,7 +541,7 @@ export default function AdminProjects() {
               </div>
             </div>
           </ModernCard>
-        </AdminPageShell>
+        </DashboardPageShell>
         <CreateProjectModal isOpen={isAddProjectOpen} onClose={closeAddProject} />
       </>
     );
@@ -551,12 +554,14 @@ export default function AdminProjects() {
         isMobileMenuOpen={isMobileMenuOpen}
         onCloseMobileMenu={closeMobileMenu}
       />
-      <AdminPageShell
+      <DashboardPageShell
         title="Project Management"
         description="Manage and track your infrastructure projects"
         actions={headerActions}
         subHeaderContent={subHeaderMeta}
         contentClassName="space-y-6"
+        mainClassName="admin-dashboard-shell"
+        homeHref="/admin-dashboard"
       >
         <ProjectsPageContent
           searchQuery={searchQuery}
@@ -613,7 +618,7 @@ export default function AdminProjects() {
           renderColumns={() => columns}
           tableActions={actions}
         />
-      </AdminPageShell>
+      </DashboardPageShell>
       <CreateProjectModal isOpen={isAddProjectOpen} onClose={closeAddProject} />
     </>
   );

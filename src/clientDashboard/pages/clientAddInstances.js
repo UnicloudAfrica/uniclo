@@ -20,6 +20,7 @@ import { useFetchClientSubnets } from "../../hooks/clientHooks/subnetHooks";
 import { useFetchClientSecurityGroups } from "../../hooks/clientHooks/securityGroupHooks";
 import { useFetchClientKeyPairs } from "../../hooks/clientHooks/keyPairsHook";
 import { useInitiateMultiClientInstanceRequest } from "../../hooks/clientHooks/instanceHooks";
+import ClientPageShell from "../components/ClientPageShell";
 
 const ClientAddInstancePage = () => {
   const navigate = useNavigate();
@@ -578,6 +579,18 @@ const ClientAddInstancePage = () => {
     }
   };
 
+  const headerActions = (
+    <button
+      type="button"
+      onClick={handleClose}
+      disabled={isSubmissionPending || isPaying}
+      className="inline-flex items-center gap-2 rounded-full border border-[--theme-border-color] px-4 py-2 text-sm font-medium text-[--theme-muted-color] transition hover:border-[--theme-color] hover:text-[--theme-color] disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      <X className="h-4 w-4" />
+      Close
+    </button>
+  );
+
   return (
     <>
       <Headbar onMenuClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
@@ -586,43 +599,42 @@ const ClientAddInstancePage = () => {
         onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
       />
       <ClientActiveTab />
-      <main className="dashboard-content-shell p-6 md:p-8">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex justify-between items-center pb-4 border-b">
-            <h2 className="text-lg font-semibold text-[#575758]">
-              Add New Instance
-            </h2>
-            <button
-              onClick={handleClose}
-              className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
-              disabled={isSubmissionPending || isPaying}
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          <div className="sticky top-0 z-10 bg-white pt-6 pb-4 border-b mb-6">
+      <ClientPageShell
+        title="Add New Instance"
+        description="Follow the guided workflow to configure, review, and deploy compute resources."
+        breadcrumbs={[
+          { label: "Home", href: "/client-dashboard" },
+          { label: "Projects", href: "/client-dashboard/projects" },
+          { label: "Add Instance" },
+        ]}
+        actions={headerActions}
+        contentWrapper="div"
+        contentClassName="space-y-6"
+      >
+        <div className="rounded-lg bg-white p-6 shadow-sm">
+          <div className="sticky top-0 z-10 mb-6 border-b bg-white pb-4 pt-6">
             <StepProgress currentStep={currentStep} steps={steps} />
           </div>
           <div
             ref={contentRef}
-            className="w-full flex flex-col items-center justify-start"
+            className="flex w-full flex-col items-center justify-start"
           >
             {renderStep()}
             {isSubmissionError && currentStep !== 3 && (
-              <p className="text-red-500 text-sm mt-4 text-center">
+              <p className="mt-4 text-center text-sm text-red-500">
                 {generalError}
               </p>
             )}
           </div>
-          <div className="flex items-center justify-between mt-4 pt-4 border-t">
+          <div className="mt-4 flex items-center justify-between border-t pt-4">
             <div className="flex gap-3">
               {currentStep > 0 && (
                 <button
                   onClick={handleBack}
-                  className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
+                  className="rounded-[30px] border border-[#ECEDF0] bg-[#FAFAFA] px-6 py-2 font-medium text-[#676767] transition-colors hover:text-gray-800"
                   disabled={isSubmissionPending || isPaying}
                 >
-                  <ChevronLeft className="w-4 h-4 mr-1 inline-block" /> Back
+                  <ChevronLeft className="mr-1 inline-block h-4 w-4" /> Back
                 </button>
               )}
             </div>
@@ -639,7 +651,7 @@ const ClientAddInstancePage = () => {
                 (isAnyFetching && currentStep !== 0) ||
                 (currentStep === 3 && isPaymentButtonDisabled)
               }
-              className="px-8 py-3 bg-[--theme-color] text-white font-medium rounded-full hover:bg-[--secondary-color] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="flex items-center justify-center rounded-full bg-[--theme-color] px-8 py-3 font-medium text-white transition-colors hover:bg-[--secondary-color] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {currentStep === 3
                 ? "Finish"
@@ -649,12 +661,12 @@ const ClientAddInstancePage = () => {
               {(isSubmissionPending ||
                 (isAnyFetching && currentStep !== 0) ||
                 isPaying) && (
-                <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
+                <Loader2 className="ml-2 h-4 w-4 animate-spin text-white" />
               )}
             </button>
           </div>
         </div>
-      </main>
+      </ClientPageShell>
       <SuccessModal
         isOpen={isSuccessModalOpen}
         onClose={handleSuccessModalClose}

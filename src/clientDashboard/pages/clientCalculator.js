@@ -9,6 +9,7 @@ import Headbar from "../components/clientHeadbar";
 import Sidebar from "../components/clientSidebar";
 import ClientActiveTab from "../components/clientActiveTab";
 import { useClientCalculatePricing } from "../../hooks/clientHooks/calculatorHook";
+import ClientPageShell from "../components/ClientPageShell";
 
 const ClientCalculator = () => {
   const navigate = useNavigate();
@@ -228,43 +229,37 @@ const ClientCalculator = () => {
         onCloseMobileMenu={closeMobileMenu}
       />
       <ClientActiveTab />
-      <main className="dashboard-content-shell p-6 md:p-8">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex justify-between items-center pb-2 ">
-            <div className="flex items-center">
-              <h2 className="text-lg font-semibold text-[#575758]">
-                Advanced Calculator
-              </h2>
-            </div>
-          </div>
-
-          <div className="mb-4">
-            <p className="text-sm text-gray-600">
-              Configure your infrastructure, calculate pricing with discounts,
-              and optionally generate invoices and create leads.
-            </p>
-          </div>
-
-          <div className="sticky top-0 z-10 bg-white pt-6 pb-4 border-b mb-6">
+      <ClientPageShell
+        title="Advanced Calculator"
+        description="Configure your infrastructure, calculate pricing with discounts, and optionally generate invoices or leads."
+        breadcrumbs={[
+          { label: "Home", href: "/client-dashboard" },
+          { label: "Pricing Calculator" },
+        ]}
+        contentWrapper="div"
+        contentClassName="space-y-6"
+      >
+        <div className="rounded-lg bg-white p-6 shadow-sm">
+          <div className="sticky top-0 z-10 mb-6 border-b bg-white pb-4 pt-6">
             <StepProgress currentStep={currentStep} steps={steps} />
           </div>
 
           <div
             ref={contentRef}
-            className="w-full flex flex-col items-center justify-start"
+            className="flex w-full flex-col items-center justify-start"
           >
             {renderStep()}
           </div>
 
-          <div className="flex items-center justify-between mt-6 pt-4 border-t">
+          <div className="mt-6 flex items-center justify-between border-t pt-4">
             <div className="flex gap-3">
               {currentStep > 0 && (
                 <button
                   onClick={handleBack}
-                  className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
+                  className="rounded-[30px] border border-[#ECEDF0] bg-[#FAFAFA] px-6 py-2 font-medium text-[#676767] transition-colors hover:text-gray-800"
                   disabled={isCalculating}
                 >
-                  <ChevronLeft className="w-4 h-4 mr-1 inline-block" /> Back
+                  <ChevronLeft className="mr-1 inline-block h-4 w-4" /> Back
                 </button>
               )}
             </div>
@@ -275,16 +270,16 @@ const ClientCalculator = () => {
                 disabled={
                   isCalculating || calculatorData.pricing_requests.length === 0
                 }
-                className="px-8 py-3 bg-[--theme-color] text-white font-medium rounded-full hover:bg-[--secondary-color] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                className="flex items-center justify-center rounded-full bg-[--theme-color] px-8 py-3 font-medium text-white transition-colors hover:bg-[--secondary-color] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isCalculating ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Calculating...
                   </>
                 ) : (
                   <>
-                    <Calculator className="w-4 h-4 mr-2" />
+                    <Calculator className="mr-2 h-4 w-4" />
                     Calculate Pricing
                   </>
                 )}
@@ -292,7 +287,7 @@ const ClientCalculator = () => {
             )}
           </div>
         </div>
-      </main>
+      </ClientPageShell>
     </>
   );
 };

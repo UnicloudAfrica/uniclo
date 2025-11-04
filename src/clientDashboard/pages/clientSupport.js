@@ -6,6 +6,7 @@ import { useCreateClientSupportMessage } from "../../hooks/clientHooks/supportHo
 import Headbar from "../components/clientHeadbar";
 import Sidebar from "../components/clientSidebar";
 import ClientActiveTab from "../components/clientActiveTab";
+import ClientPageShell from "../components/ClientPageShell";
 
 export default function ClientSupport() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -78,8 +79,15 @@ export default function ClientSupport() {
         onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
       />
       <ClientActiveTab />
-      <main className="dashboard-content-shell p-6 md:p-8">
-        <div className="bg-white rounded-lg+ p-6 border border-[#ECEDF0] max-w- mx-auto">
+      <ClientPageShell
+        title="Support"
+        description="Get help from our support team whenever you need it."
+        breadcrumbs={[
+          { label: "Home", href: "/client-dashboard" },
+          { label: "Support" },
+        ]}
+      >
+        <div className="bg-white rounded-lg p-6 border border-[#ECEDF0] max-w-2xl mx-auto">
           <h2 className="text-xl font-semibold text-gray-800 mb-2">
             Contact Support
           </h2>
@@ -170,7 +178,7 @@ export default function ClientSupport() {
             </div>
           </form>
         </div>
-      </main>
+      </ClientPageShell>
     </>
   );
 }

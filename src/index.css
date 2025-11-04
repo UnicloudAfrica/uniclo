@@ -18,6 +18,10 @@
   .dashboard-content-shell.admin-dashboard-shell {
     top: 74px;
   }
+
+  .dashboard-content-shell.client-dashboard-shell {
+    top: 96px;
+  }
 }
 
 @media only screen and (max-width: 767px) {

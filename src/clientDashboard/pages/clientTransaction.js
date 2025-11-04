@@ -6,6 +6,7 @@ import jsPDF from "jspdf";
 import ClientActiveTab from "../components/clientActiveTab";
 import DetailedTransaction from "../components/transactionDetails";
 import { useFetchClientTransactions } from "../../hooks/clientHooks/transactionHooks";
+import ClientPageShell from "../components/ClientPageShell";
 
 export default function ClientPaymentHistory() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -71,6 +72,13 @@ export default function ClientPaymentHistory() {
     return <span className={`${baseClass} ${styleClass}`}>{status}</span>;
   };
 
+  const headerActions = (
+    <button className="flex items-center gap-2 rounded-full bg-[#F2F4F8] px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900">
+      <Settings2 className="h-4 w-4 text-[#555E67]" />
+      <span>Filter</span>
+    </button>
+  );
+
   return (
     <>
       <Headbar onMenuClick={toggleMobileMenu} />
@@ -84,19 +92,19 @@ export default function ClientPaymentHistory() {
         isModalOpen={isModalOpen}
         closeModal={closeModal}
       />
-      <main className="dashboard-content-shell p-6 md:p-8">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-medium text-[#1C1C1C]">
-            Payment History
-          </h2>
-          <button className="flex items-center gap-2 px-3 py-2 text-sm bg-[#F2F4F8] rounded-[8px] text-gray-600 hover:text-gray-900 transition-colors">
-            <Settings2 className="w-4 h-4 text-[#555E67]" />
-            Filter
-          </button>
-        </div>
-
-        {/* Desktop Table */}
-        <div className="hidden md:block overflow-x-auto rounded-[12px] mt-6">
+      <ClientPageShell
+        title="Payment History"
+        description="Review your billing transactions and download detailed receipts."
+        breadcrumbs={[
+          { label: "Home", href: "/client-dashboard" },
+          { label: "Billing" },
+          { label: "Payment History" },
+        ]}
+        actions={headerActions}
+        contentWrapper="div"
+        contentClassName="space-y-6"
+      >
+        <div className="hidden overflow-x-auto rounded-[12px] md:block">
           <table className="w-full">
             <thead className="bg-[#F5F5F5]">
               <tr>
@@ -186,8 +194,7 @@ export default function ClientPaymentHistory() {
           </table>
         </div>
 
-        {/* Mobile Cards */}
-        <div className="md:hidden mt-6">
+        <div className="mt-6 md:hidden">
           {isTransactionsFetching ? (
             Array.from({ length: 3 }).map((_, index) => (
               <div
@@ -270,9 +277,8 @@ export default function ClientPaymentHistory() {
           )}
         </div>
 
-        {/* Pagination */}
         {!isTransactionsFetching && transactions.length > 0 && (
-          <div className="flex items-center justify-center px-4 py-3 mt-6">
+          <div className="mt-6 flex items-center justify-center px-4 py-3">
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
@@ -329,7 +335,7 @@ export default function ClientPaymentHistory() {
             </div>
           </div>
         )}
-      </main>
+      </ClientPageShell>
     </>
   );
 }

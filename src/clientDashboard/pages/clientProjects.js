@@ -18,7 +18,7 @@ import Headbar from "../components/clientHeadbar";
 import Sidebar from "../components/clientSidebar";
 import ClientActiveTab from "../components/clientActiveTab";
 import ModernButton from "../../adminDashboard/components/ModernButton";
-import AdminPageHeader from "../../adminDashboard/components/AdminPageHeader";
+import DashboardPageShell from "../../shared/layouts/DashboardPageShell";
 import ProjectsPageContent from "../../shared/projects/ProjectsPageContent";
 import { designTokens } from "../../styles/designTokens";
 import { useFetchClientProjects } from "../../hooks/clientHooks/projectHooks";
@@ -384,6 +384,42 @@ const ClientProjects = () => {
     [] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
+ const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
+ const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
+  const statsCards = [
+    {
+      title: "Total Projects",
+      value: projectStats.totalProjects,
+      icon: <FolderOpen size={24} />,
+      change: 0,
+      trend: "up",
+      color: "primary",
+      description: "Tracked across tenants",
+    },
+    {
+      title: "Active Projects",
+      value: projectStats.activeProjects,
+      icon: <Activity size={24} />,
+      color: "success",
+      description: "Available for workloads",
+    },
+    {
+      title: "Provisioning",
+      value: projectStats.provisioningProjects,
+      icon: <Settings size={24} />,
+      color: "warning",
+      description: "In progress",
+    },
+    {
+      title: "Instances",
+      value: projectStats.totalInstances,
+      icon: <Server size={24} />,
+      color: "info",
+      description: "Instances discovered",
+    },
+  ];
+
   const headerActions = (
     <div className="flex items-center gap-2">
       <ModernButton
@@ -420,51 +456,26 @@ const ClientProjects = () => {
     { label: "Projects" },
   ];
 
-  const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
-  const closeMobileMenu = () => setIsMobileMenuOpen(false);
-
-  const statsCards = [
-    {
-      title: "Total Projects",
-      value: projectStats.totalProjects,
-      icon: <FolderOpen size={24} />,
-      change: 0,
-      trend: "up",
-      color: "primary",
-      description: "Tracked across tenants",
-    },
-    {
-      title: "Active Projects",
-      value: projectStats.activeProjects,
-      icon: <Activity size={24} />,
-      color: "success",
-      description: "Available for workloads",
-    },
-    {
-      title: "Provisioning",
-      value: projectStats.provisioningProjects,
-      icon: <Settings size={24} />,
-      color: "warning",
-      description: "In progress",
-    },
-    {
-      title: "Instances",
-      value: projectStats.totalInstances,
-      icon: <Server size={24} />,
-      color: "info",
-      description: "Instances discovered",
-    },
-  ];
-
   if (isLoading) {
     return (
       <>
         <Headbar onMenuClick={toggleMobileMenu} />
         <Sidebar isMobileMenuOpen={isMobileMenuOpen} onCloseMobileMenu={closeMobileMenu} />
         <ClientActiveTab />
-        <main className="dashboard-content-shell flex min-h-[60vh] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin" style={{ color: designTokens.colors.primary[500] }} />
-        </main>
+        <DashboardPageShell
+          title="Project Management"
+          description="Manage and track your infrastructure projects"
+          actions={headerActions}
+          subHeaderContent={subHeaderContent}
+          homeHref="/client-dashboard"
+          mainClassName="client-dashboard-shell"
+          contentClassName="flex min-h-[60vh] items-center justify-center"
+        >
+          <Loader2
+            className="h-8 w-8 animate-spin"
+            style={{ color: designTokens.colors.primary[500] }}
+          />
+        </DashboardPageShell>
       </>
     );
   }
@@ -475,7 +486,15 @@ const ClientProjects = () => {
         <Headbar onMenuClick={toggleMobileMenu} />
         <Sidebar isMobileMenuOpen={isMobileMenuOpen} onCloseMobileMenu={closeMobileMenu} />
         <ClientActiveTab />
-        <main className="dashboard-content-shell flex min-h-[60vh] items-center justify-center p-6 md:p-8">
+        <DashboardPageShell
+          title="Project Management"
+          description="Manage and track your infrastructure projects"
+          actions={headerActions}
+          subHeaderContent={subHeaderContent}
+          homeHref="/client-dashboard"
+          mainClassName="client-dashboard-shell"
+          contentClassName="flex min-h-[60vh] items-center justify-center"
+        >
           <div className="w-full max-w-xl rounded-xl border border-red-200 bg-red-50 p-6 text-center">
             <h2 className="text-lg font-semibold text-red-700">Failed to load projects</h2>
             <p className="mt-2 text-sm text-red-600">
@@ -488,7 +507,7 @@ const ClientProjects = () => {
               <ModernButton onClick={() => setAddProjectOpen(true)}>Add Project</ModernButton>
             </div>
           </div>
-        </main>
+        </DashboardPageShell>
         <CreateProjectModal isOpen={isAddProjectOpen} onClose={() => setAddProjectOpen(false)} />
       </>
     );
@@ -499,33 +518,30 @@ const ClientProjects = () => {
       <Headbar onMenuClick={toggleMobileMenu} />
       <Sidebar isMobileMenuOpen={isMobileMenuOpen} onCloseMobileMenu={closeMobileMenu} />
       <ClientActiveTab />
-      <main className="dashboard-content-shell p-0">
-        <AdminPageHeader
-          breadcrumbs={breadcrumbs}
-          title="Project Management"
-          description="Manage and track your infrastructure projects"
-          actions={headerActions}
-          subHeaderContent={subHeaderContent}
-        />
-        <section
-          className="space-y-6 p-6 md:p-8"
-          style={{ backgroundColor: designTokens.colors.neutral[25] }}
-        >
-          <ProjectsPageContent
-            searchQuery={searchQuery}
-            onSearchChange={handleSearchChange}
-            statusOptions={STATUS_OPTIONS}
-            statusFilter={filterStatus}
-            onStatusChange={handleStatusFilterChange}
-            availableRegions={availableRegions}
-            regionFilter={filterRegion}
-            onRegionChange={handleRegionFilterChange}
-            onResetFilters={handleResetFilters}
-            statsCards={statsCards}
-            filteredProjects={paginatedProjects}
-            totalProjects={totalProjects}
-            isFetching={isFetching}
-            onRowClick={handleRowClick}
+      <DashboardPageShell
+        title="Project Management"
+        description="Manage and track your infrastructure projects"
+        actions={headerActions}
+        subHeaderContent={subHeaderContent}
+        breadcrumbs={breadcrumbs}
+        homeHref="/client-dashboard"
+        mainClassName="client-dashboard-shell"
+      >
+        <ProjectsPageContent
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          statusOptions={STATUS_OPTIONS}
+          statusFilter={filterStatus}
+          onStatusChange={handleStatusFilterChange}
+          availableRegions={availableRegions}
+          regionFilter={filterRegion}
+          onRegionChange={handleRegionFilterChange}
+          onResetFilters={handleResetFilters}
+          statsCards={statsCards}
+          filteredProjects={paginatedProjects}
+          totalProjects={totalProjects}
+          isFetching={isFetching}
+          onRowClick={handleRowClick}
           itemsPerPage={itemsPerPage}
           onItemsPerPageChange={handleItemsPerPageChange}
           currentPage={currentPage}
@@ -535,8 +551,7 @@ const ClientProjects = () => {
           renderColumns={() => columns}
           tableActions={actions}
         />
-        </section>
-      </main>
+      </DashboardPageShell>
       <CreateProjectModal isOpen={isAddProjectOpen} onClose={() => setAddProjectOpen(false)} />
     </>
   );

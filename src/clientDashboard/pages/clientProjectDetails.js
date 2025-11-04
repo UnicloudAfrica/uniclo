@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Headbar from "../components/clientHeadbar";
 import Sidebar from "../components/clientSidebar";
 import {
@@ -22,6 +22,7 @@ import {
   Server,
   Share2,
   Shield,
+  RefreshCw,
   Trash2,
   XCircle,
 } from "lucide-react";
@@ -39,7 +40,9 @@ import Subnets from "./infraComps/subnet";
 import { useFetchClientProjectById } from "../../hooks/clientHooks/projectHooks";
 import ClientActiveTab from "../components/clientActiveTab";
 import EdgeConfigPanel from "../components/EdgeConfigPanel";
+import ClientPageShell from "../components/ClientPageShell";
 import useClientTheme from "../../hooks/clientHooks/useClientTheme";
+import ToastUtils from "../../utils/toastUtil";
 
 const decodeId = (encodedId) => {
   try {
@@ -226,6 +229,7 @@ export default function ClientProjectDetails() {
     data: projectDetails,
     isFetching: isProjectFetching,
     error: projectError,
+    refetch: refetchProjectDetails,
   } = useFetchClientProjectById(projectId);
 
   useEffect(() => {
@@ -257,10 +261,6 @@ export default function ClientProjectDetails() {
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
-
-  const handleAddInstance = () => {
-    navigate("/client-dashboard/add-instance");
-  };
 
   const handleInstanceClick = (instance) => {
     const encodedId = encodeURIComponent(btoa(instance.identifier));
@@ -378,6 +378,32 @@ export default function ClientProjectDetails() {
   const networkCount =
     getResourceCount(resourcesCount, ["networks"]) +
     (Array.isArray(projectDetails?.networks) ? projectDetails.networks.length : 0);
+
+  const missingInstancePrereqs = useMemo(() => {
+    const missing = [];
+    if (!vpcCount) missing.push("VPC");
+    if (!subnetCount) missing.push("Subnet");
+    if (!sgCount) missing.push("Security Group");
+    if (!keyPairCount) missing.push("Key Pair");
+    if (!eniCount) missing.push("Network Interface");
+    return missing;
+  }, [eniCount, keyPairCount, sgCount, subnetCount, vpcCount]);
+
+  const canCreateInstances = missingInstancePrereqs.length === 0;
+  const instancePrereqMessage = canCreateInstances
+    ? "Launch a new compute instance for this project."
+    : `Complete the following before launching an instance: ${missingInstancePrereqs.join(
+        ", "
+      )}.`;
+
+  const handleAddInstance = useCallback(() => {
+    if (!canCreateInstances) {
+      ToastUtils.error(instancePrereqMessage);
+      return;
+    }
+
+    navigate("/client-dashboard/add-instance");
+  }, [canCreateInstances, instancePrereqMessage, navigate]);
 
   const setupComplete =
     (projectDetails?.status &&
@@ -617,6 +643,53 @@ export default function ClientProjectDetails() {
     ? `${completedInfraSections}/${totalInfraSections} infra steps`
     : "Infra steps pending";
 
+  const pageTitle = projectDetails?.name || "Project Overview";
+  const pageDescription = projectDetails
+    ? `${projectDetails?.identifier || projectId} • ${providerLabel} • ${regionLabel}`
+    : "Loading project context...";
+
+  const breadcrumbs = useMemo(
+    () => [
+      { label: "Home", href: "/client-dashboard" },
+      { label: "Projects", href: "/client-dashboard/projects" },
+      {
+        label:
+          projectDetails?.name ||
+          projectDetails?.identifier ||
+          (projectId ? `Project ${projectId}` : "Details"),
+      },
+    ],
+    [projectDetails?.identifier, projectDetails?.name, projectId]
+  );
+
+  const headerActions = useMemo(() => {
+    const baseButtonClasses =
+      "inline-flex items-center gap-2 rounded-full border border-[--theme-color-20] px-4 py-2 text-sm font-semibold transition";
+    return (
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => navigate("/client-dashboard/projects")}
+          className={`${baseButtonClasses} text-[--theme-color] hover:border-[--theme-color] hover:bg-[--theme-color-10]`}
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Projects
+        </button>
+        <button
+          type="button"
+          onClick={() => refetchProjectDetails()}
+          disabled={isProjectFetching}
+          className={`${baseButtonClasses} text-[--theme-color] hover:border-[--theme-color] hover:bg-[--theme-color-10] disabled:cursor-not-allowed disabled:border-[--theme-border-color] disabled:text-[--theme-muted-color]`}
+        >
+          <RefreshCw
+            className={`h-4 w-4 ${isProjectFetching ? "animate-spin" : ""}`}
+          />
+          <span>Refresh</span>
+        </button>
+      </div>
+    );
+  }, [isProjectFetching, navigate, refetchProjectDetails]);
+
   const metadataItems = useMemo(
     () => [
       {
@@ -674,7 +747,16 @@ export default function ClientProjectDetails() {
           onCloseMobileMenu={closeMobileMenu}
         />
         <ClientActiveTab />
-        <main className="dashboard-content-shell p-6 md:p-8 flex items-center justify-center">
+        <ClientPageShell
+          title="Project Details"
+          description="Loading project context..."
+          breadcrumbs={[
+            { label: "Home", href: "/client-dashboard" },
+            { label: "Projects", href: "/client-dashboard/projects" },
+            { label: "Details" },
+          ]}
+          contentClassName="flex min-h-[60vh] items-center justify-center"
+        >
           <div className="w-full max-w-5xl space-y-6">
             <div
               className="rounded-3xl p-8 text-white"
@@ -696,7 +778,7 @@ export default function ClientProjectDetails() {
             </div>
             <SkeletonBlock className="h-64" />
           </div>
-        </main>
+        </ClientPageShell>
       </>
     );
   }
@@ -710,8 +792,17 @@ export default function ClientProjectDetails() {
           onCloseMobileMenu={closeMobileMenu}
         />
         <ClientActiveTab />
-        <main className="dashboard-content-shell p-6 md:p-8 flex items-center justify-center flex-col text-center">
-          <p className="text-sm md:text-base font-normal text-gray-700 mb-4">
+        <ClientPageShell
+          title="Project Details"
+          description="We couldn't locate this project."
+          breadcrumbs={[
+            { label: "Home", href: "/client-dashboard" },
+            { label: "Projects", href: "/client-dashboard/projects" },
+            { label: "Details" },
+          ]}
+          contentClassName="flex min-h-[60vh] flex-col items-center justify-center text-center gap-4"
+        >
+          <p className="text-sm md:text-base font-normal text-gray-700">
             This project could not be found.
           </p>
           <button
@@ -721,7 +812,7 @@ export default function ClientProjectDetails() {
           >
             Back to Projects
           </button>
-        </main>
+        </ClientPageShell>
       </>
     );
   }
@@ -734,23 +825,21 @@ export default function ClientProjectDetails() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <ClientActiveTab />
-      <main className="dashboard-content-shell p-6 md:p-8">
-        <div className="space-y-8">
-          <section
-            className="relative overflow-hidden rounded-3xl border border-transparent p-6 md:p-10 text-white shadow-lg"
-            style={{ background: accentGradient }}
-          >
+      <ClientPageShell
+        title={pageTitle}
+        description={pageDescription}
+        breadcrumbs={breadcrumbs}
+        actions={headerActions}
+        contentClassName="space-y-8"
+        contentWrapper="div"
+      >
+        <section
+          className="relative overflow-hidden rounded-3xl border border-transparent p-6 md:p-10 text-white shadow-lg"
+          style={{ background: accentGradient }}
+        >
             <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex-1 space-y-5">
                 <div className="flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => navigate("/client-dashboard/projects")}
-                    className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white/80 transition hover:bg-white/20"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    Projects
-                  </button>
                   <span
                     className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${projectStatus.bg} ${projectStatus.text}`}
                   >
@@ -780,7 +869,13 @@ export default function ClientProjectDetails() {
                   <button
                     type="button"
                     onClick={handleAddInstance}
-                    className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-[--theme-color] transition hover:bg-white/90 hover:text-[--secondary-color]"
+                    disabled={!canCreateInstances}
+                    title={instancePrereqMessage}
+                    className={`inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition ${
+                      canCreateInstances
+                        ? "bg-white text-[--theme-color] hover:bg-white/90 hover:text-[--secondary-color]"
+                        : "bg-white/20 text-white/60 cursor-not-allowed"
+                    }`}
                   >
                     <Plus className="h-4 w-4" />
                     Add Instance
@@ -840,6 +935,19 @@ export default function ClientProjectDetails() {
             </div>
             <div className="pointer-events-none absolute right-6 top-6 h-32 w-32 rounded-full bg-white/10 blur-3xl" />
           </section>
+
+          {!canCreateInstances ? (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 shadow-sm">
+              <p className="font-semibold text-amber-900">Instances locked</p>
+              <p className="mt-1">
+                Complete the following before launching an instance:{" "}
+                <span className="font-medium">
+                  {missingInstancePrereqs.join(", ")}
+                </span>
+                .
+              </p>
+            </div>
+          ) : null}
 
           <div className="grid gap-6 xl:grid-cols-[320px,1fr]">
             <section className="rounded-2xl border border-[--theme-border-color] bg-white p-6 shadow-sm">
@@ -1025,7 +1133,13 @@ export default function ClientProjectDetails() {
                   <button
                     type="button"
                     onClick={handleAddInstance}
-                    className="inline-flex items-center gap-2 rounded-full bg-[--theme-color] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[--secondary-color]"
+                    disabled={!canCreateInstances}
+                    title={instancePrereqMessage}
+                    className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition ${
+                      canCreateInstances
+                        ? "bg-[--theme-color] text-white hover:bg-[--secondary-color]"
+                        : "bg-[--theme-color-10] text-[--theme-muted-color] cursor-not-allowed"
+                    }`}
                   >
                     <Plus className="h-4 w-4" />
                     Add Instance
@@ -1250,8 +1364,7 @@ export default function ClientProjectDetails() {
               </div>
             )}
           </section>
-        </div>
-      </main>
+      </ClientPageShell>
 
       <EditDescriptionModal
         isOpen={isEditDescriptionModalOpen}

@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useFetchClientInstances } from "../../hooks/clientHooks/instanceHooks";
 import { useNavigate } from "react-router-dom";
 import ClientActiveTab from "../components/clientActiveTab";
+import ClientPageShell from "../components/ClientPageShell";
 
 export default function ClientInstances() {
   const navigate = useNavigate();
@@ -49,10 +50,18 @@ export default function ClientInstances() {
           onCloseMobileMenu={closeMobileMenu}
         />
         <ClientActiveTab />
-        <main className="dashboard-content-shell p-6 md:p-8 flex items-center justify-center">
+        <ClientPageShell
+          title="Instances"
+          description="Manage and monitor your cloud instances."
+          breadcrumbs={[
+            { label: "Home", href: "/client-dashboard" },
+            { label: "Instances" },
+          ]}
+          contentClassName="flex min-h-[60vh] flex-col items-center justify-center gap-3"
+        >
           <Loader2 className="w-8 h-8 animate-spin text-[--theme-color]" />
-          <p className="ml-2 text-[--theme-color] mt-2">Loading instances...</p>
-        </main>
+          <p className="text-[--theme-color]">Loading instances...</p>
+        </ClientPageShell>
       </>
     );
   }
@@ -65,7 +74,14 @@ export default function ClientInstances() {
         onCloseMobileMenu={closeMobileMenu}
       />
       <ClientActiveTab />
-      <main className="dashboard-content-shell p-6 md:p-8">
+      <ClientPageShell
+        title="Instances"
+        description="Manage and monitor your cloud instances."
+        breadcrumbs={[
+          { label: "Home", href: "/client-dashboard" },
+          { label: "Instances" },
+        ]}
+      >
         <div className="flex items-center justify-between">
           <button
             onClick={() => navigate("/client-dashboard/add-instance")}
@@ -258,7 +274,7 @@ export default function ClientInstances() {
             </div>
           </div>
         )}
-      </main>
+      </ClientPageShell>
     </>
   );
 }

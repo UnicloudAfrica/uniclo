@@ -1,13 +1,36 @@
-import React, { useState } from "react";
-import { Loader2, Pencil, Trash2 } from "lucide-react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
+import {
+  Wifi,
+  Pencil,
+  Trash2,
+  Plus,
+  TrendingUp,
+  DollarSign,
+} from "lucide-react";
 import { useFetchBandwidthProducts } from "../../../hooks/adminHooks/bandwidthHooks";
+import ResourceDataExplorer from "../../components/ResourceDataExplorer";
 import AddBandwidthModal from "./bandwidthSubs/addBandWidth";
 import EditBandwidthModal from "./bandwidthSubs/editBandwidth";
 import DeleteBandwidthModal from "./bandwidthSubs/deleteBandWidth";
+import ModernButton from "../../components/ModernButton";
 
-const BandWidth = ({ selectedRegion }) => {
-  const { data: bandwidths, isFetching: isBandWidthsFetching } =
-    useFetchBandwidthProducts(selectedRegion);
+const formatCurrency = (amount, currency = "USD") => {
+  if (amount === null || amount === undefined || Number.isNaN(amount)) {
+    return "—";
+  }
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(amount));
+};
+
+const BandWidth = ({ selectedRegion, onMetricsChange }) => {
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [search, setSearch] = useState("");
+
   const [isAddBandwidthModalOpen, setIsAddBandwidthModalOpen] = useState(false);
   const [isEditBandwidthModalOpen, setIsEditBandwidthModalOpen] =
     useState(false);
@@ -15,7 +38,61 @@ const BandWidth = ({ selectedRegion }) => {
     useState(false);
   const [selectedBandwidth, setSelectedBandwidth] = useState(null);
 
+  useEffect(() => {
+    setPage(1);
+    setSearch("");
+  }, [selectedRegion]);
+
+  const { data, isFetching } = useFetchBandwidthProducts(
+    selectedRegion,
+    { page, perPage, search },
+    { enabled: Boolean(selectedRegion), keepPreviousData: true }
+  );
+
+  const rows = data?.data ?? [];
+  const meta = data?.meta ?? null;
+  const total = meta?.total ?? rows.length;
+
+  const averagePrice = useMemo(() => {
+    if (!rows.length) return 0;
+    const sum = rows.reduce((acc, item) => acc + Number(item.price || 0), 0);
+    return sum / rows.length;
+  }, [rows]);
+
+  const highestPrice = useMemo(() => {
+    if (!rows.length) return 0;
+    return Math.max(...rows.map((item) => Number(item.price || 0)));
+  }, [rows]);
+
+  useEffect(() => {
+    onMetricsChange?.({
+      metrics: [
+        {
+          label: "Bandwidth SKUs",
+          value: total,
+          description: "Available throughput tiers",
+          icon: <Wifi className="h-5 w-5" />,
+        },
+        {
+          label: "Median price (USD)",
+          value: formatCurrency(averagePrice),
+          description: "Average monthly cost per SKU",
+          icon: <DollarSign className="h-5 w-5" />,
+        },
+        {
+          label: "Premium tier",
+          value: formatCurrency(highestPrice),
+          description: "Highest configured SKU",
+          icon: <TrendingUp className="h-5 w-5" />,
+        },
+      ],
+      description:
+        "Monitor and tune network throughput offers by region to keep provisioning aligned with customer demand.",
+    });
+  }, [total, averagePrice, highestPrice, onMetricsChange]);
+
   const handleAddBandwidth = () => {
+    setSelectedBandwidth(null);
     setIsAddBandwidthModalOpen(true);
   };
 
@@ -29,151 +106,118 @@ const BandWidth = ({ selectedRegion }) => {
     setIsDeleteBandwidthModalOpen(true);
   };
 
-  const formatCurrency = (amount, currency = "USD") => {
-    if (amount === null || amount === undefined) return "N/A";
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(parseFloat(amount));
+  const columns = [
+    {
+      header: "SKU",
+      key: "identifier",
+      render: (item) => (
+        <div className="flex flex-col">
+          <span className="font-semibold text-slate-900">
+            {item.name || "Unnamed"}
+          </span>
+          <span className="text-xs font-medium uppercase tracking-wider text-slate-400">
+            {item.identifier || "—"}
+          </span>
+        </div>
+      ),
+    },
+    {
+      header: "Billing cadence",
+      key: "billing_frequency",
+      align: "center",
+      render: (item) => (
+        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+          {item.billing_frequency?.replace(/_/g, " ") || "monthly"}
+        </span>
+      ),
+    },
+    {
+      header: "",
+      key: "actions",
+      align: "right",
+      render: (item) => (
+        <div className="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => handleEditBandwidth(item)}
+            className="inline-flex items-center justify-center rounded-full border border-slate-200 p-2 text-slate-500 transition hover:border-primary-200 hover:text-primary-600"
+            title="Edit bandwidth"
+            aria-label="Edit bandwidth"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDeleteBandwidth(item)}
+            className="inline-flex items-center justify-center rounded-full border border-red-200 p-2 text-red-500 transition hover:border-red-300 hover:bg-red-50"
+            title="Remove bandwidth"
+            aria-label="Remove bandwidth"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
+  const primaryAction = (
+    <ModernButton
+      size="sm"
+      onClick={handleAddBandwidth}
+      className="flex items-center gap-2"
+    >
+      <Plus className="h-4 w-4" />
+      Add bandwidth
+    </ModernButton>
+  );
+
+  const emptyState = {
+    icon: (
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-500/10 text-primary-500">
+        <Wifi className="h-5 w-5" />
+      </span>
+    ),
+    title: "No bandwidth products yet",
+    description:
+      "Add throughput tiers to power tenant provisioning flows and quotes for this region.",
+    action: (
+      <ModernButton onClick={handleAddBandwidth} className="flex items-center gap-2">
+        <Plus className="h-4 w-4" />
+        Create bandwidth SKU
+      </ModernButton>
+    ),
   };
 
-  if (isBandWidthsFetching || !selectedRegion) {
-    return (
-      <div className="flex items-center justify-center min-h-[200px]">
-        <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
-        <p className="ml-2 text-gray-700">
-          {!selectedRegion
-            ? "Waiting for region selection..."
-            : "Loading bandwidth products..."}
-        </p>
-      </div>
-    );
-  }
+  const handleSearch = useCallback(
+    (value) => {
+      setSearch(value);
+      setPage(1);
+    },
+    [setSearch, setPage]
+  );
 
   return (
     <>
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={handleAddBandwidth}
-          className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
-        >
-          Add Bandwidth
-        </button>
-      </div>
-
-      <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px] border border-gray-200">
-        <table className="w-full">
-          <thead className="bg-[#F5F5F5]">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Identifier
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Price
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Action
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-[#E8E6EA]">
-            {bandwidths && bandwidths.length > 0 ? (
-              bandwidths.map((bandwidth) => (
-                <tr key={bandwidth.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {bandwidth.identifier || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {bandwidth.name || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatCurrency(bandwidth.price)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
-                    <div className="flex items-center space-x-3">
-                      <button
-                        onClick={() => handleEditBandwidth(bandwidth)}
-                        className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                        title="Edit Bandwidth"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteBandwidth(bandwidth)}
-                        className="text-red-500 hover:text-red-700 transition-colors"
-                        title="Delete Bandwidth"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td
-                  colSpan="4"
-                  className="px-6 py-4 text-center text-sm text-gray-500"
-                >
-                  No bandwidth products found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="md:hidden mt-6 space-y-4">
-        {bandwidths && bandwidths.length > 0 ? (
-          bandwidths.map((bandwidth) => (
-            <div
-              key={bandwidth.id}
-              className="bg-white rounded-[12px] shadow-sm p-4 border border-gray-200"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-base font-semibold text-gray-900">
-                  {bandwidth.name || "N/A"}
-                </h3>
-                <div className="flex items-center space-x-3">
-                  <button
-                    onClick={() => handleEditBandwidth(bandwidth)}
-                    className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                    title="Edit Bandwidth"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteBandwidth(bandwidth)}
-                    className="text-red-500 hover:text-red-700 transition-colors"
-                    title="Delete Bandwidth"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-              <div className="space-y-1 text-sm text-gray-600">
-                <div className="flex justify-between">
-                  <span className="font-medium">Identifier:</span>
-                  <span>{bandwidth.identifier || "N/A"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Price:</span>
-                  <span>{formatCurrency(bandwidth.price)}</span>
-                </div>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="bg-white rounded-[12px] shadow-sm p-4 text-center text-gray-500">
-            No bandwidth products found.
-          </div>
-        )}
-      </div>
+      <ResourceDataExplorer
+        title="Bandwidth catalog"
+        description="Fine-tune bandwidth tiers and keep pricing aligned with infrastructure cost."
+        columns={columns}
+        rows={rows}
+        loading={isFetching}
+        page={meta?.current_page ?? page}
+        perPage={meta?.per_page ?? perPage}
+        total={total}
+        meta={meta}
+        onPageChange={setPage}
+        onPerPageChange={(next) => {
+          setPerPage(next);
+          setPage(1);
+        }}
+        searchValue={search}
+        onSearch={handleSearch}
+        toolbarSlot={primaryAction}
+        emptyState={emptyState}
+      />
 
       <AddBandwidthModal
         isOpen={isAddBandwidthModalOpen}

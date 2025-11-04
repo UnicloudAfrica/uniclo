@@ -55,7 +55,7 @@ export default function VerifyMail() {
 
         switch (userRole) {
           case "tenant":
-            navigate("/dashboard");
+            navigate("/dashboard/onboarding");
             break;
           case "client":
             navigate("/client-dashboard");
@@ -64,7 +64,7 @@ export default function VerifyMail() {
             navigate("/admin-dashboard");
             break;
           default:
-            navigate("/dashboard");
+            navigate("/dashboard/onboarding");
             break;
         }
       },

@@ -1,40 +1,88 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
-import { Pencil, Trash2 } from "lucide-react"; // Import icons
+import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { CalendarClock, SquarePen, Trash2 } from "lucide-react";
 import { EditClientModal } from "../../pages/clientComps/editClient";
 import DeleteClientModal from "../../pages/clientComps/deleteClient";
+import ModernButton from "../ModernButton";
+import StatusPill from "../StatusPill";
+import IconBadge from "../IconBadge";
 
-// Function to encode the ID for URL
-const encodeId = (id) => {
-  return encodeURIComponent(btoa(id));
-};
+const encodeId = (id) => encodeURIComponent(btoa(id));
 
 const OverviewClient = ({ client }) => {
   const navigate = useNavigate();
   const [isEditClientModalOpen, setIsEditClientModalOpen] = useState(false);
   const [isDeleteClientModalOpen, setIsDeleteClientModalOpen] = useState(false);
-  const [selectedClient, setSelectedClient] = useState(null); // To store client data for modals
+  const [selectedClient, setSelectedClient] = useState(null);
+
+  const statusLabel = client?.verified === 1 ? "Active client" : "Pending activation";
+  const statusTone = client?.verified === 1 ? "success" : "warning";
+
+  const fullName = useMemo(
+    () =>
+      [client?.first_name, client?.middle_name, client?.last_name]
+        .filter(Boolean)
+        .join(" ")
+        .trim(),
+    [client]
+  );
+
+  const addressLine = useMemo(() => {
+    const parts = [client?.address, client?.city, client?.state, client?.country]
+      .filter(Boolean)
+      .join(", ");
+    return parts || "Address not supplied";
+  }, [client]);
 
   const handleViewTenantDetails = (tenantIdentifier, tenantName) => {
-    if (tenantIdentifier) {
-      const encodedTenantId = encodeId(tenantIdentifier); // Use identifier for encoding
-      const encodedTenantName = encodeURIComponent(tenantName);
-      navigate(
-        `/admin-dashboard/partners/details?id=${encodedTenantId}&name=${encodedTenantName}`
-      );
-    }
+    if (!tenantIdentifier) return;
+    const encodedTenantId = encodeId(tenantIdentifier);
+    const encodedTenantName = encodeURIComponent(tenantName || "");
+    navigate(
+      `/admin-dashboard/partners/details?id=${encodedTenantId}&name=${encodedTenantName}`
+    );
   };
 
-  const formatDateTime = (dateString) => {
-    if (!dateString) return "N/A";
-    try {
-      return new Date(dateString).toLocaleString();
-    } catch (e) {
-      return "Invalid Date";
-    }
-  };
+  const formatDateTime = (value) =>
+    value
+      ? new Date(value).toLocaleString(undefined, {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "—";
 
-  // Handlers for opening and closing modals
+  const contactItems = [
+    {
+      label: "Email address",
+      value: client?.email || "Not provided",
+      iconKey: "contact.email",
+      tone: "primary",
+      type: "mailto",
+    },
+    {
+      label: "Phone number",
+      value: client?.phone || "Not provided",
+      iconKey: "contact.phone",
+      tone: "indigo",
+    },
+    {
+      label: "Tenant",
+      value: client?.tenant?.name || "Not assigned",
+      iconKey: "business.companyType",
+      tone: "slate",
+      action: client?.tenant?.identifier
+        ? () =>
+            handleViewTenantDetails(
+              client.tenant.identifier,
+              client.tenant.name
+            )
+        : null,
+    },
+  ];
+
   const openEditClientModal = (clientData) => {
     setSelectedClient(clientData);
     setIsEditClientModalOpen(true);
@@ -55,20 +103,9 @@ const OverviewClient = ({ client }) => {
     setSelectedClient(null);
   };
 
-  // Pass-through functions for parent component's handlers
-  const onClientEditSave = (updatedClient) => {
-    // onEditClient(updatedClient);
-    closeEditClientModal();
-  };
-
-  const onClientDeleteConfirm = (clientId) => {
-    // onDeleteClient(clientId);
-    closeDeleteClientModal();
-  };
-
   if (!client) {
     return (
-      <div className="text-center text-gray-500 py-8">
+      <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/70 p-10 text-center text-sm text-slate-500">
         No client data available.
       </div>
     );
@@ -76,177 +113,208 @@ const OverviewClient = ({ client }) => {
 
   return (
     <>
-      <div className="flex flex-col-reverse md:flex-row">
-        {/* Main Content */}
-        <div className="flex-1 md:px-8">
-          <div className="w-full md:max-w-2xl">
-            {/* Header */}
-            <div className="pb-4 border-b border-[#EDEFF6] mb-4">
-              <div className="flex justify-between items-center mb-2.5">
-                <div className="text-base font-medium text-[#575758]">ID:</div>
-                <div className="text-base font-medium text-[#575758]">
-                  #{client.identifier || "N/A"}
-                </div>
-              </div>
-              <div className="text-right flex justify-between items-center">
-                <div className="text-base font-medium text-[#575758]">
-                  Status:
-                </div>
-                <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    client.verified === 1
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
-                  }`}
-                >
-                  {client.verified === 1 ? "Active" : "Inactive"}
-                </span>
+      <div className="space-y-6">
+        <div className="rounded-3xl border border-[#EAECF0] bg-gradient-to-br from-white via-[#F5F8FB] to-white p-6 shadow-sm">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Client Profile
+              </p>
+              <h2 className="mt-1 text-2xl font-semibold text-slate-900">
+                {fullName || client.email || "Client record"}
+              </h2>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <StatusPill label={statusLabel} tone={statusTone} />
+                <StatusPill
+                  label={`Client ID ${client.identifier || "—"}`}
+                  tone="neutral"
+                />
               </div>
             </div>
-
-            {/* Details Grid */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="text-base font-light text-[#575758]">Name:</div>
-                <div className="text-base font-medium text-[#575758]">
-                  {client.first_name || "N/A"}{" "}
-                  {client.middle_name ? `${client.middle_name} ` : ""}
-                  {client.last_name || "N/A"}
-                </div>
-              </div>
-              <div className="text-right flex items-center justify-between">
-                <div className="text-base font-light text-[#575758]">
-                  Email Address:
-                </div>
-                <div className="text-base font-medium text-[#575758]">
-                  {client.email || "N/A"}
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="text-base font-light text-[#575758]">
-                  Phone Number:
-                </div>
-                <div className="text-base font-medium text-[#575758]">
-                  {client.phone || "N/A"}
-                </div>
-              </div>
-
-              {/* New: Address */}
-              <div className="flex items-center justify-between">
-                <div className="text-base font-light text-[#575758]">
-                  Address:
-                </div>
-                <div className="text-base font-medium text-[#575758]">
-                  {client.address || "N/A"}
-                </div>
-              </div>
-
-              {/* New: Zip */}
-              <div className="flex items-center justify-between">
-                <div className="text-base font-light text-[#575758]">
-                  Zip Code:
-                </div>
-                <div className="text-base font-medium text-[#575758]">
-                  {client.zip || "N/A"}
-                </div>
-              </div>
-
-              {/* New: Country */}
-              <div className="flex items-center justify-between">
-                <div className="text-base font-light text-[#575758]">
-                  Country:
-                </div>
-                <div className="text-base font-medium text-[#575758]">
-                  {client.country || "N/A"}
-                </div>
-              </div>
-
-              {/* New: City */}
-              <div className="flex items-center justify-between">
-                <div className="text-base font-light text-[#575758]">City:</div>
-                <div className="text-base font-medium text-[#575758]">
-                  {client.city || "N/A"}
-                </div>
-              </div>
-
-              {/* New: State */}
-              <div className="flex items-center justify-between">
-                <div className="text-base font-light text-[#575758]">
-                  State:
-                </div>
-                <div className="text-base font-medium text-[#575758]">
-                  {client.state || "N/A"}
-                </div>
-              </div>
-
-              {/* Tenant Name with click handler */}
-              <div className="flex items-center justify-between">
-                <div className="text-base font-light text-[#575758]">
-                  Tenant Name:
-                </div>
-                <button
-                  onClick={() =>
-                    handleViewTenantDetails(
-                      client.tenant?.identifier, // Use tenant identifier
-                      client.tenant?.name
-                    )
-                  }
-                  className="text-base font-medium text-[#288DD1] hover:underline disabled:text-gray-500 disabled:no-underline disabled:cursor-not-allowed"
-                  disabled={!client.tenant?.identifier}
-                >
-                  {client.tenant?.name || "N/A"}
-                </button>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="text-base font-light text-[#575758]">
-                  Created At:
-                </div>
-                <div className="text-base font-medium text-[#575758]">
-                  {formatDateTime(client.created_at)}
-                </div>
-              </div>
-            </div>
-
-            {/* Edit and Delete Icons */}
-            <div className="flex justify-end gap-3 mt-8">
-              <button
+            <div className="flex flex-wrap items-center gap-2">
+              <ModernButton
+                variant="outline"
+                size="sm"
+                className="gap-2"
                 onClick={() => openEditClientModal(client)}
-                className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                title="Edit Client"
               >
-                <Pencil className="w-5 h-5" />
-              </button>
-              <button
+                <SquarePen className="h-4 w-4" />
+                Edit Client
+              </ModernButton>
+              <ModernButton
+                variant="danger"
+                size="sm"
+                className="gap-2"
                 onClick={() => openDeleteClientModal(client)}
-                className="text-red-500 hover:text-red-700 transition-colors"
-                title="Delete Client"
               >
-                <Trash2 className="w-5 h-5" />
-              </button>
+                <Trash2 className="h-4 w-4" />
+                Remove
+              </ModernButton>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <InfoStat label="Account status" value={statusLabel} />
+            <InfoStat label="Tenant" value={client?.tenant?.name || "Not assigned"} />
+            <InfoStat label="Created" value={formatDateTime(client?.created_at)} />
+            <InfoStat label="Updated" value={formatDateTime(client?.updated_at)} />
+          </div>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
+          <div className="space-y-6">
+            <div className="rounded-3xl border border-[#EAECF0] bg-white p-5 shadow-sm">
+              <h3 className="text-sm font-semibold text-slate-900">
+                Contact Details
+              </h3>
+              <ul className="mt-4 space-y-3">
+                {contactItems.map(({ label, value, iconKey, tone, type, action }) => (
+                  <li key={label} className="flex items-start gap-3 text-sm">
+                    <IconBadge iconKey={iconKey} tone={tone} size="sm" className="mt-0.5" />
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        {label}
+                      </p>
+                      {type === "mailto" && value && value !== "Not provided" ? (
+                        <a
+                          href={`mailto:${value}`}
+                          className="text-sm font-semibold text-[#288DD1] hover:underline"
+                        >
+                          {value}
+                        </a>
+                      ) : action ? (
+                        <button
+                          type="button"
+                          onClick={action}
+                          className="text-sm font-semibold text-[#288DD1] hover:underline"
+                        >
+                          {value}
+                        </button>
+                      ) : (
+                        <p className="text-sm font-semibold text-slate-800">
+                          {value}
+                        </p>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="rounded-3xl border border-[#EAECF0] bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-2">
+                <IconBadge
+                  iconKey="business.registeredAddress"
+                  tone="slate"
+                  size="sm"
+                />
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Address & Location
+                </h3>
+              </div>
+              <dl className="mt-4 space-y-4">
+                <div className="rounded-2xl border border-[#EEF2F6] bg-[#F9FAFB] p-3 text-sm text-slate-800">
+                  {addressLine}
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-xs text-slate-600">
+                  <div>
+                    <p className="font-semibold uppercase tracking-wide">
+                      Zip / Postal
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-slate-800">
+                      {client?.zip || "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-semibold uppercase tracking-wide">
+                      Country
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-slate-800">
+                      {client?.country || "—"}
+                    </p>
+                  </div>
+                </div>
+              </dl>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="rounded-3xl border border-[#EAECF0] bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-2">
+                <IconBadge iconKey="contact.accountId" tone="primary" size="sm" />
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Account Details
+                </h3>
+              </div>
+              <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+                <DetailRow label="Identifier" value={client?.identifier || "—"} />
+                <DetailRow label="Role" value={client?.role || "Client"} />
+                <DetailRow label="Status" value={statusLabel} />
+                <DetailRow
+                  label="Tenant reference"
+                  value={client?.tenant?.identifier || "—"}
+                />
+              </dl>
+            </div>
+
+            <div className="rounded-3xl border border-[#EAECF0] bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-2">
+                <CalendarClock className="h-5 w-5 text-[#288DD1]" />
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Activity Timeline
+                </h3>
+              </div>
+              <dl className="mt-4 space-y-3 text-sm">
+                <TimelineRow label="Created" value={formatDateTime(client?.created_at)} />
+                <TimelineRow label="Updated" value={formatDateTime(client?.updated_at)} />
+              </dl>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Edit Client Modal */}
-      {isEditClientModalOpen && selectedClient && (
+      {isEditClientModalOpen && (
         <EditClientModal
-          client={client}
+          client={selectedClient}
           onClose={closeEditClientModal}
-          onSave={onClientEditSave} // Propagate save to parent
+          onClientUpdated={closeEditClientModal}
         />
       )}
-
-      {/* Delete Client Modal */}
       <DeleteClientModal
         isOpen={isDeleteClientModalOpen}
         onClose={closeDeleteClientModal}
-        client={client}
-        onDeleteConfirm={onClientDeleteConfirm}
+        client={selectedClient}
+        onDeleteConfirm={closeDeleteClientModal}
       />
     </>
   );
 };
+
+const InfoStat = ({ label, value }) => (
+  <div className="rounded-2xl border border-[#EEF2F6] bg-white p-4 shadow-sm">
+    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+      {label}
+    </p>
+    <p className="mt-1 text-sm font-semibold text-slate-900">{value}</p>
+  </div>
+);
+
+const DetailRow = ({ label, value }) => (
+  <div>
+    <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+      {label}
+    </dt>
+    <dd className="mt-1 text-sm font-semibold text-slate-800">{value}</dd>
+  </div>
+);
+
+const TimelineRow = ({ label, value }) => (
+  <div className="flex items-center justify-between rounded-2xl border border-[#EEF2F6] bg-[#F9FAFB] px-4 py-3">
+    <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+      {label}
+    </dt>
+    <dd className="text-sm font-semibold text-slate-800">{value}</dd>
+  </div>
+);
 
 export default OverviewClient;

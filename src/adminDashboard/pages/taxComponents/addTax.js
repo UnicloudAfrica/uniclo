@@ -4,46 +4,47 @@ import { useFetchCountries } from "../../../hooks/resource";
 import { useCreateTaxConfiguration } from "../../../hooks/adminHooks/taxConfigurationHooks";
 import ToastUtils from "../../../utils/toastUtil";
 
-const AddTaxTypeModal = ({ isOpen, onClose }) => {
+const AddTaxTypeModal = ({ isOpen, onClose, defaultCountryId, onSuccess }) => {
   const { data: countries, isFetching: isCountriesFetching } =
     useFetchCountries();
   const { mutate, isPending } = useCreateTaxConfiguration();
 
   const [formData, setFormData] = useState({
     name: "",
-    slug: "",
     initialRate: "",
     selectedCountryId: "",
   });
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) {
       setFormData({
         name: "",
-        slug: "",
+        initialRate: "",
+        selectedCountryId: defaultCountryId ? String(defaultCountryId) : "",
+      });
+      setErrors({});
+    } else {
+      setFormData({
+        name: "",
         initialRate: "",
         selectedCountryId: "",
       });
       setErrors({});
     }
-  }, [isOpen]);
+  }, [isOpen, defaultCountryId]);
 
   const validateForm = () => {
     const newErrors = {};
     if (!formData.name.trim()) {
       newErrors.name = "Tax Type Name is required";
     }
-    if (!formData.slug.trim()) {
-      newErrors.slug = "Slug is required";
-    }
 
     // Validate initial rate if provided
     if (formData.initialRate.trim() !== "") {
       const rateValue = parseFloat(formData.initialRate);
-      if (isNaN(rateValue) || rateValue < 0 || rateValue > 1) {
-        // Rates are typically 0 to 1 (e.g., 0.075 for 7.5%)
-        newErrors.initialRate = "Rate must be a number between 0 and 1.";
+      if (isNaN(rateValue) || rateValue < 0 || rateValue > 100) {
+        newErrors.initialRate = "Rate must be a number between 0 and 100.";
       }
       // If an initial rate is provided, a country MUST be selected.
       if (!formData.selectedCountryId) {
@@ -67,23 +68,26 @@ const AddTaxTypeModal = ({ isOpen, onClose }) => {
 
     const dataToSubmit = {
       name: formData.name,
-      slug: formData.slug,
     };
 
     // If an initial rate and a country are provided, add them to country_rates
     if (formData.initialRate.trim() !== "" && formData.selectedCountryId) {
-      dataToSubmit.rates = [
-        {
-          country_id: parseInt(formData.selectedCountryId),
-          rate: parseFloat(formData.initialRate),
-        },
-      ];
+      const numericInitialRate = parseFloat(formData.initialRate);
+      if (!Number.isNaN(numericInitialRate)) {
+        dataToSubmit.rates = [
+          {
+            country_id: parseInt(formData.selectedCountryId),
+            rate: numericInitialRate / 100,
+          },
+        ];
+      }
     }
 
     mutate(dataToSubmit, {
       onSuccess: () => {
         ToastUtils.success("Tax type added successfully");
         onClose();
+        onSuccess?.();
       },
       onError: (err) => {
         console.error("Failed to create Tax Type:", err);
@@ -137,28 +141,6 @@ const AddTaxTypeModal = ({ isOpen, onClose }) => {
                 <p className="text-red-500 text-xs mt-1">{errors.name}</p>
               )}
             </div>
-            <div>
-              <label
-                htmlFor="slug"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Slug<span className="text-red-500">*</span>
-              </label>
-              <input
-                id="slug"
-                type="text"
-                value={formData.slug}
-                onChange={(e) => updateFormData("slug", e.target.value)}
-                placeholder="e.g., vat"
-                className={`w-full input-field ${
-                  errors.slug ? "border-red-500" : "border-gray-300"
-                }`}
-                disabled={isPending}
-              />
-              {errors.slug && (
-                <p className="text-red-500 text-xs mt-1">{errors.slug}</p>
-              )}
-            </div>
             {/* Optional Initial Rate */}
             <div className="border-t border-gray-200 pt-4 mt-4">
               <h3 className="text-base font-semibold text-gray-800 mb-3">
@@ -169,7 +151,7 @@ const AddTaxTypeModal = ({ isOpen, onClose }) => {
                   htmlFor="initialRate"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Rate (Enter percentage: 7.5 for 7.5% or decimal: 0.075)
+                  Rate (enter percentage, e.g. 7.5 for 7.5%)
                 </label>
                 <div className="relative">
                   <input
@@ -180,25 +162,19 @@ const AddTaxTypeModal = ({ isOpen, onClose }) => {
                     max="100"
                     value={formData.initialRate}
                     onChange={(e) => {
-                      let value = e.target.value;
-                      // If user enters a value greater than 1, assume it's percentage format
-                      // Convert to decimal for storage (7.5 becomes 0.075)
-                      if (parseFloat(value) > 1 && parseFloat(value) <= 100) {
-                        value = (parseFloat(value) / 100).toString();
-                      }
-                      updateFormData("initialRate", value);
+                      updateFormData("initialRate", e.target.value);
                     }}
-                    placeholder="7.5 or 0.075"
+                    placeholder="7.5"
                     className={`w-full input-field ${
                       errors.initialRate ? "border-red-500" : "border-gray-300"
                     }`}
                     disabled={isPending}
                   />
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">
-                    {formData.initialRate && parseFloat(formData.initialRate) ? 
-                      `${(parseFloat(formData.initialRate) * 100).toFixed(2)}%` : 
-                      '%'
-                    }
+                    {formData.initialRate &&
+                    !Number.isNaN(parseFloat(formData.initialRate))
+                      ? `${parseFloat(formData.initialRate).toFixed(2)}%`
+                      : "%"}
                   </div>
                 </div>
                 {errors.initialRate && (
@@ -207,7 +183,7 @@ const AddTaxTypeModal = ({ isOpen, onClose }) => {
                   </p>
                 )}
                 <p className="text-xs text-gray-500 mt-1">
-                  Enter 7.5 for 7.5% tax (will be stored as 0.075)
+                  Enter the percentage you want to apply (e.g. 7.5 for 7.5%).
                 </p>
               </div>
               <div className="mt-4">

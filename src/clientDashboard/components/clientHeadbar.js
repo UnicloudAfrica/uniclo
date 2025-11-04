@@ -48,13 +48,23 @@ const Headbar = ({ onMenuClick }) => {
       {/* Desktop View */}
       <div className="w-full fixed top-0 left-0 h-[74px] px-6 md:px-8 py-3 z-[999] border-b bg-[#fff] border-[#C8CBD9] hidden md:flex justify-between items-center font-Outfit">
         {isThemeFetching ? (
-          <div className="w-[71px] h-[54px] bg-gray-200 rounded animate-pulse" />
+          <div className="w-[110px] h-[48px] bg-gray-200 rounded animate-pulse" />
         ) : (
-          <img
-            src={theme?.businessLogoHref}
-            className="w-auto h-[54px] max-w-[150px] object-contain"
-            alt="Business Logo"
-          />
+          <a
+            href={theme?.businessLogoLink || "/client-dashboard"}
+            className="inline-flex items-center"
+            aria-label="Client home"
+          >
+            <img
+              src={theme?.businessLogoHref}
+              className="w-auto h-[54px] max-w-[160px] object-contain"
+              alt={
+                theme?.company?.name
+                  ? `${theme.company.name} Logo`
+                  : "Client Portal Logo"
+              }
+            />
+          </a>
         )}
         {/* Centered Free Trial Button */}
         {/* <div className="absolute left-1/2 transform -translate-x-1/2">

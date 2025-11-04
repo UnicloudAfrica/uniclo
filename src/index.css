@@ -10,7 +10,8 @@
 
 @layer components {
   .dashboard-content-shell {
-    @apply absolute top-[126px] left-0 md:left-20 lg:left-[20%] w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full;
+    @apply absolute top-[126px] left-0 md:left-20 lg:left-[20%] w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full;
+    background-color: var(--theme-surface-alt, #FAFAFA);
     font-family: "Outfit", "Inter", "SF Pro Display", system-ui, sans-serif;
   }
 
@@ -42,6 +43,21 @@ select,
 textarea {
   font-family: inherit;
 }
+
+.modern-input-field::placeholder {
+  color: #9ca3af;
+  opacity: 1;
+}
+
+.modern-select-field {
+  background-image: none;
+  background-color: #f8fafc;
+}
+
+.modern-textarea-field::placeholder {
+  color: #9ca3af;
+  opacity: 1;
+}
 /* menu  */
 
 /* Target sonner toasts */
@@ -70,6 +86,24 @@ textarea {
 :root {
   --bar-bg: #121212;
   --unicloud-blue: #288dd1;
+  --theme-color: #288dd1;
+  --secondary-color: #3272ca;
+  --theme-color-10: rgba(40, 141, 209, 0.1);
+  --theme-color-20: rgba(40, 141, 209, 0.2);
+  --theme-border-color: rgba(50, 114, 202, 0.18);
+  --theme-card-bg: #ffffff;
+  --theme-surface-alt: #f3f4f6;
+  --theme-heading-color: #1f2937;
+  --theme-text-color: #1f2937;
+  --theme-muted-color: #6b7280;
+  --theme-badge-success-bg: rgba(40, 141, 209, 0.16);
+  --theme-badge-success-text: #288dd1;
+  --theme-badge-pending-bg: #fef3c7;
+  --theme-badge-pending-text: #92400e;
+  --theme-badge-failed-bg: #fee2e2;
+  --theme-badge-failed-text: #b91c1c;
+  --theme-tag-bg: rgba(40, 141, 209, 0.16);
+  --theme-tag-text: #288dd1;
   font-family: "Outfit", "Inter", "SF Pro Display", system-ui, sans-serif;
 }
 
@@ -158,14 +192,84 @@ body {
   -webkit-background-clip: text;
   color: transparent;
 }
+
+/* Dynamic branding overrides */
+.text-\[\#288DD1\],
+.hover\:text-\[\#288DD1\]:hover,
+.focus\:text-\[\#288DD1\]:focus {
+  color: var(--theme-color) !important;
+}
+
+.text-\[\#3272CA\],
+.hover\:text-\[\#3272CA\]:hover,
+.focus\:text-\[\#3272CA\]:focus {
+  color: var(--secondary-color) !important;
+}
+
+.hover\:text-\[\#1976D2\]:hover,
+.focus\:text-\[\#1976D2\]:focus {
+  color: var(--secondary-color) !important;
+}
+
+.bg-\[\#288DD1\],
+.hover\:bg-\[\#288DD1\]:hover,
+.focus\:bg-\[\#288DD1\]:focus {
+  background-color: var(--theme-color) !important;
+}
+
+.bg-\[\#288DD11A\],
+.bg-\[\#288DD10D\],
+.bg-\[\#288DD10d\] {
+  background-color: var(--theme-color-10) !important;
+}
+
+.bg-\[\#1976D2\],
+.hover\:bg-\[\#1976D2\]:hover {
+  background-color: var(--secondary-color) !important;
+}
+
+.text-\[\#6db1df\],
+.hover\:text-\[\#6db1df\]:hover,
+.focus\:text-\[\#6db1df\]:focus {
+  color: var(--theme-color-20) !important;
+}
+
+.hover\:bg-\[\#6db1df\]:hover,
+.focus\:bg-\[\#6db1df\]:focus {
+  background-color: var(--theme-color-20) !important;
+}
+
+.border-\[\#288DD1\],
+.border-\[\#288dd1\],
+.focus\:border-\[\#288DD1\]:focus,
+.focus\:border-\[\#288dd1\]:focus {
+  border-color: var(--theme-color) !important;
+}
+
+.border-\[\#288dd12d\],
+.border-\[\#288DD12D\] {
+  border-color: var(--theme-border-color) !important;
+}
+
+.focus\:ring-\[\#288DD1\]:focus,
+.focus\:ring-\[\#288dd1\]:focus,
+.ring-\[\#288DD1\] {
+  --tw-ring-color: var(--theme-color) !important;
+}
+
+.focus\:ring-\[\#1976D2\]:focus,
+.ring-\[\#1976D2\] {
+  --tw-ring-color: var(--secondary-color) !important;
+}
+
+.text-\[\#288DD1\] svg,
+.text-\[\#3272CA\] svg {
+  fill: currentColor;
+}
 .gradient-txt {
   background: linear-gradient(45deg, var(--unicloud-blue) cc, #3fe0c8);
   -webkit-background-clip: text;
   color: transparent;
-}
-.group {
-  background-image: url(../src/pages/assets/server.svg);
-  background-size: cover;
 }
 .corp {
   background-image: url(../src/pages/assets/corp.svg);
@@ -252,6 +356,15 @@ img {
 
 .input-field:focus {
   box-shadow: 0 0 0 1px var(--unicloud-blue);
+}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
 }
 ::-webkit-scrollbar {
   -webkit-appearance: none;

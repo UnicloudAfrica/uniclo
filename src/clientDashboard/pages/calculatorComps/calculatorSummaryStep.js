@@ -6,7 +6,6 @@ import {
   Building,
   Phone,
   Mail,
-  MapPin,
   Loader2,
   Calculator,
   CheckCircle,
@@ -88,6 +87,13 @@ const CalculatorSummaryStep = ({
           const { _display, ...rest } = req;
           return rest;
         }),
+        object_storage_items: (calculatorData.object_storage_items || []).map(
+          (item) => {
+            const { _display, ...rest } = item;
+            return rest;
+          }
+        ),
+        country_code: calculatorData.country_code || null,
       };
 
       createMultiQuote(payload, {
@@ -133,22 +139,12 @@ const CalculatorSummaryStep = ({
     try {
       const payload = {
         subject: `Calculator Lead - ${
-          pricingResult?.pricing?.total
-            ? formatCurrency(
-                pricingResult.pricing.total,
-                pricingResult.pricing.currency
-              )
-            : "Quote Request"
+          combinedTotal > 0 ? combinedTotalFormatted : "Quote Request"
         }`,
         email: leadData.email,
         bill_to_name: `${leadData.first_name} ${leadData.last_name}`,
         notes: `Lead created from advanced calculator. Total estimated cost: ${
-          pricingResult?.pricing?.total
-            ? formatCurrency(
-                pricingResult.pricing.total,
-                pricingResult.pricing.currency
-              )
-            : "N/A"
+          combinedTotal > 0 ? combinedTotalFormatted : "N/A"
         }`,
         create_lead: true,
         lead_info: {
@@ -163,6 +159,13 @@ const CalculatorSummaryStep = ({
           const { _display, ...rest } = req;
           return rest;
         }),
+        object_storage_items: (calculatorData.object_storage_items || []).map(
+          (item) => {
+            const { _display, ...rest } = item;
+            return rest;
+          }
+        ),
+        country_code: calculatorData.country_code || null,
       };
 
       createMultiQuote(payload, {
@@ -210,7 +213,123 @@ const CalculatorSummaryStep = ({
     );
   }
 
-  const { pricing, summary } = pricingResult;
+  const pricing = pricingResult.pricing || {};
+  const summary = pricingResult.summary || {
+    total_items: 0,
+    total_instances: 0,
+    regions: [],
+    has_discount: false,
+  };
+
+  const normalizeLine = (line) => ({
+    name: line.name || "",
+    region: line.region || line.meta?.region || null,
+    quantity: Number(line.quantity || 0),
+    unit_price: Number(
+      line.unit_price ??
+        line.unit_amount ??
+        0
+    ),
+    total: Number(line.total || 0),
+    currency: line.currency || pricing.currency || "USD",
+    term_months: line.term_months ?? line.meta?.object_storage?.months ?? null,
+    meta: line.meta || {},
+  });
+
+  const apiStorage = pricing.object_storage;
+  const hasApiStorage =
+    !!apiStorage?.included_in_totals &&
+    Array.isArray(apiStorage.lines) &&
+    apiStorage.lines.length > 0;
+
+  const apiStorageLines = hasApiStorage
+    ? apiStorage.lines.map(normalizeLine)
+    : [];
+
+  const storageItems = calculatorData.object_storage_items || [];
+  const fallbackStorageLines = storageItems.map((item) => ({
+    name: item.product_name || "Object Storage Tier",
+    region: item.region,
+    quantity: item.quantity,
+    unit_price: Number(item.unit_price || 0),
+    total: Number(item.total_price || 0),
+    currency: item.currency || pricing.currency || "USD",
+    term_months: item.months,
+    meta: {
+      object_storage: {
+        quantity: item.quantity,
+        months: item.months,
+      },
+    },
+  }));
+
+  const storageLines = hasApiStorage ? apiStorageLines : fallbackStorageLines;
+
+  const storageSubtotal = hasApiStorage
+    ? Number(apiStorage.subtotal || 0)
+    : storageLines.reduce(
+        (sum, line) => sum + Number(line.total || 0),
+        0
+      );
+
+  const baseSubtotal = Number(pricing.subtotal || 0);
+  const baseTax = Number(pricing.tax || 0);
+  const basePreDiscount = Number(
+    pricing.pre_discount_subtotal || baseSubtotal
+  );
+  const discountAmount = Number(pricing.discount || 0);
+
+  let combinedLines = [];
+  let combinedPreDiscount;
+  let combinedSubtotal;
+  let combinedTax;
+  let combinedTotal;
+  let storageTax = 0;
+
+  if (hasApiStorage) {
+    combinedLines = Array.isArray(pricing.lines)
+      ? pricing.lines.map(normalizeLine)
+      : storageLines;
+    combinedPreDiscount = basePreDiscount;
+    combinedSubtotal = baseSubtotal;
+    combinedTax = baseTax;
+    combinedTotal = Number(pricing.total || 0);
+  } else {
+    const effectiveTaxRate =
+      baseSubtotal > 0 ? baseTax / baseSubtotal : 0;
+    storageTax = Number((storageSubtotal * effectiveTaxRate).toFixed(2));
+
+    combinedLines = [
+      ...(Array.isArray(pricing.lines)
+        ? pricing.lines.map(normalizeLine)
+        : []),
+      ...storageLines,
+    ];
+    combinedPreDiscount = basePreDiscount + storageSubtotal;
+    combinedSubtotal = baseSubtotal + storageSubtotal;
+    combinedTax = baseTax + storageTax;
+    combinedTotal =
+      Number(pricing.total || 0) + storageSubtotal + storageTax;
+  }
+
+  const displayCurrency =
+    pricing.currency ||
+    storageLines[0]?.currency ||
+    calculatorData.currency_code ||
+    "USD";
+  const combinedTotalFormatted = formatCurrency(combinedTotal, displayCurrency);
+
+  const combinedTotalItems = hasApiStorage
+    ? summary.total_items
+    : summary.total_items + storageLines.length;
+  const combinedRegions = hasApiStorage
+    ? new Set(summary.regions || [])
+    : new Set([
+        ...(summary.regions || []),
+        ...storageItems.map((item) => item.region),
+      ]);
+  const showPreDiscountRow =
+    basePreDiscount !== baseSubtotal || storageSubtotal > 0;
 
   return (
     <div className="space-y-6 w-full max-w-4xl">
@@ -243,7 +362,7 @@ const CalculatorSummaryStep = ({
               </tr>
             </thead>
             <tbody>
-              {pricing.lines.map((line, idx) => (
+              {combinedLines.map((line, idx) => (
                 <tr key={idx} className="border-t">
                   <td className="p-3">
                     <div>{line.name}</div>
@@ -252,13 +371,25 @@ const CalculatorSummaryStep = ({
                         Region: {formatRegionName(line.region)}
                       </div>
                     )}
+                    {line.term_months && (
+                      <div className="text-xs text-gray-500">
+                        Term: {line.term_months} month
+                        {line.term_months === 1 ? "" : "s"}
+                      </div>
+                    )}
                   </td>
                   <td className="p-3 text-right">{line.quantity}</td>
                   <td className="p-3 text-right">
-                    {formatCurrency(line.unit_price, line.currency)}
+                    {formatCurrency(
+                      line.unit_price,
+                      line.currency || displayCurrency
+                    )}
                   </td>
                   <td className="p-3 text-right">
-                    {formatCurrency(line.total, line.currency)}
+                    {formatCurrency(
+                      line.total,
+                      line.currency || displayCurrency
+                    )}
                   </td>
                 </tr>
               ))}
@@ -269,27 +400,24 @@ const CalculatorSummaryStep = ({
         {/* Totals */}
         <div className="flex justify-end">
           <div className="w-full max-w-xs space-y-2">
-            {pricing.pre_discount_subtotal !== pricing.subtotal && (
+            {showPreDiscountRow && (
               <div className="flex justify-between py-1 border-b border-gray-100">
                 <span className="text-sm font-medium text-gray-600">
                   Subtotal (before discount):
                 </span>
                 <span className="text-sm text-gray-900">
-                  {formatCurrency(
-                    pricing.pre_discount_subtotal,
-                    pricing.currency
-                  )}
+                  {formatCurrency(combinedPreDiscount, displayCurrency)}
                 </span>
               </div>
             )}
 
-            {pricing.discount > 0 && (
+            {discountAmount > 0 && (
               <div className="flex justify-between py-1 border-b border-gray-100">
                 <span className="text-sm font-medium text-gray-600">
                   {pricing.discount_label || "Discount"}:
                 </span>
                 <span className="text-sm text-green-600">
-                  -{formatCurrency(pricing.discount, pricing.currency)}
+                  -{formatCurrency(discountAmount, displayCurrency)}
                 </span>
               </div>
             )}
@@ -299,53 +427,59 @@ const CalculatorSummaryStep = ({
                 Subtotal:
               </span>
               <span className="text-sm text-gray-900">
-                {formatCurrency(pricing.subtotal, pricing.currency)}
+                {formatCurrency(combinedSubtotal, displayCurrency)}
               </span>
             </div>
 
             <div className="flex justify-between py-1 border-b border-gray-100">
               <span className="text-sm font-medium text-gray-600">Tax:</span>
               <span className="text-sm text-gray-900">
-                {formatCurrency(pricing.tax, pricing.currency)}
+                {formatCurrency(combinedTax, displayCurrency)}
               </span>
             </div>
 
             <div className="flex justify-between py-2 pt-3 border-t border-gray-300">
               <span className="font-semibold text-gray-800">Total:</span>
               <span className="font-semibold text-lg text-[--theme-color]">
-                {formatCurrency(pricing.total, pricing.currency)}
+                {formatCurrency(combinedTotal, displayCurrency)}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Summary Stats */}
-        <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg">
-          <div>
-            <div className="font-medium text-gray-600">Total Items</div>
-            <div className="text-lg font-semibold text-gray-900">
-              {summary.total_items}
-            </div>
-          </div>
-          <div>
-            <div className="font-medium text-gray-600">Total Instances</div>
-            <div className="text-lg font-semibold text-blue-600">
-              {summary.total_instances}
-            </div>
-          </div>
-          <div>
-            <div className="font-medium text-gray-600">Regions</div>
-            <div className="text-lg font-semibold text-purple-600">
-              {summary.regions.length}
-            </div>
-          </div>
-          <div>
-            <div className="font-medium text-gray-600">Has Discount</div>
-            <div className="text-lg font-semibold text-green-600">
-              {summary.has_discount ? "Yes" : "No"}
-            </div>
+      {/* Summary Stats */}
+      <div className="mt-6 grid grid-cols-2 md:grid-cols-5 gap-4 bg-gray-50 p-4 rounded-lg">
+        <div>
+          <div className="font-medium text-gray-600">Total Items</div>
+          <div className="text-lg font-semibold text-gray-900">
+            {combinedTotalItems}
           </div>
         </div>
+        <div>
+          <div className="font-medium text-gray-600">Total Instances</div>
+          <div className="text-lg font-semibold text-blue-600">
+            {summary.total_instances}
+          </div>
+        </div>
+        <div>
+          <div className="font-medium text-gray-600">Regions</div>
+          <div className="text-lg font-semibold text-purple-600">
+            {combinedRegions.size}
+          </div>
+        </div>
+        <div>
+          <div className="font-medium text-gray-600">Has Discount</div>
+          <div className="text-lg font-semibold text-green-600">
+            {discountAmount > 0 ? "Yes" : "No"}
+          </div>
+        </div>
+        <div>
+          <div className="font-medium text-gray-600">Currency</div>
+          <div className="text-lg font-semibold text-gray-900">
+            {displayCurrency}
+          </div>
+        </div>
+      </div>
       </div>
 
       {/* Action Options */}

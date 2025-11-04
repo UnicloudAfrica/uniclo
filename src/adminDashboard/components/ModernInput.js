@@ -1,6 +1,12 @@
-import React, { useState, forwardRef } from 'react';
-import { Eye, EyeOff, AlertCircle, Check } from 'lucide-react';
-import { designTokens } from '../../styles/designTokens';
+import React, { useState, forwardRef } from "react";
+import { Eye, EyeOff, AlertCircle, Check } from "lucide-react";
+import { designTokens } from "../../styles/designTokens";
+
+const mergeClassNames = (...values) =>
+  values
+    .flat()
+    .filter(Boolean)
+    .join(" ");
 
 const ModernInput = forwardRef(({
   type = 'text',
@@ -19,6 +25,7 @@ const ModernInput = forwardRef(({
   icon = null,
   endIcon = null,
   className = '',
+  inputClassName = '',
   ...props
 }, ref) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -55,8 +62,12 @@ const ModernInput = forwardRef(({
       borderRadius: designTokens.borderRadius.lg,
       outline: 'none',
       transition: 'all 0.2s ease',
-      backgroundColor: disabled ? designTokens.colors.neutral[100] : designTokens.colors.neutral[0],
-      color: disabled ? designTokens.colors.neutral[400] : designTokens.colors.neutral[900]
+      backgroundColor: disabled
+        ? designTokens.colors.neutral[100]
+        : designTokens.colors.neutral[50],
+      color: disabled
+        ? designTokens.colors.neutral[400]
+        : designTokens.colors.neutral[900]
     };
 
     if (error) {
@@ -94,8 +105,14 @@ const ModernInput = forwardRef(({
       default:
         return {
           ...baseStyles,
-          border: `1px solid ${isFocused ? designTokens.colors.primary[500] : designTokens.colors.neutral[300]}`,
-          boxShadow: isFocused ? `0 0 0 3px ${designTokens.colors.primary[100]}` : 'none'
+          border: `1px solid ${
+            isFocused
+              ? designTokens.colors.primary[500]
+              : designTokens.colors.neutral[300]
+          }`,
+          boxShadow: isFocused
+            ? `0 0 0 3px ${designTokens.colors.primary[100]}`
+            : 'none'
         };
     }
   };
@@ -104,7 +121,9 @@ const ModernInput = forwardRef(({
     display: 'block',
     fontSize: designTokens.typography.fontSize.sm[0],
     fontWeight: designTokens.typography.fontWeight.medium,
-    color: error ? designTokens.colors.error[700] : designTokens.colors.neutral[700],
+    color: error
+      ? designTokens.colors.error[700]
+      : designTokens.colors.neutral[600],
     marginBottom: '6px',
     fontFamily: designTokens.typography.fontFamily.sans.join(', ')
   };
@@ -228,6 +247,7 @@ const ModernInput = forwardRef(({
           placeholder={placeholder}
           disabled={disabled}
           style={getVariantStyles()}
+          className={mergeClassNames('modern-input-field', inputClassName)}
           {...props}
         />
         

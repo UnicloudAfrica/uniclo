@@ -15,7 +15,7 @@ const StepProgress = ({ currentStep, steps }) => (
           <div
             className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors duration-300 ${
               index <= currentStep
-                ? "bg-[#288DD1] text-white"
+                ? "bg-[--theme-color] text-white"
                 : "bg-gray-200 text-gray-500"
             }`}
           >
@@ -23,7 +23,7 @@ const StepProgress = ({ currentStep, steps }) => (
           </div>
           <p
             className={`text-xs mt-2 text-center transition-colors duration-300 ${
-              index <= currentStep ? "text-[#288DD1]" : "text-gray-500"
+              index <= currentStep ? "text-[--theme-color]" : "text-gray-500"
             }`}
           >
             {step}
@@ -32,7 +32,7 @@ const StepProgress = ({ currentStep, steps }) => (
         {index < steps.length - 1 && (
           <div
             className={`flex-1 h-0.5 mx-4 transition-colors duration-300 ${
-              index < currentStep ? "bg-[#288DD1]" : "bg-gray-200"
+              index < currentStep ? "bg-[--theme-color]" : "bg-gray-200"
             }`}
           />
         )}

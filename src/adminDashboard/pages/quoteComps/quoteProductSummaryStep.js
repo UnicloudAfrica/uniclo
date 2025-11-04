@@ -1,178 +1,254 @@
-import React from "react";
+import React, { useMemo } from "react";
+import {
+  Cpu,
+  HardDrive,
+  Network,
+  ListChecks,
+  Tag,
+  BadgePercent,
+} from "lucide-react";
+import ModernCard from "../../components/ModernCard";
+
+const SummaryTile = ({ icon: Icon, label, value, tone }) => (
+  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="flex items-center gap-3">
+      <div
+        className={`flex h-10 w-10 items-center justify-center rounded-2xl ${
+          tone === "primary"
+            ? "bg-primary-50 text-primary-600"
+            : tone === "success"
+            ? "bg-emerald-50 text-emerald-600"
+            : "bg-slate-100 text-slate-500"
+        }`}
+      >
+        <Icon className="h-5 w-5" />
+      </div>
+      <div>
+        <p className="text-xs uppercase tracking-wide text-slate-400">
+          {label}
+        </p>
+        <p className="text-lg font-semibold text-slate-900">{value}</p>
+      </div>
+    </div>
+  </div>
+);
 
 const ProductSummaryStep = ({ pricingRequests, formData }) => {
-  // Group items by product type
-  const groupItemsByType = () => {
-    const grouped = {
+  const groupedItems = useMemo(() => {
+    const groups = {
       compute: [],
       storage: [],
       network: [],
-      other: []
+      other: [],
     };
 
     pricingRequests.forEach((req, index) => {
-      const item = {
+      const base = {
         index,
         region: req.region,
         months: req.months,
         instances: req.number_of_instances,
-        compute: req._display?.compute || 'Unknown Compute',
-        os: req._display?.os || 'Unknown OS',
-        storage: req._display?.storage || 'Unknown Storage',
-        bandwidth: req.bandwidth_count > 0 ? `${req.bandwidth_count} units` : null,
-        floatingIps: req.floating_ip_count > 0 ? `${req.floating_ip_count} IPs` : null,
+        compute: req._display?.compute || "Unknown Compute",
+        os: req._display?.os || "Unknown OS",
+        storage: req._display?.storage || "Unknown Storage",
+        bandwidth: req.bandwidth_count
+          ? `${req.bandwidth_count} bandwidth units`
+          : null,
+        floatingIps: req.floating_ip_count
+          ? `${req.floating_ip_count} floating IPs`
+          : null,
       };
 
-      // Compute instances
-      grouped.compute.push({
-        ...item,
-        type: 'Compute Instance',
-        details: `${item.instances}x ${item.compute} (${item.os}) - ${item.months} month(s)`,
+      groups.compute.push({
+        ...base,
+        label: "Compute instance",
+        highlight: `${base.instances}× ${base.compute}`,
+        description: `${base.os} • ${base.months} month${
+          base.months === 1 ? "" : "s"
+        }`,
       });
 
-      // Storage
-      grouped.storage.push({
-        ...item,
-        type: 'Storage',
-        details: `${item.instances}x ${item.storage} - ${item.months} month(s)`,
+      groups.storage.push({
+        ...base,
+        label: "Storage",
+        highlight: base.storage,
+        description: `${base.instances} attachment${
+          base.instances === 1 ? "" : "s"
+        } • ${base.months} month${base.months === 1 ? "" : "s"}`,
       });
 
-      // Network resources
-      if (item.bandwidth) {
-        grouped.network.push({
-          ...item,
-          type: 'Bandwidth',
-          details: `${item.bandwidth} - ${item.months} month(s)`,
+      if (base.bandwidth) {
+        groups.network.push({
+          ...base,
+          label: "Bandwidth",
+          highlight: base.bandwidth,
+          description: `${base.months} month${
+            base.months === 1 ? "" : "s"
+          } • Region ${base.region}`,
         });
       }
 
-      if (item.floatingIps) {
-        grouped.network.push({
-          ...item,
-          type: 'Floating IPs',
-          details: `${item.floatingIps} - ${item.months} month(s)`,
+      if (base.floatingIps) {
+        groups.network.push({
+          ...base,
+          label: "Floating IPs",
+          highlight: base.floatingIps,
+          description: `${base.months} month${
+            base.months === 1 ? "" : "s"
+          } • Region ${base.region}`,
         });
       }
 
-      // Cross connect if present
       if (req.cross_connect_id) {
-        grouped.other.push({
-          ...item,
-          type: 'Cross Connect',
-          details: `Cross Connect - ${item.months} month(s)`,
+        groups.other.push({
+          ...base,
+          label: "Cross connect",
+          highlight: "Dedicated connectivity",
+          description: `${base.months} month${
+            base.months === 1 ? "" : "s"
+          } • Region ${base.region}`,
         });
       }
     });
 
-    return grouped;
-  };
+    return groups;
+  }, [pricingRequests]);
 
-  const groupedItems = groupItemsByType();
+  const discountApplied =
+    formData.apply_total_discount && formData.total_discount_value;
 
-  const ProductTypeSection = ({ title, items, bgColor = "bg-gray-50", emoji }) => {
-    if (items.length === 0) return null;
-
+  const Section = ({ icon: Icon, title, items, tone }) => {
+    if (!items.length) return null;
     return (
-      <div className={`${bgColor} p-4 rounded-lg mb-4`}>
-        <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
-          {emoji && <span className="mr-2 text-lg">{emoji}</span>}
-          {title} ({items.length} item{items.length !== 1 ? 's' : ''})
-        </h4>
-        <div className="space-y-2">
+      <ModernCard padding="lg" variant="outlined" className="space-y-4">
+        <header className="flex items-center gap-3">
+          <div
+            className={`flex h-10 w-10 items-center justify-center rounded-2xl ${
+              tone === "primary"
+                ? "bg-primary-50 text-primary-600"
+                : tone === "success"
+                ? "bg-emerald-50 text-emerald-600"
+                : "bg-slate-100 text-slate-500"
+            }`}
+          >
+            <Icon className="h-5 w-5" />
+          </div>
+          <div>
+            <h4 className="text-sm font-semibold text-slate-900">{title}</h4>
+            <p className="text-xs text-slate-500">
+              {items.length} item{items.length === 1 ? "" : "s"}
+            </p>
+          </div>
+        </header>
+
+        <div className="space-y-4">
           {items.map((item, idx) => (
-            <div key={idx} className="bg-white p-3 rounded border border-gray-200">
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="font-medium text-sm text-gray-900">{item.type}</div>
-                  <div className="text-sm text-gray-600">{item.details}</div>
-                  <div className="text-xs text-gray-500 mt-1">Region: {item.region}</div>
+            <div
+              key={`${item.label}-${idx}`}
+              className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-slate-400">
+                    {item.label}
+                  </p>
+                  <p className="text-sm font-semibold text-slate-900">
+                    {item.highlight}
+                  </p>
+                  <p className="text-xs text-slate-500">{item.description}</p>
                 </div>
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-500">
+                  {item.region}
+                </span>
               </div>
             </div>
           ))}
         </div>
-      </div>
+      </ModernCard>
     );
   };
 
   return (
-    <div className="space-y-6 w-full max-w-4xl">
-      <div className="text-center mb-6">
-        <h3 className="text-xl font-semibold text-gray-800">Product Summary</h3>
-        <p className="text-sm text-gray-500 mt-1">
-          Review your items grouped by product type before finalizing the quote.
+    <div className="space-y-8">
+      <div className="space-y-3 text-center">
+        <h3 className="text-lg font-semibold text-slate-900">
+          Product Summary
+        </h3>
+        <p className="text-sm text-slate-500">
+          Validate grouped resources before moving to final review.
         </p>
       </div>
 
-      {/* Total discount preview */}
-      {formData.apply_total_discount && formData.total_discount_value && (
-        <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-          <h4 className="font-semibold text-blue-800 mb-2">Total Order Discount Applied</h4>
-          <div className="text-sm text-blue-700">
-            <div>
-              Type: {formData.total_discount_type === 'percent' ? 'Percentage' : 'Fixed Amount'}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <SummaryTile
+          icon={ListChecks}
+          label="Configurations"
+          value={pricingRequests.length}
+        />
+        <SummaryTile
+          icon={Cpu}
+          label="Compute Items"
+          value={groupedItems.compute.length}
+          tone="primary"
+        />
+        <SummaryTile
+          icon={HardDrive}
+          label="Storage Items"
+          value={groupedItems.storage.length}
+          tone="success"
+        />
+        <SummaryTile
+          icon={Network}
+          label="Network Items"
+          value={groupedItems.network.length}
+        />
+      </div>
+
+      {discountApplied && (
+        <ModernCard
+          padding="lg"
+          variant="filled"
+          className="flex flex-wrap items-center justify-between gap-4"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-100 text-amber-600">
+              <BadgePercent className="h-5 w-5" />
             </div>
             <div>
-              Value: {formData.total_discount_value}
-              {formData.total_discount_type === 'percent' ? '%' : ''}
+              <p className="text-sm font-semibold text-amber-700">
+                Global discount active
+              </p>
+              <p className="text-sm text-amber-600">
+                {formData.total_discount_type === "percent"
+                  ? `${formData.total_discount_value}% off every item`
+                  : `-${formData.total_discount_value} applied to order`}
+                {formData.total_discount_label
+                  ? ` • ${formData.total_discount_label}`
+                  : ""}
+              </p>
             </div>
-            {formData.total_discount_label && (
-              <div>Label: {formData.total_discount_label}</div>
-            )}
           </div>
-        </div>
+        </ModernCard>
       )}
 
-      {/* Product type sections */}
-      <ProductTypeSection
-        title="Compute Resources"
+      <Section
+        icon={Cpu}
+        title="Compute resources"
+        tone="primary"
         items={groupedItems.compute}
-        bgColor="bg-blue-50"
-        emoji="🖥️"
       />
-      
-      <ProductTypeSection
-        title="Storage Resources"
+      <Section
+        icon={HardDrive}
+        title="Storage allocations"
+        tone="success"
         items={groupedItems.storage}
-        bgColor="bg-green-50"
-        emoji="💾"
       />
-      
-      <ProductTypeSection
-        title="Network Resources"
+      <Section
+        icon={Network}
+        title="Network additions"
         items={groupedItems.network}
-        bgColor="bg-purple-50"
-        emoji="🌐"
       />
-      
-      <ProductTypeSection
-        title="Other Resources"
-        items={groupedItems.other}
-        bgColor="bg-orange-50"
-        emoji="🔗"
-      />
-
-      <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-        <h4 className="font-semibold text-gray-800 mb-2">Summary</h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div>
-            <div className="font-medium text-gray-600">Total Items</div>
-            <div className="text-lg font-semibold text-gray-900">{pricingRequests.length}</div>
-          </div>
-          <div>
-            <div className="font-medium text-gray-600">Compute</div>
-            <div className="text-lg font-semibold text-blue-600">{groupedItems.compute.length}</div>
-          </div>
-          <div>
-            <div className="font-medium text-gray-600">Storage</div>
-            <div className="text-lg font-semibold text-green-600">{groupedItems.storage.length}</div>
-          </div>
-          <div>
-            <div className="font-medium text-gray-600">Network</div>
-            <div className="text-lg font-semibold text-purple-600">{groupedItems.network.length}</div>
-          </div>
-        </div>
-      </div>
+      <Section icon={Tag} title="Other resources" items={groupedItems.other} />
     </div>
   );
 };

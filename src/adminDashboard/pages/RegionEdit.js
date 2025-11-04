@@ -1,11 +1,49 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import adminRegionApi from '../../services/adminRegionApi';
-import ToastUtils from '../../utils/toastUtil';
-import AdminSidebar from '../components/adminSidebar';
-import AdminHeadbar from '../components/adminHeadbar';
-import { ArrowLeft, Loader2 } from 'lucide-react';
-import { designTokens } from '../../styles/designTokens';
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  AlertCircle,
+  Loader2,
+  MapPin,
+  Save,
+} from "lucide-react";
+import adminRegionApi from "../../services/adminRegionApi";
+import ToastUtils from "../../utils/toastUtil";
+import AdminSidebar from "../components/adminSidebar";
+import AdminHeadbar from "../components/adminHeadbar";
+import AdminPageShell from "../components/AdminPageShell";
+import ModernCard from "../components/ModernCard";
+import ModernButton from "../components/ModernButton";
+import ModernInput from "../components/ModernInput";
+import StatusPill from "../components/StatusPill";
+import { designTokens } from "../../styles/designTokens";
+
+const statusOptions = [
+  { value: "healthy", label: "Healthy" },
+  { value: "degraded", label: "Degraded" },
+  { value: "down", label: "Down" },
+];
+
+const statusToneMap = {
+  healthy: "success",
+  degraded: "warning",
+  down: "danger",
+};
+
+const statusLabelMap = {
+  healthy: "Healthy",
+  degraded: "Degraded",
+  down: "Down",
+};
+
+const formatSegment = (value) => {
+  if (!value) return "";
+  return value
+    .toString()
+    .split(/[_-]/)
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(" ");
+};
 
 const RegionEdit = () => {
   const { id: code } = useParams();
@@ -15,19 +53,26 @@ const RegionEdit = () => {
   const [submitting, setSubmitting] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    code: '',
-    country_code: '',
-    city: '',
-    base_url: '',
-    status: 'healthy',
+    name: "",
+    code: "",
+    country_code: "",
+    city: "",
+    base_url: "",
+    status: "healthy",
     is_active: true,
   });
   const [errors, setErrors] = useState({});
 
+  const formId = "region-edit-form";
+
   useEffect(() => {
     fetchRegionDetail();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code]);
+
+  const toggleMobileMenu = () =>
+    setIsMobileMenuOpen((prevState) => !prevState);
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   const fetchRegionDetail = async () => {
     try {
@@ -36,76 +81,193 @@ const RegionEdit = () => {
       const regionData = response.data;
       setRegion(regionData);
       setFormData({
-        name: regionData.name || '',
-        code: regionData.code || '',
-        country_code: regionData.country_code || '',
-        city: regionData.city || '',
-        base_url: regionData.base_url || '',
-        status: regionData.status || 'healthy',
-        is_active: regionData.is_active !== undefined ? regionData.is_active : true,
+        name: regionData.name || "",
+        code: regionData.code || "",
+        country_code: regionData.country_code || "",
+        city: regionData.city || "",
+        base_url: regionData.base_url || "",
+        status: regionData.status || "healthy",
+        is_active:
+          regionData.is_active !== undefined ? regionData.is_active : true,
       });
     } catch (error) {
-      console.error('Error fetching region:', error);
-      ToastUtils.error('Failed to load region details');
+      console.error("Error fetching region:", error);
+      ToastUtils.error("Failed to load region details");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({ 
-      ...prev, 
-      [name]: type === 'checkbox' ? checked : value 
-    }));
+  const handleChange = (event) => {
+    const { name, value, type, checked } = event.target;
+    setFormData((prev) => {
+      const updatedValue =
+        type === "checkbox"
+          ? checked
+          : name === "country_code"
+          ? value.toUpperCase()
+          : value;
+      return { ...prev, [name]: updatedValue };
+    });
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
-  const validate = () => {
-    const newErrors = {};
-    if (!formData.name) newErrors.name = 'Region name is required';
-    if (!formData.code) newErrors.code = 'Region code is required';
-    if (!formData.country_code) newErrors.country_code = 'Country code is required';
-    if (!formData.base_url) newErrors.base_url = 'Base URL is required';
-    else if (!/^https?:\/\/.+/.test(formData.base_url)) newErrors.base_url = 'Must be a valid URL';
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const handleStatusChange = (event) => {
+    const { value } = event.target;
+    setFormData((prev) => ({ ...prev, status: value }));
+    if (errors.status) {
+      setErrors((prev) => ({ ...prev, status: "" }));
+    }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
+  const toggleActiveState = () => {
+    setFormData((prev) => ({ ...prev, is_active: !prev.is_active }));
+  };
+
+  const validate = () => {
+    const nextErrors = {};
+    if (!formData.name.trim()) nextErrors.name = "Region name is required";
+    if (!formData.country_code.trim())
+      nextErrors.country_code = "Country code is required";
+    if (!formData.base_url.trim())
+      nextErrors.base_url = "Base URL is required";
+    else if (!/^https?:\/\/.+/.test(formData.base_url.trim()))
+      nextErrors.base_url = "Enter a valid URL starting with http or https";
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     if (!validate()) return;
 
     try {
       setSubmitting(true);
-      await adminRegionApi.updateRegion(code, formData);
-      ToastUtils.success('Region updated successfully');
-      navigate(`/admin-dashboard/regions/${region.code}`);
+      await adminRegionApi.updateRegion(code, {
+        ...formData,
+        name: formData.name.trim(),
+        country_code: formData.country_code.trim(),
+        city: formData.city.trim(),
+        base_url: formData.base_url.trim(),
+      });
+      ToastUtils.success("Region updated successfully");
+      navigate(`/admin-dashboard/regions/${formData.code}`);
     } catch (error) {
-      console.error('Error updating region:', error);
-      ToastUtils.error('Failed to update region');
+      console.error("Error updating region:", error);
+      ToastUtils.error("Failed to update region");
     } finally {
       setSubmitting(false);
     }
   };
 
+  const locationLabel = useMemo(() => {
+    const parts = [formData.city, formData.country_code].filter(Boolean);
+    return parts.join(", ");
+  }, [formData.city, formData.country_code]);
+
+  const headerMeta = useMemo(() => {
+    if (!region) return null;
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <StatusPill
+          label={
+            statusLabelMap[formData.status] ||
+            formatSegment(formData.status) ||
+            "Status Unknown"
+          }
+          tone={statusToneMap[formData.status] || "info"}
+        />
+        <StatusPill
+          label={formData.is_active ? "Active" : "Inactive"}
+          tone={formData.is_active ? "success" : "warning"}
+        />
+        {region.ownership_type && (
+          <StatusPill
+            label={`${formatSegment(region.ownership_type)} Ownership`}
+            tone="neutral"
+          />
+        )}
+      </div>
+    );
+  }, [region, formData.status, formData.is_active]);
+
+  const headerActions = useMemo(() => {
+    if (!region) return null;
+    return (
+      <div className="flex flex-wrap gap-2">
+        <ModernButton
+          variant="ghost"
+          size="sm"
+          onClick={() =>
+            navigate(`/admin-dashboard/regions/${region.code}`)
+          }
+        >
+          View Region
+        </ModernButton>
+        <ModernButton
+          variant="primary"
+          size="sm"
+          type="submit"
+          form={formId}
+          isLoading={submitting}
+          isDisabled={submitting}
+          className="flex items-center gap-2"
+        >
+          <Save size={16} />
+          Save Changes
+        </ModernButton>
+      </div>
+    );
+  }, [region, submitting, navigate]);
+
+  const renderLoadingShell = () => (
+    <AdminPageShell
+      title="Edit Region"
+      description="Update region configuration."
+      contentClassName="flex min-h-[60vh] items-center justify-center"
+    >
+      <Loader2
+        className="h-10 w-10 animate-spin"
+        style={{ color: designTokens.colors.primary[500] }}
+      />
+    </AdminPageShell>
+  );
+
+  const renderNotFoundShell = () => (
+    <AdminPageShell
+      title="Edit Region"
+      description="Update region configuration."
+      contentClassName="flex min-h-[60vh] items-center justify-center"
+      actions={
+        <ModernButton
+          variant="outline"
+          onClick={() => navigate("/admin-dashboard/regions")}
+        >
+          Back to Regions
+        </ModernButton>
+      }
+    >
+      <ModernCard className="max-w-md space-y-3 text-center">
+        <AlertCircle className="mx-auto h-10 w-10 text-red-500" />
+        <p className="text-sm text-gray-600">
+          We could not find this region. It may have been removed.
+        </p>
+      </ModernCard>
+    </AdminPageShell>
+  );
+
   if (loading) {
     return (
       <>
-        <AdminHeadbar toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
-        <AdminSidebar isMobileMenuOpen={isMobileMenuOpen} closeMobileMenu={() => setIsMobileMenuOpen(false)} />
-        <div 
-          className="min-h-screen pt-[126px] px-4 md:px-6 lg:px-8 md:ml-20 lg:ml-[20%]"
-          style={{ backgroundColor: designTokens.colors.neutral[50] }}
-        >
-          <div className="flex items-center justify-center py-20">
-            <Loader2 size={48} className="animate-spin" style={{ color: designTokens.colors.primary[600] }} />
-          </div>
-        </div>
+        <AdminHeadbar onMenuClick={toggleMobileMenu} />
+        <AdminSidebar
+          isMobileMenuOpen={isMobileMenuOpen}
+          onCloseMobileMenu={closeMobileMenu}
+        />
+        {renderLoadingShell()}
       </>
     );
   }
@@ -113,203 +275,222 @@ const RegionEdit = () => {
   if (!region) {
     return (
       <>
-        <AdminHeadbar toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
-        <AdminSidebar isMobileMenuOpen={isMobileMenuOpen} closeMobileMenu={() => setIsMobileMenuOpen(false)} />
-        <div 
-          className="min-h-screen pt-[126px] px-4 md:px-6 lg:px-8 md:ml-20 lg:ml-[20%]"
-          style={{ backgroundColor: designTokens.colors.neutral[50] }}
-        >
-          <div className="max-w-4xl mx-auto py-8">
-            <div className="bg-white rounded-2xl shadow-sm p-12 text-center" style={{ borderColor: designTokens.colors.neutral[200], borderWidth: '1px' }}>
-              <h3 className="text-lg font-semibold mb-2" style={{ color: designTokens.colors.neutral[900] }}>Region not found</h3>
-              <Link to="/admin-dashboard/regions" style={{ color: designTokens.colors.primary[600] }} className="hover:underline font-medium">
-                Back to regions
-              </Link>
-            </div>
-          </div>
-        </div>
+        <AdminHeadbar onMenuClick={toggleMobileMenu} />
+        <AdminSidebar
+          isMobileMenuOpen={isMobileMenuOpen}
+          onCloseMobileMenu={closeMobileMenu}
+        />
+        {renderNotFoundShell()}
       </>
     );
   }
 
   return (
     <>
-      <AdminHeadbar toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
-      <AdminSidebar isMobileMenuOpen={isMobileMenuOpen} closeMobileMenu={() => setIsMobileMenuOpen(false)} />
-      
-      <main 
-        className="min-h-screen pt-[126px] px-4 md:px-6 lg:px-8 pb-8 md:ml-20 lg:ml-[20%]"
-        style={{ backgroundColor: designTokens.colors.neutral[50] }}
+      <AdminHeadbar onMenuClick={toggleMobileMenu} />
+      <AdminSidebar
+        isMobileMenuOpen={isMobileMenuOpen}
+        onCloseMobileMenu={closeMobileMenu}
+      />
+      <AdminPageShell
+        title={`Edit ${region.name || region.code}`}
+        description={
+          locationLabel
+            ? `${locationLabel} • ${formData.code}`
+            : `Region Code: ${formData.code}`
+        }
+        subHeaderContent={headerMeta}
+        actions={headerActions}
+        contentClassName="space-y-8"
       >
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="mb-6 md:mb-8">
-            <Link
-              to={`/admin-dashboard/regions/${region.code}`}
-              className="inline-flex font-medium items-center gap-2 mb-4 md:mb-6 transition-all hover:gap-3"
-              style={{ color: designTokens.colors.primary[600] }}
-            >
-              <ArrowLeft size={20} />
-              <span className="hidden sm:inline">Back to Region Detail</span>
-              <span className="sm:hidden">Back</span>
-            </Link>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2" style={{ color: designTokens.colors.neutral[900] }}>Edit Region</h1>
-            <p className="text-sm sm:text-base" style={{ color: designTokens.colors.neutral[600] }}>
-              Update region: <span className="font-semibold">{region.name}</span> <span className="font-mono">({region.code})</span>
-            </p>
+        <div className="space-y-8">
+          <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#0284C7] via-[#2563EB] to-[#1D4ED8] text-white shadow-2xl">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.15),_transparent_55%)]" />
+            <div className="relative p-6 sm:p-8 lg:p-10">
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                <div className="space-y-3">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-white/70">
+                    Edit Region
+                  </div>
+                  <div className="space-y-2">
+                    <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                      {formData.name || region.name || "Region"}
+                    </h2>
+                    <p className="text-sm text-white/80 sm:text-base">
+                      {locationLabel || "Location not specified"} • {formData.code}
+                    </p>
+                  </div>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                  <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
+                    <p className="text-xs font-medium uppercase tracking-wide text-white/70">
+                      Active State
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-white">
+                      {formData.is_active ? "Active" : "Inactive"}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
+                    <p className="text-xs font-medium uppercase tracking-wide text-white/70">
+                      Country
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-white">
+                      {formData.country_code || "—not set"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-6 lg:p-8" style={{ borderColor: designTokens.colors.neutral[200], borderWidth: '1px' }}>
-              <div className="space-y-6">
-                {/* Region Name */}
+          <form
+            id={formId}
+            onSubmit={handleSubmit}
+            className="space-y-6"
+          >
+            <ModernCard title="Identity & Routing" className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <ModernInput
+                  label="Region Name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="e.g., Lagos Region 1"
+                  required
+                  error={errors.name}
+                />
+
+                <ModernInput
+                  label="Region Code"
+                  name="code"
+                  value={formData.code}
+                  disabled
+                  helper="Region codes cannot be changed."
+                />
+              </div>
+
+              <ModernInput
+                label="Base URL"
+                name="base_url"
+                value={formData.base_url}
+                onChange={handleChange}
+                placeholder="https://api.example.com"
+                required
+                error={errors.base_url}
+              />
+            </ModernCard>
+
+            <ModernCard title="Location & Status" className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-2">
+                <ModernInput
+                  label="Country Code"
+                  name="country_code"
+                  value={formData.country_code}
+                  onChange={handleChange}
+                  placeholder="NG"
+                  maxLength={2}
+                  required
+                  helper="Use ISO 3166-1 alpha-2 country codes."
+                  error={errors.country_code}
+                />
+
+                <ModernInput
+                  label="City"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  placeholder="Lagos"
+                />
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Region Name <span className="text-red-500">*</span>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                    Operational Status
                   </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    placeholder="e.g., Lagos Region 1"
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors.name ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  />
-                  {errors.name && <p className="text-sm text-red-500 mt-1">{errors.name}</p>}
+                  <select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleStatusChange}
+                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  >
+                    {statusOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                {/* Region Code (readonly) */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Region Code
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.code}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
-                    readOnly
-                    disabled
-                  />
-                  <p className="text-sm text-gray-500 mt-1">Region code cannot be changed</p>
-                </div>
-
-                {/* Country and City */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Country Code <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="country_code"
-                      value={formData.country_code}
-                      onChange={handleChange}
-                      placeholder="NG"
-                      maxLength={2}
-                      className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase ${
-                        errors.country_code ? 'border-red-500' : 'border-gray-300'
+                <div className="flex flex-col justify-end">
+                  <span className="mb-2 text-sm font-medium text-gray-700">
+                    Active Region
+                  </span>
+                  <div className="flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-gray-900">
+                        {formData.is_active ? "Active" : "Inactive"}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        Toggle availability for provisioning workflows.
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={toggleActiveState}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+                        formData.is_active ? "bg-blue-500" : "bg-gray-300"
                       }`}
-                    />
-                    {errors.country_code && <p className="text-sm text-red-500 mt-1">{errors.country_code}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      City
-                    </label>
-                    <input
-                      type="text"
-                      name="city"
-                      value={formData.city}
-                      onChange={handleChange}
-                      placeholder="Lagos"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-
-                {/* Base URL */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Base URL <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="url"
-                    name="base_url"
-                    value={formData.base_url}
-                    onChange={handleChange}
-                    placeholder="https://api.example.com"
-                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors.base_url ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  />
-                  {errors.base_url && <p className="text-sm text-red-500 mt-1">{errors.base_url}</p>}
-                </div>
-
-                {/* Status and Active */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Status
-                    </label>
-                    <select
-                      name="status"
-                      value={formData.status}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      aria-pressed={formData.is_active}
                     >
-                      <option value="healthy">Healthy</option>
-                      <option value="degraded">Degraded</option>
-                      <option value="down">Down</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Active Status
-                    </label>
-                    <label className="flex items-center gap-2 mt-2">
-                      <input
-                        type="checkbox"
-                        name="is_active"
-                        checked={formData.is_active}
-                        onChange={handleChange}
-                        className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      <span
+                        className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${
+                          formData.is_active ? "translate-x-5" : "translate-x-1"
+                        }`}
                       />
-                      <span className="text-sm text-gray-700">Region is active</span>
-                    </label>
+                      <span className="sr-only">Toggle active state</span>
+                    </button>
                   </div>
                 </div>
               </div>
+            </ModernCard>
 
-              {/* Actions */}
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8">
-                <button
-                  type="button"
-                  onClick={() => navigate(`/admin-dashboard/regions/${region.code}`)}
-                  className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 border rounded-lg font-medium transition-colors"
-                  style={{ borderColor: designTokens.colors.neutral[300], color: designTokens.colors.neutral[700] }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = designTokens.colors.neutral[50]}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  disabled={submitting}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  style={{ backgroundColor: designTokens.colors.primary[600] }}
-                  onMouseEnter={(e) => !submitting && (e.currentTarget.style.backgroundColor = designTokens.colors.primary[700])}
-                  onMouseLeave={(e) => !submitting && (e.currentTarget.style.backgroundColor = designTokens.colors.primary[600])}
-                >
-                  {submitting && <Loader2 size={16} className="animate-spin" />}
-                  {submitting ? 'Updating...' : 'Update Region'}
-                </button>
+            <ModernCard title="Review & Submit" className="space-y-3">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3 text-sm text-gray-600">
+                  <MapPin className="h-5 w-5 text-blue-500" />
+                  <span>
+                    Changes will reflect immediately across provisioning and
+                    inventory experiences for this region.
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <ModernButton
+                    type="button"
+                    variant="ghost"
+                    onClick={() =>
+                      navigate(`/admin-dashboard/regions/${region.code}`)
+                    }
+                    isDisabled={submitting}
+                  >
+                    Cancel
+                  </ModernButton>
+                  <ModernButton
+                    type="submit"
+                    variant="primary"
+                    isLoading={submitting}
+                    isDisabled={submitting}
+                    className="flex items-center gap-2"
+                  >
+                    <Save size={16} />
+                    {submitting ? "Saving…" : "Save Changes"}
+                  </ModernButton>
+                </div>
               </div>
-            </form>
+            </ModernCard>
+          </form>
         </div>
-      </main>
+      </AdminPageShell>
     </>
   );
 };

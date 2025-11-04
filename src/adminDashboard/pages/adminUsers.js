@@ -7,6 +7,7 @@ import {
   Plus,
   Trash2,
   SquarePen,
+  Eye,
   Loader2,
 } from "lucide-react";
 import AdminHeadbar from "../components/adminHeadbar";
@@ -17,12 +18,10 @@ import ModernStatsCard from "../components/ModernStatsCard";
 import ModernCard from "../components/ModernCard";
 import ModernButton from "../components/ModernButton";
 import { useFetchAdmins } from "../../hooks/adminHooks/adminHooks";
-import { EditAdminModal } from "./adminComps/editAdmin";
 import { DeleteAdminModal } from "./adminComps/deleteAdmin";
 
 export default function AdminUsers() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [showEditAdminModal, setShowEditAdminModal] = useState(false);
   const [showDeleteAdminModal, setShowDeleteAdminModal] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState(null);
   const navigate = useNavigate();
@@ -33,19 +32,31 @@ export default function AdminUsers() {
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   const handleAddAdmin = () => navigate("/admin-dashboard/admin-users/create");
+  const encodeId = (id) => {
+    try {
+      return encodeURIComponent(btoa(String(id)));
+    } catch (error) {
+      console.error("Failed to encode admin id", error);
+      return null;
+    }
+  };
+
+  const handleViewAdmin = (admin) => {
+    const encodedId = admin?.identifier ? encodeId(admin.identifier) : null;
+    if (!encodedId) return;
+    navigate(`/admin-dashboard/admin-users/${encodedId}`);
+  };
+
   const handleEditAdmin = (admin) => {
-    setSelectedAdmin(admin);
-    setShowEditAdminModal(true);
+    const encodedId = admin?.identifier ? encodeId(admin.identifier) : null;
+    if (!encodedId) return;
+    navigate(`/admin-dashboard/admin-users/${encodedId}/edit`);
   };
   const handleDeleteAdmin = (admin) => {
     setSelectedAdmin(admin);
     setShowDeleteAdminModal(true);
   };
 
-  const closeEditAdminModal = () => {
-    setShowEditAdminModal(false);
-    setSelectedAdmin(null);
-  };
   const closeDeleteAdminModal = () => {
     setShowDeleteAdminModal(false);
     setSelectedAdmin(null);
@@ -101,21 +112,33 @@ export default function AdminUsers() {
               <td className="px-6 py-4 text-sm text-gray-600">{admin.phone || "N/A"}</td>
               <td className="px-6 py-4 text-sm text-gray-600">{admin.email || "N/A"}</td>
               <td className="px-6 py-4 text-sm text-gray-600">{admin.role || "N/A"}</td>
-              <td className="px-6 py-4 text-right text-sm font-medium space-x-2">
-                <button
-                  onClick={() => handleEditAdmin(admin)}
-                  className="inline-flex items-center justify-center rounded-full border border-gray-200 p-2 text-[#288DD1] hover:bg-gray-50"
-                  title="Edit Admin"
-                >
-                  <SquarePen className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => handleDeleteAdmin(admin)}
-                  className="inline-flex items-center justify-center rounded-full border border-gray-200 p-2 text-red-600 hover:bg-red-50"
-                  title="Delete Admin"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
+              <td className="px-6 py-4 text-sm font-medium">
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <button
+                    onClick={() => handleViewAdmin(admin)}
+                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-[#288DD1] hover:text-[#288DD1]"
+                    title="View Admin"
+                  >
+                    <Eye className="w-4 h-4" />
+                    View
+                  </button>
+                  <button
+                    onClick={() => handleEditAdmin(admin)}
+                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-[#288DD1] hover:text-[#288DD1]"
+                    title="Edit Admin"
+                  >
+                    <SquarePen className="w-4 h-4" />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteAdmin(admin)}
+                    className="inline-flex items-center gap-2 rounded-full border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:border-red-400 hover:text-red-700"
+                    title="Delete Admin"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
+                </div>
               </td>
             </tr>
           ))}
@@ -184,12 +207,6 @@ export default function AdminUsers() {
           {tableContent}
         </ModernCard>
       </AdminPageShell>
-
-      <EditAdminModal
-        isOpen={showEditAdminModal}
-        onClose={closeEditAdminModal}
-        admin={selectedAdmin}
-      />
       <DeleteAdminModal
         isOpen={showDeleteAdminModal}
         onClose={closeDeleteAdminModal}

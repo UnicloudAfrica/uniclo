@@ -1,124 +1,130 @@
-import React, { useState } from "react";
-import { Pencil, Trash2 } from "lucide-react"; // Import icons
+import React, { useMemo, useState } from "react";
+import { CalendarClock, SquarePen, Trash2 } from "lucide-react";
 import EditPartnerModal from "../../pages/tenantComps/editTenant";
 import DeletePartnerModal from "../../pages/tenantComps/deleteTenant";
+import ModernButton from "../ModernButton";
+import StatusPill from "../StatusPill";
+import IconBadge from "../IconBadge";
 
 const OverviewPartner = ({ partnerDetails }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  // Helper function to format dates
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
+  const formatDate = (value) => {
+    if (!value) return "—";
     try {
-      const date = new Date(dateString);
-      return date.toLocaleString("en-US", {
+      return new Date(value).toLocaleString(undefined, {
         year: "numeric",
-        month: "long",
+        month: "short",
         day: "numeric",
-        hour: "numeric",
+        hour: "2-digit",
         minute: "2-digit",
-        hour12: true,
       });
-    } catch (e) {
-      console.error("Error formatting date:", e);
-      return "Invalid Date";
+    } catch (error) {
+      console.error("Failed to format date", error);
+      return "—";
     }
   };
 
-  // Status Badge Component
-  const StatusBadge = ({ verified }) => {
-    const statusText = verified === 1 ? "Verified" : "Unverified";
-    const bgColor = verified === 1 ? "bg-green-100" : "bg-red-100";
-    const textColor = verified === 1 ? "text-green-800" : "text-red-800";
-    return (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${bgColor} ${textColor}`}
-      >
-        {statusText}
-      </span>
-    );
-  };
+  const business = partnerDetails?.business ?? {};
+  const verificationTone = partnerDetails?.verified === 1 ? "success" : "warning";
+  const verificationLabel =
+    partnerDetails?.verified === 1 ? "Verified partner" : "Verification pending";
 
-  // Helper to render a field, now directly using partnerDetails
-  const renderField = (label, value, isLink = false, isColor = false) => {
-    if (value === null || value === undefined || value === "") {
-      return (
-        <div className="flex items-center justify-between">
-          <div className="text-base font-light text-[#575758]">{label}:</div>
-          <div className="text-base font-medium text-[#575758]">N/A</div>
-        </div>
-      );
-    }
+  const domain =
+    partnerDetails?.domain ||
+    business?.domain ||
+    (partnerDetails?.name
+      ? `${partnerDetails.name.toLowerCase().replace(/\s+/g, "-")}.unicloudafrica.com`
+      : null);
 
-    if (isLink) {
-      return (
-        <div className="flex items-center justify-between">
-          <div className="text-base font-light text-[#575758]">{label}:</div>
-          <div className="text-base font-medium text-[#575758]">
-            <a
-              href={value}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#288DD1] hover:underline truncate max-w-[200px] block" // Added max-w and block for truncation
-            >
-              {value}
-            </a>
-          </div>
-        </div>
-      );
-    }
-
-    if (isColor) {
-      return (
-        <div className="flex items-center justify-between">
-          <div className="text-base font-light text-[#575758]">{label}:</div>
-          <div className="flex items-center gap-2 text-base font-medium text-[#575758]">
-            <span
-              className="w-6 h-6 rounded-full border border-gray-300"
-              style={{ backgroundColor: value }}
-            ></span>
-            <span>{value}</span>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="flex items-center justify-between">
-        <div className="text-base font-light text-[#575758]">{label}:</div>
-        <div className="text-base font-medium text-[#575758]">{value}</div>
-      </div>
-    );
-  };
-
-  // Dynamically generate documents list from partnerDetails
   const documents = [
+    { title: "National ID Document", path: partnerDetails?.national_id_document },
+    { title: "Registration Document", path: partnerDetails?.registration_document },
+    { title: "Utility Bill Document", path: partnerDetails?.utility_bill_document },
+    { title: "Company Logo", path: partnerDetails?.logo },
+  ].filter((doc) => doc.path);
+
+  const contactItems = useMemo(
+    () => [
+      {
+        label: "Primary email",
+        value: partnerDetails?.email || business?.email || "Not provided",
+        type: "mailto",
+        iconKey: "contact.email",
+        tone: "primary",
+      },
+      {
+        label: "Phone number",
+        value: partnerDetails?.phone || business?.phone || "Not provided",
+        iconKey: "contact.phone",
+        tone: "indigo",
+      },
+      {
+        label: "Domain",
+        value: domain || "Not configured",
+        type: domain ? "url" : undefined,
+        iconKey: "contact.domain",
+        tone: "primary",
+      },
+      {
+        label: "Account ID",
+        value: partnerDetails?.identifier || "—",
+        iconKey: "contact.accountId",
+        tone: "slate",
+      },
+    ],
+    [partnerDetails, business, domain]
+  );
+
+  const addressLine = useMemo(() => {
+    const segments = [
+      business?.address,
+      business?.city,
+      business?.state,
+      business?.country,
+    ].filter(Boolean);
+    return segments.length ? segments.join(", ") : "Address not captured";
+  }, [business]);
+
+  const businessItems = [
     {
-      title: "National ID Document",
-      path: partnerDetails.national_id_document,
-      type: "image",
+      label: "Company type",
+      value: business?.company_type || "—",
+      iconKey: "business.companyType",
+      tone: "indigo",
     },
     {
-      title: "Registration Document",
-      path: partnerDetails.registration_document,
-      type: "image",
+      label: "Industry",
+      value: business?.industry || "—",
+      iconKey: "business.industry",
+      tone: "indigo",
     },
     {
-      title: "Utility Bill Document",
-      path: partnerDetails.utility_bill_document,
-      type: "image",
+      label: "Website",
+      value: business?.website || partnerDetails?.website || "—",
+      type: "url",
+      iconKey: "business.website",
+      tone: "primary",
     },
     {
-      title: "Company Logo",
-      path: partnerDetails.logo,
-      type: "image",
+      label: "Registered address",
+      value: addressLine,
+      iconKey: "business.registeredAddress",
+      tone: "slate",
     },
-  ].filter((doc) => doc.path); // Filter out documents that don't have a path
+  ];
+
+  const complianceItems = [
+    { label: "Registration number", value: business?.registration_number || "—" },
+    { label: "TIN number", value: business?.tin_number || "—" },
+    { label: "Verification token", value: partnerDetails?.verification_token || "—" },
+    { label: "Last updated", value: formatDate(partnerDetails?.updated_at) },
+  ];
 
   if (!partnerDetails) {
     return (
-      <div className="text-center text-gray-500 py-10">
+      <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/70 p-10 text-center text-sm text-slate-500">
         No partner details available.
       </div>
     );
@@ -126,150 +132,197 @@ const OverviewPartner = ({ partnerDetails }) => {
 
   return (
     <>
-      <div className="flex flex-col-reverse md:flex-row">
-        {/* Left Sidebar - Documents */}
-        <div className="w-full md:w-80 px-4 overflow-y-auto space-y-4 divide-y ">
-          {documents.length > 0 ? (
-            documents.map((doc, index) => (
-              <div
-                key={index}
-                className="pt-8 flex items-center flex-col justify-center md:block"
-              >
-                {doc.path ? (
-                  <img
-                    src={doc.path} // Use the actual path from partnerDetails
-                    alt={doc.title}
-                    className="max-w-[150px] h-auto rounded-md shadow-sm"
-                    // Add onerror to show a placeholder if image fails to load
-                    onError={(e) => {
-                      e.target.onerror = null; // Prevent infinite loop
-                      e.target.src = `https://placehold.co/150x100/E0E0E0/676767?text=No+Image`;
-                      e.target.alt = "Image not available";
-                    }}
-                  />
-                ) : (
-                  <div className="w-[150px] h-[100px] bg-gray-200 flex items-center justify-center text-gray-500 text-xs rounded-md">
-                    No Image
-                  </div>
-                )}
-                <p className="mt-1.5 text-center text-[#1C1C1C80] text-xs font-normal">
-                  {doc.title}
-                </p>
+      <div className="space-y-6">
+        <div className="rounded-3xl border border-[#EAECF0] bg-gradient-to-br from-white via-[#F4F7FB] to-white p-6 shadow-sm">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Partner Profile
+              </p>
+              <h2 className="mt-1 text-2xl font-semibold text-slate-900">
+                {partnerDetails.name || "Unnamed partner"}
+              </h2>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <StatusPill label={verificationLabel} tone={verificationTone} />
+                <StatusPill
+                  label={`Created ${formatDate(partnerDetails.created_at)}`}
+                  tone="neutral"
+                />
               </div>
-            ))
-          ) : (
-            <div className="pt-8 text-center text-gray-500 text-sm">
-              No documents found.
             </div>
-          )}
+            <div className="flex flex-wrap items-center gap-2">
+              <ModernButton
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => setIsEditModalOpen(true)}
+              >
+                <SquarePen className="h-4 w-4" />
+                Edit Profile
+              </ModernButton>
+              <ModernButton
+                variant="danger"
+                size="sm"
+                className="gap-2"
+                onClick={() => setIsDeleteModalOpen(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+                Remove Partner
+              </ModernButton>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <InfoStat label="Identifier" value={partnerDetails.identifier || "—"} />
+            <InfoStat label="Status" value={verificationLabel} />
+            <InfoStat label="Last activity" value={formatDate(partnerDetails.updated_at)} />
+            <InfoStat
+              label="Dependants"
+              value={
+                Array.isArray(business?.dependant_tenant)
+                  ? business.dependant_tenant.length
+                  : "—"
+              }
+            />
+          </div>
         </div>
 
-        {/* Main Content - Partner Details */}
-        <div className="flex-1 md:px-8 bg-white rounded-[12px] shadow-sm p-6">
-          <div className="w-full md:max-w-2xl">
-            {/* Header */}
-            <div className="pb-4 border-b border-[#EDEFF6] mb-4 flex justify-between items-center">
-              <div className="flex items-center gap-4">
-                <div className="text-base font-medium text-[#575758]">
-                  ID: {partnerDetails.identifier || "N/A"}
-                </div>
-                <StatusBadge verified={partnerDetails.verified} />
-              </div>
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={() => setIsEditModalOpen(true)}
-                  className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                  title="Edit Partner"
-                >
-                  <Pencil className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setIsDeleteModalOpen(true)}
-                  className="text-red-500 hover:text-red-700 transition-colors"
-                  title="Delete Partner"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
+        <div className="grid gap-6 xl:grid-cols-[320px,1fr]">
+          <div className="space-y-6">
+            <div className="rounded-3xl border border-[#EAECF0] bg-white p-5 shadow-sm">
+              <h3 className="text-sm font-semibold text-slate-900">Key Contacts</h3>
+              <ul className="mt-4 space-y-3">
+                {contactItems.map(({ iconKey, tone, label, value, type }) => (
+                  <li key={label} className="flex items-start gap-3 text-sm">
+                    <IconBadge iconKey={iconKey} tone={tone} size="sm" className="mt-0.5" />
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        {label}
+                      </p>
+                      {type === "mailto" && value && value !== "Not provided" ? (
+                        <a
+                          href={`mailto:${value}`}
+                          className="text-sm font-semibold text-[#288DD1] hover:underline"
+                        >
+                          {value}
+                        </a>
+                      ) : type === "url" && value && value !== "Not configured" ? (
+                        <a
+                          href={value.startsWith("http") ? value : `https://${value}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm font-semibold text-[#288DD1] hover:underline"
+                        >
+                          {value}
+                        </a>
+                      ) : (
+                        <p className="text-sm font-semibold text-slate-800">{value}</p>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
             </div>
 
-            {/* Details Grid */}
-            <div className="space-y-3">
-              {renderField("Name", partnerDetails.name)}
-              {renderField("Email Address", partnerDetails.email)}
-              {renderField("Phone Number", partnerDetails.phone)}
-              {renderField("Type", partnerDetails.type)}
-              {renderField("Industry", partnerDetails.industry)}
-              <div className="flex items-center justify-between">
-                <div className="text-base font-light text-[#575758]">
-                  Address:
+            <div className="rounded-3xl border border-dashed border-[#D8DFE8] bg-white p-5 shadow-sm">
+              <h3 className="text-sm font-semibold text-slate-900">Compliance Library</h3>
+              {documents.length > 0 ? (
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  {documents.map((doc, index) => (
+                    <div
+                      key={`${doc.title}-${index}`}
+                      className="rounded-2xl border border-[#EAECF0] bg-[#F8FAFC] p-4 text-center"
+                    >
+                      <img
+                        src={doc.path}
+                        alt={doc.title}
+                        className="mx-auto h-24 w-auto rounded-lg object-contain"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src =
+                            "https://placehold.co/200x120/E0E0E0/676767?text=Preview";
+                        }}
+                      />
+                      <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        {doc.title}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-                <div className="text-base font-medium text-[#575758] text-right">
-                  {partnerDetails.address || "N/A"}
-                  {partnerDetails.city && `, ${partnerDetails.city}`}
-                  {partnerDetails.state && `, ${partnerDetails.state}`}
-                  {partnerDetails.zip && ` ${partnerDetails.zip}`}
-                  {partnerDetails.country && `, ${partnerDetails.country}`}
+              ) : (
+                <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                  No compliance documents uploaded yet.
                 </div>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="rounded-3xl border border-[#EAECF0] bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-2">
+                <IconBadge
+                  iconKey="business.companyType"
+                  tone="primary"
+                  size="sm"
+                />
+                <h3 className="text-sm font-semibold text-slate-900">Business Profile</h3>
               </div>
-              {renderField(
-                "Registration Number",
-                partnerDetails.registration_number
-              )}
-              {renderField("TIN Number", partnerDetails.tin_number)}
-              {renderField("Website", partnerDetails.website, true)}
+              <dl className="mt-4 space-y-4">
+                {businessItems.map(({ iconKey, tone, label, value, type }) => (
+                  <div
+                    key={label}
+                    className="flex items-start gap-3 rounded-2xl border border-[#EEF2F6] bg-[#F9FAFB] p-3"
+                  >
+                    <IconBadge iconKey={iconKey} tone={tone} />
+                    <div>
+                      <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        {label}
+                      </dt>
+                      {type === "url" && value && value !== "—" ? (
+                        <a
+                          href={value.startsWith("http") ? value : `https://${value}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm font-semibold text-[#288DD1] hover:underline"
+                        >
+                          {value}
+                        </a>
+                      ) : (
+                        <dd className="text-sm font-semibold text-slate-800">{value}</dd>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </dl>
+            </div>
 
-              {/* New Business-related fields, directly from partnerDetails */}
-              {renderField(
-                "Privacy Policy URL",
-                partnerDetails.privacy_policy_url,
-                true
-              )}
-              {renderField(
-                "Unsubscription URL",
-                partnerDetails.unsubscription_url,
-                true
-              )}
-              {renderField(
-                "Help Center URL",
-                partnerDetails.help_center_url,
-                true
-              )}
-              {renderField(
-                "Business Logo Href",
-                partnerDetails.logo_href,
-                true
-              )}
-              {renderField(
-                "Theme Color",
-                partnerDetails.theme_color,
-                false,
-                true
-              )}
-              {renderField(
-                "Secondary Color",
-                partnerDetails.secondary_color,
-                false,
-                true
-              )}
-              {renderField(
-                "Ahref Link Color",
-                partnerDetails.ahref_link_color,
-                false,
-                true
-              )}
-
-              {renderField("Created At", formatDate(partnerDetails.created_at))}
-              {renderField(
-                "Last Updated",
-                formatDate(partnerDetails.updated_at)
-              )}
+            <div className="rounded-3xl border border-[#EAECF0] bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-2">
+                <IconBadge icon={CalendarClock} tone="indigo" size="sm" />
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Compliance & Lifecycle
+                </h3>
+              </div>
+              <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+                {complianceItems.map(({ label, value }) => (
+                  <div
+                    key={label}
+                    className="rounded-2xl border border-[#EEF2F6] bg-[#F9FAFB] p-3"
+                  >
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {label}
+                    </dt>
+                    <dd className="mt-1 text-sm font-semibold text-slate-800">
+                      {value || "—"}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Modals */}
       <EditPartnerModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
@@ -278,11 +331,20 @@ const OverviewPartner = ({ partnerDetails }) => {
       <DeletePartnerModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        partnerId={partnerDetails.id}
-        partnerName={partnerDetails.name}
+        tenantId={partnerDetails?.id || partnerDetails?.identifier}
+        tenantName={partnerDetails?.name}
       />
     </>
   );
 };
+
+const InfoStat = ({ label, value }) => (
+  <div className="rounded-2xl border border-[#EEF2F6] bg-white p-4 shadow-sm">
+    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+      {label}
+    </p>
+    <p className="mt-1 text-sm font-semibold text-slate-900">{value}</p>
+  </div>
+);
 
 export default OverviewPartner;

@@ -1,21 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { X, Loader2, PlusCircle, Trash2 } from "lucide-react";
-import { useFetchCountries } from "../../../hooks/resource";
+import { X, Loader2, Trash2 } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import { useUpdateTaxConfiguration } from "../../../hooks/adminHooks/taxConfigurationHooks";
 
-const EditTaxTypeModal = ({ isOpen, onClose, taxType }) => {
-  const { data: countries, isFetching: isCountriesFetching } =
-    useFetchCountries();
+const EditTaxTypeModal = ({ isOpen, onClose, taxType, onSuccess }) => {
   const { mutate, isPending } = useUpdateTaxConfiguration(); // Use the new update tax type hook
 
   const [formData, setFormData] = useState({
     name: "",
-    slug: "",
     countryRates: [], // Array to manage rates
   });
-  const [newRateCountryId, setNewRateCountryId] = useState("");
-  const [newRateValue, setNewRateValue] = useState("");
   const [errors, setErrors] = useState({});
 
   // Populate form data when the modal opens or when the taxType prop changes
@@ -23,24 +17,24 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType }) => {
     if (isOpen && taxType) {
       setFormData({
         name: taxType.name || "",
-        slug: taxType.slug || "",
         // Deep copy country_rates to avoid direct mutation of prop
         countryRates: taxType.country_rates
-          ? taxType.country_rates.map((rate) => ({ ...rate }))
+          ? taxType.country_rates.map((rate) => ({
+              ...rate,
+              rate:
+                rate?.rate === null || rate?.rate === undefined
+                  ? ""
+                  : (Number(rate.rate) * 100).toString(),
+            }))
           : [],
       });
-      setNewRateCountryId("");
-      setNewRateValue("");
       setErrors({}); // Clear any previous errors
     } else if (!isOpen) {
       // Reset form when modal closes
       setFormData({
         name: "",
-        slug: "",
         countryRates: [],
       });
-      setNewRateCountryId("");
-      setNewRateValue("");
       setErrors({});
     }
   }, [isOpen, taxType]);
@@ -50,37 +44,13 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType }) => {
     if (!formData.name.trim()) {
       newErrors.name = "Tax Type Name is required";
     }
-    if (!formData.slug.trim()) {
-      newErrors.slug = "Slug is required";
-    }
-
     // Validate existing rates
     formData.countryRates.forEach((rate, index) => {
       const rateValue = parseFloat(rate.rate);
-      if (isNaN(rateValue) || rateValue < 0 || rateValue > 1) {
-        newErrors[`rate-${index}`] = "Rate must be a number between 0 and 1.";
+      if (isNaN(rateValue) || rateValue < 0 || rateValue > 100) {
+        newErrors[`rate-${index}`] = "Rate must be a number between 0 and 100.";
       }
     });
-
-    // Validate new rate if attempting to add
-    if (newRateValue.trim() !== "" || newRateCountryId !== "") {
-      const rateValue = parseFloat(newRateValue);
-      if (isNaN(rateValue) || rateValue < 0 || rateValue > 1) {
-        newErrors.newRateValue = "New rate must be a number between 0 and 1.";
-      }
-      if (!newRateCountryId) {
-        newErrors.newRateCountryId = "Country is required for new rate.";
-      } else {
-        // Check if country already has a rate for this tax type
-        const countryAlreadyHasRate = formData.countryRates.some(
-          (rate) => String(rate.country_id) === String(newRateCountryId)
-        );
-        if (countryAlreadyHasRate) {
-          newErrors.newRateCountryId =
-            "This country already has a rate for this tax type.";
-        }
-      }
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -107,51 +77,6 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType }) => {
     });
   };
 
-  const handleAddRate = () => {
-    const newErrors = {};
-    const rateValue = parseFloat(newRateValue);
-
-    if (newRateValue.trim() === "") {
-      newErrors.newRateValue = "Rate is required.";
-    } else if (isNaN(rateValue) || rateValue < 0 || rateValue > 1) {
-      newErrors.newRateValue = "Rate must be a number between 0 and 1.";
-    }
-
-    if (!newRateCountryId) {
-      newErrors.newRateCountryId = "Country is required.";
-    } else {
-      const countryAlreadyHasRate = formData.countryRates.some(
-        (rate) => String(rate.country_id) === String(newRateCountryId)
-      );
-      if (countryAlreadyHasRate) {
-        newErrors.newRateCountryId =
-          "This country already has a rate for this tax type.";
-      }
-    }
-
-    setErrors(newErrors);
-
-    if (Object.keys(newErrors).length === 0) {
-      const selectedCountry = countries.find(
-        (c) => String(c.id) === String(newRateCountryId)
-      );
-
-      setFormData((prev) => ({
-        ...prev,
-        countryRates: [
-          ...prev.countryRates,
-          {
-            country_id: parseInt(newRateCountryId),
-            rate: parseFloat(newRateValue).toFixed(5), // Store as string with precision
-            country: selectedCountry, // Attach country object for display
-          },
-        ],
-      }));
-      setNewRateCountryId("");
-      setNewRateValue("");
-    }
-  };
-
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
 
@@ -160,12 +85,11 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType }) => {
     if (taxType?.id) {
       const updatedData = {
         name: formData.name,
-        slug: formData.slug,
         rates: formData.countryRates.map((rate) => ({
           // Only include 'id' if it exists (for existing rates)
           ...(rate.id && { id: rate.id }),
           country_id: rate.country_id,
-          rate: parseFloat(rate.rate), // Ensure rate is a number for submission
+          rate: parseFloat(rate.rate) / 100,
         })),
       };
 
@@ -175,6 +99,7 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType }) => {
           onSuccess: () => {
             ToastUtils.success("Tax type updated successfully");
             onClose();
+            onSuccess?.();
           },
           onError: (err) => {
             console.error("Failed to update Tax Type:", err);
@@ -190,13 +115,6 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType }) => {
   };
 
   if (!isOpen) return null;
-
-  const availableCountriesForNewRate = countries?.filter(
-    (country) =>
-      !formData.countryRates.some(
-        (rate) => String(rate.country_id) === String(country.id)
-      )
-  );
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
@@ -240,29 +158,6 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType }) => {
                 <p className="text-red-500 text-xs mt-1">{errors.name}</p>
               )}
             </div>
-            {/* <div>
-              <label
-                htmlFor="slug"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Slug<span className="text-red-500">*</span>
-              </label>
-              <input
-                id="slug"
-                type="text"
-                value={formData.slug}
-                onChange={(e) => updateFormDataField("slug", e.target.value)}
-                placeholder="e.g., vat"
-                className={`w-full input-field ${
-                  errors.slug ? "border-red-500" : "border-gray-300"
-                }`}
-                disabled={isPending}
-              />
-              {errors.slug && (
-                <p className="text-red-500 text-xs mt-1">{errors.slug}</p>
-              )}
-            </div> */}
-
             {/* Country Rates Management */}
             <div className="border-t border-gray-200 pt-4 mt-4">
               <h3 className="text-base font-semibold text-gray-800 mb-3">
@@ -278,20 +173,28 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType }) => {
                       <span className="font-medium text-gray-700 w-1/3">
                         {rate.country?.name || `Country ID: ${rate.country_id}`}
                       </span>
-                      <input
-                        type="number"
-                        step="0.001"
-                        value={rate.rate}
-                        onChange={(e) =>
-                          handleRateChange(index, e.target.value)
-                        }
-                        className={`w-1/3 input-field ${
-                          errors[`rate-${index}`]
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
-                        disabled={isPending}
-                      />
+                      <div className="relative w-1/3">
+                        <input
+                          type="number"
+                          step="0.001"
+                          min="0"
+                          max="100"
+                          value={rate.rate}
+                          onChange={(e) =>
+                            handleRateChange(index, e.target.value)
+                          }
+                          placeholder="7.5"
+                          className={`w-full input-field pr-10 ${
+                            errors[`rate-${index}`]
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
+                          disabled={isPending}
+                        />
+                        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-400">
+                          %
+                        </span>
+                      </div>
                       <button
                         onClick={() => handleRemoveRate(index)}
                         className="p-2 text-red-500 hover:text-red-700 transition-colors"
@@ -315,124 +218,7 @@ const EditTaxTypeModal = ({ isOpen, onClose, taxType }) => {
               )}
 
               {/* Add New Rate Section */}
-              <div className="mt-4 p-3 border border-dashed border-gray-300 rounded-lg">
-                <h4 className="text-sm font-medium text-gray-700 mb-3">
-                  Add New Rate
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label
-                      htmlFor="newRateCountry"
-                      className="block text-xs font-medium text-gray-700 mb-1"
-                    >
-                      Country
-                    </label>
-                    <span
-                      className={`w-full input-field block transition-all ${
-                        errors.newRateCountryId ? "border-red-500 border" : ""
-                      }`}
-                    >
-                      {isCountriesFetching ? (
-                        <div className="flex items-center py-2">
-                          <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
-                          <span className="text-gray-500 text-sm">
-                            Loading countries...
-                          </span>
-                        </div>
-                      ) : availableCountriesForNewRate &&
-                        availableCountriesForNewRate.length > 0 ? (
-                        <select
-                          id="newRateCountry"
-                          value={newRateCountryId}
-                          onChange={(e) => {
-                            setNewRateCountryId(e.target.value);
-                            setErrors((prev) => ({
-                              ...prev,
-                              newRateCountryId: null,
-                            }));
-                          }}
-                          className="w-full bg-transparent outline-none"
-                          disabled={isPending}
-                        >
-                          <option value="">Select a country</option>
-                          {availableCountriesForNewRate.map((country) => (
-                            <option key={country.id} value={country.id}>
-                              {country.name}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <div className="flex items-center py-2 text-gray-500 text-sm">
-                          All countries already have rates.
-                        </div>
-                      )}
-                    </span>
-                    {errors.newRateCountryId && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.newRateCountryId}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="newRateValue"
-                      className="block text-xs font-medium text-gray-700 mb-1"
-                    >
-                      Rate (Enter percentage: 7.5 for 7.5% or decimal: 0.075)
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="newRateValue"
-                        type="number"
-                        step="0.001"
-                        min="0"
-                        max="100"
-                        value={newRateValue}
-                        onChange={(e) => {
-                          let value = e.target.value;
-                          // If user enters a value greater than 1, assume it's percentage format
-                          // Convert to decimal for storage (7.5 becomes 0.075)
-                          if (parseFloat(value) > 1 && parseFloat(value) <= 100) {
-                            value = (parseFloat(value) / 100).toString();
-                          }
-                          setNewRateValue(value);
-                          setErrors((prev) => ({ ...prev, newRateValue: null }));
-                        }}
-                        placeholder="7.5 or 0.075"
-                        className={`w-full input-field ${
-                          errors.newRateValue
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
-                        disabled={isPending}
-                      />
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">
-                        {newRateValue && parseFloat(newRateValue) ? 
-                          `${(parseFloat(newRateValue) * 100).toFixed(2)}%` : 
-                          '%'
-                        }
-                      </div>
-                    </div>
-                    {errors.newRateValue && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.newRateValue}
-                      </p>
-                    )}
-                    <p className="text-xs text-gray-500 mt-1">
-                      Enter 7.5 for 7.5% tax (will be stored as 0.075)
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleAddRate}
-                  className="mt-4 px-4 py-2 bg-[#288DD1] text-white rounded-md hover:bg-[#1976D2] transition-colors flex items-center justify-center text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={
-                    isPending || !newRateCountryId || newRateValue.trim() === ""
-                  }
-                >
-                  <PlusCircle className="w-4 h-4 mr-2" /> Add Rate
-                </button>
-              </div>
+              {/* No new rate creation inside edit to keep focus on existing entries */}
             </div>
           </div>
         </div>

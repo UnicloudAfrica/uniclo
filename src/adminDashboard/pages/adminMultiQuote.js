@@ -1,11 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, Loader2, X } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
-import {
-  useCreateMultiQuotes,
-  useFetchCalculatorOptions,
-} from "../../hooks/adminHooks/calculatorOptionHooks";
+import { ChevronLeft } from "lucide-react";
+import { useCreateMultiQuotes } from "../../hooks/adminHooks/calculatorOptionHooks";
 import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
 import { useFetchTenants } from "../../hooks/adminHooks/tenantHooks";
 import { useFetchClients } from "../../hooks/adminHooks/clientHooks";
@@ -13,23 +9,22 @@ import { useSharedClients } from "../../hooks/sharedCalculatorHooks";
 import { useFetchProductPricing } from "../../hooks/resource";
 import AdminSidebar from "../components/adminSidebar";
 import AdminHeadbar from "../components/adminHeadbar";
-import AdminActiveTab from "../components/adminActiveTab";
 import StepProgress from "../../dashboard/components/instancesubcomps/stepProgress";
 import QuoteInfoStep from "./quoteComps/quoteInfoStep";
 import QuoteResourceStep from "./quoteComps/quoteResourceStep";
-import QuoteSummaryStep from "./quoteComps/quoteSummaryStep";
 import QuoteBreakdownStep from "./quoteComps/quoteBreakdownStep";
 import ProductSummaryStep from "./quoteComps/quoteProductSummaryStep";
 import QuoteFinalReviewStep from "./quoteComps/quoteFinalReviewStep";
 import ToastUtils from "../../utils/toastUtil";
 import AdminPageShell from "../components/AdminPageShell";
+import ModernCard from "../components/ModernCard";
+import ModernButton from "../components/ModernButton";
+import StatusPill from "../components/StatusPill";
 
 const AdminMultiQuote = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const contentRef = useRef(null);
 
   const [formData, setFormData] = useState({
     // Step 1
@@ -110,10 +105,19 @@ const AdminMultiQuote = () => {
     });
 
   const steps = ["Quote Info", "Add Items", "Product Summary", "Final Review", "Confirmation"];
+  const stepDescriptions = [
+    "Capture who the quote is for and define billing context.",
+    "Add compute, storage, and optional services for the quote.",
+    "Review the items selected and adjust quantities as needed.",
+    "Confirm delivery settings, discounts, and lead capture options.",
+    "Share, download, or continue collaborating on this quote.",
+  ];
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [currentStep]);
+
+  const stepDescription = stepDescriptions[currentStep] || stepDescriptions[0];
 
   const updateFormData = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -307,6 +311,19 @@ const AdminMultiQuote = () => {
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
+  const selectedTenant = tenants?.find(
+    (tenant) => String(tenant.id) === String(selectedTenantId)
+  );
+  const userPool = selectedTenantId ? tenantClients : adminClients;
+  const selectedUser = userPool?.find(
+    (user) => String(user.id) === String(selectedUserId)
+  );
+  const assignmentDetails = {
+    assignType,
+    tenant: selectedTenant,
+    user: selectedUser,
+  };
+
   const renderStep = () => {
     switch (currentStep) {
       case 0:
@@ -315,7 +332,6 @@ const AdminMultiQuote = () => {
             formData={formData}
             errors={errors}
             updateFormData={updateFormData}
-            handleSelectChange={handleSelectChange}
           />
         );
       case 1:
@@ -324,7 +340,6 @@ const AdminMultiQuote = () => {
             formData={formData}
             errors={errors}
             updateFormData={updateFormData}
-            handleSelectChange={handleSelectChange}
             regions={regions}
             isRegionsFetching={isRegionsFetching}
             computerInstances={computerInstances}
@@ -357,6 +372,7 @@ const AdminMultiQuote = () => {
             formData={formData}
             pricingRequests={pricingRequests}
             tenants={tenants}
+            assignmentDetails={assignmentDetails}
             updateFormData={updateFormData}
             errors={errors}
           />
@@ -368,6 +384,199 @@ const AdminMultiQuote = () => {
     }
   };
 
+  const activeStepLabel = steps[currentStep] || steps[0];
+  const headerMeta = (
+    <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-gray-500">
+      <StatusPill
+        label={`Step ${currentStep + 1} of ${steps.length}`}
+        tone={currentStep + 1 === steps.length ? "success" : "info"}
+      />
+      <span>{activeStepLabel}</span>
+      <span className="hidden sm:inline text-gray-300">•</span>
+      <span>
+        {pricingRequests.length} item{pricingRequests.length === 1 ? "" : "s"}
+      </span>
+      {formData.apply_total_discount && formData.total_discount_value && (
+        <>
+          <span className="hidden sm:inline text-gray-300">•</span>
+          <span>
+            Discount {formData.total_discount_value}
+            {formData.total_discount_type === "percent" ? "%" : ""}
+          </span>
+        </>
+      )}
+      {formData.subject && (
+        <>
+          <span className="hidden sm:inline text-gray-300">•</span>
+          <span className="truncate max-w-xs">{formData.subject}</span>
+        </>
+      )}
+    </div>
+  );
+
+  const headerActions = (
+    <div className="flex flex-wrap gap-2">
+      <ModernButton
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate("/admin-dashboard/quote")}
+      >
+        Close
+      </ModernButton>
+    </div>
+  );
+
+  const quoteMetadata = [
+    formData.subject && { label: "Subject", value: formData.subject },
+    formData.bill_to_name && { label: "Bill To", value: formData.bill_to_name },
+    formData.email && { label: "Primary Email", value: formData.email },
+    formData.emails && { label: "CC", value: formData.emails },
+  ].filter(Boolean);
+
+  const assignmentMetadata = [
+    assignType
+      ? {
+          label: "Assignment Type",
+          value: assignType.charAt(0).toUpperCase() + assignType.slice(1),
+        }
+      : null,
+    assignType !== "" && selectedTenant
+      ? {
+          label: "Tenant",
+          value:
+            selectedTenant.name ||
+            selectedTenant.company_name ||
+            selectedTenant.id,
+        }
+      : null,
+    assignType === "user" && selectedUser
+      ? {
+          label: "User",
+          value:
+            selectedUser.business_name ||
+            `${selectedUser.first_name || ""} ${
+              selectedUser.last_name || ""
+            }`.trim() ||
+            selectedUser.email ||
+            selectedUser.id,
+        }
+      : null,
+  ].filter(Boolean);
+  const hasAssignmentData = assignmentMetadata.length > 0;
+  const assignmentStatus =
+    assignType === ""
+      ? null
+      : assignType === "tenant" && !selectedTenant
+      ? { label: "Select tenant", tone: "warning" }
+      : assignType === "user" && !selectedUser
+      ? { label: "Select user", tone: "warning" }
+      : { label: "Configured", tone: "success" };
+
+  const totalInstancesSelected = pricingRequests.reduce(
+    (sum, item) => sum + (item.number_of_instances || 0),
+    0
+  );
+  const uniqueRegions = Array.from(
+    new Set(pricingRequests.map((item) => item.region).filter(Boolean))
+  );
+
+  const itemsMetadata = [
+    { label: "Total Items", value: pricingRequests.length || "0" },
+    totalInstancesSelected
+      ? { label: "Instances", value: totalInstancesSelected.toString() }
+      : null,
+    uniqueRegions.length
+      ? { label: "Regions", value: uniqueRegions.join(", ") }
+      : null,
+  ].filter(Boolean);
+  const hasQuoteItems = pricingRequests.length > 0;
+
+  const discountMetadata = formData.apply_total_discount && formData.total_discount_value
+    ? [
+        {
+          label: "Discount",
+          value:
+            formData.total_discount_type === "percent"
+              ? `${formData.total_discount_value}%`
+              : `$${formData.total_discount_value}`,
+        },
+        formData.total_discount_label
+          ? { label: "Label", value: formData.total_discount_label }
+          : null,
+      ].filter(Boolean)
+    : [];
+
+  const summaryCards = [
+    quoteMetadata.length
+      ? {
+          key: "quote-metadata",
+          title: "Quote Snapshot",
+          subtitle: "Primary context",
+          metadata: quoteMetadata,
+        }
+      : null,
+    hasAssignmentData
+      ? {
+          key: "assignment",
+          title: "Assignment",
+          subtitle: "Delivery owner",
+          metadata: assignmentMetadata,
+          statuses: assignmentStatus ? [assignmentStatus] : undefined,
+        }
+      : null,
+    hasQuoteItems
+      ? {
+          key: "items",
+          title: "Quote Items",
+          subtitle: "Resources captured",
+          metadata: itemsMetadata,
+          statuses: [
+            {
+              label: "In Progress",
+              tone: "info",
+            },
+          ],
+        }
+      : null,
+    discountMetadata.length
+      ? {
+          key: "discount",
+          title: "Discount",
+          subtitle: "Order adjustments",
+          metadata: discountMetadata,
+          statuses: [
+            { label: "Applied", tone: "info" },
+          ],
+        }
+      : null,
+  ].filter(Boolean);
+
+  const stepCtas = [
+    "Continue to Items",
+    "Continue to Product Summary",
+    "Continue to Final Review",
+    "Submit Quote",
+    "Finish",
+  ];
+  const isReviewStep = currentStep === steps.length - 2;
+  const isFinalStep = currentStep === steps.length - 1;
+  const primaryActionLabel = stepCtas[currentStep] || "Continue";
+
+  const handlePrimaryAction = () => {
+    if (isReviewStep) {
+      handleSubmit();
+    } else if (isFinalStep) {
+      navigate("/admin-dashboard/quote");
+    } else {
+      handleNext();
+    }
+  };
+
+  const disablePrimary =
+    isSubmissionPending ||
+    (currentStep === 1 && pricingRequests.length === 0) ||
+    (isReviewStep && pricingRequests.length === 0);
+
   return (
     <>
       <AdminHeadbar onMenuClick={toggleMobileMenu} />
@@ -375,134 +584,300 @@ const AdminMultiQuote = () => {
         isMobileMenuOpen={isMobileMenuOpen}
         onCloseMobileMenu={closeMobileMenu}
       />
-      <AdminActiveTab />
       <AdminPageShell
         title="Create Multi-Quote"
         description="Build complex product quotes, assign them to tenants or users, and generate pricing breakdowns."
-        actions={
-          <button
-            onClick={() => navigate("/admin-dashboard/quote")}
-            className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        }
-        contentClassName="space-y-6"
+        subHeaderContent={headerMeta}
+        actions={headerActions}
+        contentClassName="space-y-6 2xl:space-y-8"
       >
-        <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
-          <div className="sticky top-0 z-10 bg-white pt-2 pb-4 border-b">
-            <StepProgress currentStep={currentStep} steps={steps} />
+        <ModernCard
+          padding="lg"
+          className="overflow-hidden border border-primary-100 bg-gradient-to-br from-primary-50 via-white to-primary-50 shadow-sm"
+        >
+          <div className="flex flex-col gap-6 2xl:flex-row 2xl:items-center 2xl:justify-between">
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusPill
+                  label={`Step ${currentStep + 1} of ${steps.length}`}
+                  tone={currentStep + 1 === steps.length ? "success" : "info"}
+                />
+                <span className="text-sm font-medium text-primary-700">
+                  {steps[currentStep]}
+                </span>
+              </div>
+              <h2 className="text-2xl font-semibold text-primary-900">
+                {activeStepLabel}
+              </h2>
+              <p className="text-sm text-primary-700 max-w-2xl">
+                {stepDescription}
+              </p>
+            </div>
+            <div className="w-full max-w-xl rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm backdrop-blur">
+              <StepProgress currentStep={currentStep} steps={steps} />
+            </div>
+          </div>
+        </ModernCard>
+
+        {summaryCards.length > 0 && (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {summaryCards.map((card) => (
+              <ModernCard key={card.key} padding="lg" className="space-y-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                      {card.subtitle}
+                    </p>
+                    <h3 className="text-base font-semibold text-slate-900">
+                      {card.title}
+                    </h3>
+                  </div>
+                  {card.statuses?.length ? (
+                    <div className="flex flex-wrap gap-2">
+                      {card.statuses.map((status, idx) => (
+                        <StatusPill
+                          key={`${card.key}-status-${idx}`}
+                          label={status.label}
+                          tone={status.tone}
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+                <dl className="space-y-2 text-sm">
+                  {card.metadata?.map((meta) => (
+                    <div
+                      key={`${card.key}-${meta.label}`}
+                      className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2"
+                    >
+                      <dt className="text-slate-500">{meta.label}</dt>
+                      <dd className="font-semibold text-slate-900">{meta.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </ModernCard>
+            ))}
+          </div>
+        )}
+
+        <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_minmax(320px,380px)] 2xl:items-start">
+          <div className="space-y-6">
+            <ModernCard padding="lg" className="space-y-6">
+              {renderStep()}
+            </ModernCard>
+
+            <ModernCard
+              padding="lg"
+              className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div className="text-sm text-slate-600">
+                {isFinalStep
+                  ? "Quote is ready. Close to return to the quotes dashboard."
+                  : "Continue to the next step or go back to make adjustments."}
+              </div>
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
+                {currentStep > 0 && currentStep < steps.length && (
+                  <ModernButton
+                    variant="ghost"
+                    onClick={handleBack}
+                    isDisabled={isSubmissionPending}
+                    className="flex items-center gap-2"
+                  >
+                    <ChevronLeft className="h-4 w-4" /> Back
+                  </ModernButton>
+                )}
+                <ModernButton
+                  variant="primary"
+                  onClick={handlePrimaryAction}
+                  isDisabled={disablePrimary}
+                  isLoading={isSubmissionPending}
+                >
+                  {primaryActionLabel}
+                </ModernButton>
+              </div>
+            </ModernCard>
           </div>
 
-          {/* Assignment Section (Admin only) */}
-          {currentStep === 0 && (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
-              <h3 className="text-md font-semibold mb-4 text-gray-900">
-                Assignment (Admin only)
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Assign To</label>
-                  <select
-                    value={assignType}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      setAssignType(v);
-                      setSelectedTenantId('');
-                      setSelectedUserId('');
+          <div className="space-y-6 2xl:sticky 2xl:top-24">
+            <ModernCard padding="lg" className="space-y-5">
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-slate-900">Assignment</h3>
+                <p className="text-xs text-slate-500">
+                  Attach this quote to a tenant or client for easier follow-up.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                {[
+                  { value: "", label: "None" },
+                  { value: "tenant", label: "Tenant" },
+                  { value: "user", label: "User" },
+                ].map((option) => (
+                  <button
+                    key={option.value || "none"}
+                    type="button"
+                    onClick={() => {
+                      setAssignType(option.value);
+                      setSelectedTenantId("");
+                      setSelectedUserId("");
                     }}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300"
+                    className={`rounded-xl border px-3 py-2 text-sm font-medium transition ${
+                      assignType === option.value
+                        ? "border-primary-500 bg-primary-50 text-primary-600"
+                        : "border-slate-200 text-slate-600 hover:border-primary-200"
+                    }`}
                   >
-                    <option value="">None</option>
-                    <option value="tenant">Tenant</option>
-                    <option value="user">User (Client)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Tenant</label>
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">
+                    Tenant
+                  </label>
                   <select
                     value={selectedTenantId}
                     onChange={(e) => {
                       setSelectedTenantId(e.target.value);
-                      setSelectedUserId('');
+                      setSelectedUserId("");
                     }}
-                    disabled={assignType !== 'tenant' && assignType !== 'user'}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      assignType ? 'border-gray-300' : 'bg-gray-50 cursor-not-allowed border-gray-200'
+                    disabled={assignType !== "tenant" && assignType !== "user"}
+                    className={`w-full rounded-xl border px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 ${
+                      assignType ? "border-slate-300 bg-white" : "border-slate-200 bg-slate-50 text-slate-400"
                     }`}
                   >
-                    <option value="">{assignType ? 'Select Tenant' : 'Select assign type first'}</option>
-                    {tenants?.map(t => (
-                      <option key={t.id} value={t.id}>
-                        {t.name || t.company_name || `Tenant ${t.id}`}
+                    <option value="">
+                      {assignType ? "Select tenant" : "Choose assignment first"}
+                    </option>
+                    {tenants?.map((tenant) => (
+                      <option key={tenant.id} value={tenant.id}>
+                        {tenant.name || tenant.company_name || `Tenant ${tenant.id}`}
                       </option>
                     ))}
                   </select>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">User</label>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">
+                    User
+                  </label>
                   <select
                     value={selectedUserId}
                     onChange={(e) => setSelectedUserId(e.target.value)}
-                    disabled={assignType !== 'user'}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      assignType === 'user' ? 'border-gray-300' : 'bg-gray-50 cursor-not-allowed border-gray-200'
+                    disabled={assignType !== "user"}
+                    className={`w-full rounded-xl border px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 ${
+                      assignType === "user"
+                        ? "border-slate-300 bg-white"
+                        : "border-slate-200 bg-slate-50 text-slate-400"
                     }`}
                   >
-                    <option value="">{assignType === 'user' ? 'Select User' : 'Select assign type user'}</option>
-                    {(selectedTenantId ? tenantClients : adminClients)?.map(u => (
-                      <option key={u.id} value={u.id}>
-                        {u.business_name || `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || `User ${u.id}`}
+                    <option value="">
+                      {assignType === "user" ? "Select user" : "Choose user assignment"}
+                    </option>
+                    {userPool?.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.business_name ||
+                          `${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+                          user.email ||
+                          `User ${user.id}`}
                       </option>
                     ))}
                   </select>
                 </div>
               </div>
-            </div>
-          )}
-          <div
-            ref={contentRef}
-            className="w-full flex flex-col items-center justify-start"
-          >
-            {renderStep()}
-          </div>
-          <div className="flex items-center justify-between mt-4 pt-4 border-t">
-            <div className="flex gap-3">
-              {currentStep > 0 && (
-                <button
-                  onClick={handleBack}
-                  className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
-                  disabled={isSubmissionPending}
-                >
-                  <ChevronLeft className="w-4 h-4 mr-1 inline-block" /> Back
-                </button>
-              )}
-            </div>
-            <button
-              onClick={
-                currentStep === 3
-                  ? handleSubmit
-                  : currentStep === 4
-                  ? () => navigate("/admin-dashboard/quote")
-                  : handleNext
-              }
-              disabled={isSubmissionPending}
-              className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              {currentStep === 4
-                ? "Finish"
-                : currentStep === 3
-                ? "Submit Quote"
-                : "Next"}
-              {isSubmissionPending && (
-                <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-              )}
-            </button>
+              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
+                Current assignment: {" "}
+                <span className="font-medium text-slate-700">
+                  {assignType === "tenant" && selectedTenant
+                    ? selectedTenant.name || selectedTenant.company_name
+                    : assignType === "user" && selectedUser
+                    ? selectedUser.business_name || selectedUser.email
+                    : "Not assigned"}
+                </span>
+              </div>
+            </ModernCard>
+
+            {(formData.subject || formData.notes || formData.emails) && (
+              <ModernCard padding="lg" className="space-y-4">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-semibold text-slate-900">
+                    Quote overview
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Snapshot of recipient and message context that will appear on the quote.
+                  </p>
+                </div>
+                <dl className="space-y-3 text-sm">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                      Primary contact
+                    </dt>
+                    <dd className="mt-1 font-semibold text-slate-900">
+                      {formData.bill_to_name || "—"}
+                    </dd>
+                    <dd className="text-xs text-slate-500">
+                      {formData.email || "No email provided"}
+                    </dd>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                      CC emails
+                    </dt>
+                    <dd className="mt-1 font-medium text-slate-900">
+                      {formData.emails?.trim() || "—"}
+                    </dd>
+                  </div>
+                  {formData.notes?.trim() && (
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                      <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                        Notes
+                      </dt>
+                      <dd className="mt-1 whitespace-pre-wrap text-sm text-slate-900">
+                        {formData.notes.trim()}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              </ModernCard>
+            )}
+
+            {pricingRequests.length > 0 && (
+              <ModernCard padding="lg" className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-slate-900">
+                    Items queued
+                  </h3>
+                  <StatusPill
+                    label={`${pricingRequests.length} item${pricingRequests.length === 1 ? "" : "s"}`}
+                    tone="info"
+                  />
+                </div>
+                <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                  {pricingRequests.map((item, idx) => (
+                    <div
+                      key={`${item.region}-${idx}`}
+                      className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600"
+                    >
+                      <p className="font-semibold text-slate-900">
+                        {item._display?.compute || "Compute"}
+                        <span className="text-slate-400"> • </span>
+                        {item._display?.os || "OS"}
+                      </p>
+                      <p className="mt-1">
+                        {item.number_of_instances} instance
+                        {item.number_of_instances === 1 ? "" : "s"} • {item.months} month
+                        {item.months === 1 ? "" : "s"} • Region {item.region}
+                      </p>
+                      <p className="mt-1 text-slate-500">
+                        Storage: {item._display?.storage || "—"}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </ModernCard>
+            )}
           </div>
         </div>
-            </AdminPageShell>
+      </AdminPageShell>
     </>
   );
 };

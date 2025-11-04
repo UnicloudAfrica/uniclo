@@ -15,10 +15,12 @@ export default function VerificationCodeInput({
   const [isActive, setIsActive] = useState(false); // Start inactive, activate on success
   const inputRefs = useRef([]);
   const { mutate, isPending } = useResendOTP();
+  const lastCompletedValueRef = useRef(null);
 
   // Sync code with parent state
   useEffect(() => {
     setCode(initialCode || new Array(length).fill(""));
+    lastCompletedValueRef.current = null;
   }, [initialCode, length]);
 
   // Timer effect
@@ -47,6 +49,7 @@ export default function VerificationCodeInput({
     if (isNaN(element.value)) return false;
 
     const newCode = [...code];
+    lastCompletedValueRef.current = null;
     newCode[index] = element.value;
     setCode(newCode);
     onCodeChange(newCode); // Sync with parent
@@ -68,6 +71,7 @@ export default function VerificationCodeInput({
       newCode[index] = "";
       setCode(newCode);
       onCodeChange(newCode); // Sync with parent
+      lastCompletedValueRef.current = null;
     }
   };
 
@@ -82,6 +86,7 @@ export default function VerificationCodeInput({
         ...new Array(length - pasteCode.length).fill(""),
       ];
       setCode(newCode);
+      lastCompletedValueRef.current = null;
       onCodeChange(newCode); // Sync with parent
       // Focus the next empty input or last input
       const nextIndex = Math.min(pasteCode.length, length - 1);
@@ -106,8 +111,11 @@ export default function VerificationCodeInput({
 
   // Check if code is complete and notify parent
   useEffect(() => {
-    if (code.every((digit) => digit !== "")) {
-      onComplete(code.join(""));
+    const joined = code.join("");
+    const isComplete = code.every((digit) => digit !== "");
+    if (isComplete && joined !== lastCompletedValueRef.current) {
+      lastCompletedValueRef.current = joined;
+      onComplete(joined);
     }
     onCodeChange(code); // Sync state on every change
   }, [code, onCodeChange, onComplete]);

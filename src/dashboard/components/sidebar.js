@@ -167,7 +167,7 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
         >
           <div className="relative flex items-center justify-center w-5 h-5 flex-shrink-0">
             {isActive && (
-              <div className="absolute left-[-14px] w-1 h-4 bg-black rounded-[3px]" />
+              <div className="absolute left-[-14px] w-1 h-4 bg-[--theme-color] rounded-[3px]" />
             )}
             <img
               src={isActive ? item.activeIcon : item.icon}

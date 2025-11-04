@@ -10,6 +10,7 @@ import {
   Building2,
   UserPlus,
   Plus,
+  SquarePen,
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -22,6 +23,7 @@ import ModernCard from "../components/ModernCard";
 import ModernButton from "../components/ModernButton";
 import { useFetchClients } from "../../hooks/adminHooks/clientHooks";
 import DeleteClientModal from "./clientComps/deleteClient";
+import EditClientModal from "./clientComps/editClient";
 
 const encodeId = (id) => encodeURIComponent(btoa(id));
 
@@ -32,6 +34,7 @@ const AdminClients = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTenantId, setSelectedTenantId] = useState("");
   const [isDeleteClientModalOpen, setIsDeleteClientModalOpen] = useState(false);
+  const [isEditClientModalOpen, setIsEditClientModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { data: clients, isFetching: isClientsFetching } = useFetchClients();
@@ -99,9 +102,19 @@ const AdminClients = () => {
     navigate(`/admin-dashboard/clients/details?id=${encodedId}&name=${clientFullName}`);
   };
 
+  const handleEditClient = (client) => {
+    setSelectedClient(client);
+    setIsEditClientModalOpen(true);
+  };
+
   const handleDeleteClient = (client) => {
     setSelectedClient(client);
     setIsDeleteClientModalOpen(true);
+  };
+
+  const closeEditClientModal = () => {
+    setIsEditClientModalOpen(false);
+    setSelectedClient(null);
   };
 
   const closeDeleteClientModal = () => {
@@ -189,21 +202,36 @@ const AdminClients = () => {
                   <td className="px-6 py-4 text-sm text-gray-600">
                     {item.tenant?.name || "N/A"}
                   </td>
-                  <td className="px-6 py-4 text-right space-x-2">
-                    <button
-                      onClick={() => handleViewDetails(item)}
-                      className="inline-flex items-center justify-center rounded-full border border-gray-200 p-2 text-[#288DD1] hover:bg-gray-50"
-                      title="View details"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteClient(item)}
-                      className="inline-flex items-center justify-center rounded-full border border-gray-200 p-2 text-red-500 hover:bg-red-50"
-                      title="Delete client"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end gap-2">
+                      <ModernButton
+                        variant="primary"
+                        size="sm"
+                        className="gap-2 text-xs"
+                        onClick={() => handleEditClient(item)}
+                      >
+                        <SquarePen className="h-4 w-4" />
+                        Edit
+                      </ModernButton>
+                      <ModernButton
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 text-xs"
+                        onClick={() => handleViewDetails(item)}
+                      >
+                        <Eye className="h-4 w-4" />
+                        View
+                      </ModernButton>
+                      <ModernButton
+                        variant="danger"
+                        size="sm"
+                        className="gap-2 text-xs"
+                        onClick={() => handleDeleteClient(item)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete
+                      </ModernButton>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -233,20 +261,33 @@ const AdminClients = () => {
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <button
+                  <ModernButton
+                    variant="primary"
+                    size="sm"
+                    className="gap-1 text-xs"
+                    onClick={() => handleEditClient(item)}
+                  >
+                    <SquarePen className="h-4 w-4" />
+                    Edit
+                  </ModernButton>
+                  <ModernButton
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 text-xs"
                     onClick={() => handleViewDetails(item)}
-                    className="inline-flex items-center justify-center rounded-full border border-gray-200 p-2 text-[#288DD1] hover:bg-gray-50"
-                    title="View details"
                   >
-                    <Eye className="w-4 h-4" />
-                  </button>
-                  <button
+                    <Eye className="h-4 w-4" />
+                    View
+                  </ModernButton>
+                  <ModernButton
+                    variant="danger"
+                    size="sm"
+                    className="gap-1 text-xs"
                     onClick={() => handleDeleteClient(item)}
-                    className="inline-flex items-center justify-center rounded-full border border-gray-200 p-2 text-red-500 hover:bg-red-50"
-                    title="Delete client"
                   >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </ModernButton>
                 </div>
               </div>
             </div>
@@ -342,6 +383,14 @@ const AdminClients = () => {
           </div>
         </ModernCard>
       </AdminPageShell>
+
+      {isEditClientModalOpen && (
+        <EditClientModal
+          client={selectedClient}
+          onClose={closeEditClientModal}
+          onClientUpdated={closeEditClientModal}
+        />
+      )}
 
       <DeleteClientModal
         isOpen={isDeleteClientModalOpen}

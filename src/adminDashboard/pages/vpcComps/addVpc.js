@@ -4,35 +4,15 @@ import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
 import { useCreateVpc } from "../../../hooks/adminHooks/vcpHooks";
 import ModernModal from "../../components/ModernModal";
 import ModernInput from "../../components/ModernInput";
+import ModernSelect from "../../components/ModernSelect";
 import { designTokens } from "../../../styles/designTokens";
 import ToastUtils from "../../../utils/toastUtil";
-
-const selectStyles = {
-  width: "100%",
-  height: "52px",
-  borderRadius: designTokens.borderRadius.lg,
-  border: `1px solid ${designTokens.colors.neutral[300]}`,
-  padding: "0 16px",
-  fontSize: designTokens.typography.fontSize.base[0],
-  fontFamily: designTokens.typography.fontFamily.sans.join(", "),
-  color: designTokens.colors.neutral[800],
-  backgroundColor: designTokens.colors.neutral[0],
-  outline: "none",
-  transition: "all 0.2s ease",
-};
 
 const checkboxStyles = {
   width: "18px",
   height: "18px",
   borderRadius: designTokens.borderRadius.sm,
   border: `1px solid ${designTokens.colors.neutral[300]}`,
-};
-
-const helperTextStyles = {
-  fontSize: designTokens.typography.fontSize.xs[0],
-  marginTop: "6px",
-  color: designTokens.colors.error[600],
-  fontFamily: designTokens.typography.fontFamily.sans.join(", "),
 };
 
 const AddVpc = ({ isOpen, onClose, projectId = "" }) => {
@@ -125,6 +105,7 @@ const AddVpc = ({ isOpen, onClose, projectId = "" }) => {
       isOpen={isOpen}
       onClose={onClose}
       title="Add Virtual Private Cloud"
+      subtitle="Define a network boundary for your project and optionally mark it as the default VPC."
       actions={actions}
       loading={isPending}
       size="lg"
@@ -146,43 +127,21 @@ const AddVpc = ({ isOpen, onClose, projectId = "" }) => {
           error={errors.name}
           required
         />
-        <div>
-          <label
-            htmlFor="vpc-region"
-            className="block text-sm font-medium"
-            style={{ color: designTokens.colors.neutral[700] }}
-          >
-            Region <span className="text-red-500">*</span>
-          </label>
-          <select
-            id="vpc-region"
-            value={formData.region}
-            onChange={(event) => updateField("region", event.target.value)}
-            disabled={isRegionsFetching}
-            style={selectStyles}
-            onFocus={(event) => {
-              event.target.style.borderColor = designTokens.colors.primary[500];
-              event.target.style.boxShadow = `0 0 0 3px ${designTokens.colors.primary[100]}`;
-            }}
-            onBlur={(event) => {
-              event.target.style.borderColor =
-                designTokens.colors.neutral[300];
-              event.target.style.boxShadow = "none";
-            }}
-          >
-            <option value="" disabled>
-              {isRegionsFetching ? "Loading regions..." : "Select a region"}
-            </option>
-            {regions?.map((region) => (
-              <option key={region.code} value={region.code}>
-                {region.name}
-              </option>
-            ))}
-          </select>
-          {errors.region && (
-            <p style={helperTextStyles}>{errors.region}</p>
-          )}
-        </div>
+        <ModernSelect
+          label="Region"
+          placeholder={
+            isRegionsFetching ? "Loading regions..." : "Select a region"
+          }
+          value={formData.region}
+          onChange={(event) => updateField("region", event.target.value)}
+          disabled={isRegionsFetching}
+          required
+          error={errors.region}
+          options={regions?.map((region) => ({
+            label: region.name,
+            value: region.code,
+          })) ?? []}
+        />
         <ModernInput
           label="CIDR Block"
           placeholder="10.0.0.0/16"

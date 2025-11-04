@@ -12,7 +12,7 @@ import {
   Menu,
 } from "lucide-react";
 import logo from "./assets/logo.png";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { designTokens } from "../../styles/designTokens";
 import useAuthStore from "../../stores/userAuthStore";
 
@@ -178,12 +178,12 @@ const AdminHeadbar = ({ onMenuClick }) => {
           </button> */}
 
           {/* Help Button */}
-          <a
-            href="/admin-dashboard/support-ticket"
+          <Link
+            to="/admin-dashboard/support-ticket"
             className="p-2 rounded-lg transition-colors duration-200 hover:bg-gray-100"
           >
             <HelpCircle size={20} />
-          </a>
+          </Link>
 
           {/* Notifications */}
           <div className="relative" ref={notificationRef}>
@@ -297,21 +297,23 @@ const AdminHeadbar = ({ onMenuClick }) => {
                   boxShadow: designTokens.shadows.lg,
                 }}
               >
-                <a
-                  href="/admin-dashboard/profile-settings"
+                <Link
+                  to="/admin-dashboard/profile-settings"
                   className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 transition-colors duration-200"
+                  onClick={() => setIsProfileOpen(false)}
                 >
                   <User size={18} />
                   Profile Settings
-                </a>
+                </Link>
 
-                <a
-                  href="/admin-dashboard/profile-settings"
+                <Link
+                  to="/admin-dashboard/profile-settings"
                   className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 transition-colors duration-200"
+                  onClick={() => setIsProfileOpen(false)}
                 >
                   <Settings size={18} />
                   Account Settings
-                </a>
+                </Link>
 
                 <hr style={{ borderColor: designTokens.colors.neutral[200] }} />
 

@@ -1,13 +1,49 @@
-import { useState } from "react";
-import { Loader2, Pencil, Trash2 } from "lucide-react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
+import {
+  Cable,
+  MapPinned,
+  DollarSign,
+  Pencil,
+  Trash2,
+  Plus,
+} from "lucide-react";
 import { useFetchCrossConnects } from "../../../hooks/adminHooks/crossConnectHooks";
+import ResourceDataExplorer from "../../components/ResourceDataExplorer";
+import AddCrossConnect from "./crossConnectSubs/addCC";
 import EditCrossConnect from "./crossConnectSubs/editCC";
 import DeleteCrossConnect from "./crossConnectSubs/deleteCC";
-import AddCrossConnect from "./crossConnectSubs/addCC";
+import ModernButton from "../../components/ModernButton";
 
-const CrossConnect = ({ selectedRegion }) => {
-  const { data: crossConnects, isFetching: isCrossConnectsFetching } =
-    useFetchCrossConnects(selectedRegion);
+const formatCurrency = (amount, currency = "USD") => {
+  if (amount === null || amount === undefined || Number.isNaN(amount)) {
+    return "—";
+  }
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(amount));
+};
+
+const formatDate = (dateString) => {
+  if (!dateString) return "—";
+  try {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  } catch (error) {
+    return "—";
+  }
+};
+
+const CrossConnect = ({ selectedRegion, onMetricsChange }) => {
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [search, setSearch] = useState("");
+
   const [isAddCrossConnectModalOpen, setIsAddCrossConnectModalOpen] =
     useState(false);
   const [isEditCrossConnectModalOpen, setIsEditCrossConnectModalOpen] =
@@ -16,193 +52,198 @@ const CrossConnect = ({ selectedRegion }) => {
     useState(false);
   const [selectedCrossConnect, setSelectedCrossConnect] = useState(null);
 
-  const handleAddCrossConnect = () => {
+  useEffect(() => {
+    setPage(1);
+    setSearch("");
+  }, [selectedRegion]);
+
+  const { data, isFetching } = useFetchCrossConnects(
+    selectedRegion,
+    { page, perPage, search },
+    { enabled: Boolean(selectedRegion), keepPreviousData: true }
+  );
+
+  const rows = data?.data ?? [];
+  const meta = data?.meta ?? null;
+  const total = meta?.total ?? rows.length;
+
+  const averagePrice = useMemo(() => {
+    if (!rows.length) return 0;
+    return (
+      rows.reduce((acc, item) => acc + Number(item.price || 0), 0) /
+      rows.length
+    );
+  }, [rows]);
+
+  const providerCoverage = useMemo(() => {
+    return new Set(rows.map((item) => item.provider || "platform")).size;
+  }, [rows]);
+
+  useEffect(() => {
+    onMetricsChange?.({
+      metrics: [
+        {
+          label: "Cross connect SKUs",
+          value: total,
+          description: "Private networking offers",
+          icon: <Cable className="h-5 w-5" />,
+        },
+        {
+          label: "Providers",
+          value: providerCoverage,
+          description: "Carrier/IX partners covered",
+          icon: <MapPinned className="h-5 w-5" />,
+        },
+        {
+          label: "Average price",
+          value: formatCurrency(averagePrice),
+          description: "Typical monthly charge",
+          icon: <DollarSign className="h-5 w-5" />,
+        },
+      ],
+      description:
+        "Curate partner cross-connect offers and keep pricing aligned with colocation contracts.",
+    });
+  }, [total, providerCoverage, averagePrice, onMetricsChange]);
+
+  const handleAdd = () => {
+    setSelectedCrossConnect(null);
     setIsAddCrossConnectModalOpen(true);
   };
 
-  const handleEditCrossConnect = (crossConnect) => {
-    setSelectedCrossConnect(crossConnect);
+  const handleEdit = (record) => {
+    setSelectedCrossConnect(record);
     setIsEditCrossConnectModalOpen(true);
   };
 
-  const handleDeleteCrossConnect = (crossConnect) => {
-    setSelectedCrossConnect(crossConnect);
+  const handleDelete = (record) => {
+    setSelectedCrossConnect(record);
     setIsDeleteCrossConnectModalOpen(true);
   };
 
-  const formatCurrency = (amount, currency = "USD") => {
-    if (amount === null || amount === undefined) return "N/A";
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(parseFloat(amount));
+  const columns = [
+    {
+      header: "Cross connect profile",
+      key: "name",
+      render: (item) => (
+        <div className="flex flex-col">
+          <span className="font-semibold text-slate-900">
+            {item.name || "Cross connect"}
+          </span>
+          <span className="text-xs text-slate-500">
+            {item.identifier || "No identifier"}
+          </span>
+        </div>
+      ),
+    },
+    {
+      header: "Provider",
+      key: "provider",
+      align: "center",
+      render: (item) => (
+        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+          {item.provider || "Platform"}
+        </span>
+      ),
+    },
+    {
+      header: "Updated",
+      key: "updated_at",
+      align: "right",
+      render: (item) => (
+        <span className="text-xs text-slate-500">
+          {formatDate(item.updated_at || item.created_at)}
+        </span>
+      ),
+    },
+    {
+      header: "",
+      key: "actions",
+      align: "right",
+      render: (item) => (
+        <div className="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => handleEdit(item)}
+            className="inline-flex items-center justify-center rounded-full border border-slate-200 p-2 text-slate-500 transition hover:border-primary-200 hover:text-primary-600"
+            title="Edit cross connect"
+            aria-label="Edit cross connect"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDelete(item)}
+            className="inline-flex items-center justify-center rounded-full border border-red-200 p-2 text-red-500 transition hover:border-red-300 hover:bg-red-50"
+            title="Remove cross connect"
+            aria-label="Remove cross connect"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
+  const primaryAction = (
+    <ModernButton
+      size="sm"
+      onClick={handleAdd}
+      className="flex items-center gap-2"
+    >
+      <Plus className="h-4 w-4" />
+      Add cross connect
+    </ModernButton>
+  );
+
+  const emptyState = {
+    icon: (
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-500/10 text-primary-500">
+        <Cable className="h-5 w-5" />
+      </span>
+    ),
+    title: "No cross-connect products",
+    description:
+      "Expose carrier cross connects so customers can bring hybrid workloads into your platform.",
+    action: (
+      <ModernButton onClick={handleAdd} className="flex items-center gap-2">
+        <Plus className="h-4 w-4" />
+        Create cross connect SKU
+      </ModernButton>
+    ),
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      });
-    } catch (e) {
-      console.error("Error formatting date:", e);
-      return "Invalid Date";
-    }
-  };
-
-  if (isCrossConnectsFetching) {
-    return (
-      <div className="flex items-center justify-center min-h-[200px]">
-        <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
-        <p className="ml-2 text-gray-700">Loading Cross Connects...</p>
-      </div>
-    );
-  }
+  const handleSearch = useCallback(
+    (value) => {
+      setSearch(value);
+      setPage(1);
+    },
+    [setSearch, setPage]
+  );
 
   return (
     <>
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={handleAddCrossConnect}
-          className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
-        >
-          Add Cross Connect
-        </button>
-      </div>
+      <ResourceDataExplorer
+        title="Carrier cross connects"
+        description="Manage dedicated network cross-connects and pricing for co-located customers."
+        columns={columns}
+        rows={rows}
+        loading={isFetching}
+        page={meta?.current_page ?? page}
+        perPage={meta?.per_page ?? perPage}
+        total={total}
+        meta={meta}
+        onPageChange={setPage}
+        onPerPageChange={(next) => {
+          setPerPage(next);
+          setPage(1);
+        }}
+        searchValue={search}
+        onSearch={handleSearch}
+        toolbarSlot={primaryAction}
+        emptyState={emptyState}
+      />
 
-      {/* Desktop Table */}
-      <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px] border border-gray-200">
-        <table className="w-full">
-          <thead className="bg-[#F5F5F5]">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Identifier
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Price
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Created At
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Action
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-[#E8E6EA]">
-            {crossConnects && crossConnects.length > 0 ? (
-              crossConnects.map((cc) => (
-                <tr key={cc.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {cc.name || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {cc.identifier || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatCurrency(cc.price)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatDate(cc.created_at)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
-                    <div className="flex items-center space-x-3">
-                      <button
-                        onClick={() => handleEditCrossConnect(cc)}
-                        className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                        title="Edit Cross Connect"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteCrossConnect(cc)}
-                        className="text-red-500 hover:text-red-700 transition-colors"
-                        title="Delete Cross Connect"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td
-                  colSpan="5"
-                  className="px-6 py-4 text-center text-sm text-gray-500"
-                >
-                  No Cross Connects found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Mobile Cards */}
-      <div className="md:hidden mt-6 space-y-4">
-        {crossConnects && crossConnects.length > 0 ? (
-          crossConnects.map((cc) => (
-            <div
-              key={cc.id}
-              className="bg-white rounded-[12px] shadow-sm p-4 border border-gray-200"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-base font-semibold text-gray-900">
-                  {cc.name || "N/A"}
-                </h3>
-                <div className="flex items-center space-x-3">
-                  <button
-                    onClick={() => handleEditCrossConnect(cc)}
-                    className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                    title="Edit Cross Connect"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteCrossConnect(cc)}
-                    className="text-red-500 hover:text-red-700 transition-colors"
-                    title="Delete Cross Connect"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-              <div className="space-y-1 text-sm text-gray-600">
-                <div className="flex justify-between">
-                  <span className="font-medium">Identifier:</span>
-                  <span>{cc.identifier || "N/A"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Price:</span>
-                  <span>{formatCurrency(cc.price)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Created At:</span>
-                  <span>{formatDate(cc.created_at)}</span>
-                </div>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="bg-white rounded-[12px] shadow-sm p-4 text-center text-gray-500">
-            No Cross Connects found.
-          </div>
-        )}
-      </div>
-
-      {/* Modals */}
       <AddCrossConnect
         isOpen={isAddCrossConnectModalOpen}
         onClose={() => setIsAddCrossConnectModalOpen(false)}

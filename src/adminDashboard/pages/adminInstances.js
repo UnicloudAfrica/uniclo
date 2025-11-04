@@ -18,9 +18,6 @@ import {
   Eye,
   CheckSquare,
   Square as UncheckedSquare,
-  Download,
-  Upload,
-  Settings,
   AlertCircle,
   CheckCircle,
   Clock,
@@ -28,18 +25,22 @@ import {
   HardDrive,
   Network,
   Copy,
-  ExternalLink,
-  Zap
+  Sparkles,
+  Zap,
 } from "lucide-react";
 
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
-import AdminActiveTab from "../components/adminActiveTab";
 import EmbeddedConsole, { useConsoleManager } from "../../components/Console/EmbeddedConsole";
 import ToastUtils from "../../utils/toastUtil";
 import useAdminAuthStore from "../../stores/adminAuthStore";
 import { useFetchPurchasedInstances } from "../../hooks/adminHooks/instancesHook";
 import AdminPageShell from "../components/AdminPageShell";
+import ModernCard from "../components/ModernCard";
+import ModernButton from "../components/ModernButton";
+import StatusPill from "../components/StatusPill";
+import ModernInput from "../components/ModernInput";
+import ModernStatsCard from "../components/ModernStatsCard";
 
 // Enhanced Status Badge Component
 const StatusBadge = ({ status, size = 'sm' }) => {
@@ -99,117 +100,129 @@ const InstanceRow = ({
   };
 
   const quickActions = [
-    { key: 'start', label: 'Start', icon: Play, color: 'text-green-600', condition: instance.status === 'stopped' },
-    { key: 'stop', label: 'Stop', icon: Square, color: 'text-red-600', condition: instance.status === 'running' },
-    { key: 'reboot', label: 'Reboot', icon: RotateCw, color: 'text-blue-600', condition: instance.status === 'running' },
-    { key: 'console', label: 'Console', icon: Terminal, color: 'text-indigo-600', condition: true },
+    { key: 'start', label: 'Start', icon: Play, condition: instance.status === 'stopped' },
+    { key: 'stop', label: 'Stop', icon: Square, condition: instance.status === 'running' },
+    { key: 'reboot', label: 'Reboot', icon: RotateCw, condition: instance.status === 'running' },
+    { key: 'console', label: 'Console', icon: Terminal, condition: true },
   ];
 
   const availableActions = quickActions.filter(action => action.condition);
 
   return (
     <>
-      <tr className="hover:bg-gray-50 border-b border-gray-200">
+      <tr className="transition-colors hover:bg-slate-50/70">
         {/* Selection Checkbox */}
-        <td className="px-6 py-4">
+        <td className="px-5 py-4">
           <button
             onClick={() => onSelect(instance.id)}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-slate-300 transition hover:text-primary-500"
           >
             {isSelected ? (
-              <CheckSquare className="w-5 h-5 text-blue-600" />
+              <CheckSquare className="h-5 w-5 text-primary-500" />
             ) : (
-              <UncheckedSquare className="w-5 h-5" />
+              <UncheckedSquare className="h-5 w-5" />
             )}
           </button>
         </td>
 
         {/* Expand/Collapse */}
-        <td className="px-2 py-4">
+        <td className="px-3 py-4">
           <button
             onClick={() => setExpanded(!expanded)}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-slate-300 transition hover:text-primary-500"
           >
             {expanded ? (
-              <ChevronDown className="w-4 h-4" />
+              <ChevronDown className="h-4 w-4" />
             ) : (
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="h-4 w-4" />
             )}
           </button>
         </td>
 
         {/* Instance Name & ID */}
-        <td className="px-6 py-4">
-          <div className="flex items-center">
+        <td className="px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="hidden rounded-lg bg-slate-100 p-2 text-slate-500 md:block">
+              <Server className="h-4 w-4" />
+            </div>
             <div>
               <button
                 onClick={() => onNavigateToDetails(instance.identifier)}
-                className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                className="text-sm font-semibold text-primary-600 transition hover:text-primary-700"
               >
                 {instance.name || `Instance-${instance.identifier?.slice(-8)}`}
               </button>
-              <p className="text-xs text-gray-500 font-mono">{instance.identifier}</p>
+              <p className="font-mono text-xs text-slate-400">
+                {instance.identifier}
+              </p>
             </div>
           </div>
         </td>
 
         {/* Status */}
-        <td className="px-6 py-4">
+        <td className="px-5 py-4">
           <StatusBadge status={instance.status} size="xs" />
         </td>
 
         {/* Instance Type */}
-        <td className="px-6 py-4 text-sm text-gray-900">
+        <td className="px-5 py-4 text-sm text-slate-800">
           <div className="flex items-center">
-            <Server className="w-4 h-4 mr-2 text-gray-400" />
+            <Server className="mr-2 h-4 w-4 text-slate-400" />
             <span>{instance.compute?.name || 'N/A'}</span>
           </div>
         </td>
 
         {/* Resources */}
-        <td className="px-6 py-4 text-sm text-gray-900">
-          <div className="space-y-1">
+        <td className="px-5 py-4 text-sm text-slate-800">
+          <div className="space-y-1.5">
             <div className="flex items-center">
-              <Zap className="w-3 h-3 mr-1 text-blue-500" />
+              <Zap className="mr-1 h-3 w-3 text-primary-500" />
               <span>{instance.compute?.vcpus || 0} vCPU</span>
             </div>
             <div className="flex items-center">
-              <HardDrive className="w-3 h-3 mr-1 text-green-500" />
-              <span>{instance.compute?.memory_mb ? Math.round(instance.compute.memory_mb / 1024) : 0} GB</span>
+              <HardDrive className="mr-1 h-3 w-3 text-emerald-500" />
+              <span>
+                {instance.compute?.memory_mb
+                  ? Math.round(instance.compute.memory_mb / 1024)
+                  : 0}{" "}
+                GB
+              </span>
             </div>
           </div>
         </td>
 
         {/* IP Address */}
-        <td className="px-6 py-4 text-sm text-gray-900">
+        <td className="px-5 py-4 text-sm text-slate-800">
           <div className="flex items-center">
-            <Network className="w-4 h-4 mr-2 text-gray-400" />
-            <span>{instance.floating_ip?.ip_address || instance.private_ip || 'N/A'}</span>
+            <Network className="mr-2 h-4 w-4 text-slate-400" />
+            <span>
+              {instance.floating_ip?.ip_address || instance.private_ip || 'N/A'}
+            </span>
             {(instance.floating_ip?.ip_address || instance.private_ip) && (
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(instance.floating_ip?.ip_address || instance.private_ip);
                   ToastUtils.success('IP copied to clipboard');
                 }}
-                className="ml-2 p-1 text-gray-400 hover:text-gray-600"
+                className="ml-2 rounded-full p-1 text-slate-300 transition hover:bg-slate-100 hover:text-primary-500"
               >
-                <Copy className="w-3 h-3" />
+                <Copy className="h-3 w-3" />
               </button>
             )}
           </div>
         </td>
 
         {/* Created */}
-        <td className="px-6 py-4 text-sm text-gray-500">
+        <td className="px-5 py-4 text-sm text-slate-500">
           <div className="flex items-center">
-            <Clock className="w-4 h-4 mr-2 text-gray-400" />
+            <Clock className="mr-2 h-4 w-4 text-slate-300" />
             {instance.created_at ? new Date(instance.created_at).toLocaleDateString() : 'N/A'}
           </div>
         </td>
 
         {/* Quick Actions */}
-        <td className="px-6 py-4">
-          <div className="flex items-center space-x-2">
+        <td className="px-5 py-4">
+          <div className="flex items-center gap-2">
             {availableActions.slice(0, 3).map(action => (
               <button
                 key={action.key}
@@ -221,13 +234,13 @@ const InstanceRow = ({
                   }
                 }}
                 disabled={actionLoading[instance.id]?.[action.key]}
-                className={`p-1 rounded hover:bg-gray-100 ${action.color} disabled:opacity-50`}
+                className="rounded-full border border-slate-200 p-1.5 text-slate-500 transition hover:border-primary-200 hover:text-primary-500 disabled:cursor-not-allowed disabled:opacity-40"
                 title={action.label}
               >
                 {actionLoading[instance.id]?.[action.key] ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <action.icon className="w-4 h-4" />
+                  <action.icon className="h-4 w-4" />
                 )}
               </button>
             ))}
@@ -236,41 +249,41 @@ const InstanceRow = ({
             <div className="relative">
               <button
                 onClick={() => setShowActions(!showActions)}
-                className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600"
+                className="rounded-full border border-slate-200 p-1.5 text-slate-400 transition hover:border-primary-200 hover:text-primary-500"
               >
-                <MoreHorizontal className="w-4 h-4" />
+                <MoreHorizontal className="h-4 w-4" />
               </button>
 
               {showActions && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-                  <div className="py-1">
+                <div className="absolute right-0 mt-2 w-52 rounded-2xl border border-slate-100 bg-white p-2 shadow-xl">
+                  <div className="space-y-1 text-sm text-slate-600">
                     <button
                       onClick={() => onNavigateToDetails(instance.identifier)}
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 transition hover:bg-slate-50"
                     >
-                      <Eye className="w-4 h-4 mr-2" />
+                      <Eye className="h-4 w-4 text-primary-500" />
                       View Details
                     </button>
                     <button
                       onClick={() => handleAction('suspend')}
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 transition hover:bg-slate-50"
                     >
-                      <Pause className="w-4 h-4 mr-2" />
+                      <Pause className="h-4 w-4 text-amber-500" />
                       Suspend
                     </button>
                     <button
                       onClick={() => handleAction('hibernate')}
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 transition hover:bg-slate-50"
                     >
-                      <Moon className="w-4 h-4 mr-2" />
+                      <Moon className="h-4 w-4 text-violet-500" />
                       Hibernate
                     </button>
-                    <hr className="my-1" />
+                    <div className="h-px bg-slate-100" />
                     <button
                       onClick={() => handleAction('destroy')}
-                      className="flex items-center px-4 py-2 text-sm text-red-700 hover:bg-red-50 w-full text-left"
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-red-600 transition hover:bg-red-50"
                     >
-                      <Trash2 className="w-4 h-4 mr-2" />
+                      <Trash2 className="h-4 w-4" />
                       Destroy
                     </button>
                   </div>
@@ -283,59 +296,61 @@ const InstanceRow = ({
 
       {/* Expanded Row Details */}
       {expanded && (
-        <tr className="bg-gray-50">
-          <td colSpan="9" className="px-6 py-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <tr className="bg-slate-50/60">
+          <td colSpan="9" className="px-5 py-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2">Instance Details</h4>
+                <h4 className="mb-2 text-sm font-semibold text-slate-800">
+                  Instance details
+                </h4>
                 <dl className="space-y-1">
                   <div className="flex justify-between">
-                    <dt className="text-xs text-gray-500">Region:</dt>
-                    <dd className="text-xs text-gray-900">{instance.region || 'N/A'}</dd>
+                    <dt className="text-xs text-slate-500">Region:</dt>
+                    <dd className="text-xs text-slate-800">{instance.region || 'N/A'}</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-xs text-gray-500">Provider:</dt>
-                    <dd className="text-xs text-gray-900">{instance.provider || 'N/A'}</dd>
+                    <dt className="text-xs text-slate-500">Provider:</dt>
+                    <dd className="text-xs text-slate-800">{instance.provider || 'N/A'}</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-xs text-gray-500">OS Image:</dt>
-                    <dd className="text-xs text-gray-900">{instance.os_image?.name || 'N/A'}</dd>
+                    <dt className="text-xs text-slate-500">OS image:</dt>
+                    <dd className="text-xs text-slate-800">{instance.os_image?.name || 'N/A'}</dd>
                   </div>
                 </dl>
               </div>
 
               <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2">Network</h4>
+                <h4 className="mb-2 text-sm font-semibold text-slate-800">Network</h4>
                 <dl className="space-y-1">
                   <div className="flex justify-between">
-                    <dt className="text-xs text-gray-500">Private IP:</dt>
-                    <dd className="text-xs text-gray-900">{instance.private_ip || 'N/A'}</dd>
+                    <dt className="text-xs text-slate-500">Private IP:</dt>
+                    <dd className="text-xs text-slate-800">{instance.private_ip || 'N/A'}</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-xs text-gray-500">Floating IP:</dt>
-                    <dd className="text-xs text-gray-900">{instance.floating_ip?.ip_address || 'N/A'}</dd>
+                    <dt className="text-xs text-slate-500">Floating IP:</dt>
+                    <dd className="text-xs text-slate-800">{instance.floating_ip?.ip_address || 'N/A'}</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-xs text-gray-500">Security Group:</dt>
-                    <dd className="text-xs text-gray-900">{instance.security_group || 'N/A'}</dd>
+                    <dt className="text-xs text-slate-500">Security group:</dt>
+                    <dd className="text-xs text-slate-800">{instance.security_group || 'N/A'}</dd>
                   </div>
                 </dl>
               </div>
 
               <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2">Storage</h4>
+                <h4 className="mb-2 text-sm font-semibold text-slate-800">Storage</h4>
                 <dl className="space-y-1">
                   <div className="flex justify-between">
-                    <dt className="text-xs text-gray-500">Storage Size:</dt>
-                    <dd className="text-xs text-gray-900">{instance.storage_size_gb || 'N/A'} GB</dd>
+                    <dt className="text-xs text-slate-500">Storage size:</dt>
+                    <dd className="text-xs text-slate-800">{instance.storage_size_gb || 'N/A'} GB</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-xs text-gray-500">Volume Type:</dt>
-                    <dd className="text-xs text-gray-900">{instance.volume_type?.name || 'N/A'}</dd>
+                    <dt className="text-xs text-slate-500">Volume type:</dt>
+                    <dd className="text-xs text-slate-800">{instance.volume_type?.name || 'N/A'}</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-xs text-gray-500">Boot From:</dt>
-                    <dd className="text-xs text-gray-900">{instance.boot_from_volume ? 'Volume' : 'Image'}</dd>
+                    <dt className="text-xs text-slate-500">Boot from:</dt>
+                    <dd className="text-xs text-slate-800">{instance.boot_from_volume ? 'Volume' : 'Image'}</dd>
                   </div>
                 </dl>
               </div>
@@ -350,10 +365,9 @@ const InstanceRow = ({
 // Main Component
 export default function AdminInstances() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const {
+  const {
     isFetching: isInstancesFetching,
     data: instancesResponse,
-    error,
     refetch,
   } = useFetchPurchasedInstances();
 
@@ -366,8 +380,6 @@ export default function AdminInstances() {
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState('desc');
   const [showFilters, setShowFilters] = useState(false);
-  const [actionLoading, setActionLoading] = useState({});
-  const [showBulkActions, setShowBulkActions] = useState(false);
 
   // Filter and sort instances
   useEffect(() => {
@@ -474,29 +486,101 @@ export default function AdminInstances() {
   };
 
   const uniqueStatuses = [...new Set(instances.map(i => i.status))].filter(Boolean);
+  const totalInstancesCount = instances.length;
+  const runningCount = instances.filter(
+    (i) => ["running", "active"].includes((i.status || "").toLowerCase())
+  ).length;
+  const stoppedCount = instances.filter(
+    (i) => ["stopped", "shutoff", "paused", "suspended"].includes(
+      (i.status || "").toLowerCase()
+    )
+  ).length;
+  const provisioningCount = instances.filter((i) =>
+    ["provisioning", "building", "reboot", "hard_reboot"].includes(
+      (i.status || "").toLowerCase()
+    )
+  ).length;
+  const statusBreakdown = uniqueStatuses
+    .map((status) => ({
+      status,
+      count: instances.filter((i) => i.status === status).length,
+    }))
+    .sort((a, b) => b.count - a.count);
+  const recentInstances = instances
+    .slice()
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 4);
+  const actionLoading = useMemo(() => ({}), []);
+  const fleetStats = [
+    {
+      key: "total",
+      title: "Total Instances",
+      value: totalInstancesCount.toLocaleString(),
+      description: `${runningCount} running`,
+      icon: <Server size={24} />,
+      color: "info",
+    },
+    {
+      key: "running",
+      title: "Active",
+      value: runningCount.toLocaleString(),
+      description: provisioningCount
+        ? `${provisioningCount} provisioning`
+        : "All healthy",
+      icon: <Play size={24} />,
+      color: "success",
+    },
+    {
+      key: "idle",
+      title: "Idle / Stopped",
+      value: stoppedCount.toLocaleString(),
+      description:
+        stoppedCount > 0
+          ? `${Math.round(
+              (stoppedCount / Math.max(totalInstancesCount, 1)) * 100
+            )}% of fleet`
+          : "No idle instances",
+      icon: <Square size={24} />,
+      color: "warning",
+    },
+    {
+      key: "bandwidth",
+      title: "Bandwidth Ready",
+      value: instances
+        .filter((i) => Number(i.bandwidth_count || 0) > 0)
+        .length.toLocaleString(),
+      description: "Floating IP or dedicated bandwidth attached",
+      icon: <Network size={24} />,
+      color: "info",
+    },
+  ];
+  const selectedInstanceList = filteredInstances.filter((instance) =>
+    selectedInstances.has(instance.id)
+  );
 
   const headerActions = (
     <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-      <button
+      <ModernButton
+        variant="ghost"
+        size="sm"
         onClick={() => refetch()}
-        disabled={isInstancesFetching}
-        className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+        isDisabled={isInstancesFetching}
+        leftIcon={
+          <RefreshCw className={`h-4 w-4 ${isInstancesFetching ? "animate-spin" : ""}`} />
+        }
       >
-        <RefreshCw
-          className={`w-4 h-4 mr-2 ${isInstancesFetching ? "animate-spin" : ""}`}
-        />
         Refresh
-      </button>
-
-      <button
+      </ModernButton>
+      <ModernButton
+        variant="primary"
+        size="sm"
         onClick={() =>
           (window.location.href = "/admin-dashboard/multi-instance-creation")
         }
-        className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-sm"
+        leftIcon={<Plus className="h-4 w-4" />}
       >
-        <Plus className="w-4 h-4 mr-2" />
-        Create Instance
-      </button>
+        New Instance
+      </ModernButton>
     </div>
   );
 
@@ -507,198 +591,400 @@ export default function AdminInstances() {
         isMobileMenuOpen={isMobileMenuOpen}
         onCloseMobileMenu={closeMobileMenu}
       />
-      <AdminActiveTab />
 
       <AdminPageShell
         title="Instance Management"
         description="Manage and monitor your cloud instances"
         actions={headerActions}
+        contentClassName="space-y-6 lg:space-y-8"
       >
-        {/* Search and Filters */}
-        <div className="bg-white border-b border-gray-200 px-6 md:px-8 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-            <div className="flex items-center space-x-4">
-              {/* Search */}
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search instances..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
+        <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#0F172A] via-[#1E3A8A] to-[#1D4ED8] text-white shadow-2xl">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.16),_transparent_55%)]" />
+          <div className="relative flex flex-col gap-8 p-6 sm:p-8 lg:flex-row lg:items-center lg:justify-between lg:p-10">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-white/70">
+                <Sparkles size={14} />
+                Fleet Control
               </div>
-
-              {/* Status Filter */}
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="all">All Status</option>
-                {uniqueStatuses.map(status => (
-                  <option key={status} value={status}>
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </option>
-                ))}
-              </select>
-
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
-              >
-                <Filter className="w-4 h-4 mr-2" />
-                More Filters
-              </button>
+              <div className="space-y-2">
+                <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                  Orchestrate every workload with confidence
+                </h2>
+                <p className="max-w-2xl text-sm text-white/80 sm:text-base">
+                  Stay responsive with live health indicators, instant lifecycle actions, and deep visibility
+                  into utilisation across your entire compute fleet.
+                </p>
+              </div>
             </div>
 
-            {/* Bulk Actions */}
-            {selectedInstances.size > 0 && (
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-500">
-                  {selectedInstances.size} selected
-                </span>
-                <div className="relative">
-                  <button
-                    onClick={() => setShowBulkActions(!showBulkActions)}
-                    className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
-                  >
-                    Bulk Actions
-                    <ChevronDown className="w-4 h-4 ml-2" />
-                  </button>
-
-                  {showBulkActions && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-                      <div className="py-1">
-                        <button
-                          onClick={() => executeBulkAction('start')}
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                        >
-                          <Play className="w-4 h-4 mr-2" />
-                          Start All
-                        </button>
-                        <button
-                          onClick={() => executeBulkAction('stop')}
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                        >
-                          <Square className="w-4 h-4 mr-2" />
-                          Stop All
-                        </button>
-                        <button
-                          onClick={() => executeBulkAction('reboot')}
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                        >
-                          <RotateCw className="w-4 h-4 mr-2" />
-                          Reboot All
-                        </button>
-                        <hr className="my-1" />
-                        <button
-                          onClick={() => executeBulkAction('destroy')}
-                          className="flex items-center px-4 py-2 text-sm text-red-700 hover:bg-red-50 w-full text-left"
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Destroy All
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+              <div className="rounded-2xl border border-white/40 bg-white/15 px-4 py-3 backdrop-blur">
+                <p className="text-xs font-semibold uppercase tracking-wide text-white/70">
+                  Live consoles
+                </p>
+                <p className="mt-2 text-lg font-semibold text-white">
+                  {consoles.length
+                    ? `${consoles.length} session${consoles.length === 1 ? "" : "s"} active`
+                    : "Ready for on-demand access"}
+                </p>
               </div>
-            )}
+              <div className="rounded-2xl border border-white/40 bg-white/15 px-4 py-3 backdrop-blur">
+                <p className="text-xs font-semibold uppercase tracking-wide text-white/70">
+                  Provisioning Pulse
+                </p>
+                <p className="mt-2 text-lg font-semibold text-white">
+                  {provisioningCount
+                    ? `${provisioningCount} in flight`
+                    : "No builds running"}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Instance Table */}
-        <div className="bg-white m-6 md:m-8 rounded-lg shadow-sm border border-gray-200">
-          {isInstancesFetching ? (
-            <div className="p-12 text-center">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
-              <p className="text-gray-500">Loading instances...</p>
-            </div>
-          ) : filteredInstances.length === 0 ? (
-            <div className="p-12 text-center">
-              <Server className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg font-medium">No instances found</p>
-              <p className="text-gray-400 mt-2">
-                {searchTerm || statusFilter !== 'all' 
-                  ? 'Try adjusting your search or filters' 
-                  : 'Create your first instance to get started'
-                }
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-visible">
-              <table className="min-w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left">
-                      <button
-                        onClick={handleSelectAll}
-                        className="text-gray-400 hover:text-gray-600"
-                      >
-                        {selectedInstances.size === filteredInstances.length ? (
-                          <CheckSquare className="w-5 h-5 text-blue-600" />
-                        ) : (
-                          <UncheckedSquare className="w-5 h-5" />
-                        )}
-                      </button>
-                    </th>
-                    <th className="px-2 py-3"></th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Instance
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Resources
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      IP Address
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Created
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white">
-                  {filteredInstances.map((instance) => (
-                    <InstanceRow
-                      key={instance.id}
-                      instance={instance}
-                      isSelected={selectedInstances.has(instance.id)}
-                      onSelect={handleInstanceSelect}
-                      onAction={executeInstanceAction}
-                      onConsoleAccess={handleConsoleAccess}
-onNavigateToDetails={(idOrIdentifier) => navigateToInstanceDetails(idOrIdentifier)}
-                      actionLoading={actionLoading}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {fleetStats.map((stat) => (
+            <ModernStatsCard
+              key={stat.key}
+              title={stat.title}
+              value={stat.value}
+              description={stat.description}
+              icon={stat.icon}
+              color={stat.color}
+            />
+          ))}
         </div>
 
-        {/* Console Windows */}
-        {consoles.map(console => (
+        <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] 2xl:items-start">
+          <ModernCard padding="lg" className="space-y-6">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+              <div className="w-full max-w-xl">
+                <ModernInput
+                  label="Search fleet"
+                  placeholder="Search by name, identifier, or IP"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  icon={<Search className="h-4 w-4" />}
+                />
+              </div>
+              <div className="flex flex-wrap items-end gap-3">
+                <div>
+                  <label className="mb-2 block text-xs font-medium text-slate-500">
+                    Status
+                  </label>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="w-40 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                  >
+                    <option value="all">All</option>
+                    {uniqueStatuses.map((status) => (
+                      <option key={status} value={status}>
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-2 block text-xs font-medium text-slate-500">
+                    Sort by
+                  </label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="w-36 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                  >
+                    <option value="created_at">Created date</option>
+                    <option value="name">Name</option>
+                    <option value="status">Status</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-2 block text-xs font-medium text-slate-500">
+                    Direction
+                  </label>
+                  <select
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value)}
+                    className="w-32 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                  >
+                    <option value="desc">Newest first</option>
+                    <option value="asc">Oldest first</option>
+                  </select>
+                </div>
+                <ModernButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowFilters((prev) => !prev)}
+                  leftIcon={<Filter className="h-4 w-4" />}
+                >
+                  {showFilters ? "Hide filters" : "More filters"}
+                </ModernButton>
+              </div>
+            </div>
+
+            {showFilters && (
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-slate-700">
+                    Quick status focus
+                  </p>
+                  <ModernButton
+                    variant="ghost"
+                    size="xs"
+                    onClick={() => {
+                      setStatusFilter("all");
+                      setSearchTerm("");
+                    }}
+                  >
+                    Reset filters
+                  </ModernButton>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {statusBreakdown.slice(0, 6).map((item) => (
+                    <button
+                      key={item.status}
+                      type="button"
+                      onClick={() => setStatusFilter(item.status)}
+                      className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+                        statusFilter === item.status
+                          ? "border-primary-400 bg-primary-50 text-primary-700"
+                          : "border-slate-200 bg-white text-slate-600 hover:border-primary-200"
+                      }`}
+                    >
+                      {item.status} • {item.count}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-500">
+                  Use advanced filters to target lifecycle states quickly and keep medium-sized screens clutter free.
+                </p>
+              </div>
+            )}
+
+            {selectedInstanceList.length > 0 && (
+              <div className="flex flex-col gap-3 rounded-2xl border border-primary-200 bg-primary-50/60 p-4 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-wrap items-center gap-3">
+                  <StatusPill
+                    label={`${selectedInstanceList.length} selected`}
+                    tone="info"
+                  />
+                  <p className="text-sm font-medium text-primary-700">
+                    Choose a bulk action to apply across the highlighted instances.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { action: "start", label: "Start", icon: Play },
+                    { action: "stop", label: "Stop", icon: Square },
+                    { action: "reboot", label: "Reboot", icon: RotateCw },
+                    { action: "destroy", label: "Destroy", icon: Trash2 },
+                  ].map(({ action, label, icon: Icon }) => (
+                    <ModernButton
+                      key={action}
+                      variant={action === "destroy" ? "danger" : "outline"}
+                      size="sm"
+                      onClick={() => executeBulkAction(action)}
+                      leftIcon={<Icon className="h-4 w-4" />}
+                    >
+                      {label}
+                    </ModernButton>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="rounded-2xl border border-slate-100 shadow-sm">
+              {isInstancesFetching ? (
+                <div className="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
+                  <p className="text-sm text-slate-500">
+                    Pulling latest instance telemetry…
+                  </p>
+                </div>
+              ) : filteredInstances.length === 0 ? (
+                <div className="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
+                  <Server className="h-10 w-10 text-slate-400" />
+                  <p className="text-base font-semibold text-slate-700">
+                    No instances match the current view
+                  </p>
+                  <p className="text-sm text-slate-500">
+                    {searchTerm || statusFilter !== "all"
+                      ? "Try adjusting your search or filters."
+                      : "Spin up a new instance to see it appear instantly."}
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-slate-100">
+                    <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      <tr>
+                        <th className="px-5 py-3 text-left">
+                          <button
+                            onClick={handleSelectAll}
+                            className="text-slate-400 hover:text-primary-500"
+                          >
+                            {selectedInstances.size === filteredInstances.length &&
+                            filteredInstances.length > 0 ? (
+                              <CheckSquare className="h-5 w-5 text-primary-500" />
+                            ) : (
+                              <UncheckedSquare className="h-5 w-5" />
+                            )}
+                          </button>
+                        </th>
+                        <th className="px-3 py-3" />
+                        <th className="px-5 py-3 text-left">Instance</th>
+                        <th className="px-5 py-3 text-left">Status</th>
+                        <th className="px-5 py-3 text-left">Type</th>
+                        <th className="px-5 py-3 text-left">Resources</th>
+                        <th className="px-5 py-3 text-left">IP</th>
+                        <th className="px-5 py-3 text-left">Created</th>
+                        <th className="px-5 py-3 text-left">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-sm text-slate-600">
+                      {filteredInstances.map((instance) => (
+                        <InstanceRow
+                          key={instance.id}
+                          instance={instance}
+                          isSelected={selectedInstances.has(instance.id)}
+                          onSelect={handleInstanceSelect}
+                          onAction={executeInstanceAction}
+                          onConsoleAccess={handleConsoleAccess}
+                          onNavigateToDetails={(identifier) =>
+                            navigateToInstanceDetails(identifier)
+                          }
+                          actionLoading={actionLoading}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </ModernCard>
+
+          <div className="space-y-6">
+            <ModernCard padding="lg" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Fleet breakdown
+                </h3>
+                <StatusPill
+                  label={`${totalInstancesCount} total`}
+                  tone="neutral"
+                />
+              </div>
+              <div className="space-y-3">
+                {statusBreakdown.slice(0, 6).map((item) => {
+                  const percentage = totalInstancesCount
+                    ? Math.round((item.count / totalInstancesCount) * 100)
+                    : 0;
+                  return (
+                    <div key={item.status} className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-medium text-slate-700">
+                          {item.status}
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          {item.count} • {percentage}%
+                        </span>
+                      </div>
+                      <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+                        <div
+                          className="h-full rounded-full bg-primary-400"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </ModernCard>
+
+            {recentInstances.length > 0 && (
+              <ModernCard padding="lg" className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-slate-900">
+                    Recent activity
+                  </h3>
+                  <StatusPill
+                    label="Last 4 events"
+                    tone="info"
+                  />
+                </div>
+                <ul className="space-y-3 text-sm">
+                  {recentInstances.map((instance) => (
+                    <li
+                      key={instance.id}
+                      className="rounded-xl border border-slate-200 bg-white px-3 py-2"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Server className="h-4 w-4 text-slate-400" />
+                          <span className="font-semibold text-slate-800">
+                            {instance.name ||
+                              `Instance-${instance.identifier?.slice(-6)}`}
+                          </span>
+                        </div>
+                        <span className="text-xs text-slate-500">
+                          {instance.created_at
+                            ? new Date(instance.created_at).toLocaleString()
+                            : "Unknown"}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {instance.region || "Any region"} • {instance.status}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </ModernCard>
+            )}
+
+            <ModernCard padding="lg" className="space-y-4">
+              <h3 className="text-sm font-semibold text-slate-900">
+                Smart shortcuts
+              </h3>
+              <div className="space-y-3 text-sm text-slate-600">
+                <button
+                  type="button"
+                  onClick={() =>
+                    (window.location.href =
+                      "/admin-dashboard/multi-instance-creation")
+                  }
+                  className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-left transition hover:border-primary-200 hover:bg-primary-50"
+                >
+                  <span>Launch multi-instance workflow</span>
+                  <ChevronRight className="h-4 w-4 text-primary-500" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => refetch()}
+                  className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-left transition hover:border-primary-200 hover:bg-primary-50"
+                >
+                  <span>Force refresh metrics</span>
+                  <RotateCw className="h-4 w-4 text-primary-500" />
+                </button>
+                <p className="text-xs text-slate-500">
+                  Need deeper visibility? Export instance metadata or jump into a console session directly from the actions column.
+                </p>
+              </div>
+            </ModernCard>
+          </div>
+        </div>
+
+        {consoles.map((console) => (
           <EmbeddedConsole
             key={console.id}
             instanceId={console.instanceId}
-            isVisible={true}
+            isVisible
             onClose={() => closeConsole(console.instanceId)}
             initialPosition={console.position}
             initialSize={console.size}
           />
         ))}
-            </AdminPageShell>
+      </AdminPageShell>
     </>
   );
 }

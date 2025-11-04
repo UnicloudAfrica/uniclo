@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import api from "../index/api";
 
 // **POST**: Create a new account
@@ -24,10 +24,20 @@ const resendOTP = async (userData) => {
   return await api("POST", "/business/auth/send-email", userData);
 };
 
+const setupTwoFactor = async () => {
+  return await api("GET", "/business/2fa-setup");
+};
+
+const enableTwoFactor = async (payload) => {
+  return await api("POST", "/business/2fa-enable", payload);
+};
+
+const disableTwoFactor = async (payload) => {
+  return await api("POST", "/business/2fa-disable", payload);
+};
+
 // Hook to create a new account
 export const useCreateAccount = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: createAccount,
     onError: (error) => {
@@ -41,8 +51,6 @@ export const useCreateAccount = () => {
 
 // Hook to log in to account
 export const useLoginAccount = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: loginAccount,
     onError: (error) => {
@@ -56,8 +64,6 @@ export const useLoginAccount = () => {
 
 // Hook to verify mail
 export const useVerifyMail = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: verifyEmail,
     onError: (error) => {
@@ -71,8 +77,6 @@ export const useVerifyMail = () => {
 
 // Hook to verify mail
 export const useForgotPassword = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: forgotPassword,
     onError: (error) => {
@@ -85,8 +89,6 @@ export const useForgotPassword = () => {
 };
 // Hook to verify mail
 export const useResetPassword = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: resetPassword,
     onError: (error) => {
@@ -99,8 +101,6 @@ export const useResetPassword = () => {
 };
 // Hook to verify mail
 export const useResendOTP = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: resendOTP,
     onError: (error) => {
@@ -109,5 +109,23 @@ export const useResendOTP = () => {
     onSuccess: (data) => {
       // console.log(data);
     },
+  });
+};
+
+export const useSetupTwoFactor = () => {
+  return useMutation({
+    mutationFn: setupTwoFactor,
+  });
+};
+
+export const useEnableTwoFactor = () => {
+  return useMutation({
+    mutationFn: enableTwoFactor,
+  });
+};
+
+export const useDisableTwoFactor = () => {
+  return useMutation({
+    mutationFn: disableTwoFactor,
   });
 };

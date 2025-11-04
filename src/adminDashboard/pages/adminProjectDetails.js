@@ -23,9 +23,8 @@ import AdminPageShell from "../components/AdminPageShell";
 import ModernCard from "../components/ModernCard";
 import ModernButton from "../components/ModernButton";
 import ResourceListCard from "../components/ResourceListCard";
-import {
-  useProjectStatus,
-} from "../../hooks/adminHooks/projectHooks";
+import PaymentModal from "../components/PaymentModal";
+import { useFetchProjectById, useProjectStatus } from "../../hooks/adminHooks/projectHooks";
 import { useProjectInfrastructureStatus } from "../../hooks/adminHooks/projectInfrastructureHooks";
 import KeyPairs from "./infraComps/keyPairs";
 import SecurityGroup from "./infraComps/securityGroup";
@@ -47,6 +46,7 @@ import AssignEdgeConfigModal from "./projectComps/assignEdgeConfig";
 import { designTokens } from "../../styles/designTokens";
 import ToastUtils from "../../utils/toastUtil";
 import api from "../../index/admin/api";
+import silentApi from "../../index/admin/silent";
 import { syncProjectEdgeConfigAdmin, useFetchProjectEdgeConfigAdmin } from "../../hooks/adminHooks/edgeHooks";
 
 const decodeId = (encodedId) => {
@@ -84,6 +84,20 @@ const isMember = (user) => {
   if (user?.status?.member) return true;
   if (user?.status?.tenant_admin) return false;
   return true;
+};
+
+const safeParseJson = (value, fallback = null) => {
+  if (value === null || value === undefined) return fallback;
+  if (typeof value === "object") return value;
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value);
+    } catch (error) {
+      console.warn("Failed to parse JSON value", error, value);
+      return fallback;
+    }
+  }
+  return fallback;
 };
 
 const promoteActionCandidates = [
@@ -154,6 +168,9 @@ export default function AdminProjectDetails() {
   const [actionLoading, setActionLoading] = useState(null);
   const [userActionLoading, setUserActionLoading] = useState(null);
   const [isEdgeSyncing, setIsEdgeSyncing] = useState(false);
+  const [activePaymentPayload, setActivePaymentPayload] = useState(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(null);
   const contentRef = useRef(null);
 
   const queryParams = new URLSearchParams(location.search);
@@ -170,6 +187,12 @@ export default function AdminProjectDetails() {
     isFetching: isProjectStatusFetching,
     refetch: refetchProjectStatus,
   } = useProjectStatus(projectId);
+
+  const {
+    data: projectDetailsResponse,
+    isFetching: isProjectDetailsFetching,
+    refetch: refetchProjectDetails,
+  } = useFetchProjectById(projectId, { enabled: Boolean(projectId) });
 
   const {
     data: infraStatusData,
@@ -246,6 +269,286 @@ export default function AdminProjectDetails() {
   const projectUsers = project?.users?.local ?? [];
   const tenantAdminUsers = projectUsers.filter(isTenantAdmin);
   const hasTenantAdmin = tenantAdminUsers.length > 0;
+
+  const projectDetailsPayload =
+    projectDetailsResponse?.data ?? projectDetailsResponse;
+  const projectDetails = projectDetailsPayload || project;
+
+  const projectInstances = useMemo(() => {
+    if (Array.isArray(projectDetails?.instances)) {
+      return projectDetails.instances;
+    }
+    if (Array.isArray(project?.instances)) {
+      return project.instances;
+    }
+    if (Array.isArray(projectDetails?.pending_instances)) {
+      return projectDetails.pending_instances;
+    }
+    return [];
+  }, [projectDetails, project]);
+
+  const normalizeStatusValue = (value) =>
+    (value || "").toString().toLowerCase().replace(/\s+/g, "_");
+
+  const transactionPendingKeywords = ["pending", "awaiting", "requires", "processing"];
+
+  const isTransactionPending = (tx) => {
+    if (!tx) return false;
+    const statusValue = normalizeStatusValue(tx.status);
+    const gatewayStatusValue = normalizeStatusValue(
+      tx.payment_status || tx.gateway_status || tx.state
+    );
+    return transactionPendingKeywords.some(
+      (keyword) =>
+        statusValue.includes(keyword) || gatewayStatusValue.includes(keyword)
+    );
+  };
+
+  const buildPaymentPayload = (instanceDetails, transaction, paymentOptions, metadata) => {
+    const fallbackCurrency = transaction?.currency || projectDetails?.currency || project?.currency || "NGN";
+    const fallbackAmount = Number(transaction?.amount ?? 0);
+
+    const normalizedOptions = (Array.isArray(paymentOptions) && paymentOptions.length
+      ? paymentOptions
+      : [
+          {
+            id: "default-card",
+            payment_type: "Card",
+            name: "Paystack",
+            transaction_reference:
+              transaction?.identifier ||
+              transaction?.reference ||
+              `tx-${instanceDetails?.identifier}`,
+            total: fallbackAmount,
+            currency: fallbackCurrency,
+            charge_breakdown: {
+              base_amount: fallbackAmount,
+              percentage_fee: 0,
+              flat_fee: 0,
+              total_fees: 0,
+              grand_total: fallbackAmount,
+              currency: fallbackCurrency,
+            },
+            details: null,
+          },
+        ]
+    ).map((option, index) => {
+      const total = Number(option.total ?? fallbackAmount);
+      const currency = option.currency || fallbackCurrency;
+      const chargeBreakdown = option.charge_breakdown || {
+        base_amount: Number(option.base_amount ?? fallbackAmount),
+        percentage_fee: Number(option.percentage_fee ?? 0),
+        flat_fee: Number(option.flat_fee ?? 0),
+        total_fees: Number(option.total_fees ?? 0),
+        grand_total: total || fallbackAmount,
+        currency,
+      };
+
+      return {
+        id: option.id ?? index + 1,
+        name: option.name || option.gateway || "Paystack",
+        payment_type: option.payment_type || option.type || "Card",
+        transaction_reference:
+          option.transaction_reference ||
+          option.reference ||
+          transaction?.identifier ||
+          transaction?.id ||
+          `tx-${instanceDetails?.identifier}`,
+        total,
+        currency,
+        details: option.details || null,
+        charge_breakdown: chargeBreakdown,
+      };
+    });
+
+    const expiresAt =
+      metadata?.payment?.expires_at ||
+      metadata?.expires_at ||
+      transaction?.expires_at ||
+      transaction?.payment_expires_at ||
+      null;
+
+    const pricingBreakdown = metadata?.pricing_breakdown || metadata?.breakdown;
+    const orderItems = Array.isArray(metadata?.order_items)
+      ? metadata.order_items
+      : undefined;
+
+    return {
+      data: {
+        transaction: {
+          id: transaction?.id,
+          identifier:
+            transaction?.identifier ||
+            transaction?.reference ||
+            `tx-${instanceDetails?.identifier}`,
+          status: transaction?.status || "pending",
+          type: transaction?.type || transaction?.transaction_type || "purchase",
+          amount: Number(transaction?.amount ?? normalizedOptions[0]?.total ?? 0),
+          currency: transaction?.currency || normalizedOptions[0]?.currency || fallbackCurrency,
+          user: transaction?.user || null,
+        },
+        order: {
+          id: transaction?.order_id || metadata?.order_id || null,
+          total: Number(transaction?.amount ?? normalizedOptions[0]?.total ?? 0),
+          currency: transaction?.currency || normalizedOptions[0]?.currency || fallbackCurrency,
+          fast_track: Boolean(metadata?.fast_track_completed),
+        },
+        instances: [
+          {
+            id: instanceDetails?.id,
+            identifier: instanceDetails?.identifier,
+            name: instanceDetails?.name,
+            region: instanceDetails?.region || projectDetails?.region || project?.region,
+            provider: instanceDetails?.provider || projectDetails?.provider || project?.provider,
+            status: instanceDetails?.status,
+          },
+        ],
+        instance_count: 1,
+        payment: {
+          required: true,
+          status: transaction?.status || "pending",
+          payment_gateway_options: normalizedOptions,
+          expires_at: expiresAt,
+        },
+        pricing_breakdown: pricingBreakdown,
+        order_items: orderItems,
+      },
+    };
+  };
+
+  const pendingPaymentEntries = useMemo(() => {
+    if (!Array.isArray(projectInstances) || projectInstances.length === 0) {
+      return [];
+    }
+    return projectInstances
+      .map((instance) => {
+        const statusValue = normalizeStatusValue(instance.status);
+        const paymentStatusValue = normalizeStatusValue(
+          instance.payment_status || instance.billing_status
+        );
+        const indicatesPayment =
+          ["payment_pending", "pending_payment", "awaiting_payment", "payment_required"].some((token) =>
+            statusValue.includes(token) || paymentStatusValue.includes(token)
+          ) || statusValue.includes("payment");
+
+        const transactions = Array.isArray(instance.transactions)
+          ? instance.transactions
+          : [];
+        const pendingTransaction = transactions.find(isTransactionPending);
+
+        if (!pendingTransaction && !indicatesPayment) {
+          return null;
+        }
+
+        const parsedMetadata = pendingTransaction
+          ? safeParseJson(pendingTransaction.metadata, pendingTransaction.metadata)
+          : null;
+        const parsedOptions = pendingTransaction
+          ? safeParseJson(
+              pendingTransaction.payment_gateway_options,
+              pendingTransaction.payment_gateway_options
+            )
+          : null;
+        const paymentOptions = Array.isArray(parsedOptions)
+          ? parsedOptions
+          : parsedOptions
+          ? [parsedOptions]
+          : [];
+        const expiresAt =
+          parsedMetadata?.payment?.expires_at ||
+          parsedMetadata?.expires_at ||
+          pendingTransaction?.expires_at ||
+          pendingTransaction?.payment_expires_at ||
+          null;
+
+        return {
+          instance,
+          transaction: pendingTransaction || null,
+          paymentOptions,
+          metadata: parsedMetadata,
+          expiresAt,
+        };
+      })
+      .filter(Boolean);
+  }, [projectInstances]);
+
+  const handleOpenPayment = async (entry) => {
+    const targetInstance = entry?.instance;
+    if (!targetInstance?.identifier) {
+      ToastUtils.error("Instance identifier is missing for this payment.");
+      return;
+    }
+
+    try {
+      setPaymentLoading(targetInstance.identifier);
+      let workingInstance = targetInstance;
+      let pendingTransaction = entry?.transaction || null;
+      let paymentOptions = entry?.paymentOptions || [];
+      let metadata = entry?.metadata || null;
+
+      if (!pendingTransaction || !Array.isArray(paymentOptions) || paymentOptions.length === 0) {
+        const response = await silentApi(
+          "GET",
+          `/instances/${encodeURIComponent(targetInstance.identifier)}`
+        );
+        workingInstance = response?.data || targetInstance;
+        const transactions = Array.isArray(workingInstance?.transactions)
+          ? workingInstance.transactions
+          : [];
+        pendingTransaction = transactions.find(isTransactionPending) || null;
+        if (pendingTransaction) {
+          metadata = safeParseJson(
+            pendingTransaction.metadata,
+            pendingTransaction.metadata
+          );
+          const parsedOptions = safeParseJson(
+            pendingTransaction.payment_gateway_options,
+            pendingTransaction.payment_gateway_options
+          );
+          paymentOptions = Array.isArray(parsedOptions)
+            ? parsedOptions
+            : parsedOptions
+            ? [parsedOptions]
+            : [];
+        }
+      }
+
+      if (!pendingTransaction) {
+        ToastUtils.info("No pending payment was found for this instance.");
+        return;
+      }
+
+      const payload = buildPaymentPayload(
+        workingInstance,
+        pendingTransaction,
+        paymentOptions,
+        metadata || {}
+      );
+      setActivePaymentPayload(payload);
+      setIsPaymentModalOpen(true);
+    } catch (error) {
+      console.error("Failed to load payment details:", error);
+      ToastUtils.error(error?.message || "Failed to load payment details.");
+    } finally {
+      setPaymentLoading(null);
+    }
+  };
+
+  const closePaymentModal = () => {
+    setIsPaymentModalOpen(false);
+    setActivePaymentPayload(null);
+  };
+
+  const handlePaymentComplete = async () => {
+    try {
+      await Promise.all([
+        refetchProjectStatus?.(),
+        refetchProjectDetails?.(),
+      ]);
+    } catch (error) {
+      console.warn("Failed to refresh project data after payment.", error);
+    }
+  };
 
   const normalizeSummaryKey = (value = "") =>
     value.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -1101,6 +1404,158 @@ export default function AdminProjectDetails() {
 
               <div
                 className="rounded-2xl border p-4"
+                style={{
+                  borderColor: designTokens.colors.neutral[200],
+                  backgroundColor: designTokens.colors.neutral[0],
+                }}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="text-base font-semibold" style={{ color: designTokens.colors.neutral[900] }}>
+                    Pending Instance Payments
+                  </h3>
+                  <StatusBadge
+                    label={
+                      pendingPaymentEntries.length
+                        ? `${pendingPaymentEntries.length} payment${pendingPaymentEntries.length > 1 ? "s" : ""} pending`
+                        : "All payments clear"
+                    }
+                    active={pendingPaymentEntries.length === 0}
+                    tone={pendingPaymentEntries.length === 0 ? "success" : "danger"}
+                  />
+                </div>
+                <p className="mt-1 text-xs" style={{ color: designTokens.colors.neutral[500] }}>
+                  Instances remain paused until billing completes. Resume payments directly from here to keep provisioning on track.
+                </p>
+
+                {isProjectDetailsFetching ? (
+                  <div
+                    className="mt-4 flex items-center gap-2 text-sm"
+                    style={{ color: designTokens.colors.neutral[600] }}
+                  >
+                    <Loader2 size={16} className="animate-spin" />
+                    Loading project billing data...
+                  </div>
+                ) : pendingPaymentEntries.length === 0 ? (
+                  <div
+                    className="mt-4 rounded-xl border border-dashed px-4 py-6 text-sm text-center"
+                    style={{
+                      borderColor: designTokens.colors.neutral[200],
+                      color: designTokens.colors.neutral[500],
+                      backgroundColor: designTokens.colors.neutral[50],
+                    }}
+                  >
+                    All instance payments are up to date for this project.
+                  </div>
+                ) : (
+                  <div className="mt-4 space-y-3">
+                    {pendingPaymentEntries.map((entry) => {
+                      const instance = entry.instance;
+                      const transaction = entry.transaction;
+                      const paymentOptionSample =
+                        Array.isArray(entry.paymentOptions) && entry.paymentOptions.length
+                          ? entry.paymentOptions[0]
+                          : null;
+                      const amountValue =
+                        typeof transaction?.amount === "number"
+                          ? transaction.amount
+                          : typeof paymentOptionSample?.total === "number"
+                          ? paymentOptionSample.total
+                          : null;
+                      const currencyValue =
+                        transaction?.currency ||
+                        paymentOptionSample?.currency ||
+                        projectDetails?.currency ||
+                        project?.currency ||
+                        "NGN";
+                      const amountDisplay =
+                        amountValue !== null && amountValue !== undefined
+                          ? `${currencyValue} ${amountValue.toLocaleString()}`
+                          : "Payment link pending";
+                      const expiresDate = entry.expiresAt ? new Date(entry.expiresAt) : null;
+                      const expiresLabel =
+                        expiresDate && !Number.isNaN(expiresDate.getTime())
+                          ? expiresDate.toLocaleString()
+                          : null;
+                      const statusLabel = (transaction?.status || instance.status || "pending")
+                        .toString()
+                        .replace(/_/g, " ");
+
+                      return (
+                        <div
+                          key={instance.identifier || instance.id}
+                          className="rounded-xl border px-4 py-3"
+                          style={{
+                            borderColor: designTokens.colors.neutral[200],
+                            backgroundColor: designTokens.colors.neutral[50],
+                          }}
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <p
+                                className="text-sm font-semibold"
+                                style={{ color: designTokens.colors.neutral[900] }}
+                              >
+                                {instance.name || instance.identifier || "Pending instance"}
+                              </p>
+                              <p
+                                className="font-mono text-xs"
+                                style={{ color: designTokens.colors.neutral[500] }}
+                              >
+                                {instance.identifier || "—"}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs" style={{ color: designTokens.colors.neutral[500] }}>
+                                Amount
+                              </p>
+                              <p
+                                className="text-sm font-semibold"
+                                style={{ color: designTokens.colors.neutral[900] }}
+                              >
+                                {amountDisplay}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <span
+                              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium"
+                              style={{
+                                backgroundColor: designTokens.colors.warning[50],
+                                color: designTokens.colors.warning[700],
+                              }}
+                            >
+                              {statusLabel}
+                            </span>
+                            {expiresLabel && (
+                              <span
+                                className="text-xs"
+                                style={{ color: designTokens.colors.neutral[500] }}
+                              >
+                                Expires {expiresLabel}
+                              </span>
+                            )}
+                          </div>
+                          <ModernButton
+                            size="sm"
+                            variant="outline"
+                            className="mt-3 flex items-center gap-2"
+                            onClick={() => handleOpenPayment(entry)}
+                            disabled={Boolean(paymentLoading)}
+                          >
+                            {paymentLoading === instance.identifier && (
+                              <Loader2 size={14} className="animate-spin" />
+                            )}
+                            Resume payment
+                          </ModernButton>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div
+                className="rounded-2xl border p-4"
                 style={{ borderColor: designTokens.colors.neutral[200], backgroundColor: designTokens.colors.neutral[0] }}
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1622,48 +2077,92 @@ export default function AdminProjectDetails() {
               <h3 className="text-sm font-semibold mb-3" style={{ color: designTokens.colors.neutral[800] }}>
                 Infrastructure Journey
               </h3>
-              <div className="space-y-2">
-                {infrastructureSections.map((section) => {
-                  const isComplete = getStatusForSection(section.key);
-                  const isActive = activeSection === section.key;
-                  return (
-                    <button
-                      key={section.key}
-                      onClick={() => handleSectionClick(section.key)}
-                      className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition"
-                      style={{
-                        backgroundColor: isActive
-                          ? designTokens.colors.primary[50]
-                          : "transparent",
-                        color: isActive
-                          ? designTokens.colors.primary[700]
-                          : designTokens.colors.neutral[700],
-                        border: `1px solid ${
-                          isActive
+              <div className="relative pl-3">
+                <div className="absolute left-[23px] top-3 bottom-3 hidden w-px bg-gray-200 md:block" />
+                <div className="space-y-3">
+                  {infrastructureSections.map((section, index) => {
+                    const isComplete = getStatusForSection(section.key);
+                    const isActive = activeSection === section.key;
+                    const isFirst = index === 0;
+                    const iconNode = React.cloneElement(section.icon, {
+                      size: 18,
+                      style: {
+                        color: isComplete
+                          ? designTokens.colors.success[500]
+                          : designTokens.colors.neutral[400],
+                    },
+                    });
+
+                    return (
+                      <button
+                        key={section.key}
+                        onClick={() => handleSectionClick(section.key)}
+                        className="relative w-full rounded-xl border px-4 py-3 text-left transition"
+                        style={{
+                          backgroundColor: isActive
+                            ? designTokens.colors.primary[50]
+                            : "#FFFFFF",
+                          borderColor: isActive
                             ? designTokens.colors.primary[200]
-                            : "transparent"
-                        }`,
-                      }}
-                    >
-                      <span>
-                        {React.cloneElement(section.icon, {
-                          size: 16,
-                          style: {
-                            color: isComplete
-                              ? designTokens.colors.success[500]
-                              : designTokens.colors.neutral[400],
-                          },
-                        })}
-                      </span>
-                      <span className="flex-1 text-left font-medium">
-                        {section.label}
-                      </span>
-                      <span className="text-xs">
-                        {isComplete ? "Ready" : "Pending"}
-                      </span>
-                    </button>
-                  );
-                })}
+                            : designTokens.colors.neutral[200],
+                          boxShadow: isActive ? "0 4px 8px rgba(11, 99, 206, 0.08)" : "none",
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center">
+                            <div
+                              className="flex h-10 w-10 items-center justify-center rounded-full border"
+                              style={{
+                                borderColor: isComplete
+                                  ? designTokens.colors.success[200]
+                                  : designTokens.colors.neutral[200],
+                                backgroundColor: isComplete
+                                  ? designTokens.colors.success[50]
+                                  : "#FFFFFF",
+                              }}
+                            >
+                              {iconNode}
+                            </div>
+                            {!isFirst && (
+                              <div className="absolute -top-10 left-1/2 hidden h-10 w-px -translate-x-1/2 bg-gray-200 md:block" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <p
+                              className="text-sm font-semibold"
+                              style={{
+                                color: isActive
+                                  ? designTokens.colors.primary[700]
+                                  : designTokens.colors.neutral[800],
+                              }}
+                            >
+                              {section.label}
+                            </p>
+                            <p
+                              className="text-xs"
+                              style={{ color: designTokens.colors.neutral[500] }}
+                            >
+                              {isComplete ? "Ready to provision" : "Pending configuration"}
+                            </p>
+                          </div>
+                          <span
+                            className="rounded-full px-2 py-1 text-xs font-medium"
+                            style={{
+                              backgroundColor: isComplete
+                                ? designTokens.colors.success[50]
+                                : designTokens.colors.neutral[100],
+                              color: isComplete
+                                ? designTokens.colors.success[600]
+                                : designTokens.colors.neutral[600],
+                            }}
+                          >
+                            {isComplete ? "Ready" : "Pending"}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </ModernCard>
@@ -1673,6 +2172,15 @@ export default function AdminProjectDetails() {
           </ModernCard>
         </div>
       </AdminPageShell>
+
+      {activePaymentPayload && (
+        <PaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={closePaymentModal}
+          transactionData={activePaymentPayload}
+          onPaymentComplete={handlePaymentComplete}
+        />
+      )}
 
       <AssignEdgeConfigModal
         isOpen={isAssignEdgeOpen}

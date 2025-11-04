@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import CartFloat from "../components/cartFloat";
 import Headbar from "../components/headbar";
 import Sidebar from "../components/sidebar";
@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react"; // Import Pencil and Trash2
 import AddInstanceModal from "../components/addInstanace";
+import PaymentModal from "../components/instancesubcomps/paymentModalcomponent";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useFetchProjectById } from "../../hooks/projectHooks";
 import EditDescriptionModal from "./projectComps/editProject";
@@ -33,6 +34,64 @@ import { useFetchTenantRouteTables } from "../../hooks/routeTable";
 import { useFetchTenantNetworkInterfaces } from "../../hooks/eni";
 import { useFetchTenantElasticIps } from "../../hooks/elasticIPHooks";
 import { useFetchTenantVpcs } from "../../hooks/vpcHooks";
+import ToastUtils from "../../utils/toastUtil";
+import silentApi from "../../index/silent";
+
+const safeParseJson = (value, fallback = null) => {
+  if (value === null || value === undefined) return fallback;
+  if (typeof value === "object") return value;
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value);
+    } catch (error) {
+      console.warn("Failed to parse JSON value", error, value);
+      return fallback;
+    }
+  }
+  return fallback;
+};
+
+const normalizeStatusValue = (value) =>
+  (value || "").toString().toLowerCase().replace(/\s+/g, "_");
+
+const PAYMENT_STATUS_MARKERS = [
+  "payment_pending",
+  "pending_payment",
+  "awaiting_payment",
+  "payment_required",
+];
+
+const isTransactionPending = (transaction) => {
+  if (!transaction) return false;
+  const statusValue = normalizeStatusValue(transaction.status);
+  if (!statusValue) return false;
+  if (PAYMENT_STATUS_MARKERS.some((marker) => statusValue.includes(marker))) {
+    return true;
+  }
+  return statusValue === "pending";
+};
+
+const instanceIndicatesPaymentPending = (instance) => {
+  if (!instance) return false;
+  const statusValue = normalizeStatusValue(instance.status);
+  const paymentStatusValue = normalizeStatusValue(
+    instance.payment_status || instance.billing_status
+  );
+  const hasMarker = (value) =>
+    PAYMENT_STATUS_MARKERS.some((marker) => value.includes(marker)) ||
+    (value.includes("payment") && value.includes("pending"));
+  return hasMarker(statusValue) || hasMarker(paymentStatusValue);
+};
+
+const extractPendingTransaction = (instance) => {
+  if (!instance) return null;
+  const transactions = Array.isArray(instance.transactions)
+    ? instance.transactions
+    : [];
+  return (
+    transactions.find((tx) => isTransactionPending(tx)) || null
+  );
+};
 
 // Function to decode the ID from URL
 const decodeId = (encodedId) => {
@@ -57,6 +116,9 @@ export default function ProjectDetails() {
     useState(false);
   const [isDeleteConfirmModalOpen, setIsDeleteConfirmModalOpen] =
     useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [paymentLoadingId, setPaymentLoadingId] = useState(null);
+  const [paymentContext, setPaymentContext] = useState(null);
 
   const queryParams = new URLSearchParams(location.search);
   const encodedProjectId = queryParams.get("id");
@@ -228,6 +290,7 @@ export default function ProjectDetails() {
     data: projectDetails,
     isFetching: isProjectFetching,
     error: projectError,
+    refetch: refetchProjectDetails,
   } = useFetchProjectById(projectId);
 
   const projectRegion = projectDetails?.region || projectDetails?.region;
@@ -328,6 +391,210 @@ export default function ProjectDetails() {
       `/dashboard/instances/details?id=${encodedId}&name=${instanceName}`
     );
   };
+
+  const hasPendingPayment = useCallback(
+    (instance) =>
+      Boolean(
+        extractPendingTransaction(instance) ||
+          instanceIndicatesPaymentPending(instance)
+      ),
+    []
+  );
+
+  const closePaymentModal = useCallback(() => {
+    setIsPaymentModalOpen(false);
+    setPaymentContext(null);
+  }, []);
+
+  const handleOpenPaymentModal = useCallback(
+    async (event, instance) => {
+      event?.stopPropagation?.();
+      if (!instance?.identifier) {
+        ToastUtils.error("Instance identifier is missing for this payment.");
+        return;
+      }
+
+      setPaymentLoadingId(instance.identifier);
+
+      try {
+        let workingInstance = instance;
+        let pendingTransaction = extractPendingTransaction(instance);
+
+        if (!pendingTransaction) {
+          const response = await silentApi(
+            "GET",
+            `/business/instances/${encodeURIComponent(instance.identifier)}`
+          );
+          if (response?.data) {
+            workingInstance = response.data;
+            pendingTransaction = extractPendingTransaction(response.data);
+          }
+        }
+
+        if (!pendingTransaction) {
+          ToastUtils.error("No pending payment was found for this instance.");
+          return;
+        }
+
+        const metadata =
+          safeParseJson(
+            pendingTransaction.metadata,
+            pendingTransaction.metadata
+          ) || {};
+        const rawOptions = safeParseJson(
+          pendingTransaction.payment_gateway_options,
+          pendingTransaction.payment_gateway_options
+        );
+        let paymentOptions = Array.isArray(rawOptions)
+          ? rawOptions
+          : rawOptions
+          ? [rawOptions]
+          : [];
+
+        const fallbackCurrency =
+          pendingTransaction.currency ||
+          paymentOptions?.[0]?.currency ||
+          projectDetails?.currency ||
+          "NGN";
+        const fallbackAmount = Number(
+          pendingTransaction.amount ??
+            paymentOptions?.[0]?.total ??
+            metadata?.amount ??
+            0
+        );
+
+        if (!paymentOptions.length) {
+          paymentOptions = [
+            {
+              id: "paystack-card",
+              name: "Paystack",
+              payment_type: "Card",
+              transaction_reference:
+                pendingTransaction.identifier ||
+                pendingTransaction.reference ||
+                `tx-${instance.identifier}`,
+              total: fallbackAmount,
+              currency: fallbackCurrency,
+              charge_breakdown: {
+                base_amount: fallbackAmount,
+                percentage_fee: 0,
+                flat_fee: 0,
+                total_fees: 0,
+                grand_total: fallbackAmount,
+                currency: fallbackCurrency,
+              },
+            },
+          ];
+        } else {
+          paymentOptions = paymentOptions.map((option, index) => {
+            const total = Number(option.total ?? fallbackAmount);
+            const currency = option.currency || fallbackCurrency;
+            const breakdown = option.charge_breakdown || {};
+            return {
+              id: option.id ?? index + 1,
+              name: option.name || option.gateway || "Paystack",
+              payment_type: option.payment_type || option.type || "Card",
+              transaction_reference:
+                option.transaction_reference ||
+                option.reference ||
+                pendingTransaction.identifier ||
+                pendingTransaction.id ||
+                `tx-${instance.identifier}`,
+              total,
+              currency,
+              details: option.details || null,
+              charge_breakdown: {
+                base_amount: Number(breakdown.base_amount ?? fallbackAmount),
+                percentage_fee: Number(breakdown.percentage_fee ?? 0),
+                flat_fee: Number(breakdown.flat_fee ?? 0),
+                total_fees: Number(breakdown.total_fees ?? 0),
+                grand_total: Number(breakdown.grand_total ?? total ?? fallbackAmount),
+                currency,
+              },
+            };
+          });
+        }
+
+        const pricingBreakdown =
+          metadata?.pricing_breakdown || metadata?.breakdown || {};
+
+        const normalizedTransaction = {
+          ...pendingTransaction,
+          amount: fallbackAmount,
+          currency: fallbackCurrency,
+          payment_gateway_options: paymentOptions,
+          metadata: {
+            ...metadata,
+            pricing_breakdown: pricingBreakdown,
+          },
+        };
+
+        setPaymentContext({
+          instance: workingInstance,
+          transaction: normalizedTransaction,
+        });
+        setIsPaymentModalOpen(true);
+      } catch (error) {
+        console.error("Failed to load payment details:", error);
+        ToastUtils.error(
+          error?.message || "Failed to load payment instructions."
+        );
+      } finally {
+        setPaymentLoadingId(null);
+      }
+    },
+    [projectDetails]
+  );
+
+  const handlePaymentInitiated = useCallback(
+    (reference) => {
+      if (reference) {
+        ToastUtils.success("Payment initiated successfully.");
+      } else {
+        ToastUtils.info("Payment process started.");
+      }
+      closePaymentModal();
+      refetchProjectDetails?.();
+    },
+    [closePaymentModal, refetchProjectDetails]
+  );
+
+  const getStatusBadgeClass = useCallback((status) => {
+    const normalized = normalizeStatusValue(status);
+    if (!normalized) {
+      return "bg-gray-100 text-gray-800";
+    }
+    if (
+      normalized.includes("running") ||
+      normalized.includes("active")
+    ) {
+      return "bg-green-100 text-green-800";
+    }
+    if (
+      normalized.includes("stopped") ||
+      normalized.includes("failed") ||
+      normalized.includes("error")
+    ) {
+      return "bg-red-100 text-red-800";
+    }
+    if (
+      normalized.includes("spawn") ||
+      normalized.includes("provisioning") ||
+      normalized.includes("creating")
+    ) {
+      return "bg-blue-100 text-blue-800";
+    }
+    if (
+      PAYMENT_STATUS_MARKERS.some((marker) => normalized.includes(marker)) ||
+      (normalized.includes("payment") && normalized.includes("pending"))
+    ) {
+      return "bg-orange-100 text-orange-800";
+    }
+    if (normalized.includes("pending")) {
+      return "bg-yellow-100 text-yellow-700";
+    }
+    return "bg-gray-100 text-gray-800";
+  }, []);
 
   // Determine if project can be deleted (only if no instances)
   const canDeleteProject = instances.length === 0;
@@ -621,31 +888,43 @@ export default function ProjectDetails() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                           <span
-                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${
-                              item.status === "Running"
-                                ? "bg-green-100 text-green-800"
-                                : item.status === "Stopped"
-                                ? "bg-red-100 text-red-800"
-                                : item.status === "spawning"
-                                ? "bg-blue-100 text-blue-800"
-                                : item.status === "payment_pending"
-                                ? "bg-orange-100 text-orange-800"
-                                : "bg-gray-100 text-gray-800" // Default for other statuses
-                            }`}
+                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${getStatusBadgeClass(item.status)}`}
                           >
                             {item.status?.replace(/_/g, " ") || "N/A"}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation(); // Prevent row click from firing
-                              handleRowClick(item);
-                            }}
-                            className="text-[#288DD1] hover:underline text-sm font-medium"
-                          >
-                            View Details
-                          </button>
+                          <div className="flex flex-col items-start gap-2">
+                            {hasPendingPayment(item) && (
+                              <button
+                                onClick={(e) => handleOpenPaymentModal(e, item)}
+                                disabled={paymentLoadingId === item.identifier}
+                                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition ${
+                                  paymentLoadingId === item.identifier
+                                    ? "cursor-not-allowed border-blue-100 bg-blue-50 text-blue-400"
+                                    : "border-blue-200 bg-blue-50 text-blue-600 hover:border-blue-300 hover:bg-blue-100"
+                                }`}
+                              >
+                                {paymentLoadingId === item.identifier ? (
+                                  <>
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                    Loading…
+                                  </>
+                                ) : (
+                                  "Complete payment"
+                                )}
+                              </button>
+                            )}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent row click from firing
+                                handleRowClick(item);
+                              }}
+                              className="text-[#288DD1] hover:underline text-sm font-medium"
+                            >
+                              View Details
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -666,63 +945,81 @@ export default function ProjectDetails() {
             {/* Mobile Cards */}
             <div className="md:hidden mt-6 space-y-4">
               {currentData.length > 0 ? (
-                currentData.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => handleRowClick(item)}
-                    className="bg-white rounded-[12px] shadow-sm p-4 cursor-pointer border border-gray-200"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-base font-semibold text-gray-900">
-                        {item.name || "N/A"}
-                      </h3>
-                      <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${
-                          item.status === "Running"
-                            ? "bg-green-100 text-green-800"
-                            : item.status === "Stopped"
-                            ? "bg-red-100 text-red-800"
-                            : item.status === "spawning"
-                            ? "bg-blue-100 text-blue-800"
-                            : item.status === "payment_pending"
-                            ? "bg-orange-100 text-orange-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {item.status?.replace(/_/g, " ") || "N/A"}
-                      </span>
-                    </div>
-                    <div className="space-y-1 text-sm text-gray-600">
-                      <div className="flex justify-between">
-                        <span className="font-medium">Disk:</span>
-                        <span>
-                          {item.storage_size_gb
-                            ? `${item.storage_size_gb} GiB`
-                            : "N/A"}
+                currentData.map((item) => {
+                  const statusLabel =
+                    item.status?.replace(/_/g, " ") || "N/A";
+                  const statusClass = getStatusBadgeClass(item.status);
+                  const paymentLoading = paymentLoadingId === item.identifier;
+                  const showPayment = hasPendingPayment(item);
+
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => handleRowClick(item)}
+                      className="bg-white rounded-[12px] shadow-sm p-4 cursor-pointer border border-gray-200"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-base font-semibold text-gray-900">
+                          {item.name || "N/A"}
+                        </h3>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${statusClass}`}
+                        >
+                          {statusLabel}
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">EBS Volume:</span>
-                        <span>{item.ebs_volume?.name || "N/A"}</span>
+                      <div className="space-y-1 text-sm text-gray-600">
+                        <div className="flex justify-between">
+                          <span className="font-medium">Disk:</span>
+                          <span>
+                            {item.storage_size_gb
+                              ? `${item.storage_size_gb} GiB`
+                              : "N/A"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">EBS Volume:</span>
+                          <span>{item.ebs_volume?.name || "N/A"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">OS:</span>
+                          <span>{item.os_image?.name || "N/A"}</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">OS:</span>
-                        <span>{item.os_image?.name || "N/A"}</span>
+                      <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+                        {showPayment && (
+                          <button
+                            onClick={(e) => handleOpenPaymentModal(e, item)}
+                            disabled={paymentLoading}
+                            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition ${
+                              paymentLoading
+                                ? "cursor-not-allowed border-blue-100 bg-blue-50 text-blue-400"
+                                : "border-blue-200 bg-blue-50 text-blue-600 hover:border-blue-300 hover:bg-blue-100"
+                            }`}
+                          >
+                            {paymentLoading ? (
+                              <>
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                Loading…
+                              </>
+                            ) : (
+                              "Complete payment"
+                            )}
+                          </button>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent card click
+                            handleRowClick(item);
+                          }}
+                          className="text-[#288DD1] hover:underline text-sm font-medium"
+                        >
+                          View Details
+                        </button>
                       </div>
                     </div>
-                    <div className="mt-4 text-right">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent row click from firing
-                          handleRowClick(item);
-                        }}
-                        className="text-[#288DD1] hover:underline text-sm font-medium"
-                      >
-                        View Details
-                      </button>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="bg-white rounded-[12px] shadow-sm p-4 text-center text-gray-500">
                   No instances found for this project.
@@ -793,6 +1090,14 @@ export default function ProjectDetails() {
           </div>
         )}
       </main>
+      {paymentContext?.transaction && (
+        <PaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={closePaymentModal}
+          transaction={paymentContext.transaction}
+          onPaymentInitiated={handlePaymentInitiated}
+        />
+      )}
       <AddInstanceModal isOpen={isAddInstanceOpen} onClose={closeAddInstance} />
       <EditDescriptionModal
         isOpen={isEditDescriptionModalOpen}

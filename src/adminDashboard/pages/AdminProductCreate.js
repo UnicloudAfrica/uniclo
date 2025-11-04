@@ -9,11 +9,18 @@ import AdminActiveTab from "../components/adminActiveTab";
 import AdminPageShell from "../components/AdminPageShell";
 import ModernCard from "../components/ModernCard";
 import ModernButton from "../components/ModernButton";
+import SelectableInput from "../components/SelectableInput";
 import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
 import { useCreateProducts } from "../../hooks/adminHooks/adminProductHooks";
 import ToastUtils from "../../utils/toastUtil";
 import useAuthRedirect from "../../utils/adminAuthRedirect";
 import silentApi from "../../index/admin/silent";
+
+const OBJECT_STORAGE_TYPE = "object_storage_configuration";
+const DEFAULT_OBJECT_STORAGE_PRICE_PER_GB = 0.16;
+
+const objectStorageNameForQuota = (quota) =>
+  quota === 1 ? "Object Storage (per GiB)" : `Object Storage ${quota} GiB`;
 
 const productTypes = [
   { value: "compute_instance", label: "Compute Instance" },
@@ -21,6 +28,7 @@ const productTypes = [
   { value: "os_image", label: "OS Image" },
   { value: "bandwidth", label: "Bandwidth" },
   { value: "ip", label: "Floating IP" },
+  { value: OBJECT_STORAGE_TYPE, label: "Object Storage" },
   { value: "volume_type", label: "Volume Type" },
 ];
 
@@ -30,6 +38,7 @@ const typeToEndpoint = {
   os_image: "/product-os-image",
   bandwidth: "/product-bandwidth",
   ip: "/product-floating-ip",
+  [OBJECT_STORAGE_TYPE]: null,
   volume_type: "/product-volume-type",
 };
 
@@ -41,9 +50,12 @@ const createEmptyEntry = () => ({
   name: "",
   productable_type: "",
   productable_id: "",
+  productSearch: "",
   provider: "",
   region: "",
   price: "",
+  objectStorageQuota: "1",
+  objectStoragePricePerGb: DEFAULT_OBJECT_STORAGE_PRICE_PER_GB.toString(),
   options: [],
   loadingOptions: false,
   errors: {},
@@ -76,20 +88,22 @@ const AdminProductCreate = () => {
   const normalizeType = (raw) => {
     if (raw === null || raw === undefined) return "";
     const value = String(raw).trim().toLowerCase();
-    const aliases = {
-      "compute instance": "compute_instance",
-      compute: "compute_instance",
-      "cross connect": "cross_connect",
-      "cross-connect": "cross_connect",
+  const aliases = {
+    "compute instance": "compute_instance",
+    compute: "compute_instance",
+    "cross connect": "cross_connect",
+    "cross-connect": "cross_connect",
       "os image": "os_image",
       "operating system": "os_image",
       bandwidth: "bandwidth",
-      "floating ip": "ip",
-      floating_ip: "ip",
-      ip: "ip",
-      "volume type": "volume_type",
-      volume: "volume_type",
-    };
+    "floating ip": "ip",
+    floating_ip: "ip",
+    ip: "ip",
+    "object storage": OBJECT_STORAGE_TYPE,
+    object_storage: OBJECT_STORAGE_TYPE,
+    "volume type": "volume_type",
+    volume: "volume_type",
+  };
 
     if (aliases[value]) {
       return aliases[value];
@@ -160,11 +174,40 @@ const AdminProductCreate = () => {
       };
     }
 
+    if (productableType === OBJECT_STORAGE_TYPE) {
+      const quota = Number.isFinite(productableIdNumber) && productableIdNumber > 0
+        ? Math.floor(productableIdNumber)
+        : 1;
+      const resolvedPrice = Number.isFinite(priceNumber) && priceNumber > 0
+        ? Number(priceNumber.toFixed(4))
+        : Number((quota * DEFAULT_OBJECT_STORAGE_PRICE_PER_GB).toFixed(4));
+      const pricePerGb =
+        quota > 0 && resolvedPrice > 0
+          ? Number((resolvedPrice / quota).toFixed(4))
+          : DEFAULT_OBJECT_STORAGE_PRICE_PER_GB;
+
+      const entry = {
+        ...createEmptyEntry(),
+        name: name || objectStorageNameForQuota(quota),
+        productable_type: productableType,
+        productable_id: String(quota),
+        productSearch: "",
+        provider: regionInfo.provider ?? "",
+        region,
+        price: resolvedPrice.toFixed(4),
+        objectStorageQuota: String(quota),
+        objectStoragePricePerGb: pricePerGb.toString(),
+      };
+
+      return { entry };
+    }
+
     const entry = {
       ...createEmptyEntry(),
       name,
       productable_type: productableType,
       productable_id: String(productableIdNumber),
+      productSearch: "",
       provider: regionInfo.provider ?? "",
       region,
       price: priceNumber.toString(),
@@ -178,8 +221,13 @@ const AdminProductCreate = () => {
 
   const updateEntry = (index, updater) => {
     setEntries((prev) => {
+      if (index < 0 || index >= prev.length) {
+        return prev;
+      }
       const next = [...prev];
-      next[index] = { ...next[index], ...updater };
+      const current = next[index];
+      next[index] =
+        typeof updater === "function" ? updater(current) : { ...current, ...updater };
       return next;
     });
   };
@@ -190,7 +238,13 @@ const AdminProductCreate = () => {
       return;
     }
 
-    updateEntry(index, { loadingOptions: true, options: [], productable_id: "" });
+    updateEntry(index, (prev) => ({
+      ...prev,
+      loadingOptions: true,
+      options: [],
+      productable_id: "",
+      productSearch: "",
+    }));
 
     try {
       const params = new URLSearchParams();
@@ -198,10 +252,8 @@ const AdminProductCreate = () => {
       params.append("region", regionCode);
 
       const response = await silentApi(
-        `${endpoint}?${params.toString()}`,
-        {
-          method: "GET",
-        }
+        "GET",
+        `${endpoint}?${params.toString()}`
       );
 
       const records = Array.isArray(response?.data)
@@ -210,12 +262,34 @@ const AdminProductCreate = () => {
         ? response.message
         : [];
 
-      updateEntry(index, {
-        options: records.map((record) => ({
-          id: record.productable_id,
-          name: record.name || record.product?.name || "Unnamed",
-        })),
-        loadingOptions: false,
+      const mappedOptions = records.map((record, optionIndex) => {
+        const rawId =
+          record.productable_id ??
+          record.product_id ??
+          record.id ??
+          record.product?.productable_id ??
+          record.product?.id ??
+          optionIndex;
+        return {
+          id: String(rawId),
+          name: record.name || record.product?.name || `Option ${optionIndex + 1}`,
+        };
+      });
+
+      updateEntry(index, (prev) => {
+        const matchedOption = mappedOptions.find(
+          (option) => String(option.id) === String(prev.productable_id)
+        );
+
+        return {
+          ...prev,
+          options: mappedOptions,
+          loadingOptions: false,
+          productSearch: prev.productSearch,
+          ...(matchedOption
+            ? { name: prev.name || matchedOption.name }
+            : {}),
+        };
       });
     } catch (error) {
       console.error("Failed to load product options", error);
@@ -225,19 +299,205 @@ const AdminProductCreate = () => {
   };
 
   const handleEntryFieldChange = (index, field, value) => {
-    updateEntry(index, { [field]: value, errors: { ...entries[index].errors, [field]: null } });
+    const currentEntry = entries[index];
+    if (!currentEntry) return;
 
     if (field === "productable_type") {
-      loadProductOptions(index, entries[index].region, value);
+      const isObjectStorageType = value === OBJECT_STORAGE_TYPE;
+      const quota = Math.max(1, Number(currentEntry.objectStorageQuota) || 1);
+      const pricePerGb = Number(currentEntry.objectStoragePricePerGb) || DEFAULT_OBJECT_STORAGE_PRICE_PER_GB;
+      const totalPrice = Number((quota * pricePerGb).toFixed(4));
+
+      updateEntry(index, {
+        productable_type: value,
+        productable_id: isObjectStorageType ? String(quota) : "",
+        productSearch: "",
+        options: [],
+        name: isObjectStorageType
+          ? objectStorageNameForQuota(quota)
+          : "",
+        price: isObjectStorageType ? totalPrice.toFixed(4) : "",
+        objectStorageQuota: isObjectStorageType ? String(quota) : "1",
+        objectStoragePricePerGb: isObjectStorageType
+          ? pricePerGb.toString()
+          : DEFAULT_OBJECT_STORAGE_PRICE_PER_GB.toString(),
+        errors: {
+          ...currentEntry.errors,
+          productable_type: null,
+          productable_id: null,
+          objectStorageQuota: null,
+          objectStoragePricePerGb: null,
+          price: null,
+        },
+      });
+      if (currentEntry.region && value && value !== OBJECT_STORAGE_TYPE) {
+        loadProductOptions(index, currentEntry.region, value);
+      }
+      return;
     }
 
     if (field === "region") {
       const regionInfo = regionLookup[value];
-      updateEntry(index, { provider: regionInfo?.provider ?? "" });
-      if (entries[index].productable_type) {
-        loadProductOptions(index, value, entries[index].productable_type);
+      const isObjectStorageType = currentEntry.productable_type === OBJECT_STORAGE_TYPE;
+      updateEntry(index, {
+        region: value,
+        provider: regionInfo?.provider ?? "",
+        productable_id: isObjectStorageType
+          ? String(Math.max(1, Number(currentEntry.objectStorageQuota) || 1))
+          : "",
+        productSearch: "",
+        options: [],
+        name: isObjectStorageType
+          ? objectStorageNameForQuota(
+              Math.max(1, Number(currentEntry.objectStorageQuota) || 1)
+            )
+          : "",
+        errors: {
+          ...currentEntry.errors,
+          region: null,
+          productable_id: null,
+        },
+      });
+      if (
+        currentEntry.productable_type &&
+        currentEntry.productable_type !== OBJECT_STORAGE_TYPE
+      ) {
+        loadProductOptions(index, value, currentEntry.productable_type);
       }
+      return;
     }
+
+    if (field === "productable_id") {
+      const selectedOption = currentEntry.options.find(
+        (option) => String(option.id) === String(value)
+      );
+      updateEntry(index, {
+        productable_id: value,
+        name: selectedOption ? selectedOption.name : "",
+        productSearch: "",
+        errors: {
+          ...currentEntry.errors,
+          productable_id: null,
+          name: selectedOption ? null : currentEntry.errors.name,
+        },
+      });
+      return;
+    }
+
+    if (field === "objectStorageQuota") {
+      const rawValue = Number(value);
+      const quota = Number.isFinite(rawValue) && rawValue > 0 ? Math.floor(rawValue) : 0;
+      updateEntry(index, (prev) => {
+        const resolvedQuota = quota > 0 ? quota : 0;
+        const pricePerGb = Number(prev.objectStoragePricePerGb) || DEFAULT_OBJECT_STORAGE_PRICE_PER_GB;
+        const total = resolvedQuota > 0
+          ? Number((resolvedQuota * pricePerGb).toFixed(4))
+          : 0;
+        return {
+          ...prev,
+          objectStorageQuota: value,
+          productable_id: resolvedQuota > 0 ? String(resolvedQuota) : "",
+          name:
+            resolvedQuota > 0
+              ? objectStorageNameForQuota(resolvedQuota)
+              : prev.name,
+          price: total > 0 ? total.toFixed(4) : "",
+          errors: {
+            ...prev.errors,
+            objectStorageQuota: null,
+            productable_id: null,
+            name: null,
+            price: null,
+          },
+        };
+      });
+      return;
+    }
+
+    if (field === "objectStoragePricePerGb") {
+      const rawValue = Number(value);
+      updateEntry(index, (prev) => {
+        const pricePerGb = Number.isFinite(rawValue) && rawValue > 0 ? rawValue : 0;
+        const quota = Math.max(0, Math.floor(Number(prev.objectStorageQuota) || 0));
+        const total = quota > 0 && pricePerGb > 0
+          ? Number((quota * pricePerGb).toFixed(4))
+          : 0;
+        return {
+          ...prev,
+          objectStoragePricePerGb: value,
+          price: total > 0 ? total.toFixed(4) : "",
+          errors: {
+            ...prev.errors,
+            objectStoragePricePerGb: null,
+            price: null,
+          },
+        };
+      });
+      return;
+    }
+
+    updateEntry(index, {
+      [field]: value,
+      errors: { ...currentEntry.errors, [field]: null },
+    });
+  };
+
+  const handleProductSearchChange = (index, searchValue) => {
+    const currentEntry = entries[index];
+    if (!currentEntry) return;
+
+    const trimmedValue = (searchValue || "").trim();
+
+    if (!trimmedValue) {
+      updateEntry(index, {
+        productSearch: "",
+        productable_id: "",
+        name: "",
+      });
+      return;
+    }
+
+    const matchedOption = currentEntry.options.find(
+      (option) => option.name.toLowerCase() === trimmedValue.toLowerCase()
+    );
+
+    if (matchedOption) {
+      updateEntry(index, (prev) => ({
+        ...prev,
+        productSearch: "",
+        productable_id: matchedOption.id,
+        name: matchedOption.name,
+        errors: { ...prev.errors, productable_id: null, name: null },
+      }));
+    } else {
+      updateEntry(index, (prev) => ({
+        ...prev,
+        productSearch: searchValue,
+        ...(prev.name === searchValue
+          ? {}
+          : { productable_id: "", name: "" }),
+      }));
+    }
+  };
+
+  const handleProductSelect = (index, option) => {
+    if (!option) {
+      updateEntry(index, (prev) => ({
+        ...prev,
+        productable_id: "",
+        name: "",
+        productSearch: "",
+      }));
+      return;
+    }
+
+    updateEntry(index, (prev) => ({
+      ...prev,
+      productable_id: String(option.id),
+      name: option.name,
+      productSearch: option.name,
+      errors: { ...prev.errors, productable_id: null, name: null },
+    }));
   };
 
   const addEntry = () => {
@@ -321,12 +581,38 @@ const AdminProductCreate = () => {
       if (!entry.productable_type) {
         errors.productable_type = "Product type is required.";
       }
-      if (!entry.productable_id) {
-        errors.productable_id = "Product is required.";
-      }
-      const priceNumber = Number(entry.price);
-      if (!Number.isFinite(priceNumber) || priceNumber < 0) {
-        errors.price = "Price must be a positive number.";
+
+      if (entry.productable_type === OBJECT_STORAGE_TYPE) {
+        const quotaValue = Number(entry.objectStorageQuota);
+        const pricePerGbValue = Number(entry.objectStoragePricePerGb);
+
+        if (!Number.isFinite(quotaValue) || quotaValue <= 0) {
+          errors.objectStorageQuota = "Quota must be greater than zero.";
+        }
+
+        if (!Number.isFinite(pricePerGbValue) || pricePerGbValue <= 0) {
+          errors.objectStoragePricePerGb = "Price per GiB must be greater than zero.";
+        }
+
+        if (!errors.objectStorageQuota && !errors.objectStoragePricePerGb) {
+          const quotaInt = Math.max(1, Math.floor(quotaValue));
+          const totalPrice = Number((quotaInt * pricePerGbValue).toFixed(4));
+          entry.productable_id = String(quotaInt);
+          entry.name =
+            entry.name?.trim() || objectStorageNameForQuota(quotaInt);
+          entry.price = totalPrice.toFixed(4);
+        } else {
+          entry.productable_id = entry.productable_id || "";
+          entry.price = entry.price || "";
+        }
+      } else {
+        if (!entry.productable_id) {
+          errors.productable_id = "Product is required.";
+        }
+        const priceNumber = Number(entry.price);
+        if (!Number.isFinite(priceNumber) || priceNumber < 0) {
+          errors.price = "Price must be a positive number.";
+        }
       }
 
       if (Object.keys(errors).length > 0) {
@@ -434,8 +720,23 @@ const AdminProductCreate = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {entries.map((entry, index) => (
-                    <tr key={entry.id} className="align-top">
+                  {entries.map((entry, index) => {
+                    const isObjectStorageRow =
+                      entry.productable_type === OBJECT_STORAGE_TYPE;
+                    const isProductDisabled =
+                      isObjectStorageRow ||
+                      isSubmitting ||
+                      entry.loadingOptions ||
+                      !entry.region ||
+                      !entry.productable_type;
+                    const productPlaceholder = !entry.region || !entry.productable_type
+                      ? "Select region & type first"
+                      : entry.loadingOptions
+                      ? "Loading products..."
+                      : "Search product";
+
+                    return (
+                      <tr key={entry.id} className="align-top">
                       <td className="px-4 py-3 text-sm text-gray-500">
                         {index + 1}
                       </td>
@@ -508,38 +809,94 @@ const AdminProductCreate = () => {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <select
-                          value={entry.productable_id}
-                          onChange={(e) =>
-                            handleEntryFieldChange(index, "productable_id", e.target.value)
-                          }
-                          className={`w-full input-field ${
-                            entry.errors.productable_id ? "border-red-500" : "border-gray-300"
-                          }`}
-                          disabled={
-                            isSubmitting ||
-                            entry.loadingOptions ||
-                            !entry.region ||
-                            !entry.productable_type
-                          }
-                        >
-                          <option value="">
-                            {!entry.region || !entry.productable_type
-                              ? "Select region & type"
-                              : entry.loadingOptions
-                              ? "Loading options..."
-                              : "Select product"}
-                          </option>
-                          {entry.options.map((option) => (
-                            <option key={`${entry.id}-${option.id}`} value={option.id}>
-                              {option.name}
-                            </option>
-                          ))}
-                        </select>
-                        {entry.errors.productable_id && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {entry.errors.productable_id}
-                          </p>
+                        {isObjectStorageRow ? (
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-500 mb-1">
+                                Quota (GiB)
+                              </label>
+                              <input
+                                type="number"
+                                min="1"
+                                step="1"
+                                value={entry.objectStorageQuota}
+                                onChange={(e) =>
+                                  handleEntryFieldChange(index, "objectStorageQuota", e.target.value)
+                                }
+                                className={`w-full input-field ${
+                                  entry.errors.objectStorageQuota
+                                    ? "border-red-500"
+                                    : "border-gray-300"
+                                }`}
+                                disabled={isSubmitting}
+                              />
+                              {entry.errors.objectStorageQuota && (
+                                <p className="text-red-500 text-xs mt-1">
+                                  {entry.errors.objectStorageQuota}
+                                </p>
+                              )}
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-500 mb-1">
+                                Price per GiB (USD)
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.0001"
+                                value={entry.objectStoragePricePerGb}
+                                onChange={(e) =>
+                                  handleEntryFieldChange(index, "objectStoragePricePerGb", e.target.value)
+                                }
+                                className={`w-full input-field ${
+                                  entry.errors.objectStoragePricePerGb
+                                    ? "border-red-500"
+                                    : "border-gray-300"
+                                }`}
+                                disabled={isSubmitting}
+                              />
+                              {entry.errors.objectStoragePricePerGb && (
+                                <p className="text-red-500 text-xs mt-1">
+                                  {entry.errors.objectStoragePricePerGb}
+                                </p>
+                              )}
+                            </div>
+                            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                              <div className="flex items-center justify-between">
+                                <span>Total price</span>
+                                <span className="font-semibold text-slate-900">
+                                  {entry.price ? `$${Number(entry.price).toFixed(4)}` : "—"}
+                                </span>
+                              </div>
+                              <p className="mt-1 text-[10px] text-slate-500">
+                                Calculated as quota × price per GiB.
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <SelectableInput
+                              options={entry.options}
+                              value={entry.productable_id}
+                              searchValue={entry.productSearch}
+                              onSearchChange={(val) =>
+                                handleProductSearchChange(index, val)
+                              }
+                              onSelect={(option) =>
+                                handleProductSelect(index, option)
+                              }
+                              placeholder={productPlaceholder}
+                              disabled={isProductDisabled}
+                              isLoading={entry.loadingOptions}
+                              emptyMessage="No products found"
+                              hasError={Boolean(entry.errors.productable_id)}
+                            />
+                            {entry.errors.productable_id && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {entry.errors.productable_id}
+                              </p>
+                            )}
+                          </>
                         )}
                       </td>
                       <td className="px-4 py-3">
@@ -555,7 +912,7 @@ const AdminProductCreate = () => {
                           className={`w-full input-field ${
                             entry.errors.price ? "border-red-500" : "border-gray-300"
                           }`}
-                          disabled={isSubmitting}
+                          disabled={isSubmitting || isObjectStorageRow}
                         />
                         {entry.errors.price && (
                           <p className="text-red-500 text-xs mt-1">{entry.errors.price}</p>
@@ -575,31 +932,47 @@ const AdminProductCreate = () => {
                           </ModernButton>
                         )}
                       </td>
-                    </tr>
-                  ))}
+                      </tr>
+                    );
+                })}
                 </tbody>
               </table>
             </div>
 
             <div className="md:hidden space-y-4">
-              {entries.map((entry, index) => (
-                <div key={entry.id} className="p-4 border rounded-lg">
-                  <div className="flex justify-between items-center mb-4">
-                    <p className="font-semibold">Product #{index + 1}</p>
-                    {entries.length > 1 && (
-                      <ModernButton
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeEntry(index)}
-                        type="button"
-                        isDisabled={isSubmitting}
-                        className="text-red-600"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </ModernButton>
-                    )}
-                  </div>
-                  <div className="space-y-4">
+              {entries.map((entry, index) => {
+                const isObjectStorageRow =
+                  entry.productable_type === OBJECT_STORAGE_TYPE;
+                const isProductDisabled =
+                  isObjectStorageRow ||
+                  isSubmitting ||
+                  entry.loadingOptions ||
+                  !entry.region ||
+                  !entry.productable_type;
+                const productPlaceholder = !entry.region || !entry.productable_type
+                  ? "Select region & type first"
+                  : entry.loadingOptions
+                  ? "Loading products..."
+                  : "Search product";
+
+                return (
+                  <div key={entry.id} className="p-4 border rounded-lg">
+                    <div className="flex justify-between items-center mb-4">
+                      <p className="font-semibold">Product #{index + 1}</p>
+                      {entries.length > 1 && (
+                        <ModernButton
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeEntry(index)}
+                          type="button"
+                          isDisabled={isSubmitting}
+                          className="text-red-600"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </ModernButton>
+                      )}
+                    </div>
+                    <div className="space-y-4">
                     <div>
                       <label className="text-sm font-medium text-gray-700">
                         Product Name <span className="text-red-500">*</span>
@@ -681,38 +1054,94 @@ const AdminProductCreate = () => {
                       <label className="text-sm font-medium text-gray-700">
                         Product <span className="text-red-500">*</span>
                       </label>
-                      <select
-                        value={entry.productable_id}
-                        onChange={(e) =>
-                          handleEntryFieldChange(index, "productable_id", e.target.value)
-                        }
-                        className={`w-full input-field mt-1 ${
-                          entry.errors.productable_id ? "border-red-500" : "border-gray-300"
-                        }`}
-                        disabled={
-                          isSubmitting ||
-                          entry.loadingOptions ||
-                          !entry.region ||
-                          !entry.productable_type
-                        }
-                      >
-                        <option value="">
-                          {!entry.region || !entry.productable_type
-                            ? "Select region & type"
-                            : entry.loadingOptions
-                            ? "Loading options..."
-                            : "Select product"}
-                        </option>
-                        {entry.options.map((option) => (
-                          <option key={`${entry.id}-${option.id}`} value={option.id}>
-                            {option.name}
-                          </option>
-                        ))}
-                      </select>
-                      {entry.errors.productable_id && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {entry.errors.productable_id}
-                        </p>
+                      {isObjectStorageRow ? (
+                        <div className="space-y-3 mt-1">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">
+                              Quota (GiB)
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              step="1"
+                              value={entry.objectStorageQuota}
+                              onChange={(e) =>
+                                handleEntryFieldChange(index, "objectStorageQuota", e.target.value)
+                              }
+                              className={`w-full input-field ${
+                                entry.errors.objectStorageQuota
+                                  ? "border-red-500"
+                                  : "border-gray-300"
+                              }`}
+                              disabled={isSubmitting}
+                            />
+                            {entry.errors.objectStorageQuota && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {entry.errors.objectStorageQuota}
+                              </p>
+                            )}
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">
+                              Price per GiB (USD)
+                            </label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.0001"
+                              value={entry.objectStoragePricePerGb}
+                              onChange={(e) =>
+                                handleEntryFieldChange(index, "objectStoragePricePerGb", e.target.value)
+                              }
+                              className={`w-full input-field ${
+                                entry.errors.objectStoragePricePerGb
+                                  ? "border-red-500"
+                                  : "border-gray-300"
+                              }`}
+                              disabled={isSubmitting}
+                            />
+                            {entry.errors.objectStoragePricePerGb && (
+                              <p className="text-red-500 text-xs mt-1">
+                                {entry.errors.objectStoragePricePerGb}
+                              </p>
+                            )}
+                          </div>
+                          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                            <div className="flex items-center justify-between">
+                              <span>Total price</span>
+                              <span className="font-semibold text-slate-900">
+                                {entry.price ? `$${Number(entry.price).toFixed(4)}` : "—"}
+                              </span>
+                            </div>
+                            <p className="mt-1 text-[10px] text-slate-500">
+                              Calculated as quota × price per GiB.
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <SelectableInput
+                            options={entry.options}
+                            value={entry.productable_id}
+                            searchValue={entry.productSearch}
+                            onSearchChange={(val) =>
+                              handleProductSearchChange(index, val)
+                            }
+                            onSelect={(option) =>
+                              handleProductSelect(index, option)
+                            }
+                            placeholder={productPlaceholder}
+                            disabled={isProductDisabled}
+                            isLoading={entry.loadingOptions}
+                            emptyMessage="No products found"
+                            hasError={Boolean(entry.errors.productable_id)}
+                          />
+                          {entry.errors.productable_id && (
+                            <p className="text-red-500 text-xs mt-1">
+                              {entry.errors.productable_id}
+                            </p>
+                          )}
+                        </>
                       )}
                     </div>
                     <div>
@@ -731,7 +1160,7 @@ const AdminProductCreate = () => {
                         className={`w-full input-field mt-1 ${
                           entry.errors.price ? "border-red-500" : "border-gray-300"
                         }`}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isObjectStorageRow}
                       />
                       {entry.errors.price && (
                         <p className="text-red-500 text-xs mt-1">{entry.errors.price}</p>
@@ -739,7 +1168,8 @@ const AdminProductCreate = () => {
                     </div>
                   </div>
                 </div>
-              ))}
+              );
+              })}
             </div>
 
             <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

@@ -114,7 +114,7 @@ export default function Dashboard() {
   if (isLoading || isProfileFetching) {
     return (
       <div className="w-full h-svh flex items-center justify-center">
-        <Loader2 className="w-12 text-[#288DD1] animate-spin" />
+        <Loader2 className="w-12 text-[--theme-color] animate-spin" />
       </div>
     );
   }
@@ -132,10 +132,10 @@ export default function Dashboard() {
           Welcome, {profile?.first_name} 👋🏽
         </p>
 
-        <div className="w-full md:w-[352px] mt-4 bg-[#288DD10D] py-6 px-5 rounded-[10px]">
+        <div className="w-full md:w-[352px] mt-4 bg-[--theme-color-10] py-6 px-5 rounded-[10px]">
           <div className="flex items-center space-x-1">
             <img src={cloudCheck} className="" alt="" />
-            <p className="font-medium text-base text-[#288DD1]">
+            <p className="font-medium text-base text-[--theme-color]">
               Current Module
             </p>
           </div>
@@ -146,10 +146,10 @@ export default function Dashboard() {
             to="/dashboard/purchased-modules"
             className="mt-2 space-x-2 flex items-center"
           >
-            <p className="font-Outfit font-normal text-xs text-[#288DD1]">
+            <p className="font-Outfit font-normal text-xs text-[--theme-color]">
               SEE PURCHASED MODULES
             </p>
-            <ChevronRight className="w-4 text-[#288DD1]" />
+            <ChevronRight className="w-4 text-[--theme-color]" />
           </Link>
         </div>
 
@@ -167,13 +167,13 @@ export default function Dashboard() {
             metrics.map((metric, index) => (
               <div
                 key={index}
-                className={`flex-1 p-4 w-full rounded-[12px] bg-[#288DD10D] border border-[#288dd12d]`}
+                className={`flex-1 p-4 w-full rounded-[12px] bg-[--theme-color-10] border border-[--theme-border-color]`}
               >
                 <p className="text-xs text-[#676767] capitalize">
                   {metric.label}
                 </p>
                 <div className="flex items-center mt-4 space-x-1.5">
-                  <p className="text-lg md:text-2xl font-medium text-[#3272CA]">
+                  <p className="text-lg md:text-2xl font-medium text-[--secondary-color]">
                     {metric.value}
                   </p>
                   {/* Removed upward/downward conditional rendering as per request */}
@@ -214,14 +214,14 @@ export default function Dashboard() {
                         </p>
                       </div>
                     </div>
-                    <p className="text-[#288DD1] mt-4 text-2xl font-semibold">
+                    <p className="text-[--theme-color] mt-4 text-2xl font-semibold">
                       ₦{formatAmount(offer.fixed_price)}/{offer.period_days}{" "}
                       days
                     </p>
                     <p className="mt-4 text-[#676767] font-normal text-sm">
                       {offer.productable.description}
                     </p>
-                    <button className="bg-[#288DD11A] rounded-[30px] py-3 px-8 mt-4 text-[#288DD1] font-normal text-base">
+                    <button className="bg-[--theme-color-10] rounded-[30px] py-3 px-8 mt-4 text-[--theme-color] font-normal text-base">
                       Use Now
                     </button>
                   </div>
@@ -264,7 +264,7 @@ export default function Dashboard() {
                         </p>
                       </div>
                     </div>
-                    <p className="text-[#288DD1] mt-4 text-2xl font-semibold">
+                    <p className="text-[--theme-color] mt-4 text-2xl font-semibold">
                       ₦
                       {formatAmount(
                         offer.productable.price_per_month *
@@ -275,7 +275,7 @@ export default function Dashboard() {
                     <p className="mt-4 text-[#676767] font-normal text-sm">
                       {offer.productable.description}
                     </p>
-                    <button className="bg-[#288DD11A] rounded-[30px] py-3 px-8 mt-4 text-[#288DD1] font-normal text-base">
+                    <button className="bg-[--theme-color-10] rounded-[30px] py-3 px-8 mt-4 text-[--theme-color] font-normal text-base">
                       Purchase
                     </button>
                   </div>

@@ -19,12 +19,19 @@ import {
   User,
   CheckSquare,
   Server,
+  ClipboardList,
+  HardDrive,
 } from "lucide-react";
+import lapapi from "../../index/admin/lapapi";
+import useAdminAuthStore from "../../stores/adminAuthStore";
 
 const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   const [activeItem, setActiveItem] = useState("Home");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const clearToken = useAdminAuthStore((state) => state.clearToken);
+  const clearUserEmail = useAdminAuthStore((state) => state.clearUserEmail);
 
   // Map of paths to menu item names
   const pathToItemMap = {
@@ -35,6 +42,7 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/admin-dashboard/payment": "Payment",
     "/admin-dashboard/projects": "Projects",
     "/admin-dashboard/instances": "Instances",
+    "/admin-dashboard/object-storage": "Object Storage",
     // Instance management paths removed - functionality moved to standard instances
     // "/admin-dashboard/instance-management": "Instance Management",
     // "/admin-dashboard/instance-management/details": "Instance Details",
@@ -49,6 +57,7 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/admin-dashboard/pricing": "Pricing",
     "/admin-dashboard/regions": "Regions",
     "/admin-dashboard/region-approvals": "Region Approvals",
+    "/admin-dashboard/onboarding-review": "Onboarding Review",
     "/admin-dashboard/calculator": "Calculator",
     "/admin-dashboard/calculator-new": "Calculator",
     "/admin-dashboard/advanced-calculator": "Calculator",
@@ -124,6 +133,12 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       path: "/admin-dashboard/instances",
     },
     {
+      name: "Object Storage",
+      icon: HardDrive,
+      isLucide: true,
+      path: "/admin-dashboard/object-storage",
+    },
+    {
       name: "Regions",
       icon: MapPin,
       isLucide: true,
@@ -134,6 +149,12 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       icon: CheckSquare,
       isLucide: true,
       path: "/admin-dashboard/region-approvals",
+    },
+    {
+      name: "Onboarding Review",
+      icon: ClipboardList,
+      isLucide: true,
+      path: "/admin-dashboard/onboarding-review",
     },
     {
       name: "Calculator",
@@ -172,6 +193,24 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     navigate(path);
     if (onCloseMobileMenu && typeof onCloseMobileMenu === "function") {
       onCloseMobileMenu(); // Close mobile menu after navigation
+    }
+  };
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await lapapi("POST", "/business/auth/logout");
+    } catch (error) {
+      console.error("Admin logout failed:", error);
+    } finally {
+      clearToken?.();
+      clearUserEmail?.();
+      if (onCloseMobileMenu && typeof onCloseMobileMenu === "function") {
+        onCloseMobileMenu();
+      }
+      navigate("/admin-signin");
+      setIsLoggingOut(false);
     }
   };
 
@@ -251,6 +290,20 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
             <nav className="flex-1 ov w-full mt-3 px-2 max-h-[80vh] overflow-y-auto">
               <ul className="flex flex-col h-full w-full">
                 {menuItems.map((item) => renderMenuItem(item))}
+                <li className="mt-auto">
+                  <button
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                    className="w-full flex items-center py-2 px-3.5 space-x-2 text-left text-[#DC3F41] transition-all duration-200 hover:bg-[#FDF2F2] disabled:opacity-60 disabled:cursor-wait"
+                  >
+                    <div className="relative flex items-center justify-center w-5 h-5 flex-shrink-0">
+                      <LogOut size={16} className={isLoggingOut ? "animate-spin" : ""} />
+                    </div>
+                    <span className="text-sm font-normal hidden lg:block font-Outfit">
+                      {isLoggingOut ? "Logging out…" : "Logout"}
+                    </span>
+                  </button>
+                </li>
               </ul>
             </nav>
           </div>
@@ -301,16 +354,16 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
                 {menuItems.map((item) => renderMobileMenuItem(item))}
                 <li>
                   <button
-                    className="w-full flex items-center py-3 px-4 space-x-3 text-left text-[#DC3F41] hover:bg-[#ffffff15] rounded-lg transition-colors duration-200"
-                    onClick={() => {
-                      // Add logout logic here
-                      onCloseMobileMenu();
-                    }}
+                    className="w-full flex items-center py-3 px-4 space-x-3 text-left text-[#DC3F41] hover:bg-[#ffffff15] rounded-lg transition-colors duration-200 disabled:opacity-60 disabled:cursor-wait"
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
                   >
                     <div className="flex items-center justify-center w-5 h-5 flex-shrink-0">
-                      <LogOut />
+                      <LogOut className={isLoggingOut ? "animate-spin" : ""} />
                     </div>
-                    <span className="text-xs font-medium">Logout</span>
+                    <span className="text-xs font-medium">
+                      {isLoggingOut ? "Logging out…" : "Logout"}
+                    </span>
                   </button>
                 </li>
               </ul>

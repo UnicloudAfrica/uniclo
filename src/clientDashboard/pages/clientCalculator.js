@@ -18,6 +18,9 @@ const ClientCalculator = () => {
 
   const [calculatorData, setCalculatorData] = useState({
     pricing_requests: [],
+    object_storage_items: [],
+    country_code: "US",
+    currency_code: "USD",
   });
 
   const [pricingResult, setPricingResult] = useState(null);
@@ -45,6 +48,32 @@ const ClientCalculator = () => {
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
+  const handleCountryChange = (countryCode, currencyCode) => {
+    const normalizedCountry = countryCode ? countryCode.toUpperCase() : "";
+    const normalizedCurrency = currencyCode ? currencyCode.toUpperCase() : "USD";
+
+    setCalculatorData((prev) => {
+      if (
+        prev.country_code === normalizedCountry &&
+        prev.currency_code === normalizedCurrency
+      ) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        country_code: normalizedCountry,
+        currency_code: normalizedCurrency,
+        pricing_requests: [],
+        object_storage_items: [],
+      };
+    });
+
+    setPricingResult(null);
+    setCurrentStep(0);
+    setErrors({});
+  };
+
   const addPricingRequest = (request) => {
     setCalculatorData((prev) => ({
       ...prev,
@@ -59,11 +88,31 @@ const ClientCalculator = () => {
     }));
   };
 
+  const addStorageItem = (item) => {
+    setCalculatorData((prev) => ({
+      ...prev,
+      object_storage_items: [...(prev.object_storage_items || []), item],
+    }));
+  };
+
+  const removeStorageItem = (index) => {
+    setCalculatorData((prev) => ({
+      ...prev,
+      object_storage_items: (prev.object_storage_items || []).filter(
+        (_, i) => i !== index
+      ),
+    }));
+  };
+
   const validateConfiguration = () => {
     const newErrors = {};
 
-    if (calculatorData.pricing_requests.length === 0) {
-      newErrors.general = "Please add at least one configuration to calculate.";
+    if (
+      calculatorData.pricing_requests.length === 0 &&
+      (calculatorData.object_storage_items?.length || 0) === 0
+    ) {
+      newErrors.general =
+        "Add at least one compute or object storage item to calculate.";
     }
 
     setErrors(newErrors);
@@ -75,12 +124,53 @@ const ClientCalculator = () => {
       return;
     }
 
+    const storageItems = calculatorData.object_storage_items || [];
+    const hasComputeRequests = calculatorData.pricing_requests.length > 0;
+
+    if (!hasComputeRequests && storageItems.length > 0) {
+      const syntheticResult = {
+        pricing: {
+          lines: [],
+          pre_discount_subtotal: 0,
+          discount: 0,
+          discount_label: null,
+          subtotal: 0,
+          tax: 0,
+          total: 0,
+          currency:
+            storageItems[0]?.currency || calculatorData.currency_code || "USD",
+        },
+        summary: {
+          total_items: 0,
+          total_instances: 0,
+          regions: [],
+          has_discount: false,
+        },
+      };
+
+      setPricingResult(syntheticResult);
+      setCurrentStep(1);
+      ToastUtils.success("Pricing calculation complete.");
+      return;
+    }
+
     const payload = {
       pricing_requests: calculatorData.pricing_requests.map((req) => {
         const { _display, ...rest } = req;
         return rest;
       }),
     };
+
+    if (storageItems.length) {
+      payload.object_storage_items = storageItems.map((item) => {
+        const { _display, ...rest } = item;
+        return rest;
+      });
+    }
+
+    if (calculatorData.country_code) {
+      payload.country_code = calculatorData.country_code;
+    }
 
     calculatePricingMutation(payload);
   };
@@ -106,13 +196,16 @@ const ClientCalculator = () => {
     switch (currentStep) {
       case 0:
         return (
-          <CalculatorConfigStep
-            calculatorData={calculatorData}
-            errors={errors}
-            updateCalculatorData={updateCalculatorData}
-            onAddRequest={addPricingRequest}
-            onRemoveRequest={removePricingRequest}
-          />
+        <CalculatorConfigStep
+          calculatorData={calculatorData}
+          errors={errors}
+          updateCalculatorData={updateCalculatorData}
+          onAddRequest={addPricingRequest}
+          onRemoveRequest={removePricingRequest}
+          onAddStorageItem={addStorageItem}
+          onRemoveStorageItem={removeStorageItem}
+          onCountryChange={handleCountryChange}
+        />
         );
       case 1:
         return (

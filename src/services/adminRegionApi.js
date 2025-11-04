@@ -23,7 +23,18 @@ class AdminRegionApiService {
    */
   async fetchRegionApprovals(params = {}) {
     try {
-      const queryString = new URLSearchParams(params).toString();
+      const query = new URLSearchParams();
+      query.set('ownership_type', 'tenant_owned');
+
+      Object.entries(params).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === '') {
+          query.delete(key);
+        } else {
+          query.set(key, value);
+        }
+      });
+
+      const queryString = query.toString();
       const url = `${config.adminURL}/region-approvals${queryString ? `?${queryString}` : ''}`;
       
       const response = await fetch(url, {
@@ -274,6 +285,24 @@ class AdminRegionApiService {
 
       if (data.success || response.ok) {
         ToastUtils.success(data.message || 'Platform region created successfully');
+        const regionCode = data?.data?.code || regionData.code;
+        // If object storage payload included, verify right away using new endpoint
+        if (regionData.object_storage?.enabled && regionCode) {
+          try {
+            await this.verifyObjectStorage(regionCode, {
+              object_storage: {
+                base_url: regionData.object_storage.base_url,
+                access_key: regionData.object_storage.access_key,
+                account: regionData.object_storage.account,
+                default_quota_gb: regionData.object_storage.default_quota_gb,
+                notification_email: regionData.object_storage.notification_email,
+              },
+            });
+          } catch (error) {
+            console.error('Object storage verification after region creation failed:', error);
+          }
+        }
+
         return {
           success: true,
           data: data.data
@@ -292,9 +321,15 @@ class AdminRegionApiService {
    * Verify MSP admin credentials for platform-owned regions
    * Admin can only verify credentials for regions they create (platform-owned)
    */
-  async verifyCredentials(regionCode, credentials) {
+  async verifyCredentials(identifier, credentials, options = {}) {
+    const scope = options.scope || 'region';
+    const path =
+      scope === 'approval'
+        ? `region-approvals/${identifier}/verify-credentials`
+        : `regions/${identifier}/verify-credentials`;
+
     try {
-      const response = await fetch(`${config.adminURL}/regions/${regionCode}/verify-credentials`, {
+      const response = await fetch(`${config.adminURL}/${path}`, {
         method: 'POST',
         headers: this.getAuthHeaders(),
         body: JSON.stringify(credentials),
@@ -303,17 +338,17 @@ class AdminRegionApiService {
       const data = await response.json();
 
       if (data.success || response.ok) {
-        ToastUtils.success(data.message || 'Credentials verified successfully');
         return {
           success: true,
-          verified: data.verified || true,
+          message: data.message || 'Credentials verified successfully',
+          verified: data.verified ?? true,
           credentials_updated_at: data.credentials_updated_at
         };
       } else {
         throw new Error(data.message || 'Failed to verify credentials');
       }
     } catch (error) {
-      console.error(`Error verifying credentials for region ${regionCode}:`, error);
+      console.error(`Error verifying credentials for region ${identifier}:`, error);
       ToastUtils.error(error.message);
       throw error;
     }
@@ -386,6 +421,31 @@ class AdminRegionApiService {
     } catch (error) {
       console.error(`Error updating region ${code}:`, error);
       ToastUtils.error(error.message);
+      throw error;
+    }
+  }
+
+  async verifyObjectStorage(regionCode, payload = null) {
+    try {
+      const response = await fetch(`${config.adminURL}/regions/${regionCode}/verify-object-storage`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: payload ? JSON.stringify(payload) : JSON.stringify({}),
+      });
+
+      const data = await response.json();
+
+      if (data.success || response.ok) {
+        return {
+          success: true,
+          message: data.message || 'Object storage verified successfully',
+        };
+      }
+
+      throw new Error(data.message || 'Failed to verify object storage');
+    } catch (error) {
+      console.error(`Error verifying object storage for region ${regionCode}:`, error);
+      ToastUtils.error(error.message || 'Failed to verify object storage');
       throw error;
     }
   }

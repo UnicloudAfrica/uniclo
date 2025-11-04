@@ -1,20 +1,16 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  ArrowUpRight,
+  BarChart3,
+  CheckCircle2,
   Eye,
   Loader2,
-  Users,
   UserPlus,
-  Phone,
-  Mail,
-  Target,
-  TrendingUp
+  Users,
 } from "lucide-react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
-import AdminActiveTab from "../components/adminActiveTab";
-import ModernStatsCard from "../components/ModernStatsCard";
-import ModernTable from "../components/ModernTable";
 import ModernButton from "../components/ModernButton";
 import ModernCard from "../components/ModernCard";
 import {
@@ -22,6 +18,8 @@ import {
   useFetchLeadStats,
 } from "../../hooks/adminHooks/leadsHook";
 import AdminPageShell from "../components/AdminPageShell";
+import ResourceHero from "../components/ResourceHero";
+import ResourceDataExplorer from "../components/ResourceDataExplorer";
 
 const formatCreatedAt = (dateString) => {
   const date = new Date(dateString);
@@ -41,11 +39,72 @@ const formatStatusForDisplay = (status) => {
   return status.replace(/_/g, " ");
 };
 
+const STATUS_CONFIG = {
+  all: {
+    label: "All leads",
+    description: "Entire pipeline",
+    tone: "bg-slate-900 text-white",
+    chip: "bg-slate-800 text-slate-100",
+  },
+  new: {
+    label: "New",
+    description: "Awaiting contact",
+    tone: "bg-sky-500/10 text-sky-600",
+    chip: "bg-sky-500/15 text-sky-600",
+  },
+  contacted: {
+    label: "Contacted",
+    description: "Initial outreach",
+    tone: "bg-amber-500/10 text-amber-600",
+    chip: "bg-amber-500/15 text-amber-600",
+  },
+  qualified: {
+    label: "Qualified",
+    description: "Ready for proposal",
+    tone: "bg-green-500/10 text-green-600",
+    chip: "bg-green-500/15 text-green-600",
+  },
+  proposal_sent: {
+    label: "Proposal sent",
+    description: "Awaiting feedback",
+    tone: "bg-indigo-500/10 text-indigo-600",
+    chip: "bg-indigo-500/15 text-indigo-600",
+  },
+  negotiating: {
+    label: "Negotiating",
+    description: "In discussion",
+    tone: "bg-purple-500/10 text-purple-600",
+    chip: "bg-purple-500/15 text-purple-600",
+  },
+  closed_won: {
+    label: "Closed won",
+    description: "Converted clients",
+    tone: "bg-emerald-500/10 text-emerald-600",
+    chip: "bg-emerald-500/15 text-emerald-600",
+  },
+  closed_lost: {
+    label: "Closed lost",
+    description: "Lost opportunities",
+    tone: "bg-rose-500/10 text-rose-600",
+    chip: "bg-rose-500/15 text-rose-600",
+  },
+};
+
+const STATUS_ORDER = [
+  "all",
+  "new",
+  "contacted",
+  "qualified",
+  "proposal_sent",
+  "negotiating",
+  "closed_won",
+  "closed_lost",
+];
+
 export default function AdminLeads() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activeSegment, setActiveSegment] = useState("all");
-  const itemsPerPage = 10;
-  const contentRef = useRef(null);
+  const [activeStatus, setActiveStatus] = useState("all");
+  const [searchValue, setSearchValue] = useState("");
   const navigate = useNavigate();
 
   const openCreateLead = () => navigate("/admin-dashboard/leads/create");
@@ -59,28 +118,66 @@ export default function AdminLeads() {
   };
 
   const { data: leads = [], isFetching: isLeadsFetching } = useFetchLeads();
-  const { data: leadStats, isFetching: isLeadStatsFetching } =
-    useFetchLeadStats();
+  const { data: leadStats, isFetching: isLeadStatsFetching } = useFetchLeadStats();
 
   const leadsByStatus = useMemo(
-    () => leadStats?.message?.leads_by_status || {},
+    () => leadStats?.message?.leads_by_status ?? {},
     [leadStats]
   );
-  const totalLeadCount = leadStats?.message?.leads ?? leads.length;
+
+  const totalLeadCount = leadStats?.message?.leads ?? leads.length ?? 0;
+  const wonCount = leadsByStatus.closed_won ?? 0;
+  const engagedCount =
+    (leadsByStatus.contacted ?? 0) +
+    (leadsByStatus.qualified ?? 0) +
+    (leadsByStatus.proposal_sent ?? 0) +
+    (leadsByStatus.negotiating ?? 0);
+  const conversionRate = totalLeadCount
+    ? Math.round((wonCount / totalLeadCount) * 100)
+    : 0;
+
+  const statusSegments = useMemo(() => {
+    return STATUS_ORDER.map((statusId) => {
+      if (statusId === "all") {
+        return {
+          id: "all",
+          count: totalLeadCount,
+          label: STATUS_CONFIG.all.label,
+          description: STATUS_CONFIG.all.description,
+        };
+      }
+      const config = STATUS_CONFIG[statusId];
+      return {
+        id: statusId,
+        count: leadsByStatus[statusId] ?? 0,
+        label: config?.label ?? statusId,
+        description: config?.description ?? "",
+      };
+    }).filter((segment) => segment.id === "all" || segment.count > 0);
+  }, [leadsByStatus, totalLeadCount]);
 
   const filteredLeads = useMemo(() => {
     if (!Array.isArray(leads)) return [];
-    if (activeSegment === "all") {
-      return leads;
-    }
-    return leads.filter((lead) => lead.status === activeSegment);
-  }, [leads, activeSegment]);
 
-  useEffect(() => {
-    if (contentRef.current) {
-      contentRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    const byStatus =
+      activeStatus === "all"
+        ? leads
+        : leads.filter((lead) => lead.status === activeStatus);
+
+    if (!searchValue.trim()) {
+      return byStatus;
     }
-  }, [activeSegment]);
+
+    const term = searchValue.trim().toLowerCase();
+    return byStatus.filter((lead) => {
+      const name = `${lead.first_name} ${lead.last_name}`.toLowerCase();
+      return (
+        name.includes(term) ||
+        lead.email?.toLowerCase().includes(term) ||
+        lead.company?.toLowerCase().includes(term)
+      );
+    });
+  }, [leads, activeStatus, searchValue]);
 
   const getStatusColorClass = (status) => {
     switch (status) {
@@ -104,30 +201,100 @@ export default function AdminLeads() {
   };
 
   const headerActions = (
-    <ModernButton
-      onClick={openCreateLead}
-      variant="primary"
-      size="lg"
-      className="inline-flex items-center gap-2"
-    >
-      <UserPlus className="w-5 h-5" />
-      Create New Lead
+    <ModernButton onClick={openCreateLead} className="inline-flex items-center gap-2">
+      <UserPlus className="h-4 w-4" />
+      Add lead
     </ModernButton>
   );
 
-  const leadSegments = useMemo(() => {
-    const baseSegments = [
-      { id: "all", label: "All leads", count: totalLeadCount },
-      { id: "new", label: "New", count: leadsByStatus.new ?? 0 },
-      { id: "contacted", label: "Contacted", count: leadsByStatus.contacted ?? 0 },
-      { id: "qualified", label: "Qualified", count: leadsByStatus.qualified ?? 0 },
-      { id: "proposal_sent", label: "Proposal Sent", count: leadsByStatus.proposal_sent ?? 0 },
-      { id: "negotiating", label: "Negotiating", count: leadsByStatus.negotiating ?? 0 },
-      { id: "closed_won", label: "Closed Won", count: leadsByStatus.closed_won ?? 0 },
-      { id: "closed_lost", label: "Closed Lost", count: leadsByStatus.closed_lost ?? 0 },
-    ];
-    return baseSegments.filter(Boolean);
-  }, [leadsByStatus, totalLeadCount]);
+  const leadColumns = useMemo(
+    () => [
+      {
+        header: "Lead",
+        key: "name",
+        render: (row) => (
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold text-slate-900">
+              {row.first_name} {row.last_name}
+            </span>
+            <span className="text-xs text-slate-400">{row.company ?? "—"}</span>
+          </div>
+        ),
+      },
+      {
+        header: "Contact",
+        key: "email",
+        render: (row) => (
+          <div className="flex flex-col text-sm text-slate-600">
+            <span>{row.email}</span>
+            {row.phone && <span className="text-xs text-slate-400">{row.phone}</span>}
+          </div>
+        ),
+      },
+      {
+        header: "Stage",
+        key: "status",
+        render: (row) => (
+          <span
+            className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold capitalize ${getStatusColorClass(
+              row.status
+            )}`}
+          >
+            {formatStatusForDisplay(row.status)}
+          </span>
+        ),
+      },
+      {
+        header: "Source",
+        key: "source",
+        render: (row) => (
+          <span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium capitalize text-slate-600">
+            {row.source || "—"}
+          </span>
+        ),
+      },
+      {
+        header: "Lead type",
+        key: "lead_type",
+        render: (row) => (
+          <span className="text-sm font-medium capitalize text-slate-700">
+            {row.lead_type || "—"}
+          </span>
+        ),
+      },
+      {
+        header: "Created",
+        key: "created_at",
+        render: (row) => (
+          <span className="text-sm text-slate-500">
+            {formatCreatedAt(row.created_at)}
+          </span>
+        ),
+      },
+      {
+        header: "",
+        key: "actions",
+        align: "right",
+        render: (row) => (
+          <button
+            type="button"
+            onClick={() =>
+              navigate(
+                `/admin-dashboard/leads/details?name=${encodeURIComponent(
+                  `${row.first_name} ${row.last_name}`
+                )}&id=${encodeId(row.id)}`
+              )
+            }
+            className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-500 transition hover:border-primary-200 hover:text-primary-600"
+          >
+            <Eye className="h-3 w-3" />
+            View
+          </button>
+        ),
+      },
+    ],
+    [navigate]
+  );
 
   return (
     <>
@@ -136,187 +303,142 @@ export default function AdminLeads() {
         isMobileMenuOpen={isMobileMenuOpen}
         onCloseMobileMenu={closeMobileMenu}
       />
-      <AdminActiveTab />
       <AdminPageShell
-        ref={contentRef}
-        title="Leads"
-        description="Monitor lead acquisition and pipeline performance"
-        actions={headerActions}
-        contentClassName="space-y-8 overflow-y-auto"
+        description="Stay on top of every inquiry—from first contact to close—and spot which prospects need attention next."
+        contentClassName="space-y-8"
       >
-        <ModernCard className="space-y-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                Pipeline overview
+        <ResourceHero
+          title="Lead pipeline"
+          subtitle="Growth"
+          description="Track how prospects move through each stage and spot opportunities for faster conversions."
+          metrics={[
+            {
+              label: "Pipeline volume",
+              value: totalLeadCount,
+              description: "All leads across every stage",
+              icon: <Users className="h-4 w-4" />,
+            },
+            {
+              label: "Conversion rate",
+              value: `${conversionRate}%`,
+              description: "Closed won vs. total leads",
+              icon: <CheckCircle2 className="h-4 w-4" />,
+            },
+            {
+              label: "Engaged leads",
+              value: engagedCount,
+              description: "In conversation right now",
+              icon: <BarChart3 className="h-4 w-4" />,
+            },
+          ]}
+          accent="midnight"
+          rightSlot={headerActions}
+        />
+
+        <ModernCard className="space-y-6 border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-1">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Stage insights
               </p>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Manage people segments
+              <h2 className="text-lg font-semibold text-slate-900">
+                Focus on a slice of the funnel
               </h2>
-              <p className="text-sm text-gray-500">
-                Filter the funnel to focus on specific lead stages and outcomes.
+              <p className="text-sm text-slate-500">
+                Select a stage to highlight the leads that need attention right now.
               </p>
             </div>
-            <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
-              Live pipeline
+            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+              <ArrowUpRight className="h-3 w-3" />
+              Live updates
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            {leadSegments.map((segment) => {
-              const isActive = activeSegment === segment.id;
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {statusSegments.map((segment) => {
+              const config = STATUS_CONFIG[segment.id] || STATUS_CONFIG.all;
+              const isActive = activeStatus === segment.id;
               return (
                 <button
                   key={segment.id}
                   type="button"
-                  onClick={() => setActiveSegment(segment.id)}
-                  className={[
-                    "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition",
+                  onClick={() => setActiveStatus(segment.id)}
+                  className={`group flex flex-col gap-3 rounded-2xl border px-4 py-4 text-left transition ${
                     isActive
-                      ? "border-cyan-200 bg-cyan-50 text-cyan-700 shadow-sm"
-                      : "border-gray-200 bg-white text-gray-600 hover:border-cyan-200 hover:text-cyan-700",
-                  ].join(" ")}
+                      ? "border-slate-900 bg-slate-900 text-white shadow-lg"
+                      : "border-slate-200 bg-white hover:border-slate-300"
+                  }`}
                 >
-                  <span>{segment.label}</span>
-                  <span
-                    className={[
-                      "inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold",
-                      isActive ? "bg-cyan-100 text-cyan-700" : "bg-gray-100 text-gray-600",
-                    ].join(" ")}
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
+                        isActive ? "bg-white/20 text-white" : config.tone
+                      }`}
+                    >
+                      {config.label}
+                    </span>
+                    <span
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
+                        isActive ? "bg-white/20 text-white" : config.chip
+                      }`}
+                    >
+                      {segment.count}
+                    </span>
+                  </div>
+                  <p
+                    className={`text-sm ${
+                      isActive ? "text-white/80" : "text-slate-500"
+                    }`}
                   >
-                    {segment.count}
-                  </span>
+                    {config.description}
+                  </p>
                 </button>
               );
             })}
           </div>
         </ModernCard>
 
-        <div className="space-y-8">
-          {isLeadStatsFetching ? (
-            <div className="flex justify-center items-center h-48">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <ModernStatsCard
-                title="Total Leads"
-                value={leadStats?.message?.leads || 0}
-                icon={<Users />}
-                color="primary"
-                trend="neutral"
-                description="All leads in the system"
-              />
-              {leadStats?.message?.leads_by_status &&
-                Object.entries(leadStats?.message.leads_by_status).map(
-                  ([status, count], index) => {
-                    const getStatusConfig = (status) => {
-                      switch (status) {
-                        case "new":
-                          return { icon: <UserPlus />, color: "info" };
-                        case "contacted":
-                          return { icon: <Phone />, color: "warning" };
-                        case "qualified":
-                          return { icon: <Target />, color: "success" };
-                        case "proposal_sent":
-                          return { icon: <Mail />, color: "primary" };
-                        case "negotiating":
-                          return { icon: <TrendingUp />, color: "warning" };
-                        case "closed_won":
-                          return { icon: <Target />, color: "success" };
-                        case "closed_lost":
-                          return { icon: <Users />, color: "error" };
-                        default:
-                          return { icon: <Users />, color: "info" };
-                      }
-                    };
-                    
-                    const config = getStatusConfig(status);
-                    
-                    return (
-                      <ModernStatsCard
-                        key={status}
-                        title={`${formatStatusForDisplay(status)} Leads`}
-                        value={count}
-                        icon={config.icon}
-                        color={config.color}
-                        trend="neutral"
-                        description={`Leads in ${formatStatusForDisplay(status).toLowerCase()} stage`}
-                      />
-                    );
-                  }
-                )}
-            </div>
-          )}
-          <ModernTable
-            title="Leads Management"
-            data={filteredLeads}
+        <ModernCard className="space-y-6 border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Lead directory
+            </h2>
+            <p className="text-sm text-slate-500">
+              Explore every prospect, understand where they are in the journey, and dig into the context behind each opportunity.
+            </p>
+          </div>
+
+          <ResourceDataExplorer
+            columns={leadColumns}
+            rows={filteredLeads}
             loading={isLeadsFetching}
-            columns={[
-              {
-                key: 'id',
-                header: 'ID',
-                render: (value, row, index) => index + 1
-              },
-              {
-                key: 'name',
-                header: 'Name',
-                render: (_, row) => `${row.first_name} ${row.last_name}`
-              },
-              {
-                key: 'email',
-                header: 'Email'
-              },
-              {
-                key: 'lead_type',
-                header: 'Lead Type',
-                render: (value) => (
-                  <span className="capitalize">{value}</span>
-                )
-              },
-              {
-                key: 'status',
-                header: 'Status',
-                render: (value) => (
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColorClass(value)}`}
-                  >
-                    {formatStatusForDisplay(value)}
-                  </span>
-                )
-              },
-              {
-                key: 'source',
-                header: 'Source',
-                render: (value) => (
-                  <span className="capitalize">{value}</span>
-                )
-              },
-              {
-                key: 'created_at',
-                header: 'Created At',
-                render: (value) => formatCreatedAt(value)
-              }
-            ]}
-            actions={[
-              {
-                label: 'View Details',
-                icon: <Eye size={16} />,
-                onClick: (lead) => {
-                  window.location.href = `/admin-dashboard/leads/details?name=${encodeURIComponent(
-                    `${lead.first_name} ${lead.last_name}`
-                  )}&id=${encodeId(lead.id)}`;
-                }
-              }
-            ]}
-            searchable={true}
-            exportable={true}
-            filterable={true}
-            paginated={true}
-            pageSize={itemsPerPage}
-            emptyMessage="No leads found."
+            searchValue={searchValue}
+            onSearch={setSearchValue}
+            highlight
+            emptyState={{
+              icon: (
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-500/10 text-primary-500">
+                  <UserPlus className="h-5 w-5" />
+                </span>
+              ),
+              title: "No leads yet",
+              description:
+                "Start capturing opportunities by adding leads manually or importing from your CRM.",
+              action: (
+                <ModernButton onClick={openCreateLead} className="flex items-center gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Add your first lead
+                </ModernButton>
+              ),
+            }}
           />
-        </div>
+        </ModernCard>
+
+        {isLeadStatsFetching && (
+          <div className="flex h-24 items-center justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
+          </div>
+        )}
       </AdminPageShell>
     </>
   );

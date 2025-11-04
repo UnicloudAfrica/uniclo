@@ -1,170 +1,445 @@
-import React, { useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import {
+  Calculator,
+  Flag,
+  Globe,
+  Loader2,
+  Percent,
+  Pencil,
+  Plus,
+} from "lucide-react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
 import AdminPageShell from "../components/AdminPageShell";
-import ModernTable from "../components/ModernTable";
-import ModernCard from "../components/ModernCard";
-import ModernStatsCard from "../components/ModernStatsCard";
 import ModernButton from "../components/ModernButton";
-import {
-  Loader2,
-  Pencil,
-  PlusCircle,
-  Calculator,
-  Globe,
-  Percent,
-  Settings,
-} from "lucide-react";
-import ToastUtils from "../../utils/toastUtil";
-import { designTokens } from "../../styles/designTokens";
+import ModernCard from "../components/ModernCard";
+import ResourceHero from "../components/ResourceHero";
+import ResourceDataExplorer from "../components/ResourceDataExplorer";
 import AddTaxTypeModal from "./taxComponents/addTax";
 import EditTaxTypeModal from "./taxComponents/editTax";
 import { useFetchTaxConfigurations } from "../../hooks/adminHooks/taxConfigurationHooks";
 
+const formatRate = (rate) => {
+  if (rate === null || rate === undefined) return "—";
+  const numeric = Number(rate);
+  if (Number.isNaN(numeric)) return "—";
+  return `${(numeric * 100).toFixed(2)}%`;
+};
+
 export default function AdminTax() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAddTaxTypeModalOpen, setIsAddTaxTypeModalOpen] = useState(false);
+  const [isEditTaxTypeModalOpen, setIsEditTaxTypeModalOpen] = useState(false);
+  const [selectedTaxType, setSelectedTaxType] = useState(null);
+  const [selectedCountryId, setSelectedCountryId] = useState(null);
+  const [countrySearch, setCountrySearch] = useState("");
+
   const {
     data: taxConfigurations = [],
     isFetching: isTaxFetching,
     refetch,
-  } = useFetchTaxConfigurations();
-
-  const [isAddTaxTypeModalOpen, setIsAddTaxTypeModalOpen] = useState(false);
-  const [isEditTaxTypeModalOpen, setIsEditTaxTypeModalOpen] = useState(false);
-  const [selectedTaxType, setSelectedTaxType] = useState(null);
+  } = useFetchTaxConfigurations({
+    onError: (error) => {
+      console.error("Failed to fetch tax configurations", error);
+    },
+  });
 
   const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
-  const handleAddTaxType = () => setIsAddTaxTypeModalOpen(true);
-  const handleEditTaxType = (taxType) => {
-    setSelectedTaxType(taxType);
-    setIsEditTaxTypeModalOpen(true);
-  };
+  const taxTypeMap = useMemo(() => {
+    const map = new Map();
+    (taxConfigurations || []).forEach((taxType) => {
+      if (!taxType || typeof taxType !== "object") return;
+      map.set(taxType.id, taxType);
+    });
+    return map;
+  }, [taxConfigurations]);
 
-  const formatRate = (rate) => {
-    if (rate === null || rate === undefined) return "N/A";
-    return `${(parseFloat(rate) * 100).toFixed(2)}%`;
-  };
+  const countryCatalogue = useMemo(() => {
+    const catalogueMap = new Map();
 
-  const taxStats = {
-    totalTaxTypes: taxConfigurations?.length || 0,
-    totalCountryRates:
-      taxConfigurations?.reduce(
-        (sum, taxType) => sum + (taxType.country_rates?.length || 0),
-        0
-      ) || 0,
-    averageRate:
-      taxConfigurations?.length > 0
-        ? (
-            taxConfigurations.reduce((sum, taxType) => {
-              const rates = taxType.country_rates || [];
-              const typeAvg =
-                rates.length > 0
-                  ? rates.reduce(
-                      (rateSum, rate) => rateSum + (parseFloat(rate.rate) || 0),
-                      0
-                    ) / rates.length
-                  : 0;
-              return sum + typeAvg;
-            }, 0) / taxConfigurations.length
-          ).toFixed(2)
-        : 0,
-    countriesWithTax: [
-      ...new Set(
-        taxConfigurations?.flatMap((taxType) =>
-          (taxType.country_rates || [])
-            .map((rate) => rate.country?.name)
-            .filter(Boolean)
-        ) || []
-      ),
-    ].length,
-  };
+    (taxConfigurations || []).forEach((taxType) => {
+      const rates = taxType?.country_rates || [];
+      rates.forEach((rate) => {
+        const country = rate?.country;
+        if (!country?.id) return;
 
-  const tableData = [];
-  taxConfigurations?.forEach((taxType) => {
-    if (taxType.country_rates && taxType.country_rates.length > 0) {
-      taxType.country_rates.forEach((rate) => {
-        tableData.push({
-          id: `${taxType.id}-${rate.id}`,
-          taxType: taxType.name || "N/A",
-          country: rate.country?.name || "N/A",
-          rate: rate.rate,
-          formattedRate: formatRate(rate.rate),
+        if (!catalogueMap.has(country.id)) {
+          catalogueMap.set(country.id, {
+            country,
+            taxTypes: [],
+          });
+        }
+
+        const entry = catalogueMap.get(country.id);
+        entry.taxTypes.push({
+          id: `${taxType.id}-${rate.id ?? "rate"}`,
           taxTypeId: taxType.id,
-          taxTypeObj: taxType,
+          name: taxType.name || "Untitled tax",
+          slug: taxType.slug,
+          rate: Number(rate.rate ?? 0),
         });
       });
-    } else {
-      tableData.push({
-        id: taxType.id,
-        taxType: taxType.name || "N/A",
-        country: "No rates configured",
-        rate: null,
-        formattedRate: "N/A",
-        taxTypeId: taxType.id,
-        taxTypeObj: taxType,
-      });
+    });
+
+    return Array.from(catalogueMap.entries())
+      .map(([countryId, entry]) => ({
+        countryId: Number(countryId),
+        country: entry.country,
+        name: entry.country?.name || "Unknown country",
+        code: entry.country?.code || entry.country?.iso2 || "",
+        taxCount: entry.taxTypes.length,
+        taxTypes: entry.taxTypes,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [taxConfigurations]);
+
+  useEffect(() => {
+    if (!countryCatalogue.length) {
+      setSelectedCountryId(null);
+      return;
     }
-  });
 
-  const columns = [
-    {
-      key: "taxType",
-      header: "Tax Type",
-      render: (value) => (
-        <div className="flex items-center gap-2">
-          <Calculator size={16} style={{ color: designTokens.colors.primary[500] }} />
-          <span className="font-medium">{value}</span>
-        </div>
+    const stillValid = countryCatalogue.some(
+      (entry) => entry.countryId === selectedCountryId
+    );
+
+    if (!stillValid) {
+      setSelectedCountryId(countryCatalogue[0].countryId);
+    }
+  }, [countryCatalogue, selectedCountryId]);
+
+  const filteredCountries = useMemo(() => {
+    const query = countrySearch.trim().toLowerCase();
+    if (!query) return countryCatalogue;
+
+    return countryCatalogue.filter(
+      (entry) =>
+        entry.name.toLowerCase().includes(query) ||
+        entry.code.toLowerCase().includes(query)
+    );
+  }, [countryCatalogue, countrySearch]);
+
+  const selectedCountry = useMemo(
+    () =>
+      countryCatalogue.find(
+        (entry) => entry.countryId === selectedCountryId
+      ) || null,
+    [countryCatalogue, selectedCountryId]
+  );
+
+  const countryRows = useMemo(() => {
+    if (!selectedCountry) return [];
+    return selectedCountry.taxTypes.map((item) => ({
+      id: item.id,
+      taxTypeId: item.taxTypeId,
+      name: item.name,
+      slug: item.slug,
+      rate: item.rate,
+      taxType: taxTypeMap.get(item.taxTypeId),
+    }));
+  }, [selectedCountry, taxTypeMap]);
+
+  const totalRates = useMemo(
+    () =>
+      countryCatalogue.reduce(
+        (sum, entry) => sum + entry.taxTypes.length,
+        0
       ),
+    [countryCatalogue]
+  );
+
+  const averageRate = useMemo(() => {
+    if (!totalRates) return 0;
+    const sum = countryCatalogue.reduce((rateSum, entry) => {
+      return (
+        rateSum +
+        entry.taxTypes.reduce(
+          (innerSum, value) => innerSum + (Number(value.rate) || 0),
+          0
+        )
+      );
+    }, 0);
+    return (sum / totalRates) * 100;
+  }, [countryCatalogue, totalRates]);
+
+  const heroMetrics = useMemo(
+    () => [
+      {
+        label: "Countries covered",
+        value: countryCatalogue.length,
+        description: "With active tax settings",
+        icon: <Globe className="h-4 w-4" />,
+      },
+      {
+        label: "Tax categories",
+        value: taxConfigurations.length,
+        description: "Global tax definitions",
+        icon: <Calculator className="h-4 w-4" />,
+      },
+      {
+        label: "Avg rate",
+        value: `${averageRate.toFixed(2)}%`,
+        description: "Across all country entries",
+        icon: <Percent className="h-4 w-4" />,
+      },
+    ],
+    [averageRate, countryCatalogue.length, taxConfigurations.length]
+  );
+
+  const handleOpenAddTaxType = useCallback(() => {
+    setIsAddTaxTypeModalOpen(true);
+  }, []);
+
+  const handleOpenEditTaxType = useCallback(
+    (taxType) => {
+      if (!taxType) return;
+      setSelectedTaxType(taxType);
+      setIsEditTaxTypeModalOpen(true);
     },
-    {
-      key: "country",
-      header: "Country",
-      render: (value) => (
-        <div className="flex items-center gap-2">
-          <Globe size={16} style={{ color: designTokens.colors.info[500] }} />
-          <span>{value}</span>
-        </div>
-      ),
-    },
-    {
-      key: "formattedRate",
-      header: "Rate",
-      render: (value, item) => (
-        <div className="flex items-center gap-1">
-          <Percent size={14} style={{ color: designTokens.colors.success[500] }} />
-          <span
-            className="px-2 py-1 text-xs font-medium"
-            style={{
-              borderRadius: 9999,
-              backgroundColor:
-                item.rate > 0 ? designTokens.colors.success[50] : designTokens.colors.neutral[50],
-              color:
-                item.rate > 0 ? designTokens.colors.success[700] : designTokens.colors.neutral[500],
-            }}
-          >
-            {value}
+    []
+  );
+
+  const columns = useMemo(
+    () => [
+      {
+        key: "name",
+        header: "Tax type",
+        render: (row) => (
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary-500/10 text-primary-500">
+              <Calculator className="h-4 w-4" />
+            </span>
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-slate-900">
+                {row.name}
+              </span>
+              {row.slug && (
+                <span className="text-xs uppercase tracking-wide text-slate-400">
+                  {row.slug}
+                </span>
+              )}
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: "rate",
+        header: "Rate",
+        align: "right",
+        render: (row) => (
+          <span className="inline-flex items-center justify-end gap-2">
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary-500/10 px-3 py-1 text-xs font-semibold text-primary-600">
+              <Percent className="h-3 w-3" />
+              {formatRate(row.rate)}
+            </span>
           </span>
+        ),
+      },
+      {
+        key: "actions",
+        header: "",
+        align: "right",
+        render: (row) => (
+          <button
+            type="button"
+            onClick={() => handleOpenEditTaxType(row.taxType)}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:border-primary-200 hover:text-primary-600"
+            title="Edit tax type"
+            aria-label="Edit tax type"
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
+        ),
+      },
+    ],
+    [handleOpenEditTaxType]
+  );
+
+  const countryList = (
+    <ModernCard
+      padding="none"
+      className="flex flex-1 flex-col overflow-hidden border border-slate-200/80 bg-white/90 shadow-sm"
+    >
+      <div className="border-b border-slate-100 px-6 py-5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">
+              Country catalogue
+            </h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Select a market to review tax types and percentage rates.
+            </p>
+          </div>
+          <ModernButton
+            onClick={handleOpenAddTaxType}
+            className="hidden items-center gap-2 md:flex"
+            size="sm"
+          >
+            <Plus className="h-4 w-4" />
+            Add tax type
+          </ModernButton>
         </div>
-      ),
-    },
-  ];
+        <div className="relative mt-4">
+          <input
+            type="search"
+            value={countrySearch}
+            onChange={(event) => setCountrySearch(event.target.value)}
+            placeholder="Search countries"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-600 outline-none transition focus:border-primary-300 focus:bg-white focus:shadow-sm"
+          />
+        </div>
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        {isTaxFetching && !countryCatalogue.length ? (
+          <div className="flex h-56 items-center justify-center text-sm text-slate-500">
+            <div className="flex flex-col items-center gap-2">
+              <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
+              Fetching countries…
+            </div>
+          </div>
+        ) : !filteredCountries.length ? (
+          <div className="px-6 py-10 text-center text-sm text-slate-500">
+            {countrySearch
+              ? "No countries match your search."
+              : "No tax rates have been configured yet."}
+          </div>
+        ) : (
+          <ul className="divide-y divide-slate-100">
+            {filteredCountries.map((entry) => {
+              const isActive = entry.countryId === selectedCountryId;
+              return (
+                <li key={entry.countryId}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCountryId(entry.countryId)}
+                    className={`flex w-full items-start justify-between gap-3 px-6 py-4 text-left transition ${
+                      isActive
+                        ? "bg-primary-50/80 text-primary-600"
+                        : "hover:bg-slate-50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+                        <Flag className="h-4 w-4" />
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold">
+                          {entry.name}
+                        </p>
+                        <p className="text-xs uppercase tracking-wide text-slate-400">
+                          {entry.code || "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-500 shadow-sm">
+                      {entry.taxCount}{" "}
+                      {entry.taxCount === 1 ? "tax" : "taxes"}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+      <div className="border-t border-slate-100 px-6 py-4 md:hidden">
+        <ModernButton
+          onClick={handleOpenAddTaxType}
+          className="flex w-full items-center justify-center gap-2"
+          size="sm"
+        >
+          <Plus className="h-4 w-4" />
+          Add tax type
+        </ModernButton>
+      </div>
+    </ModernCard>
+  );
 
-  const actions = [
-    {
-      icon: <Pencil size={16} />,
-      label: "Edit Tax Type",
-      onClick: (item) => handleEditTaxType(item.taxTypeObj),
-    },
-  ];
-
-  const headerActions = (
-    <ModernButton className="flex items-center gap-2" onClick={handleAddTaxType}>
-      <PlusCircle size={18} />
-      Add Tax Type
-    </ModernButton>
+  const detailPanel = (
+    <ModernCard
+      padding="none"
+      className="flex flex-1 flex-col overflow-hidden border border-slate-200/80 bg-white/90 shadow-sm"
+    >
+      {selectedCountry ? (
+        <ResourceDataExplorer
+          title={`${selectedCountry.name} tax types`}
+          description="Review configured tax categories and adjust rates for this market."
+          columns={columns}
+          rows={countryRows}
+          loading={isTaxFetching}
+          page={1}
+          perPage={countryRows.length || 10}
+          total={countryRows.length}
+          toolbarSlot={
+            <ModernButton
+              onClick={handleOpenAddTaxType}
+              className="flex items-center gap-2"
+              size="sm"
+            >
+              <Plus className="h-4 w-4" />
+              Add tax type
+            </ModernButton>
+          }
+          emptyState={{
+            icon: (
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-500/10 text-primary-500">
+                <Percent className="h-5 w-5" />
+              </span>
+            ),
+            title: "No tax types yet",
+            description:
+              "Create a tax type to start tracking percentages for this country.",
+            action: (
+              <ModernButton
+                onClick={handleOpenAddTaxType}
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add tax type
+              </ModernButton>
+            ),
+          }}
+        />
+      ) : (
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-16 text-center">
+          {isTaxFetching ? (
+            <>
+              <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
+              <p className="text-sm text-slate-500">
+                Loading tax catalogue…
+              </p>
+            </>
+          ) : (
+            <>
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-500/10 text-primary-500">
+                <Globe className="h-5 w-5" />
+              </span>
+              <h3 className="text-lg font-semibold text-slate-900">
+                No countries configured
+              </h3>
+              <p className="max-w-sm text-sm text-slate-500">
+                Add a tax type and assign it to a country to begin managing
+                regional tax percentages.
+              </p>
+              <ModernButton
+                onClick={handleOpenAddTaxType}
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Create tax type
+              </ModernButton>
+            </>
+          )}
+        </div>
+      )}
+    </ModernCard>
   );
 
   return (
@@ -174,77 +449,36 @@ export default function AdminTax() {
         isMobileMenuOpen={isMobileMenuOpen}
         onCloseMobileMenu={closeMobileMenu}
       />
-      <AdminPageShell
-        title="Tax Configuration"
-        description="Manage tax types and rates for different countries."
-        actions={headerActions}
-        contentClassName="space-y-6"
-      >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <ModernStatsCard
-            title="Tax Types"
-            value={taxStats.totalTaxTypes}
-            icon={<Calculator size={24} />}
-            color="primary"
-            description="Configured tax categories"
-          />
-          <ModernStatsCard
-            title="Country Rates"
-            value={taxStats.totalCountryRates}
-            icon={<Globe size={24} />}
-            color="success"
-            description="Regional tax overrides"
-          />
-          <ModernStatsCard
-            title="Average Rate"
-            value={`${taxStats.averageRate}%`}
-            icon={<Percent size={24} />}
-            color="warning"
-            description="Across all markets"
-          />
-          <ModernStatsCard
-            title="Markets Covered"
-            value={taxStats.countriesWithTax}
-            icon={<Settings size={24} />}
-            color="info"
-            description="Countries with configured taxes"
-          />
-        </div>
+      <AdminPageShell contentClassName="space-y-8">
+        <ResourceHero
+          title="Tax configuration"
+          subtitle="Billing"
+          description="Model country-specific tax rules so billing can automatically apply the right percentages for each market."
+          metrics={heroMetrics}
+          accent="midnight"
+          rightSlot={
+            <ModernButton
+              onClick={handleOpenAddTaxType}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              New tax type
+            </ModernButton>
+          }
+        />
 
-        <ModernCard>
-          {isTaxFetching && tableData.length === 0 ? (
-            <div className="flex h-48 flex-col items-center justify-center gap-3 text-sm text-gray-500">
-              <Loader2
-                className="h-6 w-6 animate-spin"
-                style={{ color: designTokens.colors.primary[500] }}
-              />
-              <span>Loading tax configurations…</span>
-            </div>
-          ) : (
-            <ModernTable
-              title="Tax Rates"
-              data={tableData}
-              columns={columns}
-              actions={actions}
-              searchable
-              filterable
-              exportable
-              sortable
-              loading={isTaxFetching}
-              emptyMessage="No tax configurations found"
-            />
-          )}
-        </ModernCard>
+        <div className="flex flex-col gap-6 lg:flex-row">
+          <div className="w-full lg:max-w-sm">{countryList}</div>
+          <div className="flex-1">{detailPanel}</div>
+        </div>
       </AdminPageShell>
 
       {isAddTaxTypeModalOpen && (
         <AddTaxTypeModal
           isOpen={isAddTaxTypeModalOpen}
           onClose={() => setIsAddTaxTypeModalOpen(false)}
-          onSuccess={() => {
-            ToastUtils.success("Tax type added successfully");
-            refetch();
-          }}
+          defaultCountryId={selectedCountry?.country?.id}
+          onSuccess={() => refetch()}
         />
       )}
 
@@ -256,7 +490,7 @@ export default function AdminTax() {
             setSelectedTaxType(null);
           }}
           taxType={selectedTaxType}
-          refetch={refetch}
+          onSuccess={() => refetch()}
         />
       )}
     </>

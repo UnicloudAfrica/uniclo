@@ -1,291 +1,402 @@
 import React from "react";
-import { FileText, Download, User, Building, Phone, Mail, MapPin, Loader2 } from "lucide-react";
+import {
+  FileText,
+  Download,
+  User,
+  Building,
+  Phone,
+  Mail,
+  Loader2,
+  ShieldCheck,
+} from "lucide-react";
 import { useFetchCountries } from "../../../hooks/adminHooks/countriesHooks";
+import ModernCard from "../../components/ModernCard";
+import ModernInput from "../../components/ModernInput";
 
-const QuoteFinalReviewStep = ({ 
-  formData, 
-  pricingRequests, 
+const selectBaseClass =
+  "w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:cursor-wait disabled:bg-slate-50";
+
+const QuoteFinalReviewStep = ({
+  formData,
+  pricingRequests,
   tenants,
   updateFormData,
-  errors = {}
+  errors = {},
+  assignmentDetails = {},
 }) => {
   const { data: countries, isLoading: isCountriesLoading } = useFetchCountries();
-  
-  const selectedTenant = tenants?.find(
-    (t) => tenants && String(t.id) === String(formData.tenant_id)
+  const {
+    assignType: assignmentMode = "",
+    tenant: assignedTenant,
+    user: assignedUser,
+  } = assignmentDetails || {};
+  const selectedTenant =
+    assignedTenant ||
+    tenants?.find((t) => String(t.id) === String(formData.tenant_id));
+  const selectedUser = assignedUser || null;
+  const tenantLabel = selectedTenant
+    ? selectedTenant.name ||
+      selectedTenant.company_name ||
+      `Tenant ${selectedTenant.id}`
+    : null;
+  const userLabel = selectedUser
+    ? selectedUser.business_name ||
+      [selectedUser.first_name, selectedUser.last_name]
+        .filter(Boolean)
+        .join(" ") ||
+      selectedUser.email ||
+      `User ${selectedUser.id}`
+    : null;
+  const assignmentType =
+    assignmentMode ||
+    (selectedUser ? "user" : selectedTenant ? "tenant" : "");
+  const assignmentLabel =
+    assignmentType === "user" && userLabel
+      ? userLabel
+      : assignmentType === "tenant" && tenantLabel
+      ? tenantLabel
+      : "Not assigned";
+  const assignmentSublabel =
+    assignmentType === "user"
+      ? tenantLabel
+        ? `User under ${tenantLabel}`
+        : "User assignment"
+      : assignmentType === "tenant"
+      ? "Tenant assignment"
+      : "Quote remains unassigned until submission.";
+
+  const totalInstances = pricingRequests.reduce(
+    (sum, req) => sum + (req.number_of_instances || 1),
+    0
   );
 
-  const inputClass = "block w-full rounded-md border-gray-300 focus:border-[#288DD1] focus:ring-[#288DD1] sm:text-sm input-field";
-
-  const DetailRow = ({ label, value, valueClass = "" }) => (
-    <div className="flex justify-between items-start py-2 border-b border-gray-100 last:border-b-0">
-      <span className="text-sm font-medium text-gray-600">{label}:</span>
-      <span className={`text-sm text-gray-900 text-right ${valueClass}`}>{value || "N/A"}</span>
-    </div>
-  );
-
-  const calculateTotalItems = () => {
-    return pricingRequests.reduce((total, req) => total + (req.number_of_instances || 1), 0);
-  };
+  const regionCount = new Set(
+    pricingRequests.map((req) => req.region).filter(Boolean)
+  ).size;
 
   return (
-    <div className="space-y-6 w-full max-w-4xl">
-      <div className="text-center mb-6">
-        <h3 className="text-xl font-semibold text-gray-800">Final Review & Invoice Options</h3>
-        <p className="text-sm text-gray-500 mt-1">
-          Review all details and provide lead information before generating the quote.
+    <div className="space-y-8">
+      <div className="space-y-2 text-center">
+        <h3 className="text-lg font-semibold text-slate-900">
+          Final Review & Handoff
+        </h3>
+        <p className="text-sm text-slate-500">
+          Confirm recipients, optional lead capture, and invoice preferences
+          before generating the quote.
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Quote Summary */}
-        <div className="bg-white border rounded-lg p-6">
-          <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <FileText className="w-5 h-5 mr-2" />
-            Quote Summary
-          </h4>
-          <div className="space-y-2">
-            <DetailRow label="Subject" value={formData.subject} />
-            {selectedTenant && (
-              <DetailRow label="Tenant" value={selectedTenant.name} />
-            )}
-            <DetailRow label="Primary Email" value={formData.email} />
-            <DetailRow label="Bill To" value={formData.bill_to_name} />
-            {formData.emails && (
-              <DetailRow label="CC Emails" value={formData.emails} />
-            )}
-            <DetailRow label="Total Items" value={calculateTotalItems()} valueClass="font-semibold" />
-            
-            {/* Discount Information */}
-            {formData.apply_total_discount && formData.total_discount_value && (
-              <>
-                <DetailRow 
-                  label="Total Discount Type" 
-                  value={formData.total_discount_type === 'percent' ? 'Percentage' : 'Fixed Amount'} 
-                />
-                <DetailRow 
-                  label="Discount Value" 
-                  value={`${formData.total_discount_value}${formData.total_discount_type === 'percent' ? '%' : ''}`}
-                  valueClass="font-semibold text-green-600"
-                />
-                {formData.total_discount_label && (
-                  <DetailRow label="Discount Label" value={formData.total_discount_label} />
-                )}
-              </>
-            )}
-          </div>
-        </div>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,400px)]">
+        <div className="space-y-6">
+          <ModernCard padding="lg" className="space-y-5">
+            <header className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-50 text-primary-600">
+                <FileText className="h-5 w-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-slate-900">
+                  Quote details
+                </h4>
+                <p className="text-xs text-slate-500">
+                  Primary delivery information for the generated document.
+                </p>
+              </div>
+            </header>
 
-        {/* Lead Information Collection */}
-        <div className="bg-white border rounded-lg p-6">
-          <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <User className="w-5 h-5 mr-2" />
-            Lead Information
-          </h4>
-          
-          {/* Create Lead Checkbox */}
-          <div className="mb-4">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="create_lead"
-                checked={formData.create_lead || false}
-                onChange={(e) => updateFormData("create_lead", e.target.checked)}
-                className="rounded border-gray-300 text-[#288DD1] focus:ring-[#288DD1]"
-              />
-              <label htmlFor="create_lead" className="text-sm font-medium text-gray-700">
-                Create lead for tracking and follow-up
-              </label>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                <p className="text-xs uppercase tracking-wide text-slate-400">
+                  Subject
+                </p>
+                <p className="mt-1 text-sm font-semibold text-slate-900">
+                  {formData.subject || "—"}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                <p className="text-xs uppercase tracking-wide text-slate-400">
+                  Primary email
+                </p>
+                <p className="mt-1 text-sm font-semibold text-slate-900">
+                  {formData.email || "—"}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                <p className="text-xs uppercase tracking-wide text-slate-400">
+                  Bill to
+                </p>
+                <p className="mt-1 text-sm font-semibold text-slate-900">
+                  {formData.bill_to_name || "—"}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                <p className="text-xs uppercase tracking-wide text-slate-400">
+                  Assignment
+                </p>
+                <p className="mt-1 text-sm font-semibold text-slate-900">
+                  {assignmentLabel}
+                </p>
+                <p className="text-xs text-slate-500">{assignmentSublabel}</p>
+              </div>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              This will help track the quote request in the leads system for future follow-ups.
-            </p>
-          </div>
 
-          {/* Lead Form Fields */}
-          {formData.create_lead && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    <User className="w-4 h-4 inline mr-1" />
-                    First Name*
-                  </label>
-                  <input
-                    type="text"
+            {formData.emails?.trim() && (
+              <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                <p className="text-xs uppercase tracking-wide text-slate-400">
+                  CC recipients
+                </p>
+                <p className="mt-1 text-sm text-slate-600">{formData.emails}</p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center">
+                <p className="text-xs uppercase tracking-wide text-slate-400">
+                  Configurations
+                </p>
+                <p className="mt-1 text-lg font-semibold text-slate-900">
+                  {pricingRequests.length}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center">
+                <p className="text-xs uppercase tracking-wide text-slate-400">
+                  Instances
+                </p>
+                <p className="mt-1 text-lg font-semibold text-slate-900">
+                  {totalInstances}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center">
+                <p className="text-xs uppercase tracking-wide text-slate-400">
+                  Regions
+                </p>
+                <p className="mt-1 text-lg font-semibold text-slate-900">
+                  {regionCount}
+                </p>
+              </div>
+            </div>
+
+            {formData.apply_total_discount && formData.total_discount_value && (
+              <div className="rounded-2xl border border-dashed border-amber-200 bg-amber-50 p-4">
+                <p className="text-xs uppercase tracking-wide text-amber-500">
+                  Discount applied
+                </p>
+                <p className="mt-1 text-sm font-semibold text-amber-700">
+                  {formData.total_discount_type === "percent"
+                    ? `${formData.total_discount_value}% off`
+                    : `-${formData.total_discount_value} flat discount`}
+                  {formData.total_discount_label
+                    ? ` • ${formData.total_discount_label}`
+                    : ""}
+                </p>
+              </div>
+            )}
+
+            {formData.notes?.trim() && (
+              <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                <p className="text-xs uppercase tracking-wide text-slate-400">
+                  Internal notes
+                </p>
+                <p className="mt-1 text-sm text-slate-600 whitespace-pre-wrap">
+                  {formData.notes}
+                </p>
+              </div>
+            )}
+          </ModernCard>
+
+          <ModernCard padding="lg" className="space-y-5">
+            <header className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-semibold text-slate-900">
+                  Lead capture (optional)
+                </h4>
+                <p className="text-xs text-slate-500">
+                  Create a trackable record in the CRM when this quote is sent.
+                </p>
+              </div>
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={formData.create_lead || false}
+                  onChange={(e) => updateFormData("create_lead", e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-primary-500 focus:ring-primary-200"
+                />
+                Enable
+              </label>
+            </header>
+
+            {formData.create_lead && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <ModernInput
+                    label="First name"
                     value={formData.lead_first_name || ""}
-                    onChange={(e) => updateFormData("lead_first_name", e.target.value)}
-                    className={`${inputClass} ${errors.lead_first_name ? "border-red-500" : ""}`}
-                    placeholder="John"
+                    onChange={(e) =>
+                      updateFormData("lead_first_name", e.target.value)
+                    }
                     required
+                    error={errors.lead_first_name}
+                    icon={<User className="h-4 w-4" />}
                   />
-                  {errors.lead_first_name && (
-                    <p className="text-red-500 text-xs mt-1">{errors.lead_first_name}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Last Name*
-                  </label>
-                  <input
-                    type="text"
+                  <ModernInput
+                    label="Last name"
                     value={formData.lead_last_name || ""}
-                    onChange={(e) => updateFormData("lead_last_name", e.target.value)}
-                    className={`${inputClass} ${errors.lead_last_name ? "border-red-500" : ""}`}
-                    placeholder="Doe"
+                    onChange={(e) =>
+                      updateFormData("lead_last_name", e.target.value)
+                    }
                     required
+                    error={errors.lead_last_name}
+                    icon={<User className="h-4 w-4" />}
                   />
-                  {errors.lead_last_name && (
-                    <p className="text-red-500 text-xs mt-1">{errors.lead_last_name}</p>
-                  )}
+                  <ModernInput
+                    label="Contact email"
+                    type="email"
+                    value={formData.lead_email || formData.email}
+                    onChange={(e) =>
+                      updateFormData("lead_email", e.target.value)
+                    }
+                    required
+                    error={errors.lead_email}
+                    icon={<Mail className="h-4 w-4" />}
+                  />
+                  <ModernInput
+                    label="Phone"
+                    value={formData.lead_phone || ""}
+                    onChange={(e) =>
+                      updateFormData("lead_phone", e.target.value)
+                    }
+                    icon={<Phone className="h-4 w-4" />}
+                  />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <Mail className="w-4 h-4 inline mr-1" />
-                  Contact Email*
-                </label>
-                <input
-                  type="email"
-                  value={formData.lead_email || formData.email}
-                  onChange={(e) => updateFormData("lead_email", e.target.value)}
-                  className={`${inputClass} ${errors.lead_email ? "border-red-500" : ""}`}
-                  placeholder="john.doe@company.com"
-                  required
-                />
-                {errors.lead_email && (
-                  <p className="text-red-500 text-xs mt-1">{errors.lead_email}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <Phone className="w-4 h-4 inline mr-1" />
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  value={formData.lead_phone || ""}
-                  onChange={(e) => updateFormData("lead_phone", e.target.value)}
-                  className={inputClass}
-                  placeholder="+1 (555) 123-4567"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <Building className="w-4 h-4 inline mr-1" />
-                  Company
-                </label>
-                <input
-                  type="text"
+                <ModernInput
+                  label="Company"
                   value={formData.lead_company || ""}
-                  onChange={(e) => updateFormData("lead_company", e.target.value)}
-                  className={inputClass}
-                  placeholder="Company Name Ltd"
+                  onChange={(e) =>
+                    updateFormData("lead_company", e.target.value)
+                  }
+                  icon={<Building className="h-4 w-4" />}
                 />
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <MapPin className="w-4 h-4 inline mr-1" />
-                  Country*
-                </label>
-                <span
-                  className={`w-full input-field block transition-all ${
-                    errors.lead_country ? "border-red-500 border" : ""
-                  }`}
-                >
-                  {isCountriesLoading ? (
-                    <div className="flex items-center">
-                      <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
-                      <span className="text-gray-500 text-sm">
-                        Loading countries...
-                      </span>
-                    </div>
-                  ) : (
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Country<span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
                     <select
                       value={formData.lead_country || ""}
-                      onChange={(e) => updateFormData("lead_country", e.target.value)}
-                      className="w-full bg-transparent outline-none"
+                      onChange={(e) =>
+                        updateFormData("lead_country", e.target.value)
+                      }
+                      disabled={isCountriesLoading}
+                      className={`${selectBaseClass} ${
+                        errors.lead_country ? "border-red-400" : ""
+                      }`}
                       required
                     >
-                      <option value="">Select a country</option>
+                      <option value="">
+                        {isCountriesLoading
+                          ? "Loading countries..."
+                          : "Select a country"}
+                      </option>
                       {countries?.map((country) => (
                         <option key={country.id} value={country.name}>
                           {country.emoji} {country.name}
                         </option>
                       ))}
                     </select>
+                    {isCountriesLoading && (
+                      <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-slate-400" />
+                    )}
+                  </div>
+                  {errors.lead_country && (
+                    <p className="mt-2 text-xs font-medium text-red-600">
+                      {errors.lead_country}
+                    </p>
                   )}
-                </span>
-                {errors.lead_country && (
-                  <p className="text-red-500 text-xs mt-1">{errors.lead_country}</p>
-                )}
-                <p className="text-xs text-gray-500 mt-1">
-                  Select the lead's country for proper tax calculation
+                  <p className="mt-2 text-xs text-slate-500">
+                    Used to contextualize taxes and regulation in follow-up.
+                  </p>
+                </div>
+              </div>
+            )}
+          </ModernCard>
+        </div>
+
+        <div className="space-y-6">
+          <ModernCard padding="lg" className="space-y-4">
+            <header className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+                <Download className="h-5 w-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-slate-900">
+                  Document handoff
+                </h4>
+                <p className="text-xs text-slate-500">
+                  After submission you will be able to:
                 </p>
               </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Invoice Options */}
-      <div className="bg-gray-50 border rounded-lg p-6">
-        <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-          <Download className="w-5 h-5 mr-2" />
-          Invoice Generation Options
-        </h4>
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <h5 className="font-medium text-gray-700 mb-2">After submission, you will be able to:</h5>
-            <ul className="space-y-2 text-sm text-gray-600">
-              <li className="flex items-center">
-                <FileText className="w-4 h-4 mr-2 text-green-500" />
-                Generate professional PDF quote
+            </header>
+            <ul className="space-y-3 text-sm text-slate-600">
+              <li className="flex items-center gap-3">
+                <FileText className="h-4 w-4 text-primary-500" />
+                Generate a branded PDF quote immediately
               </li>
-              <li className="flex items-center">
-                <Download className="w-4 h-4 mr-2 text-blue-500" />
-                Download invoice immediately
+              <li className="flex items-center gap-3">
+                <Download className="h-4 w-4 text-slate-500" />
+                Download or email the document to clients
               </li>
-              <li className="flex items-center">
-                <Mail className="w-4 h-4 mr-2 text-purple-500" />
-                Email quote to specified recipients
+              <li className="flex items-center gap-3">
+                <Mail className="h-4 w-4 text-emerald-500" />
+                Share to multiple recipients in one action
               </li>
               {formData.create_lead && (
-                <li className="flex items-center">
-                  <User className="w-4 h-4 mr-2 text-orange-500" />
-                  Track lead in CRM system
+                <li className="flex items-center gap-3">
+                  <User className="h-4 w-4 text-amber-500" />
+                  Track follow-up in the CRM automatically
                 </li>
               )}
             </ul>
-          </div>
-          
-          <div className="bg-white p-4 rounded border">
-            <h5 className="font-medium text-gray-700 mb-2">Quote Details:</h5>
-            <div className="space-y-1 text-sm">
-              <div>Items: {pricingRequests.length} product configurations</div>
-              <div>Total Instances: {calculateTotalItems()}</div>
-              <div>Regions: {[...new Set(pricingRequests.map(req => req.region))].length}</div>
-              {formData.apply_total_discount && (
-                <div className="text-green-600 font-medium">
-                  Total Discount: {formData.total_discount_value}
-                  {formData.total_discount_type === 'percent' ? '%' : ''}
-                </div>
-              )}
+          </ModernCard>
+
+          <ModernCard padding="lg" variant="outlined" className="space-y-4">
+            <header>
+              <h4 className="text-sm font-semibold text-slate-900">
+                Delivery checklist
+              </h4>
+              <p className="text-xs text-slate-500">
+                Quick summary of the configurations included.
+              </p>
+            </header>
+            <div className="space-y-3 text-sm text-slate-600">
+              <div className="flex items-center justify-between">
+                <span>Compute bundles</span>
+                <span className="font-semibold text-slate-900">
+                  {pricingRequests.length}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Total instances</span>
+                <span className="font-semibold text-slate-900">
+                  {totalInstances}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Regions covered</span>
+                <span className="font-semibold text-slate-900">
+                  {regionCount}
+                </span>
+              </div>
             </div>
-          </div>
+            <p className="text-center text-xs text-slate-500">
+              Once generated, quotes include delivery-ready messaging and a PDF
+              attachment.
+            </p>
+          </ModernCard>
         </div>
       </div>
-
-      {formData.notes && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <h5 className="font-medium text-yellow-800 mb-2">Additional Notes:</h5>
-          <p className="text-sm text-yellow-700">{formData.notes}</p>
-        </div>
-      )}
     </div>
   );
 };

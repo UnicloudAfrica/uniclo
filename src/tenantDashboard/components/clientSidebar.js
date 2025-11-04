@@ -11,7 +11,15 @@ import activePaymentHistory from "./assets/activeHistory.png";
 import supportTicket from "./assets/support.png";
 import activeSupportTicket from "./assets/activeSupport.png";
 import appSettings from "./assets/settings.png";
-import { LogOut, X, Users, MapPin, DollarSign } from "lucide-react";
+import {
+  LogOut,
+  X,
+  Users,
+  MapPin,
+  DollarSign,
+  ClipboardList,
+  HardDrive,
+} from "lucide-react";
 import useAuthStore from "../../stores/userAuthStore";
 
 const Sidebar = ({ tenantData, activeTab, setActiveTab }) => {
@@ -28,6 +36,9 @@ const Sidebar = ({ tenantData, activeTab, setActiveTab }) => {
     "/tenant-dashboard/leads": "Leads",
     "/tenant-dashboard/region-requests": "Region Requests",
     "/tenant-dashboard/revenue": "Revenue",
+    "/tenant-dashboard/onboarding": "Onboarding Review",
+    "/tenant-dashboard/onboarding-review": "Onboarding Review",
+    "/tenant-dashboard/object-storage": "Object Storage",
     "/dashboard/payment-history": "Payment History",
     "/dashboard/support-ticket": "Support Ticket",
     "/dashboard/app-settings": "App Settings",
@@ -55,6 +66,13 @@ const Sidebar = ({ tenantData, activeTab, setActiveTab }) => {
       path: "/dashboard/instances-request",
     },
     {
+      name: "Object Storage",
+      icon: HardDrive,
+      activeIcon: HardDrive,
+      path: "/tenant-dashboard/object-storage",
+      isLucide: true,
+    },
+    {
       name: "Leads",
       icon: clients, // Using clients icon temporarily - you can add a specific leads icon
       activeIcon: activeClients,
@@ -65,6 +83,13 @@ const Sidebar = ({ tenantData, activeTab, setActiveTab }) => {
       icon: MapPin,
       activeIcon: MapPin,
       path: "/tenant-dashboard/region-requests",
+      isLucide: true,
+    },
+    {
+      name: "Onboarding Review",
+      icon: ClipboardList,
+      activeIcon: ClipboardList,
+      path: "/tenant-dashboard/onboarding",
       isLucide: true,
     },
     {

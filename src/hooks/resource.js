@@ -51,13 +51,16 @@ const fetchGeneralRegions = async () => {
   const res = await silentApi("GET", "/business/cloud-regions");
   return res.data;
 };
-const fetchProductPricing = async (region, productable_type) => {
+const fetchProductPricing = async (region, productable_type, countryCode = "") => {
   const params = new URLSearchParams();
   if (region) {
     params.append("region", region);
   }
   if (productable_type) {
     params.append("productable_type", productable_type);
+  }
+  if (countryCode) {
+    params.append("country_code", countryCode.toUpperCase());
   }
   const res = await silentApi("GET", `/product-pricing?${params.toString()}`);
   return res.data;
@@ -278,11 +281,18 @@ export const useFetchProductPricing = (
   productable_type,
   options = {}
 ) => {
+  const { countryCode = "", ...queryOptions } = options;
+
   return useQuery({
-    queryKey: ["product-pricing", region, productable_type],
-    queryFn: () => fetchProductPricing(region, productable_type),
+    queryKey: [
+      "product-pricing",
+      region,
+      productable_type,
+      countryCode ? countryCode.toUpperCase() : "",
+    ],
+    queryFn: () => fetchProductPricing(region, productable_type, countryCode),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
-    ...options,
+    ...queryOptions,
   });
 };

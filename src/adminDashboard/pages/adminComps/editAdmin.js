@@ -7,7 +7,13 @@ import FormLayout, {
   getAccentRgba,
 } from "../../components/FormLayout";
 
-export const EditAdminModal = ({ isOpen, onClose, admin, onUpdateSuccess }) => {
+export const EditAdminModal = ({
+  isOpen,
+  onClose,
+  admin,
+  onUpdateSuccess,
+  mode = "modal",
+}) => {
   // State to hold form data, initialized with admin prop
   const [formData, setFormData] = useState({
     first_name: "",
@@ -57,6 +63,8 @@ export const EditAdminModal = ({ isOpen, onClose, admin, onUpdateSuccess }) => {
     }));
   };
 
+  const isPageMode = mode === "page";
+
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -68,16 +76,19 @@ export const EditAdminModal = ({ isOpen, onClose, admin, onUpdateSuccess }) => {
     // Prepare data for update. Only send fields that are editable and might have changed.
     const updatedData = {
       id: admin.identifier, // Admin ID is required for the update mutation
-      first_name: formData.first_name,
-      last_name: formData.last_name,
-      email: formData.email,
-      phone: formData.phone,
-      address: formData.address,
-      zip: formData.zip,
-      country_id: formData.country_id,
-      city: formData.city,
-      state: formData.state,
-      role: formData.role,
+      identifier: admin.identifier,
+      adminData: {
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        zip: formData.zip,
+        country_id: formData.country_id,
+        city: formData.city,
+        state: formData.state,
+        role: formData.role,
+      },
     };
 
     updateAdmin(updatedData, {
@@ -156,7 +167,8 @@ export const EditAdminModal = ({ isOpen, onClose, admin, onUpdateSuccess }) => {
     "Consider revoking access if the administrator leaves the organisation.",
   ];
 
-  if (!isOpen) return null;
+  const shouldRender = isPageMode || isOpen;
+  if (!shouldRender) return null;
 
   const asideContent = (
     <>
@@ -277,7 +289,7 @@ export const EditAdminModal = ({ isOpen, onClose, admin, onUpdateSuccess }) => {
 
   return (
     <FormLayout
-      mode="modal"
+      mode={mode}
       onClose={onClose}
       isProcessing={isPending}
       title={`Edit Admin${admin?.first_name ? ` • ${admin.first_name}` : ""}`}
@@ -288,6 +300,7 @@ export const EditAdminModal = ({ isOpen, onClose, admin, onUpdateSuccess }) => {
       aside={asideContent}
       footer={footer}
       maxWidthClass="max-w-4xl"
+      showCloseButton={!isPageMode}
     >
       <form
         id={formId}

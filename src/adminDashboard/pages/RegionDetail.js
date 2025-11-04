@@ -1,11 +1,81 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import adminRegionApi from '../../services/adminRegionApi';
-import ToastUtils from '../../utils/toastUtil';
-import AdminSidebar from '../components/adminSidebar';
-import AdminHeadbar from '../components/adminHeadbar';
-import { designTokens } from '../../styles/designTokens';
-import { ArrowLeft, Edit, CheckCircle, AlertCircle, MapPin, Globe, Server } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  Activity,
+  AlertCircle,
+  Building2,
+  CheckCircle,
+  Clock,
+  DollarSign,
+  Edit,
+  KeyRound,
+  Link as LinkIcon,
+  Loader2,
+  MapPin,
+  RefreshCw,
+  Settings,
+  ShieldCheck,
+  Sparkles,
+  Users,
+} from "lucide-react";
+import adminRegionApi from "../../services/adminRegionApi";
+import ToastUtils from "../../utils/toastUtil";
+import AdminSidebar from "../components/adminSidebar";
+import AdminHeadbar from "../components/adminHeadbar";
+import AdminPageShell from "../components/AdminPageShell";
+import ModernCard from "../components/ModernCard";
+import ModernStatsCard from "../components/ModernStatsCard";
+import ModernButton from "../components/ModernButton";
+import StatusPill from "../components/StatusPill";
+import { designTokens } from "../../styles/designTokens";
+
+const statusToneMap = {
+  healthy: "success",
+  degraded: "warning",
+  down: "danger",
+};
+
+const statusLabelMap = {
+  healthy: "Healthy",
+  degraded: "Degraded",
+  down: "Down",
+};
+
+const formatSegment = (value) => {
+  if (!value) return "";
+  return value
+    .toString()
+    .split(/[_-]/)
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(" ");
+};
+
+const formatDateTime = (value) =>
+  value ? new Date(value).toLocaleString() : "—";
+
+const AttributeTile = ({ label, value, hint, icon: Icon }) => {
+  const resolvedValue =
+    value !== null && value !== undefined && value !== "" ? value : "—";
+  return (
+    <div className="flex items-start gap-3 rounded-2xl border border-gray-100 bg-gray-50/70 px-4 py-3">
+      {Icon && (
+        <div className="rounded-xl bg-white/90 p-2 text-gray-500 shadow-sm">
+          <Icon size={18} />
+        </div>
+      )}
+      <div className="flex-1 space-y-1">
+        <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+          {label}
+        </p>
+        <div className="text-sm font-semibold text-gray-900 break-words">
+          {resolvedValue}
+        </div>
+        {hint && <p className="text-xs text-gray-500">{hint}</p>}
+      </div>
+    </div>
+  );
+};
 
 const RegionDetail = () => {
   const { id: code } = useParams();
@@ -13,19 +83,14 @@ const RegionDetail = () => {
   const [region, setRegion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [showCredentialModal, setShowCredentialModal] = useState(false);
-  const [verifying, setVerifying] = useState(false);
-  const [credentials, setCredentials] = useState({
-    username: '',
-    password: '',
-    domain: '',
-    domain_id: '',
-    default_project: '',
-  });
 
   useEffect(() => {
     fetchRegionDetail();
   }, [code]);
+
+  const toggleMobileMenu = () =>
+    setIsMobileMenuOpen((prevState) => !prevState);
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   const fetchRegionDetail = async () => {
     try {
@@ -33,48 +98,214 @@ const RegionDetail = () => {
       const response = await adminRegionApi.fetchRegionByCode(code);
       setRegion(response.data);
     } catch (error) {
-      console.error('Error fetching region:', error);
-      ToastUtils.error('Failed to load region details');
+      console.error("Error fetching region:", error);
+      ToastUtils.error("Failed to load region details");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerifyCredentials = async (e) => {
-    e.preventDefault();
-    
-    if (!credentials.username || !credentials.password || !credentials.domain) {
-      ToastUtils.error('Please fill in all required fields');
-      return;
+  const locationLabel = useMemo(() => {
+    if (!region) return "";
+    const segments = [region.city, region.country_code].filter(Boolean);
+    return segments.join(", ");
+  }, [region]);
+
+  const headerMeta = useMemo(() => {
+    if (!region) return null;
+    const pills = [
+      region.status && (
+        <StatusPill
+          key="status"
+          label={statusLabelMap[region.status] || formatSegment(region.status)}
+          tone={statusToneMap[region.status] || "info"}
+        />
+      ),
+      <StatusPill
+        key="active"
+        label={region.is_active ? "Active" : "Inactive"}
+        tone={region.is_active ? "success" : "warning"}
+      />,
+    ];
+
+    if (region.fulfillment_mode) {
+      pills.push(
+        <StatusPill
+          key="fulfillment"
+          label={`${formatSegment(region.fulfillment_mode)} Fulfillment`}
+          tone="info"
+        />
+      );
     }
 
-    try {
-      setVerifying(true);
-      await adminRegionApi.verifyCredentials(code, credentials);
-      setShowCredentialModal(false);
-      setCredentials({ username: '', password: '', domain: '', domain_id: '', default_project: '' });
-      fetchRegionDetail(); // Refresh to show verification status
-      ToastUtils.success('Credentials verified successfully');
-    } catch (error) {
-      console.error('Error verifying credentials:', error);
-    } finally {
-      setVerifying(false);
+    if (region.ownership_type) {
+      pills.push(
+        <StatusPill
+          key="ownership"
+          label={`${formatSegment(region.ownership_type)} Ownership`}
+          tone="neutral"
+        />
+      );
     }
-  };
+
+    return <div className="flex flex-wrap items-center gap-2">{pills}</div>;
+  }, [region]);
+
+  const headerActions = useMemo(() => {
+    if (!region) return null;
+
+    return (
+      <div className="flex flex-wrap gap-2">
+        <ModernButton
+          variant="ghost"
+          size="sm"
+          className="flex items-center gap-2"
+          onClick={fetchRegionDetail}
+          isDisabled={loading}
+        >
+          <RefreshCw size={16} />
+          Refresh
+        </ModernButton>
+
+        {region.fulfillment_mode === "automated" ? (
+          <ModernButton
+            key="credentials"
+            variant={region.msp_credentials_verified_at ? "outline" : "primary"}
+            size="sm"
+            className="flex items-center gap-2"
+            onClick={() =>
+              navigate(`/admin-dashboard/regions/${region.code}/credentials`)
+            }
+          >
+            <ShieldCheck size={16} />
+            {region.msp_credentials_verified_at
+              ? "Update Credentials"
+              : "Verify Credentials"}
+          </ModernButton>
+        ) : null}
+
+        <Link to={`/admin-dashboard/regions/${region.code}/edit`}>
+          <ModernButton
+            variant="secondary"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <Edit size={16} />
+            Edit Region
+          </ModernButton>
+        </Link>
+      </div>
+    );
+  }, [region, loading]);
+
+  const statsCards = useMemo(() => {
+    if (!region) return [];
+
+    const cards = [
+      {
+        key: "health",
+        title: "Operational Health",
+        value: formatSegment(region.status) || "Unknown",
+        color: statusToneMap[region.status] || "info",
+        icon: <Activity size={24} />,
+        description:
+          region.status === "healthy"
+            ? "All systems performing normally"
+            : region.status === "degraded"
+            ? "Performance degradation observed"
+            : region.status === "down"
+            ? "Region is currently unavailable"
+            : "Health status not reported",
+      },
+      {
+        key: "active-state",
+        title: "Activation",
+        value: region.is_active ? "Active" : "Inactive",
+        color: region.is_active ? "success" : "warning",
+        icon: <CheckCircle size={24} />,
+        description: region.is_active
+          ? "Region can serve workloads"
+          : "Region has been deactivated",
+      },
+    ];
+
+    if (region.fulfillment_mode) {
+      cards.push({
+        key: "fulfillment",
+        title: "Fulfillment Mode",
+        value: formatSegment(region.fulfillment_mode),
+        color:
+          region.fulfillment_mode === "automated" ? "primary" : "info",
+        icon: <Settings size={24} />,
+        description:
+          region.fulfillment_mode === "automated"
+            ? "Provisioning handled automatically"
+            : "Provisioning requires manual steps",
+      });
+    }
+
+    if (region.ownership_type) {
+      cards.push({
+        key: "ownership",
+        title: "Ownership",
+        value: formatSegment(region.ownership_type),
+        color: "info",
+        icon: <Users size={24} />,
+        description:
+          region.ownership_type === "platform"
+            ? "Managed by platform team"
+            : "Owned by tenant partner",
+      });
+    }
+
+    return cards;
+  }, [region]);
+
+  const renderLoadingShell = () => (
+    <AdminPageShell
+      title="Region"
+      description="Detailed operational overview."
+      contentClassName="flex min-h-[60vh] items-center justify-center"
+    >
+      <Loader2
+        className="h-10 w-10 animate-spin"
+        style={{ color: designTokens.colors.primary[500] }}
+      />
+    </AdminPageShell>
+  );
+
+  const renderNotFoundShell = () => (
+    <AdminPageShell
+      title="Region"
+      description="Detailed operational overview."
+      contentClassName="flex min-h-[60vh] items-center justify-center"
+      actions={
+        <ModernButton
+          variant="outline"
+          onClick={() => navigate("/admin-dashboard/regions")}
+        >
+          Back to Regions
+        </ModernButton>
+      }
+    >
+      <ModernCard className="max-w-md text-center space-y-3">
+        <AlertCircle className="mx-auto h-10 w-10 text-red-500" />
+        <p className="text-sm text-gray-600">
+          We could not find this region. It may have been removed.
+        </p>
+      </ModernCard>
+    </AdminPageShell>
+  );
 
   if (loading) {
     return (
       <>
-        <AdminHeadbar toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
-        <AdminSidebar isMobileMenuOpen={isMobileMenuOpen} closeMobileMenu={() => setIsMobileMenuOpen(false)} />
-        <div 
-          className="min-h-screen pt-[126px] px-4 md:px-6 lg:px-8 md:ml-20 lg:ml-[20%]"
-          style={{ backgroundColor: designTokens.colors.neutral[50] }}
-        >
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: designTokens.colors.primary[600] }}></div>
-          </div>
-        </div>
+        <AdminHeadbar onMenuClick={toggleMobileMenu} />
+        <AdminSidebar
+          isMobileMenuOpen={isMobileMenuOpen}
+          onCloseMobileMenu={closeMobileMenu}
+        />
+        {renderLoadingShell()}
       </>
     );
   }
@@ -82,289 +313,288 @@ const RegionDetail = () => {
   if (!region) {
     return (
       <>
-        <AdminHeadbar toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
-        <AdminSidebar isMobileMenuOpen={isMobileMenuOpen} closeMobileMenu={() => setIsMobileMenuOpen(false)} />
-        <div 
-          className="min-h-screen pt-[126px] px-4 md:px-6 lg:px-8 md:ml-20 lg:ml-[20%]"
-          style={{ backgroundColor: designTokens.colors.neutral[50] }}
-        >
-          <div className="max-w-7xl mx-auto py-8">
-            <div className="bg-white rounded-2xl shadow-sm p-12 text-center" style={{ borderColor: designTokens.colors.neutral[200], borderWidth: '1px' }}>
-              <AlertCircle size={48} style={{ color: designTokens.colors.error[500], margin: '0 auto 16px' }} />
-              <h3 className="text-lg font-semibold mb-2" style={{ color: designTokens.colors.neutral[900] }}>Region not found</h3>
-              <Link to="/admin-dashboard/regions" style={{ color: designTokens.colors.primary[600] }} className="hover:underline font-medium">
-                Back to regions
-              </Link>
-            </div>
-          </div>
-        </div>
+        <AdminHeadbar onMenuClick={toggleMobileMenu} />
+        <AdminSidebar
+          isMobileMenuOpen={isMobileMenuOpen}
+          onCloseMobileMenu={closeMobileMenu}
+        />
+        {renderNotFoundShell()}
       </>
     );
   }
 
+  const ownershipTenant = region.owner_tenant;
+  const platformFee =
+    region.platform_fee_percentage !== null &&
+    region.platform_fee_percentage !== undefined
+      ? `${region.platform_fee_percentage}%`
+      : "—";
+
+  const shouldShowAutomationCard =
+    region.fulfillment_mode === "automated";
+
   return (
     <>
-      <AdminHeadbar toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
-      <AdminSidebar isMobileMenuOpen={isMobileMenuOpen} closeMobileMenu={() => setIsMobileMenuOpen(false)} />
-      
-      <main 
-        className="min-h-screen pt-[126px] px-4 md:px-6 lg:px-8 pb-8 md:ml-20 lg:ml-[20%]"
-        style={{ backgroundColor: designTokens.colors.neutral[50] }}
+      <AdminHeadbar onMenuClick={toggleMobileMenu} />
+      <AdminSidebar
+        isMobileMenuOpen={isMobileMenuOpen}
+        onCloseMobileMenu={closeMobileMenu}
+      />
+      <AdminPageShell
+        title={region.name || "Region"}
+        description={
+          locationLabel
+            ? `${locationLabel} • ${region.code}`
+            : `Region Code: ${region.code}`
+        }
+        subHeaderContent={headerMeta}
+        actions={headerActions}
+        contentClassName="space-y-8"
       >
-        <div className="max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="mb-6 md:mb-8">
-            <Link
-              to="/admin-dashboard/regions"
-              className="inline-flex font-medium items-center gap-2 mb-4 md:mb-6 transition-all hover:gap-3"
-              style={{ color: designTokens.colors.primary[600] }}
-            >
-              <ArrowLeft size={20} />
-              <span className="hidden sm:inline">Back to Regions</span>
-              <span className="sm:hidden">Back</span>
-            </Link>
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-              <div className="flex-1">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2" style={{ color: designTokens.colors.neutral[900] }}>{region.name}</h1>
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-base sm:text-lg" style={{ color: designTokens.colors.neutral[600] }}>
-                  <span className="font-mono text-sm sm:text-base" style={{ color: designTokens.colors.primary[700] }}>{region.code}</span>
-                  <span className="hidden sm:inline">•</span>
-                  <div className="flex items-center gap-1.5">
-                    <Globe size={16} className="sm:w-[18px] sm:h-[18px]" />
-                    <span>{region.country_code}</span>
+        <div className="space-y-8">
+          <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#0F172A] via-[#1D4ED8] to-[#38BDF8] text-white shadow-2xl">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.12),_transparent_55%)]" />
+            <div className="relative p-6 sm:p-8 lg:p-10">
+              <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+                <div className="space-y-4">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-white/70">
+                    <Sparkles size={14} />
+                    Region Spotlight
+                  </div>
+                  <div className="space-y-2">
+                    <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                      {region.name}
+                    </h2>
+                    <p className="text-sm text-white/80 sm:text-base">
+                      {locationLabel || "Location not specified"}
+                    </p>
                   </div>
                 </div>
-              </div>
-              <Link
-                to={`/admin-dashboard/regions/${region.code}/edit`}
-                className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-semibold text-white transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 whitespace-nowrap"
-                style={{ backgroundColor: designTokens.colors.primary[600] }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = designTokens.colors.primary[700]}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = designTokens.colors.primary[600]}
-              >
-                <Edit size={16} className="sm:w-[18px] sm:h-[18px]" />
-                <span className="hidden sm:inline">Edit Region</span>
-                <span className="sm:hidden">Edit</span>
-              </Link>
-            </div>
-          </div>
 
-          {/* Main Info Card */}
-          <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-6 lg:p-8 mb-4 sm:mb-6" style={{ borderColor: designTokens.colors.neutral[200], borderWidth: '1px' }}>
-            <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6" style={{ color: designTokens.colors.neutral[900] }}>Region Information</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-              <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl" style={{ backgroundColor: designTokens.colors.neutral[50] }}>
-                <div className="flex items-center gap-2 mb-2" style={{ color: designTokens.colors.neutral[600] }}>
-                  <Server size={14} className="sm:w-4 sm:h-4" />
-                  <div className="text-xs sm:text-sm font-medium">Provider</div>
-                </div>
-                <div className="text-lg sm:text-xl font-semibold capitalize" style={{ color: designTokens.colors.neutral[900] }}>{region.provider}</div>
-              </div>
-              <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl" style={{ backgroundColor: designTokens.colors.neutral[50] }}>
-                <div className="text-xs sm:text-sm font-medium mb-2" style={{ color: designTokens.colors.neutral[600] }}>Region Code</div>
-                <div className="text-lg sm:text-xl font-mono font-semibold break-all" style={{ color: designTokens.colors.primary[700] }}>{region.code}</div>
-              </div>
-              <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl" style={{ backgroundColor: designTokens.colors.neutral[50] }}>
-                <div className="flex items-center gap-2 mb-2" style={{ color: designTokens.colors.neutral[600] }}>
-                  <Globe size={14} className="sm:w-4 sm:h-4" />
-                  <div className="text-xs sm:text-sm font-medium">Country</div>
-                </div>
-                <div className="text-lg sm:text-xl font-semibold" style={{ color: designTokens.colors.neutral[900] }}>{region.country_code}</div>
-              </div>
-              <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl" style={{ backgroundColor: designTokens.colors.neutral[50] }}>
-                <div className="flex items-center gap-2 mb-2" style={{ color: designTokens.colors.neutral[600] }}>
-                  <MapPin size={14} className="sm:w-4 sm:h-4" />
-                  <div className="text-xs sm:text-sm font-medium">City</div>
-                </div>
-                <div className="text-lg sm:text-xl font-semibold" style={{ color: designTokens.colors.neutral[900] }}>{region.city || 'N/A'}</div>
-              </div>
-              <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl" style={{ backgroundColor: designTokens.colors.neutral[50] }}>
-                <div className="text-xs sm:text-sm font-medium mb-2" style={{ color: designTokens.colors.neutral[600] }}>Status</div>
-                <div className="text-lg sm:text-xl font-semibold capitalize" style={{ color: designTokens.colors.neutral[900] }}>{region.status || 'unknown'}</div>
-              </div>
-              <div className="p-3 sm:p-4 rounded-lg sm:rounded-xl" style={{ backgroundColor: designTokens.colors.neutral[50] }}>
-                <div className="text-xs sm:text-sm font-medium mb-2" style={{ color: designTokens.colors.neutral[600] }}>Active</div>
-                <div className="flex items-center gap-2">
-                  {region.is_active ? (
-                    <>
-                      <CheckCircle size={18} className="sm:w-5 sm:h-5" style={{ color: designTokens.colors.success[500] }} />
-                      <span className="text-lg sm:text-xl font-semibold" style={{ color: designTokens.colors.success[700] }}>Yes</span>
-                    </>
-                  ) : (
-                    <>
-                      <AlertCircle size={18} className="sm:w-5 sm:h-5" style={{ color: designTokens.colors.error[500] }} />
-                      <span className="text-lg sm:text-xl font-semibold" style={{ color: designTokens.colors.error[700] }}>No</span>
-                    </>
-                  )}
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                  <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
+                    <p className="text-xs font-medium uppercase tracking-wide text-white/70">
+                      Region Code
+                    </p>
+                    <p className="mt-2 font-mono text-lg font-semibold text-white">
+                      {region.code}
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
+                    <p className="text-xs font-medium uppercase tracking-wide text-white/70">
+                      Base URL
+                    </p>
+                    <p className="mt-2 break-all text-sm font-semibold text-white/90">
+                      {region.base_url || "Not configured"}
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
+                    <p className="text-xs font-medium uppercase tracking-wide text-white/70">
+                      Last Updated
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-white">
+                      {formatDateTime(region.updated_at)}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* MSP Credentials Card */}
-          {region.provider === 'zadara' && (
-            <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-6 lg:p-8" style={{ borderColor: designTokens.colors.neutral[200], borderWidth: '1px' }}>
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-                <h2 className="text-xl sm:text-2xl font-bold" style={{ color: designTokens.colors.neutral[900] }}>MSP Admin Credentials</h2>
-                {region.msp_credentials_verified_at ? (
-                  <div className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold flex items-center gap-1.5 sm:gap-2" style={{ backgroundColor: designTokens.colors.success[100], color: designTokens.colors.success[800] }}>
-                    <CheckCircle size={14} className="sm:w-4 sm:h-4" />
-                    Verified
-                  </div>
-                ) : (
-                  <div className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold flex items-center gap-1.5 sm:gap-2" style={{ backgroundColor: designTokens.colors.warning[100], color: designTokens.colors.warning[800] }}>
-                    <AlertCircle size={14} className="sm:w-4 sm:h-4" />
-                    Not Verified
-                  </div>
-                )}
-              </div>
-              
-              {region.msp_credentials_verified_at ? (
-                <div>
-                  <p className="text-xs sm:text-sm mb-3" style={{ color: designTokens.colors.neutral[600] }}>
-                    Last verified: {new Date(region.msp_credentials_verified_at).toLocaleString()}
-                  </p>
-                  <button
-                    onClick={() => setShowCredentialModal(true)}
-                    className="font-semibold text-sm transition-colors"
-                    style={{ color: designTokens.colors.primary[600] }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = designTokens.colors.primary[700]}
-                    onMouseLeave={(e) => e.currentTarget.style.color = designTokens.colors.primary[600]}
-                  >
-                    Update credentials →
-                  </button>
-                </div>
-              ) : (
-                <div>
-                  <p className="text-xs sm:text-sm mb-4 sm:mb-5" style={{ color: designTokens.colors.neutral[600] }}>
-                    MSP admin credentials are required for automated provisioning in this region.
-                  </p>
-                  <button
-                    onClick={() => setShowCredentialModal(true)}
-                    className="w-full sm:w-auto px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-semibold text-white transition-all shadow-sm hover:shadow-md"
-                    style={{ backgroundColor: designTokens.colors.primary[600] }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = designTokens.colors.primary[700]}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = designTokens.colors.primary[600]}
-                  >
-                    Verify Credentials
-                  </button>
-                </div>
-              )}
+          {statsCards.length > 0 && (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {statsCards.map((card) => (
+                <ModernStatsCard
+                  key={card.key}
+                  title={card.title}
+                  value={card.value}
+                  icon={card.icon}
+                  color={card.color}
+                  description={card.description}
+                />
+              ))}
             </div>
           )}
-        </div>
-      </main>
 
-      {/* Credential Verification Modal */}
-      {showCredentialModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Verify MSP Admin Credentials</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Region: <strong>{region.name}</strong>
-            </p>
-            <form onSubmit={handleVerifyCredentials}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Username <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={credentials.username}
-                    onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="MSP admin username"
-                    required
+          <div className="grid gap-6 xl:grid-cols-[1.7fr,1fr]">
+            <div className="space-y-6">
+              <ModernCard title="Core Attributes" className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <AttributeTile
+                    label="Region Code"
+                    value={
+                      <span className="font-mono">{region.code || "—"}</span>
+                    }
+                    icon={KeyRound}
+                  />
+                  <AttributeTile
+                    label="Base URL"
+                    value={
+                      <span className="break-all">{region.base_url || "—"}</span>
+                    }
+                    icon={LinkIcon}
+                  />
+                  <AttributeTile
+                    label="Location"
+                    value={locationLabel || "—"}
+                    icon={MapPin}
+                    hint={region.country_code ? `Country: ${region.country_code}` : undefined}
                   />
                 </div>
+              </ModernCard>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Password <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="password"
-                    value={credentials.password}
-                    onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="MSP admin password"
-                    required
+              <ModernCard title="Operational Profile" className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <AttributeTile
+                    label="Health Status"
+                    value={formatSegment(region.status) || "Unknown"}
+                    icon={Activity}
+                  />
+                  <AttributeTile
+                    label="Active"
+                    value={region.is_active ? "Yes" : "No"}
+                    icon={CheckCircle}
+                  />
+                  <AttributeTile
+                    label="Fulfillment Mode"
+                    value={
+                      region.fulfillment_mode
+                        ? formatSegment(region.fulfillment_mode)
+                        : "—"
+                    }
+                    icon={Settings}
+                  />
+                  <AttributeTile
+                    label="Platform Fee"
+                    value={platformFee}
+                    icon={DollarSign}
+                    hint="Applied to revenue generated in this region"
+                  />
+                  <AttributeTile
+                    label="Created"
+                    value={formatDateTime(region.created_at)}
+                    icon={Clock}
+                  />
+                  <AttributeTile
+                    label="Last Updated"
+                    value={formatDateTime(region.updated_at)}
+                    icon={RefreshCw}
                   />
                 </div>
+              </ModernCard>
+            </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Domain <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={credentials.domain}
-                    onChange={(e) => setCredentials({ ...credentials, domain: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="cloud_msp"
-                    required
+            <div className="space-y-6">
+              <ModernCard title="Ownership & Access" className="space-y-4">
+                <div className="grid gap-4">
+                  <AttributeTile
+                    label="Ownership Type"
+                    value={
+                      region.ownership_type
+                        ? formatSegment(region.ownership_type)
+                        : "—"
+                    }
+                    icon={Building2}
                   />
+                  {ownershipTenant && (
+                    <AttributeTile
+                      label="Owning Tenant"
+                      value={ownershipTenant.name || "—"}
+                      icon={Users}
+                      hint={[
+                        ownershipTenant.email,
+                        ownershipTenant.id,
+                      ]
+                        .filter(Boolean)
+                        .join(" • ")}
+                    />
+                  )}
                 </div>
+              </ModernCard>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Domain ID <span className="text-gray-500">(optional)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={credentials.domain_id}
-                    onChange={(e) => setCredentials({ ...credentials, domain_id: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="dom-xxxxx"
-                  />
-                </div>
+              {shouldShowAutomationCard && (
+                <ModernCard title="Automation & Credentials" className="space-y-4">
+                  <div
+                    className={`flex flex-col gap-3 rounded-2xl border px-4 py-3 ${
+                      region.msp_credentials_verified_at
+                        ? "border-green-200 bg-green-50 text-green-800"
+                        : "border-yellow-200 bg-yellow-50 text-yellow-800"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      {region.msp_credentials_verified_at ? (
+                        <CheckCircle size={20} />
+                      ) : (
+                        <AlertCircle size={20} />
+                      )}
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold">
+                          {region.msp_credentials_verified_at
+                            ? "Credentials Verified"
+                            : "Credentials Not Verified"}
+                        </p>
+                        <p className="text-xs">
+                          {region.msp_credentials_verified_at
+                            ? `Last verified ${formatDateTime(
+                                region.msp_credentials_verified_at
+                              )}`
+                            : "Automated provisioning requires verified MSP admin credentials."}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                  <ModernButton
+                    variant={
+                      region.msp_credentials_verified_at
+                        ? "outline"
+                        : "primary"
+                    }
+                    size="sm"
+                    className="flex items-center gap-2"
+                    onClick={() =>
+                      navigate(
+                        `/admin-dashboard/regions/${region.code}/credentials`
+                      )
+                    }
+                  >
+                    <ShieldCheck size={16} />
+                    {region.msp_credentials_verified_at
+                      ? "Update Credentials"
+                      : "Verify Credentials"}
+                      </ModernButton>
+                      <ModernButton
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center gap-2"
+                        onClick={fetchRegionDetail}
+                      >
+                        <RefreshCw size={16} />
+                        Refresh Status
+                      </ModernButton>
+                    </div>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Default Project <span className="text-gray-500">(optional)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={credentials.default_project}
-                    onChange={(e) => setCredentials({ ...credentials, default_project: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="default"
-                  />
-                </div>
-
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-xs text-blue-800">
-                    <strong>Note:</strong> MSP admins authenticate using the default project token. 
-                    Ensure credentials have <strong>msp_admin</strong> role.
+                  <p className="text-xs text-gray-500">
+                    Credentials are stored securely and used to orchestrate
+                    workloads in this region. Contact platform engineering if you
+                    need to rotate credentials.
                   </p>
-                </div>
-              </div>
-
-              <div className="flex gap-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowCredentialModal(false);
-                    setCredentials({ username: '', password: '', domain: '', domain_id: '', default_project: '' });
-                  }}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-                  disabled={verifying}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={verifying}
-                >
-                  {verifying ? 'Verifying...' : 'Verify'}
-                </button>
-              </div>
-            </form>
+                </ModernCard>
+              )}
+            </div>
           </div>
+
+          {region.admin_notes && (
+            <ModernCard title="Admin Notes">
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                {region.admin_notes}
+              </p>
+            </ModernCard>
+          )}
         </div>
-      )}
+      </AdminPageShell>
     </>
   );
 };

@@ -70,6 +70,7 @@ const AddIgw = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) => {
       isOpen={isOpen}
       onClose={onClose}
       title="Add Internet Gateway"
+      subtitle="Expose resources in your VPC to the public internet."
       actions={actions}
       loading={isPending}
       contentClassName="space-y-5"

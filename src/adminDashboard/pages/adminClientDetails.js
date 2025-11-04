@@ -6,9 +6,21 @@ import OverviewClient from "../components/clientsComps/clientsOverview";
 import ClientModules from "../components/clientsComps/clientsModules";
 import { useLocation, useNavigate } from "react-router-dom"; // Import useLocation and useNavigate
 
-import { ArrowLeft, Loader2, AlertTriangle } from "lucide-react"; // Import icons for loading/error
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Boxes,
+  Building2,
+  CircleUserRound,
+  LayoutDashboard,
+  Loader2,
+  Mail,
+  ShieldCheck,
+  ClipboardList,
+} from "lucide-react"; // Import icons for loading/error
 import { useFetchClientById } from "../../hooks/adminHooks/clientHooks";
 import AdminPageShell from "../components/AdminPageShell";
+import OnboardingStatusBoard from "../components/onboarding/OnboardingStatusBoard";
 
 // Function to decode the ID from URL
 const decodeId = (encodedId) => {
@@ -56,25 +68,110 @@ export default function AdminClientDetails() {
   };
 
   const handleGoBack = () => {
-    navigate("/admin/clients"); // Navigate back to the clients list
+    navigate("/admin-dashboard/clients"); // Navigate back to the clients list
   };
 
-  const buttons = [
+  const formatDate = (value) => {
+    if (!value) return null;
+    try {
+      return new Date(value).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    } catch (error) {
+      console.error("Failed to format date", error);
+      return null;
+    }
+  };
+
+  const fullName = [
+    clientDetails?.first_name,
+    clientDetails?.middle_name,
+    clientDetails?.last_name,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+
+  const primaryEmail = clientDetails?.email || "No email provided";
+
+  const summaryCards = [
     {
-      label: "Overview",
-      value: "overview",
-      component: <OverviewClient client={clientDetails} />, // Pass clientDetails
+      label: "Client Profile",
+      value: fullName || "Unnamed client",
+      hint: clientDetails?.role
+        ? `Role • ${clientDetails.role}`
+        : "Role not assigned",
+      icon: CircleUserRound,
+      accentBg: "bg-[#288DD1]/10",
+      accentText: "text-[#288DD1]",
     },
     {
-      label: "Purchased Modules History",
-      value: "purchased",
-      component: <ClientModules client={clientDetails} />, // Pass clientDetails
+      label: "Status",
+      value: clientDetails?.verified === 1 ? "Active" : "Pending",
+      hint: clientDetails?.updated_at
+        ? `Updated ${formatDate(clientDetails.updated_at)}`
+        : "Never reviewed",
+      icon: ShieldCheck,
+      accentBg:
+        clientDetails?.verified === 1 ? "bg-emerald-50" : "bg-amber-50",
+      accentText:
+        clientDetails?.verified === 1 ? "text-emerald-600" : "text-amber-600",
+    },
+    {
+      label: "Contact",
+      value: clientDetails?.email || "No email provided",
+      hint: clientDetails?.phone
+        ? `Phone • ${clientDetails.phone}`
+        : "Phone number unavailable",
+      icon: Mail,
+      accentBg: "bg-slate-100",
+      accentText: "text-slate-700",
+    },
+    {
+      label: "Tenant",
+      value: clientDetails?.tenant?.name || "No tenant assigned",
+      hint: clientDetails?.tenant?.identifier
+        ? `ID • ${clientDetails?.tenant?.identifier}`
+        : "Identifier unavailable",
+      icon: Building2,
+      accentBg: "bg-indigo-50",
+      accentText: "text-indigo-600",
     },
   ];
 
-  const handleButtonClick = (value) => {
-    setActiveButton(value);
-  };
+  const tabs = [
+    {
+      label: "Overview",
+      value: "overview",
+      description: "Profile, tenancy, and compliance summary",
+      icon: LayoutDashboard,
+      component: <OverviewClient client={clientDetails} />,
+    },
+    {
+      label: "Modules",
+      value: "purchased",
+      description: "Provisioned services and billing snapshots",
+      icon: Boxes,
+      component: <ClientModules client={clientDetails} />,
+    },
+    {
+      label: "Onboarding",
+      value: "onboarding",
+      description: "Track submission progress and review flags",
+      icon: ClipboardList,
+      component: (
+        <OnboardingStatusBoard
+          target="client"
+          persona="tenant_client_business"
+          userId={clientId}
+          entityName={fullName || primaryEmail}
+          contextName={clientDetails?.tenant?.name}
+        />
+      ),
+    },
+  ];
 
   // Show loading state
   if (isClientFetching || clientId === null) {
@@ -132,41 +229,99 @@ export default function AdminClientDetails() {
       />
       <AdminActiveTab />
       <AdminPageShell
-        title={`Client Details: ${clientDetails.first_name} ${clientDetails.last_name}`}
-        description={clientDetails.email || "No email provided"}
+        title={`Client • ${fullName || "Record"}`}
+        description={primaryEmail}
         actions={
           <button
-            onClick={() => navigate("/admin-dashboard/clients")}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+            onClick={handleGoBack}
+            className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-[#288DD1] hover:text-[#288DD1]"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Clients
           </button>
         }
-        contentClassName="space-y-6"
+        contentClassName="space-y-8"
       >
-        <div className="flex border-b w-full border-[#EAECF0]">
-          {buttons.map((button, index) => (
-            <button
-              key={index}
-              className={`font-medium text-sm pb-4 px-2 transition-all ${
-                activeButton === button.value
-                  ? "border-b-2 border-[#288DD1] text-[#288DD1]"
-                  : "text-[#1C1C1C]"
-              }`}
-              onClick={() => handleButtonClick(button.value)}
-            >
-              {button.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="w-full mt-6">
-          {React.cloneElement(
-            buttons.find((button) => button.value === activeButton).component,
-            { client: clientDetails }
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {summaryCards.map(
+            ({ label, value, hint, icon: Icon, accentBg, accentText }) => (
+              <div
+                key={label}
+                className="rounded-3xl border border-[#EAECF0] bg-white p-5 shadow-sm transition hover:border-[#288DD1]/50 hover:shadow-md"
+              >
+                <div className="flex items-start gap-3">
+                  <span
+                    className={`flex h-10 w-10 items-center justify-center rounded-2xl ${accentBg} ${accentText}`}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {label}
+                    </p>
+                    <p className="mt-1 text-base font-semibold text-slate-900">
+                      {value}
+                    </p>
+                    {hint && (
+                      <p className="mt-2 text-xs font-medium text-slate-500">
+                        {hint}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
           )}
-        </div>
+        </section>
+
+        <section>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            {tabs.map(({ value, label, description, icon: Icon }) => {
+              const isActive = activeButton === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setActiveButton(value)}
+                  className={`group flex items-start gap-3 rounded-3xl border px-5 py-4 text-left shadow-sm transition ${
+                    isActive
+                      ? "border-[#288DD1] bg-[#F3FAFF] shadow-md"
+                      : "border-transparent bg-white hover:border-[#288DD1]/40 hover:shadow-md"
+                  }`}
+                >
+                  <span
+                    className={`mt-1 flex h-10 w-10 items-center justify-center rounded-2xl ${
+                      isActive
+                        ? "bg-[#288DD1]/15 text-[#288DD1]"
+                        : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p
+                      className={`text-sm font-semibold ${
+                        isActive ? "text-[#0F172A]" : "text-slate-700"
+                      }`}
+                    >
+                      {label}
+                    </p>
+                    <p className="mt-1 text-xs font-medium text-slate-500">
+                      {description}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-[#EAECF0] bg-white p-6 shadow-sm">
+          {
+            tabs.find((tab) => tab.value === activeButton)?.component ??
+            tabs[0].component
+          }
+        </section>
       </AdminPageShell>
     </>
   );

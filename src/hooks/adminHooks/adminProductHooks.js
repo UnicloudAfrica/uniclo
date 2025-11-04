@@ -2,11 +2,17 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/admin/silent";
 import api from "../../index/admin/api";
 
-const fetchProducts = async (country_code, provider) => {
+const fetchProducts = async ({ country_code, provider, productType }) => {
   const params = [];
-  if (country_code)
+  if (country_code) {
     params.push(`country_code=${encodeURIComponent(country_code)}`);
-  if (provider) params.push(`provider=${encodeURIComponent(provider)}`);
+  }
+  if (provider) {
+    params.push(`provider=${encodeURIComponent(provider)}`);
+  }
+  if (productType) {
+    params.push(`productable_type=${encodeURIComponent(productType)}`);
+  }
   const queryString = params.length > 0 ? `?${params.join("&")}` : "";
   const res = await silentApi("GET", `/products${queryString}`);
   if (!res.data) {
@@ -44,12 +50,24 @@ export const useFetchProducts = (
   provider = "",
   options = {}
 ) => {
+  const { productType = "", ...queryOptions } = options || {};
+
   return useQuery({
-    queryKey: ["productsadmin", country_code || "none", provider || "none"],
-    queryFn: () => fetchProducts(country_code, provider),
+    queryKey: [
+      "productsadmin",
+      country_code || "none",
+      provider || "none",
+      productType || "all",
+    ],
+    queryFn: () =>
+      fetchProducts({
+        country_code,
+        provider,
+        productType,
+      }),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
-    ...options,
+    ...queryOptions,
   });
 };
 

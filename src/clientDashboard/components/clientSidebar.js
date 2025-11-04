@@ -10,6 +10,7 @@ import {
   CreditCard,
   LifeBuoy,
   Settings,
+  HardDrive,
 } from "lucide-react";
 import { useFetchClientProfile } from "../../hooks/clientHooks/resources";
 import useClientAuthStore from "../../stores/clientAuthStore";
@@ -34,6 +35,7 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/client-dashboard/projects/details": "Projects",
     "/client-dashboard/instances": "Instances",
     "/client-dashboard/add-instance": "Instances",
+    "/client-dashboard/object-storage": "Object Storage",
     "/client-dashboard/calculator": "Calculator",
     "/client-dashboard/orders-payments": "Orders & Payments",
     // "/client-dashboard/security": "Security",
@@ -71,6 +73,11 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
           },
         ]
       : []),
+    {
+      name: "Object Storage",
+      Icon: HardDrive,
+      path: "/client-dashboard/object-storage",
+    },
 
     {
       name: "Calculator",

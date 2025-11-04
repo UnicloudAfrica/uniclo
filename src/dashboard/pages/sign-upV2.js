@@ -1,135 +1,253 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCreateAccount } from "../../hooks/authHooks";
+import { useVerifyBusiness } from "../../hooks/businessHooks";
 import useAuthStore from "../../stores/userAuthStore";
-import ToastUtils from "../../utils/toastUtil";
-import { useFetchIndustries } from "../../hooks/resource";
-import Header from "./signup/header";
-import SignUpForm from "./signup/signupsteps";
-import TabSelector from "./signup/tabselector";
 import sideBg from "./assets/sideBg.svg";
+import Header from "./signup/header";
+import { Loader2, ShieldCheck, AlertCircle } from "lucide-react";
+
+const ROLE_TABS = [
+  { id: "tenant", label: "Partner / Tenant" },
+  { id: "client", label: "Client" },
+];
+
+const INITIAL_FORM = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  password: "",
+  confirmPassword: "",
+  companyName: "",
+  companyType: "",
+  registrationNumber: "",
+  verificationToken: "",
+};
 
 export default function DashboardSignUpV2() {
   const navigate = useNavigate();
   const setUserEmail = useAuthStore((state) => state.setUserEmail);
   const { mutate, isPending } = useCreateAccount();
-  const { data: industries, isFetching: isIndustriesFetching } =
-    useFetchIndustries();
-  const [activeTab, setActiveTab] = useState("partner");
+  const { mutate: verifyBusiness, isPending: isVerifying } =
+    useVerifyBusiness();
+
+  const [activeRole, setActiveRole] = useState("tenant");
+  const [formData, setFormData] = useState(INITIAL_FORM);
   const [errors, setErrors] = useState({});
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    confirmPassword: "",
-    contactPersonFirstName: "",
-    contactPersonLastName: "",
-    companyName: "",
-    subdomain: "",
-    businessPhone: "",
-    phone: "",
-    business_name: "",
-    registration_number: "",
-    company_type: "",
-    tin_number: "",
-    industry: "",
-    website: "",
-    verification_token: "",
-  });
+  const [isBusinessVerified, setIsBusinessVerified] = useState(false);
+  const [verificationResult, setVerificationResult] = useState(null);
+  const [verificationError, setVerificationError] = useState(null);
 
-  const validateForm = () => {
-    const newErrors = {};
+  const updateField = (field, value) => {
+    const requiresReverification = [
+      "companyName",
+      "companyType",
+      "registrationNumber",
+    ].includes(field);
 
-    if (!formData.email) newErrors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(formData.email))
-      newErrors.email = "Invalid email format";
+    setFormData((prev) => {
+      const next = { ...prev, [field]: value };
+      if (requiresReverification) {
+        next.verificationToken = "";
+      }
+      return next;
+    });
 
-    if (!formData.password) newErrors.password = "Password is required";
-    else if (formData.password.length < 6)
-      newErrors.password = "Password must be at least 6 characters";
-
-    if (!formData.confirmPassword)
-      newErrors.confirmPassword = "Confirm password is required";
-    else if (formData.password !== formData.confirmPassword)
-      newErrors.confirmPassword = "Passwords do not match";
-
-    if (!formData.contactPersonFirstName)
-      newErrors.contactPersonFirstName = "First name is required";
-    if (!formData.contactPersonLastName)
-      newErrors.contactPersonLastName = "Last name is required";
-
-    // Common business fields for both partner and client
-    if (!formData.business_name)
-      newErrors.business_name = "Business name is required";
-    if (!formData.company_type)
-      newErrors.company_type = "Business type is required";
-    if (!formData.industry) newErrors.industry = "Industry is required";
-    if (!formData.businessPhone)
-      newErrors.businessPhone = "Business phone is required";
-    else if (!/^\+?\d{10,15}$/.test(formData.businessPhone))
-      newErrors.businessPhone =
-        "Invalid phone number format (e.g., +1234567890)";
-
-    if (activeTab === "partner") {
-      if (!formData.subdomain) newErrors.subdomain = "Subdomain is required";
-      else if (!/^[a-zA-Z0-9-]+$/.test(formData.subdomain))
-        newErrors.subdomain =
-          "Subdomain can only contain letters, numbers, and hyphens";
+    if (requiresReverification) {
+      setIsBusinessVerified(false);
+      setVerificationResult(null);
+      setVerificationError(null);
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors((prev) => ({
+      ...prev,
+      [field]: null,
+      general: null,
+      verificationToken: requiresReverification ? null : prev.verificationToken,
+    }));
   };
 
-  const updateFormData = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: null }));
-  };
+  const validate = () => {
+    const validationErrors = {};
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validateForm()) {
-      const userData = {
-        first_name: formData.contactPersonFirstName,
-        last_name: formData.contactPersonLastName,
-        email: formData.email,
-        password: formData.password,
-        password_confirmation: formData.confirmPassword,
-        role: activeTab === "partner" ? "tenant" : "client",
-        phone: formData.businessPhone,
-        domain:
-          activeTab === "partner"
-            ? `${formData.subdomain}.unicloudafrica.com`
-            : `${formData.business_name
-                .toLowerCase()
-                .replace(/\s+/g, "-")}.unicloudafrica.com`,
-        business: {
-          phone: formData.businessPhone,
-          name: formData.business_name,
-          registration_number: formData.registration_number,
-          company_type: formData.company_type,
-          tin_number: formData.tin_number,
-        },
-        verification_token: formData.verification_token,
-      };
-
-      mutate(userData, {
-        onSuccess: () => {
-          // ToastUtils.success(
-          //   "Account created successfully! Please verify your email."
-          // );
-          setUserEmail(formData.email);
-          navigate("/verify-mail");
-        },
-        onError: (err) => {
-          const errorMessage =
-            err.response?.data?.message ||
-            err.message ||
-            "Failed to create account. Please try again.";
-          setErrors({ general: errorMessage });
-          // ToastUtils.error(errorMessage);
-        },
-      });
+    if (!formData.firstName.trim()) {
+      validationErrors.firstName = "First name is required";
     }
+    if (!formData.lastName.trim()) {
+      validationErrors.lastName = "Last name is required";
+    }
+    if (!formData.email.trim()) {
+      validationErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email.trim())) {
+      validationErrors.email = "Enter a valid email address";
+    }
+    if (!formData.password) {
+      validationErrors.password = "Password is required";
+    } else if (formData.password.length < 6) {
+      validationErrors.password = "Password must be at least 6 characters";
+    }
+    if (!formData.confirmPassword) {
+      validationErrors.confirmPassword = "Confirm your password";
+    } else if (formData.password !== formData.confirmPassword) {
+      validationErrors.confirmPassword = "Passwords do not match";
+    }
+    if (!formData.companyName.trim()) {
+      validationErrors.companyName = "Company name is required";
+    }
+    if (!formData.companyType) {
+      validationErrors.companyType = "Business type is required";
+    }
+    if (!formData.registrationNumber.trim()) {
+      validationErrors.registrationNumber = "Incorporation number is required";
+    }
+    if (!formData.verificationToken) {
+      validationErrors.verificationToken =
+        "Verify your business before signing up.";
+    }
+    setErrors(validationErrors);
+    return Object.keys(validationErrors).length === 0;
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    if (!validate()) return;
+
+    const payload = {
+      first_name: formData.firstName.trim(),
+      last_name: formData.lastName.trim(),
+      email: formData.email.trim().toLowerCase(),
+      password: formData.password,
+      password_confirmation: formData.confirmPassword,
+      role: activeRole === "tenant" ? "tenant" : "client",
+      company_name: formData.companyName.trim(),
+      verification_token: formData.verificationToken,
+      business: {
+        name: formData.companyName.trim(),
+        company_type: formData.companyType,
+        registration_number: formData.registrationNumber.trim(),
+      },
+    };
+
+    mutate(payload, {
+      onSuccess: () => {
+        setUserEmail(payload.email);
+        navigate("/verify-mail");
+      },
+      onError: (err) => {
+        const message =
+          err?.response?.data?.message ||
+          err?.message ||
+          "Sign up failed. Please try again.";
+        setErrors((prev) => ({ ...prev, general: message }));
+      },
+    });
+  };
+
+  const handleVerifyBusiness = () => {
+    setVerificationError(null);
+
+    if (
+      !formData.companyName.trim() ||
+      !formData.companyType ||
+      !formData.registrationNumber.trim()
+    ) {
+      setErrors((prev) => ({
+        ...prev,
+        companyName: !formData.companyName.trim()
+          ? "Business name is required"
+          : prev.companyName,
+        companyType: !formData.companyType
+          ? "Business type is required"
+          : prev.companyType,
+        registrationNumber: !formData.registrationNumber.trim()
+          ? "Incorporation number is required"
+          : prev.registrationNumber,
+      }));
+      return;
+    }
+
+    verifyBusiness(
+      {
+        target: activeRole === "tenant" ? "tenant" : "client",
+        business_name: formData.companyName.trim(),
+        company_type: formData.companyType,
+        registration_number: formData.registrationNumber.trim(),
+      },
+      {
+        onSuccess: (data) => {
+          const token = data?.verification_token ?? "";
+
+          if (!token) {
+            setIsBusinessVerified(false);
+            setErrors((prev) => ({
+              ...prev,
+              verificationToken: "Unable to verify business. Please try again.",
+            }));
+          } else {
+            setFormData((prev) => ({
+              ...prev,
+              verificationToken: token,
+            }));
+            setIsBusinessVerified(true);
+            setErrors((prev) => ({ ...prev, verificationToken: null }));
+          }
+
+          setVerificationResult(data);
+          setVerificationError(
+            token ? null : "Verification succeeded but no token was returned."
+          );
+        },
+        onError: (error) => {
+          setIsBusinessVerified(false);
+          setVerificationResult(null);
+          setFormData((prev) => ({ ...prev, verificationToken: "" }));
+          setVerificationError(
+            error?.response?.data?.message ||
+              error?.message ||
+              "Unable to verify business."
+          );
+        },
+      }
+    );
+  };
+
+  const businessTypes = useMemo(
+    () => [
+      { value: "", label: "Select business type" },
+      { value: "RC", label: "Limited Liability Company (RC)" },
+      { value: "BN", label: "Business Name (BN)" },
+      { value: "IT", label: "Incorporated Trustees (IT)" },
+      { value: "LL", label: "Limited Liability" },
+      { value: "LLP", label: "Limited Liability Partnership (LLP)" },
+      { value: "Other", label: "Other" },
+    ],
+    []
+  );
+
+  const normalizedPreview = useMemo(() => {
+    if (!verificationResult?.normalized) {
+      return null;
+    }
+
+    const normalized = verificationResult.normalized;
+
+    return {
+      registrationNumber: normalized.rc_number ?? normalized.registration_number,
+      companyName: normalized.company_name,
+      companyType: normalized.company_type,
+      address: normalized.address,
+      status: normalized.status,
+      registrationDate: normalized.registration_date,
+    };
+  }, [verificationResult]);
+
+  const handleRoleChange = (role) => {
+    setActiveRole(role);
+    setIsBusinessVerified(false);
+    setVerificationResult(null);
+    setVerificationError(null);
+    setFormData((prev) => ({ ...prev, verificationToken: "" }));
+    setErrors((prev) => ({ ...prev, verificationToken: null }));
   };
 
   return (
@@ -137,17 +255,192 @@ export default function DashboardSignUpV2() {
       <div className="flex-1 flex flex-col justify-center bg-white">
         <div className="max-w-md mx-auto w-full">
           <Header />
-          <TabSelector activeTab={activeTab} setActiveTab={setActiveTab} />
-          <SignUpForm
-            activeTab={activeTab}
-            formData={formData}
-            errors={errors}
-            isPending={isPending}
-            industries={industries}
-            isIndustriesFetching={isIndustriesFetching}
-            updateFormData={updateFormData}
-            handleSubmit={handleSubmit}
-          />
+
+          <div className="flex bg-[#F5F6F8] rounded-[12px] p-1 mb-8">
+            {ROLE_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleRoleChange(tab.id)}
+                className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-[10px] transition-all ${
+                  activeRole === tab.id
+                    ? "bg-white shadow text-[#121212]"
+                    : "text-[#6B7280]"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field
+                label="First Name"
+                value={formData.firstName}
+                error={errors.firstName}
+                onChange={(value) => updateField("firstName", value)}
+              />
+              <Field
+                label="Last Name"
+                value={formData.lastName}
+                error={errors.lastName}
+                onChange={(value) => updateField("lastName", value)}
+              />
+            </div>
+
+            <Field
+              label="Company Name"
+              value={formData.companyName}
+              error={errors.companyName}
+              onChange={(value) => updateField("companyName", value)}
+            />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <SelectField
+                label="Business Type"
+                value={formData.companyType}
+                error={errors.companyType}
+                options={businessTypes}
+                onChange={(value) => updateField("companyType", value)}
+                disabled={isBusinessVerified || isVerifying}
+              />
+              <Field
+                label="Incorporation Number"
+                value={formData.registrationNumber}
+                error={errors.registrationNumber}
+                onChange={(value) => updateField("registrationNumber", value)}
+                disabled={isBusinessVerified || isVerifying}
+                placeholder="e.g., RC123456"
+              />
+            </div>
+
+            <div className="space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">
+                    Verify your business
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Confirm your CAC record before creating the account.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleVerifyBusiness}
+                  disabled={isVerifying || isBusinessVerified}
+                  className="inline-flex items-center justify-center rounded-lg bg-[#288DD1] px-4 py-2 text-sm font-semibold text-white hover:bg-[#6db1df] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isVerifying ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Verifying…
+                    </>
+                  ) : isBusinessVerified ? (
+                    <>
+                      <ShieldCheck className="mr-2 h-4 w-4" />
+                      Verified
+                    </>
+                  ) : (
+                    "Verify Business"
+                  )}
+                </button>
+              </div>
+              {verificationError && (
+                <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  <AlertCircle className="mt-0.5 h-4 w-4" />
+                  <span>{verificationError}</span>
+                </div>
+              )}
+              {isBusinessVerified && (
+                <div className="space-y-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+                  <div className="flex items-center gap-2 font-semibold">
+                    <ShieldCheck className="h-4 w-4" />
+                    Business verified successfully.
+                  </div>
+                  {normalizedPreview && (
+                    <dl className="grid gap-1 text-xs text-emerald-800 sm:grid-cols-2">
+                      {normalizedPreview.companyName && (
+                        <div>
+                          <dt className="font-semibold">Company</dt>
+                          <dd>{normalizedPreview.companyName}</dd>
+                        </div>
+                      )}
+                      {normalizedPreview.registrationNumber && (
+                        <div>
+                          <dt className="font-semibold">RC Number</dt>
+                          <dd>{normalizedPreview.registrationNumber}</dd>
+                        </div>
+                      )}
+                      {normalizedPreview.registrationDate && (
+                        <div>
+                          <dt className="font-semibold">Registered</dt>
+                          <dd>{normalizedPreview.registrationDate}</dd>
+                        </div>
+                      )}
+                      {normalizedPreview.address && (
+                        <div className="sm:col-span-2">
+                          <dt className="font-semibold">Address</dt>
+                          <dd>{normalizedPreview.address}</dd>
+                        </div>
+                      )}
+                    </dl>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <Field
+              label="Email"
+              type="email"
+              value={formData.email}
+              error={errors.email}
+              onChange={(value) => updateField("email", value)}
+            />
+
+            <PasswordField
+              label="Password"
+              value={formData.password}
+              error={errors.password}
+              onChange={(value) => updateField("password", value)}
+            />
+
+            <PasswordField
+              label="Confirm Password"
+              value={formData.confirmPassword}
+              error={errors.confirmPassword}
+              onChange={(value) => updateField("confirmPassword", value)}
+            />
+
+            {errors.verificationToken && (
+              <p className="text-red-500 text-sm">
+                {errors.verificationToken}
+              </p>
+            )}
+            {errors.general && (
+              <p className="text-red-500 text-sm">{errors.general}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={
+                isPending || isVerifying || !formData.verificationToken
+              }
+              className="w-full bg-[#288DD1] hover:bg-[#6db1df] text-white font-semibold py-3 px-4 rounded-[30px] transition-colors focus:outline-none focus:ring-1 focus:ring-[#288DD1] focus:ring-offset-2 disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {isPending ? "Creating account..." : "Create account"}
+            </button>
+
+            <p className="text-center text-sm text-[#6B7280]">
+              Already have an account?{" "}
+              <a
+                href="/sign-in"
+                className="text-[#288DD1] hover:text-[#6db1df] font-medium"
+              >
+                Log in
+              </a>
+            </p>
+          </form>
         </div>
       </div>
       <div
@@ -158,6 +451,94 @@ export default function DashboardSignUpV2() {
         }}
         className="flex-1 side-bg hidden lg:flex items-center justify-center relative overflow-hidden"
       ></div>
+    </div>
+  );
+}
+
+function SelectField({
+  label,
+  value,
+  onChange,
+  error,
+  options,
+  disabled = false,
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label} <span className="text-red-500">*</span>
+      </label>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        disabled={disabled}
+        className={`input-field ${error ? "border-red-500" : "border-gray-300"} bg-white`}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+    </div>
+  );
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  error,
+  type = "text",
+  disabled = false,
+  placeholder,
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label} <span className="text-red-500">*</span>
+      </label>
+      <input
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className={`input-field ${error ? "border-red-500" : "border-gray-300"}`}
+        placeholder={placeholder ?? `Enter ${label.toLowerCase()}`}
+        disabled={disabled}
+      />
+      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+    </div>
+  );
+}
+
+function PasswordField({ label, value, onChange, error }) {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label} <span className="text-red-500">*</span>
+      </label>
+      <div className="relative">
+        <input
+          type={visible ? "text" : "password"}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className={`input-field ${
+            error ? "border-red-500" : "border-gray-300"
+          }`}
+          placeholder={`Enter ${label.toLowerCase()}`}
+        />
+        <button
+          type="button"
+          onClick={() => setVisible((prev) => !prev)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"
+        >
+          {visible ? "Hide" : "Show"}
+        </button>
+      </div>
+      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
     </div>
   );
 }

@@ -2,10 +2,18 @@ import { BellRing, CircleHelp, Menu } from "lucide-react";
 import logo from "./assets/logo.png";
 import { useLocation } from "react-router-dom";
 import { useFetchProfile } from "../../hooks/resource";
+import {
+  useApplyBrandingTheme,
+  useTenantBrandingTheme,
+} from "../../hooks/useBrandingTheme";
 
 const Headbar = ({ onMenuClick }) => {
   const location = useLocation();
   const { data: profile, isFetching: isProfileFetching } = useFetchProfile();
+  const { data: branding, isFetching: isBrandingFetching } =
+    useTenantBrandingTheme();
+
+  useApplyBrandingTheme(branding, { fallbackLogo: logo });
 
   // Map URL path segments to human-readable names
   const pathMap = {
@@ -46,7 +54,25 @@ const Headbar = ({ onMenuClick }) => {
       {/* Desktop View */}
       <div className="w-full fixed top-0 left-0 h-[74px] px-6 md:px-8 py-3 z-[999] border-b bg-[#fff] border-[#C8CBD9] hidden md:flex justify-between items-center font-Outfit">
         {/* Logo */}
-        <img src={logo} className="w-[71px] h-[54px]" alt="Logo" />
+        {isBrandingFetching ? (
+          <div className="w-[110px] h-[48px] bg-gray-200 rounded animate-pulse" />
+        ) : (
+          <a
+            href={branding?.logoHref || "/"}
+            className="inline-flex items-center"
+            aria-label="Tenant home"
+          >
+            <img
+              src={branding?.logo ?? logo}
+              className="max-h-[54px] max-w-[160px] object-contain"
+              alt={
+                branding?.company?.name
+                  ? `${branding.company.name} Logo`
+                  : "Portal Logo"
+              }
+            />
+          </a>
+        )}
         {/* Centered Free Trial Button */}
         {/* <div className="absolute left-1/2 transform -translate-x-1/2">
           <button className="bg-[#288DD11A] rounded-[10px] py-3 px-9 text-center font-normal text-base text-[#288DD1]">

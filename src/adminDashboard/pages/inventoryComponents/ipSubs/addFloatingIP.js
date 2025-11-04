@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { X, Loader2 } from "lucide-react";
-import { useCreateFloatingIP } from "../../../../hooks/adminHooks/floatingIPHooks";
+import { useCreateFloatingIP } from "../../../../hooks/adminHooks/floatingIpHooks";
 import ToastUtils from "../../../../utils/toastUtil";
 
 const AddFloatingIP = ({ isOpen, onClose }) => {

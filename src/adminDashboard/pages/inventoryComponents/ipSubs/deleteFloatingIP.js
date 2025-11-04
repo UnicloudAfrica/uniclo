@@ -1,6 +1,6 @@
 import React from "react";
 import { X, Loader2 } from "lucide-react";
-import { useDeleteFloatingIP } from "../../../../hooks/adminHooks/floatingIPHooks";
+import { useDeleteFloatingIP } from "../../../../hooks/adminHooks/floatingIpHooks";
 import ToastUtils from "../../../../utils/toastUtil";
 
 const DeleteFloatingIP = ({ isOpen, onClose, floatingIP }) => {

@@ -1,18 +1,13 @@
-import React, { useState } from "react";
-import { Download, FileText, Check, Mail, CheckCircle } from "lucide-react";
+import React from "react";
+import { Download, CheckCircle, FileText } from "lucide-react";
+import ModernCard from "../../components/ModernCard";
+import ModernButton from "../../components/ModernButton";
 
-const DetailRow = ({ label, value }) => (
-  <div className="flex justify-between items-start py-2 border-b border-gray-100 last:border-b-0">
-    <span className="text-sm font-medium text-gray-600">{label}:</span>
-    <span className="text-sm text-gray-900 text-right">{value || "N/A"}</span>
-  </div>
-);
-
-const formatCurrency = (amount, currency) => {
-  if (amount === null || amount === undefined) return "N/A";
+const formatCurrency = (amount, currency = "USD") => {
+  if (amount === null || amount === undefined) return "—";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: currency || "NGN",
+    currency,
   }).format(amount);
 };
 
@@ -25,171 +20,198 @@ const downloadPdf = (base64String, filename) => {
   const byteArray = new Uint8Array(byteNumbers);
   const blob = new Blob([byteArray], { type: "application/pdf" });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
   URL.revokeObjectURL(url);
 };
 
+const TotalsCard = ({ amounts }) => (
+  <div className="w-full max-w-xs space-y-2">
+    {amounts.pre_discount_subtotal &&
+      amounts.pre_discount_subtotal !== amounts.subtotal && (
+        <div className="flex items-center justify-between text-sm text-slate-500">
+          <span>Subtotal before discount</span>
+          <span className="font-medium text-slate-700">
+            {formatCurrency(amounts.pre_discount_subtotal, amounts.currency)}
+          </span>
+        </div>
+      )}
+    {amounts.discount > 0 && (
+      <div className="flex items-center justify-between text-sm text-amber-600">
+        <span>{amounts.discount_label || "Discount"}</span>
+        <span className="font-semibold">
+          -{formatCurrency(amounts.discount, amounts.currency)}
+        </span>
+      </div>
+    )}
+    <div className="flex items-center justify-between border-t border-slate-200 pt-2 text-sm text-slate-600">
+      <span>Subtotal</span>
+      <span className="font-semibold">
+        {formatCurrency(amounts.subtotal, amounts.currency)}
+      </span>
+    </div>
+    <div className="flex items-center justify-between text-sm text-slate-600">
+      <span>Tax</span>
+      <span className="font-semibold">
+        {formatCurrency(amounts.tax, amounts.currency)}
+      </span>
+    </div>
+    <div className="flex items-center justify-between border-t border-slate-200 pt-2 text-base font-semibold text-slate-900">
+      <span>Total</span>
+      <span>{formatCurrency(amounts.total, amounts.currency)}</span>
+    </div>
+  </div>
+);
+
 const QuoteBreakdownStep = ({ apiResponse }) => {
-  if (!apiResponse || !apiResponse.invoices) {
+  if (!apiResponse?.invoices?.length) {
     return (
-      <div className="text-center text-gray-500">
-        No quote details to display.
+      <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-8 text-center text-sm text-slate-500">
+        No quote details available yet.
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 w-full">
-      <div className="text-center">
-        <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-        <h3 className="text-2xl font-bold text-gray-800">
-          Quote Created Successfully
+    <div className="space-y-8">
+      <div className="space-y-2 text-center">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+          <CheckCircle className="h-8 w-8" />
+        </div>
+        <h3 className="text-lg font-semibold text-slate-900">
+          Quote generated successfully
         </h3>
-        <p className="text-gray-500 mt-2">
-          Below is the summary of the generated quote. You can download the PDF
-          for your records.
+        <p className="text-sm text-slate-500">
+          Review the generated documents below or download them for sharing.
         </p>
       </div>
 
-      {apiResponse.invoices.map((invoiceData, index) => {
-        const invoice = invoiceData.payload;
-        return (
-        <div
-          key={invoice.invoice_number}
-          className="bg-white border border-gray-200 rounded-lg shadow-sm p-6"
-        >
-          <div className="flex flex-col md:flex-row gap-4 justify-between items-start mb-4">
-            <div>
-              <h4 className="text-xl font-semibold text-gray-800">
-                {invoice.subject || 'Multi-Quote'}
-              </h4>
-              <p className="text-sm text-gray-500">
-                Invoice #: {invoice.invoice_number}
-              </p>
-            </div>
-            {invoiceData.pdf && (
-              <button
-                onClick={() =>
-                  downloadPdf(invoiceData.pdf, invoiceData.filename || 'quote.pdf')
-                }
-                className="flex items-center gap-2 px-4 py-2 bg-[#288DD1] text-white font-medium rounded-md hover:bg-[#1976D2] transition-colors"
-              >
-                <Download className="w-4 h-4" /> Download PDF
-              </button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <h5 className="font-semibold mb-2">Address To:</h5>
-              <div className="flex flex-wrap items-center gap-x-2">
-                <p className="font-medium">{invoice.bill_to.name}</p>
-                <p className="text-sm text-gray-500">
-                  ({invoice.bill_to.email})
-                </p>
+      <div className="space-y-6">
+        {apiResponse.invoices.map((invoiceData) => {
+          const invoice = invoiceData.payload;
+          return (
+            <ModernCard
+              key={invoice.invoice_number}
+              padding="lg"
+              className="space-y-6"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-slate-400">
+                    Quote
+                  </p>
+                  <h4 className="text-xl font-semibold text-slate-900">
+                    {invoice.subject || "Generated Quote"}
+                  </h4>
+                  <p className="text-sm text-slate-500">
+                    Invoice #{invoice.invoice_number}
+                  </p>
+                </div>
+                {invoiceData.pdf && (
+                  <ModernButton
+                    variant="outline"
+                    size="sm"
+                    leftIcon={<Download className="h-4 w-4" />}
+                    onClick={() =>
+                      downloadPdf(
+                        invoiceData.pdf,
+                        invoiceData.filename || "quote.pdf"
+                      )
+                    }
+                  >
+                    Download PDF
+                  </ModernButton>
+                )}
               </div>
-            </div>
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <h5 className="font-semibold mb-2">Dates:</h5>
-              <p>
-                <strong>Issued:</strong>{" "}
-                {new Date(invoice.issued_at).toLocaleDateString()}
-              </p>
-              <p>
-                <strong>Due:</strong>{" "}
-                {new Date(invoice.due_at).toLocaleDateString()}
-              </p>
-            </div>
-          </div>
 
-          <div>
-            <h5 className="font-semibold mb-2">Line Items:</h5>
-            <div className="border rounded-lg overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="p-3 text-left">Item</th>
-                    <th className="p-3 text-right">Qty</th>
-                    <th className="p-3 text-right">Unit Price</th>
-                    <th className="p-3 text-right">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {invoice.line_items.map((item, idx) => (
-                    <tr key={idx} className="border-t">
-                      <td className="p-3">{item.name}</td>
-                      <td className="p-3 text-right">{item.quantity}</td>
-                      <td className="p-3 text-right">
-                        {formatCurrency(item.unit_amount, item.currency)}
-                      </td>
-                      <td className="p-3 text-right">
-                        {formatCurrency(item.total, item.currency)}
-                      </td>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                  <p className="text-xs uppercase tracking-wide text-slate-400">
+                    Bill to
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">
+                    {invoice.bill_to.name}
+                  </p>
+                  <p className="text-xs text-slate-500">{invoice.bill_to.email}</p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                  <p className="text-xs uppercase tracking-wide text-slate-400">
+                    Timeline
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Issued{" "}
+                    <span className="font-medium text-slate-900">
+                      {new Date(invoice.issued_at).toLocaleDateString()}
+                    </span>
+                  </p>
+                  <p className="text-sm text-slate-600">
+                    Due{" "}
+                    <span className="font-medium text-slate-900">
+                      {new Date(invoice.due_at).toLocaleDateString()}
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="overflow-hidden rounded-2xl border border-slate-200">
+                <table className="min-w-full divide-y divide-slate-200 text-sm">
+                  <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-medium">Item</th>
+                      <th className="px-4 py-3 text-right font-medium">
+                        Qty
+                      </th>
+                      <th className="px-4 py-3 text-right font-medium">
+                        Unit price
+                      </th>
+                      <th className="px-4 py-3 text-right font-medium">
+                        Total
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div className="mt-6 flex justify-end">
-            <div className="w-full max-w-xs space-y-2">
-              {invoice.amounts.pre_discount_subtotal && 
-                invoice.amounts.pre_discount_subtotal !== invoice.amounts.subtotal && (
-                <DetailRow
-                  label="Subtotal (before discount)"
-                  value={formatCurrency(
-                    invoice.amounts.pre_discount_subtotal,
-                    invoice.amounts.currency
-                  )}
-                />
-              )}
-              
-              {invoice.amounts.discount && invoice.amounts.discount > 0 && (
-                <DetailRow
-                  label={invoice.amounts.discount_label || "Discount"}
-                  value={`-${formatCurrency(
-                    invoice.amounts.discount,
-                    invoice.amounts.currency
-                  )}`}
-                />
-              )}
-              
-              <DetailRow
-                label="Subtotal"
-                value={formatCurrency(
-                  invoice.amounts.subtotal,
-                  invoice.amounts.currency
-                )}
-              />
-              
-              <DetailRow
-                label="Tax"
-                value={formatCurrency(
-                  invoice.amounts.tax,
-                  invoice.amounts.currency
-                )}
-              />
-              
-              <div className="border-t pt-2">
-                <DetailRow
-                  label="Total"
-                  value={formatCurrency(
-                    invoice.amounts.total,
-                    invoice.amounts.currency
-                  )}
-                />
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white">
+                    {invoice.line_items.map((item, idx) => (
+                      <tr key={`${item.name}-${idx}`}>
+                        <td className="px-4 py-3">
+                          <p className="font-medium text-slate-900">
+                            {item.name}
+                          </p>
+                          {item.description && (
+                            <p className="text-xs text-slate-500">
+                              {item.description}
+                            </p>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right text-slate-600">
+                          {item.quantity}
+                        </td>
+                        <td className="px-4 py-3 text-right text-slate-600">
+                          {formatCurrency(item.unit_amount, item.currency)}
+                        </td>
+                        <td className="px-4 py-3 text-right font-medium text-slate-900">
+                          {formatCurrency(item.total, item.currency)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            </div>
-          </div>
-        </div>
-        );
-      })}
+
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <FileText className="h-4 w-4 text-slate-400" />
+                  Generated via multi-quote workflow
+                </div>
+                <TotalsCard amounts={invoice.amounts} />
+              </div>
+            </ModernCard>
+          );
+        })}
+      </div>
     </div>
   );
 };

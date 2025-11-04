@@ -361,9 +361,9 @@ export default function AdminProjectDetails() {
           description: "Deployment region",
           icon: <Network size={18} className="text-[#288DD1]" />,
         },
-        {
+        projectDetails.provider && {
           label: "Provider",
-          value: (projectDetails.provider || "zadara").toUpperCase(),
+          value: projectDetails.provider.toUpperCase(),
           description: "Cloud provider",
           icon: <Globe size={18} className="text-[#288DD1]" />,
         },
@@ -379,7 +379,7 @@ export default function AdminProjectDetails() {
           description: "Storage resources",
           icon: <HardDrive size={18} className="text-[#288DD1]" />,
         },
-      ]
+      ].filter(Boolean)
     : [];
 
   const isRefreshing =

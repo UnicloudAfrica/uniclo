@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
-import { useUpdateFloatingIP } from "../../../../hooks/adminHooks/floatingIPHooks";
+import { useUpdateFloatingIP } from "../../../../hooks/adminHooks/floatingIpHooks";
 import ToastUtils from "../../../../utils/toastUtil";
 
 const EditFloatingIP = ({ isOpen, onClose, floatingIP }) => {

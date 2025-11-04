@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Plus,
   Trash2,
@@ -11,6 +11,7 @@ import {
   Shield,
   Globe,
   DollarSign,
+  Clock,
   AlertCircle,
   CheckCircle,
   Loader2,
@@ -23,6 +24,7 @@ import {
   RefreshCw,
   X,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   Info,
   CreditCard
@@ -30,25 +32,38 @@ import {
 
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
-import AdminActiveTab from "../components/adminActiveTab";
+import AdminPageShell from "../components/AdminPageShell";
 import ModernCard from "../components/ModernCard";
 import ModernButton from "../components/ModernButton";
 import ModernInput from "../components/ModernInput";
-import PaymentModal from "../components/PaymentModal";
+import StatusPill from "../components/StatusPill";
+import StepProgress from "../../dashboard/components/instancesubcomps/stepProgress";
 import ToastUtils from "../../utils/toastUtil";
 import { designTokens } from "../../styles/designTokens";
 import { useFetchProductPricing, useFetchGeneralRegions } from "../../hooks/resource";
-import { useFetchInstanceRequests } from "../../hooks/adminHooks/instancesHook";
 import { useFetchProjects } from "../../hooks/adminHooks/projectHooks";
 import { useFetchSecurityGroups } from "../../hooks/adminHooks/securityGroupHooks";
 import { useFetchKeyPairs } from "../../hooks/adminHooks/keyPairHooks";
 import { useFetchSubnets } from "../../hooks/adminHooks/subnetHooks";
-import { useFetchNetworkInterfaces } from "../../hooks/adminHooks/networkHooks";
+import { useFetchNetworks } from "../../hooks/adminHooks/networkHooks";
 import { useFetchTenants, useFetchSubTenantByTenantID } from "../../hooks/adminHooks/tenantHooks";
 import { useFetchClients } from "../../hooks/adminHooks/clientHooks";
 import useAdminAuthStore from "../../stores/adminAuthStore";
 import config from "../../config";
 import { useLocation } from "react-router-dom";
+
+const extractRegionCode = (region) => {
+  if (!region) return "";
+  if (typeof region === "string") return region;
+  return (
+    region.code ||
+    region.region ||
+    region.slug ||
+    region.id ||
+    region.identifier ||
+    ""
+  );
+};
 
 // Configuration Card Component
 const InstanceConfigCard = ({
@@ -116,20 +131,33 @@ const InstanceConfigCard = ({
   const { data: securityGroups } = useFetchSecurityGroups(projectIdentifier, selectedRegion, { enabled: !!projectIdentifier && !!selectedRegion });
   const { data: keyPairs } = useFetchKeyPairs(projectIdentifier, selectedRegion, { enabled: !!projectIdentifier && !!selectedRegion });
   const { data: subnets } = useFetchSubnets(projectIdentifier, selectedRegion, { enabled: !!projectIdentifier && !!selectedRegion });
-  const { data: networkInterfaces } = useFetchNetworkInterfaces(projectIdentifier, selectedRegion, { enabled: !!projectIdentifier && !!selectedRegion });
+  const { data: networksResponse } = useFetchNetworks(projectIdentifier, selectedRegion, { enabled: !!projectIdentifier && !!selectedRegion });
+  const networkOptions = useMemo(() => {
+    if (!networksResponse) return [];
+    if (Array.isArray(networksResponse)) return networksResponse;
+    if (Array.isArray(networksResponse.data)) return networksResponse.data;
+    return [];
+  }, [networksResponse]);
 
   // Fetch region-scoped products for this specific configuration
-  const { data: computeInstancesByRegion } = useFetchProductPricing(selectedRegion, "compute_instance", { enabled: !!selectedRegion });
-  const { data: osImagesByRegion } = useFetchProductPricing(selectedRegion, "os_image", { enabled: !!selectedRegion });
-  const { data: volumeTypesByRegion } = useFetchProductPricing(selectedRegion, "volume_type", { enabled: !!selectedRegion });
+  const { data: computeInstancesByRegion } = useFetchProductPricing(selectedRegion, "compute_instance", { enabled: !!selectedRegion, keepPreviousData: true });
+  const { data: osImagesByRegion } = useFetchProductPricing(selectedRegion, "os_image", { enabled: !!selectedRegion, keepPreviousData: true });
+  const { data: volumeTypesByRegion } = useFetchProductPricing(selectedRegion, "volume_type", { enabled: !!selectedRegion, keepPreviousData: true });
 
   // Fetch projects filtered by selected region
-  const { data: projectsRespForRegion } = useFetchProjects({ per_page: 100, region: selectedRegion }, { enabled: !!selectedRegion });
+  const { data: projectsRespForRegion } = useFetchProjects(
+    { per_page: 100, region: selectedRegion },
+    { enabled: !!selectedRegion, keepPreviousData: true }
+  );
   const unfilteredProjects = projectsRespForRegion?.data || resources?.projects || [];
-  const projectsForRegion = (unfilteredProjects || []).filter(p => {
+  const projectsForRegion = (unfilteredProjects || []).filter((project) => {
     if (!selectedRegion) return true;
-    const projRegion = p?.region || p?.region;
-    return !projRegion || String(projRegion) === String(selectedRegion);
+    const projectRegion =
+      extractRegionCode(project?.region) ||
+      project?.region_code ||
+      project?.region ||
+      "";
+    return !projectRegion || String(projectRegion) === String(selectedRegion);
   });
 
   // Reset dependent selections when region or project changes
@@ -140,7 +168,7 @@ const InstanceConfigCard = ({
       updateConfig('network_id', '');
       updateConfig('subnet_id', '');
       updateConfig('security_group_ids', []);
-      updateConfig('key_pair_id', '');
+      updateConfig('keypair_name', '');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRegion]);
@@ -150,7 +178,7 @@ const InstanceConfigCard = ({
       updateConfig('network_id', '');
       updateConfig('subnet_id', '');
       updateConfig('security_group_ids', []);
-      updateConfig('key_pair_id', '');
+      updateConfig('keypair_name', '');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectIdentifier]);
@@ -500,7 +528,7 @@ const InstanceConfigCard = ({
               className="modern-button btn-compact inline-flex items-center px-3 py-2"
               style={{
                 '--btn-bg': '#f3f4f6',
-                '--btn-color': '#374151',
+                '--btn-color': '#ffffff',
                 '--btn-border': '1px solid transparent',
                 '--btn-shadow': 'none',
                 '--btn-hover-bg': '#e5e7eb',
@@ -533,11 +561,26 @@ const InstanceConfigCard = ({
                     } ${(!projectIdentifier || !selectedRegion) ? 'bg-gray-50 cursor-not-allowed' : ''}`}
                 >
                   <option value="">None (use default)</option>
-                  {(networkInterfaces || []).map(network => (
-                    <option key={network.id} value={network.id}>
-                      {network.name}
-                    </option>
-                  ))}
+                  {networkOptions.map((network) => {
+                    const value =
+                      network?.id ??
+                      network?.network_id ??
+                      network?.uuid ??
+                      network?.identifier ??
+                      "";
+                    if (!value) return null;
+                    const label =
+                      network?.name ??
+                      network?.display_name ??
+                      network?.network_name ??
+                      network?.label ??
+                      value;
+                    return (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 
@@ -645,6 +688,888 @@ const InstanceConfigCard = ({
   );
 };
 
+const InlinePaymentPanel = ({
+  transactionData,
+  onPaymentComplete,
+  onModifyOrder,
+}) => {
+  const [paymentStatus, setPaymentStatus] = useState("pending");
+  const [timeRemaining, setTimeRemaining] = useState(null);
+  const [isPolling, setIsPolling] = useState(false);
+  const [selectedPaymentOption, setSelectedPaymentOption] = useState(null);
+
+  const {
+    transaction,
+    instances,
+    payment,
+    order,
+    order_items: orderItems = [],
+    pricing_breakdown: pricingBreakdown = [],
+  } = transactionData?.data || {};
+  const paymentGatewayOptions = payment?.payment_gateway_options || [];
+
+  useEffect(() => {
+    setPaymentStatus("pending");
+    setTimeRemaining(null);
+  }, [transactionData]);
+
+  useEffect(() => {
+    if (paymentGatewayOptions.length > 0) {
+      const paystackCardOption = paymentGatewayOptions.find(
+        (option) =>
+          option.name?.toLowerCase().includes("paystack") &&
+          option.payment_type?.toLowerCase() === "card"
+      );
+      setSelectedPaymentOption(paystackCardOption || paymentGatewayOptions[0]);
+    } else {
+      setSelectedPaymentOption(null);
+    }
+  }, [paymentGatewayOptions]);
+
+  useEffect(() => {
+    if (!payment?.expires_at) {
+      setTimeRemaining(null);
+      return;
+    }
+
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const expiry = new Date(payment.expires_at).getTime();
+      const remaining = expiry - now;
+
+      if (remaining > 0) {
+        const hours = Math.floor(remaining / (1000 * 60 * 60));
+        const minutes = Math.floor(
+          (remaining % (1000 * 60 * 60)) / (1000 * 60)
+        );
+        const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+        setTimeRemaining({ hours, minutes, seconds });
+      } else {
+        setTimeRemaining(null);
+        setPaymentStatus("expired");
+      }
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [payment?.expires_at]);
+
+  const pollTransactionStatus = async () => {
+    if (!transaction?.id || isPolling) return;
+
+    setIsPolling(true);
+    try {
+      const { token } = useAdminAuthStore.getState();
+      const response = await fetch(
+        `${config.baseURL}/business/transactions/${transaction.id}/status`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      );
+      const data = await response.json();
+
+      if (data.success && data.data) {
+        if (data.data.status === "successful") {
+          setPaymentStatus("completed");
+          onPaymentComplete?.(data.data);
+        } else if (data.data.status === "failed") {
+          setPaymentStatus("failed");
+        }
+      }
+    } catch (error) {
+      console.error("Failed to poll transaction status:", error);
+    } finally {
+      setIsPolling(false);
+    }
+  };
+
+  useEffect(() => {
+    if (
+      (paymentStatus === "pending" || paymentStatus === "transfer_pending") &&
+      transaction?.id
+    ) {
+      const interval = setInterval(pollTransactionStatus, 10000);
+      return () => clearInterval(interval);
+    }
+    return undefined;
+  }, [paymentStatus, transaction?.id]);
+
+  useEffect(() => {
+    if (!window.PaystackPop) {
+      const script = document.createElement("script");
+      script.src = "https://js.paystack.co/v1/inline.js";
+      script.async = true;
+      document.body.appendChild(script);
+
+      return () => {
+        if (document.body.contains(script)) {
+          document.body.removeChild(script);
+        }
+      };
+    }
+    return undefined;
+  }, []);
+
+  const handlePaymentOptionChange = (optionId) => {
+    const option = paymentGatewayOptions.find(
+      (opt) => String(opt.id) === String(optionId)
+    );
+    setSelectedPaymentOption(option || null);
+  };
+
+  const handlePayNow = () => {
+    if (!selectedPaymentOption) return;
+
+    if (selectedPaymentOption.payment_type?.toLowerCase() === "card") {
+      if (!selectedPaymentOption.transaction_reference) {
+        ToastUtils.error(
+          "Payment reference not ready yet. Please try again in a moment."
+        );
+        return;
+      }
+
+      const paystackKey = process.env.REACT_APP_PAYSTACK_KEY;
+      if (!paystackKey) {
+        ToastUtils.error("Paystack public key missing. Contact support.");
+        return;
+      }
+
+      if (!window.PaystackPop || typeof window.PaystackPop.setup !== "function") {
+        ToastUtils.error(
+          "Unable to initialize Paystack. Please refresh the page and try again."
+        );
+        return;
+      }
+
+      try {
+        const amountMinorUnits = Math.round(
+          Number(selectedPaymentOption.total || 0) * 100
+        );
+
+        if (!Number.isFinite(amountMinorUnits) || amountMinorUnits <= 0) {
+          ToastUtils.error("Invalid payment amount; please regenerate the order.");
+          console.error("Invalid Paystack amount", selectedPaymentOption.total);
+          return;
+        }
+
+        const popup = window.PaystackPop.setup({
+          key: paystackKey,
+          email: transaction?.user?.email || "user@example.com",
+          amount: amountMinorUnits,
+          reference: selectedPaymentOption.transaction_reference,
+          channels: ["card"],
+          onSuccess: (response) => {
+            setPaymentStatus("completed");
+            onPaymentComplete?.(response);
+          },
+          onCancel: () => {
+            console.log("Payment cancelled");
+          },
+          onError: (error) => {
+            console.error("Payment failed:", error);
+            setPaymentStatus("failed");
+            ToastUtils.error("Card payment failed. Please try again or use another method.");
+          },
+        });
+
+        if (popup && typeof popup.openIframe === "function") {
+          popup.openIframe();
+        } else {
+          throw new Error("Paystack popup unavailable");
+        }
+      } catch (error) {
+        console.error("Failed to launch Paystack:", error);
+        ToastUtils.error("Could not launch Paystack payment window. Please retry.");
+      }
+    } else if (
+      selectedPaymentOption.payment_type?.toLowerCase().includes("transfer")
+    ) {
+      setPaymentStatus("transfer_pending");
+      ToastUtils.info(
+        "Bank transfer details generated. Complete the transfer and refresh status."
+      );
+    }
+  };
+
+  const getStatusIcon = () => {
+    switch (paymentStatus) {
+      case "completed":
+        return <CheckCircle className="h-8 w-8 text-emerald-500" />;
+      case "failed":
+      case "expired":
+        return <AlertCircle className="h-8 w-8 text-red-500" />;
+      default:
+        return <Clock className="h-8 w-8 text-amber-500" />;
+    }
+  };
+
+  const getStatusMessage = () => {
+    switch (paymentStatus) {
+      case "completed":
+        return "Payment completed! Your instances are being provisioned and will be available shortly.";
+      case "failed":
+        return "Payment failed. Please try again or contact support.";
+      case "expired":
+        return "Payment link has expired. Please create a new order.";
+      case "transfer_pending":
+        return "Bank transfer initiated. Your order will update once the transfer is confirmed.";
+      default:
+        return "Complete your payment to proceed with instance provisioning.";
+    }
+  };
+
+  if (!transactionData) {
+    return null;
+  }
+
+  const statusLabel =
+    paymentStatus === "pending"
+      ? "Pending"
+      : paymentStatus
+        .split("_")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+
+  const statusTone =
+    paymentStatus === "completed"
+      ? "success"
+      : paymentStatus === "failed"
+        ? "warning"
+        : paymentStatus === "expired"
+          ? "warning"
+          : "info";
+
+  const currencyCode = transaction?.currency || order?.currency || "NGN";
+  const formatCurrency = (value, overrideCurrency) => {
+    const numeric = Number(value);
+    const currency = overrideCurrency || currencyCode;
+    if (!Number.isFinite(numeric)) {
+      return `${currency} 0.00`;
+    }
+    try {
+      return new Intl.NumberFormat("en-NG", {
+        style: "currency",
+        currency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(numeric);
+    } catch (err) {
+      return `${currency} ${numeric.toFixed(2)}`;
+    }
+  };
+
+  const breakdown = selectedPaymentOption?.charge_breakdown || {};
+  const breakdownCurrency = breakdown.currency || currencyCode;
+  const baseAmount = Number(
+    breakdown.base_amount ?? transaction?.amount ?? order?.total ?? 0
+  );
+  const selectedTotal = Number(
+    breakdown.grand_total ?? selectedPaymentOption?.total ?? baseAmount
+  );
+  const gatewayFee = Number(
+    breakdown.total_fees ?? Math.max(selectedTotal - baseAmount, 0)
+  );
+  const percentageFee = Number(breakdown.percentage_fee ?? 0);
+  const flatFee = Number(breakdown.flat_fee ?? 0);
+
+  return (
+    <div className="space-y-6">
+      <ModernCard
+        padding="lg"
+        className="overflow-hidden border border-primary-100 bg-gradient-to-br from-primary-50 via-white to-primary-100 shadow-sm"
+      >
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="rounded-2xl bg-white p-2 shadow-sm">
+              {getStatusIcon()}
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-lg font-semibold text-slate-900 sm:text-xl">
+                Complete payment
+              </h3>
+              <p className="text-xs text-slate-500 sm:text-sm">
+                Transaction #{transaction?.identifier || transaction?.id || "N/A"}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusPill label={statusLabel} tone={statusTone} />
+            <ModernButton variant="ghost" onClick={pollTransactionStatus}>
+              Refresh status
+            </ModernButton>
+            <ModernButton variant="ghost" onClick={onModifyOrder}>
+              Modify order
+            </ModernButton>
+          </div>
+        </div>
+        <div
+          className="mt-4 rounded-2xl border px-4 py-3"
+          style={{
+            backgroundColor:
+              paymentStatus === "completed"
+                ? designTokens.colors.success[50]
+                : designTokens.colors.neutral[50],
+            borderColor: designTokens.colors.neutral[200],
+          }}
+        >
+          <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
+            <span
+              className="font-medium"
+              style={{
+                color:
+                  paymentStatus === "completed"
+                    ? designTokens.colors.success[800]
+                    : designTokens.colors.neutral[700],
+              }}
+            >
+              {getStatusMessage()}
+            </span>
+            {timeRemaining && paymentStatus === "pending" && (
+              <span
+                className="font-medium"
+                style={{ color: designTokens.colors.warning[600] }}
+              >
+                Expires in {timeRemaining.hours}h {timeRemaining.minutes}m{" "}
+                {timeRemaining.seconds}s
+              </span>
+            )}
+          </div>
+        </div>
+      </ModernCard>
+
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="px-6 py-6">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="space-y-4">
+              <h4
+                className="flex items-center font-semibold"
+                style={{ color: designTokens.colors.neutral[900] }}
+              >
+                <DollarSign className="mr-2 h-5 w-5" />
+                Payment Details
+              </h4>
+              <div className="space-y-4 text-sm">
+                <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Order amount</span>
+                    <span className="font-semibold text-slate-900">
+                      {formatCurrency(baseAmount, breakdownCurrency)}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="text-slate-500">Gateway fees</span>
+                    <span className="font-medium text-amber-600">
+                      {gatewayFee > 0
+                        ? formatCurrency(gatewayFee, breakdownCurrency)
+                        : `${breakdownCurrency} 0.00`}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="text-slate-500">Total due</span>
+                    <span className="text-lg font-semibold text-slate-900">
+                      {formatCurrency(selectedTotal, breakdownCurrency)}
+                    </span>
+                  </div>
+                  <div className="mt-3 space-y-1 rounded-xl bg-white px-3 py-2 text-xs text-slate-600">
+                    <div className="flex items-center justify-between">
+                      <span>Percentage fee</span>
+                      <span>{formatCurrency(percentageFee, breakdownCurrency)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Flat fee</span>
+                      <span>{formatCurrency(flatFee, breakdownCurrency)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Total fees</span>
+                      <span>{formatCurrency(gatewayFee, breakdownCurrency)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs uppercase tracking-wide text-slate-400">
+                    <span>Gateway</span>
+                    <span>Reference</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span
+                      className="rounded px-2 py-1 text-xs font-medium capitalize"
+                      style={{
+                        backgroundColor: designTokens.colors.primary[100],
+                        color: designTokens.colors.primary[800],
+                      }}
+                    >
+                      {selectedPaymentOption?.name || "—"} ·{" "}
+                      {selectedPaymentOption?.payment_type || "—"}
+                    </span>
+                    <span
+                      className="rounded px-2 py-1 font-mono text-xs"
+                      style={{
+                        backgroundColor: designTokens.colors.neutral[100],
+                        color: designTokens.colors.neutral[700],
+                      }}
+                    >
+                      {selectedPaymentOption?.transaction_reference || "—"}
+                    </span>
+                  </div>
+                </div>
+
+                {paymentGatewayOptions.length > 1 && (
+                  <div className="col-span-full space-y-2">
+                    <label
+                      className="block text-xs font-medium"
+                      style={{ color: designTokens.colors.neutral[700] }}
+                    >
+                      Payment method
+                    </label>
+                    <select
+                      value={selectedPaymentOption?.id || ""}
+                      onChange={(e) => handlePaymentOptionChange(e.target.value)}
+                      className="w-full rounded border px-2 py-1 text-xs"
+                      style={{
+                        borderColor: designTokens.colors.neutral[300],
+                        backgroundColor: designTokens.colors.neutral[0],
+                      }}
+                    >
+                      {paymentGatewayOptions.map((option) => {
+                        const optionBreakdown = option.charge_breakdown || {};
+                        const optionCurrency =
+                          optionBreakdown.currency || breakdownCurrency;
+                        const optionTotal = Number(
+                          optionBreakdown.grand_total ?? option.total ?? 0
+                        );
+                        const optionFee = Number(
+                          optionBreakdown.total_fees ??
+                          Math.max(optionTotal - baseAmount, 0)
+                        );
+                        return (
+                          <option key={option.id} value={option.id}>
+                            {`${option.name} (${option.payment_type}) • ${formatCurrency(
+                              optionTotal,
+                              optionCurrency
+                            )} – fees ${formatCurrency(optionFee, optionCurrency)}`}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4
+                className="flex items-center font-semibold"
+                style={{ color: designTokens.colors.neutral[900] }}
+              >
+                <Server className="mr-2 h-5 w-5" />
+                Instances ({instances?.length || 0})
+              </h4>
+              <div className="max-h-48 space-y-2 overflow-y-auto">
+                {instances?.map((instance, index) => {
+                  const config = instance.configuration || {};
+                  const compute = config.compute || {};
+                  const osImage = config.os_image || {};
+                  const primaryVolume = config.primary_volume || {};
+                  const additionalVolumes = Array.isArray(config.additional_volumes)
+                    ? config.additional_volumes
+                    : [];
+                  const pricingInfo = instance.pricing || {};
+                  const project = config.project || {};
+
+                  return (
+                    <div
+                      key={instance.id}
+                      className="rounded-lg p-3 text-sm"
+                      style={{ backgroundColor: designTokens.colors.neutral[50] }}
+                    >
+                      <div className="mb-1 flex items-center justify-between">
+                        <span
+                          className="font-medium"
+                          style={{ color: designTokens.colors.neutral[900] }}
+                        >
+                          {instance.name || `Instance ${index + 1}`}
+                        </span>
+                        <span
+                          className="rounded px-2 py-1 text-xs"
+                          style={{
+                            backgroundColor: designTokens.colors.primary[100],
+                            color: designTokens.colors.primary[800],
+                          }}
+                        >
+                          {instance.provider} • {instance.region}
+                        </span>
+                      </div>
+                      <div
+                        className="text-xs"
+                        style={{ color: designTokens.colors.neutral[600] }}
+                      >
+                        Status: <span className="font-medium">{instance.status}</span>
+                      </div>
+                      {instance.months && (
+                        <div className="text-xs text-slate-500">
+                          Term: {instance.months} month{instance.months === 1 ? "" : "s"}
+                        </div>
+                      )}
+                      <div className="mt-3 space-y-1 text-xs text-slate-600">
+                        {compute?.name && (
+                          <div>
+                            <span className="font-medium text-slate-700">Compute:</span>{" "}
+                            {compute.name}
+                            {compute.vcpu ? ` · ${compute.vcpu} vCPU` : ""}
+                            {compute.ram_mb
+                              ? ` • ${Math.round(Number(compute.ram_mb) / 1024)} GB RAM`
+                              : ""}
+                          </div>
+                        )}
+                        {osImage?.name && (
+                          <div>
+                            <span className="font-medium text-slate-700">OS:</span>{" "}
+                            {osImage.name}
+                          </div>
+                        )}
+                        {(primaryVolume?.name || primaryVolume?.size_gb) && (
+                          <div>
+                            <span className="font-medium text-slate-700">
+                              Primary volume:
+                            </span>{" "}
+                            {(primaryVolume.name || "Volume").trim()} •{" "}
+                            {primaryVolume.size_gb} GB
+                          </div>
+                        )}
+                        {additionalVolumes.length > 0 && (
+                          <div>
+                            <span className="font-medium text-slate-700">
+                              Additional volumes:
+                            </span>{" "}
+                            {additionalVolumes
+                              .map((vol) => {
+                                const label = vol.volume_type_id
+                                  ? `#${vol.volume_type_id}`
+                                  : "Volume";
+                                return `${label} (${vol.size_gb} GB)`;
+                              })
+                              .join(", ")}
+                          </div>
+                        )}
+                        {config.security_groups?.length > 0 && (
+                          <div>
+                            <span className="font-medium text-slate-700">
+                              Security groups:
+                            </span>{" "}
+                            {config.security_groups.join(", ")}
+                          </div>
+                        )}
+                        {config.network && (
+                          <div>
+                            <span className="font-medium text-slate-700">Network:</span>{" "}
+                            {config.network}
+                          </div>
+                        )}
+                        {config.key_name && (
+                          <div>
+                            <span className="font-medium text-slate-700">SSH key:</span>{" "}
+                            {config.key_name}
+                          </div>
+                        )}
+                        {project?.name && (
+                          <div>
+                            <span className="font-medium text-slate-700">Project:</span>{" "}
+                            {project.name}
+                          </div>
+                        )}
+                        {config.tags?.length > 0 && (
+                          <div>
+                            <span className="font-medium text-slate-700">Tags:</span>{" "}
+                            {config.tags.join(", ")}
+                          </div>
+                        )}
+                      </div>
+                      {pricingInfo.subtotal !== undefined && (
+                        <div className="mt-3 flex items-center justify-between rounded-xl bg-white px-3 py-2 text-xs">
+                          <span className="text-slate-500">Instance total</span>
+                          <span className="font-semibold text-slate-900">
+                            {formatCurrency(
+                              pricingInfo.subtotal,
+                              pricingInfo.currency || currencyCode
+                            )}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {pricingBreakdown.length > 0 && (
+            <div className="mt-6 space-y-4 border-t border-slate-200 pt-4">
+              <h4
+                className="flex items-center font-semibold"
+                style={{ color: designTokens.colors.neutral[900] }}
+              >
+                <Info className="mr-2 h-5 w-5 text-primary-500" />
+                Order breakdown
+              </h4>
+              <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+                {pricingBreakdown.map((bundle, index) => (
+                  <div
+                    key={`pricing-${index}`}
+                    className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-600"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800">
+                          Configuration {index + 1} • {bundle.instance_count} instance
+                          {bundle.instance_count === 1 ? "" : "s"}
+                        </p>
+                        <p className="text-[11px] uppercase tracking-wide text-slate-400">
+                          {bundle.months} month{bundle.months === 1 ? "" : "s"} term
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[11px] text-slate-500">Total</p>
+                        <p className="text-sm font-semibold text-slate-900">
+                          {formatCurrency(bundle.total, bundle.currency)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-3 space-y-1 rounded-xl bg-white px-3 py-2">
+                      <div className="flex items-center justify-between">
+                        <span>Subtotal</span>
+                        <span>{formatCurrency(bundle.subtotal, bundle.currency)}</span>
+                      </div>
+                      {bundle.discount > 0 && (
+                        <div className="flex items-center justify-between text-amber-600">
+                          <span>
+                            Discount
+                            {bundle.discount_label ? ` (${bundle.discount_label})` : ""}
+                          </span>
+                          <span>-{formatCurrency(bundle.discount, bundle.currency)}</span>
+                        </div>
+                      )}
+                      {Number(bundle.tax) > 0 && (
+                        <div className="flex items-center justify-between">
+                          <span>Tax</span>
+                          <span>{formatCurrency(bundle.tax, bundle.currency)}</span>
+                        </div>
+                      )}
+                    </div>
+                    {Array.isArray(bundle.lines) && bundle.lines.length > 0 && (
+                      <details className="mt-2">
+                        <summary className="cursor-pointer text-[11px] font-medium text-primary-600">
+                          View line items
+                        </summary>
+                        <div className="mt-2 space-y-1 rounded-xl border border-slate-100 bg-white px-3 py-2">
+                          {bundle.lines.map((line, lineIdx) => (
+                            <div
+                              key={`line-${index}-${lineIdx}`}
+                              className="flex items-center justify-between"
+                            >
+                              <span className="max-w-[60%] text-slate-600">
+                                {line.name} · {line.quantity}×
+                              </span>
+                              <span className="font-semibold text-slate-800">
+                                {formatCurrency(line.total, line.currency)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {orderItems.length > 0 && (
+            <div className="mt-6 space-y-3 border-t border-slate-200 pt-4">
+              <h4
+                className="flex items-center font-semibold"
+                style={{ color: designTokens.colors.neutral[900] }}
+              >
+                <Server className="mr-2 h-5 w-5" />
+                Order items
+              </h4>
+              <div className="space-y-2 text-xs text-slate-600">
+                {orderItems.map((item) => (
+                  <div
+                    key={`order-item-${item.id}`}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2"
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-medium text-slate-800">
+                        {item.description ||
+                          (item.instance?.name
+                            ? `${item.instance.name}`
+                            : `Line ${item.id}`)}
+                      </span>
+                      <span className="text-[11px] uppercase tracking-wide text-slate-400">
+                        Qty {item.quantity} · {item.itemable_type?.split("\\").pop()}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[11px] text-slate-500">Unit</p>
+                      <p className="font-semibold text-slate-900">
+                        {formatCurrency(item.unit_price, item.currency)}
+                      </p>
+                      <p className="text-[11px] text-slate-500">Subtotal</p>
+                      <p className="font-semibold text-slate-900">
+                        {formatCurrency(item.subtotal, item.currency)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-6 flex flex-col gap-3 border-t border-slate-200 pt-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <Info className="h-4 w-4 text-primary-500" />
+              {paymentStatus === "completed"
+                ? "Payment completed. Provisioning underway."
+                : "Verify payment information and proceed to finalize your order."}
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              {paymentStatus === "pending" && selectedPaymentOption && (
+                <ModernButton
+                  variant="secondary"
+                  onClick={handlePayNow}
+                  leftIcon={
+                    selectedPaymentOption.payment_type?.toLowerCase() === "card" ? (
+                      <CreditCard className="h-4 w-4" />
+                    ) : (
+                      <Server className="h-4 w-4" />
+                    )
+                  }
+                >
+                  {selectedPaymentOption.payment_type?.toLowerCase() === "card"
+                    ? "Pay with card"
+                    : "Bank transfer"}
+                </ModernButton>
+              )}
+              <ModernButton
+                variant="outline"
+                onClick={pollTransactionStatus}
+                isDisabled={isPolling}
+                leftIcon={<RefreshCw className="h-4 w-4" />}
+              >
+                {isPolling ? "Checking..." : "Check status"}
+              </ModernButton>
+            </div>
+          </div>
+
+          {paymentStatus === "pending" &&
+            selectedPaymentOption?.payment_type
+              ?.toLowerCase()
+              .includes("transfer") &&
+            selectedPaymentOption?.details && (
+              <div
+                className="mt-6 rounded-xl border px-4 py-3"
+                style={{
+                  backgroundColor: designTokens.colors.warning[50],
+                  borderColor: designTokens.colors.warning[200],
+                }}
+              >
+                <h5
+                  className="mb-3 flex items-center font-semibold"
+                  style={{ color: designTokens.colors.warning[800] }}
+                >
+                  <Server className="mr-2 h-4 w-4" />
+                  Bank transfer details
+                </h5>
+                <div className="space-y-2 text-sm">
+                  {selectedPaymentOption.details.account_name && (
+                    <div className="flex justify-between">
+                      <span style={{ color: designTokens.colors.warning[700] }}>
+                        Account name:
+                      </span>
+                      <span
+                        className="font-mono font-medium"
+                        style={{ color: designTokens.colors.neutral[900] }}
+                      >
+                        {selectedPaymentOption.details.account_name}
+                      </span>
+                    </div>
+                  )}
+                  {selectedPaymentOption.details.account_number && (
+                    <div className="flex justify-between">
+                      <span style={{ color: designTokens.colors.warning[700] }}>
+                        Account number:
+                      </span>
+                      <span
+                        className="font-mono font-medium"
+                        style={{ color: designTokens.colors.neutral[900] }}
+                      >
+                        {selectedPaymentOption.details.account_number}
+                      </span>
+                    </div>
+                  )}
+                  {selectedPaymentOption.details.bank_name && (
+                    <div className="flex justify-between">
+                      <span style={{ color: designTokens.colors.warning[700] }}>
+                        Bank:
+                      </span>
+                      <span
+                        className="font-medium"
+                        style={{ color: designTokens.colors.neutral[900] }}
+                      >
+                        {selectedPaymentOption.details.bank_name}
+                      </span>
+                    </div>
+                  )}
+                  <div
+                    className="flex items-center justify-between border-t border-dashed pt-2"
+                    style={{ borderColor: designTokens.colors.warning[200] }}
+                  >
+                    <span style={{ color: designTokens.colors.warning[700] }}>
+                      Amount to transfer:
+                    </span>
+                    <span
+                      className="text-lg font-bold"
+                      style={{ color: designTokens.colors.success[700] }}
+                    >
+                      ₦{selectedPaymentOption.total?.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          {paymentStatus === "pending" && (
+            <div
+              className="mt-4 rounded-xl border px-4 py-3 text-sm"
+              style={{
+                backgroundColor: designTokens.colors.info[50],
+                borderColor: designTokens.colors.info[200],
+                color: designTokens.colors.info[700],
+              }}
+            >
+              <p className="flex items-start">
+                <AlertCircle className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0" />
+                {selectedPaymentOption?.payment_type?.toLowerCase().includes(
+                  "transfer"
+                )
+                  ? 'After making the bank transfer, click "Check status" or wait for automatic verification. Your instances will be provisioned once payment is confirmed.'
+                  : 'After completing payment, your instances will be automatically provisioned on Zadara. This card will update automatically, or you can click "Check status" to refresh.'}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Main Component
 export default function MultiInstanceCreation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -661,7 +1586,7 @@ export default function MultiInstanceCreation() {
     network_id: '',
     subnet_id: '',
     security_group_ids: [],
-    key_pair_id: '',
+    keypair_name: '',
     floating_ip_count: 0,
     tags: []
   }]);
@@ -671,15 +1596,14 @@ export default function MultiInstanceCreation() {
   const [pricingLoading, setPricingLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [expandedConfigs, setExpandedConfigs] = useState(new Set([0]));
-  const [activeStep, setActiveStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
   const [fastTrack, setFastTrack] = useState(false);
   // Admin assignment (optional)
   const [assignType, setAssignType] = useState(''); // '', 'tenant', 'user'
   const [selectedTenantId, setSelectedTenantId] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
-  
-  // Payment modal state
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
+
+  // Payment state
   const [paymentTransactionData, setPaymentTransactionData] = useState(null);
 
   // Fetch regions from API
@@ -708,27 +1632,39 @@ export default function MultiInstanceCreation() {
 
   // For top-level loading indicator only; per-card fetches will handle region variations
   const firstRegion = regions && regions.length > 0 ? regions[0] : null;
-  const firstRegionCode = typeof firstRegion === 'string' ? firstRegion : (firstRegion?.code || firstRegion?.region || firstRegion?.slug || firstRegion?.id || '');
+  const firstRegionCode = extractRegionCode(firstRegion);
   const selectedRegion = configurations[0]?.region || firstRegionCode;
 
   // Use product-pricing API to fetch resources based on region (for first config as baseline)
   const { data: computeInstances, isFetching: isComputeInstancesFetching } =
     useFetchProductPricing(selectedRegion, "compute_instance", {
       enabled: !!selectedRegion,
+      keepPreviousData: true,
     });
   const { data: osImages, isFetching: isOsImagesFetching } =
     useFetchProductPricing(selectedRegion, "os_image", {
       enabled: !!selectedRegion,
+      keepPreviousData: true,
     });
   const { data: volumeTypes, isFetching: isVolumeTypesFetching } =
     useFetchProductPricing(selectedRegion, "volume_type", {
       enabled: !!selectedRegion,
+      keepPreviousData: true,
     });
   // Fetch projects for admin filtered by region (used as baseline; cards fetch per-region too)
-  const { data: projectsResponse, isFetching: isProjectsFetching } = useFetchProjects({ per_page: 100, region: selectedRegion });
+  const { data: projectsResponse, isFetching: isProjectsFetching } = useFetchProjects(
+    { per_page: 100, region: selectedRegion },
+    { keepPreviousData: true }
+  );
   const projects = projectsResponse?.data || [];
 
   const loading = isProjectsFetching || isComputeInstancesFetching || isOsImagesFetching || isVolumeTypesFetching;
+  const isInitialLoading =
+    loading &&
+    !computeInstances &&
+    !osImages &&
+    !volumeTypes &&
+    projects.length === 0;
 
   // Set default region when regions are loaded and no region is set
   useEffect(() => {
@@ -741,7 +1677,10 @@ export default function MultiInstanceCreation() {
         return prev;
       }
 
-      const defaultRegion = regions[0].code;
+      const defaultRegion = extractRegionCode(regions[0]);
+      if (!defaultRegion) {
+        return prev;
+      }
       return [
         { ...prev[0], region: defaultRegion },
         ...prev.slice(1)
@@ -760,7 +1699,7 @@ export default function MultiInstanceCreation() {
   // Add new configuration
   const addConfiguration = () => {
     const first = regions && regions.length > 0 ? regions[0] : null;
-    const defaultRegionCode = typeof first === 'string' ? first : (first?.code || first?.region || first?.slug || first?.id || '');
+    const defaultRegionCode = extractRegionCode(first);
     const newConfig = {
       name: '',
       description: '',
@@ -829,10 +1768,18 @@ export default function MultiInstanceCreation() {
   // Validate configurations before preview/create
   const validateForPricing = () => {
     const newErrors = {};
+    if (!configurations.length) {
+      newErrors.instances = ["Add at least one configuration before continuing."];
+      setErrors(newErrors);
+      ToastUtils.warning("Add at least one configuration before continuing.");
+      return false;
+    }
+
     configurations.forEach((c, i) => {
       // region or project_id (identifier) must exist
       if (!c.region && !c.project_id) {
         newErrors[`instances.${i}.region`] = ["Region or Project is required."];
+        newErrors[`instances.${i}.project_id`] = ["Region or Project is required."];
       }
       if (!c.compute_instance_id) {
         newErrors[`instances.${i}.compute_instance_id`] = ["Instance Type is required."];
@@ -855,6 +1802,8 @@ export default function MultiInstanceCreation() {
             newErrors[`instances.${i}.volume_types.${vi}.storage_size_gb`] = ["Size must be at least 1 GiB."];
           }
         });
+      } else {
+        newErrors[`instances.${i}.volume_types`] = ["At least one volume definition is required."];
       }
       if (c.bandwidth_id && (!c.bandwidth_count || Number(c.bandwidth_count) < 1)) {
         newErrors[`instances.${i}.bandwidth_count`] = ["Bandwidth count must be at least 1 when bandwidth is selected."];
@@ -942,6 +1891,7 @@ export default function MultiInstanceCreation() {
   const createInstances = async () => {
     setCreating(true);
     setErrors({});
+    setPaymentTransactionData(null);
 
     try {
       const { token } = useAdminAuthStore.getState();
@@ -987,17 +1937,14 @@ export default function MultiInstanceCreation() {
       const data = await response.json();
 
       if (data.success) {
-        // Check if payment is required (non-fast-track)
         if (data.data?.payment?.required && !data.data?.fast_track_completed) {
-          // Show payment modal
           setPaymentTransactionData(data);
-          setShowPaymentModal(true);
-          setCreating(false);
+          setCurrentStep(PAYMENT_STEP_INDEX);
           ToastUtils.info('Payment required. Please complete payment to proceed.');
         } else {
           // Fast-track completed - redirect to instances page to see details
           ToastUtils.success(data.message || 'Instances created successfully!');
-          
+
           // Redirect to instances page
           setTimeout(() => {
             window.location.href = '/admin-dashboard/instances';
@@ -1025,27 +1972,672 @@ export default function MultiInstanceCreation() {
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
   };
-  
+
   // Handle payment completion
-  const handlePaymentComplete = (completedTransaction) => {
-    console.log('Payment completed:', completedTransaction);
-    setShowPaymentModal(false);
+  const handlePaymentComplete = (_completedTransaction) => {
     ToastUtils.success('Payment completed! Your instances are being provisioned.');
-    
-    // Redirect to instances page after a short delay
+
     setTimeout(() => {
       window.location.href = '/admin-dashboard/instances';
     }, 2000);
   };
-  
-  const handleClosePaymentModal = () => {
-    setShowPaymentModal(false);
-    setPaymentTransactionData(null);
-  };
 
   const totalInstances = configurations.reduce((sum, config) => sum + (config.count || 0), 0);
+  const selectedTenant = tenants?.find(
+    (tenant) => String(tenant.id) === String(selectedTenantId)
+  );
+  const scopedClients = selectedTenantId ? subTenantClients : clients;
+  const selectedUser = scopedClients?.find(
+    (client) => String(client.id) === String(selectedUserId)
+  );
 
-  if (loading) {
+  const configurationStepReady = useMemo(() => {
+    if (!configurations.length) {
+      return false;
+    }
+
+    return configurations.every((config) => {
+      const hasLocation = Boolean(config.region || config.project_id);
+      const hasCompute = Boolean(config.compute_instance_id);
+      const hasImage = Boolean(config.os_image_id);
+      const validCount = Number(config.count) > 0;
+      const validMonths = Number(config.months) > 0;
+      const volumesValid =
+        Array.isArray(config.volume_types) &&
+        config.volume_types.length > 0 &&
+        config.volume_types.every(
+          (volume) =>
+            Boolean(volume.volume_type_id) &&
+            Number(volume.storage_size_gb) > 0
+        );
+
+      return (
+        hasLocation && hasCompute && hasImage && validCount && validMonths && volumesValid
+      );
+    });
+  }, [configurations]);
+
+  const PAYMENT_STEP_INDEX = 3;
+  const steps = ["Assignment", "Configurations", "Review & Launch", "Payment"];
+  const stepDescriptions = [
+    "Connect this deployment to the right owner and optional recipients.",
+    "Define compute, storage, and networking for each batch.",
+    "Verify pricing, toggle fast track, and launch the deployment.",
+    "Complete payment to release provisioning.",
+  ];
+  const stepDescription =
+    currentStep === 1 && !configurationStepReady
+      ? "Complete required configuration details before continuing to review."
+      : currentStep === PAYMENT_STEP_INDEX && !paymentTransactionData
+        ? "Create an order from the review step to generate payment instructions."
+        : stepDescriptions[currentStep] || stepDescriptions[0];
+
+  const handleNextStep = () => {
+    if (currentStep === 1) {
+      const isValid = validateForPricing();
+      if (!configurationStepReady || !isValid) {
+        return;
+      }
+    }
+    if (currentStep === PAYMENT_STEP_INDEX - 1) {
+      if (!paymentTransactionData) {
+        ToastUtils.info("Launch an order first to generate payment instructions.");
+        return;
+      }
+    }
+    setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
+  };
+
+  const handleBackStep = () => {
+    setCurrentStep((prev) => Math.max(prev - 1, 0));
+  };
+
+  const disableContinue =
+    (currentStep === 1 && !configurationStepReady) ||
+    currentStep === PAYMENT_STEP_INDEX - 1;
+
+  const renderAssignmentCard = () => (
+    <ModernCard padding="lg" className="space-y-5">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-900">
+            Assignment (admin only)
+          </h3>
+          <p className="text-xs text-slate-500">
+            Route this deployment to a tenant or client workspace for easier follow-up.
+          </p>
+        </div>
+        <StatusPill
+          label={
+            assignType
+              ? `${assignType === "tenant" ? "Tenant" : "User"} assignment`
+              : "Optional"
+          }
+          tone={assignType ? "info" : "neutral"}
+        />
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {[
+          { value: "", label: "Unassigned" },
+          { value: "tenant", label: "Tenant" },
+          { value: "user", label: "User" },
+        ].map((option) => (
+          <button
+            key={option.value || "none"}
+            type="button"
+            onClick={() => {
+              setAssignType(option.value);
+              setSelectedTenantId("");
+              setSelectedUserId("");
+            }}
+            className={`rounded-2xl border px-3 py-2 text-sm font-medium transition ${assignType === option.value
+                ? "border-primary-400 bg-primary-50 text-primary-700"
+                : "border-slate-200 bg-white text-slate-600 hover:border-primary-200"
+              }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-slate-500">
+            Assign to
+          </label>
+          <select
+            value={assignType}
+            onChange={(e) => {
+              const value = e.target.value;
+              setAssignType(value);
+              setSelectedTenantId("");
+              setSelectedUserId("");
+            }}
+            className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+          >
+            <option value="">None</option>
+            <option value="tenant">Tenant</option>
+            <option value="user">User (Client)</option>
+          </select>
+        </div>
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-slate-500">
+            Tenant
+          </label>
+          <select
+            value={selectedTenantId}
+            onChange={(e) => {
+              setSelectedTenantId(e.target.value);
+              setSelectedUserId("");
+            }}
+            disabled={assignType !== "tenant" && assignType !== "user"}
+            className={`w-full rounded-2xl border px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 ${assignType ? "bg-white" : "bg-slate-50 text-slate-400"
+              }`}
+          >
+            <option value="">
+              {assignType ? "Select tenant" : "Choose assignment type"}
+            </option>
+            {tenants?.map((tenant) => (
+              <option key={tenant.id} value={tenant.id}>
+                {tenant.name || tenant.company_name || `Tenant ${tenant.id}`}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-slate-500">
+            User
+          </label>
+          <select
+            value={selectedUserId}
+            onChange={(e) => setSelectedUserId(e.target.value)}
+            disabled={assignType !== "user"}
+            className={`w-full rounded-2xl border px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 ${assignType === "user" ? "bg-white" : "bg-slate-50 text-slate-400"
+              }`}
+          >
+            <option value="">
+              {assignType === "user" ? "Select user" : "Choose user assignment"}
+            </option>
+            {scopedClients?.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.name ||
+                  `${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+                  user.email ||
+                  `User ${user.id}`}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+      <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
+        Current assignment:{" "}
+        <span className="font-medium text-slate-700">
+          {assignType === "tenant" && selectedTenant
+            ? selectedTenant.name || selectedTenant.company_name
+            : assignType === "user" && selectedUser
+              ? selectedUser.name ||
+              `${selectedUser.first_name || ""} ${selectedUser.last_name || ""}`.trim() ||
+              selectedUser.email
+              : "Not assigned"}
+        </span>
+      </div>
+    </ModernCard>
+  );
+
+  const renderConfigurationsStep = () => (
+    <>
+      <ModernCard padding="lg" className="space-y-3">
+        <h3 className="text-sm font-semibold text-slate-900">
+          Build configurations
+        </h3>
+        <p className="text-xs text-slate-500">
+          Configure compute, storage, networking, and optional add-ons for each batch. Duplicate an existing configuration to accelerate similar builds.
+        </p>
+      </ModernCard>
+      <div className="space-y-6">
+        {configurations.map((config, index) => (
+          <InstanceConfigCard
+            key={index}
+            config={config}
+            index={index}
+            onUpdate={updateConfiguration}
+            onDelete={deleteConfiguration}
+            onDuplicate={duplicateConfiguration}
+            resources={{
+              compute_instances: computeInstances || [],
+              os_images: osImages || [],
+              volume_types: volumeTypes || [],
+              regions: regions,
+              projects: projects,
+            }}
+            errors={errors}
+            isExpanded={expandedConfigs.has(index)}
+            onToggleExpand={toggleConfigExpansion}
+          />
+        ))}
+      </div>
+      <ModernButton
+        variant="primary"
+        onClick={addConfiguration}
+        leftIcon={<Plus className="h-4 w-4" />}
+      >
+        Add another configuration
+      </ModernButton>
+    </>
+  );
+
+  const renderReviewStep = () => (
+    <ModernCard padding="lg" className="space-y-6">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <button
+          type="button"
+          onClick={() => setFastTrack(!fastTrack)}
+          className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm transition ${fastTrack
+              ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+              : "border-slate-200 bg-white text-slate-600 hover:border-primary-200"
+            }`}
+        >
+          <div
+            className={`relative h-5 w-10 rounded-full transition ${fastTrack ? "bg-emerald-500/80" : "bg-slate-200"
+              }`}
+          >
+            <span
+              className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition ${fastTrack ? "right-1" : "left-1"
+                }`}
+            />
+          </div>
+          <div>
+            <p className="font-medium">
+              {fastTrack ? "Fast track enabled" : "Enable fast track"}
+            </p>
+            <p className="text-xs">
+              {fastTrack
+                ? "Instances begin provisioning immediately after payment."
+                : "Keep this off to review the order before provisioning."}
+            </p>
+          </div>
+        </button>
+        <div className="flex flex-wrap gap-3">
+          <ModernButton
+            variant="outline"
+            onClick={getPricingPreview}
+            isDisabled={pricingLoading || totalInstances === 0}
+            isLoading={pricingLoading}
+            leftIcon={<Calculator className="h-4 w-4" />}
+          >
+            Calculate pricing
+          </ModernButton>
+          <ModernButton
+            variant="ghost"
+            onClick={() => (window.location.href = "/admin-dashboard/projects")}
+          >
+            Cancel
+          </ModernButton>
+        </div>
+      </div>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-center gap-2 text-sm text-slate-600">
+          <Info className="h-4 w-4 text-primary-500" />
+          {totalInstances > 0
+            ? `Ready to create ${totalInstances} instance${totalInstances === 1 ? "" : "s"}`
+            : "Configure at least one instance to continue."}
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <ModernButton
+            variant="secondary"
+            onClick={() => {
+              if (!paymentTransactionData) {
+                ToastUtils.info("Launch an order first to generate payment instructions.");
+                return;
+              }
+              setCurrentStep(PAYMENT_STEP_INDEX);
+            }}
+            isDisabled={!paymentTransactionData || creating}
+            leftIcon={<CreditCard className="h-4 w-4" />}
+          >
+            Go to payment
+          </ModernButton>
+          <button
+            onClick={() => {
+              if (!pricing) {
+                ToastUtils.warning("Please calculate pricing before launching.");
+                return;
+              }
+              createInstances();
+            }}
+            disabled={creating || totalInstances === 0}
+            className="group relative inline-flex items-center justify-center overflow-hidden rounded-2xl px-6 py-3 text-sm font-semibold text-white transition focus:outline-none focus:ring-4 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-50"
+            style={{
+              background: fastTrack
+                ? `linear-gradient(135deg, ${designTokens.colors.success[400]} 0%, ${designTokens.colors.success[600]} 50%, ${designTokens.colors.success[700]} 100%)`
+                : `linear-gradient(135deg, ${designTokens.colors.primary[400]} 0%, ${designTokens.colors.primary[600]} 50%, ${designTokens.colors.primary[700]} 100%)`,
+              boxShadow: fastTrack
+                ? `0 12px 35px -8px ${designTokens.colors.success[500]}60`
+                : `0 12px 35px -8px ${designTokens.colors.primary[500]}60`,
+            }}
+          >
+            <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-30">
+              <div className="h-full w-full bg-white/60" />
+            </div>
+            <div className="relative flex items-center gap-2">
+              {creating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>
+                    {fastTrack ? "Launching instances…" : "Creating order…"}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4" />
+                  <span>{fastTrack ? "Launch now" : "Create order"}</span>
+                </>
+              )}
+            </div>
+          </button>
+        </div>
+      </div>
+    </ModernCard>
+  );
+
+  const renderPaymentStep = () => {
+    if (!paymentTransactionData) {
+      return (
+        <ModernCard padding="lg" className="space-y-4">
+          <h3 className="text-sm font-semibold text-slate-900">
+            Payment pending
+          </h3>
+          <p className="text-xs text-slate-500">
+            Generate an order from the review step to unlock payment instructions. Once an order is created, your payment summary will appear here.
+          </p>
+          <ModernButton
+            variant="primary"
+            onClick={() => setCurrentStep(PAYMENT_STEP_INDEX - 1)}
+            leftIcon={<ChevronLeft className="h-4 w-4" />}
+          >
+            Back to review
+          </ModernButton>
+        </ModernCard>
+      );
+    }
+
+    return (
+      <InlinePaymentPanel
+        transactionData={paymentTransactionData}
+        onPaymentComplete={handlePaymentComplete}
+        onModifyOrder={() => setCurrentStep(PAYMENT_STEP_INDEX - 1)}
+      />
+    );
+  };
+
+  const renderPrimaryContent = () => {
+    switch (currentStep) {
+      case 0:
+        return renderAssignmentCard();
+      case 1:
+        return renderConfigurationsStep();
+      case 2:
+        return renderReviewStep();
+      case PAYMENT_STEP_INDEX:
+        return renderPaymentStep();
+      default:
+        return renderAssignmentCard();
+    }
+  };
+
+  const renderSidebarContent = () => {
+    if (currentStep === 0) {
+      return (
+        <div className="space-y-6 2xl:sticky 2xl:top-24">
+          <ModernCard padding="lg" className="space-y-3">
+            <h3 className="text-sm font-semibold text-slate-900">
+              Deployment guide
+            </h3>
+            <ul className="space-y-2 text-xs text-slate-500">
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-primary-500" />
+                <span>Step 1: Assign the deployment so billing and notifications go to the right workspace.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-primary-500" />
+                <span>Step 2: Build configurations for each workload you want to launch.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-primary-500" />
+                <span>Step 3: Review pricing, optionally fast-track, and kick off provisioning.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-primary-500" />
+                <span>Step 4: Complete payment and monitor provisioning automatically.</span>
+              </li>
+            </ul>
+          </ModernCard>
+        </div>
+      );
+    }
+    if (currentStep === PAYMENT_STEP_INDEX) {
+      const transaction = paymentTransactionData?.data?.transaction;
+      const paymentMeta = paymentTransactionData?.data?.payment;
+
+      return (
+        <div className="space-y-6 2xl:sticky 2xl:top-24">
+          <ModernCard padding="lg" className="space-y-3">
+            <h3 className="text-sm font-semibold text-slate-900">
+              Payment summary
+            </h3>
+            <dl className="space-y-2 text-sm text-slate-600">
+              <div className="flex items-center justify-between">
+                <dt>Amount</dt>
+                <dd className="font-semibold text-slate-900">
+                  {transaction?.currency} {transaction?.amount?.toLocaleString()}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between">
+                <dt>Transaction ID</dt>
+                <dd className="font-mono text-xs text-slate-500">
+                  {transaction?.identifier || transaction?.id || "—"}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between">
+                <dt>Expires</dt>
+                <dd className="text-sm text-slate-500">
+                  {paymentMeta?.expires_at
+                    ? new Date(paymentMeta.expires_at).toLocaleString()
+                    : "—"}
+                </dd>
+              </div>
+            </dl>
+          </ModernCard>
+          <ModernCard padding="lg" className="space-y-3">
+            <h3 className="text-sm font-semibold text-slate-900">
+              Need help?
+            </h3>
+            <p className="text-xs text-slate-500">
+              Payments verify automatically. If a transfer is delayed, click “Check Status” below the payment details or contact billing support with your transaction reference.
+            </p>
+          </ModernCard>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6 2xl:sticky 2xl:top-24">
+        <ModernCard padding="lg" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-900">
+              Pricing snapshot
+            </h3>
+            <StatusPill
+              label={pricing ? "Preview ready" : "Action needed"}
+              tone={pricing ? "success" : "warning"}
+            />
+          </div>
+          {pricing ? (
+            <div className="space-y-3 text-sm text-slate-600">
+              {Array.isArray(pricing.previews) &&
+                pricing.previews.map((preview) => (
+                  <div
+                    key={preview.index}
+                    className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
+                  >
+                    <p className="font-semibold text-slate-800">
+                      Config {preview.index + 1} • {preview.count} item
+                      {preview.count === 1 ? "" : "s"}
+                    </p>
+                    <p className="text-xs">
+                      {preview.currency} {preview.total_price} total • {preview.currency}{" "}
+                      {preview.unit_price} / instance
+                    </p>
+                  </div>
+                ))}
+              <div className="rounded-xl bg-white px-3 py-3">
+                <p className="text-xs uppercase tracking-wide text-slate-500">
+                  Grand total
+                </p>
+                <p className="text-lg font-semibold text-slate-900">
+                  {pricing.currency} {pricing.grand_total}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <p className="text-xs text-slate-500">
+              Run a pricing preview to unlock cost projections and payment options.
+            </p>
+          )}
+        </ModernCard>
+
+        <ModernCard padding="lg" className="space-y-3">
+          <h3 className="text-sm font-semibold text-slate-900">
+            Assignment summary
+          </h3>
+          <dl className="space-y-2 text-sm text-slate-600">
+            <div className="flex items-center justify-between">
+              <dt>Scope</dt>
+              <dd className="font-medium text-slate-900">
+                {assignType ? assignType.toUpperCase() : "Not assigned"}
+              </dd>
+            </div>
+            <div className="flex items-center justify-between">
+              <dt>Tenant</dt>
+              <dd className="font-medium text-slate-900">
+                {selectedTenant
+                  ? selectedTenant.name || selectedTenant.company_name
+                  : "—"}
+              </dd>
+            </div>
+            <div className="flex items-center justify-between">
+              <dt>User</dt>
+              <dd className="font-medium text-slate-900">
+                {selectedUser
+                  ? selectedUser.name ||
+                  `${selectedUser.first_name || ""} ${selectedUser.last_name || ""}`.trim() ||
+                  selectedUser.email
+                  : "—"}
+              </dd>
+            </div>
+          </dl>
+        </ModernCard>
+
+        <ModernCard padding="lg" className="space-y-3">
+          <h3 className="text-sm font-semibold text-slate-900">
+            Launch checklist
+          </h3>
+          <ul className="space-y-2 text-sm text-slate-600">
+            <li className="flex items-start gap-2">
+              <CheckCircle className="h-4 w-4 text-emerald-500" />
+              <span>
+                Confirm each configuration has region, compute type, and OS image defined.
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle className="h-4 w-4 text-emerald-500" />
+              <span>
+                Run a pricing preview to confirm estimated spend before issuing the order.
+              </span>
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle className="h-4 w-4 text-emerald-500" />
+              <span>
+                Decide whether to enable fast track to start provisioning immediately.
+              </span>
+            </li>
+          </ul>
+        </ModernCard>
+      </div>
+    );
+  };
+
+  const renderNavigationCard = () => {
+    if (currentStep === PAYMENT_STEP_INDEX) {
+      return null;
+    }
+
+    const nextStepMessage =
+      currentStep === steps.length - 1
+        ? "Review totals and use the actions below to launch."
+        : currentStep === 1 && !configurationStepReady
+          ? "Fill in the required configuration details to unlock the review step."
+          : stepDescriptions[currentStep + 1];
+
+    const showContinue =
+      currentStep < steps.length - 1 && currentStep !== PAYMENT_STEP_INDEX - 1;
+
+    return (
+      <ModernCard
+        padding="lg"
+        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div className="text-sm text-slate-600">{nextStepMessage}</div>
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
+          {currentStep > 0 && (
+            <ModernButton variant="ghost" onClick={handleBackStep}>
+              Back
+            </ModernButton>
+          )}
+          {showContinue && (
+            <ModernButton
+              variant="primary"
+              onClick={handleNextStep}
+              isDisabled={disableContinue}
+            >
+              Continue
+            </ModernButton>
+          )}
+        </div>
+      </ModernCard>
+    );
+  };
+
+  const headerMeta = (
+    <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-gray-500">
+      <StatusPill
+        label={`Step ${currentStep + 1} of ${steps.length}`}
+        tone={currentStep + 1 === steps.length ? "success" : "info"}
+      />
+      <span>{steps[currentStep]}</span>
+      <span className="hidden sm:inline text-gray-300">•</span>
+      <span>
+        {totalInstances} instance{totalInstances === 1 ? "" : "s"}
+      </span>
+      <span className="hidden sm:inline text-gray-300">•</span>
+      <span>
+        {configurations.length} configuration
+        {configurations.length === 1 ? "" : "s"}
+      </span>
+      {currentStep === PAYMENT_STEP_INDEX && paymentTransactionData && (
+        <>
+          <span className="hidden sm:inline text-gray-300">•</span>
+          <span>
+            Payment{" "}
+            {(paymentTransactionData?.data?.transaction?.status || "pending")
+              .replace(/_/g, " ")
+              .replace(/\b\w/g, (char) => char.toUpperCase())}
+          </span>
+        </>
+      )}
+    </div>
+  );
+
+  if (isInitialLoading) {
     return (
       <>
         <AdminHeadbar onMenuClick={toggleMobileMenu} />
@@ -1053,22 +2645,35 @@ export default function MultiInstanceCreation() {
           isMobileMenuOpen={isMobileMenuOpen}
           onCloseMobileMenu={closeMobileMenu}
         />
-        <AdminActiveTab />
-        <main
-          className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8 flex items-center justify-center"
-          style={{ backgroundColor: designTokens.colors.neutral[25] }}
+        <AdminPageShell
+          breadcrumbs={[
+            { label: "Home", href: "/admin-dashboard" },
+            { label: "Instances", href: "/admin-dashboard/instances" },
+            { label: "Multi Instance Creation" },
+          ]}
+          title="Multi-Instance Creation"
+          description="Create multiple instances with different configurations in a single request."
+          subHeaderContent={headerMeta}
+          contentClassName="flex min-h-[60vh] items-center justify-center"
         >
-          <div className="text-center">
+          <div className="text-center space-y-2">
             <Loader2
-              className="w-8 h-8 animate-spin mx-auto mb-2"
+              className="w-8 h-8 animate-spin mx-auto"
               style={{ color: designTokens.colors.primary[500] }}
             />
-            <p style={{ color: designTokens.colors.neutral[700] }}>Loading resources...</p>
+            <p style={{ color: designTokens.colors.neutral[700] }}>
+              Loading resources...
+            </p>
           </div>
-        </main>
+        </AdminPageShell>
       </>
     );
   }
+
+  const sidebarContent = renderSidebarContent();
+  const layoutClass = sidebarContent
+    ? "grid gap-8 2xl:grid-cols-[minmax(0,1fr)_minmax(320px,360px)] 2xl:items-start"
+    : "space-y-8";
 
   return (
     <>
@@ -1077,412 +2682,63 @@ export default function MultiInstanceCreation() {
         isMobileMenuOpen={isMobileMenuOpen}
         onCloseMobileMenu={closeMobileMenu}
       />
-      <AdminActiveTab />
-
-      <main
-        className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full"
-        style={{ backgroundColor: designTokens.colors.neutral[25] }}
+      <AdminPageShell
+        breadcrumbs={[
+          { label: "Home", href: "/admin-dashboard" },
+          { label: "Instances", href: "/admin-dashboard/instances" },
+          { label: "Multi Instance Creation" },
+        ]}
+        title="Multi-Instance Creation"
+        description="Create multiple instances with different configurations in a single request."
+        subHeaderContent={headerMeta}
+        contentClassName="space-y-8"
       >
-        {/* Header */}
-        <div
-          className="bg-white px-6 md:px-8 py-6"
-          style={{ borderBottom: `1px solid ${designTokens.colors.neutral[200]}` }}
+        <ModernCard
+          padding="lg"
+          className="overflow-hidden border border-primary-100 bg-gradient-to-br from-primary-50 via-white to-primary-100 shadow-sm"
         >
-          <div className="flex items-center justify-between">
-            <div>
-              <h1
-                className="text-2xl font-bold"
-                style={{ color: designTokens.colors.neutral[900] }}
-              >
-                Multi-Instance Creation
-              </h1>
-              <p
-                className="text-sm mt-1"
-                style={{ color: designTokens.colors.neutral[500] }}
-              >
-                Create multiple instances with different configurations in a single request
-              </p>
-            </div>
-
-            <div className="flex items-center space-x-3">
-              <div className="text-right">
-                <p
-                  className="text-sm font-medium"
-                  style={{ color: designTokens.colors.neutral[900] }}
-                >
-                  {totalInstances} Total Instances
-                </p>
-                <p
-                  className="text-xs"
-                  style={{ color: designTokens.colors.neutral[500] }}
-                >
-                  {configurations.length} Configurations
-                </p>
-              </div>
-
-              {pricing && (
-                <div
-                  className="text-right px-3 py-2 rounded-lg"
-                  style={{ backgroundColor: designTokens.colors.success[50] }}
-                >
-                  <p
-                    className="text-sm font-semibold"
-                    style={{ color: designTokens.colors.success[900] }}
-                  >
-                    {pricing.currency} {pricing.grand_total}
-                  </p>
-                  <p
-                    className="text-xs"
-                    style={{ color: designTokens.colors.success[600] }}
-                  >
-                    Total Cost
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="p-6 md:p-8">
-          {/* Assignment (Admin only) */}
-          <ModernCard className="p-6 mb-8">
-            <h3
-              className="text-md font-semibold mb-4"
-              style={{ color: designTokens.colors.neutral[900] }}
-            >
-              Assignment (Admin only)
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Assign To</label>
-                <select
-                  value={assignType}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setAssignType(v);
-                    setSelectedTenantId('');
-                    setSelectedUserId('');
-                  }}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 border-gray-300"
-                >
-                  <option value="">None</option>
-                  <option value="tenant">Tenant</option>
-                  <option value="user">User (Client)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tenant</label>
-                <select
-                  value={selectedTenantId}
-                  onChange={(e) => {
-                    setSelectedTenantId(e.target.value);
-                    setSelectedUserId('');
-                  }}
-                  disabled={assignType !== 'tenant' && assignType !== 'user'}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${assignType ? 'border-gray-300' : 'bg-gray-50 cursor-not-allowed'}`}
-                >
-                  <option value="">{assignType ? 'Select Tenant' : 'Select assign type first'}</option>
-                  {tenants?.map(t => (
-                    <option key={t.id} value={t.id}>{t.name || t.company_name || `Tenant ${t.id}`}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">User</label>
-                <select
-                  value={selectedUserId}
-                  onChange={(e) => setSelectedUserId(e.target.value)}
-                  disabled={assignType !== 'user'}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${assignType === 'user' ? '' : 'bg-gray-50 cursor-not-allowed'}`}
-                >
-                  <option value="">{assignType === 'user' ? 'Select User' : 'Select assign type user'}</option>
-                  {(selectedTenantId ? subTenantClients : clients)?.map(u => (
-                    <option key={u.id} value={u.id}>{u.name || `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || `User ${u.id}`}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </ModernCard>
-
-          {/* Configuration Cards */}
-          <div className="space-y-6 mb-8">
-            {configurations.map((config, index) => (
-              <InstanceConfigCard
-                key={index}
-                config={config}
-                index={index}
-                onUpdate={updateConfiguration}
-                onDelete={deleteConfiguration}
-                onDuplicate={duplicateConfiguration}
-                resources={{
-                  compute_instances: computeInstances || [],
-                  os_images: osImages || [],
-                  volume_types: volumeTypes || [],
-                  regions: regions,
-                  projects: projects
-                }}
-                errors={errors}
-                isExpanded={expandedConfigs.has(index)}
-                onToggleExpand={toggleConfigExpansion}
-              />
-            ))}
-          </div>
-
-          {/* Add Configuration Button */}
-          <div className="mb-8">
-            <ModernButton
-              onClick={addConfiguration}
-              className="inline-flex items-center"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Add Another Configuration
-            </ModernButton>
-          </div>
-
-          {/* Pricing Section */}
-          {pricing && (
-            <ModernCard className="p-6 mb-8">
-              <h3
-                className="text-lg font-semibold mb-4"
-                style={{ color: designTokens.colors.neutral[900] }}
-              >
-                Pricing Breakdown
-              </h3>
-
-              <div className="space-y-4">
-                {pricing.previews.map((preview, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-4 rounded-lg"
-                    style={{ backgroundColor: designTokens.colors.neutral[50] }}
-                  >
-                    <div>
-                      <h4
-                        className="font-medium"
-                        style={{ color: designTokens.colors.neutral[900] }}
-                      >
-                        Configuration #{preview.index + 1}
-                      </h4>
-                      <p
-                        className="text-sm"
-                        style={{ color: designTokens.colors.neutral[500] }}
-                      >
-                        {preview.count} × {preview.product_name}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p
-                        className="font-semibold"
-                        style={{ color: designTokens.colors.neutral[900] }}
-                      >
-                        {preview.currency} {preview.total_price}
-                      </p>
-                      <p
-                        className="text-sm"
-                        style={{ color: designTokens.colors.neutral[500] }}
-                      >
-                        {preview.currency} {preview.unit_price} per instance
-                      </p>
-                    </div>
-                  </div>
-                ))}
-
-                <div className="pt-4" style={{ borderTop: `1px solid ${designTokens.colors.neutral[200]}` }}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4
-                        className="text-lg font-bold"
-                        style={{ color: designTokens.colors.neutral[900] }}
-                      >
-                        Grand Total
-                      </h4>
-                      <p
-                        className="text-sm"
-                        style={{ color: designTokens.colors.neutral[500] }}
-                      >
-                        {pricing.total_instances} instances across {pricing.total_configurations} configurations
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p
-                        className="text-2xl font-bold"
-                        style={{ color: designTokens.colors.success[600] }}
-                      >
-                        {pricing.currency} {pricing.grand_total}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </ModernCard>
-          )}
-
-          {/* Action Bar */}
-          <ModernCard className="flex items-center justify-between p-6">
-            <div className="flex items-center space-x-4">
-              <label
-                className="inline-flex items-center space-x-2 text-sm mr-4"
-                style={{ color: designTokens.colors.neutral[700] }}
-              >
-                <input
-                  type="checkbox"
-                  checked={fastTrack}
-                  onChange={(e) => setFastTrack(e.target.checked)}
-                  className="rounded"
-                  style={{
-                    borderColor: designTokens.colors.neutral[300],
-                    color: designTokens.colors.primary[600]
-                  }}
+          <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-primary-700">
+                <StatusPill
+                  label={`Step ${currentStep + 1} of ${steps.length}`}
+                  tone={currentStep + 1 === steps.length ? "success" : "info"}
                 />
-                <span>Fast track</span>
-              </label>
-
-              <ModernButton
-                onClick={getPricingPreview}
-                disabled={pricingLoading || totalInstances === 0}
-                variant="outline"
-                className="inline-flex items-center"
-              >
-                {pricingLoading ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Calculator className="w-4 h-4 mr-2" />
-                )}
-                Calculate Pricing
-              </ModernButton>
-
-              <div className="text-sm" style={{ color: designTokens.colors.neutral[600] }}>
-                <span className="flex items-center">
-                  <Info className="w-4 h-4 mr-1" />
-                  {totalInstances > 0 ? `Ready to create ${totalInstances} instances` : 'Configure at least one instance'}
+                <span className="text-sm font-medium text-primary-700">
+                  {steps[currentStep]}
                 </span>
               </div>
-            </div>
-
-            <div className="flex items-center space-x-3">
-              <ModernButton
-                onClick={() => window.location.href = '/admin-dashboard/projects'}
-                variant="ghost"
-              >
-                Cancel
-              </ModernButton>
-
-              <button
-                onClick={createInstances}
-                disabled={creating || totalInstances === 0 || !pricing}
-                className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                style={{
-                  background: fastTrack
-                    ? `linear-gradient(135deg, ${designTokens.colors.success[400]} 0%, ${designTokens.colors.success[600]} 50%, ${designTokens.colors.success[700]} 100%)`
-                    : `linear-gradient(135deg, ${designTokens.colors.primary[400]} 0%, ${designTokens.colors.primary[600]} 50%, ${designTokens.colors.primary[700]} 100%)`,
-                  borderRadius: '16px',
-                  border: 'none',
-                  boxShadow: fastTrack
-                    ? `0 12px 35px -8px ${designTokens.colors.success[500]}60, 0 8px 20px -6px ${designTokens.colors.success[600]}40, inset 0 1px 0 rgba(255, 255, 255, 0.2)`
-                    : `0 12px 35px -8px ${designTokens.colors.primary[500]}60, 0 8px 20px -6px ${designTokens.colors.primary[600]}40, inset 0 1px 0 rgba(255, 255, 255, 0.2)`,
-                  focusRingColor: fastTrack ? designTokens.colors.success[300] : designTokens.colors.primary[300],
-                  minHeight: '64px',
-                  minWidth: '200px'
-                }}
-              >
-                {/* Animated background overlay */}
-                <div 
-                  className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                  style={{
-                    background: fastTrack
-                      ? `linear-gradient(135deg, ${designTokens.colors.success[300]} 0%, ${designTokens.colors.success[500]} 100%)`
-                      : `linear-gradient(135deg, ${designTokens.colors.primary[300]} 0%, ${designTokens.colors.primary[500]} 100%)`,
-                    borderRadius: '16px'
-                  }}
+              <h2 className="text-2xl font-semibold text-slate-900 md:text-3xl">
+                Multi-instance launch console
+              </h2>
+              <p className="max-w-2xl text-sm text-primary-700 md:text-base">
+                {stepDescription}
+              </p>
+              <div className="flex flex-wrap items-center gap-3 text-xs text-primary-700 sm:text-sm">
+                <StatusPill
+                  label={`${totalInstances} instance${totalInstances === 1 ? "" : "s"}`}
+                  tone="info"
                 />
-                
-                {/* Shimmer effect */}
-                <div className="absolute inset-0 rounded-2xl overflow-hidden">
-                  <div 
-                    className="absolute -top-2 -left-full w-full h-full opacity-30 group-hover:left-full transition-all duration-1000 ease-out"
-                    style={{
-                      background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)',
-                      transform: 'skewX(-15deg)'
-                    }}
-                  />
-                </div>
-
-                {/* Content */}
-                <div className="relative flex items-center justify-center space-x-3 z-10">
-                  {creating ? (
-                    <>
-                      <div className="relative">
-                        <Loader2 className="w-6 h-6 animate-spin drop-shadow-sm" />
-                        <div className="absolute inset-0 w-6 h-6 border-2 border-transparent border-t-white/30 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
-                      </div>
-                      <span className="animate-pulse font-bold tracking-wide">
-                        {fastTrack ? 'Launching Instances...' : 'Creating Order...'}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <div className="relative">
-                        <div 
-                          className="absolute -inset-1 rounded-full opacity-75 group-hover:opacity-100 transition-opacity duration-300"
-                          style={{
-                            background: fastTrack
-                              ? `radial-gradient(circle, ${designTokens.colors.success[300]}40 0%, transparent 70%)`
-                              : `radial-gradient(circle, ${designTokens.colors.primary[300]}40 0%, transparent 70%)`
-                          }}
-                        />
-                        {fastTrack ? (
-                          <Play className="w-6 h-6 drop-shadow-sm relative z-10 group-hover:scale-110 transition-transform duration-300" />
-                        ) : (
-                          <CreditCard className="w-6 h-6 drop-shadow-sm relative z-10 group-hover:scale-110 transition-transform duration-300" />
-                        )}
-                      </div>
-                      
-                      <div className="flex flex-col items-start">
-                        <span className="font-bold tracking-wide text-lg leading-none mb-1">
-                          {fastTrack 
-                            ? '🚀 Launch Instance' + (totalInstances > 1 ? 's' : '')
-                            : '💳 Create Order'
-                          }
-                        </span>
-                        <span className="text-xs opacity-90 font-medium">
-                          {totalInstances} instance{totalInstances !== 1 ? 's' : ''} • {pricing?.currency} {pricing?.grand_total?.toLocaleString()}
-                        </span>
-                      </div>
-                      
-                      {/* Arrow indicator */}
-                      <div className="ml-2 opacity-80 group-hover:translate-x-1 transition-transform duration-300">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                        </svg>
-                      </div>
-                    </>
-                  )}
-                </div>
-                
-                {/* Pulse effect on hover */}
-                <div 
-                  className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-20 transition-all duration-300"
-                  style={{
-                    background: 'radial-gradient(circle at center, rgba(255, 255, 255, 0.8) 0%, transparent 70%)',
-                    animation: 'pulse 2s infinite'
-                  }}
+                <StatusPill
+                  label={`${configurations.length} configuration${configurations.length === 1 ? "" : "s"}`}
+                  tone="neutral"
                 />
-              </button>
+              </div>
             </div>
-          </ModernCard>
+            <div className="w-full max-w-xl rounded-2xl border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur">
+              <StepProgress currentStep={currentStep} steps={steps} />
+            </div>
+          </div>
+        </ModernCard>
+
+        <div className={layoutClass}>
+          <div className="space-y-6">
+            {renderPrimaryContent()}
+            {renderNavigationCard()}
+          </div>
+          {sidebarContent}
         </div>
-        
-        {/* Payment Modal */}
-        <PaymentModal
-          isOpen={showPaymentModal}
-          onClose={handleClosePaymentModal}
-          transactionData={paymentTransactionData}
-          onPaymentComplete={handlePaymentComplete}
-        />
-      </main>
+      </AdminPageShell>
     </>
   );
 }

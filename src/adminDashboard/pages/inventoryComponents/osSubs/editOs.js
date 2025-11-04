@@ -1,27 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useUpdateOsImage } from "../../../../hooks/adminHooks/os-imageHooks";
-import ToastUtils from "../../../../utils/toastUtil"; // Assuming ToastUtils is available
+import ToastUtils from "../../../../utils/toastUtil";
 
 const EditOS = ({ isOpen, onClose, osImage }) => {
-  const [formData, setFormData] = useState({
-    name: "",
-    // price: "", // Changed from license_fee to price
-  });
+  const [formData, setFormData] = useState({ name: "" });
   const [errors, setErrors] = useState({});
 
-  // Populate form data when the modal opens or when osImage changes
   useEffect(() => {
     if (isOpen && osImage) {
-      setFormData({
-        name: osImage.name || "",
-        // // Populate price from osImage.price, ensuring it's a number and formatted
-        // price:
-        //   osImage.price !== undefined && osImage.price !== null
-        //     ? parseFloat(osImage.price).toFixed(2)
-        //     : "",
-      });
-      setErrors({}); // Clear any previous errors
+      setFormData({ name: osImage.name || "" });
+      setErrors({});
     }
   }, [isOpen, osImage]);
 
@@ -32,19 +21,13 @@ const EditOS = ({ isOpen, onClose, osImage }) => {
     if (!formData.name.trim()) {
       newErrors.name = "OS Image Name is required";
     }
-    // // Validate price field
-    // if (!formData.price || isNaN(parseFloat(formData.price))) {
-    //   newErrors.price = "Price must be a valid number";
-    // } else if (parseFloat(formData.price) < 0) {
-    //   newErrors.price = "Price cannot be negative";
-    // }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const updateFormData = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: null })); // Clear error when input changes
+    setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
   const handleSubmit = (e) => {
@@ -53,29 +36,24 @@ const EditOS = ({ isOpen, onClose, osImage }) => {
     if (!validateForm()) return;
 
     if (osImage?.id) {
-      // Use osImage.id as the id for update
-      const updatedData = {
-        name: formData.name,
-        // price: parseFloat(formData.price), // Changed from license_fee to price
-      };
+      const updatedData = { name: formData.name };
 
       mutate(
-        { id: osImage.id, imageData: updatedData }, // Pass id and updated data
+        { id: osImage.id, imageData: updatedData },
         {
           onSuccess: () => {
-            console.log("OS Image updated successfully!");
-            ToastUtils.success("OS Image updated successfully"); // Assuming ToastUtils is imported
-            onClose(); // Close modal on success
+            ToastUtils.success("OS Image updated successfully");
+            onClose();
           },
           onError: (err) => {
             console.error("Failed to update OS Image:", err);
-            ToastUtils.error("Failed to update OS Image. Please try again."); // Assuming ToastUtils is imported
+            ToastUtils.error("Failed to update OS Image. Please try again.");
           },
         }
       );
     } else {
       console.error("No OS Image ID provided for update.");
-      ToastUtils.error("Cannot update: OS Image ID is missing."); // Assuming ToastUtils is imported
+      ToastUtils.error("Cannot update: OS Image ID is missing.");
     }
   };
 
@@ -84,7 +62,6 @@ const EditOS = ({ isOpen, onClose, osImage }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full">
-        {/* Header */}
         <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] w-full">
           <h2 className="text-lg font-semibold text-[#575758]">
             Edit OS Image: {osImage?.name || "N/A"}
@@ -96,7 +73,6 @@ const EditOS = ({ isOpen, onClose, osImage }) => {
             <X className="w-5 h-5" />
           </button>
         </div>
-        {/* Content */}
         <div className="px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start">
           <div className="space-y-4 w-full">
             <div>
@@ -120,34 +96,8 @@ const EditOS = ({ isOpen, onClose, osImage }) => {
                 <p className="text-red-500 text-xs mt-1">{errors.name}</p>
               )}
             </div>
-            {/* <div>
-              <label
-                htmlFor="price" // Changed from licenseFee to price
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Price (USD)<span className="text-red-500">*</span>{" "}
-                {/* Changed label text */}
-            {/* </label> */}
-            {/* <input
-                id="price" // Changed from licenseFee to price
-                type="number"
-                step="0.01" // Allow decimal values
-                value={formData.price} // Changed from license_fee to price
-                onChange={(e) => updateFormData("price", e.target.value)} // Changed from license_fee to price
-                placeholder="e.g., 0.00 or 15.50"
-                className={`w-full input-field ${
-                  errors.price ? "border-red-500" : "border-gray-300" // Changed from license_fee to price
-                }`}
-              /> */}
-            {/* {errors.price && ( // Changed from license_fee to price
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.price} {/* Changed from license_fee to price */}
-            {/* </p>
-              )}  */}
-            {/* </div> */}
           </div>
         </div>
-        {/* Footer */}
         <div className="flex items-center justify-end px-6 py-4 border-t rounded-b-[24px]">
           <div className="flex gap-3">
             <button

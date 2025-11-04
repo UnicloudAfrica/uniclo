@@ -3,7 +3,7 @@ import { X, Loader2 } from "lucide-react";
 import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
 import { useUpdateProduct } from "../../../hooks/adminHooks/adminProductHooks";
 
-const EditProduct = ({ isOpen, onClose, product }) => {
+const EditProduct = ({ isOpen, onClose, product, onUpdated }) => {
   const [formData, setFormData] = useState({
     name: "",
     region: "",
@@ -36,7 +36,12 @@ const EditProduct = ({ isOpen, onClose, product }) => {
     updateProduct(
       { id: product.id, productData: formData },
       {
-        onSuccess: () => onClose(),
+        onSuccess: () => {
+          onClose();
+          if (typeof onUpdated === "function") {
+            onUpdated();
+          }
+        },
         onError: (error) =>
           console.error("Error updating product:", error.message),
       }

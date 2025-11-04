@@ -46,6 +46,7 @@ import AdminClientCreate from "./adminDashboard/pages/adminClientCreate";
 import AdminClientDetails from "./adminDashboard/pages/adminClientDetails";
 import AdminModules from "./adminDashboard/pages/adminModules";
 import AdminPayment from "./adminDashboard/pages/adminPayment";
+import AdminPaymentDetails from "./adminDashboard/pages/adminPaymentDetails";
 import ForgotPassword from "./dashboard/pages/forgotPassword";
 import ResetPassword from "./dashboard/pages/resetPassword";
 // import AdminSignup from "./adminDashboard/pages/adminSignup";
@@ -67,6 +68,8 @@ import TenantRegister from "./tenantDashboard/pages/tenant-signup";
 import TenantLogin from "./tenantDashboard/pages/tenant-signin";
 import AdminUsers from "./adminDashboard/pages/adminUsers";
 import AdminUserCreate from "./adminDashboard/pages/adminUserCreate";
+import AdminUserDetails from "./adminDashboard/pages/adminUserDetails";
+import AdminUserEdit from "./adminDashboard/pages/adminUserEdit";
 import AdminProjects from "./adminDashboard/pages/adminProjects";
 import AdminProjectDetails from "./adminDashboard/pages/adminProjectDetails";
 import AdminAddInstance from "./adminDashboard/pages/adminAddInstance";
@@ -85,7 +88,6 @@ import AdminKeyPairs from "./adminDashboard/pages/adminKeyPairs";
 import AdminPricing from "./adminDashboard/pages/adminPricing";
 import AdminProducts from "./adminDashboard/pages/adminProducts";
 import AdminProductCreate from "./adminDashboard/pages/AdminProductCreate";
-import AdminColocation from "./adminDashboard/pages/adminColocation";
 import AddInstancePage from "./dashboard/pages/addInstance";
 // import AdminQuoteCalculator from "./adminDashboard/pages/AdminQuoteCalculator";
 import TenantQuotes from "./dashboard/pages/quotes";
@@ -96,9 +98,12 @@ import ClientProject from "./clientDashboard/pages/clientProjects";
 import ClientProjectDetails from "./clientDashboard/pages/clientProjectDetails";
 import ClientInstances from "./clientDashboard/pages/clientInstances";
 import ClientAddInstancePage from "./clientDashboard/pages/clientAddInstances";
+import ObjectStoragePage from "./clientDashboard/pages/ObjectStoragePage";
 import AdminMultiQuote from "./adminDashboard/pages/adminMultiQuote";
 import AdminAdvancedCalculator from "./adminDashboard/pages/adminAdvancedCalculator";
 import AdminInfrastructureSetup from "./adminDashboard/pages/adminInfrastructureSetup";
+import AdminObjectStorage from "./adminDashboard/pages/adminObjectStorage";
+import AdminObjectStorageCreate from "./adminDashboard/pages/adminObjectStorageCreate";
 import MultiInstanceCreation from "./adminDashboard/pages/multiInstanceCreation";
 // Instance Management routes removed - functionality moved to standard instances
 // import InstanceManagement from "./adminDashboard/pages/instanceManagement";
@@ -112,12 +117,16 @@ import AdminInstances from "./adminDashboard/pages/adminInstances";
 import AdminInstancesDetails from "./adminDashboard/pages/adminInstancesDetails";
 import TenantLeads from "./tenantDashboard/pages/tenant-leads";
 import TenantLeadDetails from "./tenantDashboard/pages/tenant-lead-details";
+import TenantObjectStorage from "./tenantDashboard/pages/TenantObjectStorage";
 import RegionApprovals from "./adminDashboard/pages/RegionApprovals";
 import RegionApprovalDetail from "./adminDashboard/pages/RegionApprovalDetail";
 import RegionApprovalEdit from "./adminDashboard/pages/RegionApprovalEdit";
 import RegionApprovalCreate from "./adminDashboard/pages/RegionApprovalCreate";
 import RegionDetail from "./adminDashboard/pages/RegionDetail";
 import RegionEdit from "./adminDashboard/pages/RegionEdit";
+import AdminOnboardingReview from "./adminDashboard/pages/adminOnboardingReview";
+import TenantOnboardingOverview from "./tenantDashboard/pages/TenantOnboardingOverview";
+import RegionCredentials from "./adminDashboard/pages/RegionCredentials";
 import RegionRequests from "./tenantDashboard/pages/RegionRequests";
 import RegionRequestDetail from "./tenantDashboard/pages/RegionRequestDetail";
 import NewRegionRequest from "./tenantDashboard/pages/NewRegionRequest";
@@ -125,6 +134,8 @@ import RevenueDashboard from "./tenantDashboard/pages/RevenueDashboard";
 
 import ClientDashboardLayout from "./clientDashboard/components/ClientDashboardLayout";
 import Press from "./pages/press";
+import TenantRoute from "./routes/TenantRoute";
+import OnboardingDashboard from "./dashboard/onboarding";
 function App() {
   const location = useLocation();
   const subdomain = getSubdomain();
@@ -186,28 +197,148 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/verify-mail" element={<VerifyMail />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/dashboard/modules" element={<Modules />} />
-          <Route path="/dashboard/instances" element={<PurchasedModules />} />
-          <Route path="/dashboard/clients" element={<Clients />} />
-          <Route path="/dashboard/requests" element={<Requests />} />
-          <Route path="/dashboard/projects" element={<Project />} />
-          <Route path="/dashboard/calculator" element={<TenantCalculator />} />
-          <Route path="/dashboard/products" element={<Products />} />
-          <Route path="/dashboard/admin-users" element={<TenantAdmin />} />
+          <Route
+            path="/dashboard/onboarding"
+            element={
+              <TenantRoute>
+                <OnboardingDashboard />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <TenantRoute>
+                <Dashboard />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/modules"
+            element={
+              <TenantRoute>
+                <Modules />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/instances"
+            element={
+              <TenantRoute>
+                <Instances />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/purchased-modules"
+            element={
+              <TenantRoute>
+                <PurchasedModules />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/clients"
+            element={
+              <TenantRoute>
+                <Clients />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/requests"
+            element={
+              <TenantRoute>
+                <Requests />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/projects"
+            element={
+              <TenantRoute>
+                <Project />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/calculator"
+            element={
+              <TenantRoute>
+                <TenantCalculator />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/products"
+            element={
+              <TenantRoute>
+                <Products />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/admin-users"
+            element={
+              <TenantRoute>
+                <TenantAdmin />
+              </TenantRoute>
+            }
+          />
           <Route
             path="/dashboard/projects/details"
-            element={<ProjectDetails />}
+            element={
+              <TenantRoute>
+                <ProjectDetails />
+              </TenantRoute>
+            }
           />
-          <Route path="/dashboard/instances" element={<Instances />} />
-          <Route path="/dashboard/quotes" element={<TenantQuotes />} />
-          <Route path="/dashboard/add-instance" element={<AddInstancePage />} />
+          <Route
+            path="/dashboard/instances/details"
+            element={
+              <TenantRoute>
+                <InstancesDetails />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/quotes"
+            element={
+              <TenantRoute>
+                <TenantQuotes />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/add-instance"
+            element={
+              <TenantRoute>
+                <AddInstancePage />
+              </TenantRoute>
+            }
+          />
 
           {/* Tenant Leads Routes */}
           <Route path="/tenant-dashboard/leads" element={<TenantLeads />} />
           <Route
             path="/tenant-dashboard/leads/details"
             element={<TenantLeadDetails />}
+          />
+          <Route
+            path="/tenant-dashboard/onboarding"
+            element={
+              <TenantRoute>
+                <TenantOnboardingOverview />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/tenant-dashboard/onboarding-review"
+            element={
+              <TenantRoute>
+                <TenantOnboardingOverview />
+              </TenantRoute>
+            }
           />
 
           {/* Tenant Region Marketplace Routes */}
@@ -227,24 +358,50 @@ function App() {
             path="/tenant-dashboard/revenue"
             element={<RevenueDashboard />}
           />
-          <Route path="/dashboard/account-settings" element={<Settings />} />
           <Route
-            path="/dashboard/tax-configurations"
-            element={<DashboardTaxConfigurations />}
+            path="/tenant-dashboard/object-storage"
+            element={<TenantObjectStorage />}
           />
           <Route
-            path="/dashboard/instances/details"
-            element={<InstancesDetails />}
+            path="/dashboard/account-settings"
+            element={
+              <TenantRoute>
+                <Settings />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/tax-configurations"
+            element={
+              <TenantRoute>
+                <DashboardTaxConfigurations />
+              </TenantRoute>
+            }
           />
           <Route
             path="/dashboard/clients/overview"
-            element={<ClientsOverview />}
+            element={
+              <TenantRoute>
+                <ClientsOverview />
+              </TenantRoute>
+            }
           />
           <Route
             path="/dashboard/payment-history"
-            element={<PaymentHistory />}
+            element={
+              <TenantRoute>
+                <PaymentHistory />
+              </TenantRoute>
+            }
           />
-          <Route path="/dashboard/support-ticket" element={<SupportTicket />} />
+          <Route
+            path="/dashboard/support-ticket"
+            element={
+              <TenantRoute>
+                <SupportTicket />
+              </TenantRoute>
+            }
+          />
 
           {/* admin pages */}
           <Route path="/admin-signin" element={<AdminLogin />} />
@@ -255,6 +412,14 @@ function App() {
           <Route
             path="/admin-dashboard/admin-users/create"
             element={<AdminUserCreate />}
+          />
+          <Route
+            path="/admin-dashboard/admin-users/:adminId"
+            element={<AdminUserDetails />}
+          />
+          <Route
+            path="/admin-dashboard/admin-users/:adminId/edit"
+            element={<AdminUserEdit />}
           />
           <Route path="/admin-dashboard/admins" element={<AdminUsers />} />
           <Route path="/admin-dashboard/partners" element={<AdminPartners />} />
@@ -281,6 +446,10 @@ function App() {
             element={<AdminPurchasedModules />}
           />
           <Route path="/admin-dashboard/payment" element={<AdminPayment />} />
+          <Route
+            path="/admin-dashboard/payment/:transactionId"
+            element={<AdminPaymentDetails />}
+          />
           <Route path="/admin-dashboard/products" element={<AdminProducts />} />
           <Route
             path="/admin-dashboard/products/add"
@@ -288,7 +457,7 @@ function App() {
           />
           <Route
             path="/admin-dashboard/colocation"
-            element={<AdminColocation />}
+            element={<AdminPricing initialTab="colocation" />}
           />
           <Route
             path="/admin-dashboard/inventory"
@@ -310,8 +479,16 @@ function App() {
             element={<RegionEdit />}
           />
           <Route
+            path="/admin-dashboard/regions/:id/credentials"
+            element={<RegionCredentials />}
+          />
+          <Route
             path="/admin-dashboard/region-approvals"
             element={<RegionApprovals />}
+          />
+          <Route
+            path="/admin-dashboard/onboarding-review"
+            element={<AdminOnboardingReview />}
           />
           <Route
             path="/admin-dashboard/region-approvals/create"
@@ -381,6 +558,14 @@ function App() {
             path="/admin-dashboard/instances/details"
             element={<AdminInstancesDetails />}
           />
+          <Route
+            path="/admin-dashboard/object-storage"
+            element={<AdminObjectStorage />}
+          />
+          <Route
+            path="/admin-dashboard/object-storage/create"
+            element={<AdminObjectStorageCreate />}
+          />
           {/* <Route
             path="/admin-dashboard/quote-calculator"
             element={<AdminQuoteCalculator />}
@@ -419,6 +604,10 @@ function App() {
             <Route
               path="/client-dashboard/add-instance"
               element={<ClientAddInstancePage />}
+            />
+            <Route
+              path="/client-dashboard/object-storage"
+              element={<ObjectStoragePage />}
             />
             <Route
               path="/client-dashboard/calculator"

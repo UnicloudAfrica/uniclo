@@ -75,9 +75,23 @@ export const useCreateTaxConfiguration = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createTaxConfiguration,
-    onSuccess: () => {
-      // Invalidate taxConfigurations query to refresh the list
-      queryClient.invalidateQueries(["taxConfigurations"]);
+    onSuccess: async (created) => {
+      const createdTaxType = created;
+      if (createdTaxType) {
+        queryClient.setQueryData(["taxConfigurations"], (current) => {
+          if (!Array.isArray(current)) {
+            return [createdTaxType];
+          }
+          const alreadyExists = current.some(
+            (item) => item?.id === createdTaxType.id
+          );
+          return alreadyExists ? current : [...current, createdTaxType];
+        });
+      }
+      await queryClient.invalidateQueries({
+        queryKey: ["taxConfigurations"],
+        refetchType: "active",
+      });
     },
     onError: (error) => {
       console.error("Error creating tax configuration:", error);
@@ -90,10 +104,26 @@ export const useUpdateTaxConfiguration = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateTaxConfiguration,
-    onSuccess: (data, variables) => {
-      // Invalidate both taxConfigurations list and specific taxConfiguration query
-      queryClient.invalidateQueries(["taxConfigurations"]);
-      queryClient.invalidateQueries(["taxConfiguration", variables.id]);
+    onSuccess: async (updated, variables) => {
+      const updatedTaxType = updated;
+      if (updatedTaxType) {
+        queryClient.setQueryData(["taxConfigurations"], (current) => {
+          if (!Array.isArray(current)) return current;
+          return current.map((item) =>
+            item?.id === updatedTaxType.id ? updatedTaxType : item
+          );
+        });
+      }
+      await queryClient.invalidateQueries({
+        queryKey: ["taxConfigurations"],
+        refetchType: "active",
+      });
+      if (variables?.id) {
+        await queryClient.invalidateQueries({
+          queryKey: ["taxConfiguration", variables.id],
+          refetchType: "inactive",
+        });
+      }
     },
     onError: (error) => {
       console.error("Error updating tax configuration:", error);
@@ -106,9 +136,15 @@ export const useDeleteTaxConfiguration = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteTaxConfiguration,
-    onSuccess: () => {
-      // Invalidate taxConfigurations query to refresh the list
-      queryClient.invalidateQueries(["taxConfigurations"]);
+    onSuccess: async (_data, id) => {
+      queryClient.setQueryData(["taxConfigurations"], (current) => {
+        if (!Array.isArray(current)) return current;
+        return current.filter((item) => item?.id !== id);
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["taxConfigurations"],
+        refetchType: "active",
+      });
     },
     onError: (error) => {
       console.error("Error deleting tax configuration:", error);

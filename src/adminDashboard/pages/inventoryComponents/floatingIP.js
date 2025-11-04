@@ -1,19 +1,97 @@
-import { useState } from "react";
-import { Loader2, Pencil, Trash2 } from "lucide-react";
-import { useFetchFloatingIPs } from "../../../hooks/adminHooks/floatingIPHooks";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
+import {
+  Globe,
+  MapPin,
+  DollarSign,
+  Pencil,
+  Trash2,
+  Plus,
+} from "lucide-react";
+import { useFetchFloatingIPs } from "../../../hooks/adminHooks/floatingIpHooks";
+import ResourceDataExplorer from "../../components/ResourceDataExplorer";
 import AddFloatingIP from "./ipSubs/addFloatingIP";
 import EditFloatingIP from "./ipSubs/editFloatingIP";
 import DeleteFloatingIP from "./ipSubs/deleteFloatingIP";
+import ModernButton from "../../components/ModernButton";
 
-const FloatingIP = ({ selectedRegion }) => {
-  const { data: ips, isFetching: isIPsFetching } =
-    useFetchFloatingIPs(selectedRegion);
+const formatCurrency = (amount, currency = "USD") => {
+  if (amount === null || amount === undefined || Number.isNaN(amount)) {
+    return "—";
+  }
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(amount));
+};
+
+const FloatingIP = ({ selectedRegion, onMetricsChange }) => {
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [search, setSearch] = useState("");
+
   const [isAddIPsModalOpen, setIsAddIPsModalOpen] = useState(false);
   const [isEditIPsModalOpen, setIsEditIPsModalOpen] = useState(false);
   const [isDeleteIPsModalOpen, setIsDeleteIPsModalOpen] = useState(false);
   const [selectedIPs, setSelectedIPs] = useState(null);
 
+  useEffect(() => {
+    setPage(1);
+    setSearch("");
+  }, [selectedRegion]);
+
+  const { data, isFetching } = useFetchFloatingIPs(
+    selectedRegion,
+    { page, perPage, search },
+    { enabled: Boolean(selectedRegion), keepPreviousData: true }
+  );
+
+  const rows = data?.data ?? [];
+  const meta = data?.meta ?? null;
+  const total = meta?.total ?? rows.length;
+
+  const averagePrice = useMemo(() => {
+    if (!rows.length) return 0;
+    return (
+      rows.reduce((acc, ip) => acc + Number(ip.price || 0), 0) /
+      rows.length
+    );
+  }, [rows]);
+
+  const regionalCoverage = useMemo(() => {
+    return new Set(rows.map((ip) => ip.region || "global")).size;
+  }, [rows]);
+
+  useEffect(() => {
+    onMetricsChange?.({
+      metrics: [
+        {
+          label: "Floating IP pools",
+          value: total,
+          description: "Routable IP resources",
+          icon: <Globe className="h-5 w-5" />,
+        },
+        {
+          label: "Regions covered",
+          value: regionalCoverage,
+          description: "Distinct regional pools",
+          icon: <MapPin className="h-5 w-5" />,
+        },
+        {
+          label: "Average price",
+          value: formatCurrency(averagePrice),
+          description: "Typical monthly cost",
+          icon: <DollarSign className="h-5 w-5" />,
+        },
+      ],
+      description:
+        "Keep external connectivity balanced across data centres and price tiers that match carrier costs.",
+    });
+  }, [total, regionalCoverage, averagePrice, onMetricsChange]);
+
   const handleAddIPs = () => {
+    setSelectedIPs(null);
     setIsAddIPsModalOpen(true);
   };
 
@@ -27,201 +105,119 @@ const FloatingIP = ({ selectedRegion }) => {
     setIsDeleteIPsModalOpen(true);
   };
 
-  const formatCurrency = (amount, currency = "USD") => {
-    if (amount === null || amount === undefined) return "N/A";
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(parseFloat(amount));
+  const columns = [
+    {
+      header: "IP SKU",
+      key: "name",
+      render: (ip) => (
+        <div className="flex flex-col">
+          <span className="font-semibold text-slate-900">
+            {ip.name || "Floating IP"}
+          </span>
+          <span className="text-xs text-slate-500">
+            {ip.identifier || "No identifier assigned"}
+          </span>
+        </div>
+      ),
+    },
+    {
+      header: "Region",
+      key: "region",
+      align: "center",
+      render: (ip) => (
+        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+          {ip.region || "global"}
+        </span>
+      ),
+    },
+    {
+      header: "",
+      key: "actions",
+      align: "right",
+      render: (ip) => (
+        <div className="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => handleEditIPs(ip)}
+            className="inline-flex items-center justify-center rounded-full border border-slate-200 p-2 text-slate-500 transition hover:border-primary-200 hover:text-primary-600"
+            title="Edit floating IP"
+            aria-label="Edit floating IP"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDeleteIPs(ip)}
+            className="inline-flex items-center justify-center rounded-full border border-red-200 p-2 text-red-500 transition hover:border-red-300 hover:bg-red-50"
+            title="Remove floating IP"
+            aria-label="Remove floating IP"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
+  const primaryAction = (
+    <ModernButton
+      size="sm"
+      onClick={handleAddIPs}
+      className="flex items-center gap-2"
+    >
+      <Plus className="h-4 w-4" />
+      Add Floating IP
+    </ModernButton>
+  );
+
+  const emptyState = {
+    icon: (
+      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-500/10 text-primary-500">
+        <Globe className="h-5 w-5" />
+      </span>
+    ),
+    title: "No floating IP pools defined",
+    description:
+      "Create routing pools to enable public connectivity for tenant workloads in this region.",
+    action: (
+      <ModernButton onClick={handleAddIPs} className="flex items-center gap-2">
+        <Plus className="h-4 w-4" />
+        Create floating IP pool
+      </ModernButton>
+    ),
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      });
-    } catch (e) {
-      console.error("Error formatting date:", e);
-      return "Invalid Date";
-    }
-  };
-
-  if (isIPsFetching) {
-    return (
-      <div className="flex items-center justify-center min-h-[200px]">
-        <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
-        <p className="ml-2 text-gray-700">Loading Floating IPs...</p>
-      </div>
-    );
-  }
+  const handleSearch = useCallback(
+    (value) => {
+      setSearch(value);
+      setPage(1);
+    },
+    [setSearch, setPage]
+  );
 
   return (
     <>
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={handleAddIPs}
-          className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
-        >
-          Add Floating IP
-        </button>
-      </div>
+      <ResourceDataExplorer
+        title="Floating IP catalogue"
+        description="Manage routable IP pools and cost structures that back tenant networking."
+        columns={columns}
+        rows={rows}
+        loading={isFetching}
+        page={meta?.current_page ?? page}
+        perPage={meta?.per_page ?? perPage}
+        total={total}
+        meta={meta}
+        onPageChange={setPage}
+        onPerPageChange={(next) => {
+          setPerPage(next);
+          setPage(1);
+        }}
+        searchValue={search}
+        onSearch={handleSearch}
+        toolbarSlot={primaryAction}
+        emptyState={emptyState}
+      />
 
-      {/* Desktop Table */}
-      <div className="hidden md:block overflow-x-auto mt-6 rounded-[12px] border border-gray-200">
-        <table className="w-full">
-          <thead className="bg-[#F5F5F5]">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Identifier
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Price
-              </th>
-              {/* <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Local Price
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Local Currency
-              </th> */}
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Created At
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-[#555E67] uppercase">
-                Action
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-[#E8E6EA]">
-            {ips && ips.length > 0 ? (
-              ips.map((ip) => (
-                <tr key={ip.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {ip.name || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {ip.identifier || "N/A"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatCurrency(ip.price)}
-                  </td>
-                  {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatCurrency(ip.local_price, ip.local_currency)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {ip.local_currency || "N/A"}
-                  </td> */}
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                    {formatDate(ip.created_at)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
-                    <div className="flex items-center space-x-3">
-                      <button
-                        onClick={() => handleEditIPs(ip)}
-                        className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                        title="Edit Floating IP"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteIPs(ip)}
-                        className="text-red-500 hover:text-red-700 transition-colors"
-                        title="Delete Floating IP"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td
-                  colSpan="7"
-                  className="px-6 py-4 text-center text-sm text-gray-500"
-                >
-                  No Floating IPs found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Mobile Cards */}
-      <div className="md:hidden mt-6 space-y-4">
-        {ips && ips.length > 0 ? (
-          ips.map((ip) => (
-            <div
-              key={ip.id}
-              className="bg-white rounded-[12px] shadow-sm p-4 border border-gray-200"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-base font-semibold text-gray-900">
-                  {ip.name || "N/A"}
-                </h3>
-                <div className="flex items-center space-x-3">
-                  <button
-                    onClick={() => handleEditIPs(ip)}
-                    className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                    title="Edit Floating IP"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteIPs(ip)}
-                    className="text-red-500 hover:text-red-700 transition-colors"
-                    title="Delete Floating IP"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-              <div className="space-y-1 text-sm text-gray-600">
-                <div className="flex justify-between">
-                  <span className="font-medium">Identifier:</span>
-                  <span>{ip.identifier || "N/A"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Price:</span>
-                  <span>{formatCurrency(ip.price)}</span>
-                </div>
-                {/* <div className="flex justify-between">
-                  <span className="font-medium">Local Price:</span>
-                  <span>
-                    {formatCurrency(ip.local_price, ip.local_currency)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Local Currency:</span>
-                  <span>{ip.local_currency || "N/A"}</span>
-                </div> */}
-                <div className="flex justify-between">
-                  <span className="font-medium">Created At:</span>
-                  <span>{formatDate(ip.created_at)}</span>
-                </div>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="bg-white rounded-[12px] shadow-sm p-4 text-center text-gray-500">
-            No Floating IPs found.
-          </div>
-        )}
-      </div>
-
-      {/* Modals */}
       <AddFloatingIP
         isOpen={isAddIPsModalOpen}
         onClose={() => setIsAddIPsModalOpen(false)}
@@ -229,12 +225,12 @@ const FloatingIP = ({ selectedRegion }) => {
       <EditFloatingIP
         isOpen={isEditIPsModalOpen}
         onClose={() => setIsEditIPsModalOpen(false)}
-        floatingIP={selectedIPs}
+        ip={selectedIPs}
       />
       <DeleteFloatingIP
         isOpen={isDeleteIPsModalOpen}
         onClose={() => setIsDeleteIPsModalOpen(false)}
-        floatingIP={selectedIPs}
+        ip={selectedIPs}
       />
     </>
   );

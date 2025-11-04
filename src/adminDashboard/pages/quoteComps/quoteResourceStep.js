@@ -1,11 +1,24 @@
 import React from "react";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import {
+  Loader2,
+  Plus,
+  Trash2,
+  Server,
+  HardDrive,
+  Network,
+  Layers,
+} from "lucide-react";
+import ModernCard from "../../components/ModernCard";
+import ModernButton from "../../components/ModernButton";
+import ModernInput from "../../components/ModernInput";
+
+const selectBaseClass =
+  "w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400";
 
 const QuoteResourceStep = ({
   formData,
   errors,
   updateFormData,
-  handleSelectChange,
   regions,
   isRegionsFetching,
   computerInstances,
@@ -32,479 +45,472 @@ const QuoteResourceStep = ({
     }).format(amount);
   };
 
+  const hasQueuedItems = pricingRequests.length > 0;
+
   return (
-    <div className="w-full">
-      <div className="text- mb-8">
-        <h3 className="text-xl font-semibold text-gray-800">
-          Add Configurations
-        </h3>
-        <p className="text-sm text-gray-500 mt-1 max-w-2xl mx-auto">
-          Configure and add one or more pricing items to this quote.
-        </p>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-12">
-        {/* Left Column: Form */}
-        <div className="space-y-4">
-          <h4 className="text-lg font-semibold text-gray-700 border-b pb-2">
-            New Configuration
-          </h4>
-
-          <div>
-            <label
-              htmlFor="region"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Region<span className="text-red-500">*</span>
-            </label>
-            <select
-              id="region"
-              value={formData.region}
-              onChange={(e) => updateFormData("region", e.target.value)}
-              className={`w-full input-field ${
-                errors.region ? "border-red-500" : ""
-              }`}
-              disabled={isRegionsFetching}
-            >
-              <option value="">Select Region</option>
-              {regions?.map((region) => (
-                <option key={region.code} value={region.code}>
-                  {region.name}
-                </option>
-              ))}
-            </select>
-            {errors.region && (
-              <p className="text-red-500 text-xs mt-1">{errors.region}</p>
-            )}
-          </div>
-
-          <div>
-            <label
-              htmlFor="compute_instance_id"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Compute Instance<span className="text-red-500">*</span>
-            </label>
-            <select
-              id="compute_instance_id"
-              value={formData.compute_instance_id || ""}
-              onChange={(e) =>
-                updateFormData("compute_instance_id", e.target.value)
-              }
-              className={`w-full input-field ${
-                errors.compute_instance_id ? "border-red-500" : ""
-              }`}
-              disabled={isComputerInstancesFetching || !formData.region}
-            >
-              <option value="">Select Compute Instance</option>
-              {isComputerInstancesFetching ? (
-                <option disabled>Loading...</option>
-              ) : computerInstances && computerInstances.length > 0 ? (
-                computerInstances.map(({ product, pricing }) => (
-                  <option key={product.id} value={product.productable_id}>
-                    {product.name} -{" "}
-                    {formatCurrency(
-                      pricing.effective.price_local,
-                      pricing.effective.currency
-                    )}
-                  </option>
-                ))
-              ) : (
-                <option disabled>No compute instances available</option>
-              )}
-            </select>
-            {errors.compute_instance_id && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.compute_instance_id}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label
-              htmlFor="os_image_id"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              OS Image<span className="text-red-500">*</span>
-            </label>
-            <select
-              id="os_image_id"
-              value={formData.os_image_id || ""}
-              onChange={(e) => updateFormData("os_image_id", e.target.value)}
-              className={`w-full input-field ${
-                errors.os_image_id ? "border-red-500" : ""
-              }`}
-              disabled={isOsImagesFetching || !formData.region}
-            >
-              <option value="">Select OS Image</option>
-              {isOsImagesFetching ? (
-                <option disabled>Loading...</option>
-              ) : osImages && osImages.length > 0 ? (
-                osImages.map(({ product, pricing }) => (
-                  <option key={product.id} value={product.productable_id}>
-                    {product.name} -{" "}
-                    {formatCurrency(
-                      pricing.effective.price_local,
-                      pricing.effective.currency
-                    )}
-                  </option>
-                ))
-              ) : (
-                <option disabled>No OS images available</option>
-              )}
-            </select>
-            {errors.os_image_id && (
-              <p className="text-red-500 text-xs mt-1">{errors.os_image_id}</p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="months"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Term (Months)<span className="text-red-500">*</span>
-              </label>
-              <input
-                id="months"
-                type="number"
-                value={formData.months}
-                onChange={(e) => updateFormData("months", e.target.value)}
-                className={`w-full input-field ${
-                  errors.months ? "border-red-500" : ""
-                }`}
-                min="1"
-              />
-              {errors.months && (
-                <p className="text-red-500 text-xs mt-1">{errors.months}</p>
-              )}
-            </div>
-            <div>
-              <label
-                htmlFor="number_of_instances"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Number of Instances<span className="text-red-500">*</span>
-              </label>
-              <input
-                id="number_of_instances"
-                type="number"
-                value={formData.number_of_instances}
-                onChange={(e) =>
-                  updateFormData("number_of_instances", e.target.value)
-                }
-                className={`w-full input-field ${
-                  errors.number_of_instances ? "border-red-500" : ""
-                }`}
-                min="1"
-              />
-              {errors.number_of_instances && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.number_of_instances}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <h5 className="text-md font-semibold text-gray-600 pt-4 border-t">
-            Storage
-          </h5>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="volume_type_id"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Volume Type<span className="text-red-500">*</span>
-              </label>
-              <select
-                id="volume_type_id"
-                value={formData.volume_type_id || ""}
-                onChange={(e) =>
-                  updateFormData("volume_type_id", e.target.value)
-                }
-                className={`w-full input-field ${
-                  errors.volume_type_id ? "border-red-500" : ""
-                }`}
-                disabled={isEbsVolumesFetching || !formData.region}
-              >
-                <option value="">Select Volume Type</option>
-                {isEbsVolumesFetching ? (
-                  <option disabled>Loading...</option>
-                ) : ebsVolumes && ebsVolumes.length > 0 ? (
-                  ebsVolumes.map(({ product, pricing }) => (
-                    <option key={product.id} value={product.productable_id}>
-                      {product.name} -{" "}
-                      {formatCurrency(
-                        pricing.effective.price_local,
-                        pricing.effective.currency
-                      )}
-                    </option>
-                  ))
-                ) : (
-                  <option disabled>No volume types available</option>
-                )}
-              </select>
-              {errors.volume_type_id && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.volume_type_id}
-                </p>
-              )}
-            </div>
-            <div>
-              <label
-                htmlFor="storage_size_gb"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Storage Size (GB)<span className="text-red-500">*</span>
-              </label>
-              <input
-                id="storage_size_gb"
-                type="number"
-                value={formData.storage_size_gb}
-                onChange={(e) =>
-                  updateFormData("storage_size_gb", e.target.value)
-                }
-                className={`w-full input-field ${
-                  errors.storage_size_gb ? "border-red-500" : ""
-                }`}
-                min="1"
-              />
-            </div>
-          </div>
-          <h5 className="text-md font-semibold text-gray-600 pt-4 border-t">
-            Networking (Optional)
-          </h5>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="bandwidth_id"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Bandwidth
-              </label>
-              <select
-                id="bandwidth_id"
-                value={formData.bandwidth_id || ""}
-                onChange={(e) => updateFormData("bandwidth_id", e.target.value)}
-                className="w-full input-field"
-                disabled={isBandwidthsFetching || !formData.region}
-              >
-                <option value="">Select Bandwidth</option>
-                {isBandwidthsFetching ? (
-                  <option disabled>Loading...</option>
-                ) : bandwidths && bandwidths.length > 0 ? (
-                  bandwidths.map(({ product, pricing }) => (
-                    <option key={product.id} value={product.productable_id}>
-                      {product.name} -{" "}
-                      {formatCurrency(
-                        pricing.effective.price_local,
-                        pricing.effective.currency
-                      )}
-                    </option>
-                  ))
-                ) : (
-                  <option disabled>No bandwidth options available</option>
-                )}
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor="bandwidth_count"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Bandwidth Count
-              </label>
-              <input
-                id="bandwidth_count"
-                type="number"
-                value={formData.bandwidth_count}
-                onChange={(e) =>
-                  updateFormData("bandwidth_count", e.target.value)
-                }
-                className={`w-full input-field ${
-                  errors.bandwidth_count ? "border-red-500" : ""
-                }`}
-                min="0"
-                disabled={!formData.bandwidth_id}
-              />
-              {errors.bandwidth_count && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.bandwidth_count}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="floating_ip_id"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Floating IP
-              </label>
-              <select
-                id="floating_ip_id"
-                value={formData.floating_ip_id || ""}
-                onChange={(e) =>
-                  updateFormData("floating_ip_id", e.target.value)
-                }
-                className="w-full input-field"
-                disabled={isFloatingIpsFetching || !formData.region}
-              >
-                <option value="">Select Floating IP</option>
-                {isFloatingIpsFetching ? (
-                  <option disabled>Loading...</option>
-                ) : floatingIps && floatingIps.length > 0 ? (
-                  floatingIps.map(({ product, pricing }) => (
-                    <option key={product.id} value={product.productable_id}>
-                      {product.name} -{" "}
-                      {formatCurrency(
-                        pricing.effective.price_local,
-                        pricing.effective.currency
-                      )}
-                    </option>
-                  ))
-                ) : (
-                  <option disabled>No floating IPs available</option>
-                )}
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor="floating_ip_count"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Floating IP Count
-              </label>
-              <input
-                id="floating_ip_count"
-                type="number"
-                value={formData.floating_ip_count}
-                onChange={(e) =>
-                  updateFormData("floating_ip_count", e.target.value)
-                }
-                className={`w-full input-field ${
-                  errors.floating_ip_count ? "border-red-500" : ""
-                }`}
-                min="0"
-                disabled={!formData.floating_ip_id}
-              />
-              {errors.floating_ip_count && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.floating_ip_count}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="cross_connect_id"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Cross Connect
-              </label>
-              <select
-                id="cross_connect_id"
-                value={formData.cross_connect_id || ""}
-                onChange={(e) =>
-                  updateFormData("cross_connect_id", e.target.value)
-                }
-                className="w-full input-field"
-                disabled={isCrossConnectsFetching || !formData.region}
-              >
-                <option value="">Select Cross Connect</option>
-                {isCrossConnectsFetching ? (
-                  <option disabled>Loading...</option>
-                ) : crossConnects && crossConnects.length > 0 ? (
-                  crossConnects.map(({ product, pricing }) => (
-                    <option key={product.id} value={product.productable_id}>
-                      {product.name} -{" "}
-                      {formatCurrency(
-                        pricing.effective.price_local,
-                        pricing.effective.currency
-                      )}
-                    </option>
-                  ))
-                ) : (
-                  <option disabled>No cross connects available</option>
-                )}
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor="cross_connect_count"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Cross Connect Count
-              </label>
-              <input
-                id="cross_connect_count"
-                type="number"
-                value={formData.cross_connect_count}
-                onChange={(e) =>
-                  updateFormData("cross_connect_count", e.target.value)
-                }
-                className={`w-full input-field ${
-                  errors.cross_connect_count ? "border-red-500" : ""
-                }`}
-                min="0"
-                disabled={!formData.cross_connect_id}
-              />
-            </div>
-          </div>
-
-          <div className="pt-4 flex justify-end">
-            <button
-              type="button"
-              onClick={onAddRequest}
-              className="flex items-center gap-2 px-6 py-2 bg-[#288DD1] text-white font-medium rounded-md hover:bg-[#1976D2] transition-colors"
-            >
-              <Plus className="w-4 h-4" /> Add to Quote
-            </button>
-          </div>
+    <div className="space-y-6">
+      {errors.general && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {errors.general}
         </div>
+      )}
 
-        {/* Right Column: List of added configurations */}
-        <div className="mt-8 lg:mt-0">
-          <div className="sticky top-28">
-            <div className="bg-gray-50 rounded-lg p-4 border">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                Quote Items
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
+        <ModernCard padding="lg" className="space-y-6">
+          <header className="flex items-start gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-50 text-primary-600">
+              <Server className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-slate-900">
+                Configure Resources
               </h3>
-              {pricingRequests.length > 0 ? (
-                <ul className="space-y-2 max-h-96 overflow-y-auto">
-                  {pricingRequests.map((req, index) => (
-                    <li
-                      key={index}
-                      className="flex items-center justify-between p-3 bg-white rounded-md text-sm border shadow-sm"
-                    >
-                      <span className="font-medium text-gray-700">
-                        {req.number_of_instances}x {req._display.compute} (
-                        {req._display.storage}, {req._display.os})
-                      </span>
-                      <button
-                        onClick={() => onRemoveRequest(index)}
-                        title="Remove"
-                      >
-                        <Trash2 className="w-4 h-4 text-red-500 hover:text-red-700" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-gray-500 text-center py-4">
-                  No items added to the quote yet.
+              <p className="text-sm text-slate-500">
+                Select compute, storage, and networking components to build the
+                next configuration for this quote.
+              </p>
+            </div>
+          </header>
+
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Region<span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.region}
+                onChange={(e) => updateFormData("region", e.target.value)}
+                className={`${selectBaseClass} ${
+                  errors.region ? "border-red-400" : ""
+                }`}
+                disabled={isRegionsFetching}
+              >
+                <option value="">Select a region</option>
+                {regions?.map((region) => (
+                  <option key={region.code} value={region.code}>
+                    {region.name}
+                  </option>
+                ))}
+              </select>
+              {isRegionsFetching && (
+                <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Loading available regions…
+                </div>
+              )}
+              {errors.region && (
+                <p className="mt-2 text-xs font-medium text-red-600">
+                  {errors.region}
                 </p>
               )}
             </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Compute Instance<span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.compute_instance_id || ""}
+                onChange={(e) =>
+                  updateFormData("compute_instance_id", e.target.value)
+                }
+                className={`${selectBaseClass} ${
+                  errors.compute_instance_id ? "border-red-400" : ""
+                }`}
+                disabled={isComputerInstancesFetching || !formData.region}
+              >
+                <option value="">Select compute profile</option>
+                {isComputerInstancesFetching ? (
+                  <option disabled>Loading instances…</option>
+                ) : computerInstances && computerInstances.length > 0 ? (
+                  computerInstances.map(({ product, pricing }) => (
+                    <option key={product.id} value={product.productable_id}>
+                      {product.name} •{" "}
+                      {formatCurrency(
+                        pricing.effective.price_local,
+                        pricing.effective.currency
+                      )}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>No compute instances available</option>
+                )}
+              </select>
+              {errors.compute_instance_id && (
+                <p className="mt-2 text-xs font-medium text-red-600">
+                  {errors.compute_instance_id}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                OS Image<span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.os_image_id || ""}
+                onChange={(e) => updateFormData("os_image_id", e.target.value)}
+                className={`${selectBaseClass} ${
+                  errors.os_image_id ? "border-red-400" : ""
+                }`}
+                disabled={isOsImagesFetching || !formData.region}
+              >
+                <option value="">Select OS image</option>
+                {isOsImagesFetching ? (
+                  <option disabled>Loading OS images…</option>
+                ) : osImages && osImages.length > 0 ? (
+                  osImages.map(({ product, pricing }) => (
+                    <option key={product.id} value={product.productable_id}>
+                      {product.name} •{" "}
+                      {formatCurrency(
+                        pricing.effective.price_local,
+                        pricing.effective.currency
+                      )}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>No OS images available</option>
+                )}
+              </select>
+              {errors.os_image_id && (
+                <p className="mt-2 text-xs font-medium text-red-600">
+                  {errors.os_image_id}
+                </p>
+              )}
+            </div>
+
+            <ModernInput
+              label="Term (months)"
+              type="number"
+              min="1"
+              value={formData.months}
+              onChange={(e) => updateFormData("months", e.target.value)}
+              error={errors.months}
+            />
+            <ModernInput
+              label="Number of instances"
+              type="number"
+              min="1"
+              value={formData.number_of_instances}
+              onChange={(e) =>
+                updateFormData("number_of_instances", e.target.value)
+              }
+              error={errors.number_of_instances}
+            />
           </div>
-        </div>
-      </div>
+
+          <div className="rounded-3xl border border-slate-100 bg-slate-50/80 p-5">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+                <HardDrive className="h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-semibold text-slate-900">
+                  Storage configuration
+                </h4>
+                <p className="text-xs text-slate-500">
+                  Define storage volumes attached to the compute instance.
+                </p>
+                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-slate-700">
+                      Volume type<span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={formData.volume_type_id || ""}
+                      onChange={(e) =>
+                        updateFormData("volume_type_id", e.target.value)
+                      }
+                      className={`${selectBaseClass} ${
+                        errors.volume_type_id ? "border-red-400" : ""
+                      }`}
+                      disabled={isEbsVolumesFetching || !formData.region}
+                    >
+                      <option value="">Select volume type</option>
+                      {isEbsVolumesFetching ? (
+                        <option disabled>Loading volume types…</option>
+                      ) : ebsVolumes && ebsVolumes.length > 0 ? (
+                        ebsVolumes.map(({ product, pricing }) => (
+                          <option key={product.id} value={product.productable_id}>
+                            {product.name} •{" "}
+                            {formatCurrency(
+                              pricing.effective.price_local,
+                              pricing.effective.currency
+                            )}
+                          </option>
+                        ))
+                      ) : (
+                        <option disabled>No volume types available</option>
+                      )}
+                    </select>
+                    {errors.volume_type_id && (
+                      <p className="mt-2 text-xs font-medium text-red-600">
+                        {errors.volume_type_id}
+                      </p>
+                    )}
+                  </div>
+                  <ModernInput
+                    label="Storage size (GB)"
+                    type="number"
+                    min="1"
+                    value={formData.storage_size_gb}
+                    onChange={(e) =>
+                      updateFormData("storage_size_gb", e.target.value)
+                    }
+                    error={errors.storage_size_gb}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-50 text-primary-600">
+                <Network className="h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-900">
+                      Networking (optional)
+                    </h4>
+                    <p className="text-xs text-slate-500">
+                      Attach additional bandwidth, floating IPs, or cross
+                      connects.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-slate-700">
+                      Bandwidth
+                    </label>
+                    <select
+                      value={formData.bandwidth_id || ""}
+                      onChange={(e) =>
+                        updateFormData("bandwidth_id", e.target.value)
+                      }
+                      className={selectBaseClass}
+                      disabled={isBandwidthsFetching || !formData.region}
+                    >
+                      <option value="">Add bandwidth</option>
+                      {isBandwidthsFetching ? (
+                        <option disabled>Loading bandwidth…</option>
+                      ) : bandwidths && bandwidths.length > 0 ? (
+                        bandwidths.map(({ product, pricing }) => (
+                          <option key={product.id} value={product.productable_id}>
+                            {product.name} •{" "}
+                            {formatCurrency(
+                              pricing.effective.price_local,
+                              pricing.effective.currency
+                            )}
+                          </option>
+                        ))
+                      ) : (
+                        <option disabled>No bandwidth options</option>
+                      )}
+                    </select>
+                  </div>
+                  <ModernInput
+                    label="Bandwidth units"
+                    type="number"
+                    min="0"
+                    value={formData.bandwidth_count}
+                    onChange={(e) =>
+                      updateFormData("bandwidth_count", e.target.value)
+                    }
+                    disabled={!formData.bandwidth_id}
+                  />
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-slate-700">
+                      Floating IP
+                    </label>
+                    <select
+                      value={formData.floating_ip_id || ""}
+                      onChange={(e) =>
+                        updateFormData("floating_ip_id", e.target.value)
+                      }
+                      className={selectBaseClass}
+                      disabled={isFloatingIpsFetching || !formData.region}
+                    >
+                      <option value="">Add floating IPs</option>
+                      {isFloatingIpsFetching ? (
+                        <option disabled>Loading floating IPs…</option>
+                      ) : floatingIps && floatingIps.length > 0 ? (
+                        floatingIps.map(({ product, pricing }) => (
+                          <option key={product.id} value={product.productable_id}>
+                            {product.name} •{" "}
+                            {formatCurrency(
+                              pricing.effective.price_local,
+                              pricing.effective.currency
+                            )}
+                          </option>
+                        ))
+                      ) : (
+                        <option disabled>No floating IPs available</option>
+                      )}
+                    </select>
+                  </div>
+                  <ModernInput
+                    label="IP count"
+                    type="number"
+                    min="0"
+                    value={formData.floating_ip_count}
+                    onChange={(e) =>
+                      updateFormData("floating_ip_count", e.target.value)
+                    }
+                    disabled={!formData.floating_ip_id}
+                  />
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-slate-700">
+                      Cross connect
+                    </label>
+                    <select
+                      value={formData.cross_connect_id || ""}
+                      onChange={(e) =>
+                        updateFormData("cross_connect_id", e.target.value)
+                      }
+                      className={selectBaseClass}
+                      disabled={isCrossConnectsFetching || !formData.region}
+                    >
+                      <option value="">Attach cross connect</option>
+                      {isCrossConnectsFetching ? (
+                        <option disabled>Loading cross connects…</option>
+                      ) : crossConnects && crossConnects.length > 0 ? (
+                        crossConnects.map(({ product, pricing }) => (
+                          <option key={product.id} value={product.productable_id}>
+                            {product.name} •{" "}
+                            {formatCurrency(
+                              pricing.effective.price_local,
+                              pricing.effective.currency
+                            )}
+                          </option>
+                        ))
+                      ) : (
+                        <option disabled>No cross connects available</option>
+                      )}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <ModernButton
+              variant="primary"
+              onClick={onAddRequest}
+              leftIcon={<Plus className="h-4 w-4" />}
+            >
+              Add configuration
+            </ModernButton>
+            <p className="text-xs text-slate-500">
+              Each configuration becomes a dedicated line item in the quote.
+            </p>
+          </div>
+        </ModernCard>
+
+        <ModernCard padding="lg" className="space-y-6">
+          <header className="flex items-start gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+              <Layers className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-slate-900">
+                Quote queue
+              </h3>
+              <p className="text-sm text-slate-500">
+                Manage configurations already added to this quote.
+              </p>
+            </div>
+          </header>
+
+          {!hasQueuedItems && (
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-6 text-center text-sm text-slate-500">
+              No configurations added yet. Start by defining a compute profile
+              and storage requirement on the left.
+            </div>
+          )}
+
+          {hasQueuedItems && (
+            <div className="space-y-4">
+              {pricingRequests.map((item, idx) => (
+                <div
+                  key={`${item.region}-${idx}`}
+                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <p className="text-xs uppercase tracking-wide text-slate-400">
+                        Configuration {idx + 1}
+                      </p>
+                      <h4 className="text-sm font-semibold text-slate-900">
+                        {item._display?.compute || "Compute"} •{" "}
+                        {item._display?.os || "OS"}
+                      </h4>
+                      <div className="text-xs text-slate-500">
+                        Region:{" "}
+                        <span className="font-medium text-slate-600">
+                          {item.region}
+                        </span>{" "}
+                        · {item.number_of_instances} instance
+                        {item.number_of_instances === 1 ? "" : "s"} for{" "}
+                        {item.months} month{item.months === 1 ? "" : "s"}
+                      </div>
+                    </div>
+                    <ModernButton
+                      size="sm"
+                      variant="danger"
+                      onClick={() => onRemoveRequest(idx)}
+                      className="shrink-0"
+                      leftIcon={<Trash2 className="h-4 w-4" />}
+                    >
+                      Remove
+                    </ModernButton>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="rounded-xl bg-slate-50 px-3 py-2 text-xs">
+                      <span className="font-medium text-slate-600">
+                        Storage
+                      </span>
+                      <p className="mt-1 text-slate-500">
+                        {item._display?.storage || "—"}
+                      </p>
+                    </div>
+                    {(item.bandwidth_count || item.floating_ip_count) && (
+                      <div className="rounded-xl bg-slate-50 px-3 py-2 text-xs">
+                        <span className="font-medium text-slate-600">
+                          Network
+                        </span>
+                        <p className="mt-1 text-slate-500">
+                          {item.bandwidth_count
+                            ? `${item.bandwidth_count} bandwidth unit${
+                                item.bandwidth_count === 1 ? "" : "s"
+                              }`
+                            : ""}
+                          {item.bandwidth_count && item.floating_ip_count
+                            ? " • "
+                            : ""}
+                          {item.floating_ip_count
+                            ? `${item.floating_ip_count} floating IP${
+                                item.floating_ip_count === 1 ? "" : "s"
+                              }`
+                            : ""}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </ModernCard>
+      </section>
     </div>
   );
 };

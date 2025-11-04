@@ -1,28 +1,142 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
-import adminRegionApi from '../../services/adminRegionApi';
-import ToastUtils from '../../utils/toastUtil';
-import AdminSidebar from '../components/adminSidebar';
-import AdminHeadbar from '../components/adminHeadbar';
+import React, { useState, useEffect, useMemo } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  Loader2,
+  AlertCircle,
+  CheckCircle,
+  Ban,
+  PauseCircle,
+  PlayCircle,
+  DollarSign,
+  Info,
+} from "lucide-react";
+import adminRegionApi from "../../services/adminRegionApi";
+import ToastUtils from "../../utils/toastUtil";
+import AdminSidebar from "../components/adminSidebar";
+import AdminHeadbar from "../components/adminHeadbar";
+import AdminPageShell from "../components/AdminPageShell";
+import ModernCard from "../components/ModernCard";
+import ModernButton from "../components/ModernButton";
+import { designTokens } from "../../styles/designTokens";
+
+const ACTION_COPY = {
+  approve: {
+    title: "Approve Region",
+    description:
+      "Review the request details and apply the platform fee before approving this region.",
+    submitLabel: "Approve Region",
+    tone: "success",
+  },
+  reject: {
+    title: "Reject Region Request",
+    description:
+      "Provide a clear reason for rejection. The tenant will be notified with your remarks.",
+    submitLabel: "Reject Region",
+    tone: "danger",
+  },
+  suspend: {
+    title: "Suspend Region",
+    description:
+      "Temporarily pause operations in this region. Existing workloads remain but new orders are blocked.",
+    submitLabel: "Suspend Region",
+    tone: "danger",
+  },
+  reactivate: {
+    title: "Reactivate Region",
+    description:
+      "Restore an inactive region to active status. Automation and new orders will resume.",
+    submitLabel: "Reactivate Region",
+    tone: "primary",
+  },
+  update_fee: {
+    title: "Update Platform Fee",
+    description:
+      "Adjust the revenue share collected on transactions in this region. Applies to future orders only.",
+    submitLabel: "Update Fee",
+    tone: "primary",
+  },
+};
+
+const ReasonField = ({ label, value, onChange, placeholder }) => (
+  <div className="space-y-2">
+    <label className="text-sm font-medium text-gray-700">
+      {label} <span className="text-red-500">*</span>
+    </label>
+    <textarea
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+      rows={4}
+      placeholder={placeholder}
+      required
+    />
+    <p className="text-xs text-gray-500">
+      This message will be shared with the tenant that requested the region.
+    </p>
+  </div>
+);
+
+const FeeField = ({ value, onChange }) => (
+  <div className="space-y-2">
+    <label className="text-sm font-medium text-gray-700">
+      Platform Fee Percentage <span className="text-red-500">*</span>
+    </label>
+    <div className="relative">
+      <input
+        type="number"
+        min="0"
+        max="100"
+        step="0.01"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+        placeholder="20.00"
+        required
+      />
+      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+        %
+      </span>
+    </div>
+    <p className="text-xs text-gray-500">
+      Represents the share retained by the platform on future transactions in this region.
+    </p>
+  </div>
+);
+
+const NotesField = ({ value, onChange }) => (
+  <div className="space-y-2">
+    <label className="text-sm font-medium text-gray-700">
+      Admin Notes <span className="text-xs text-gray-400">(optional)</span>
+    </label>
+    <textarea
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+      rows={4}
+      placeholder="Add any internal context for this approval (not shared with tenant)."
+    />
+  </div>
+);
 
 const RegionApprovalEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const action = searchParams.get('action') || 'approve';
-  
+  const action = searchParams.get("action") || "approve";
+
   const [region, setRegion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [formData, setFormData] = useState({
-    platform_fee_percentage: '',
-    reason: '',
-    notes: '',
+    platform_fee_percentage: "",
+    reason: "",
+    notes: "",
   });
 
   useEffect(() => {
     fetchRegionDetail();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const fetchRegionDetail = async () => {
@@ -31,13 +145,13 @@ const RegionApprovalEdit = () => {
       const response = await adminRegionApi.fetchRegionApprovalById(id);
       setRegion(response.data);
       setFormData({
-        platform_fee_percentage: response.data.platform_fee_percentage || 20,
-        reason: '',
-        notes: '',
+        platform_fee_percentage: response.data.platform_fee_percentage ?? 20,
+        reason: "",
+        notes: "",
       });
     } catch (error) {
-      console.error('Error fetching region:', error);
-      ToastUtils.error('Failed to load region details');
+      console.error("Error fetching region:", error);
+      ToastUtils.error("Failed to load region details");
     } finally {
       setLoading(false);
     }
@@ -45,292 +159,282 @@ const RegionApprovalEdit = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       setSubmitting(true);
-      
-      switch (action) {
-        case 'approve':
-          await adminRegionApi.approveRegion(id, {
-            platform_fee_percentage: parseFloat(formData.platform_fee_percentage),
-            notes: formData.notes,
-          });
-          ToastUtils.success('Region approved successfully');
-          break;
-        case 'reject':
-          await adminRegionApi.rejectRegion(id, formData.reason);
-          ToastUtils.success('Region rejected');
-          break;
-        case 'suspend':
-          await adminRegionApi.suspendRegion(id, formData.reason);
-          ToastUtils.success('Region suspended');
-          break;
-        case 'reactivate':
-          await adminRegionApi.reactivateRegion(id);
-          ToastUtils.success('Region reactivated successfully');
-          break;
-        case 'update_fee':
-          await adminRegionApi.updatePlatformFee(id, parseFloat(formData.platform_fee_percentage));
-          ToastUtils.success('Platform fee updated');
-          break;
-        default:
-          break;
+
+      if (action === "approve") {
+        await adminRegionApi.approveRegion(id, {
+          platform_fee_percentage: parseFloat(formData.platform_fee_percentage),
+          notes: formData.notes,
+        });
+        ToastUtils.success("Region approved successfully");
+      } else if (action === "reject") {
+        await adminRegionApi.rejectRegion(id, formData.reason);
+        ToastUtils.success("Region rejected");
+      } else if (action === "suspend") {
+        await adminRegionApi.suspendRegion(id, formData.reason);
+        ToastUtils.success("Region suspended");
+      } else if (action === "reactivate") {
+        await adminRegionApi.reactivateRegion(id);
+        ToastUtils.success("Region reactivated successfully");
+      } else if (action === "update_fee") {
+        await adminRegionApi.updatePlatformFee(
+          id,
+          parseFloat(formData.platform_fee_percentage)
+        );
+        ToastUtils.success("Platform fee updated");
       }
-      
+
       navigate(`/admin-dashboard/region-approvals/${id}`);
     } catch (error) {
       console.error(`Error performing ${action}:`, error);
+      ToastUtils.error(error?.message || "Unable to complete the action");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const getActionTitle = () => {
-    const titles = {
-      approve: 'Approve Region',
-      reject: 'Reject Region',
-      suspend: 'Suspend Region',
-      reactivate: 'Reactivate Region',
-      update_fee: 'Update Platform Fee',
-    };
-    return titles[action] || 'Edit Region';
+  const copy = ACTION_COPY[action] || ACTION_COPY.approve;
+
+  const headerMeta = region ? (
+    <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-gray-500">
+      <span>{region.name}</span>
+      <span className="hidden sm:inline text-gray-300">•</span>
+      <span>{region.code}</span>
+      <span className="hidden sm:inline text-gray-300">•</span>
+      <span>{region.country_code}</span>
+    </div>
+  ) : null;
+
+  const renderInfoBanner = () => {
+    const baseClasses =
+      "flex items-start gap-3 rounded-xl border px-4 py-3 text-sm";
+    switch (action) {
+      case "reject":
+      case "suspend":
+        return (
+          <div
+            className={`${baseClasses} border-red-200 bg-red-50 text-red-700`}
+          >
+            <AlertCircle className="mt-0.5 h-5 w-5" />
+            <div>
+              <p className="font-medium">
+                This action impacts tenant access to the region.
+              </p>
+              <p>
+                Provide a detailed reason so the tenant understands the next
+                steps. You can re-activate or resubmit later.
+              </p>
+            </div>
+          </div>
+        );
+      case "reactivate":
+        return (
+          <div
+            className={`${baseClasses} border-green-200 bg-green-50 text-green-700`}
+          >
+            <CheckCircle className="mt-0.5 h-5 w-5" />
+            <div>
+              <p className="font-medium">Region will return to active state.</p>
+              <p>
+                Automated provisioning and marketplace visibility will resume
+                immediately after reactivation.
+              </p>
+            </div>
+          </div>
+        );
+      case "update_fee":
+        return (
+          <div
+            className={`${baseClasses} border-blue-200 bg-blue-50 text-blue-700`}
+          >
+            <DollarSign className="mt-0.5 h-5 w-5" />
+            <div>
+              <p className="font-medium">Platform fee change</p>
+              <p>
+                Adjusted fees apply to future transactions only. Completed
+                orders keep their original share.
+              </p>
+            </div>
+          </div>
+        );
+      default:
+        return (
+          <div
+            className={`${baseClasses} border-blue-200 bg-blue-50 text-blue-700`}
+          >
+            <Info className="mt-0.5 h-5 w-5" />
+            <div>
+              <p className="font-medium">Review the details carefully.</p>
+              <p>
+                Approving will make this region fully available to tenants and
+                customers.
+              </p>
+            </div>
+          </div>
+        );
+    }
   };
 
-  const getActionButtonText = () => {
-    const texts = {
-      approve: 'Approve',
-      reject: 'Reject',
-      suspend: 'Suspend',
-      reactivate: 'Reactivate',
-      update_fee: 'Update Fee',
-    };
-    return texts[action] || 'Submit';
-  };
+  const renderLoadingShell = () => (
+    <AdminPageShell
+      title={copy.title}
+      description={copy.description}
+      subHeaderContent={headerMeta}
+      contentClassName="flex min-h-[60vh] items-center justify-center"
+    >
+      <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+    </AdminPageShell>
+  );
+
+  const renderNotFoundShell = () => (
+    <AdminPageShell
+      title={copy.title}
+      description={copy.description}
+      subHeaderContent={headerMeta}
+      contentClassName="flex min-h-[60vh] items-center justify-center"
+    >
+      <ModernCard className="max-w-md text-center space-y-3">
+        <AlertCircle className="mx-auto h-8 w-8 text-red-500" />
+        <p className="text-sm text-gray-600">Region approval could not be found.</p>
+        <ModernButton
+          variant="primary"
+          onClick={() => navigate("/admin-dashboard/region-approvals")}
+        >
+          Back to approvals
+        </ModernButton>
+      </ModernCard>
+    </AdminPageShell>
+  );
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-gray-50">
-        <AdminSidebar isMobileMenuOpen={isMobileMenuOpen} closeMobileMenu={() => setIsMobileMenuOpen(false)} />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <AdminHeadbar toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
-          <div className="flex items-center justify-center flex-1">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
-        </div>
-      </div>
+      <>
+        <AdminHeadbar toggleMobileMenu={() => setIsMobileMenuOpen((prev) => !prev)} />
+        <AdminSidebar
+          isMobileMenuOpen={isMobileMenuOpen}
+          closeMobileMenu={() => setIsMobileMenuOpen(false)}
+        />
+        {renderLoadingShell()}
+      </>
     );
   }
 
   if (!region) {
     return (
-      <div className="flex h-screen bg-gray-50">
-        <AdminSidebar isMobileMenuOpen={isMobileMenuOpen} closeMobileMenu={() => setIsMobileMenuOpen(false)} />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <AdminHeadbar toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
-          <main className="flex-1 overflow-y-auto p-6">
-            <div className="max-w-3xl mx-auto">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Region not found</h3>
-                <Link to="/admin-dashboard/region-approvals" className="text-blue-600 hover:text-blue-700">
-                  Back to region approvals
-                </Link>
-              </div>
-            </div>
-          </main>
-        </div>
-      </div>
+      <>
+        <AdminHeadbar toggleMobileMenu={() => setIsMobileMenuOpen((prev) => !prev)} />
+        <AdminSidebar
+          isMobileMenuOpen={isMobileMenuOpen}
+          closeMobileMenu={() => setIsMobileMenuOpen(false)}
+        />
+        {renderNotFoundShell()}
+      </>
     );
   }
 
+  const actionTone = ACTION_COPY[action]?.tone || "primary";
+
   return (
-    <div className="flex h-screen bg-gray-50">
-      <AdminSidebar isMobileMenuOpen={isMobileMenuOpen} closeMobileMenu={() => setIsMobileMenuOpen(false)} />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <AdminHeadbar toggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
-        
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-3xl mx-auto">
-            {/* Header */}
-            <div className="mb-6">
-              <Link
-                to={`/admin-dashboard/region-approvals/${id}`}
-                className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2 mb-4"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Back to Region Detail
-              </Link>
-              <h1 className="text-3xl font-bold text-gray-900">{getActionTitle()}</h1>
-              <p className="text-gray-600 mt-1">Region: {region.name} ({region.code})</p>
-            </div>
+    <>
+      <AdminHeadbar toggleMobileMenu={() => setIsMobileMenuOpen((prev) => !prev)} />
+      <AdminSidebar
+        isMobileMenuOpen={isMobileMenuOpen}
+        closeMobileMenu={() => setIsMobileMenuOpen(false)}
+      />
+      <AdminPageShell
+        title={copy.title}
+        description={copy.description}
+        subHeaderContent={headerMeta}
+        breadcrumbs={[
+          { label: "Home", href: "/admin-dashboard" },
+          { label: "Region Approvals", href: "/admin-dashboard/region-approvals" },
+          {
+            label: region.name || "Region Detail",
+            href: `/admin-dashboard/region-approvals/${id}`,
+          },
+          { label: copy.title },
+        ]}
+        actions={
+          <ModernButton
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(`/admin-dashboard/region-approvals/${id}`)}
+          >
+            Back to region detail
+          </ModernButton>
+        }
+        contentClassName="space-y-6 max-w-3xl"
+      >
+        {renderInfoBanner()}
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-              <div className="space-y-6">
-                {/* Platform Fee (for approve and update_fee) */}
-                {(action === 'approve' || action === 'update_fee') && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Platform Fee Percentage <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.01"
-                        value={formData.platform_fee_percentage}
-                        onChange={(e) => setFormData({ ...formData, platform_fee_percentage: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="20.00"
-                        required
-                      />
-                      <span className="absolute right-4 top-2.5 text-gray-500">%</span>
-                    </div>
-                    <p className="text-sm text-gray-500 mt-1">
-                      The percentage of revenue the platform will collect from this region
-                    </p>
-                  </div>
-                )}
+        <ModernCard padding="lg">
+          <div className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {(action === "approve" || action === "update_fee") && (
+                <FeeField
+                  value={formData.platform_fee_percentage}
+                  onChange={(value) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      platform_fee_percentage: value,
+                    }))
+                  }
+                />
+              )}
 
-                {/* Reason (for reject and suspend) */}
-                {(action === 'reject' || action === 'suspend') && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Reason <span className="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      value={formData.reason}
-                      onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      rows="4"
-                      placeholder={`Please provide a reason for ${action === 'reject' ? 'rejecting' : 'suspending'} this region...`}
-                      required
-                    />
-                    <p className="text-sm text-gray-500 mt-1">
-                      This will be visible to the tenant owner
-                    </p>
-                  </div>
-                )}
+              {(action === "reject" || action === "suspend") && (
+                <ReasonField
+                  label="Reason"
+                  value={formData.reason}
+                  onChange={(value) =>
+                    setFormData((prev) => ({ ...prev, reason: value }))
+                  }
+                  placeholder={`Provide a reason for ${
+                    action === "reject" ? "rejecting" : "suspending"
+                  } this region...`}
+                />
+              )}
 
-                {/* Notes (for approve) */}
-                {action === 'approve' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Admin Notes <span className="text-gray-500">(optional)</span>
-                    </label>
-                    <textarea
-                      value={formData.notes}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      rows="4"
-                      placeholder="Add any internal notes about this approval..."
-                    />
-                    <p className="text-sm text-gray-500 mt-1">
-                      Internal notes (not visible to tenant)
-                    </p>
-                  </div>
-                )}
+              {action === "approve" && (
+                <NotesField
+                  value={formData.notes}
+                  onChange={(value) =>
+                    setFormData((prev) => ({ ...prev, notes: value }))
+                  }
+                />
+              )}
 
-                {/* Confirmation (for reactivate) */}
-                {action === 'reactivate' && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <p className="text-sm text-green-800">
-                      Are you sure you want to reactivate this region? This will restore full access and allow new orders.
-                    </p>
-                  </div>
-                )}
-
-                {/* Info Box */}
-                <div className={`border rounded-lg p-4 ${
-                  action === 'reject' || action === 'suspend' 
-                    ? 'bg-red-50 border-red-200' 
-                    : action === 'reactivate'
-                    ? 'bg-green-50 border-green-200'
-                    : 'bg-blue-50 border-blue-200'
-                }`}>
-                  <div className="flex gap-3">
-                    <svg className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
-                      action === 'reject' || action === 'suspend' ? 'text-red-600' : action === 'reactivate' ? 'text-green-600' : 'text-blue-600'
-                    }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div className={`text-sm ${
-                      action === 'reject' || action === 'suspend' ? 'text-red-800' : action === 'reactivate' ? 'text-green-800' : 'text-blue-800'
-                    }`}>
-                      {action === 'approve' && (
-                        <>
-                          <p className="font-medium mb-1">What happens when you approve?</p>
-                          <ul className="list-disc list-inside space-y-1 text-blue-700">
-                            <li>Region becomes active and visible to clients</li>
-                            <li>Tenant can start earning revenue from this region</li>
-                            <li>Platform fee will be applied to all transactions</li>
-                            {region.fulfillment_mode === 'automated' && (
-                              <li>Automated provisioning will be enabled (requires MSP credentials)</li>
-                            )}
-                          </ul>
-                        </>
-                      )}
-                      {action === 'reject' && (
-                        <>
-                          <p className="font-medium mb-1">⚠️ Warning</p>
-                          <p>This will permanently reject the region request. The tenant will be notified with your reason.</p>
-                        </>
-                      )}
-                      {action === 'suspend' && (
-                        <>
-                          <p className="font-medium mb-1">⚠️ Warning</p>
-                          <p>This will temporarily suspend the region. Existing resources will remain but new orders will be blocked.</p>
-                        </>
-                      )}
-                      {action === 'reactivate' && (
-                        <>
-                          <p className="font-medium mb-1">✓ Reactivation</p>
-                          <p>This will restore the region to active status and re-enable all operations including new orders.</p>
-                        </>
-                      )}
-                      {action === 'update_fee' && (
-                        <>
-                          <p className="font-medium mb-1">Platform Fee Update</p>
-                          <p>Changing the platform fee will affect future transactions only. Existing orders are not affected.</p>
-                        </>
-                      )}
-                    </div>
-                  </div>
+              {action === "reactivate" && (
+                <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                  Reactivating will immediately restore automation and customer ordering in this
+                  region.
                 </div>
-              </div>
+              )}
 
-              {/* Actions */}
-              <div className="flex gap-4 mt-8">
-                <button
+              <div className="flex gap-3">
+                <ModernButton
                   type="button"
+                  variant="ghost"
                   onClick={() => navigate(`/admin-dashboard/region-approvals/${id}`)}
-                  className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-                  disabled={submitting}
+                  isDisabled={submitting}
                 >
                   Cancel
-                </button>
-                <button
+                </ModernButton>
+                <ModernButton
                   type="submit"
-                  disabled={submitting}
-                  className={`flex-1 px-6 py-3 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                    action === 'reject' || action === 'suspend'
-                      ? 'bg-red-600 hover:bg-red-700'
-                      : action === 'update_fee'
-                      ? 'bg-blue-600 hover:bg-blue-700'
-                      : 'bg-green-600 hover:bg-green-700'
-                  }`}
+                  variant={actionTone === "danger" ? "danger" : "primary"}
+                  isLoading={submitting}
                 >
-                  {submitting ? 'Processing...' : getActionButtonText()}
-                </button>
+                  {copy.submitLabel}
+                </ModernButton>
               </div>
             </form>
           </div>
-        </main>
-      </div>
-    </div>
+        </ModernCard>
+      </AdminPageShell>
+    </>
   );
 };
 

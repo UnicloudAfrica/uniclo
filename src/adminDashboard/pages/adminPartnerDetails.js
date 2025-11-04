@@ -5,10 +5,23 @@ import AdminSidebar from "../components/adminSidebar";
 import OverviewPartner from "../components/partnersComponent/overviewPartner";
 import PartnerModules from "../components/partnersComponent/partnerModules";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, AlertTriangle } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Boxes,
+  Building2,
+  Globe2,
+  LayoutDashboard,
+  Loader2,
+  Mail,
+  ShieldCheck,
+  Users2,
+  ClipboardList,
+} from "lucide-react";
 import { useFetchTenantById } from "../../hooks/adminHooks/tenantHooks";
 import PartnerClients from "../components/partnersComponent/partnerClients";
 import AdminPageShell from "../components/AdminPageShell";
+import OnboardingStatusBoard from "../components/onboarding/OnboardingStatusBoard";
 
 // Function to decode the ID from URL (re-used from other files)
 const decodeId = (encodedId) => {
@@ -62,30 +75,109 @@ export default function AdminPartnerDetails() {
     setIsMobileMenuOpen(false);
   };
 
-  // Define buttons and their corresponding components
-  const buttons = [
+  const formatDate = (value) => {
+    if (!value) return null;
+    try {
+      return new Date(value).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    } catch (error) {
+      console.error("Unable to format date", error);
+      return null;
+    }
+  };
+
+  const summaryCards = [
+    {
+      label: "Partner Account",
+      value: partnerDetails?.business?.name || tenantName,
+      hint: partnerDetails?.business?.industry
+        ? `Industry • ${partnerDetails.business.industry}`
+        : "Industry not captured",
+      icon: Building2,
+      accentBg: "bg-[#288DD1]/10",
+      accentText: "text-[#288DD1]",
+    },
+    {
+      label: "Primary Contact",
+      value: partnerDetails?.email || "No email provided",
+      hint: partnerDetails?.phone
+        ? `Phone • ${partnerDetails.phone}`
+        : "Phone number unavailable",
+      icon: Mail,
+      accentBg: "bg-emerald-50",
+      accentText: "text-emerald-600",
+    },
+    {
+      label: "Location",
+      value:
+        partnerDetails?.business?.country ||
+        partnerDetails?.country ||
+        "Not specified",
+      hint: partnerDetails?.business?.city || partnerDetails?.city
+        ? `City • ${
+            partnerDetails.business?.city || partnerDetails.city || "—"
+          }`
+        : "City not provided",
+      icon: Globe2,
+      accentBg: "bg-slate-100",
+      accentText: "text-slate-700",
+    },
+    {
+      label: "Verification",
+      value: partnerDetails?.verified === 1 ? "Verified" : "Unverified",
+      hint: partnerDetails?.updated_at
+        ? `Updated ${formatDate(partnerDetails.updated_at)}`
+        : "Awaiting latest review",
+      icon: ShieldCheck,
+      accentBg:
+        partnerDetails?.verified === 1 ? "bg-emerald-50" : "bg-amber-50",
+      accentText:
+        partnerDetails?.verified === 1 ? "text-emerald-600" : "text-amber-600",
+    },
+  ];
+
+  const tabs = [
     {
       label: "Overview",
       value: "overview",
+      description: "Compliance, documents, and account metadata",
+      icon: LayoutDashboard,
       component: (
         <OverviewPartner partnerDetails={partnerDetails} tenantId={tenantId} />
-      ), // Pass partnerDetails
+      ),
     },
     {
       label: "Clients",
       value: "clients",
+      description: "Linked customers managed by this partner",
+      icon: Users2,
       component: <PartnerClients tenantId={tenantId} />,
     },
     {
-      label: "Purchased Modules History",
+      label: "Modules",
       value: "purchased",
-      component: <PartnerModules tenantId={tenantId} />, // Pass tenantId
+      description: "Purchased history and provisioning trail",
+      icon: Boxes,
+      component: <PartnerModules tenantId={tenantId} />,
+    },
+    {
+      label: "Onboarding",
+      value: "onboarding",
+      description: "Track review steps and outstanding approvals",
+      icon: ClipboardList,
+      component: (
+        <OnboardingStatusBoard
+          target="tenant"
+          persona="tenant_business"
+          tenantId={tenantId}
+          entityName={tenantName}
+        />
+      ),
     },
   ];
-
-  const handleButtonClick = (value) => {
-    setActiveButton(value);
-  };
 
   // Handle loading state
   if (isPartnerFetching) {
@@ -148,35 +240,94 @@ export default function AdminPartnerDetails() {
         actions={
           <button
             onClick={() => navigate("/admin-dashboard/partners")}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+            className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-[#288DD1] hover:text-[#288DD1]"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Partners
           </button>
         }
-        contentClassName="space-y-6"
+        contentClassName="space-y-8"
       >
-        <div className="flex border-b w-full border-[#EAECF0]">
-          {buttons.map((button) => (
-            <button
-              key={button.value}
-              className={`font-medium text-sm pb-4 px-2 transition-all mr-4 ${
-                // Added mr-4 for spacing
-                activeButton === button.value
-                  ? "border-b-2 border-[#288DD1] text-[#288DD1]"
-                  : "text-[#1C1C1C]"
-              }`}
-              onClick={() => handleButtonClick(button.value)}
-            >
-              {button.label}
-            </button>
-          ))}
-        </div>
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {summaryCards.map(
+            ({ label, value, hint, icon: Icon, accentBg, accentText }) => (
+              <div
+                key={label}
+                className="rounded-3xl border border-[#EAECF0] bg-white p-5 shadow-sm transition hover:border-[#288DD1]/50 hover:shadow-md"
+              >
+                <div className="flex items-start gap-3">
+                  <span
+                    className={`flex h-10 w-10 items-center justify-center rounded-2xl ${accentBg} ${accentText}`}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {label}
+                    </p>
+                    <p className="mt-1 text-base font-semibold text-slate-900">
+                      {value}
+                    </p>
+                    {hint && (
+                      <p className="mt-2 text-xs font-medium text-slate-500">
+                        {hint}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          )}
+        </section>
 
-        <div className="w-full mt-6">
-          {/* Render the component based on activeButton */}
-          {buttons.find((button) => button.value === activeButton).component}
-        </div>
+        <section>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {tabs.map(({ value, label, description, icon: Icon }) => {
+              const isActive = activeButton === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setActiveButton(value)}
+                  className={`group flex items-start gap-3 rounded-3xl border px-5 py-4 text-left shadow-sm transition ${
+                    isActive
+                      ? "border-[#288DD1] bg-[#F3FAFF] shadow-md"
+                      : "border-transparent bg-white hover:border-[#288DD1]/40 hover:shadow-md"
+                  }`}
+                >
+                  <span
+                    className={`mt-1 flex h-10 w-10 items-center justify-center rounded-2xl ${
+                      isActive
+                        ? "bg-[#288DD1]/15 text-[#288DD1]"
+                        : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p
+                      className={`text-sm font-semibold ${
+                        isActive ? "text-[#0F172A]" : "text-slate-700"
+                      }`}
+                    >
+                      {label}
+                    </p>
+                    <p className="mt-1 text-xs font-medium text-slate-500">
+                      {description}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-[#EAECF0] bg-white p-6 shadow-sm">
+          {
+            tabs.find((tab) => tab.value === activeButton)?.component ??
+            tabs[0].component
+          }
+        </section>
       </AdminPageShell>
     </>
   );

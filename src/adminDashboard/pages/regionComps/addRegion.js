@@ -19,8 +19,18 @@ const buildFeatureState = (features = {}) => {
   return normalized;
 };
 
+const PROVIDER_OPTIONS = [
+  { value: "zadara", label: "Zadara" },
+  { value: "aws", label: "AWS (coming soon)" },
+  { value: "azure", label: "Azure (coming soon)" },
+  { value: "gcp", label: "Google Cloud (coming soon)" },
+  { value: "oracle", label: "Oracle Cloud (coming soon)" },
+  { value: "ibm", label: "IBM Cloud (coming soon)" },
+  { value: "openstack", label: "OpenStack (coming soon)" },
+];
+
 const createInitialFormData = () => ({
-  provider: "",
+  provider: "zadara",
   code: "",
   name: "",
   country_code: "",
@@ -49,25 +59,51 @@ const AddRegionModal = ({ isOpen, onClose }) => {
     }
   }, [isOpen]);
 
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.provider.trim()) newErrors.provider = "Provider is required";
-    if (!formData.code.trim()) newErrors.code = "Code is required";
-    if (!formData.name.trim()) newErrors.name = "Region Name is required";
-    if (!formData.country_code) newErrors.country_code = "Country is required";
-    if (!formData.city.trim()) newErrors.city = "City is required";
-    if (
-      formData.base_url &&
-      !/^https?:\/\/[^\s$.?#].[^\s]*$/i.test(formData.base_url.trim())
-    ) {
+const validateForm = () => {
+  const newErrors = {};
+  if (!formData.provider.trim()) newErrors.provider = "Provider is required";
+  if (!formData.code.trim()) newErrors.code = "Code is required";
+  if (!formData.name.trim()) newErrors.name = "Region Name is required";
+  if (!formData.country_code) newErrors.country_code = "Country is required";
+  if (!formData.city.trim()) newErrors.city = "City is required";
+  if (formData.provider === "zadara") {
+    if (!formData.base_url.trim()) {
+      newErrors.base_url = "Base URL is required for Zadara";
+    } else if (!/^https?:\/\/[^\s$.?#].[^\s]*$/i.test(formData.base_url.trim())) {
       newErrors.base_url = "Base URL must be a valid URL";
     }
+  } else if (
+    formData.base_url &&
+    !/^https?:\/\/[^\s$.?#].[^\s]*$/i.test(formData.base_url.trim())
+  ) {
+    newErrors.base_url = "Base URL must be a valid URL";
+  }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const updateFormData = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    let nextValue = value;
+
+    if (field === "provider" && typeof value === "string") {
+      nextValue = value.toLowerCase();
+      setFormData((prev) => {
+        const updated = {
+          ...prev,
+          provider: nextValue,
+        };
+
+        if (nextValue !== "zadara") {
+          updated.base_url = "";
+        }
+
+        return updated;
+      });
+      setErrors((prev) => ({ ...prev, provider: null, base_url: null }));
+      return;
+    }
+
+    setFormData((prev) => ({ ...prev, [field]: nextValue }));
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
@@ -201,16 +237,28 @@ const AddRegionModal = ({ isOpen, onClose }) => {
               >
                 Provider<span className="text-red-500">*</span>
               </label>
-              <input
+              <select
                 id="provider"
-                type="text"
                 value={formData.provider}
                 onChange={(e) => updateFormData("provider", e.target.value)}
-                placeholder="e.g., AWS"
-                className={`w-full input-field ${
+                className={`w-full input-field bg-white ${
                   errors.provider ? "border-red-500" : "border-gray-300"
                 }`}
-              />
+              >
+                <option value="" disabled>
+                  Select provider
+                </option>
+                {PROVIDER_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              {formData.provider && formData.provider !== "zadara" && (
+                <p className="text-amber-600 text-xs mt-2">
+                  Automated provisioning for {formData.provider.toUpperCase()} is coming soon. MSP credentials are only required for Zadara regions.
+                </p>
+              )}
               {errors.provider && (
                 <p className="text-red-500 text-xs mt-1">{errors.provider}</p>
               )}
@@ -314,7 +362,7 @@ const AddRegionModal = ({ isOpen, onClose }) => {
                 htmlFor="base_url"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                Base URL
+                Base URL{formData.provider === "zadara" && <span className="text-red-500">*</span>}
               </label>
               <input
                 id="base_url"
@@ -325,9 +373,15 @@ const AddRegionModal = ({ isOpen, onClose }) => {
                 className={`w-full input-field ${
                   errors.base_url ? "border-red-500" : "border-gray-300"
                 }`}
+                disabled={formData.provider !== "zadara"}
               />
               {errors.base_url && (
                 <p className="text-red-500 text-xs mt-1">{errors.base_url}</p>
+              )}
+              {formData.provider !== "zadara" && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Base URL will be requested once automated provisioning is supported for this provider.
+                </p>
               )}
             </div>
             <div>

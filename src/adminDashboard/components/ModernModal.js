@@ -1,21 +1,29 @@
-import React, { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
-import { designTokens } from '../../styles/designTokens';
-import ModernButton from './ModernButton';
+import React, { useEffect, useState } from "react";
+import { X } from "lucide-react";
+import { designTokens } from "../../styles/designTokens";
+import ModernButton from "./ModernButton";
+
+const mergeClassNames = (...values) =>
+  values
+    .flat()
+    .filter(Boolean)
+    .join(" ");
 
 const ModernModal = ({
   isOpen = false,
   onClose = () => {},
-  title = '',
-  size = 'md', // sm, md, lg, xl, full
+  title = "",
+  subtitle = "",
+  size = "md", // sm, md, lg, xl, full
   children,
   showCloseButton = true,
   closeOnBackdrop = true,
   closeOnEscape = true,
   actions = [],
-  className = '',
-  contentClassName = '',
-  loading = false
+  className = "",
+  contentClassName = "",
+  loading = false,
+  backdropClassName = "",
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -53,17 +61,18 @@ const ModernModal = ({
   }, [closeOnEscape, isOpen, onClose]);
 
   const sizes = {
-    sm: { maxWidth: '400px', width: '90%' },
-    md: { maxWidth: '600px', width: '90%' },
-    lg: { maxWidth: '800px', width: '95%' },
-    xl: { maxWidth: '1200px', width: '95%' },
-    full: { maxWidth: '100vw', width: '100%', height: '100vh' }
+    sm: { maxWidth: "400px", width: "90%" },
+    md: { maxWidth: "600px", width: "90%" },
+    lg: { maxWidth: "800px", width: "95%" },
+    xl: { maxWidth: "1200px", width: "95%" },
+    full: { maxWidth: "100vw", width: "100%", height: "100vh" },
   };
 
   const backdropStyles = {
     position: 'fixed',
     inset: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: "rgba(15, 23, 42, 0.45)",
+    backdropFilter: "blur(6px)",
     display: 'flex',
     alignItems: size === 'full' ? 'stretch' : 'center',
     justifyContent: 'center',
@@ -75,12 +84,13 @@ const ModernModal = ({
 
   const modalStyles = {
     backgroundColor: designTokens.colors.neutral[0],
-    borderRadius: size === 'full' ? 0 : designTokens.borderRadius.xl,
-    boxShadow: designTokens.shadows['2xl'],
+    borderRadius: size === "full" ? 0 : designTokens.borderRadius.xl,
+    border: size === "full" ? "none" : `1px solid ${designTokens.colors.neutral[200]}`,
+    boxShadow: designTokens.shadows["2xl"],
     maxWidth: sizes[size].maxWidth,
     width: sizes[size].width,
     height: sizes[size].height || 'auto',
-    maxHeight: size === 'full' ? '100vh' : '90vh',
+    maxHeight: size === "full" ? "100vh" : "calc(100vh - 64px)",
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
@@ -120,9 +130,12 @@ const ModernModal = ({
   };
 
   const contentStyles = {
-    padding: '24px',
+    padding: "24px",
     flex: 1,
-    overflow: 'auto'
+    overflowY: "auto",
+    overflowX: "hidden",
+    color: designTokens.colors.neutral[700],
+    backgroundColor: designTokens.colors.neutral[0],
   };
 
   const footerStyles = {
@@ -158,12 +171,18 @@ const ModernModal = ({
   }
 
   return (
-    <div 
-      style={backdropStyles} 
+    <div
+      style={backdropStyles}
       onClick={handleBackdropClick}
-      className={className}
+      className={backdropClassName}
     >
-      <div style={{ ...modalStyles, position: 'relative' }}>
+      <div
+        style={{ ...modalStyles, position: "relative" }}
+        className={mergeClassNames("modern-modal-container", className)}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? "modern-modal-title" : undefined}
+      >
         {loading && (
           <div style={loadingOverlayStyles}>
             <div 
@@ -176,7 +195,21 @@ const ModernModal = ({
         {/* Header */}
         {(title || showCloseButton) && (
           <div style={headerStyles}>
-            {title && <h2 style={titleStyles}>{title}</h2>}
+            <div>
+              {title && (
+                <h2 id="modern-modal-title" style={titleStyles}>
+                  {title}
+                </h2>
+              )}
+              {subtitle ? (
+                <p
+                  className="mt-1 text-sm"
+                  style={{ color: designTokens.colors.neutral[500] }}
+                >
+                  {subtitle}
+                </p>
+              ) : null}
+            </div>
             {showCloseButton && (
               <button
                 onClick={onClose}
@@ -198,7 +231,13 @@ const ModernModal = ({
         )}
 
         {/* Content */}
-        <div style={contentStyles} className={contentClassName}>
+        <div
+          style={contentStyles}
+          className={mergeClassNames(
+            "modern-modal-content space-y-6 text-sm leading-relaxed",
+            contentClassName
+          )}
+        >
           {children}
         </div>
 

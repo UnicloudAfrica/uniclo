@@ -2,6 +2,7 @@
 import { Eye, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useFetchSubTenantByTenantID } from "../../../hooks/adminHooks/tenantHooks";
+import ModernButton from "../ModernButton";
 
 const encodeId = (id) => {
   return encodeURIComponent(btoa(id));
@@ -82,17 +83,18 @@ const PartnerClients = ({ tenantId }) => {
                         {item.email}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-normal">
-                        <button
+                        <ModernButton
+                          variant="ghost"
+                          size="sm"
+                          className="gap-2 text-xs"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleViewDetails(item);
                           }}
-                          className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                          title="View Client Details"
-                          aria-label={`View details for ${item.name}`}
                         >
-                          <Eye className="w-4 h-4" />
-                        </button>
+                          <Eye className="h-4 w-4" />
+                          View
+                        </ModernButton>
                       </td>
                     </tr>
                   ))
@@ -125,17 +127,18 @@ const PartnerClients = ({ tenantId }) => {
                     <h3 className="text-sm font-medium text-[#1C1C1C]">
                       S/N: {index + 1}
                     </h3>
-                    <button
+                    <ModernButton
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1 text-xs"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleViewDetails(item);
                       }}
-                      className="text-[#288DD1] hover:text-[#1976D2] transition-colors"
-                      title="View Client Details"
-                      aria-label={`View details for ${item.name}`}
                     >
-                      <Eye className="w-4 h-4" />
-                    </button>
+                      <Eye className="h-4 w-4" />
+                      View
+                    </ModernButton>
                   </div>
                   <p className="text-sm text-[#575758]">Name: {item.name}</p>
                   <p className="text-sm text-[#575758]">Email: {item.email}</p>

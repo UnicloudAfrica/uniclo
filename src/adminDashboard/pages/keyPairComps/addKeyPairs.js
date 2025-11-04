@@ -5,30 +5,11 @@ import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
 import { useCreateKeyPair } from "../../../hooks/adminHooks/keyPairHooks";
 import ModernModal from "../../components/ModernModal";
 import ModernInput from "../../components/ModernInput";
+import ModernSelect from "../../components/ModernSelect";
+import ModernTextarea from "../../components/ModernTextarea";
 import ModernButton from "../../components/ModernButton";
 import { designTokens } from "../../../styles/designTokens";
 import ToastUtils from "../../../utils/toastUtil";
-
-const selectStyles = {
-  width: "100%",
-  height: "52px",
-  borderRadius: designTokens.borderRadius.lg,
-  border: `1px solid ${designTokens.colors.neutral[300]}`,
-  padding: "0 16px",
-  fontSize: designTokens.typography.fontSize.base[0],
-  fontFamily: designTokens.typography.fontFamily.sans.join(", "),
-  color: designTokens.colors.neutral[800],
-  backgroundColor: designTokens.colors.neutral[0],
-  outline: "none",
-  transition: "all 0.2s ease",
-};
-
-const helperTextStyles = {
-  fontSize: designTokens.typography.fontSize.xs[0],
-  marginTop: "6px",
-  color: designTokens.colors.error[600],
-  fontFamily: designTokens.typography.fontFamily.sans.join(", "),
-};
 
 const AddKeyPair = ({
   isOpen,
@@ -173,6 +154,11 @@ const AddKeyPair = ({
       title={
         successState.isSuccess ? "Key Pair Created" : "Add Project Key Pair"
       }
+      subtitle={
+        successState.isSuccess
+          ? "Store this private key securely."
+          : "Generate a new SSH key pair or register an existing public key for this project."
+      }
       actions={actions}
       size="lg"
       loading={isPending}
@@ -222,55 +208,32 @@ const AddKeyPair = ({
             error={errors.name}
             required
           />
-          <div>
-            <label
-              htmlFor="keypair-region"
-              className="block text-sm font-medium"
-              style={{ color: designTokens.colors.neutral[700] }}
-            >
-              Region <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="keypair-region"
-              value={formData.region}
-              onChange={(event) =>
-                updateFormData("region", event.target.value)
-              }
-              disabled={isRegionsFetching}
-              style={selectStyles}
-              onFocus={(event) => {
-                event.target.style.borderColor =
-                  designTokens.colors.primary[500];
-                event.target.style.boxShadow = `0 0 0 3px ${designTokens.colors.primary[100]}`;
-              }}
-              onBlur={(event) => {
-                event.target.style.borderColor =
-                  designTokens.colors.neutral[300];
-                event.target.style.boxShadow = "none";
-              }}
-            >
-              <option value="" disabled>
-                {isRegionsFetching ? "Loading regions..." : "Select a region"}
-              </option>
-              {regions?.map((region) => (
-                <option key={region.code} value={region.code}>
-                  {region.name}
-                </option>
-              ))}
-            </select>
-            {errors.region && (
-              <p style={helperTextStyles}>{errors.region}</p>
-            )}
-          </div>
-          <ModernInput
+          <ModernSelect
+            label="Region"
+            placeholder={
+              isRegionsFetching ? "Loading regions..." : "Select a region"
+            }
+            value={formData.region}
+            onChange={(event) =>
+              updateFormData("region", event.target.value)
+            }
+            error={errors.region}
+            required
+            disabled={isRegionsFetching}
+            options={regions?.map((region) => ({
+              label: region.name,
+              value: region.code,
+            })) ?? []}
+          />
+          <ModernTextarea
             label="Public Key (optional)"
             placeholder="Paste an existing public key"
             value={formData.public_key}
             onChange={(event) =>
               updateFormData("public_key", event.target.value)
             }
-            variant="filled"
             helper="Leave empty to generate a key pair and download the private material."
+            rows={5}
           />
         </div>
       )}

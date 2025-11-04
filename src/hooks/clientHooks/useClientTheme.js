@@ -1,14 +1,37 @@
-// A dummy hook to simulate fetching client-specific theme settings.
-// In a real application, this would fetch data from an API.
-const useClientTheme = () => {
+import { useClientBrandingTheme } from "../useBrandingTheme";
+
+const FALLBACK_LOGO =
+  "https://dummyimage.com/150x50/e5e7eb/6b7280.png&text=Client+Logo";
+
+const mapBrandingToClientTheme = (branding) => {
+  if (!branding) {
+    return {
+      businessLogoHref: FALLBACK_LOGO,
+      businessLogoLink: null,
+      themeColor: "#288DD1",
+      secondaryColor: "#3272CA",
+      palette: {},
+      company: {},
+      branding: null,
+    };
+  }
+
   return {
-    data: {
-      businessLogoHref:
-        "https://dummyimage.com/150x50/e5e7eb/6b7280.png&text=Client+Logo", // A working placeholder logo
-      themeColor: "#28a745", // A greenish primary color
-      secondaryColor: "#218838", // A darker greenish secondary color
-    },
-    isFetching: false,
+    businessLogoHref: branding.logo ?? FALLBACK_LOGO,
+    businessLogoLink: branding.logoHref ?? null,
+    themeColor: branding.accentColor ?? "#288DD1",
+    secondaryColor: branding.primaryColor ?? "#3272CA",
+    palette: branding.palette ?? {},
+    company: branding.company ?? {},
+    branding,
+  };
+};
+
+const useClientTheme = (options = {}) => {
+  const query = useClientBrandingTheme(options);
+  return {
+    ...query,
+    data: mapBrandingToClientTheme(query.data),
   };
 };
 

@@ -1,998 +1,1363 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  User,
-  Mail,
-  Phone,
-  Lock,
-  Bell,
-  Shield,
-  Globe,
-  Palette,
-  Save,
-  RefreshCw,
-  Eye,
-  EyeOff,
-  Camera,
-  Upload,
-  Download,
-  Trash2,
-  AlertCircle,
-  CheckCircle,
-  Settings,
-  Key,
-  Smartphone,
-  Clock,
   Activity,
-  CreditCard,
-  FileText,
+  Bell,
+  Camera,
+  Clock,
+  Download,
+  Globe,
   Loader2,
-  Edit2,
+  Mail,
+  Palette,
+  RefreshCw,
+  Save,
+  Settings,
+  Shield,
   X,
-  Check,
-  Info
+  Trash2,
+  Upload,
+  User,
 } from "lucide-react";
-
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
-import AdminActiveTab from "../components/adminActiveTab";
-import ToastUtils from "../../utils/toastUtil";
 import AdminPageShell from "../components/AdminPageShell";
+import ResourceHero from "../components/ResourceHero";
+import ModernCard from "../components/ModernCard";
+import ModernButton from "../components/ModernButton";
+import ToastUtils from "../../utils/toastUtil";
+import {
+  useSetupTwoFactor,
+  useEnableTwoFactor,
+  useDisableTwoFactor,
+} from "../../hooks/authHooks";
+import {
+  useFetchProfileSettings,
+  useUpdateProfileSettingsBatch,
+  useResetProfileSettings,
+  useExportProfileSettings,
+  useImportProfileSettings,
+} from "../../hooks/settingsHooks";
+import useAdminAuthStore from "../../stores/adminAuthStore";
+import config from "../../config";
 
-// Profile Avatar Component
-const ProfileAvatar = ({ user, onAvatarChange }) => {
-  const [uploading, setUploading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState(user?.profile_picture_url || null);
+const TIMEZONE_OPTIONS = [
+  { value: "UTC", label: "UTC" },
+  { value: "America/New_York", label: "Eastern (US)" },
+  { value: "America/Chicago", label: "Central (US)" },
+  { value: "America/Los_Angeles", label: "Pacific (US)" },
+  { value: "Europe/London", label: "GMT / London" },
+  { value: "Africa/Lagos", label: "West Africa / Lagos" },
+];
 
-  const handleFileUpload = async (event) => {
+const LANGUAGE_OPTIONS = [
+  { value: "en", label: "English" },
+  { value: "fr", label: "French" },
+  { value: "es", label: "Spanish" },
+  { value: "de", label: "German" },
+  { value: "pt", label: "Portuguese" },
+];
+
+const THEME_OPTIONS = [
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+  { value: "auto", label: "Auto" },
+];
+
+const LAYOUT_OPTIONS = [
+  { value: "default", label: "Default" },
+  { value: "compact", label: "Compact" },
+  { value: "analytics", label: "Analytics" },
+];
+
+const ITEMS_PER_PAGE_OPTIONS = [
+  { value: 10, label: "10 rows" },
+  { value: 25, label: "25 rows" },
+  { value: 50, label: "50 rows" },
+  { value: 100, label: "100 rows" },
+];
+
+const PROFILE_TABS = [
+  {
+    id: "profile",
+    name: "Profile",
+    description:
+      "Keep your personal details accurate so teammates know who they are collaborating with.",
+    icon: User,
+    categories: ["profile", "contact"],
+    groups: [
+      {
+        title: "Identity",
+        description: "Update how your profile appears across the admin console.",
+        fields: [
+          {
+            stateKey: "profile.name",
+            label: "Full name",
+            placeholder: "Jane Doe",
+            type: "text",
+            icon: User,
+            required: true,
+          },
+          {
+            stateKey: "contact.email",
+            label: "Email address",
+            placeholder: "mail@company.com",
+            type: "text",
+            icon: Mail,
+            readOnly: true,
+            help: "Email can only be changed by the platform administrator.",
+          },
+          {
+            stateKey: "contact.phone",
+            label: "Phone number",
+            placeholder: "+234 801 234 5678",
+            type: "text",
+            icon: Activity,
+          },
+          {
+            stateKey: "profile.timezone",
+            label: "Primary timezone",
+            placeholder: "Select timezone",
+            type: "select",
+            options: TIMEZONE_OPTIONS,
+            icon: Clock,
+            includeWhenUndefined: true,
+          },
+          {
+            stateKey: "profile.location",
+            label: "Location",
+            placeholder: "City, State, Country",
+            type: "text",
+            icon: Globe,
+          },
+        ],
+      },
+      {
+        title: "About you",
+        description: "Share a short bio so teams understand your background.",
+        fields: [
+          {
+            stateKey: "profile.bio",
+            label: "Bio",
+            placeholder: "Tell us about your role, focus areas, and interests.",
+            type: "textarea",
+            rows: 4,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "notifications",
+    name: "Notifications",
+    description:
+      "Choose which alerts you want to receive to stay ahead of infrastructure activity.",
+    icon: Bell,
+    categories: ["notifications"],
+    groups: [
+      {
+        title: "Notification channels",
+        description: "Toggle the channels that should stay active for your profile.",
+        layout: "grid",
+        fields: [
+          {
+            stateKey: "notifications.email_notifications",
+            label: "Email alerts",
+            help: "Receive key operational updates in your inbox.",
+            type: "toggle",
+          },
+          {
+            stateKey: "notifications.sms_notifications",
+            label: "SMS alerts",
+            help: "Get urgent SMS alerts when capacity or billing thresholds are hit.",
+            type: "toggle",
+          },
+          {
+            stateKey: "notifications.instance_alerts",
+            label: "Instance alerts",
+            help: "Be notified when compute instances provision, fail, or scale.",
+            type: "toggle",
+          },
+          {
+            stateKey: "notifications.billing_alerts",
+            label: "Billing alerts",
+            help: "Enable summaries for invoices, renewals, and late payments.",
+            type: "toggle",
+          },
+          {
+            stateKey: "notifications.security_alerts",
+            label: "Security alerts",
+            help: "Critical notifications when security baselines change.",
+            type: "toggle",
+          },
+          {
+            stateKey: "notifications.marketing_emails",
+            label: "Product updates",
+            help: "Opt into release briefings and early product previews.",
+            type: "toggle",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "preferences",
+    name: "Preferences",
+    description:
+      "Tailor the admin experience to match the way you work day to day.",
+    icon: Palette,
+    categories: ["preferences"],
+    groups: [
+      {
+        title: "Interface preferences",
+        description: "These options impact the appearance and density of data tables.",
+        fields: [
+          {
+            stateKey: "preferences.theme",
+            label: "Theme",
+            type: "select",
+            options: THEME_OPTIONS,
+            icon: Palette,
+          },
+          {
+            stateKey: "preferences.language",
+            label: "Language",
+            type: "select",
+            options: LANGUAGE_OPTIONS,
+            icon: Globe,
+          },
+          {
+            stateKey: "preferences.dashboard_layout",
+            label: "Dashboard layout",
+            type: "select",
+            options: LAYOUT_OPTIONS,
+            icon: Settings,
+          },
+          {
+            stateKey: "preferences.items_per_page",
+            label: "Rows per page",
+            type: "select",
+            options: ITEMS_PER_PAGE_OPTIONS,
+            icon: Activity,
+            cast: (value) => Number(value) || 25,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "security",
+    name: "Security",
+    description:
+      "Increase the protection around your account and keep suspicious access at bay.",
+    icon: Shield,
+    categories: ["security"],
+    groups: [
+      {
+        title: "Multi-factor authentication",
+        description:
+          "Require a secondary factor when signing in to this admin account.",
+        fields: [],
+      },
+    ],
+  },
+];
+
+const flattenSettings = (settings = {}) => {
+  const flattened = {};
+
+  Object.entries(settings).forEach(([category, value]) => {
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      Object.entries(value).forEach(([key, inner]) => {
+        flattened[`${category}.${key}`] = inner;
+      });
+    } else {
+      flattened[category] = value;
+    }
+  });
+
+  return flattened;
+};
+
+const normalizeFieldValue = (field, raw) => {
+  if (field?.type === "toggle") {
+    return Boolean(raw);
+  }
+  if (field?.cast) {
+    return field.cast(raw);
+  }
+  if (field?.type === "select" && raw === undefined) {
+    return field.options?.[0]?.value ?? "";
+  }
+  if (raw === undefined || raw === null) {
+    return field?.type === "textarea" ? "" : "";
+  }
+  return raw;
+};
+
+const transformValueForSave = (field, raw) => {
+  if (field?.cast) {
+    return field.cast(raw);
+  }
+  if (field?.type === "toggle") {
+    return Boolean(raw);
+  }
+  if (field?.type === "select" && typeof raw === "string") {
+    return raw;
+  }
+  return raw;
+};
+
+const ProfileAvatar = ({ name, email, avatarUrl, onAvatarChange }) => {
+  const token = useAdminAuthStore((state) => state.token);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const initials =
+    name
+      ?.split(" ")
+      .map((part) => part.charAt(0).toUpperCase())
+      .join("")
+      .slice(0, 2) || "U";
+
+  const uploadEndpoint = `${config.baseURL}/business/settings/profile/avatar`;
+
+  const handleFileChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      ToastUtils.error('Please select an image file');
+    if (!file.type.startsWith("image/")) {
+      ToastUtils.error("Please select an image file (PNG, JPG, SVG).");
       return;
     }
-
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      ToastUtils.error('File size must be less than 5MB');
+      ToastUtils.error("Avatar must be smaller than 5MB.");
       return;
     }
 
-    setUploading(true);
-
+    setIsUploading(true);
     try {
       const formData = new FormData();
-      formData.append('avatar', file);
-
-      const response = await fetch('/api/v1/settings/profile/avatar', {
-        method: 'POST',
+      formData.append("avatar", file);
+      const response = await fetch(uploadEndpoint, {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
-
       const data = await response.json();
-
-      if (data.success) {
-        setPreviewUrl(data.data.avatar_url);
-        onAvatarChange(data.data.avatar_url);
-        ToastUtils.success('Profile picture updated successfully');
-      } else {
-        throw new Error(data.error || 'Failed to upload avatar');
+      if (!response.ok || !data.success) {
+        throw new Error(data?.message || "Failed to upload avatar");
       }
-    } catch (err) {
-      ToastUtils.error(err.message);
+      const nextUrl =
+        data?.data?.avatar_url || data?.data?.setting?.value || null;
+      onAvatarChange(nextUrl);
+      ToastUtils.success("Profile picture updated");
+    } catch (error) {
+      console.error(error);
+      ToastUtils.error(
+        error.message || "Unable to upload profile picture right now."
+      );
     } finally {
-      setUploading(false);
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
-  const removeAvatar = async () => {
+  const handleRemove = async () => {
+    setIsUploading(true);
     try {
-      const response = await fetch('/api/v1/settings/profile/avatar', {
-        method: 'DELETE',
+      const response = await fetch(uploadEndpoint, {
+        method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Accept': 'application/json',
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
         },
       });
-
       const data = await response.json();
-
-      if (data.success) {
-        setPreviewUrl(null);
-        onAvatarChange(null);
-        ToastUtils.success('Profile picture removed');
-      } else {
-        throw new Error(data.error || 'Failed to remove avatar');
+      if (!response.ok || !data.success) {
+        throw new Error(data?.message || "Failed to remove avatar");
       }
-    } catch (err) {
-      ToastUtils.error(err.message);
+      onAvatarChange(null);
+      ToastUtils.success("Profile picture removed");
+    } catch (error) {
+      console.error(error);
+      ToastUtils.error(
+        error.message || "Unable to remove your profile picture right now."
+      );
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  const getInitials = (name) => {
-    return name
-      ?.split(' ')
-      .map(part => part.charAt(0))
-      .join('')
-      .toUpperCase()
-      .slice(0, 2) || 'U';
-  };
-
   return (
-    <div className="flex items-center space-x-4">
-      <div className="relative">
-        <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-          {previewUrl ? (
+    <ModernCard
+      className="flex flex-col gap-4 border border-slate-200/80 bg-white/90"
+      padding="lg"
+    >
+      <div className="flex items-start gap-4">
+        <div className="relative h-20 w-20 shrink-0 rounded-2xl bg-slate-200">
+          {avatarUrl ? (
             <img
-              src={previewUrl}
-              alt="Profile"
-              className="w-full h-full object-cover"
+              src={avatarUrl}
+              alt={name || "Profile avatar"}
+              className="h-full w-full rounded-2xl object-cover"
             />
           ) : (
-            <span className="text-2xl font-bold text-gray-500">
-              {getInitials(user?.name)}
-            </span>
+            <div className="flex h-full w-full items-center justify-center rounded-2xl bg-slate-900/5 text-xl font-semibold text-slate-500">
+              {initials}
+            </div>
           )}
+          {isUploading && (
+            <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-slate-900/40">
+              <Loader2 className="h-5 w-5 animate-spin text-white" />
+            </div>
+          )}
+          <label className="absolute -bottom-2 -right-2 inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-primary-600 text-white shadow-lg transition hover:bg-primary-500">
+            <Camera className="h-4 w-4" />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+              disabled={isUploading}
+            />
+          </label>
         </div>
 
-        {uploading && (
-          <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
-            <Loader2 className="w-6 h-6 text-white animate-spin" />
+        <div className="flex-1 space-y-2">
+          <div>
+            <h3 className="text-base font-semibold text-slate-900">
+              {name || "Unknown administrator"}
+            </h3>
+            <p className="text-sm text-slate-500">{email || "No email set"}</p>
           </div>
-        )}
-
-        <label className="absolute bottom-0 right-0 bg-blue-600 rounded-full p-1.5 cursor-pointer hover:bg-blue-700 transition-colors">
-          <Camera className="w-3 h-3 text-white" />
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileUpload}
-            className="hidden"
-            disabled={uploading}
-          />
-        </label>
-      </div>
-
-      <div className="flex-1">
-        <h3 className="text-lg font-semibold text-gray-900">{user?.name || 'Unknown User'}</h3>
-        <p className="text-sm text-gray-500">{user?.email}</p>
-        <div className="flex items-center space-x-2 mt-2">
-          <button
-            onClick={() => document.querySelector('input[type="file"]').click()}
-            disabled={uploading}
-            className="text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50"
-          >
-            Change Photo
-          </button>
-          {previewUrl && (
-            <>
-              <span className="text-gray-300">•</span>
-              <button
-                onClick={removeAvatar}
-                className="text-sm text-red-600 hover:text-red-800"
+          <p className="text-xs text-slate-400">
+            Recommended size: 320 × 320px PNG, JPG, SVG (max 5MB)
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <ModernButton
+              size="sm"
+              className="flex items-center gap-2"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+            >
+              <Upload className="h-4 w-4" />
+              Upload new photo
+            </ModernButton>
+            {avatarUrl && (
+              <ModernButton
+                size="sm"
+                variant="outline"
+                className="flex items-center gap-2 text-red-500 hover:text-red-600"
+                onClick={handleRemove}
+                disabled={isUploading}
               >
+                <Trash2 className="h-4 w-4" />
                 Remove
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Settings Section Component
-const SettingsSection = ({ title, description, children, icon: Icon }) => {
-  return (
-    <div className="bg-white rounded-lg p-6 border border-gray-200">
-      <div className="flex items-start space-x-3 mb-6">
-        {Icon && (
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <Icon className="w-5 h-5 text-blue-600" />
+              </ModernButton>
+            )}
           </div>
-        )}
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-          {description && (
-            <p className="text-sm text-gray-500 mt-1">{description}</p>
-          )}
         </div>
       </div>
-      {children}
-    </div>
+    </ModernCard>
   );
 };
 
-// Form Field Component
-const FormField = ({ 
-  label, 
-  value, 
-  onChange, 
-  type = 'text', 
-  placeholder, 
-  error, 
-  required = false,
-  disabled = false,
-  icon: Icon,
-  description
-}) => {
-  const [showPassword, setShowPassword] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [tempValue, setTempValue] = useState(value);
+const FieldControl = ({ field, value, onChange }) => {
+  const {
+    label,
+    placeholder,
+    type,
+    help,
+    readOnly,
+    icon: Icon,
+    options = [],
+    rows = 3,
+  } = field;
+  const [isFocused, setFocused] = useState(false);
 
-  const handleSave = () => {
-    onChange(tempValue);
-    setIsEditing(false);
+  const renderInput = () => {
+    if (type === "textarea") {
+      return (
+        <textarea
+          rows={rows}
+          value={value ?? ""}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100"
+        />
+      );
+    }
+
+    if (type === "select") {
+      return (
+        <select
+          value={value ?? options[0]?.value ?? ""}
+          onChange={(event) => onChange(event.target.value)}
+          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100"
+        >
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      );
+    }
+
+    if (type === "toggle") {
+      const active = Boolean(value);
+      return (
+        <button
+          type="button"
+          onClick={() => onChange(!active)}
+          className={`relative inline-flex h-9 w-16 items-center rounded-full border transition ${
+            active
+              ? "border-primary-200 bg-primary-500/90"
+              : "border-slate-200 bg-slate-200/60"
+          }`}
+        >
+          <span
+            className={`ml-1 inline-flex h-7 w-7 transform items-center justify-center rounded-full bg-white text-xs font-semibold transition ${
+              active ? "translate-x-7 text-primary-600" : "translate-x-0 text-slate-500"
+            }`}
+          >
+            {active ? "On" : "Off"}
+          </span>
+        </button>
+      );
+    }
+
+    const inputType = type === "number" ? "number" : "text";
+    return (
+      <div className="relative">
+        {Icon && (
+          <Icon
+            className={`pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 ${
+              isFocused ? "text-primary-500" : ""
+            }`}
+          />
+        )}
+        <input
+          type={inputType}
+          value={value ?? ""}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          readOnly={readOnly}
+          className={`w-full rounded-xl border ${
+            readOnly
+              ? "border-slate-200 bg-slate-50 text-slate-500"
+              : "border-slate-200 bg-white text-slate-700 shadow-sm transition focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100"
+          } px-4 py-3 text-sm ${Icon ? "pl-11" : ""}`}
+        />
+      </div>
+    );
   };
-
-  const handleCancel = () => {
-    setTempValue(value);
-    setIsEditing(false);
-  };
-
-  useEffect(() => {
-    setTempValue(value);
-  }, [value]);
-
-  const inputType = type === 'password' && showPassword ? 'text' : type;
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">
-        {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-      </label>
-      
-      {description && (
-        <p className="text-xs text-gray-500">{description}</p>
-      )}
-
-      <div className="relative">
-        {Icon && (
-          <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-            <Icon className="w-4 h-4 text-gray-400" />
-          </div>
-        )}
-
-        {disabled && !isEditing ? (
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
-            <span className={`${Icon ? 'pl-8' : ''} text-sm text-gray-900`}>
-              {value || 'Not set'}
-            </span>
-            <button
-              onClick={() => setIsEditing(true)}
-              className="text-blue-600 hover:text-blue-800"
-            >
-              <Edit2 className="w-4 h-4" />
-            </button>
-          </div>
-        ) : isEditing ? (
-          <div className="flex items-center space-x-2">
-            <div className="relative flex-1">
-              <input
-                type={inputType}
-                value={tempValue}
-                onChange={(e) => setTempValue(e.target.value)}
-                placeholder={placeholder}
-                className={`
-                  w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                  ${Icon ? 'pl-10' : ''}
-                  ${error ? 'border-red-300' : 'border-gray-300'}
-                `}
-              />
-              
-              {type === 'password' && (
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              )}
-            </div>
-            
-            <button
-              onClick={handleSave}
-              className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-            >
-              <Check className="w-4 h-4" />
-            </button>
-            
-            <button
-              onClick={handleCancel}
-              className="p-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        ) : (
-          <div className="relative">
-            <input
-              type={inputType}
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              placeholder={placeholder}
-              disabled={disabled}
-              className={`
-                w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                ${Icon ? 'pl-10' : ''}
-                ${error ? 'border-red-300' : 'border-gray-300'}
-                ${disabled ? 'bg-gray-50 text-gray-500' : ''}
-              `}
-            />
-            
-            {type === 'password' && !disabled && (
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            )}
-          </div>
+      <div className="flex items-center justify-between">
+        <label className="text-sm font-medium text-slate-700">{label}</label>
+        {readOnly && (
+          <span className="rounded-full border border-slate-200 px-2 py-0.5 text-[11px] uppercase tracking-wide text-slate-400">
+            Read only
+          </span>
         )}
       </div>
-
-      {error && (
-        <p className="text-sm text-red-600 flex items-center">
-          <AlertCircle className="w-4 h-4 mr-1" />
-          {error}
-        </p>
-      )}
+      {renderInput()}
+      {help && <p className="text-xs text-slate-400">{help}</p>}
     </div>
   );
 };
 
-// Main Component
+const SecurityTwoFactorPanel = ({
+  enabled,
+  onEnable,
+  onDisable,
+  isBusy,
+  isFetching,
+}) => {
+  const statusLabel = enabled ? "Enabled" : "Disabled";
+  const statusStyles = enabled
+    ? "bg-emerald-50 text-emerald-600"
+    : "bg-slate-200 text-slate-600";
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-1">
+          <p className="text-sm font-semibold text-slate-900">
+            Two-factor authentication (2FA)
+          </p>
+          <p className="text-sm text-slate-500">
+            Add a second verification step to keep your administrative access
+            secure.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles}`}
+          >
+            {statusLabel}
+          </span>
+          <ModernButton
+            size="sm"
+            variant={enabled ? "outline" : "primary"}
+            className="flex items-center gap-2"
+            onClick={enabled ? onDisable : onEnable}
+            disabled={isBusy || isFetching}
+          >
+            {isBusy || isFetching ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Shield className="h-4 w-4" />
+            )}
+            {enabled ? "Disable 2FA" : "Enable 2FA"}
+          </ModernButton>
+        </div>
+      </div>
+      <div className="rounded-2xl border border-dashed border-slate-200 bg-white/80 p-4 text-sm text-slate-600">
+        {enabled ? (
+          <p>
+            You will need the 6-digit code from your authenticator app whenever
+            you sign in. Keep your backup codes somewhere safe.
+          </p>
+        ) : (
+          <p>
+            Use Google Authenticator, Authy, or any compatible authenticator app
+            to scan our QR code and confirm a 6-digit code to complete setup.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const buildSavePayload = (fields, formState) => {
+  return fields
+    .filter((field) => field.stateKey && !field.readOnly && field.type !== "description")
+    .map((field) => {
+      const [category, key] = field.stateKey.split(".");
+      if (!category || !key) return null;
+      const currentValue = formState[field.stateKey];
+      if (currentValue === undefined && !field.includeWhenUndefined) {
+        return null;
+      }
+      return {
+        category,
+        key,
+        value: transformValueForSave(
+          field,
+          currentValue !== undefined ? currentValue : null
+        ),
+      };
+    })
+    .filter(Boolean);
+};
+
+const flattenObjectToSettingsArray = (settingsObject = {}) => {
+  const payload = [];
+  Object.entries(settingsObject).forEach(([category, values]) => {
+    if (values && typeof values === "object" && !Array.isArray(values)) {
+      Object.entries(values).forEach(([key, value]) => {
+        payload.push({ category, key, value });
+      });
+    }
+  });
+  return payload;
+};
+
 export default function EnhancedProfileSettings() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState('profile');
-  
-  // Profile Data
-  const [profileData, setProfileData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    bio: '',
-    location: '',
-    timezone: '',
-    profile_picture_url: null,
+  const [activeTab, setActiveTab] = useState(PROFILE_TABS[0].id);
+  const [formState, setFormState] = useState({});
+  const [savingSection, setSavingSection] = useState(null);
+  const [resettingSection, setResettingSection] = useState(null);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef(null);
+  const [twoFactorModal, setTwoFactorModal] = useState({
+    open: false,
+    mode: "enable",
+    qrCodeSvg: "",
+    secret: "",
   });
+  const [twoFactorOtp, setTwoFactorOtp] = useState("");
+  const [isFetchingTwoFactor, setIsFetchingTwoFactor] = useState(false);
+  const [isTwoFactorProcessing, setIsTwoFactorProcessing] = useState(false);
 
-  // Security Data
-  const [securityData, setSecurityData] = useState({
-    current_password: '',
-    new_password: '',
-    confirm_password: '',
-    two_factor_enabled: false,
-  });
+  const {
+    data: profileSettingsData,
+    isFetching,
+    isRefetching,
+    refetch,
+  } = useFetchProfileSettings();
 
-  // Notification Settings
-  const [notificationSettings, setNotificationSettings] = useState({
-    email_notifications: true,
-    sms_notifications: false,
-    instance_alerts: true,
-    billing_alerts: true,
-    security_alerts: true,
-    marketing_emails: false,
-  });
+  const {
+    mutateAsync: updateSettingsBatch,
+    isPending: isUpdatingSettings,
+  } = useUpdateProfileSettingsBatch();
+  const { mutateAsync: resetProfileSettings } = useResetProfileSettings();
+  const { mutateAsync: exportProfileSettings, isPending: isExporting } =
+    useExportProfileSettings();
+  const { mutateAsync: importProfileSettings } = useImportProfileSettings();
+  const { mutateAsync: setupTwoFactor } = useSetupTwoFactor();
+  const { mutateAsync: enableTwoFactor } = useEnableTwoFactor();
+  const { mutateAsync: disableTwoFactor } = useDisableTwoFactor();
 
-  // Preferences
-  const [preferences, setPreferences] = useState({
-    language: 'en',
-    theme: 'light',
-    dashboard_layout: 'default',
-    items_per_page: 25,
-  });
+  const flattenedSettings = useMemo(
+    () => flattenSettings(profileSettingsData?.settings ?? {}),
+    [profileSettingsData?.settings]
+  );
 
-  const [errors, setErrors] = useState({});
-
-  // Fetch profile settings
   useEffect(() => {
-    fetchProfileSettings();
-  }, []);
+    if (Object.keys(flattenedSettings).length) {
+      setFormState(flattenedSettings);
+    }
+  }, [flattenedSettings]);
 
-  const fetchProfileSettings = async () => {
-    setLoading(true);
-    
-    try {
-      const response = await fetch('/api/v1/settings/profile', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Accept': 'application/json',
-        },
-      });
+  const availableCategories = useMemo(
+    () => profileSettingsData?.available_categories ?? [],
+    [profileSettingsData?.available_categories]
+  );
 
-      const data = await response.json();
-
-      if (data.success) {
-        const settings = data.data;
-        setProfileData({
-          name: settings.name || '',
-          email: settings.email || '',
-          phone: settings.phone || '',
-          bio: settings.bio || '',
-          location: settings.location || '',
-          timezone: settings.timezone || '',
-          profile_picture_url: settings.profile_picture_url || null,
-        });
-
-        setNotificationSettings({
-          email_notifications: settings.email_notifications ?? true,
-          sms_notifications: settings.sms_notifications ?? false,
-          instance_alerts: settings.instance_alerts ?? true,
-          billing_alerts: settings.billing_alerts ?? true,
-          security_alerts: settings.security_alerts ?? true,
-          marketing_emails: settings.marketing_emails ?? false,
-        });
-
-        setPreferences({
-          language: settings.language || 'en',
-          theme: settings.theme || 'light',
-          dashboard_layout: settings.dashboard_layout || 'default',
-          items_per_page: settings.items_per_page || 25,
-        });
-
-        setSecurityData({
-          ...securityData,
-          two_factor_enabled: settings.two_factor_enabled ?? false,
-        });
-      } else {
-        throw new Error(data.error || 'Failed to fetch profile settings');
+  const tabs = useMemo(() => {
+    if (!availableCategories.length) {
+      return PROFILE_TABS;
+    }
+    return PROFILE_TABS.filter((tab) => {
+      if (!tab.categories?.length) {
+        return true;
       }
-    } catch (err) {
-      ToastUtils.error(err.message);
+      return tab.categories.some((category) =>
+        availableCategories.includes(category)
+      );
+    });
+  }, [availableCategories]);
+
+  useEffect(() => {
+    if (!tabs.find((tab) => tab.id === activeTab) && tabs.length > 0) {
+      setActiveTab(tabs[0].id);
+    }
+  }, [tabs, activeTab]);
+
+  const activeTabConfig =
+    tabs.find((tab) => tab.id === activeTab) ?? tabs[0] ?? null;
+
+  const metrics = useMemo(() => {
+    const categoriesCount = availableCategories.length;
+    const notificationKeys = [
+      "notifications.email_notifications",
+      "notifications.sms_notifications",
+      "notifications.instance_alerts",
+      "notifications.billing_alerts",
+      "notifications.security_alerts",
+      "notifications.marketing_emails",
+    ];
+    const notificationsEnabled = notificationKeys.filter(
+      (key) => formState[key]
+    ).length;
+
+    const theme =
+      formState["preferences.theme"]?.toString().replace(/^\w/, (c) =>
+        c.toUpperCase()
+      ) || "Light";
+
+    return [
+      {
+        label: "Settings categories",
+        value: categoriesCount || tabs.length,
+        description: "Available for your role",
+        icon: <Settings className="h-4 w-4" />,
+      },
+      {
+        label: "Active alerts",
+        value: notificationsEnabled,
+        description: "Notification channels enabled",
+        icon: <Bell className="h-4 w-4" />,
+      },
+      {
+        label: "Theme preference",
+        value: theme,
+        description: "Interface appearance",
+        icon: <Palette className="h-4 w-4" />,
+      },
+    ];
+  }, [availableCategories, formState, tabs.length]);
+
+  const twoFactorEnabled = Boolean(
+    formState["security.two_factor_enabled"]
+  );
+
+  const closeTwoFactorModal = () => {
+    setTwoFactorModal({ open: false, mode: "enable", qrCodeSvg: "", secret: "" });
+    setTwoFactorOtp("");
+    setIsFetchingTwoFactor(false);
+    setIsTwoFactorProcessing(false);
+  };
+
+  const startEnableTwoFactor = async () => {
+    if (isFetchingTwoFactor || isTwoFactorProcessing) return;
+    setIsFetchingTwoFactor(true);
+    try {
+      const response = await setupTwoFactor();
+      const data = response?.data ?? response?.message ?? {};
+      if (!data?.qrCodeSvg || !data?.secret) {
+        throw new Error("Failed to initialize two-factor authentication.");
+      }
+      setTwoFactorModal({
+        open: true,
+        mode: "enable",
+        qrCodeSvg: data.qrCodeSvg,
+        secret: data.secret,
+      });
+      setTwoFactorOtp("");
+    } catch (error) {
+      console.error(error);
+      ToastUtils.error(
+        error.message || "Unable to start two-factor authentication setup."
+      );
     } finally {
-      setLoading(false);
+      setIsFetchingTwoFactor(false);
     }
   };
 
-  // Save profile settings
-  const saveProfileSettings = async (sectionData, section) => {
-    setSaving(true);
-    setErrors({});
-
-    try {
-      const response = await fetch('/api/v1/settings/profile', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({
-          section,
-          data: sectionData,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        ToastUtils.success('Settings updated successfully');
-        
-        // Refresh profile data if needed
-        if (section === 'profile') {
-          setProfileData({ ...profileData, ...sectionData });
-        }
-      } else if (data.errors) {
-        setErrors(data.errors);
-        ToastUtils.error('Please fix the validation errors');
-      } else {
-        throw new Error(data.error || 'Failed to save settings');
-      }
-    } catch (err) {
-      ToastUtils.error(err.message);
-    } finally {
-      setSaving(false);
-    }
+  const startDisableTwoFactor = () => {
+    if (isFetchingTwoFactor || isTwoFactorProcessing) return;
+    setTwoFactorModal({ open: true, mode: "disable", qrCodeSvg: "", secret: "" });
+    setTwoFactorOtp("");
   };
 
-  // Handle password change
-  const handlePasswordChange = async () => {
-    if (securityData.new_password !== securityData.confirm_password) {
-      setErrors({ confirm_password: 'Passwords do not match' });
+  const handleConfirmEnableTwoFactor = async () => {
+    const sanitizedOtp = twoFactorOtp.trim();
+    if (sanitizedOtp.length !== 6) {
+      ToastUtils.warning("Enter the 6-digit code from your authenticator app.");
       return;
     }
 
-    await saveProfileSettings({
-      current_password: securityData.current_password,
-      new_password: securityData.new_password,
-    }, 'security');
-
-    // Clear password fields on success
-    setSecurityData({
-      ...securityData,
-      current_password: '',
-      new_password: '',
-      confirm_password: '',
-    });
-  };
-
-  // Export settings
-  const exportSettings = async () => {
+    setIsTwoFactorProcessing(true);
     try {
-      const response = await fetch('/api/v1/settings/profile/export', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Accept': 'application/json',
-        },
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        // Create and download file
-        const blob = new Blob([JSON.stringify(data.data, null, 2)], {
-          type: 'application/json'
-        });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `profile-settings-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        
-        ToastUtils.success('Settings exported successfully');
-      } else {
-        throw new Error(data.error || 'Failed to export settings');
-      }
-    } catch (err) {
-      ToastUtils.error(err.message);
+      await enableTwoFactor({ otp: sanitizedOtp });
+      setFormState((prev) => ({
+        ...prev,
+        "security.two_factor_enabled": true,
+      }));
+      ToastUtils.success("Two-factor authentication enabled.");
+      closeTwoFactorModal();
+      await refetch();
+    } catch (error) {
+      console.error(error);
+      ToastUtils.error(
+        error.message || "Unable to enable two-factor authentication."
+      );
+    } finally {
+      setIsTwoFactorProcessing(false);
     }
   };
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
+  const handleConfirmDisableTwoFactor = async () => {
+    const sanitizedOtp = twoFactorOtp.trim();
+    if (sanitizedOtp.length !== 6) {
+      ToastUtils.warning("Enter the 6-digit code from your authenticator app.");
+      return;
+    }
+
+    setIsTwoFactorProcessing(true);
+    try {
+      await disableTwoFactor({ otp: sanitizedOtp });
+      setFormState((prev) => ({
+        ...prev,
+        "security.two_factor_enabled": false,
+      }));
+      ToastUtils.success("Two-factor authentication disabled.");
+      closeTwoFactorModal();
+      await refetch();
+    } catch (error) {
+      console.error(error);
+      ToastUtils.error(
+        error.message || "Unable to disable two-factor authentication."
+      );
+    } finally {
+      setIsTwoFactorProcessing(false);
+    }
   };
 
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
+  const handleFieldChange = (stateKey, value) => {
+    if (stateKey === "security.two_factor_enabled") {
+      if (value) {
+        setFormState((prev) => ({
+          ...prev,
+          "security.two_factor_enabled": prev["security.two_factor_enabled"],
+        }));
+        startEnableTwoFactor();
+      } else {
+        startDisableTwoFactor();
+      }
+      return;
+    }
+
+    setFormState((prev) => ({
+      ...prev,
+      [stateKey]: value,
+    }));
   };
 
-  const tabs = [
-    { id: 'profile', label: 'Profile', icon: User },
-    { id: 'security', label: 'Security', icon: Shield },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'preferences', label: 'Preferences', icon: Settings },
-  ];
+  const handleAvatarChange = (nextUrl) => {
+    handleFieldChange("profile.profile_picture_url", nextUrl);
+    refetch();
+  };
 
-  const headerActions = (
-    <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-      <button
-        onClick={exportSettings}
-        className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-      >
-        <Download className="w-4 h-4 mr-2" />
-        Export Settings
-      </button>
+  const handleSaveSection = async (tab) => {
+    const fields = tab.groups.flatMap((group) => group.fields || []);
+    const payload = buildSavePayload(fields, formState);
 
-      <button
-        onClick={fetchProfileSettings}
-        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors"
-      >
-        <RefreshCw className="w-4 h-4 mr-2" />
-        Refresh
-      </button>
-    </div>
-  );
+    if (!payload.length) {
+      ToastUtils.warning("No editable settings available to save.");
+      return;
+    }
 
-  if (loading) {
-    return (
-      <>
-        <AdminHeadbar onMenuClick={toggleMobileMenu} />
-        <AdminSidebar
-          isMobileMenuOpen={isMobileMenuOpen}
-          onCloseMobileMenu={closeMobileMenu}
-        />
-        <AdminActiveTab />
-                <AdminPageShell contentClassName="p-6 md:p-8 flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-2" />
-            <p className="text-gray-700">Loading profile settings...</p>
-          </div>
-                </AdminPageShell>
-      </>
-    );
-  }
+    setSavingSection(tab.id);
+    try {
+      await updateSettingsBatch({
+        settings: payload,
+      });
+      ToastUtils.success("Profile settings updated");
+      await refetch();
+    } catch (error) {
+      console.error(error);
+      ToastUtils.error(
+        error.message || "We could not save your settings right now."
+      );
+    } finally {
+      setSavingSection(null);
+    }
+  };
+
+  const handleResetSection = async (tab) => {
+    if (!tab.categories?.length) return;
+    setResettingSection(tab.id);
+    try {
+      await Promise.all(
+        tab.categories.map((category) =>
+          resetProfileSettings({ category }).catch((error) => {
+            console.error(error);
+            throw error;
+          })
+        )
+      );
+      ToastUtils.success("Settings reset to defaults");
+      await refetch();
+    } catch (error) {
+      ToastUtils.error(
+        error.message || "Unable to reset this section right now."
+      );
+    } finally {
+      setResettingSection(null);
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      const exportResult = await exportProfileSettings();
+      const payload = exportResult?.settings ?? exportResult ?? {};
+      const json = JSON.stringify(payload, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `profile-settings-${new Date()
+        .toISOString()
+        .slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      ToastUtils.success("Profile settings exported");
+    } catch (error) {
+      console.error(error);
+      ToastUtils.error("Export failed. Please try again in a moment.");
+    }
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImport = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      let settingsArray = [];
+      if (Array.isArray(parsed)) {
+        settingsArray = parsed;
+      } else if (Array.isArray(parsed?.settings)) {
+        settingsArray = parsed.settings;
+      } else if (parsed?.settings && typeof parsed.settings === "object") {
+        settingsArray = flattenObjectToSettingsArray(parsed.settings);
+      } else if (typeof parsed === "object") {
+        settingsArray = flattenObjectToSettingsArray(parsed);
+      }
+
+      if (!settingsArray.length) {
+        ToastUtils.error(
+          "Import file did not contain any valid settings entries."
+        );
+        return;
+      }
+
+      await importProfileSettings({ settings: settingsArray });
+      ToastUtils.success("Profile settings imported");
+      await refetch();
+    } catch (error) {
+      console.error(error);
+      ToastUtils.error(
+        error.message || "Unable to import settings. Please verify the file."
+      );
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const isLoading = isFetching && !profileSettingsData;
 
   return (
     <>
-      <AdminHeadbar onMenuClick={toggleMobileMenu} />
+      <AdminHeadbar onMenuClick={() => setIsMobileMenuOpen((prev) => !prev)} />
       <AdminSidebar
         isMobileMenuOpen={isMobileMenuOpen}
-        onCloseMobileMenu={closeMobileMenu}
+        onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
       />
-      <AdminActiveTab />
-
       <AdminPageShell
-        title="Profile Settings"
-        description="Manage your account settings and preferences"
-        actions={headerActions}
+        contentClassName="space-y-8"
+        description="Control how the admin console recognises you and where important notifications land."
       >
-        {/* Tabs */}
-        <div className="bg-white border-b border-gray-200 px-6 md:px-8">
-          <nav className="-mb-px flex space-x-8">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`
-                  flex items-center py-4 px-1 border-b-2 font-medium text-sm
-                  ${activeTab === tab.id 
-                    ? 'border-blue-500 text-blue-600' 
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }
-                `}
-              >
-                <tab.icon className="w-4 h-4 mr-2" />
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-        </div>
-
-        {/* Tab Content */}
-        <div className="p-6 md:p-8">
-          {activeTab === 'profile' && (
-            <div className="space-y-6">
-              {/* Profile Picture */}
-              <SettingsSection
-                title="Profile Picture"
-                description="Upload and manage your profile picture"
-                icon={Camera}
-              >
-                <ProfileAvatar
-                  user={profileData}
-                  onAvatarChange={(url) => setProfileData({ ...profileData, profile_picture_url: url })}
-                />
-              </SettingsSection>
-
-              {/* Personal Information */}
-              <SettingsSection
-                title="Personal Information"
-                description="Update your personal details and contact information"
-                icon={User}
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    label="Full Name"
-                    value={profileData.name}
-                    onChange={(value) => setProfileData({ ...profileData, name: value })}
-                    placeholder="Enter your full name"
-                    required
-                    icon={User}
-                    error={errors.name}
-                  />
-                  
-                  <FormField
-                    label="Email Address"
-                    value={profileData.email}
-                    onChange={(value) => setProfileData({ ...profileData, email: value })}
-                    type="email"
-                    placeholder="Enter your email"
-                    required
-                    icon={Mail}
-                    error={errors.email}
-                    disabled
-                    description="Contact support to change your email address"
-                  />
-                  
-                  <FormField
-                    label="Phone Number"
-                    value={profileData.phone}
-                    onChange={(value) => setProfileData({ ...profileData, phone: value })}
-                    type="tel"
-                    placeholder="+1 (555) 123-4567"
-                    icon={Phone}
-                    error={errors.phone}
-                  />
-                  
-                  <FormField
-                    label="Timezone"
-                    value={profileData.timezone}
-                    onChange={(value) => setProfileData({ ...profileData, timezone: value })}
-                    placeholder="Select timezone"
-                    icon={Globe}
-                    error={errors.timezone}
-                  />
-                </div>
-
-                <div className="mt-6">
-                  <FormField
-                    label="Location"
-                    value={profileData.location}
-                    onChange={(value) => setProfileData({ ...profileData, location: value })}
-                    placeholder="City, State, Country"
-                    icon={Globe}
-                    error={errors.location}
-                  />
-                </div>
-
-                <div className="mt-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
-                  <textarea
-                    value={profileData.bio}
-                    onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
-                    placeholder="Tell us about yourself..."
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                  {errors.bio && (
-                    <p className="text-sm text-red-600 mt-1 flex items-center">
-                      <AlertCircle className="w-4 h-4 mr-1" />
-                      {errors.bio}
-                    </p>
+        <ResourceHero
+          title="Profile settings"
+          subtitle="Account"
+          description="Curate your admin identity, preferences, and notifications so the console works the way you do."
+          metrics={metrics}
+          accent="midnight"
+          rightSlot={
+            <div className="flex flex-col items-end gap-2">
+              <div className="flex flex-wrap justify-end gap-2">
+                <ModernButton
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={() => refetch()}
+                  disabled={isRefetching}
+                >
+                  {isRefetching ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
                   )}
-                </div>
-
-                <div className="mt-6 flex justify-end">
-                  <button
-                    onClick={() => saveProfileSettings(profileData, 'profile')}
-                    disabled={saving}
-                    className="inline-flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    {saving ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4 mr-2" />
-                    )}
-                    Save Changes
-                  </button>
-                </div>
-              </SettingsSection>
+                  Refresh
+                </ModernButton>
+                <ModernButton
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={handleExport}
+                  disabled={isExporting}
+                >
+                  {isExporting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
+                  Export
+                </ModernButton>
+                <ModernButton
+                  size="sm"
+                  className="flex items-center gap-2"
+                  onClick={handleImportClick}
+                  disabled={importing}
+                >
+                  {importing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  Import
+                </ModernButton>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/json"
+                className="hidden"
+                onChange={handleImport}
+              />
             </div>
-          )}
+          }
+        />
 
-          {activeTab === 'security' && (
-            <div className="space-y-6">
-              {/* Password Change */}
-              <SettingsSection
-                title="Change Password"
-                description="Update your account password for better security"
-                icon={Lock}
-              >
-                <div className="space-y-6">
-                  <FormField
-                    label="Current Password"
-                    value={securityData.current_password}
-                    onChange={(value) => setSecurityData({ ...securityData, current_password: value })}
-                    type="password"
-                    placeholder="Enter current password"
-                    required
-                    icon={Lock}
-                    error={errors.current_password}
-                  />
-                  
-                  <FormField
-                    label="New Password"
-                    value={securityData.new_password}
-                    onChange={(value) => setSecurityData({ ...securityData, new_password: value })}
-                    type="password"
-                    placeholder="Enter new password"
-                    required
-                    icon={Lock}
-                    error={errors.new_password}
-                  />
-                  
-                  <FormField
-                    label="Confirm New Password"
-                    value={securityData.confirm_password}
-                    onChange={(value) => setSecurityData({ ...securityData, confirm_password: value })}
-                    type="password"
-                    placeholder="Confirm new password"
-                    required
-                    icon={Lock}
-                    error={errors.confirm_password}
-                  />
-                </div>
-
-                <div className="mt-6 flex justify-end">
-                  <button
-                    onClick={handlePasswordChange}
-                    disabled={saving}
-                    className="inline-flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    {saving ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Key className="w-4 h-4 mr-2" />
-                    )}
-                    Update Password
-                  </button>
-                </div>
-              </SettingsSection>
-
-              {/* Two-Factor Authentication */}
-              <SettingsSection
-                title="Two-Factor Authentication"
-                description="Add an extra layer of security to your account"
-                icon={Smartphone}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-4 h-4 rounded-full ${securityData.two_factor_enabled ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Two-factor authentication is {securityData.two_factor_enabled ? 'enabled' : 'disabled'}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {securityData.two_factor_enabled 
-                          ? 'Your account is protected with 2FA'
-                          : 'Enable 2FA for enhanced security'
-                        }
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <button
-                    onClick={() => {
-                      // TODO: Implement 2FA toggle
-                      ToastUtils.info('Two-factor authentication setup coming soon');
-                    }}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                      securityData.two_factor_enabled
-                        ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                        : 'bg-green-100 text-green-700 hover:bg-green-200'
-                    }`}
-                  >
-                    {securityData.two_factor_enabled ? 'Disable' : 'Enable'} 2FA
-                  </button>
-                </div>
-              </SettingsSection>
+        {isLoading ? (
+          <ModernCard className="flex items-center justify-center py-16">
+            <div className="flex items-center gap-3 text-sm text-slate-500">
+              <Loader2 className="h-5 w-5 animate-spin text-primary-500" />
+              Loading your profile configuration…
             </div>
-          )}
+          </ModernCard>
+        ) : (
+          <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-4 lg:flex-row">
+              <div className="flex w-full max-w-full flex-wrap gap-2 rounded-3xl border border-slate-200 bg-white/70 p-2 shadow-sm lg:w-72 lg:flex-col">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = tab.id === activeTab;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition ${
+                        isActive
+                          ? "bg-primary-500 text-white shadow-md"
+                          : "text-slate-600 hover:bg-slate-100"
+                      }`}
+                    >
+                      <span
+                        className={`flex h-9 w-9 items-center justify-center rounded-xl ${
+                          isActive
+                            ? "bg-white/20 text-white"
+                            : "bg-slate-100 text-slate-500"
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <span className="flex-1">
+                        <span className="block text-sm font-semibold">
+                          {tab.name}
+                        </span>
+                        <span
+                          className={`block text-xs ${
+                            isActive ? "text-white/80" : "text-slate-400"
+                          }`}
+                        >
+                          {tab.description}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
 
-          {activeTab === 'notifications' && (
-            <div className="space-y-6">
-              <SettingsSection
-                title="Notification Preferences"
-                description="Choose how you want to receive notifications"
-                icon={Bell}
-              >
-                <div className="space-y-4">
-                  {Object.entries(notificationSettings).map(([key, value]) => (
-                    <div key={key} className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {key === 'email_notifications' && 'Receive general email notifications'}
-                          {key === 'sms_notifications' && 'Receive SMS notifications on your phone'}
-                          {key === 'instance_alerts' && 'Alerts about your instance status changes'}
-                          {key === 'billing_alerts' && 'Notifications about billing and payments'}
-                          {key === 'security_alerts' && 'Security-related notifications'}
-                          {key === 'marketing_emails' && 'Product updates and promotional content'}
-                        </p>
+              {activeTabConfig && (
+                <div className="flex-1 space-y-6">
+                  {activeTabConfig.id === "profile" && (
+                    <ProfileAvatar
+                      name={formState["profile.name"]}
+                      email={formState["contact.email"]}
+                      avatarUrl={formState["profile.profile_picture_url"]}
+                      onAvatarChange={handleAvatarChange}
+                    />
+                  )}
+
+                  {activeTabConfig.groups.map((group) => (
+                    <ModernCard
+                      key={`${activeTabConfig.id}-${group.title}`}
+                      className="space-y-6 border border-slate-200/80 bg-white/95 shadow-sm"
+                      padding="lg"
+                    >
+                      <div className="space-y-1">
+                        <h3 className="text-base font-semibold text-slate-900">
+                          {group.title}
+                        </h3>
+                        {group.description && (
+                          <p className="text-sm text-slate-500">
+                            {group.description}
+                          </p>
+                        )}
                       </div>
-                      
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={value}
-                          onChange={(e) => setNotificationSettings({
-                            ...notificationSettings,
-                            [key]: e.target.checked
-                          })}
-                          className="sr-only peer"
+
+                      {group.fields?.length ? (
+                        <div
+                          className={`grid gap-5 ${
+                            group.layout === "grid"
+                              ? "sm:grid-cols-2"
+                              : "grid-cols-1"
+                          }`}
+                        >
+                          {group.fields.map((field) => (
+                            <FieldControl
+                              key={field.stateKey}
+                              field={field}
+                              value={normalizeFieldValue(
+                                field,
+                                formState[field.stateKey]
+                              )}
+                              onChange={(nextValue) =>
+                                handleFieldChange(field.stateKey, nextValue)
+                              }
+                            />
+                          ))}
+                        </div>
+                      ) : activeTabConfig.id === "security" ? (
+                        <SecurityTwoFactorPanel
+                          enabled={twoFactorEnabled}
+                          onEnable={startEnableTwoFactor}
+                          onDisable={startDisableTwoFactor}
+                          isBusy={isTwoFactorProcessing}
+                          isFetching={isFetchingTwoFactor}
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                      </label>
-                    </div>
+                      ) : null}
+
+                      <div className="flex flex-wrap justify-end gap-2 pt-2">
+                        <ModernButton
+                          variant="outline"
+                          className="flex items-center gap-2"
+                          onClick={() => handleResetSection(activeTabConfig)}
+                          disabled={
+                            resettingSection === activeTabConfig.id ||
+                            isUpdatingSettings
+                          }
+                        >
+                          {resettingSection === activeTabConfig.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-4 w-4" />
+                          )}
+                          Reset to defaults
+                        </ModernButton>
+                        <ModernButton
+                          className="flex items-center gap-2"
+                          onClick={() => handleSaveSection(activeTabConfig)}
+                          disabled={
+                            savingSection === activeTabConfig.id ||
+                            isUpdatingSettings
+                          }
+                        >
+                          {savingSection === activeTabConfig.id ||
+                          isUpdatingSettings ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Save className="h-4 w-4" />
+                          )}
+                          Save changes
+                        </ModernButton>
+                      </div>
+                    </ModernCard>
                   ))}
                 </div>
-
-                <div className="mt-6 flex justify-end">
-                  <button
-                    onClick={() => saveProfileSettings(notificationSettings, 'notifications')}
-                    disabled={saving}
-                    className="inline-flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    {saving ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4 mr-2" />
-                    )}
-                    Save Preferences
-                  </button>
-                </div>
-              </SettingsSection>
+              )}
             </div>
-          )}
+          </div>
+        )}
+      </AdminPageShell>
 
-          {activeTab === 'preferences' && (
-            <div className="space-y-6">
-              <SettingsSection
-                title="Application Preferences"
-                description="Customize your application experience"
-                icon={Settings}
+      {twoFactorModal.open && (
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-slate-900/50 px-4">
+          <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold text-slate-900">
+                  {twoFactorModal.mode === "enable"
+                    ? "Enable multi-factor authentication"
+                    : "Disable multi-factor authentication"}
+                </h2>
+                <p className="text-sm text-slate-500">
+                  {twoFactorModal.mode === "enable"
+                    ? "Scan the QR code with your authenticator app and enter the 6-digit code to finish setup."
+                    : "Enter the 6-digit code from your authenticator app to confirm disabling two-factor authentication."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeTwoFactorModal}
+                className="rounded-full border border-slate-200 p-2 text-slate-400 transition hover:text-slate-600"
+                aria-label="Close"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Language</label>
-                    <select
-                      value={preferences.language}
-                      onChange={(e) => setPreferences({ ...preferences, language: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="en">English</option>
-                      <option value="es">Spanish</option>
-                      <option value="fr">French</option>
-                      <option value="de">German</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Theme</label>
-                    <select
-                      value={preferences.theme}
-                      onChange={(e) => setPreferences({ ...preferences, theme: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="light">Light</option>
-                      <option value="dark">Dark</option>
-                      <option value="auto">Auto</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Items per Page</label>
-                    <select
-                      value={preferences.items_per_page}
-                      onChange={(e) => setPreferences({ ...preferences, items_per_page: parseInt(e.target.value) })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value={10}>10</option>
-                      <option value={25}>25</option>
-                      <option value={50}>50</option>
-                      <option value={100}>100</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Dashboard Layout</label>
-                    <select
-                      value={preferences.dashboard_layout}
-                      onChange={(e) => setPreferences({ ...preferences, dashboard_layout: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="default">Default</option>
-                      <option value="compact">Compact</option>
-                      <option value="detailed">Detailed</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="mt-6 flex justify-end">
-                  <button
-                    onClick={() => saveProfileSettings(preferences, 'preferences')}
-                    disabled={saving}
-                    className="inline-flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    {saving ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4 mr-2" />
-                    )}
-                    Save Preferences
-                  </button>
-                </div>
-              </SettingsSection>
+                <X className="h-4 w-4" />
+              </button>
             </div>
-          )}
+
+            {twoFactorModal.mode === "enable" && (
+              <div className="space-y-4">
+                <div className="flex flex-col items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
+                  {twoFactorModal.qrCodeSvg ? (
+                    <img
+                      src={`data:image/svg+xml;base64,${twoFactorModal.qrCodeSvg}`}
+                      alt="Authenticator QR code"
+                      className="h-40 w-40"
+                    />
+                  ) : (
+                    <div className="flex h-40 w-40 items-center justify-center rounded-2xl bg-slate-200">
+                      <Loader2 className="h-6 w-6 animate-spin text-slate-500" />
+                    </div>
+                  )}
+                  <p className="text-xs text-slate-500">
+                    Scan using Google Authenticator, Authy, or a compatible app.
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-dashed border-slate-200 bg-white/90 p-4 text-sm text-slate-600">
+                  <span className="font-medium text-slate-700">Manual code:</span>{" "}
+                  <code className="select-all break-all text-primary-600">
+                    {twoFactorModal.secret}
+                  </code>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-6 space-y-3">
+              <label className="block text-sm font-medium text-slate-700">
+                Authentication code
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={twoFactorOtp}
+                onChange={(event) =>
+                  setTwoFactorOtp(event.target.value.replace(/\D/g, "").slice(0, 6))
+                }
+                placeholder="Enter 6-digit code"
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700 focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100"
+              />
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <ModernButton
+                variant="outline"
+                onClick={closeTwoFactorModal}
+                disabled={isTwoFactorProcessing}
+              >
+                Cancel
+              </ModernButton>
+              <ModernButton
+                onClick={
+                  twoFactorModal.mode === "enable"
+                    ? handleConfirmEnableTwoFactor
+                    : handleConfirmDisableTwoFactor
+                }
+                disabled={
+                  isTwoFactorProcessing || twoFactorOtp.trim().length !== 6
+                }
+                className="flex items-center gap-2"
+              >
+                {isTwoFactorProcessing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Shield className="h-4 w-4" />
+                )}
+                {twoFactorModal.mode === "enable"
+                  ? "Verify & enable"
+                  : "Verify & disable"}
+              </ModernButton>
+            </div>
+          </div>
         </div>
-            </AdminPageShell>
+      )}
     </>
   );
 }

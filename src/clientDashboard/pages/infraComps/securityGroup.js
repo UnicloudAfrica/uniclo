@@ -1,52 +1,63 @@
-import { useState } from "react";
-import { Eye, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Eye, Trash2, RefreshCw, ShieldCheck } from "lucide-react";
 import {
-  useDeleteClientSecurityGroup,
   useFetchClientSecurityGroups,
+  useDeleteClientSecurityGroup,
+  syncClientSecurityGroupsFromProvider,
 } from "../../../hooks/clientHooks/securityGroupHooks";
 import AddSG from "../sgComps/addSG";
-import ViewSGModal from "../sgComps/viewSG";
 import DeleteSGModal from "../sgComps/deleteSG";
+import ViewSGModal from "../sgComps/viewSG";
+import { useQueryClient } from "@tanstack/react-query";
+import ToastUtils from "../../../utils/toastUtil";
+import ResourceSection from "../../../adminDashboard/components/ResourceSection";
+import ResourceEmptyState from "../../../adminDashboard/components/ResourceEmptyState";
+import ResourceListCard from "../../../adminDashboard/components/ResourceListCard";
+import ModernButton from "../../../adminDashboard/components/ModernButton";
+
+const ITEMS_PER_PAGE = 6;
+
+const getToneForStatus = (status = "") => {
+  const normalized = status.toString().toLowerCase();
+  if (["active", "available", "in-use"].includes(normalized)) return "success";
+  if (["pending", "creating", "syncing"].includes(normalized)) return "warning";
+  if (["failed", "error"].includes(normalized)) return "danger";
+  return "neutral";
+};
 
 const SecurityGroup = ({ projectId = "", region = "" }) => {
-  const { data: securityGroups, isFetching } = useFetchClientSecurityGroups(
-    projectId,
-    region
-  );
+  const queryClient = useQueryClient();
+  const { data: securityGroups, isFetching } =
+    useFetchClientSecurityGroups(projectId, region);
   const { mutate: deleteSecurityGroup, isPending: isDeleting } =
     useDeleteClientSecurityGroup();
   const [isCreateModalOpen, setCreateModal] = useState(false);
-  const [deleteModal, setDeleteModal] = useState(null); // { id, name }
-  const [viewModal, setViewModal] = useState(null); // securityGroup object
-  const openCreateModal = () => setCreateModal(true);
-  const closeCreateModal = () => setCreateModal(false);
+  const [deleteModal, setDeleteModal] = useState(null);
+  const [viewModal, setViewModal] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  // Pagination logic
-  const totalItems = securityGroups?.length || 0;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentSecurityGroups =
-    securityGroups?.slice(startIndex, endIndex) || [];
+  const totalItems = securityGroups?.length ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
 
-  const handlePreviousPage = () => {
-    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
-  };
+  const currentSecurityGroups = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return (securityGroups ?? []).slice(
+      startIndex,
+      startIndex + ITEMS_PER_PAGE
+    );
+  }, [securityGroups, currentPage]);
 
   const handleDelete = () => {
     if (!deleteModal) return;
-    const payload = {
-      project_id: projectId,
-      region: region,
-    };
     deleteSecurityGroup(
-      { id: deleteModal.id, payload },
+      {
+        id: deleteModal.id,
+        payload: {
+          project_id: projectId,
+          region,
+        },
+      },
       {
         onSuccess: () => {
           setDeleteModal(null);
@@ -59,87 +70,209 @@ const SecurityGroup = ({ projectId = "", region = "" }) => {
     );
   };
 
-  if (isFetching) {
+  const handleSync = async () => {
+    if (!projectId) {
+      ToastUtils.error("Project is required to sync security groups");
+      return;
+    }
+    setIsSyncing(true);
+    try {
+      await syncClientSecurityGroupsFromProvider({
+        project_id: projectId,
+        region,
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["clientSecurityGroups", { projectId, region }],
+      });
+      ToastUtils.success("Security groups synced successfully!");
+    } catch (error) {
+      console.error("Failed to sync Security Groups:", error);
+      ToastUtils.error(error?.message || "Failed to sync security groups.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const actions = [
+    <ModernButton
+      key="sync"
+      variant="outline"
+      size="sm"
+      leftIcon={<RefreshCw size={16} />}
+      onClick={handleSync}
+      isDisabled={!projectId || isSyncing}
+      isLoading={isSyncing}
+    >
+      {isSyncing ? "Syncing..." : "Sync Security Groups"}
+    </ModernButton>,
+    <ModernButton
+      key="add"
+      variant="primary"
+      size="sm"
+      onClick={() => setCreateModal(true)}
+    >
+      Add Security Group
+    </ModernButton>,
+  ];
+
+  const stats = useMemo(() => {
+    const base = [
+      {
+        label: "Total Security Groups",
+        value: totalItems,
+        tone: totalItems ? "primary" : "neutral",
+        icon: <ShieldCheck size={16} />,
+      },
+    ];
+    if (region) {
+      base.push({
+        label: "Region",
+        value: region,
+        tone: "info",
+      });
+    }
+    return base;
+  }, [totalItems, region]);
+
+  const renderSecurityGroupCard = (securityGroup) => {
+    const inboundRules =
+      securityGroup.ingress_rules?.length ??
+      securityGroup.inbound_rules?.length ??
+      securityGroup.rules?.inbound?.length ??
+      0;
+    const outboundRules =
+      securityGroup.egress_rules?.length ??
+      securityGroup.outbound_rules?.length ??
+      securityGroup.rules?.outbound?.length ??
+      0;
+    const status =
+      securityGroup.status || securityGroup.state || "Not specified";
+
     return (
-      <div className="flex items-center justify-center p-6 bg-gray-50 rounded-lg">
-        <p>Loading security groups...</p>
-      </div>
+      <ResourceListCard
+        key={securityGroup.id}
+        title={securityGroup.name || securityGroup.id}
+        subtitle={securityGroup.id}
+        metadata={[
+          {
+            label: "Region",
+            value: securityGroup.region || region || "—",
+          },
+          {
+            label: "Inbound Rules",
+            value: inboundRules,
+          },
+          {
+            label: "Outbound Rules",
+            value: outboundRules,
+          },
+          securityGroup.description
+            ? {
+                label: "Description",
+                value: securityGroup.description,
+              }
+            : null,
+        ].filter(Boolean)}
+        statuses={[
+          {
+            label: status,
+            tone: getToneForStatus(status),
+          },
+        ]}
+        actions={[
+          {
+            key: "inspect",
+            label: "Inspect",
+            icon: <Eye size={16} />,
+            variant: "ghost",
+            onClick: () => setViewModal(securityGroup),
+          },
+          {
+            key: "remove",
+            label: "Remove",
+            icon: <Trash2 size={16} />,
+            variant: "danger",
+            onClick: () =>
+              setDeleteModal({
+                id: securityGroup.id,
+                name: securityGroup.name,
+              }),
+            disabled: isDeleting,
+          },
+        ]}
+      />
     );
-  }
+  };
 
   return (
     <>
-      <div className="bg-gray-50 rounded-[10px] font-Outfit">
-        <div className="flex justify-end items-center mb-6">
-          <button
-            onClick={openCreateModal}
-            className="rounded-[30px] py-3 px-9 bg-[--theme-color] text-white font-normal text-base hover:bg-[--secondary-color] transition-colors"
-          >
-            Add SG
-          </button>
-        </div>
-        {currentSecurityGroups && currentSecurityGroups.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {currentSecurityGroups.map((sg) => (
-              <div
-                key={sg.id}
-                className="p-4 bg-white rounded-[10px] shadow-sm border border-gray-200 flex flex-col justify-between"
-              >
-                <div className="flex-grow">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3
-                      className="font-medium text-gray-800 truncate pr-2"
-                      title={sg.name}
-                    >
-                      {sg.name}
-                    </h3>
-                    <div className="flex-shrink-0 flex items-center space-x-2">
-                      <button
-                        onClick={() => setViewModal(sg)}
-                        className="text-gray-400 hover:text-[--theme-color] transition-colors"
-                        title="View Security Group Details"
-                      >
-                        <Eye className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() =>
-                          setDeleteModal({
-                            id: sg.id,
-                            name: sg.name,
-                          })
-                        }
-                        disabled={isDeleting}
-                        className="text-gray-400 hover:text-red-500 transition-colors"
-                        title="Delete Security Group"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                  <p className="text-sm text-gray-500">{sg.description}</p>
-                </div>
+      <ResourceSection
+        title="Security Groups"
+        description="Manage firewall rules that control inbound and outbound access to project resources."
+        actions={actions}
+        meta={stats}
+        isLoading={isFetching}
+      >
+        {currentSecurityGroups.length > 0 ? (
+          <>
+            <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+              {currentSecurityGroups.map(renderSecurityGroupCard)}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="mt-6 flex items-center justify-between text-sm text-gray-500">
+                <ModernButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
+                  isDisabled={currentPage === 1}
+                >
+                  Previous
+                </ModernButton>
+                <span>
+                  Page {currentPage} of {totalPages}
+                </span>
+                <ModernButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                  }
+                  isDisabled={currentPage === totalPages}
+                >
+                  Next
+                </ModernButton>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         ) : (
-          <p className="text-gray-500">
-            No security groups found for this project.
-          </p>
+          <ResourceEmptyState
+            title="No Security Groups"
+            message="Synchronize security groups from your cloud account or create a new group to manage access control."
+            action={
+              <ModernButton variant="primary" onClick={() => setCreateModal(true)}>
+                Create Security Group
+              </ModernButton>
+            }
+          />
         )}
-      </div>
+      </ResourceSection>
+
       <AddSG
         isOpen={isCreateModalOpen}
-        onClose={closeCreateModal}
+        onClose={() => setCreateModal(false)}
         projectId={projectId}
         region={region}
       />
       <ViewSGModal
-        isOpen={!!viewModal}
+        isOpen={Boolean(viewModal)}
         onClose={() => setViewModal(null)}
         securityGroup={viewModal}
       />
       <DeleteSGModal
-        isOpen={!!deleteModal}
+        isOpen={Boolean(deleteModal)}
         onClose={() => setDeleteModal(null)}
         securityGroupName={deleteModal?.name || ""}
         onConfirm={handleDelete}

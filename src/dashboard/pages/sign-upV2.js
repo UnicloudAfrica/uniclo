@@ -6,6 +6,7 @@ import useAuthStore from "../../stores/userAuthStore";
 import sideBg from "./assets/sideBg.svg";
 import Header from "./signup/header";
 import { Loader2, ShieldCheck, AlertCircle } from "lucide-react";
+import { useFetchCountries } from "../../hooks/resource";
 
 const ROLE_TABS = [
   { id: "tenant", label: "Partner / Tenant" },
@@ -22,6 +23,9 @@ const INITIAL_FORM = {
   companyType: "",
   registrationNumber: "",
   verificationToken: "",
+  countryId: "",
+  countryName: "",
+  countryCode: "",
 };
 
 export default function DashboardSignUpV2() {
@@ -30,6 +34,8 @@ export default function DashboardSignUpV2() {
   const { mutate, isPending } = useCreateAccount();
   const { mutate: verifyBusiness, isPending: isVerifying } =
     useVerifyBusiness();
+  const { data: countries = [], isFetching: isCountriesFetching } =
+    useFetchCountries();
 
   const [activeRole, setActiveRole] = useState("tenant");
   const [formData, setFormData] = useState(INITIAL_FORM);
@@ -37,6 +43,7 @@ export default function DashboardSignUpV2() {
   const [isBusinessVerified, setIsBusinessVerified] = useState(false);
   const [verificationResult, setVerificationResult] = useState(null);
   const [verificationError, setVerificationError] = useState(null);
+
 
   const updateField = (field, value) => {
     const requiresReverification = [
@@ -47,9 +54,22 @@ export default function DashboardSignUpV2() {
 
     setFormData((prev) => {
       const next = { ...prev, [field]: value };
+
+      if (field === "countryId") {
+        const selectedCountry = countries.find(
+          (country) => String(country.id) === value
+        );
+        next.countryName = selectedCountry?.name || "";
+        next.countryCode =
+          selectedCountry?.iso2?.toUpperCase() ||
+          selectedCountry?.iso3?.toUpperCase() ||
+          "";
+      }
+
       if (requiresReverification) {
         next.verificationToken = "";
       }
+
       return next;
     });
 
@@ -104,6 +124,9 @@ export default function DashboardSignUpV2() {
       validationErrors.verificationToken =
         "Verify your business before signing up.";
     }
+    if (!formData.countryId) {
+      validationErrors.countryId = "Select a country";
+    }
     setErrors(validationErrors);
     return Object.keys(validationErrors).length === 0;
   };
@@ -112,6 +135,30 @@ export default function DashboardSignUpV2() {
     event.preventDefault();
     if (!validate()) return;
 
+    const selectedCountry =
+      countries.find((country) => String(country.id) === formData.countryId) ||
+      null;
+    const normalizedCountryId = selectedCountry
+      ? String(selectedCountry.id)
+      : "";
+    const normalizedCountryName =
+      formData.countryName || selectedCountry?.name || "";
+    const normalizedCountryCode =
+      formData.countryCode ||
+      selectedCountry?.iso2?.toUpperCase() ||
+      selectedCountry?.iso3?.toUpperCase() ||
+      "";
+
+    const accountType = "business";
+    const businessPayload = {
+      name: formData.companyName.trim(),
+      company_type: formData.companyType,
+      registration_number: formData.registrationNumber.trim(),
+      country_id: normalizedCountryId,
+      country: normalizedCountryName,
+      country_code: normalizedCountryCode,
+    };
+
     const payload = {
       first_name: formData.firstName.trim(),
       last_name: formData.lastName.trim(),
@@ -119,13 +166,13 @@ export default function DashboardSignUpV2() {
       password: formData.password,
       password_confirmation: formData.confirmPassword,
       role: activeRole === "tenant" ? "tenant" : "client",
+      account_type: accountType,
       company_name: formData.companyName.trim(),
       verification_token: formData.verificationToken,
-      business: {
-        name: formData.companyName.trim(),
-        company_type: formData.companyType,
-        registration_number: formData.registrationNumber.trim(),
-      },
+      country_id: normalizedCountryId,
+      country: normalizedCountryName,
+      country_code: normalizedCountryCode,
+      business: businessPayload,
     };
 
     mutate(payload, {
@@ -246,9 +293,29 @@ export default function DashboardSignUpV2() {
     setIsBusinessVerified(false);
     setVerificationResult(null);
     setVerificationError(null);
-    setFormData((prev) => ({ ...prev, verificationToken: "" }));
-    setErrors((prev) => ({ ...prev, verificationToken: null }));
+    setFormData((prev) => ({
+      ...prev,
+      verificationToken: "",
+    }));
+    setErrors((prev) => ({
+      ...prev,
+      verificationToken: null,
+    }));
   };
+
+  const countryOptions = useMemo(() => {
+    if (isCountriesFetching) {
+      return [{ value: "", label: "Loading countries..." }];
+    }
+
+    return [
+      { value: "", label: "Select country" },
+      ...countries.map((country) => ({
+        value: String(country.id),
+        label: country.name,
+      })),
+    ];
+  }, [countries, isCountriesFetching]);
 
   return (
     <div className="min-h-screen flex p-8 font-Outfit">
@@ -272,7 +339,6 @@ export default function DashboardSignUpV2() {
               </button>
             ))}
           </div>
-
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field
@@ -309,7 +375,9 @@ export default function DashboardSignUpV2() {
                 label="Incorporation Number"
                 value={formData.registrationNumber}
                 error={errors.registrationNumber}
-                onChange={(value) => updateField("registrationNumber", value)}
+                onChange={(value) =>
+                  updateField("registrationNumber", value)
+                }
                 disabled={isBusinessVerified || isVerifying}
                 placeholder="e.g., RC123456"
               />
@@ -397,6 +465,14 @@ export default function DashboardSignUpV2() {
               error={errors.email}
               onChange={(value) => updateField("email", value)}
             />
+            <SelectField
+              label="Country"
+              value={formData.countryId}
+              error={errors.countryId}
+              options={countryOptions}
+              onChange={(value) => updateField("countryId", value)}
+              disabled={isCountriesFetching}
+            />
 
             <PasswordField
               label="Password"
@@ -423,9 +499,7 @@ export default function DashboardSignUpV2() {
 
             <button
               type="submit"
-              disabled={
-                isPending || isVerifying || !formData.verificationToken
-              }
+              disabled={isPending || isVerifying || !formData.verificationToken}
               className="w-full bg-[#288DD1] hover:bg-[#6db1df] text-white font-semibold py-3 px-4 rounded-[30px] transition-colors focus:outline-none focus:ring-1 focus:ring-[#288DD1] focus:ring-offset-2 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isPending ? "Creating account..." : "Create account"}

@@ -3,8 +3,19 @@ import { X, Loader2, Search, ChevronDown, Check } from "lucide-react";
 import { useCreateProject } from "../../hooks/projectHooks";
 import { useFetchGeneralRegions } from "../../hooks/resource";
 import { useFetchClients } from "../../hooks/clientHooks";
+import { useNavigate } from "react-router-dom";
+import ToastUtils from "../../utils/toastUtil";
+
+const INITIAL_FORM_STATE = {
+  name: "",
+  description: "",
+  region: "",
+  type: "vpc",
+  user_ids: [],
+};
 
 const CreateProjectModal = ({ isOpen, onClose }) => {
+  const navigate = useNavigate();
   const { mutate: createProject, isPending } = useCreateProject();
   const { isFetching: isRegionsFetching, data: regions } =
     useFetchGeneralRegions();
@@ -13,13 +24,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
     isFetching: isClientsFetching,
     refetch,
   } = useFetchClients();
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    region: "",
-    type: "vpc",
-    user_ids: [],
-  });
+  const [formData, setFormData] = useState(INITIAL_FORM_STATE);
   const [errors, setErrors] = useState({});
   const [selectedClients, setSelectedClients] = useState([]);
   const [clientSearch, setClientSearch] = useState("");
@@ -27,6 +32,51 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
   const [clientLoading, setClientLoading] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  const resetState = () => {
+    setFormData({ ...INITIAL_FORM_STATE });
+    setErrors({});
+    setSelectedClients([]);
+    setClientSearch("");
+    setClientPage(1);
+    setClientLoading(false);
+    setIsDropdownOpen(false);
+  };
+
+  const handleClose = () => {
+    resetState();
+    onClose?.();
+  };
+
+  const resolveProjectIdentifier = (payload) => {
+    if (!payload || typeof payload !== "object") {
+      return null;
+    }
+    if (payload.identifier) return payload.identifier;
+    if (payload.project_identifier) return payload.project_identifier;
+    if (payload.projectId) return payload.projectId;
+    if (payload.id) return payload.id;
+    if (payload.project) return resolveProjectIdentifier(payload.project);
+    if (payload.data) return resolveProjectIdentifier(payload.data);
+    if (payload.message && typeof payload.message === "object") {
+      return resolveProjectIdentifier(payload.message);
+    }
+    return null;
+  };
+
+  const redirectToProjectDetails = (projectPayload) => {
+    const identifier = resolveProjectIdentifier(projectPayload);
+    if (!identifier) {
+      ToastUtils.warning(
+        "Project created but could not resolve the identifier. Please check your projects list."
+      );
+      handleClose();
+      return;
+    }
+    const encodedId = encodeURIComponent(btoa(String(identifier)));
+    handleClose();
+    navigate(`/dashboard/projects/details?id=${encodedId}`);
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -37,6 +87,12 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!isOpen) {
+      resetState();
+    }
+  }, [isOpen]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -105,17 +161,21 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
   };
 
   const handleSubmit = () => {
-    if (validateForm()) {
-      const payload = { ...formData, user_ids: formData.user_ids };
-      createProject(payload, {
-        onSuccess: () => {
-          onClose();
-        },
-        onError: (error) => {
-          console.error("Error creating project:", error.message);
-        },
-      });
+    if (!validateForm()) {
+      return;
     }
+
+    const payload = { ...formData, user_ids: formData.user_ids };
+    createProject(payload, {
+      onSuccess: (project) => {
+        ToastUtils.success("Project created successfully!");
+        redirectToProjectDetails(project);
+      },
+      onError: (error) => {
+        console.error("Error creating project:", error?.message);
+        ToastUtils.error(error?.message || "Failed to create project.");
+      },
+    });
   };
 
   if (!isOpen) return null;
@@ -148,7 +208,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
             Create New Project
           </h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
           >
             <X className="w-5 h-5" />
@@ -413,7 +473,7 @@ const CreateProjectModal = ({ isOpen, onClose }) => {
         <div className="flex items-center justify-end px-6 py-4 border-t rounded-b-[24px]">
           <div className="flex gap-3">
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="px-6 py-2 text-[#676767] bg-[#FAFAFA] border border-[#ECEDF0] rounded-[30px] font-medium hover:text-gray-800 transition-colors"
             >
               Close

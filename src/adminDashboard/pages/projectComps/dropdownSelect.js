@@ -3,24 +3,30 @@ import { ChevronDown, X, Loader2 } from "lucide-react";
 
 export const DropdownSelect = ({
   options,
-  value, // Can be single value (string/number) or array of values (for multi-select)
-  onChange, // Callback receives single value or array of values
+  value,
+  onChange,
   placeholder,
   isFetching,
-  displayKey, // Key to display in the list (e.g., 'name', 'first_name')
-  valueKey, // Key to use as the value (e.g., 'id')
-  searchKeys, // Array of keys to search against (e.g., ['name', 'email'])
-  isMultiSelect = false, // New prop for multi-selection
-  error, // Optional error message
+  displayKey,
+  valueKey,
+  searchKeys,
+  isMultiSelect = false,
+  error,
+  disabled = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const dropdownRef = useRef(null);
 
-  // Determine the current display value for single select, or an array of selected options for multi-select
+  const normalizedValue = isMultiSelect
+    ? Array.isArray(value)
+      ? value
+      : []
+    : value;
+
   const selectedDisplayValue = isMultiSelect
-    ? options.filter((option) => value.includes(option[valueKey]))
-    : options.find((option) => option[valueKey] === value);
+    ? options.filter((option) => normalizedValue.includes(option[valueKey]))
+    : options.find((option) => option[valueKey] === normalizedValue);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -36,9 +42,9 @@ export const DropdownSelect = ({
 
   const handleSelect = (option) => {
     if (isMultiSelect) {
-      const newSelectedValues = value.includes(option[valueKey])
-        ? value.filter((val) => val !== option[valueKey]) // Remove if already selected
-        : [...value, option[valueKey]]; // Add if not selected
+      const newSelectedValues = normalizedValue.includes(option[valueKey])
+        ? normalizedValue.filter((val) => val !== option[valueKey])
+        : [...normalizedValue, option[valueKey]];
       onChange(newSelectedValues);
     } else {
       onChange(option[valueKey]);
@@ -48,16 +54,19 @@ export const DropdownSelect = ({
   };
 
   const handleRemoveMultiSelect = (itemValue) => {
-    const newSelectedValues = value.filter((val) => val !== itemValue);
+    const newSelectedValues = normalizedValue.filter((val) => val !== itemValue);
     onChange(newSelectedValues);
   };
 
   const filteredOptions = options.filter((option) => {
-    // If multi-select, exclude already selected options from the list
-    if (isMultiSelect && value.includes(option[valueKey])) {
+    if (disabled) {
       return false;
     }
-    // Filter by search term across specified searchKeys
+
+    if (isMultiSelect && normalizedValue.includes(option[valueKey])) {
+      return false;
+    }
+
     return searchKeys.some((key) =>
       String(option[key]).toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -67,10 +76,18 @@ export const DropdownSelect = ({
     <div className="relative w-full" ref={dropdownRef}>
       {/* Input/Display Area */}
       <div
-        className={`input-field flex items-center justify-between cursor-pointer ${
+        className={`input-field flex items-center justify-between ${
           error ? "border-red-500" : "border-gray-300"
-        } ${isOpen ? "ring-1 ring-[#288DD1] border-[#288DD1]" : ""}`}
-        onClick={() => setIsOpen(!isOpen)}
+        } ${isOpen ? "ring-1 ring-[#288DD1] border-[#288DD1]" : ""} ${
+          disabled ? "bg-gray-100 cursor-not-allowed opacity-70" : "cursor-pointer"
+        }`}
+        onClick={() => {
+          if (disabled) return;
+          setIsOpen((prev) => !prev);
+        }}
+        role="button"
+        tabIndex={disabled ? -1 : 0}
+        aria-disabled={disabled}
       >
         {isMultiSelect ? (
           <div className="flex flex-wrap gap-2 py-1">
@@ -120,10 +137,11 @@ export const DropdownSelect = ({
             <input
               type="text"
               placeholder="Search..."
-              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-[#288DD1]"
+              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-[#288DD1] disabled:bg-gray-100 disabled:cursor-not-allowed"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking search
+              onClick={(e) => e.stopPropagation()}
+              disabled={disabled}
             />
           </div>
           {isFetching ? (

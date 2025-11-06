@@ -55,9 +55,7 @@ import Requests from "./dashboard/pages/requests";
 import AdminLogin from "./adminDashboard/pages/adminSignin";
 import AdminPurchasedModules from "./adminDashboard/pages/adminPurchasedModules";
 import Project from "./dashboard/pages/projectmain";
-import Instances from "./dashboard/pages/instances";
 import ProjectDetails from "./dashboard/pages/projectDetails";
-import InstancesDetails from "./dashboard/pages/instancesDetails";
 import AdminInventory from "./adminDashboard/pages/adminInventory";
 import AdminTax from "./adminDashboard/pages/adminTax";
 import TenantHome from "./tenantDashboard/pages/tenantHome";
@@ -73,6 +71,7 @@ import AdminUserEdit from "./adminDashboard/pages/adminUserEdit";
 import AdminProjects from "./adminDashboard/pages/adminProjects";
 import AdminProjectDetails from "./adminDashboard/pages/adminProjectDetails";
 import AdminAddInstance from "./adminDashboard/pages/adminAddInstance";
+import AdminOnboardingSettings from "./adminDashboard/pages/adminOnboardingSettings";
 import Settings from "./dashboard/pages/settings";
 import DashboardTaxConfigurations from "./dashboard/pages/taxConfiguration";
 import Products from "./dashboard/pages/products";
@@ -88,7 +87,6 @@ import AdminKeyPairs from "./adminDashboard/pages/adminKeyPairs";
 import AdminPricing from "./adminDashboard/pages/adminPricing";
 import AdminProducts from "./adminDashboard/pages/adminProducts";
 import AdminProductCreate from "./adminDashboard/pages/AdminProductCreate";
-import AddInstancePage from "./dashboard/pages/addInstance";
 // import AdminQuoteCalculator from "./adminDashboard/pages/AdminQuoteCalculator";
 import TenantQuotes from "./dashboard/pages/quotes";
 // import QuoteCalculatorWizard from "./dashboard/pages/QuoteCalculatorWizard";
@@ -97,8 +95,12 @@ import ClientDashboard from "./clientDashboard/pages/clientDashboard";
 import ClientProject from "./clientDashboard/pages/clientProjects";
 import ClientProjectDetails from "./clientDashboard/pages/clientProjectDetails";
 import ClientInstances from "./clientDashboard/pages/clientInstances";
-import ClientAddInstancePage from "./clientDashboard/pages/clientAddInstances";
+import ClientMultiInstanceCreation from "./clientDashboard/pages/clientMultiInstanceCreation";
 import ObjectStoragePage from "./clientDashboard/pages/ObjectStoragePage";
+import DashboardObjectStorage from "./dashboard/pages/objectStorage";
+import DashboardLeads from "./dashboard/pages/leads";
+import DashboardLeadCreate from "./dashboard/pages/leadCreate";
+import DashboardLeadDetails from "./dashboard/pages/leadDetails";
 import AdminMultiQuote from "./adminDashboard/pages/adminMultiQuote";
 import AdminAdvancedCalculator from "./adminDashboard/pages/adminAdvancedCalculator";
 import AdminInfrastructureSetup from "./adminDashboard/pages/adminInfrastructureSetup";
@@ -222,14 +224,6 @@ function App() {
             }
           />
           <Route
-            path="/dashboard/instances"
-            element={
-              <TenantRoute>
-                <Instances />
-              </TenantRoute>
-            }
-          />
-          <Route
             path="/dashboard/purchased-modules"
             element={
               <TenantRoute>
@@ -294,10 +288,26 @@ function App() {
             }
           />
           <Route
-            path="/dashboard/instances/details"
+            path="/dashboard/leads"
             element={
               <TenantRoute>
-                <InstancesDetails />
+                <DashboardLeads />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/leads/create"
+            element={
+              <TenantRoute>
+                <DashboardLeadCreate />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/leads/details"
+            element={
+              <TenantRoute>
+                <DashboardLeadDetails />
               </TenantRoute>
             }
           />
@@ -310,10 +320,10 @@ function App() {
             }
           />
           <Route
-            path="/dashboard/add-instance"
+            path="/dashboard/object-storage"
             element={
               <TenantRoute>
-                <AddInstancePage />
+                <DashboardObjectStorage />
               </TenantRoute>
             }
           />
@@ -486,10 +496,14 @@ function App() {
             path="/admin-dashboard/region-approvals"
             element={<RegionApprovals />}
           />
-          <Route
-            path="/admin-dashboard/onboarding-review"
-            element={<AdminOnboardingReview />}
-          />
+        <Route
+          path="/admin-dashboard/onboarding-review"
+          element={<AdminOnboardingReview />}
+        />
+        <Route
+          path="/admin-dashboard/onboarding-settings"
+          element={<AdminOnboardingSettings />}
+        />
           <Route
             path="/admin-dashboard/region-approvals/create"
             element={<RegionApprovalCreate />}
@@ -602,8 +616,8 @@ function App() {
               element={<ClientInstances />}
             />
             <Route
-              path="/client-dashboard/add-instance"
-              element={<ClientAddInstancePage />}
+              path="/client-dashboard/multi-instance-creation"
+              element={<ClientMultiInstanceCreation />}
             />
             <Route
               path="/client-dashboard/object-storage"

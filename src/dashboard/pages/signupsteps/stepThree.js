@@ -12,7 +12,6 @@ export const BusinessAddressStep = ({
   cities,
   isCitiesFetching,
 }) => {
-  const isCustomCountry = formData.countryId === "other";
   const isCustomState = formData.state_id === "other";
   const isCustomCity = formData.city_id === "other";
 
@@ -51,7 +50,6 @@ export const BusinessAddressStep = ({
                   {country.name}
                 </option>
               ))}
-              <option value="other">Other</option>
             </select>
           ) : (
             <div className="flex items-center py-2 text-gray-500 text-sm">
@@ -59,18 +57,6 @@ export const BusinessAddressStep = ({
             </div>
           )}
         </span>
-        {isCustomCountry && (
-          <input
-            type="text"
-            id="countryName"
-            value={formData.countryName}
-            onChange={(e) => updateFormData("countryName", e.target.value)}
-            placeholder="Enter country"
-            className={`w-full input-field transition-all mt-2 ${
-              errors.countryId ? "border-red-500 border" : "border-gray-300"
-            }`}
-          />
-        )}
         {errors.countryId && (
           <p className="text-red-500 text-xs mt-1">{errors.countryId}</p>
         )}

@@ -48,6 +48,30 @@ const fetchProjectById = async (id) => {
   return res;
 };
 
+const fetchProjectMembershipSuggestions = async (params = {}) => {
+  const query = new URLSearchParams();
+  if (params.scope) {
+    query.append("scope", params.scope);
+  }
+  if (params.tenant_id) {
+    query.append("tenant_id", params.tenant_id);
+  }
+  if (params.client_id) {
+    query.append("client_id", params.client_id);
+  }
+
+  const uri = `/project-memberships/suggestions${
+    query.toString() ? `?${query.toString()}` : ""
+  }`;
+
+  const res = await silentApi("GET", uri);
+  if (!res?.data) {
+    throw new Error("Failed to fetch project membership suggestions");
+  }
+
+  return res.data;
+};
+
 // POST: Create a new project
 const createProject = async (projectData) => {
   const res = await api("POST", "/projects", projectData);
@@ -101,6 +125,19 @@ export const useFetchProjectById = (id, options = {}) => {
   });
 };
 
+export const useProjectMembershipSuggestions = (params = {}, options = {}) => {
+  const enabled = options.enabled ?? true;
+
+  return useQuery({
+    queryKey: ["admin-project-memberships", params],
+    queryFn: () => fetchProjectMembershipSuggestions(params),
+    enabled,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+
 // Hook to fetch project status
 export const useProjectStatus = (id, options = {}) => {
   return useQuery({
@@ -140,7 +177,9 @@ export const useCreateProject = () => {
         updated_at: new Date().toISOString(),
         instances: [],
         tenant_id: newProject.tenant_id,
-        client_ids: newProject.client_ids || [],
+        client_id: newProject.client_id ?? null,
+        assignment_scope: newProject.assignment_scope ?? null,
+        member_user_ids: newProject.member_user_ids || [],
         _isOptimistic: true // Flag to identify optimistic updates
       };
 

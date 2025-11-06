@@ -21,6 +21,16 @@ const fetchClientProjectById = async (id) => {
   return res.data;
 };
 
+// GET: Fetch project status (provisioning + infrastructure checklist)
+const fetchClientProjectStatus = async (id) => {
+  const encodedId = encodeURIComponent(id);
+  const res = await clientSilentApi("GET", `/business/projects/${encodedId}/status`);
+  if (!res?.project && !res?.data) {
+    throw new Error(`Failed to fetch project status for ${id}`);
+  }
+  return res;
+};
+
 // POST: Create a new project
 const createClientProject = async (projectData) => {
   const res = await clientApi("POST", "/business/projects", projectData);
@@ -67,6 +77,24 @@ export const useFetchClientProjectById = (id, options = {}) => {
     enabled: !!id, // Only fetch if ID is provided
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+
+// Hook to fetch project status details
+export const useClientProjectStatus = (id, options = {}) => {
+  return useQuery({
+    queryKey: ["clientProjectStatus", id],
+    queryFn: () => fetchClientProjectStatus(id),
+    enabled: !!id,
+    staleTime: 1000 * 60 * 2,
+    refetchOnWindowFocus: false,
+    retry: (failureCount, error) => {
+      if (error?.message?.includes?.("404") || error?.message?.includes?.("403")) {
+        return false;
+      }
+      return failureCount < 3;
+    },
     ...options,
   });
 };

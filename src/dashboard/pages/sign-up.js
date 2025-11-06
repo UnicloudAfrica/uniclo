@@ -42,6 +42,7 @@ export default function DashboardSignUp() {
     tinNumber: "",
     countryId: "",
     countryName: "",
+    countryCode: "",
     state: "",
     state_id: "",
     city: "",
@@ -125,7 +126,7 @@ export default function DashboardSignUp() {
         }
         break;
       case 2:
-        if (!formData.countryId && !formData.countryName)
+        if (!formData.countryId)
           newErrors.countryId = "Country is required";
         if (!formData.state_id && !formData.state)
           newErrors.state = "State is required";
@@ -160,9 +161,15 @@ export default function DashboardSignUp() {
       const newFormData = { ...prev, [field]: value };
       if (field === "countryId") {
         newFormData.countryName =
-          value === "other"
-            ? ""
-            : countries?.find((c) => c.id === parseInt(value))?.name || "";
+          countries?.find((c) => String(c.id) === value)?.name || "";
+        newFormData.countryCode =
+          countries
+            ?.find((c) => String(c.id) === value)
+            ?.iso2?.toUpperCase() ||
+          countries
+            ?.find((c) => String(c.id) === value)
+            ?.iso3?.toUpperCase() ||
+          "";
         newFormData.state_id = "";
         newFormData.state = "";
         newFormData.city_id = "";
@@ -204,14 +211,41 @@ export default function DashboardSignUp() {
 
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
+    const selectedCountry =
+      countries?.find((c) => String(c.id) === formData.countryId) || null;
+    const normalizedCountryId = selectedCountry
+      ? String(selectedCountry.id)
+      : "";
+    const normalizedCountryName =
+      formData.countryName || selectedCountry?.name || "";
+    const normalizedCountryCode =
+      formData.countryCode ||
+      selectedCountry?.iso2?.toUpperCase() ||
+      selectedCountry?.iso3?.toUpperCase() ||
+      "";
+    const normalizedState =
+      formData.state ||
+      states?.find((s) => s.id === parseInt(formData.state_id))?.name ||
+      "";
+    const normalizedCity =
+      formData.city ||
+      cities?.find((c) => c.id === parseInt(formData.city_id))?.name ||
+      "";
+
     const userData = {
       first_name: formData.contactPersonFirstName,
       last_name: formData.contactPersonLastName,
       phone: formData.contactPhone,
       email: formData.email,
       role: "Client",
+      account_type: "business",
       password: formData.password,
       password_confirmation: formData.confirmPassword,
+      country_id: normalizedCountryId,
+      country: normalizedCountryName,
+      country_code: normalizedCountryCode,
+      state: normalizedState,
+      city: normalizedCity,
       business: {
         name: formData.businessName,
         type: formData.businessType,
@@ -227,20 +261,12 @@ export default function DashboardSignUp() {
         phone: formData.businessPhone,
         website: formData.businessWebsite,
         zip: formData.postalCode,
-        country_id: formData.countryId === "other" ? null : formData.countryId,
-        country:
-          formData.countryName ||
-          countries?.find((c) => c.id === parseInt(formData.countryId))?.name ||
-          "",
-        state:
-          formData.state ||
-          states?.find((s) => s.id === parseInt(formData.state_id))?.name ||
-          "",
+        country_id: normalizedCountryId,
+        country: normalizedCountryName,
+        country_code: normalizedCountryCode,
+        state: normalizedState,
         state_id: formData.state_id === "other" ? null : formData.state_id,
-        city:
-          formData.city ||
-          cities?.find((c) => c.id === parseInt(formData.city_id))?.name ||
-          "",
+        city: normalizedCity,
         city_id: formData.city_id === "other" ? null : formData.city_id,
       },
     };

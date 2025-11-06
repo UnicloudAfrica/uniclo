@@ -159,6 +159,38 @@ const tenantBusinessSteps = [
     custom: "brandingTheme",
   },
   {
+    id: "domain_settings",
+    label: "Domain Settings",
+    description:
+      "Confirm that your primary domain has the required DNS records. We’ll notify you when verification succeeds.",
+    fields: [
+      {
+        id: "domain",
+        label: "Primary domain",
+        type: "text",
+        required: true,
+      },
+      {
+        id: "dns_verified",
+        label: "DNS status",
+        type: "select",
+        required: true,
+        options: [
+          { value: "", label: "Select status" },
+          { value: "pending", label: "Pending verification" },
+          { value: "verified", label: "DNS records verified" },
+          { value: "action_required", label: "Action required" },
+        ],
+      },
+      {
+        id: "notes",
+        label: "Notes",
+        type: "textarea",
+        helperText: "Share any context your team needs when reviewing DNS changes.",
+      },
+    ],
+  },
+  {
     id: "partner_region_qualification",
     label: "Partner Region Qualification",
     description:
@@ -167,120 +199,22 @@ const tenantBusinessSteps = [
   },
 ];
 
-const tenantClientBusinessSteps = [
-  {
-    id: "client_profile",
-    label: "Client Profile",
-    description: "Share a bit about your organisation and primary contacts.",
-    fields: [
-      {
-        id: "company_name",
-        label: "Company name",
-        type: "text",
-        required: true,
-      },
-      {
-        id: "contact_name",
-        label: "Primary contact name",
-        type: "text",
-        required: true,
-      },
-      {
-        id: "contact_email",
-        label: "Primary contact email",
-        type: "text",
-        required: true,
-      },
-      { id: "contact_phone", label: "Primary contact phone", type: "text" },
-      { id: "project_focus", label: "Project focus", type: "textarea" },
-    ],
-  },
-  {
-    id: "billing",
-    label: "Billing & Contacts",
-    description: "Who should receive invoices and operational updates?",
-    fields: [
-      {
-        id: "billing_contact_name",
-        label: "Billing contact name",
-        type: "text",
-        required: true,
-      },
-      {
-        id: "billing_contact_email",
-        label: "Billing contact email",
-        type: "text",
-        required: true,
-      },
-      {
-        id: "billing_contact_phone",
-        label: "Billing contact phone",
-        type: "text",
-      },
-      {
-        id: "preferred_payment_terms",
-        label: "Preferred payment terms",
-        type: "text",
-      },
-    ],
-  },
-  {
-    id: "branding",
-    label: "Branding",
-    description:
-      "We’ll apply your tenant’s theme, but feel free to add your own logo here.",
-    fields: [
-      { id: "logo", label: "Logo", type: "file" },
-      { id: "accent_color", label: "Accent colour", type: "text" },
-      { id: "notes", label: "Display notes", type: "textarea" },
-    ],
-  },
-];
+const clientBusinessSteps = [
+  ...["business_profile", "compliance_documents", "founders_directors"].map((stepId) => {
+    const template = tenantBusinessSteps.find((step) => step.id === stepId);
+    return template ? { ...template, fields: template.fields ? [...template.fields] : template.fields } : null;
+  }),
+].filter(Boolean);
 
-const internalClientBusinessSteps = [
-  {
-    id: "account_profile",
-    label: "Account Profile",
-    description: "Collect the baseline profile for this account.",
-    fields: [
-      {
-        id: "account_name",
-        label: "Account name",
-        type: "text",
-        required: true,
-      },
-      { id: "owner", label: "Relationship owner", type: "text" },
-      { id: "notes", label: "Notes", type: "textarea" },
-    ],
-  },
-  {
-    id: "compliance_documents",
-    label: "Compliance & Documents",
-    description:
-      "Upload any supporting KYC documents gathered by your sales or ops teams.",
-    fields: [
-      { id: "kyc_form", label: "KYC form", type: "file" },
-      { id: "supporting_documents", label: "Supporting documents", type: "file" },
-      { id: "notes", label: "Notes", type: "textarea" },
-    ],
-  },
-  {
-    id: "billing",
-    label: "Billing Preferences",
-    description: "Record the billing cadence and any internal references.",
-    fields: [
-      { id: "billing_contact", label: "Billing contact", type: "text" },
-      { id: "billing_email", label: "Billing email", type: "text" },
-      { id: "payment_terms", label: "Payment terms", type: "text" },
-      { id: "internal_reference", label: "Internal reference", type: "text" },
-    ],
-  },
-];
+const internalClientBusinessSteps = clientBusinessSteps.map((step) => ({
+  ...step,
+  fields: step.fields ? [...step.fields] : step.fields,
+}));
 
 const tenantClientIndividualSteps = [
   {
-    id: "individual_profile",
-    label: "Individual Profile",
+    id: "client_profile",
+    label: "Client Profile",
     description:
       "Share your personal details so we can verify and activate your services.",
     fields: [
@@ -320,6 +254,30 @@ const tenantClientIndividualSteps = [
         label: "Residential address",
         type: "textarea",
         required: true,
+      },
+    ],
+  },
+  {
+    id: "compliance_documents",
+    label: "Compliance & Documents",
+    description:
+      "Upload any supporting KYC documents gathered so far. We'll request more if needed.",
+    fields: [
+      {
+        id: "kyc_form",
+        label: "KYC form",
+        type: "file",
+        required: true,
+      },
+      {
+        id: "supporting_documents",
+        label: "Supporting documents",
+        type: "file",
+      },
+      {
+        id: "notes",
+        label: "Notes",
+        type: "textarea",
       },
     ],
   },
@@ -368,44 +326,14 @@ const tenantClientIndividualSteps = [
       },
     ],
   },
-  {
-    id: "billing",
-    label: "Billing & Contacts",
-    description:
-      "Let us know who should receive invoices and operational updates.",
-    fields: [
-      {
-        id: "billing_contact_name",
-        label: "Billing contact name",
-        type: "text",
-        required: true,
-      },
-      {
-        id: "billing_contact_email",
-        label: "Billing contact email",
-        type: "text",
-        required: true,
-      },
-      {
-        id: "billing_contact_phone",
-        label: "Billing contact phone",
-        type: "text",
-      },
-      {
-        id: "preferred_payment_terms",
-        label: "Preferred payment terms",
-        type: "text",
-      },
-    ],
-  },
 ];
 
 export const STEP_CONFIG = {
   tenant: tenantBusinessSteps,
   tenant_business: tenantBusinessSteps,
   tenant_partner_business: tenantBusinessSteps,
-  tenant_client_business: tenantClientBusinessSteps,
-  client: tenantClientBusinessSteps,
+  tenant_client_business: clientBusinessSteps,
+  client: clientBusinessSteps,
   tenant_client_individual: tenantClientIndividualSteps,
   crm: internalClientBusinessSteps,
   internal_client_business: internalClientBusinessSteps,
@@ -413,4 +341,3 @@ export const STEP_CONFIG = {
 
 export const getStepsForTarget = (target) =>
   STEP_CONFIG[target] ?? tenantBusinessSteps;
-

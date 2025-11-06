@@ -3,6 +3,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import logo from "./assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useCreateAccount } from "../../hooks/authHooks";
+import { useFetchCountries } from "../../hooks/resource";
 import useAuthStore from "../../stores/userAuthStore";
 import useAuthRedirect from "../../utils/authRedirect";
 
@@ -13,12 +14,18 @@ const TenantRegister = ({ tenant = "Tenant" }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const { isLoading } = useAuthRedirect();
+  const {
+    data: countries = [],
+    isFetching: isCountriesFetching,
+    isError: isCountriesError,
+  } = useFetchCountries();
   const [tenantData, setTenantData] = useState({
     name: tenant,
     logo: logo, // Placeholder logo
     color: "#288DD1", // Placeholder color
   });
 
+  const [signupRole, setSignupRole] = useState("client");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -26,6 +33,11 @@ const TenantRegister = ({ tenant = "Tenant" }) => {
     contactPersonFirstName: "",
     contactPersonLastName: "",
     phone: "",
+    countryId: "",
+    countryName: "",
+    countryCode: "",
+    accountType: "business",
+    companyName: "",
   });
 
   // Simulate API request to fetch tenant data
@@ -70,27 +82,89 @@ const TenantRegister = ({ tenant = "Tenant" }) => {
     if (!formData.phone) newErrors.phone = "Phone number is required";
     else if (!/^\+?\d{10,15}$/.test(formData.phone))
       newErrors.phone = "Invalid phone number";
+    if (!formData.countryId) newErrors.countryId = "Country is required";
+    if (!formData.accountType && signupRole === "client")
+      newErrors.accountType = "Account type is required";
+
+    const isBusinessAccount =
+      signupRole === "tenant" || formData.accountType === "business";
+    if (isBusinessAccount && !formData.companyName) {
+      newErrors.companyName = "Company name is required";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const updateFormData = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      if (field === "countryId") {
+        const selectedCountry = countries.find(
+          (country) => String(country.id) === value
+        );
+        return {
+          ...prev,
+          countryId: value,
+          countryName: selectedCountry?.name || "",
+          countryCode:
+            selectedCountry?.iso2?.toUpperCase() ||
+            selectedCountry?.iso3?.toUpperCase() ||
+            "",
+        };
+      }
+      if (field === "accountType" && value === "individual") {
+        return {
+          ...prev,
+          accountType: value,
+          companyName: "",
+        };
+      }
+      return { ...prev, [field]: value };
+    });
     setErrors((prev) => ({ ...prev, [field]: null }));
+  };
+
+  const handleRoleChange = (role) => {
+    setSignupRole(role);
+    setFormData((prev) => ({
+      ...prev,
+      accountType: role === "tenant" ? "business" : prev.accountType || "business",
+    }));
+    setErrors((prev) => ({
+      ...prev,
+      accountType: null,
+      companyName: null,
+    }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
+      const isTenant = signupRole === "tenant";
+      const isBusinessAccount =
+        isTenant || formData.accountType === "business";
+      const accountType = isTenant ? "business" : formData.accountType;
+
+      const businessPayload = isBusinessAccount
+        ? {
+            name: formData.companyName || null,
+          }
+        : {};
+
       const userData = {
         first_name: formData.contactPersonFirstName,
         last_name: formData.contactPersonLastName,
         email: formData.email,
-        role: "Client", // Fixed to Client for tenant signup
+        role: isTenant ? "tenant" : "client",
+        account_type: accountType,
         password: formData.password,
         password_confirmation: formData.confirmPassword,
         phone: formData.phone,
+        country_id: formData.countryId,
+        country: formData.countryName,
+        country_code: formData.countryCode,
+        company_name: isBusinessAccount ? formData.companyName : null,
+        business: businessPayload,
       };
 
       mutate(userData, {
@@ -134,6 +208,50 @@ const TenantRegister = ({ tenant = "Tenant" }) => {
           </p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="flex bg-[#F5F6F8] rounded-[12px] p-1">
+            {["client", "tenant"].map((role) => (
+              <button
+                key={role}
+                type="button"
+                onClick={() => handleRoleChange(role)}
+                className={`flex-1 py-2 px-3 text-sm font-medium rounded-[10px] transition-all ${
+                  signupRole === role
+                    ? "bg-white shadow text-[#121212]"
+                    : "text-[#6B7280]"
+                }`}
+              >
+                {role === "tenant" ? "I'm a Tenant" : "I'm a Client"}
+              </button>
+            ))}
+          </div>
+
+          {signupRole === "client" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Account Type <span className="text-red-500">*</span>
+              </label>
+              <div className="flex bg-[#F5F6F8] rounded-[12px] p-1">
+                {["business", "individual"].map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => updateFormData("accountType", type)}
+                    className={`flex-1 py-2 px-3 text-sm font-medium rounded-[10px] transition-all ${
+                      formData.accountType === type
+                        ? "bg-white shadow text-[#121212]"
+                        : "text-[#6B7280]"
+                    }`}
+                  >
+                    {type === "business" ? "Business" : "Individual"}
+                  </button>
+                ))}
+              </div>
+              {errors.accountType && (
+                <p className="text-red-500 text-xs mt-1">{errors.accountType}</p>
+              )}
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -239,13 +357,33 @@ const TenantRegister = ({ tenant = "Tenant" }) => {
                 errors.confirmPassword ? "border-red-500" : "border-gray-300"
               }`}
               placeholder="Confirm password"
-            />
-            {errors.confirmPassword && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.confirmPassword}
-              </p>
-            )}
-          </div>
+              />
+              {errors.confirmPassword && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.confirmPassword}
+                </p>
+              )}
+            </div>
+          { (signupRole === "tenant" || formData.accountType === "business") && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Company Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.companyName}
+                onChange={(e) => updateFormData("companyName", e.target.value)}
+                className={`w-full input-field ${
+                  errors.companyName ? "border-red-500" : "border-gray-300"
+                }`}
+                placeholder="Enter company name"
+              />
+              {errors.companyName && (
+                <p className="text-red-500 text-xs mt-1">{errors.companyName}</p>
+              )}
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Phone <span className="text-red-500">*</span>
@@ -261,6 +399,38 @@ const TenantRegister = ({ tenant = "Tenant" }) => {
             />
             {errors.phone && (
               <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Country <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={formData.countryId}
+              onChange={(e) => updateFormData("countryId", e.target.value)}
+              className={`w-full input-field ${
+                errors.countryId ? "border-red-500" : "border-gray-300"
+              }`}
+              disabled={isCountriesFetching || isCountriesError}
+            >
+              <option value="">
+                {isCountriesFetching
+                  ? "Loading countries..."
+                  : "Select a country"}
+              </option>
+              {countries.map((country) => (
+                <option key={country.id} value={country.id}>
+                  {country.name}
+                </option>
+              ))}
+            </select>
+            {isCountriesError && (
+              <p className="text-red-500 text-xs mt-1">
+                Unable to load countries. Please refresh and try again.
+              </p>
+            )}
+            {errors.countryId && (
+              <p className="text-red-500 text-xs mt-1">{errors.countryId}</p>
             )}
           </div>
 

@@ -1,18 +1,23 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
+  Activity,
   CheckCircle,
   CheckCircle2,
   ChevronLeft,
+  Clock,
   GitBranch,
   Globe,
   Key,
+  Layers,
   Loader2,
+  MapPin,
   Network,
   Plus,
   Radio,
   RefreshCw,
   Route,
+  Server,
   Shield,
   Wifi,
   XCircle,
@@ -49,6 +54,7 @@ import ToastUtils from "../../utils/toastUtil";
 import api from "../../index/admin/api";
 import silentApi from "../../index/admin/silent";
 import { syncProjectEdgeConfigAdmin, useFetchProjectEdgeConfigAdmin } from "../../hooks/adminHooks/edgeHooks";
+import useAdminAuthStore from "../../stores/adminAuthStore";
 
 const decodeId = (encodedId) => {
   try {
@@ -118,6 +124,101 @@ const demoteActionCandidates = [
   "assign_project_member",
 ];
 
+const formatDate = (value) => {
+  if (!value) return "—";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return String(value);
+  return parsed.toLocaleString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+};
+
+const toTitleCase = (input = "") =>
+  input
+    .toString()
+    .replace(/[_-]/g, " ")
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+
+const NeutralPill = ({ icon: Icon, label }) => (
+  <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/80">
+    {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
+    {label}
+  </span>
+);
+
+const SummaryMetricCard = ({ icon: Icon, label, value, helper }) => (
+  <div className="flex items-start gap-4 rounded-2xl border border-white/15 bg-white/10 p-5 shadow-sm backdrop-blur-sm">
+    <span className="mt-1 flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 text-white">
+      <Icon className="h-5 w-5" />
+    </span>
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-wide text-white/70">
+        {label}
+      </p>
+      <p className="mt-1 text-lg font-semibold text-white">{value}</p>
+      {helper ? (
+        <p className="text-xs text-white/70">{helper}</p>
+      ) : null}
+    </div>
+  </div>
+);
+
+const getProjectStatusVariant = (status = "") => {
+  const normalized = status.toString().toLowerCase();
+  switch (normalized) {
+    case "active":
+      return {
+        label: "Active",
+        bg: "bg-emerald-50",
+        text: "text-emerald-700",
+        dot: "bg-emerald-500",
+      };
+    case "pending":
+    case "processing":
+    case "provisioning":
+      return {
+        label:
+          normalized === "pending"
+            ? "Pending"
+            : normalized === "processing"
+            ? "Processing"
+            : "Provisioning",
+        bg: "bg-amber-50",
+        text: "text-amber-700",
+        dot: "bg-amber-500",
+      };
+    case "inactive":
+      return {
+        label: "Inactive",
+        bg: "bg-gray-100",
+        text: "text-gray-600",
+        dot: "bg-gray-400",
+      };
+    case "failed":
+    case "error":
+      return {
+        label: normalized === "failed" ? "Failed" : "Error",
+        bg: "bg-rose-50",
+        text: "text-rose-700",
+        dot: "bg-rose-500",
+      };
+    default:
+      return {
+        label: toTitleCase(normalized || "Unknown"),
+        bg: "bg-blue-50",
+        text: "text-blue-700",
+        dot: "bg-blue-500",
+      };
+  }
+};
+
 const StatusBadge = ({ label, active, tone = "primary" }) => {
   const palette = {
     primary: {
@@ -163,6 +264,7 @@ const StatusBadge = ({ label, active, tone = "primary" }) => {
 export default function AdminProjectDetails() {
   const location = useLocation();
   const navigate = useNavigate();
+  const adminToken = useAdminAuthStore((state) => state.token);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("setup");
   const [isAssignEdgeOpen, setIsAssignEdgeOpen] = useState(false);
@@ -287,6 +389,8 @@ const projectInstances = useMemo(() => {
   }
   return [];
 }, [projectDetails, project]);
+
+  const instanceCount = projectInstances.length;
 
   const coerceCount = (value) => {
     if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -2072,6 +2176,73 @@ const projectInstances = useMemo(() => {
     (completedSections / infrastructureSections.length) * 100
   );
 
+  const projectStatusVariant = getProjectStatusVariant(
+    project?.status || projectDetails?.status
+  );
+  const totalInfraSections = infrastructureSections.length || 1;
+  const infrastructureStepLabel = `${completedSections}/${totalInfraSections} infra steps`;
+  const heroProjectIdentifier =
+    project?.identifier || projectDetails?.identifier || resolvedProjectId || projectId;
+  const heroProviderLabel =
+    project?.provider || projectDetails?.provider || "Provider";
+  const heroRegionLabel = (project?.region || projectDetails?.region || "Region").toUpperCase();
+  const heroDescription =
+    projectDetails?.description ||
+    project?.description ||
+    "Configure infrastructure, track instances, and manage networking resources for this project.";
+
+  const metadataItems = useMemo(
+    () => [
+      {
+        label: "Project Identifier",
+        value: heroProjectIdentifier || "—",
+      },
+      {
+        label: "Project Type",
+        value: toTitleCase(projectDetails?.type || project?.type || "Unknown"),
+      },
+      {
+        label: "Created",
+        value: formatDate(projectDetails?.created_at || project?.created_at),
+      },
+      {
+        label: "Instances",
+        value: `${instanceCount} tracked`,
+      },
+    ],
+    [heroProjectIdentifier, instanceCount, project?.created_at, project?.type, projectDetails?.created_at, projectDetails?.type]
+  );
+
+  const summaryMetrics = useMemo(
+    () => [
+      {
+        label: "Project Type",
+        value: toTitleCase(projectDetails?.type || project?.type),
+        helper: "Deployment model for workloads",
+        icon: Layers,
+      },
+      {
+        label: "Region",
+        value: heroRegionLabel,
+        helper: "Deployment location",
+        icon: MapPin,
+      },
+      {
+        label: "Instances",
+        value: instanceCount,
+        helper: "Compute resources attached",
+        icon: Server,
+      },
+      {
+        label: "Created",
+        value: formatDate(projectDetails?.created_at || project?.created_at),
+        helper: "Project inception date",
+        icon: Clock,
+      },
+    ],
+    [heroRegionLabel, instanceCount, project?.created_at, project?.type, projectDetails?.created_at, projectDetails?.type]
+  );
+
   const headerActions = (
     <div className="flex flex-wrap gap-2">
       <ModernButton
@@ -2123,7 +2294,7 @@ const projectInstances = useMemo(() => {
           className="overflow-hidden"
         >
           <div
-            className="p-6 md:p-8"
+            className="relative p-6 md:p-8"
             style={{
               background:
                 "linear-gradient(135deg, rgba(11, 99, 206, 0.95) 0%, rgba(17, 24, 39, 0.92) 60%, rgba(3, 7, 18, 0.95) 100%)",
@@ -2131,80 +2302,109 @@ const projectInstances = useMemo(() => {
               borderRadius: designTokens.borderRadius.xl,
             }}
           >
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-              <div className="space-y-3">
+            <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+              <div className="flex-1 space-y-5">
                 <p className="text-xs uppercase tracking-[0.25em] text-white/60">
                   Project Control Center
                 </p>
-                <h1 className="text-3xl font-semibold">
-                  {project?.name || "Project Details"}
-                </h1>
-                <div className="flex flex-wrap items-center gap-2">
-                  <StatusBadge
-                    label={project?.provider || "Provider"}
-                    active
-                    tone="neutral"
-                  />
-                  <StatusBadge
-                    label={project?.region || "Region"}
-                    active
-                    tone="neutral"
-                  />
-                  <StatusBadge
-                    label={`${completedSections}/${infrastructureSections.length} infrastructure steps`}
-                    active={completedSections === infrastructureSections.length}
-                    tone={completedSections === infrastructureSections.length ? "success" : "neutral"}
-                  />
-                </div>
-              </div>
-              <div className="flex gap-6">
-                <div className="text-center">
-                  <div
-                    className="mx-auto h-20 w-20 rounded-full flex items-center justify-center text-2xl font-semibold border-4"
-                    style={{
-                      borderColor: "rgba(255,255,255,0.25)",
-                      background: `conic-gradient(rgba(255,255,255,0.85) ${healthPercent}%, rgba(255,255,255,0.15) 0)`,
-                      color: "#0b63ce",
-                    }}
+                <div className="flex flex-wrap items-center gap-3">
+                  <span
+                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${projectStatusVariant.bg} ${projectStatusVariant.text}`}
                   >
-                    <div className="h-16 w-16 rounded-full bg-white flex items-center justify-center">
-                      <span className="text-xl font-semibold text-[#0b63ce]">
-                        {healthPercent}%
-                      </span>
-                    </div>
-                  </div>
-                  <p className="mt-3 text-xs text-white/60 uppercase tracking-wide">
-                    Infrastructure health
+                    <span className={`h-2 w-2 rounded-full ${projectStatusVariant.dot}`} />
+                    {projectStatusVariant.label}
+                  </span>
+                  <NeutralPill icon={Shield} label={heroProjectIdentifier || "—"} />
+                  <NeutralPill icon={Layers} label={heroProviderLabel} />
+                  <NeutralPill icon={MapPin} label={heroRegionLabel} />
+                  <NeutralPill icon={Activity} label={infrastructureStepLabel} />
+                </div>
+                <div className="space-y-3">
+                  <h1 className="text-3xl font-semibold md:text-4xl">
+                    {project?.name || projectDetails?.name || "Project Overview"}
+                  </h1>
+                  <p className="max-w-2xl text-sm md:text-base text-white/80">
+                    {heroDescription}
                   </p>
                 </div>
-                <div className="hidden md:flex h-20 w-px bg-white/15" />
-                <div className="space-y-3 text-sm text-white/80">
-                  <div>
-                    <p className="text-xs uppercase text-white/60 tracking-wide">
-                      Project Identifier
-                    </p>
-                    <p className="mt-1 text-base font-medium">
-                      {project?.identifier || projectId}
+              </div>
+              <div className="flex flex-col items-start gap-6 lg:items-end">
+                <div className="flex flex-wrap gap-2 lg:justify-end">
+                  <button
+                    type="button"
+                    onClick={handleNavigateAddInstance}
+                    disabled={!canCreateInstances}
+                    title={
+                      canCreateInstances
+                        ? "Launch multi-instance workflow"
+                        : `Complete the following before launching an instance: ${missingInstancePrereqs.join(
+                            ", "
+                          )}.`
+                    }
+                    className={`inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition ${
+                      canCreateInstances
+                        ? "bg-white text-[#0b63ce] hover:bg-white/90 hover:text-[#0b63ce]"
+                        : "bg-white/20 text-white/60 cursor-not-allowed"
+                    }`}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Instance
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsAssignEdgeOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-full bg-white/15 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/25"
+                  >
+                    <Wifi className="h-4 w-4" />
+                    Manage Edge
+                  </button>
+                </div>
+                <div className="flex items-center gap-6 lg:gap-8">
+                  <div className="text-center">
+                    <div
+                      className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border-4 border-white/20"
+                      style={{
+                        background: `conic-gradient(rgba(255,255,255,0.9) ${healthPercent}%, rgba(255,255,255,0.2) 0)`,
+                      }}
+                    >
+                      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-xl font-semibold text-[#0b63ce]">
+                        {healthPercent}%
+                      </div>
+                    </div>
+                    <p className="mt-3 text-xs uppercase tracking-wide text-white/70">
+                      Infrastructure health
                     </p>
                   </div>
-                  <div>
-                    <p className="text-xs uppercase text-white/60 tracking-wide">
-                      Created
-                    </p>
-                    <p className="mt-1 text-base font-medium">
-                      {project?.created_at
-                        ? new Date(project.created_at).toLocaleString()
-                        : "—"}
-                    </p>
+                  <div className="grid gap-3 text-sm text-white/85">
+                    {metadataItems.map((item) => (
+                      <div key={item.label}>
+                        <p className="text-xs uppercase tracking-wide text-white/60">
+                          {item.label}
+                        </p>
+                        <p className="mt-1 font-medium">{item.value}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
             </div>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {summaryMetrics.map((metric) => (
+                <SummaryMetricCard key={metric.label} {...metric} />
+              ))}
+            </div>
+            <div className="pointer-events-none absolute right-6 top-6 h-32 w-32 rounded-full bg-white/10 blur-3xl" />
           </div>
           {!canCreateInstances && (
-            <div className="mt-4 rounded-lg border border-dashed border-red-200 bg-red-50 p-4 text-sm text-red-700">
-              Complete the following before provisioning new instances:{" "}
-              {missingInstancePrereqs.join(", ")}.
+            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 shadow-sm">
+              <p className="font-semibold text-amber-900">Instances locked</p>
+              <p className="mt-1">
+                Complete the following before provisioning new instances:{" "}
+                <span className="font-medium">
+                  {missingInstancePrereqs.join(", ")}
+                </span>
+                .
+              </p>
             </div>
           )}
         </ModernCard>
@@ -2502,12 +2702,13 @@ const projectInstances = useMemo(() => {
       </AdminPageShell>
 
       {activePaymentPayload && (
-        <PaymentModal
-          isOpen={isPaymentModalOpen}
-          onClose={closePaymentModal}
-          transactionData={activePaymentPayload}
-          onPaymentComplete={handlePaymentComplete}
-        />
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={closePaymentModal}
+        transactionData={activePaymentPayload}
+        onPaymentComplete={handlePaymentComplete}
+        authToken={adminToken}
+      />
       )}
 
       <AssignEdgeConfigModal

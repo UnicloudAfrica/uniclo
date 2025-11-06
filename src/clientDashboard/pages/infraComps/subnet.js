@@ -1,195 +1,260 @@
 import { useState } from "react";
-import { Eye, Trash2 } from "lucide-react";
+import { Eye, Trash2, RefreshCw } from "lucide-react";
 import {
-  useDeleteClientSubnet,
   useFetchClientSubnets,
+  useDeleteClientSubnet,
+  syncClientSubnetsFromProvider,
 } from "../../../hooks/clientHooks/subnetHooks";
 import AddSubnet from "../subnetComps/addSubnet";
+import { useQueryClient } from "@tanstack/react-query";
+import DeleteSubnetModal from "../subnetComps/deleteSubnet";
+import ViewSubnetModal from "../subnetComps/viewSubnet";
+import ToastUtils from "../../../utils/toastUtil";
+import ResourceSection from "../../../adminDashboard/components/ResourceSection";
+import ResourceEmptyState from "../../../adminDashboard/components/ResourceEmptyState";
+import ResourceListCard from "../../../adminDashboard/components/ResourceListCard";
+import ModernButton from "../../../adminDashboard/components/ModernButton";
 
-// import DeleteSubnetModal from "../subnetComps/deleteSubnet";
-// import ViewSubnetModal from "../subnetComps/viewSubnet";
+const ITEMS_PER_PAGE = 6;
 
-const Badge = ({ text }) => {
-  const badgeClasses = {
-    pending: "bg-yellow-100 text-yellow-800",
-    active: "bg-green-100 text-green-800",
-    available: "bg-green-100 text-green-800",
-    inactive: "bg-red-100 text-red-800",
-    default: "bg-gray-100 text-gray-800",
-  };
-  const badgeClass = badgeClasses[text?.toLowerCase()] || badgeClasses.default;
-
-  return (
-    <span
-      className={`px-2 py-1 text-xs font-medium rounded-full capitalize ${badgeClass}`}
-    >
-      {text}
-    </span>
-  );
+const getToneForStatus = (status = "") => {
+  const normalized = status.toString().toLowerCase();
+  if (["available", "active"].includes(normalized)) return "success";
+  if (["pending", "associating", "provisioning"].includes(normalized))
+    return "warning";
+  if (["error", "failed"].includes(normalized)) return "danger";
+  return "neutral";
 };
 
-const Subnets = ({ projectId = "" }) => {
-  const { data: subnets, isFetching } = useFetchClientSubnets(projectId);
+const Subnets = ({ projectId = "", region = "" }) => {
+  const { data: subnets, isFetching } = useFetchClientSubnets(
+    projectId,
+    region
+  );
   const { mutate: deleteSubnet, isPending: isDeleting } =
     useDeleteClientSubnet();
 
   const [isCreateModalOpen, setCreateModal] = useState(false);
+  const queryClient = useQueryClient();
   const [deleteModal, setDeleteModal] = useState(null);
-  const [viewModal, setViewModal] = useState(null); // subnet object
+  const [viewModal, setViewModal] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  const openCreateModal = () => setCreateModal(true);
-  const closeCreateModal = () => setCreateModal(false);
-  const openDeleteModal = (subnet, subnetName) =>
-    setDeleteModal({ subnet, subnetName });
-  const closeDeleteModal = () => setDeleteModal(null);
-  const openViewModal = (subnet) => setViewModal(subnet);
-  const closeViewModal = () => setViewModal(null);
-
-  // Pagination
   const totalItems = subnets?.length || 0;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentSubnets = subnets?.slice(startIndex, endIndex) || [];
-
-  const handlePreviousPage = () => {
-    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
-  };
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const currentSubnets =
+    subnets?.slice(startIndex, startIndex + ITEMS_PER_PAGE) || [];
 
   const handleDelete = () => {
     if (!deleteModal) return;
-
     const { subnet } = deleteModal;
-    const payload = { project_id: projectId, region: subnet.region };
-
     deleteSubnet(
-      { id: subnet.id, payload },
       {
-        onSuccess: () => closeDeleteModal(),
+        id: subnet.id,
+        payload: { project_id: projectId, region: subnet.region },
+      },
+      {
+        onSuccess: () => {
+          ToastUtils.success("Subnet deleted");
+          setDeleteModal(null);
+        },
         onError: (err) => {
-          console.error("Failed to delete subnet:", err);
-          closeDeleteModal();
+          ToastUtils.error(err?.message || "Failed to delete subnet");
+          setDeleteModal(null);
         },
       }
     );
   };
 
-  if (isFetching) {
-    return (
-      <div className="flex items-center justify-center p-6 bg-gray-50 rounded-[10px] font-Outfit">
-        <p className="text-gray-500 text-sm">Loading Subnets...</p>
-      </div>
-    );
-  }
+  const handleSync = async () => {
+    if (!projectId) {
+      ToastUtils.error("Project is required to sync subnets");
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      await syncClientSubnetsFromProvider({ project_id: projectId, region });
+      await queryClient.invalidateQueries({
+        queryKey: ["clientSubnets", { projectId, region }],
+      });
+      ToastUtils.success("Subnets synced successfully!");
+    } catch (error) {
+      console.error("Failed to sync Subnets:", error);
+      ToastUtils.error(error?.message || "Failed to sync subnets.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const syncButton = (
+    <ModernButton
+      key="sync"
+      variant="outline"
+      size="sm"
+      leftIcon={<RefreshCw size={16} />}
+      onClick={handleSync}
+      isDisabled={isSyncing || !projectId}
+      isLoading={isSyncing}
+    >
+      {isSyncing ? "Syncing..." : "Sync Subnets"}
+    </ModernButton>
+  );
+
+  const addButton = (
+    <ModernButton
+      key="add"
+      variant="primary"
+      size="sm"
+      onClick={() => setCreateModal(true)}
+    >
+      Add Subnet
+    </ModernButton>
+  );
 
   return (
-    <div className="bg-gray-50 rounded-[10px] font-Outfit">
-      <div className="flex justify-end items-center mb-6">
-        <button
-          onClick={openCreateModal}
-          className="rounded-[30px] py-3 px-9 bg-[--theme-color] text-white font-normal text-base hover:bg-[--secondary-color] transition-colors"
-        >
-          Add Subnet
-        </button>
-      </div>
-
-      {currentSubnets && currentSubnets.length > 0 ? (
+    <ResourceSection
+      title="Subnets"
+      description="Divide your VPC into IP ranges for tightly scoped workloads."
+      actions={[syncButton, addButton]}
+      isLoading={isFetching}
+    >
+      {currentSubnets.length > 0 ? (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {currentSubnets.map((subnet) => (
-              <div
-                key={subnet.id}
-                className="p-4 bg-white rounded-[10px] shadow-sm border border-gray-200 flex flex-col justify-between"
-              >
-                <div className="flex-grow">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3
-                      className="font-medium text-gray-800 truncate pr-2"
-                      title={subnet.name}
-                    >
-                      {subnet.name}
-                    </h3>
-                    <div className="flex-shrink-0 flex items-center space-x-2">
-                      <button
-                        onClick={() => openViewModal(subnet)}
-                        className="text-gray-400 hover:text-[--theme-color] transition-colors"
-                        title="View Subnet Details"
-                      >
-                        <Eye className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => openDeleteModal(subnet, subnet.name)}
-                        disabled={isDeleting}
-                        className="text-gray-400 hover:text-red-500 transition-colors"
-                        title="Delete Subnet"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="space-y-1 text-sm text-gray-500">
-                    <p>VPC ID: {subnet.vpc_id}</p>
-                    <p>Region: {subnet.region}</p>
-                    <p title={subnet.cidr_block}>
-                      CIDR Block: {subnet.cidr_block}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center justify-between border-t pt-3">
-                  <span className="text-sm text-gray-500">State:</span>
-                  <Badge text={subnet.state} />
-                </div>
-              </div>
-            ))}
+          <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+            {currentSubnets.map((subnet) => {
+              const displayName =
+                subnet.name || subnet.cidr_block || `Subnet ${subnet.id}`;
+              const cidr = subnet.cidr_block || subnet.cidr || "—";
+              const vpcDisplay = subnet.vpc_id || "—";
+              const status =
+                (subnet.state || subnet.status || "unknown") ?? "unknown";
+              const availableIps =
+                subnet.available_ip_address_count ??
+                subnet.meta?.available_ip_address_count ??
+                "—";
+              const totalIps =
+                subnet.total_ip_address_count ??
+                subnet.meta?.total_ip_address_count ??
+                "—";
+              const isDefault =
+                subnet.is_default ?? subnet.meta?.is_default ?? false;
+              const zone =
+                subnet.availability_zone || subnet.meta?.availability_zone;
+
+              return (
+                <ResourceListCard
+                  key={subnet.id}
+                  title={displayName}
+                  subtitle={subnet.id}
+                  metadata={[
+                    { label: "CIDR", value: cidr },
+                    { label: "VPC", value: vpcDisplay },
+                    { label: "Region", value: subnet.region || region || "—" },
+                    zone
+                      ? {
+                          label: "Availability Zone",
+                          value: zone,
+                        }
+                      : null,
+                    {
+                      label: "Available IPs",
+                      value: availableIps,
+                    },
+                    {
+                      label: "Total IPs",
+                      value: totalIps,
+                    },
+                    {
+                      label: "Default Subnet",
+                      value: isDefault ? "Yes" : "No",
+                    },
+                  ].filter(Boolean)}
+                  statuses={[
+                    { label: status, tone: getToneForStatus(status) },
+                  ]}
+                  actions={[
+                    {
+                      key: "inspect",
+                      label: "Inspect",
+                      icon: <Eye size={16} />,
+                      variant: "ghost",
+                      onClick: () => setViewModal(subnet),
+                    },
+                    {
+                      key: "remove",
+                      label: "Remove",
+                      icon: <Trash2 size={16} />,
+                      variant: "danger",
+                      onClick: () =>
+                        setDeleteModal({ subnet, subnetName: displayName }),
+                      disabled: isDeleting,
+                    },
+                  ]}
+                />
+              );
+            })}
           </div>
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-6">
-              <button
-                onClick={handlePreviousPage}
-                disabled={currentPage === 1}
-                className="px-4 py-2 bg-[--theme-color] text-white rounded-[30px] font-medium text-sm hover:bg-[--secondary-color] disabled:opacity-50 disabled:cursor-not-allowed"
+              <ModernButton
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                isDisabled={currentPage === 1}
               >
                 Previous
-              </button>
-              <div className="text-sm text-gray-600">
+              </ModernButton>
+              <span className="text-sm text-gray-500">
                 Page {currentPage} of {totalPages}
-              </div>
-              <button
-                onClick={handleNextPage}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 bg-[--theme-color] text-white rounded-[30px] font-medium text-sm hover:bg-[--secondary-color] disabled:opacity-50 disabled:cursor-not-allowed"
+              </span>
+              <ModernButton
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                }
+                isDisabled={currentPage === totalPages}
               >
                 Next
-              </button>
+              </ModernButton>
             </div>
           )}
         </>
       ) : (
-        <p className="text-gray-500 text-sm">
-          No Subnets found for this project.
-        </p>
+        <ResourceEmptyState
+          title="No Subnets"
+          message="Synchronize subnets from your cloud account or create a new subnet to allocate IP ranges."
+          action={
+            <ModernButton variant="primary" onClick={() => setCreateModal(true)}>
+              Create Subnet
+            </ModernButton>
+          }
+        />
       )}
 
-      {/* Placeholder for AddSubnet Modal */}
       <AddSubnet
         isOpen={isCreateModalOpen}
-        onClose={closeCreateModal}
+        onClose={() => setCreateModal(false)}
         projectId={projectId}
+        region={region}
       />
-
-      {/* Placeholder for DeleteSubnetModal */}
-      {/* <DeleteSubnetModal isOpen={!!deleteModal} onClose={closeDeleteModal} subnetName={deleteModal?.subnetName || ""} onConfirm={handleDelete} isDeleting={isDeleting} /> */}
-
-      {/* Placeholder for ViewSubnetModal */}
-      {/* <ViewSubnetModal isOpen={!!viewModal} onClose={closeViewModal} subnet={viewModal} /> */}
-    </div>
+      <ViewSubnetModal
+        isOpen={Boolean(viewModal)}
+        onClose={() => setViewModal(null)}
+        subnet={viewModal}
+      />
+      <DeleteSubnetModal
+        isOpen={Boolean(deleteModal)}
+        onClose={() => setDeleteModal(null)}
+        subnetName={deleteModal?.subnetName || ""}
+        onConfirm={handleDelete}
+        isDeleting={isDeleting}
+      />
+    </ResourceSection>
   );
 };
 

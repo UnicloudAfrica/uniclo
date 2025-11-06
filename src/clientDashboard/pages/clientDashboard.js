@@ -62,7 +62,7 @@ const QUICK_ACTIONS = [
   {
     title: "Launch Compute",
     description: "Deploy a new virtual machine or container workload.",
-    to: "/client-dashboard/add-instance",
+    to: "/client-dashboard/multi-instance-creation",
     Icon: Rocket,
   },
   {

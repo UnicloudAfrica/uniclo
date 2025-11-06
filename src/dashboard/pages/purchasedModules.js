@@ -5,7 +5,6 @@ import ActiveTab from "../components/activeTab";
 import { Filter, ChevronLeft, ChevronRight, Settings2 } from "lucide-react";
 import useAuthRedirect from "../../utils/authRedirect";
 import { useFetchPurchasedInstances } from "../../hooks/instancesHook";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 export default function PurchasedModules() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -15,8 +14,6 @@ export default function PurchasedModules() {
     data: fetchedInstances = { data: [], meta: {} },
     isFetching: isInstancesFetching,
   } = useFetchPurchasedInstances();
-  const navigate = useNavigate(); // Initialize navigate hook
-
   // Extract instances array and meta object for easier access
   const instances = fetchedInstances.data;
   const meta = fetchedInstances.meta;
@@ -41,17 +38,6 @@ export default function PurchasedModules() {
     if (page >= 1 && page <= totalPages) {
       console.log("Navigating to page:", page);
     }
-  };
-
-  const handleRowClick = (item) => {
-    // Encode the ID using btoa then encodeURIComponent
-    const encodedId = encodeURIComponent(btoa(item.identifier));
-    const instanceName = item.name;
-
-    // Navigate to the instance details page
-    navigate(
-      `/dashboard/instances/details?id=${encodedId}&name=${instanceName}`
-    );
   };
 
   // Status badge for instance status
@@ -266,8 +252,7 @@ export default function PurchasedModules() {
                   {currentData.map((item) => (
                     <tr
                       key={item.id}
-                      onClick={() => handleRowClick(item)}
-                      className="hover:bg-gray-50 cursor-pointer"
+                      className="hover:bg-gray-50"
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                         {item.name || "N/A"}
@@ -303,8 +288,7 @@ export default function PurchasedModules() {
               {currentData.map((item) => (
                 <div
                   key={item.id}
-                  onClick={() => handleRowClick(item)}
-                  className="bg-white rounded-[12px] shadow-sm p-4 cursor-pointer border border-gray-200"
+                  className="bg-white rounded-[12px] shadow-sm p-4 border border-gray-200"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-base font-semibold text-gray-900">

@@ -34,7 +34,7 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/client-dashboard/projects": "Projects",
     "/client-dashboard/projects/details": "Projects",
     "/client-dashboard/instances": "Instances",
-    "/client-dashboard/add-instance": "Instances",
+    "/client-dashboard/multi-instance-creation": "Instances",
     "/client-dashboard/object-storage": "Object Storage",
     "/client-dashboard/calculator": "Calculator",
     "/client-dashboard/orders-payments": "Orders & Payments",

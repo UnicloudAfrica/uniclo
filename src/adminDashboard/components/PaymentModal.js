@@ -11,7 +11,6 @@ import {
   DollarSign
 } from 'lucide-react';
 import { designTokens } from '../../styles/designTokens';
-import useAdminAuthStore from '../../stores/adminAuthStore';
 import config from '../../config';
 
 const PaymentModal = ({ 
@@ -20,7 +19,8 @@ const PaymentModal = ({
   transactionData,
   onPaymentComplete,
   mode = 'modal',
-  className = ''
+  className = '',
+  authToken,
 }) => {
   const isInline = mode === 'inline';
   const [paymentStatus, setPaymentStatus] = useState('pending');
@@ -84,16 +84,14 @@ const PaymentModal = ({
 
   // Poll transaction status
   const pollTransactionStatus = async () => {
-    if (!transaction?.id || isPolling) return;
+    if (!transaction?.id || isPolling || !authToken) return;
 
     setIsPolling(true);
     try {
-      const { token } = useAdminAuthStore.getState();
-      
       const response = await fetch(`${config.baseURL}/business/transactions/${transaction.id}/status`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
@@ -119,11 +117,11 @@ const PaymentModal = ({
 
   // Auto-poll every 10 seconds when modal is open and payment is pending
   useEffect(() => {
-    if (isActive && paymentStatus === 'pending' && transaction?.id) {
+    if (isActive && paymentStatus === 'pending' && transaction?.id && authToken) {
       const interval = setInterval(pollTransactionStatus, 10000);
       return () => clearInterval(interval);
     }
-  }, [isActive, paymentStatus, transaction?.id]);
+  }, [isActive, paymentStatus, transaction?.id, authToken]);
 
   // Load Paystack script
   useEffect(() => {

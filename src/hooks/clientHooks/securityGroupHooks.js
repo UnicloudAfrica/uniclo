@@ -2,10 +2,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import clientSilentApi from "../../index/client/silent";
 import clientApi from "../../index/client/api";
 
-const fetchClientSecurityGroups = async ({ project_id, region }) => {
+const fetchClientSecurityGroups = async ({ project_id, region, refresh = false }) => {
   const params = new URLSearchParams();
   if (project_id) params.append("project_id", project_id);
   if (region) params.append("region", region);
+  if (refresh) params.append("refresh", "1");
 
   const queryString = params.toString();
   const res = await clientSilentApi(
@@ -64,7 +65,8 @@ export const useFetchClientSecurityGroups = (
 ) => {
   return useQuery({
     queryKey: ["clientSecurityGroups", { projectId, region }],
-    queryFn: () => fetchClientSecurityGroups({ project_id: projectId, region }),
+    queryFn: () =>
+      fetchClientSecurityGroups({ project_id: projectId, region }),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
@@ -130,3 +132,8 @@ export const useDeleteClientSecurityGroup = () => {
     },
   });
 };
+
+export const syncClientSecurityGroupsFromProvider = async ({
+  project_id,
+  region,
+}) => fetchClientSecurityGroups({ project_id, region, refresh: true });

@@ -21,7 +21,7 @@ const ConfirmDeleteModal = ({ isOpen, onClose, projectId, projectName }) => {
           //   ToastUtils.success("Project Deleted Successfully");
 
           onClose(); // Close modal on success
-          navigate("/dashboard/projects"); // Navigate to the projects page
+          navigate("/client-dashboard/projects"); // Navigate to the projects page
         },
         onError: (err) => {
           console.error("Error deleting project:", err.message);

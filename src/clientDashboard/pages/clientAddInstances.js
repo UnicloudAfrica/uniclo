@@ -487,7 +487,7 @@ const ClientAddInstancePage = () => {
 
   const handleClose = () => {
     queryClient.invalidateQueries({ queryKey: ["instanceRequests"] });
-    navigate("/dashboard/instances");
+    navigate("/client-dashboard/instances");
   };
 
   const isAnyFetching =

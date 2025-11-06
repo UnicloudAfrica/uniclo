@@ -1,17 +1,11 @@
-import React, { useEffect } from "react";
-import QuoteCalculatorWizard from "./QuoteCalculatorWizard";
-import useAuthStore from "../../stores/userAuthStore";
-import { useNavigate } from "react-router-dom";
+import React from "react";
+import TenantPageShell from "../components/TenantPageShell";
 
 export default function TenantQuoteCalculator() {
-  const navigate = useNavigate();
-  const { token } = useAuthStore.getState();
-
-  useEffect(() => {
-    if (!token) {
-      navigate("/sign-in");
-    }
-  }, [token, navigate]);
-
-  return <QuoteCalculatorWizard />;
+  return (
+    <TenantPageShell
+      title="Quote Calculator"
+      description="Quote creation has moved to the Admin Dashboard."
+    />
+  );
 }

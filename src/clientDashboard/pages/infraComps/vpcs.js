@@ -1,194 +1,292 @@
-import { useState } from "react";
-import { Eye, Trash2 } from "lucide-react";
-import DeleteVpcModal from "../VpcComps/deleteVpc";
-import ViewVpcModal from "../VpcComps/viewVpc";
+import { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Eye, MapPin, Plus, RefreshCw, Trash2 } from "lucide-react";
 import {
   useFetchClientVpcs,
   useDeleteClientVpc,
+  syncClientVpcsFromProvider,
 } from "../../../hooks/clientHooks/vpcHooks";
+import ModernButton from "../../../adminDashboard/components/ModernButton";
+import ResourceSection from "../../../adminDashboard/components/ResourceSection";
+import ResourceEmptyState from "../../../adminDashboard/components/ResourceEmptyState";
+import ResourceListCard from "../../../adminDashboard/components/ResourceListCard";
 import AddTenantVpc from "../VpcComps/addVpc";
+import DeleteVpcModal from "../VpcComps/deleteVpc";
+import ViewVpcModal from "../VpcComps/viewVpc";
+import ToastUtils from "../../../utils/toastUtil";
 
-const Badge = ({ text }) => {
-  const badgeClasses = {
-    pending: "bg-yellow-100 text-yellow-800",
-    active: "bg-green-100 text-green-800",
-    available: "bg-green-100 text-green-800",
-    inactive: "bg-red-100 text-red-800",
-    default: "bg-gray-100 text-gray-800",
-  };
-  const badgeClass = badgeClasses[text?.toLowerCase()] || badgeClasses.default;
+const ITEMS_PER_PAGE = 6;
 
-  return (
-    <span
-      className={`px-2 py-1 text-xs font-medium rounded-full capitalize ${badgeClass}`}
-    >
-      {text}
-    </span>
-  );
+const normalizeStatus = (value) =>
+  value ? value.toString().replace(/_/g, " ").toLowerCase() : "";
+
+const getToneForStatus = (status) => {
+  const normalized = normalizeStatus(status);
+  if (
+    ["active", "available", "ready", "associated", "attached"].includes(
+      normalized
+    )
+  ) {
+    return "success";
+  }
+  if (
+    ["pending", "creating", "syncing", "associating"].includes(normalized)
+  ) {
+    return "warning";
+  }
+  if (["failed", "error", "deleting", "detached"].includes(normalized)) {
+    return "danger";
+  }
+  return "neutral";
 };
 
 const VPCs = ({ projectId = "", region = "" }) => {
+  const queryClient = useQueryClient();
   const { data: vpcs, isFetching } = useFetchClientVpcs(projectId, region);
   const { mutate: deleteVpc, isPending: isDeleting } = useDeleteClientVpc();
-  const [isCreateModalOpen, setCreateModal] = useState(false);
-  const [deleteModal, setDeleteModal] = useState(null); // { vpcId, vpcName } or null
-  const [viewModal, setViewModal] = useState(null); // vpc object or null
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6; // Number of VPCs per page
 
+  const [isCreateModalOpen, setCreateModal] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(null);
+  const [viewModal, setViewModal] = useState(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalItems = vpcs?.length ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const currentVpcs = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return (vpcs ?? []).slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [vpcs, currentPage]);
+
+  const stats = useMemo(() => {
+    const defaults = (vpcs ?? []).filter((item) => item.is_default).length;
+    const pending = (vpcs ?? []).filter((item) =>
+      ["pending", "creating", "syncing"].includes(
+        normalizeStatus(item.state || item.status)
+      )
+    ).length;
+    const healthy = (vpcs ?? []).filter((item) =>
+      ["available", "active"].includes(
+        normalizeStatus(item.state || item.status)
+      )
+    ).length;
+
+    const baseStats = [
+      {
+        label: "Total VPCs",
+        value: totalItems,
+        tone: "primary",
+      },
+      {
+        label: "Healthy",
+        value: healthy,
+        tone: healthy ? "success" : "neutral",
+      },
+      {
+        label: "Pending Actions",
+        value: pending,
+        tone: pending ? "warning" : "neutral",
+      },
+      {
+        label: "Default VPCs",
+        value: defaults,
+        tone: defaults ? "info" : "neutral",
+      },
+    ];
+
+    if (region) {
+      baseStats.push({
+        label: "Region",
+        value: region,
+        tone: "info",
+        icon: <MapPin size={16} />,
+      });
+    }
+
+    return baseStats;
+  }, [vpcs, totalItems, region]);
+
+  const openDeleteModal = (vpc) => setDeleteModal(vpc);
+  const closeDeleteModal = () => setDeleteModal(null);
   const openCreateModal = () => setCreateModal(true);
   const closeCreateModal = () => setCreateModal(false);
-  const openDeleteModal = (vpcId, vpcName) =>
-    setDeleteModal({ vpcId, vpcName });
-  const closeDeleteModal = () => setDeleteModal(null);
   const openViewModal = (vpc) => setViewModal(vpc);
   const closeViewModal = () => setViewModal(null);
 
-  // Pagination logic
-  const totalItems = vpcs?.length || 0;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentVpcs = vpcs?.slice(startIndex, endIndex) || [];
-
-  const handlePreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
+  const handleSync = async () => {
+    if (!projectId || !region) {
+      ToastUtils.error("Provide a project and region to sync VPCs.");
+      return;
     }
-  };
 
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage((prev) => prev + 1);
+    setIsSyncing(true);
+    try {
+      await syncClientVpcsFromProvider({ project_id: projectId, region });
+      await queryClient.invalidateQueries({
+        queryKey: ["clientVpcs", { projectId, region }],
+      });
+      ToastUtils.success("VPCs synced successfully.");
+    } catch (error) {
+      ToastUtils.error(error?.message || "Unable to sync VPCs right now.");
+    } finally {
+      setIsSyncing(false);
     }
   };
 
   const handleDelete = () => {
     if (!deleteModal) return;
 
-    const { vpcId } = deleteModal;
-    const payload = {
-      project_id: projectId,
-      region: region,
-    };
-
     deleteVpc(
-      { id: vpcId, payload },
+      {
+        id: deleteModal.id,
+        payload: {
+          project_id: projectId,
+          region,
+        },
+      },
       {
         onSuccess: () => {
+          ToastUtils.success(
+            `Deleted VPC "${deleteModal.name || deleteModal.id}".`
+          );
+          queryClient.invalidateQueries({
+            queryKey: ["clientVpcs", { projectId, region }],
+          });
           closeDeleteModal();
         },
-        onError: (err) => {
-          console.error("Failed to delete VPC:", err);
+        onError: (error) => {
+          ToastUtils.error(error?.message || "Failed to delete VPC.");
           closeDeleteModal();
         },
       }
     );
   };
 
-  if (isFetching) {
-    return (
-      <div className="flex items-center justify-center p-6 bg-gray-50 rounded-[10px] font-Outfit">
-        <p className="text-gray-500 text-sm">Loading VPCs...</p>
-      </div>
-    );
-  }
+  const actions = [
+    <ModernButton
+      key="sync"
+      variant="outline"
+      size="sm"
+      leftIcon={<RefreshCw size={16} />}
+      onClick={handleSync}
+      isLoading={isSyncing}
+      isDisabled={!projectId || !region || isSyncing}
+    >
+      {isSyncing ? "Syncing..." : "Sync VPCs"}
+    </ModernButton>,
+    <ModernButton
+      key="add"
+      variant="primary"
+      size="sm"
+      leftIcon={<Plus size={16} />}
+      onClick={openCreateModal}
+    >
+      Add VPC
+    </ModernButton>,
+  ];
 
   return (
-    <div className="bg-gray-50 rounded-[10px]  font-Outfit">
-      <div className="flex justify-end items-center mb-6">
-        <button
-          onClick={openCreateModal}
-          className="rounded-[30px] py-3 px-9 bg-[--theme-color] text-white font-normal text-base hover:bg-[--secondary-color] transition-colors"
-        >
-          Add VPC
-        </button>
-      </div>
-
-      {currentVpcs && currentVpcs.length > 0 ? (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {currentVpcs.map((vpc) => (
-              <div
-                key={vpc.id}
-                className="p-4 bg-white rounded-[10px] shadow-sm border border-gray-200 flex flex-col justify-between"
-              >
-                <div className="flex-grow">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3
-                      className="font-medium text-gray-800 truncate pr-2"
-                      title={vpc.name}
-                    >
-                      {vpc.name}
-                    </h3>
-                    <div className="flex-shrink-0 flex items-center space-x-2">
-                      <button
-                        onClick={() => openViewModal(vpc)}
-                        className="text-gray-400 hover:text-[--theme-color] transition-colors"
-                        title="View VPC Details"
-                      >
-                        <Eye className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => openDeleteModal(vpc.id, vpc.name)}
-                        disabled={isDeleting}
-                        className="text-gray-400 hover:text-red-500 transition-colors"
-                        title="Delete VPC"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="space-y-1 text-sm text-gray-500">
-                    <p>
-                      Provider:{" "}
-                      {typeof vpc.provider === "string" && vpc.provider.trim() !== ""
-                        ? vpc.provider.toUpperCase()
-                        : "N/A"}
-                    </p>
-                    <p>Region: {vpc.region}</p>
-                    <p title={vpc.cidr_block}>CIDR Block: {vpc.cidr_block}</p>
-                    <p>Default: {vpc.is_default ? "Yes" : "No"}</p>
-                    <p>
-                      State:{" "}
-                      <span className="capitalize">{vpc.state || "N/A"}</span>
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center justify-between border-t pt-3">
-                  <span className="text-sm text-gray-500">Status:</span>
-                  <Badge text={vpc.status} />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6">
-              <button
-                onClick={handlePreviousPage}
-                disabled={currentPage === 1}
-                className="px-4 py-2 bg-[--theme-color] text-white rounded-[30px] font-medium text-sm hover:bg-[--secondary-color] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-              <div className="text-sm text-gray-600">
-                Page {currentPage} of {totalPages}
-              </div>
-              <button
-                onClick={handleNextPage}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 bg-[--theme-color] text-white rounded-[30px] font-medium text-sm hover:bg-[--secondary-color] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
+    <>
+      <ResourceSection
+        title="Virtual Private Clouds"
+        description="Segment your project networking into isolated address spaces that match your infrastructure topology."
+        actions={actions}
+        meta={stats}
+        isLoading={isFetching}
+      >
+        {totalItems > 0 ? (
+          <>
+            <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+              {currentVpcs.map((vpc) => (
+                <ResourceListCard
+                  key={vpc.id}
+                  title={vpc.name || "Unnamed VPC"}
+                  subtitle={vpc.id || "Unknown ID"}
+                  metadata={[
+                    { label: "Region", value: vpc.region || region || "—" },
+                    { label: "CIDR", value: vpc.cidr_block || "—" },
+                    {
+                      label: "Default",
+                      value: vpc.is_default ? "Yes" : "No",
+                    },
+                  ]}
+                  statuses={[
+                    {
+                      label: normalizeStatus(vpc.state) || "unknown",
+                      tone: getToneForStatus(vpc.state),
+                    },
+                    vpc.status
+                      ? {
+                          label: normalizeStatus(vpc.status) || "unknown",
+                          tone: getToneForStatus(vpc.status),
+                        }
+                      : null,
+                  ].filter(Boolean)}
+                  actions={[
+                    {
+                      key: "inspect",
+                      label: "Inspect",
+                      icon: <Eye size={16} />,
+                      variant: "ghost",
+                      onClick: () => openViewModal(vpc),
+                    },
+                    {
+                      key: "remove",
+                      label: "Remove",
+                      icon: <Trash2 size={16} />,
+                      variant: "danger",
+                      onClick: () => openDeleteModal(vpc),
+                      disabled: isDeleting,
+                    },
+                  ]}
+                />
+              ))}
             </div>
-          )}
-        </>
-      ) : (
-        <p className="text-gray-500 text-sm">No VPCs found for this project.</p>
-      )}
+
+            {totalPages > 1 && (
+              <div className="mt-6 flex items-center justify-between">
+                <ModernButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
+                  isDisabled={currentPage === 1}
+                >
+                  Previous
+                </ModernButton>
+                <span className="text-sm text-gray-500">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <ModernButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                  }
+                  isDisabled={currentPage === totalPages}
+                >
+                  Next
+                </ModernButton>
+              </div>
+            )}
+          </>
+        ) : (
+          <ResourceEmptyState
+            title="No VPCs yet"
+            message="Create a VPC or sync from your cloud account to start structuring your project networks."
+            action={
+              <ModernButton
+                variant="primary"
+                leftIcon={<Plus size={16} />}
+                onClick={openCreateModal}
+              >
+                Create VPC
+              </ModernButton>
+            }
+          />
+        )}
+      </ResourceSection>
 
       <AddTenantVpc
         isOpen={isCreateModalOpen}
@@ -196,21 +294,19 @@ const VPCs = ({ projectId = "", region = "" }) => {
         projectId={projectId}
         region={region}
       />
-
       <DeleteVpcModal
-        isOpen={!!deleteModal}
+        isOpen={Boolean(deleteModal)}
         onClose={closeDeleteModal}
-        vpcName={deleteModal?.vpcName || ""}
+        vpcName={deleteModal?.name || deleteModal?.id || ""}
         onConfirm={handleDelete}
         isDeleting={isDeleting}
       />
-
       <ViewVpcModal
-        isOpen={!!viewModal}
+        isOpen={Boolean(viewModal)}
         onClose={closeViewModal}
         vpc={viewModal}
       />
-    </div>
+    </>
   );
 };
 

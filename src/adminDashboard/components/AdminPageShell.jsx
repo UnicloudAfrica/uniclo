@@ -23,6 +23,7 @@ const friendlyPathMap = {
   quote: "Generate Quote",
   regions: "Regions",
   "region-approvals": "Region Approvals",
+  "onboarding-settings": "Onboarding Settings",
   "tax-configuration": "Tax Configuration",
   projects: "Projects",
   "project-details": "Project Details",

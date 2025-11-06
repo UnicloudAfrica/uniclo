@@ -21,6 +21,7 @@ import {
   Server,
   ClipboardList,
   HardDrive,
+  SlidersHorizontal,
 } from "lucide-react";
 import lapapi from "../../index/admin/lapapi";
 import useAdminAuthStore from "../../stores/adminAuthStore";
@@ -58,6 +59,7 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/admin-dashboard/regions": "Regions",
     "/admin-dashboard/region-approvals": "Region Approvals",
     "/admin-dashboard/onboarding-review": "Onboarding Review",
+    "/admin-dashboard/onboarding-settings": "Onboarding Settings",
     "/admin-dashboard/calculator": "Calculator",
     "/admin-dashboard/calculator-new": "Calculator",
     "/admin-dashboard/advanced-calculator": "Calculator",
@@ -155,6 +157,12 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       icon: ClipboardList,
       isLucide: true,
       path: "/admin-dashboard/onboarding-review",
+    },
+    {
+      name: "Onboarding Settings",
+      icon: SlidersHorizontal,
+      isLucide: true,
+      path: "/admin-dashboard/onboarding-settings",
     },
     {
       name: "Calculator",

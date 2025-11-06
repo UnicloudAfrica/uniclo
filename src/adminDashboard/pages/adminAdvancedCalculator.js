@@ -425,10 +425,10 @@ const AdminAdvancedCalculator = () => {
           </div>
         )}
 
-        <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_minmax(320px,380px)]">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(320px,380px)]">
           <div className="space-y-6">{renderStep()}</div>
 
-          <div className="space-y-6 2xl:sticky 2xl:top-24">
+          <div className="space-y-6 xl:sticky xl:top-24">
             <ModernCard padding="lg" className="space-y-5">
               <div className="space-y-2">
                 <h3 className="text-base font-semibold text-slate-900">

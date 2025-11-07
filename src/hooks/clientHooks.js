@@ -4,8 +4,11 @@ import silentTenantApi from "../index/tenant/silentTenant";
 import tenantApi from "../index/tenant/tenantApi";
 
 // GET: Fetch all clients
-const fetchClients = async () => {
-  const res = await silentTenantApi("GET", "/admin/clients");
+const fetchClients = async ({ queryKey }) => {
+  const [, params] = queryKey;
+  const tenantId = params?.tenantId;
+  const query = tenantId ? `?tenant_id=${tenantId}` : "";
+  const res = await silentTenantApi("GET", `/admin/clients${query}`);
   if (!res.data) {
     throw new Error("Failed to fetch clients");
   }
@@ -13,7 +16,8 @@ const fetchClients = async () => {
 };
 
 // GET: Fetch client by ID
-const fetchClientById = async (id) => {
+const fetchClientById = async ({ queryKey }) => {
+  const [, id] = queryKey;
   const res = await silentTenantApi("GET", `/admin/clients/${id}`);
   if (!res) {
     throw new Error(`Failed to fetch client with ID ${id}`);
@@ -52,9 +56,9 @@ const deleteClient = async (id) => {
 };
 
 // Hook to fetch all clients
-export const useFetchClients = (options = {}) => {
+export const useFetchClients = (tenantId = null, options = {}) => {
   return useQuery({
-    queryKey: ["clients"],
+    queryKey: ["clients", { tenantId }],
     queryFn: fetchClients,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     refetchOnWindowFocus: false,
@@ -67,7 +71,7 @@ export const useFetchClients = (options = {}) => {
 export const useFetchClientById = (id, options = {}) => {
   return useQuery({
     queryKey: ["clients", id],
-    queryFn: () => fetchClientById(id),
+    queryFn: fetchClientById,
     enabled: !!id, // Only fetch if ID is provided
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,

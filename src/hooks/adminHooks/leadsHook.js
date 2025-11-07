@@ -22,6 +22,30 @@ const fetchLeadStats = async () => {
   return res;
 };
 
+const extractLeadTypes = (payload) => {
+  const sources = [
+    payload,
+    payload?.data,
+    payload?.message,
+    payload?.data?.data,
+    payload?.data?.lead_types,
+    payload?.lead_types,
+  ];
+
+  for (const source of sources) {
+    if (Array.isArray(source)) {
+      return source;
+    }
+  }
+
+  return [];
+};
+
+const fetchLeadTypes = async () => {
+  const res = await silentApi("GET", "/lead-types");
+  return extractLeadTypes(res);
+};
+
 // const fetchLeads = async (params = {}) => {
 //   const defaultParams = {
 //     per_page: 10,
@@ -145,6 +169,16 @@ export const useFetchLeadStats = (options = {}) => {
     queryKey: ["admin-lead-stats"],
     queryFn: fetchLeadStats,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+
+export const useFetchLeadTypes = (options = {}) => {
+  return useQuery({
+    queryKey: ["admin-lead-types"],
+    queryFn: fetchLeadTypes,
+    staleTime: 1000 * 60 * 10,
     refetchOnWindowFocus: false,
     ...options,
   });

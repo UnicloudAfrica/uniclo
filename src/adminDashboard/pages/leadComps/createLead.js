@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { User, Mail, Phone, Building } from "lucide-react";
 // import { useFetchAdmins } from "../../../hooks/adminHooks/adminHooks";
-import { useCreateNewLead } from "../../../hooks/adminHooks/leadsHook";
+import { useCreateNewLead, useFetchLeadTypes } from "../../../hooks/adminHooks/leadsHook";
 import ToastUtils from "../../../utils/toastUtil";
 import { useFetchCountries } from "../../../hooks/resource";
 import ModernInput from "../../components/ModernInput";
@@ -9,6 +9,11 @@ import FormLayout, {
   formAccent,
   getAccentRgba,
 } from "../../components/FormLayout";
+import {
+  buildLeadTypeOptions,
+  ensureLeadTypeValue,
+  formatLeadTypeLabel,
+} from "../../../utils/leadTypes";
 
 const leadStatusOptions = [
   "new",
@@ -61,6 +66,10 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
   const [errors, setErrors] = useState({});
 
   const { mutate, isPending } = useCreateNewLead();
+  const {
+    data: leadTypesData = [],
+    isLoading: leadTypesLoading,
+  } = useFetchLeadTypes();
   // const { data: admins, isLoading: adminsLoading } = useFetchAdmins();
   const adminsLoading = false;
   const {
@@ -68,6 +77,46 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
     isLoading: countriesLoading,
     isError: countriesError,
   } = useFetchCountries();
+
+  const leadTypeOptions = useMemo(
+    () => buildLeadTypeOptions(leadTypesData),
+    [leadTypesData],
+  );
+
+  const leadTypeSet = useMemo(
+    () => new Set(leadTypeOptions.map((option) => option.value)),
+    [leadTypeOptions],
+  );
+
+  const normalizeLeadTypeValue = useCallback(
+    (value) => ensureLeadTypeValue(value, leadTypeOptions),
+    [leadTypeOptions],
+  );
+
+  const getLeadTypeLabel = (value) => {
+    const normalized = normalizeLeadTypeValue(value);
+    if (!normalized) {
+      return "Not set";
+    }
+    const match = leadTypeOptions.find((option) => option.value === normalized);
+    return match ? match.label : formatLeadTypeLabel(normalized);
+  };
+
+  useEffect(() => {
+    if (!formData.lead_type) {
+      return;
+    }
+
+    const normalized = normalizeLeadTypeValue(formData.lead_type);
+    if (!normalized) {
+      setFormData((prev) => ({ ...prev, lead_type: "" }));
+      return;
+    }
+
+    if (normalized !== formData.lead_type) {
+      setFormData((prev) => ({ ...prev, lead_type: normalized }));
+    }
+  }, [formData.lead_type, normalizeLeadTypeValue]);
 
   useEffect(() => {
     if (!isPageMode && isOpen) {
@@ -105,6 +154,12 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
       newErrors.last_name = "Last name is required.";
     if (!formData.email.trim()) newErrors.email = "Email is required.";
     if (!formData.status) newErrors.status = "Status is required.";
+    if (
+      leadTypeOptions.length > 0 &&
+      (!formData.lead_type || !leadTypeSet.has(formData.lead_type))
+    ) {
+      newErrors.lead_type = "Lead type is required.";
+    }
 
     if (
       formData.lead_stage.stage_name ||
@@ -161,11 +216,15 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
           onClose();
         }
       },
+      onError: (error) => {
+        ToastUtils.error(error?.message || "Failed to create lead.");
+      },
     });
   };
 
   const accent = formAccent.primary;
   const formId = "create-lead-form";
+  const selectedLeadTypeLabel = getLeadTypeLabel(formData.lead_type);
 
   const leadSummary = useMemo(
     () => [
@@ -180,13 +239,14 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
           },
           { label: "Email", value: formData.email || "Not provided" },
           { label: "Phone", value: formData.phone || "Not provided" },
+          { label: "Lead type", value: selectedLeadTypeLabel },
         ],
       },
       {
         title: "Company context",
         items: [
           { label: "Company", value: formData.company || "—" },
-          { label: "Lead type", value: formData.lead_type || "—" },
+          { label: "Lead type", value: selectedLeadTypeLabel },
           { label: "Source", value: formData.source || "—" },
         ],
       },
@@ -223,11 +283,13 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
       formData.status,
       formData.lead_stage.stage_name,
       formData.lead_stage.status,
+      selectedLeadTypeLabel,
     ]
   );
 
   const guidanceItems = [
     "Status determines the lead’s placement across dashboard insights.",
+    "Lead type comes directly from your catalog—select the closest match.",
     "If you capture stage metadata, provide a description for downstream teams.",
     "Assigning a lead ensures accountability; leave blank when undecided.",
   ];
@@ -236,6 +298,10 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
     {
       label: "Pipeline status",
       value: formData.status ? formatDisplay(formData.status) : "Unassigned",
+    },
+    {
+      label: "Lead type",
+      value: selectedLeadTypeLabel,
     },
     {
       label: "Stage",
@@ -524,15 +590,30 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Lead Type
+                Lead Type<span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
+              <select
                 value={formData.lead_type}
-                onChange={(e) => updateFormData("lead_type", e.target.value)}
-                placeholder="e.g., Web Lead"
-                className="w-full rounded-[10px] border border-gray-300 px-3 py-2 text-sm input-field"
-              />
+                onChange={(e) =>
+                  updateFormData("lead_type", normalizeLeadTypeValue(e.target.value))
+                }
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
+                  errors.lead_type ? "border-red-500" : "border-gray-300"
+                }`}
+                disabled={leadTypesLoading && leadTypeOptions.length === 0}
+              >
+                <option value="">
+                  {leadTypesLoading ? "Loading lead types..." : "Select a lead type"}
+                </option>
+                {leadTypeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              {errors.lead_type && (
+                <p className="text-red-500 text-xs mt-1">{errors.lead_type}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

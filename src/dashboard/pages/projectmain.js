@@ -22,7 +22,6 @@ import {
 import TenantPageShell from "../components/TenantPageShell";
 import ProjectsPageContent from "../../shared/projects/ProjectsPageContent";
 import { useFetchProjects } from "../../hooks/projectHooks";
-import CreateProjectModal from "../components/addProject";
 import ModernButton from "../../adminDashboard/components/ModernButton";
 import ModernCard from "../../adminDashboard/components/ModernCard";
 import ToastUtils from "../../utils/toastUtil";
@@ -111,8 +110,11 @@ const buildProjectsList = (response) => {
 export default function TenantProjects() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const goToCreateProject = useCallback(
+    () => navigate("/dashboard/projects/create"),
+    [navigate]
+  );
 
-  const [isAddProjectOpen, setAddProjectOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState(
     () => searchParams.get("search") || ""
   );
@@ -458,10 +460,7 @@ export default function TenantProjects() {
         />
         Refresh
       </ModernButton>
-      <ModernButton
-        onClick={() => setAddProjectOpen(true)}
-        className="flex items-center gap-2"
-      >
+      <ModernButton onClick={goToCreateProject} className="flex items-center gap-2">
         <Plus size={18} />
         Add Project
       </ModernButton>
@@ -530,10 +529,6 @@ export default function TenantProjects() {
             </p>
           </div>
         </TenantPageShell>
-        <CreateProjectModal
-          isOpen={isAddProjectOpen}
-          onClose={() => setAddProjectOpen(false)}
-        />
       </>
     );
   }
@@ -565,7 +560,7 @@ export default function TenantProjects() {
                   >
                     Retry
                   </ModernButton>
-                  <ModernButton onClick={() => setAddProjectOpen(true)}>
+                  <ModernButton onClick={goToCreateProject}>
                     Add Project
                   </ModernButton>
                 </div>
@@ -573,10 +568,6 @@ export default function TenantProjects() {
             </ModernCard>
           </div>
         </TenantPageShell>
-        <CreateProjectModal
-          isOpen={isAddProjectOpen}
-          onClose={() => setAddProjectOpen(false)}
-        />
       </>
     );
   }
@@ -638,10 +629,6 @@ export default function TenantProjects() {
           tableActions={actions}
         />
       </TenantPageShell>
-      <CreateProjectModal
-        isOpen={isAddProjectOpen}
-        onClose={() => setAddProjectOpen(false)}
-      />
     </>
   );
 }

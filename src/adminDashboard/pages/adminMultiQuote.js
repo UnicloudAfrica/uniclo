@@ -678,7 +678,7 @@ const AdminMultiQuote = () => {
               <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
                 {currentStep > 0 && currentStep < steps.length && (
                   <ModernButton
-                    variant="ghost"
+                    variant="outline"
                     onClick={handleBack}
                     isDisabled={isSubmissionPending}
                     className="flex items-center gap-2"

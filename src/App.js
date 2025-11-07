@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Navigate } from "react-router-dom";
 import { Routes, Route } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import About from "./pages/about";
@@ -35,7 +35,6 @@ import { Modules } from "./dashboard/pages/modules";
 import PurchasedModules from "./dashboard/pages/purchasedModules";
 import PaymentHistory from "./dashboard/pages/paymentHistory";
 import SupportTicket from "./dashboard/pages/supportTicket";
-import Clients from "./dashboard/pages/clients";
 import ClientsOverview from "./dashboard/pages/clientsOverview";
 import AdminDashboard from "./adminDashboard/pages/adminDashboard";
 import AdminPartners from "./adminDashboard/pages/adminPartners";
@@ -55,6 +54,7 @@ import Requests from "./dashboard/pages/requests";
 import AdminLogin from "./adminDashboard/pages/adminSignin";
 import AdminPurchasedModules from "./adminDashboard/pages/adminPurchasedModules";
 import Project from "./dashboard/pages/projectmain";
+import DashboardProjectCreate from "./dashboard/pages/projectCreate";
 import ProjectDetails from "./dashboard/pages/projectDetails";
 import AdminInventory from "./adminDashboard/pages/adminInventory";
 import AdminTax from "./adminDashboard/pages/adminTax";
@@ -69,18 +69,20 @@ import AdminUserCreate from "./adminDashboard/pages/adminUserCreate";
 import AdminUserDetails from "./adminDashboard/pages/adminUserDetails";
 import AdminUserEdit from "./adminDashboard/pages/adminUserEdit";
 import AdminProjects from "./adminDashboard/pages/adminProjects";
+import AdminProjectCreate from "./adminDashboard/pages/adminProjectCreate";
 import AdminProjectDetails from "./adminDashboard/pages/adminProjectDetails";
 import AdminAddInstance from "./adminDashboard/pages/adminAddInstance";
 import AdminOnboardingSettings from "./adminDashboard/pages/adminOnboardingSettings";
 import Settings from "./dashboard/pages/settings";
 import DashboardTaxConfigurations from "./dashboard/pages/taxConfiguration";
 import Products from "./dashboard/pages/products";
-import TenantAdmin from "./dashboard/pages/tenantAdmin";
 import Calculator from "./pages/calculator";
 import AdminLeads from "./adminDashboard/pages/adminLeads";
 import AdminLeadCreate from "./adminDashboard/pages/adminLeadCreate";
 import AdminLeadDetails from "./adminDashboard/pages/adminLeadDetails";
 import TenantCalculator from "./dashboard/pages/calculator";
+import DashboardInstances from "./dashboard/pages/instances";
+import DashboardMultiInstanceCreation from "./dashboard/pages/multiInstanceCreation";
 import AdminSupportTicket from "./adminDashboard/pages/adminSupport";
 import AdminRegion from "./adminDashboard/pages/adminRegion";
 import AdminKeyPairs from "./adminDashboard/pages/adminKeyPairs";
@@ -88,11 +90,11 @@ import AdminPricing from "./adminDashboard/pages/adminPricing";
 import AdminProducts from "./adminDashboard/pages/adminProducts";
 import AdminProductCreate from "./adminDashboard/pages/AdminProductCreate";
 // import AdminQuoteCalculator from "./adminDashboard/pages/AdminQuoteCalculator";
-import TenantQuotes from "./dashboard/pages/quotes";
 // import QuoteCalculatorWizard from "./dashboard/pages/QuoteCalculatorWizard";
 import TenantQuoteCalculator from "./dashboard/pages/TenantQuoteCalculator";
 import ClientDashboard from "./clientDashboard/pages/clientDashboard";
 import ClientProject from "./clientDashboard/pages/clientProjects";
+import ClientProjectCreate from "./clientDashboard/pages/clientProjectCreate";
 import ClientProjectDetails from "./clientDashboard/pages/clientProjectDetails";
 import ClientInstances from "./clientDashboard/pages/clientInstances";
 import ClientMultiInstanceCreation from "./clientDashboard/pages/clientMultiInstanceCreation";
@@ -117,6 +119,16 @@ import ClientSettings from "./clientDashboard/pages/clientAccountSettings";
 import ClientSupport from "./clientDashboard/pages/clientSupport";
 import AdminInstances from "./adminDashboard/pages/adminInstances";
 import AdminInstancesDetails from "./adminDashboard/pages/adminInstancesDetails";
+import PartnersAndClientsPage from "./dashboard/pages/clients";
+import NewPartnerPage from "./dashboard/pages/partners/NewPartner";
+import PartnerDetailsPage from "./dashboard/pages/partners/PartnerDetails";
+import EditPartnerPage from "./dashboard/pages/partners/EditPartner";
+import NewClientPage from "./dashboard/pages/clients/NewClient";
+import ClientDetailsPage from "./dashboard/pages/clients/ClientDetails";
+import EditClientPage from "./dashboard/pages/clients/EditClient";
+import InviteTenantUserPage from "./dashboard/pages/tenantUsers/NewTenantUser";
+import TenantUserDetailsPage from "./dashboard/pages/tenantUsers/TenantUserDetails";
+import EditTenantUserPage from "./dashboard/pages/tenantUsers/EditTenantUser";
 import TenantLeads from "./tenantDashboard/pages/tenant-leads";
 import TenantLeadDetails from "./tenantDashboard/pages/tenant-lead-details";
 import TenantObjectStorage from "./tenantDashboard/pages/TenantObjectStorage";
@@ -173,8 +185,24 @@ function App() {
           <Route path="/press" element={<Press />} />
           <Route path="/calculator" element={<Calculator />} />
           <Route
-            path="/dashboard/quote-calculator"
+            path="/dashboard/quote-invoice"
             element={<TenantQuoteCalculator />}
+          />
+          <Route
+            path="/dashboard/instances"
+            element={
+              <TenantRoute>
+                <DashboardInstances />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/multi-instance-creation"
+            element={
+              <TenantRoute>
+                <DashboardMultiInstanceCreation />
+              </TenantRoute>
+            }
           />
           <Route
             path="/Africa-Data-Centres-and-Onix-Data-Centre-announce-partnership"
@@ -235,7 +263,79 @@ function App() {
             path="/dashboard/clients"
             element={
               <TenantRoute>
-                <Clients />
+                <PartnersAndClientsPage />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/partners/new"
+            element={
+              <TenantRoute>
+                <NewPartnerPage />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/partners/:partnerId"
+            element={
+              <TenantRoute>
+                <PartnerDetailsPage />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/partners/:partnerId/edit"
+            element={
+              <TenantRoute>
+                <EditPartnerPage />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/clients/new"
+            element={
+              <TenantRoute>
+                <NewClientPage />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/clients/:clientId"
+            element={
+              <TenantRoute>
+                <ClientDetailsPage />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/clients/:clientId/edit"
+            element={
+              <TenantRoute>
+                <EditClientPage />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/tenant-users/new"
+            element={
+              <TenantRoute>
+                <InviteTenantUserPage />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/tenant-users/:userId"
+            element={
+              <TenantRoute>
+                <TenantUserDetailsPage />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/tenant-users/:userId/edit"
+            element={
+              <TenantRoute>
+                <EditTenantUserPage />
               </TenantRoute>
             }
           />
@@ -252,6 +352,14 @@ function App() {
             element={
               <TenantRoute>
                 <Project />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/projects/create"
+            element={
+              <TenantRoute>
+                <DashboardProjectCreate />
               </TenantRoute>
             }
           />
@@ -273,11 +381,7 @@ function App() {
           />
           <Route
             path="/dashboard/admin-users"
-            element={
-              <TenantRoute>
-                <TenantAdmin />
-              </TenantRoute>
-            }
+            element={<Navigate to="/dashboard/clients?tab=users" replace />}
           />
           <Route
             path="/dashboard/projects/details"
@@ -308,14 +412,6 @@ function App() {
             element={
               <TenantRoute>
                 <DashboardLeadDetails />
-              </TenantRoute>
-            }
-          />
-          <Route
-            path="/dashboard/quotes"
-            element={
-              <TenantRoute>
-                <TenantQuotes />
               </TenantRoute>
             }
           />
@@ -474,6 +570,10 @@ function App() {
             element={<AdminInventory />}
           />
           <Route path="/admin-dashboard/projects" element={<AdminProjects />} />
+          <Route
+            path="/admin-dashboard/projects/create"
+            element={<AdminProjectCreate />}
+          />
           <Route path="/admin-dashboard/leads" element={<AdminLeads />} />
           <Route
             path="/admin-dashboard/leads/create"
@@ -606,6 +706,10 @@ function App() {
             <Route
               path="/client-dashboard/projects"
               element={<ClientProject />}
+            />
+            <Route
+              path="/client-dashboard/projects/create"
+              element={<ClientProjectCreate />}
             />
             <Route
               path="/client-dashboard/projects/details"

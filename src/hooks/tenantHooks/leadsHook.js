@@ -22,6 +22,30 @@ const fetchLeadStats = async () => {
   return res;
 };
 
+const extractLeadTypes = (payload) => {
+  const sources = [
+    payload,
+    payload?.data,
+    payload?.message,
+    payload?.data?.data,
+    payload?.data?.lead_types,
+    payload?.lead_types,
+  ];
+
+  for (const source of sources) {
+    if (Array.isArray(source)) {
+      return source;
+    }
+  }
+
+  return [];
+};
+
+const fetchLeadTypes = async () => {
+  const res = await silentTenant("GET", "/lead-types");
+  return extractLeadTypes(res);
+};
+
 // GET: Fetch lead by ID
 const fetchLeadById = async (id) => {
   const res = await silentTenant("GET", `/leads/${id}`);
@@ -127,6 +151,16 @@ export const useFetchLeadStats = (options = {}) => {
     queryKey: ["tenant-lead-stats"],
     queryFn: fetchLeadStats,
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+
+export const useFetchLeadTypes = (options = {}) => {
+  return useQuery({
+    queryKey: ["tenant-lead-types"],
+    queryFn: fetchLeadTypes,
+    staleTime: 1000 * 60 * 10,
     refetchOnWindowFocus: false,
     ...options,
   });

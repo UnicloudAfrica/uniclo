@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { User, Mail, Phone, Building, Loader2 } from "lucide-react";
-import { useCreateNewLead } from "../../../hooks/tenantHooks/leadsHook";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { User, Mail, Phone, Building } from "lucide-react";
+import { useCreateNewLead, useFetchLeadTypes } from "../../../hooks/tenantHooks/leadsHook";
 import { useFetchTenantAdmins } from "../../../hooks/adminUserHooks";
 import ToastUtils from "../../../utils/toastUtil";
 import { useFetchCountries } from "../../../hooks/resource";
@@ -9,6 +9,11 @@ import FormLayout, {
   formAccent,
   getAccentRgba,
 } from "../../../adminDashboard/components/FormLayout";
+import {
+  buildLeadTypeOptions,
+  ensureLeadTypeValue,
+  formatLeadTypeLabel,
+} from "../../../utils/leadTypes";
 
 const leadStatusOptions = [
   "new",
@@ -37,42 +42,102 @@ const leadStageNameOptions = [
   "approval",
 ];
 
-const DEFAULT_FORM_STATE = {
-  first_name: "",
-  last_name: "",
-  email: "",
-  phone: "",
-  company: "",
-  country: "",
-  lead_type: "",
-  status: "",
-  source: "",
-  notes: "",
-  assigned_to: "",
-  lead_stage: {
-    stage_name: "",
-    description: "",
-    assigned_to: "",
-    status: "",
-  },
-};
-
 const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
   const isPageMode = mode === "page";
-  const [formData, setFormData] = useState(DEFAULT_FORM_STATE);
+  const [formData, setFormData] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+    company: "",
+    country: "",
+    lead_type: "",
+    status: "",
+    source: "",
+    notes: "",
+    assigned_to: "",
+    lead_stage: {
+      stage_name: "",
+      description: "",
+      assigned_to: "",
+      status: "",
+    },
+  });
   const [errors, setErrors] = useState({});
 
   const { mutate, isPending } = useCreateNewLead();
-  const { data: admins, isLoading: adminsLoading } = useFetchTenantAdmins();
+  const {
+    data: leadTypesData = [],
+    isLoading: leadTypesLoading,
+  } = useFetchLeadTypes();
+  const { data: admins = [], isLoading: adminsLoading } = useFetchTenantAdmins();
   const {
     data: countries,
     isLoading: countriesLoading,
     isError: countriesError,
   } = useFetchCountries();
 
+  const leadTypeOptions = useMemo(
+    () => buildLeadTypeOptions(leadTypesData),
+    [leadTypesData],
+  );
+
+  const leadTypeSet = useMemo(
+    () => new Set(leadTypeOptions.map((option) => option.value)),
+    [leadTypeOptions],
+  );
+
+  const normalizeLeadTypeValue = useCallback(
+    (value) => ensureLeadTypeValue(value, leadTypeOptions),
+    [leadTypeOptions],
+  );
+
+  const getLeadTypeLabel = (value) => {
+    const normalized = normalizeLeadTypeValue(value);
+    if (!normalized) {
+      return "Not set";
+    }
+    const match = leadTypeOptions.find((option) => option.value === normalized);
+    return match ? match.label : formatLeadTypeLabel(normalized);
+  };
+
+  useEffect(() => {
+    if (!formData.lead_type) {
+      return;
+    }
+
+    const normalized = normalizeLeadTypeValue(formData.lead_type);
+    if (!normalized) {
+      setFormData((prev) => ({ ...prev, lead_type: "" }));
+      return;
+    }
+
+    if (normalized !== formData.lead_type) {
+      setFormData((prev) => ({ ...prev, lead_type: normalized }));
+    }
+  }, [formData.lead_type, normalizeLeadTypeValue]);
+
   useEffect(() => {
     if (!isPageMode && isOpen) {
-      setFormData(DEFAULT_FORM_STATE);
+      setFormData({
+        first_name: "",
+        last_name: "",
+        email: "",
+        phone: "",
+        company: "",
+        country: "",
+        lead_type: "",
+        status: "",
+        source: "",
+        notes: "",
+        assigned_to: "",
+        lead_stage: {
+          stage_name: "",
+          description: "",
+          assigned_to: "",
+          status: "",
+        },
+      });
       setErrors({});
     }
   }, [isOpen, isPageMode]);
@@ -88,6 +153,12 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
       newErrors.last_name = "Last name is required.";
     if (!formData.email.trim()) newErrors.email = "Email is required.";
     if (!formData.status) newErrors.status = "Status is required.";
+    if (
+      leadTypeOptions.length > 0 &&
+      (!formData.lead_type || !leadTypeSet.has(formData.lead_type))
+    ) {
+      newErrors.lead_type = "Lead type is required.";
+    }
 
     if (
       formData.lead_stage.stage_name ||
@@ -125,7 +196,7 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
   };
 
   const handleSubmit = (e) => {
-    if (e) e.preventDefault();
+    e.preventDefault();
     if (!validateForm()) {
       return;
     }
@@ -143,9 +214,6 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
         if (typeof onClose === "function") {
           onClose();
         }
-        if (!isPageMode) {
-          setFormData(DEFAULT_FORM_STATE);
-        }
       },
       onError: (error) => {
         ToastUtils.error(error?.message || "Failed to create lead.");
@@ -153,160 +221,421 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
     });
   };
 
-  const countryOptions = useMemo(() => {
-    if (countriesError) {
-      return [];
-    }
+  const accent = formAccent.primary;
+  const formId = "create-lead-form";
+  const selectedLeadTypeLabel = getLeadTypeLabel(formData.lead_type);
 
-    return (countries || []).map((country) => ({
-      value: country.iso2 || country.code,
-      label: country.name,
-    }));
-  }, [countries, countriesError]);
+  const leadSummary = useMemo(
+    () => [
+      {
+        title: "Prospect overview",
+        items: [
+          {
+            label: "Full name",
+            value:
+              [formData.first_name, formData.last_name].filter(Boolean).join(" ") ||
+              "Pending",
+          },
+          { label: "Email", value: formData.email || "Not provided" },
+          { label: "Phone", value: formData.phone || "Not provided" },
+          { label: "Lead type", value: selectedLeadTypeLabel },
+        ],
+      },
+      {
+        title: "Company context",
+        items: [
+          { label: "Company", value: formData.company || "—" },
+          { label: "Lead type", value: selectedLeadTypeLabel },
+          { label: "Source", value: formData.source || "—" },
+        ],
+      },
+      {
+        title: "Stage details",
+        items: [
+          {
+            label: "Pipeline status",
+            value: formData.status ? formatDisplay(formData.status) : "Unset",
+          },
+          {
+            label: "Stage name",
+            value: formData.lead_stage.stage_name
+              ? formatDisplay(formData.lead_stage.stage_name)
+              : "Not captured",
+          },
+          {
+            label: "Stage status",
+            value: formData.lead_stage.status
+              ? formatDisplay(formData.lead_stage.status)
+              : "Not captured",
+          },
+        ],
+      },
+    ],
+    [
+      formData.first_name,
+      formData.last_name,
+      formData.email,
+      formData.phone,
+      formData.company,
+      formData.lead_type,
+      formData.source,
+      formData.status,
+      formData.lead_stage.stage_name,
+      formData.lead_stage.status,
+      selectedLeadTypeLabel,
+    ],
+  );
+
+  const guidanceItems = [
+    "Status determines the lead’s placement across dashboard insights.",
+    "Lead type comes directly from your catalog—select the closest match.",
+    "If you capture stage metadata, provide a description for downstream teams.",
+    "Assigning a lead ensures accountability; leave blank when undecided.",
+  ];
+
+  const meta = [
+    {
+      label: "Pipeline status",
+      value: formData.status ? formatDisplay(formData.status) : "Unassigned",
+    },
+    {
+      label: "Lead type",
+      value: selectedLeadTypeLabel,
+    },
+    {
+      label: "Stage",
+      value: formData.lead_stage.stage_name
+        ? formatDisplay(formData.lead_stage.stage_name)
+        : "Not set",
+    },
+    {
+      label: "Country",
+      value: formData.country || "Not captured",
+    },
+  ];
+
+  const asideContent = (
+    <>
+      <div className="rounded-2xl border border-slate-200 bg-white/80 p-5 shadow-sm backdrop-blur">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Lead summary
+            </p>
+            <p className="text-lg font-semibold text-slate-800">
+              {[formData.first_name, formData.last_name].filter(Boolean).join(" ") ||
+                "New lead"}
+            </p>
+          </div>
+          <span
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold"
+            style={{
+              backgroundColor: getAccentRgba(accent.color, 0.12),
+              color: accent.color,
+            }}
+          >
+            {formData.status ? (
+              formData.status.charAt(0).toUpperCase()
+            ) : (
+              <span aria-hidden="true">•</span>
+            )}
+          </span>
+        </div>
+        <dl className="mt-4 space-y-2 text-sm text-slate-600">
+          <div className="flex items-center justify-between">
+            <dt>Email</dt>
+            <dd className="max-w-[160px] text-right font-medium text-slate-800">
+              {formData.email || "Pending"}
+            </dd>
+          </div>
+          <div className="flex items-center justify-between">
+            <dt>Company</dt>
+            <dd className="font-medium text-slate-800">
+              {formData.company || "—"}
+            </dd>
+          </div>
+          <div className="flex items-center justify-between">
+            <dt>Status</dt>
+            <dd className="font-medium text-slate-800">
+              {formData.status ? formatDisplay(formData.status) : "Not set"}
+            </dd>
+          </div>
+        </dl>
+        <p className="mt-3 text-xs text-slate-500">
+          Keep lead details concise; supplementary notes appear in the lead
+          profile after creation.
+        </p>
+      </div>
+
+      {leadSummary.map((section) => (
+        <div
+          key={section.title}
+          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+        >
+          <h3 className="text-sm font-semibold text-slate-800">
+            {section.title}
+          </h3>
+          <dl className="mt-3 space-y-3 text-sm">
+            {section.items.map((item) => (
+              <div
+                key={`${section.title}-${item.label}`}
+                className="flex items-start justify-between gap-3"
+              >
+                <dt className="text-slate-500">{item.label}</dt>
+                <dd className="max-w-[160px] text-right font-medium text-slate-800">
+                  {item.value || "—"}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      ))}
+
+      <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-100 p-5 shadow-sm">
+        <h3 className="text-sm font-semibold text-slate-800">Creation tips</h3>
+        <ul className="mt-3 space-y-2 text-sm text-slate-600">
+          {guidanceItems.map((tip) => (
+            <li key={tip} className="flex items-start gap-2">
+              <span
+                className="mt-1 h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: accent.color }}
+              />
+              <span>{tip}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </>
+  );
+
+  const footer = (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <button
+        type="button"
+        onClick={() => {
+          if (typeof onClose === "function") {
+            onClose();
+          }
+        }}
+        disabled={isPending}
+        className="w-full rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-slate-400 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        form={formId}
+        disabled={isPending}
+        className="inline-flex w-full items-center justify-center rounded-full bg-[#0F62FE] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0b51d3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0F62FE] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+      >
+        {isPending ? (
+          <>
+            Saving
+            <span className="ml-2 inline-flex h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+          </>
+        ) : (
+          "Create lead"
+        )}
+      </button>
+    </div>
+  );
+
+  const shouldRender = isPageMode || isOpen;
+  if (!shouldRender) {
+    return null;
+  }
 
   return (
     <FormLayout
-      title="Lead details"
-      description="Capture the essentials so your team can nurture and convert this opportunity."
-      accentColor={formAccent.cyan}
-      footer={
-        <div className="flex justify-end gap-3">
-          {!isPageMode && (
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
-              disabled={isPending}
-            >
-              Cancel
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={isPending}
-            className="inline-flex items-center gap-2 rounded-full bg-[--theme-color] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[--secondary-color] disabled:opacity-60"
-          >
-            {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-            Create lead
-          </button>
-        </div>
-      }
+      mode={mode}
+      onClose={onClose}
+      isProcessing={isPending}
+      title="Create New Lead"
+      description="Capture lead contact details, company information, and pipeline status to start tracking progress."
+      accentGradient={accent.gradient}
+      accentColor={accent.color}
+      meta={meta}
+      aside={asideContent}
+      footer={footer}
+      maxWidthClass={isPageMode ? "max-w-6xl" : "max-w-4xl"}
     >
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr),minmax(0,1fr)]">
-        <section className="space-y-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <div>
-            <h3 className="text-base font-semibold text-gray-900">
-              Contact information
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Let us know who you&apos;re speaking with so we can tailor the
-              onboarding path.
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <ModernInput
-              label="First name"
-              value={formData.first_name}
-              onChange={(e) => updateFormData("first_name", e.target.value)}
-              placeholder="Jane"
-              icon={User}
-              required
-              error={errors.first_name}
-            />
-            <ModernInput
-              label="Last name"
-              value={formData.last_name}
-              onChange={(e) => updateFormData("last_name", e.target.value)}
-              placeholder="Doe"
-              icon={User}
-              required
-              error={errors.last_name}
-            />
-            <ModernInput
-              label="Email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => updateFormData("email", e.target.value)}
-              placeholder="jane@example.com"
-              icon={Mail}
-              required
-              error={errors.email}
-            />
-            <ModernInput
-              label="Phone"
-              value={formData.phone}
-              onChange={(e) => updateFormData("phone", e.target.value)}
-              placeholder="+1 234 567 8900"
-              icon={Phone}
-            />
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <ModernInput
-              label="Company"
-              value={formData.company}
-              onChange={(e) => updateFormData("company", e.target.value)}
-              placeholder="Acme Inc."
-              icon={Building}
-            />
+      <form id={formId} className="space-y-8" onSubmit={handleSubmit}>
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <header className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
-                Country
+              <h3 className="text-base font-semibold text-slate-900">
+                Personal information
+              </h3>
+              <p className="text-sm text-slate-500">
+                Basic contact details for following up with the prospect.
+              </p>
+            </div>
+          </header>
+          <div className="mt-6 space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <ModernInput
+                label="First Name"
+                type="text"
+                value={formData.first_name}
+                onChange={(e) => updateFormData("first_name", e.target.value)}
+                placeholder="e.g., John"
+                required
+                error={errors.first_name}
+                icon={<User />}
+                autoComplete="given-name"
+              />
+              <ModernInput
+                label="Last Name"
+                type="text"
+                value={formData.last_name}
+                onChange={(e) => updateFormData("last_name", e.target.value)}
+                placeholder="e.g., Doe"
+                required
+                error={errors.last_name}
+                icon={<User />}
+                autoComplete="family-name"
+              />
+              <ModernInput
+                label="Email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => updateFormData("email", e.target.value)}
+                placeholder="e.g., john.doe@example.com"
+                required
+                error={errors.email}
+                icon={<Mail />}
+                autoComplete="email"
+                autoCorrect="off"
+                spellCheck="false"
+              />
+              <ModernInput
+                label="Phone"
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => updateFormData("phone", e.target.value)}
+                placeholder="e.g., +1234567890"
+                icon={<Phone />}
+                autoComplete="tel"
+              />
+              <ModernInput
+                label="Company"
+                type="text"
+                value={formData.company}
+                onChange={(e) => updateFormData("company", e.target.value)}
+                placeholder="e.g., Acme Corp"
+                icon={<Building />}
+                autoComplete="organization"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Notes
               </label>
-              <select
-                className={`w-full rounded-lg border px-3 py-2 text-sm ${
-                  errors.country ? "border-red-500" : "border-gray-300"
-                }`}
-                value={formData.country}
-                onChange={(e) => updateFormData("country", e.target.value)}
-                disabled={countriesLoading}
-              >
-                <option value="">
-                  {countriesLoading ? "Loading..." : "Select country"}
-                </option>
-                {countryOptions.map((country) => (
-                  <option key={country.value} value={country.value}>
-                    {country.label}
-                  </option>
-                ))}
-              </select>
-              {errors.country && (
-                <p className="mt-1 text-xs text-red-500">{errors.country}</p>
-              )}
+              <textarea
+                value={formData.notes}
+                onChange={(e) => updateFormData("notes", e.target.value)}
+                rows={3}
+                placeholder="Describe additional context"
+                className="w-full rounded-[10px] border border-gray-300 px-3 py-2 text-sm input-field"
+              />
             </div>
           </div>
         </section>
 
-        <section
-          className="space-y-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm"
-          style={{
-            backgroundColor: getAccentRgba(formAccent.cyan, 0.05),
-            borderColor: getAccentRgba(formAccent.cyan, 0.12),
-          }}
-        >
-          <div>
-            <h3 className="text-base font-semibold text-gray-900">
-              Lead profiling
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Outline how this partner entered your pipeline and what type of
-              opportunity they represent.
-            </p>
-          </div>
-
-          <div className="space-y-4">
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <header className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
-                Lead status<span className="text-red-500">*</span>
+              <h3 className="text-base font-semibold text-slate-900">
+                Lead qualification
+              </h3>
+              <p className="text-sm text-slate-500">
+                Qualify the lead with pipeline status and ownership details.
+              </p>
+            </div>
+          </header>
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Country
               </label>
               <select
-                className={`w-full rounded-lg border px-3 py-2 text-sm ${
-                  errors.status ? "border-red-500" : "border-gray-300"
+                value={formData.country}
+                onChange={(e) => updateFormData("country", e.target.value)}
+                disabled={countriesLoading}
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
+                  errors.country ? "border-red-500" : "border-gray-300"
                 }`}
+              >
+                <option value="" disabled>
+                  {countriesLoading
+                    ? "Loading countries..."
+                    : "Select a country"}
+                </option>
+                {countriesError && (
+                  <option value="" disabled>
+                    Error loading countries
+                  </option>
+                )}
+                {countries &&
+                  countries.map((country) => (
+                    <option key={country.code} value={country.name}>
+                      {country.name}
+                    </option>
+                  ))}
+              </select>
+              {errors.country && (
+                <p className="text-red-500 text-xs mt-1">{errors.country}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Lead Type<span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.lead_type}
+                onChange={(e) =>
+                  updateFormData("lead_type", normalizeLeadTypeValue(e.target.value))
+                }
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
+                  errors.lead_type ? "border-red-500" : "border-gray-300"
+                }`}
+                disabled={leadTypesLoading && leadTypeOptions.length === 0}
+              >
+                <option value="">
+                  {leadTypesLoading ? "Loading lead types..." : "Select a lead type"}
+                </option>
+                {leadTypeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              {errors.lead_type && (
+                <p className="text-red-500 text-xs mt-1">{errors.lead_type}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Source
+              </label>
+              <input
+                type="text"
+                value={formData.source}
+                onChange={(e) => updateFormData("source", e.target.value)}
+                placeholder="e.g., Ad Campaign"
+                className="w-full rounded-[10px] border border-gray-300 px-3 py-2 text-sm input-field"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status<span className="text-red-500">*</span>
+              </label>
+              <select
                 value={formData.status}
                 onChange={(e) => updateFormData("status", e.target.value)}
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
+                  errors.status ? "border-red-500" : "border-gray-300"
+                }`}
               >
                 <option value="" disabled>
                   Select a status
@@ -318,161 +647,158 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
                 ))}
               </select>
               {errors.status && (
-                <p className="mt-1 text-xs text-red-500">{errors.status}</p>
+                <p className="text-red-500 text-xs mt-1">{errors.status}</p>
               )}
             </div>
-
-            <ModernInput
-              label="Lead type"
-              value={formData.lead_type}
-              onChange={(e) => updateFormData("lead_type", e.target.value)}
-              placeholder="e.g. Cloud migration"
-            />
-            <ModernInput
-              label="Source"
-              value={formData.source}
-              onChange={(e) => updateFormData("source", e.target.value)}
-              placeholder="e.g. Referral, Marketplace"
-            />
-
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
-                Owner (optional)
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Assigned To (Optional)
               </label>
               <select
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                 value={formData.assigned_to}
                 onChange={(e) => updateFormData("assigned_to", e.target.value)}
                 disabled={adminsLoading}
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
+                  errors.assigned_to ? "border-red-500" : "border-gray-300"
+                }`}
               >
-                <option value="">Unassigned</option>
-                {adminsLoading ? (
-                  <option disabled>Loading owners...</option>
-                ) : (
+                <option value="">
+                  {adminsLoading ? "Loading owners..." : "Unassigned"}
+                </option>
+                {!adminsLoading &&
                   admins?.map((admin) => (
                     <option key={admin.id} value={admin.identifier || admin.id}>
-                      {admin.first_name} {admin.last_name} ({admin.email})
+                      {[admin.first_name, admin.last_name].filter(Boolean).join(" ") ||
+                        admin.email ||
+                        admin.identifier ||
+                        admin.id}
                     </option>
-                  ))
-                )}
+                  ))}
               </select>
+              {errors.assigned_to && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.assigned_to}
+                </p>
+              )}
             </div>
           </div>
         </section>
-      </div>
 
-      <section className="space-y-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-        <div>
-          <h3 className="text-base font-semibold text-gray-900">
-            Optional stage setup
-          </h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Create the first milestone you expect to achieve with this lead.
-          </p>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              Stage name
-            </label>
-            <select
-              className={`w-full rounded-lg border px-3 py-2 text-sm ${
-                errors.stage_name ? "border-red-500" : "border-gray-300"
-              }`}
-              value={formData.lead_stage.stage_name}
-              onChange={(e) =>
-                updateLeadStageFormData("stage_name", e.target.value)
-              }
-            >
-              <option value="">Select a stage</option>
-              {leadStageNameOptions.map((stage) => (
-                <option key={stage} value={stage}>
-                  {formatDisplay(stage)}
-                </option>
-              ))}
-            </select>
-            {errors.stage_name && (
-              <p className="mt-1 text-xs text-red-500">{errors.stage_name}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              Stage status
-            </label>
-            <select
-              className={`w-full rounded-lg border px-3 py-2 text-sm ${
-                errors.stage_status ? "border-red-500" : "border-gray-300"
-              }`}
-              value={formData.lead_stage.status}
-              onChange={(e) =>
-                updateLeadStageFormData("status", e.target.value)
-              }
-            >
-              <option value="">Select status</option>
-              {leadStageStatusOptions.map((status) => (
-                <option key={status} value={status}>
-                  {formatDisplay(status)}
-                </option>
-              ))}
-            </select>
-            {errors.stage_status && (
-              <p className="mt-1 text-xs text-red-500">
-                {errors.stage_status}
+        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <header className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-base font-semibold text-slate-900">
+                Lead stage information
+              </h3>
+              <p className="text-sm text-slate-500">
+                Optionally capture the current workflow stage for this lead.
               </p>
-            )}
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="md:col-span-2">
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              Stage description
-            </label>
-            <textarea
-              rows={3}
-              className={`w-full rounded-lg border px-3 py-2 text-sm ${
-                errors.stage_description ? "border-red-500" : "border-gray-300"
-              }`}
-              value={formData.lead_stage.description}
-              onChange={(e) =>
-                updateLeadStageFormData("description", e.target.value)
-              }
-              placeholder="Outline the goals or expected outcome for this stage."
-            />
-            {errors.stage_description && (
-              <p className="mt-1 text-xs text-red-500">
-                {errors.stage_description}
-              </p>
-            )}
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              Stage owner (optional)
-            </label>
-            <select
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-              value={formData.lead_stage.assigned_to}
-              onChange={(e) =>
-                updateLeadStageFormData("assigned_to", e.target.value)
-              }
-              disabled={adminsLoading}
-            >
-              <option value="">Unassigned</option>
-              {adminsLoading ? (
-                <option disabled>Loading owners...</option>
-              ) : (
-                admins?.map((admin) => (
-                  <option key={admin.id} value={admin.identifier || admin.id}>
-                    {admin.first_name} {admin.last_name} ({admin.email})
+            </div>
+          </header>
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Stage Name
+              </label>
+              <select
+                value={formData.lead_stage.stage_name}
+                onChange={(e) =>
+                  updateLeadStageFormData("stage_name", e.target.value)
+                }
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
+                  errors.stage_name ? "border-red-500" : "border-gray-300"
+                }`}
+              >
+                <option value="">Select a stage name</option>
+                {leadStageNameOptions.map((name) => (
+                  <option key={name} value={name}>
+                    {formatDisplay(name)}
                   </option>
-                ))
+                ))}
+              </select>
+              {errors.stage_name && (
+                <p className="text-red-500 text-xs mt-1">{errors.stage_name}</p>
               )}
-            </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Stage Status
+              </label>
+              <select
+                value={formData.lead_stage.status}
+                onChange={(e) => updateLeadStageFormData("status", e.target.value)}
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
+                  errors.stage_status ? "border-red-500" : "border-gray-300"
+                }`}
+              >
+                <option value="">Select a status</option>
+                {leadStageStatusOptions.map((status) => (
+                  <option key={status} value={status}>
+                    {formatDisplay(status)}
+                  </option>
+                ))}
+              </select>
+              {errors.stage_status && (
+                <p className="text-red-500 text-xs mt-1">{errors.stage_status}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Assigned to Stage
+              </label>
+              <select
+                value={formData.lead_stage.assigned_to}
+                onChange={(e) =>
+                  updateLeadStageFormData("assigned_to", e.target.value)
+                }
+                disabled={adminsLoading}
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
+                  errors.stage_assigned_to ? "border-red-500" : "border-gray-300"
+                }`}
+              >
+                <option value="">
+                  {adminsLoading ? "Loading owners..." : "Unassigned"}
+                </option>
+                {!adminsLoading &&
+                  admins?.map((admin) => (
+                    <option key={admin.id} value={admin.identifier || admin.id}>
+                      {[admin.first_name, admin.last_name].filter(Boolean).join(" ") ||
+                        admin.email ||
+                        admin.identifier ||
+                        admin.id}
+                    </option>
+                  ))}
+              </select>
+              {errors.stage_assigned_to && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.stage_assigned_to}
+                </p>
+              )}
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Stage Description
+              </label>
+              <textarea
+                value={formData.lead_stage.description}
+                onChange={(e) =>
+                  updateLeadStageFormData("description", e.target.value)
+                }
+                rows={2}
+                placeholder="Describe the stage of this lead."
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
+                  errors.stage_description ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.stage_description && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors.stage_description}
+                </p>
+              )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </form>
     </FormLayout>
   );
 };

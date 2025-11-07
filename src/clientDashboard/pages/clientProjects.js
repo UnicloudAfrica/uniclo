@@ -22,7 +22,6 @@ import DashboardPageShell from "../../shared/layouts/DashboardPageShell";
 import ProjectsPageContent from "../../shared/projects/ProjectsPageContent";
 import { designTokens } from "../../styles/designTokens";
 import { useFetchClientProjects } from "../../hooks/clientHooks/projectHooks";
-import CreateProjectModal from "./projectComps/addProject";
 import ToastUtils from "../../utils/toastUtil";
 
 const STATUS_OPTIONS = [
@@ -90,7 +89,6 @@ const ClientProjects = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isAddProjectOpen, setAddProjectOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get("search") || "");
   const [filterStatus, setFilterStatus] = useState(() => searchParams.get("status") || "");
   const [filterRegion, setFilterRegion] = useState(() => searchParams.get("region") || "");
@@ -104,6 +102,10 @@ const ClientProjects = () => {
   });
   const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const goToCreateProject = useCallback(
+    () => navigate("/client-dashboard/projects/create"),
+    [navigate]
+  );
 
   const {
     data: projects = [],
@@ -433,7 +435,7 @@ const ClientProjects = () => {
         <RefreshCw size={16} className={isManualRefreshing ? "animate-spin" : ""} />
         Refresh
       </ModernButton>
-      <ModernButton onClick={() => setAddProjectOpen(true)} className="flex items-center gap-2">
+      <ModernButton onClick={goToCreateProject} className="flex items-center gap-2">
         <Plus size={18} />
         Add Project
       </ModernButton>
@@ -504,11 +506,10 @@ const ClientProjects = () => {
               <ModernButton variant="outline" onClick={() => refetch()}>
                 Retry
               </ModernButton>
-              <ModernButton onClick={() => setAddProjectOpen(true)}>Add Project</ModernButton>
+              <ModernButton onClick={goToCreateProject}>Add Project</ModernButton>
             </div>
           </div>
         </DashboardPageShell>
-        <CreateProjectModal isOpen={isAddProjectOpen} onClose={() => setAddProjectOpen(false)} />
       </>
     );
   }
@@ -552,7 +553,6 @@ const ClientProjects = () => {
           tableActions={actions}
         />
       </DashboardPageShell>
-      <CreateProjectModal isOpen={isAddProjectOpen} onClose={() => setAddProjectOpen(false)} />
     </>
   );
 };

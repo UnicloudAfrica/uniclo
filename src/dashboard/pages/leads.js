@@ -115,105 +115,6 @@ const getStatusColorClass = (status) => {
   }
 };
 
-const SafeTenantPageShell =
-  TenantPageShell ??
-  (({ children }) => <div className="p-6 md:p-8">{children}</div>);
-
-const SafeModernButton =
-  ModernButton ??
-  (({ children, className = "", ...props }) => (
-    <button
-      className={`inline-flex items-center gap-2 rounded border border-gray-300 px-3 py-2 text-sm ${className}`}
-      {...props}
-    >
-      {children}
-    </button>
-  ));
-
-const SafeModernCard =
-  ModernCard ??
-  (({ children, className = "", ...props }) => (
-    <div
-      className={`rounded-2xl border border-gray-200 bg-white p-6 shadow-sm ${className}`}
-      {...props}
-    >
-      {children}
-    </div>
-  ));
-
-const SafeResourceHero =
-  ResourceHero ??
-  (({ title, subtitle, description, rightSlot, metrics = [] }) => (
-    <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="space-y-2">
-          {subtitle ? (
-            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              {subtitle}
-            </span>
-          ) : null}
-          <h1 className="text-2xl font-semibold text-gray-900">{title}</h1>
-          {description ? (
-            <p className="text-sm text-gray-500">{description}</p>
-          ) : null}
-        </div>
-        {rightSlot}
-      </div>
-      {metrics.length ? (
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {metrics.map((metric) => (
-            <div
-              key={metric.label}
-              className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3"
-            >
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                {metric.label}
-              </p>
-              <p className="mt-2 text-xl font-semibold text-gray-900">
-                {metric.value}
-              </p>
-              {metric.description ? (
-                <p className="text-xs text-gray-500">{metric.description}</p>
-              ) : null}
-            </div>
-          ))}
-        </div>
-      ) : null}
-    </section>
-  ));
-
-const SafeResourceDataExplorer =
-  ResourceDataExplorer ??
-  (({ rows = [], emptyState }) => (
-    <div className="rounded-2xl border border-gray-200 bg-white p-6">
-      {rows.length === 0 && emptyState ? (
-        <div className="text-center text-sm text-gray-500">
-          {emptyState.icon}
-          <h3 className="mt-3 text-base font-semibold text-gray-900">
-            {emptyState.title}
-          </h3>
-          <p className="mt-2">{emptyState.description}</p>
-          {emptyState.action ? (
-            <div className="mt-4">{emptyState.action}</div>
-          ) : null}
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {rows.map((row, index) => (
-            <div
-              key={row.id ?? index}
-              className="rounded-xl border border-gray-100 bg-gray-50 p-4 text-sm text-gray-700"
-            >
-              <pre className="overflow-x-auto whitespace-pre-wrap">
-                {JSON.stringify(row, null, 2)}
-              </pre>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  ));
-
 export default function DashboardLeads() {
   const navigate = useNavigate();
   const [activeStatus, setActiveStatus] = useState("all");
@@ -280,13 +181,13 @@ export default function DashboardLeads() {
   }, [leads, activeStatus, searchValue]);
 
   const headerActions = (
-    <SafeModernButton
+    <ModernButton
       onClick={() => navigate("/dashboard/leads/create")}
       className="inline-flex items-center gap-2"
     >
       <UserPlus className="h-4 w-4" />
       Add lead
-    </SafeModernButton>
+    </ModernButton>
   );
 
   const leadColumns = useMemo(
@@ -381,12 +282,12 @@ export default function DashboardLeads() {
   );
 
   return (
-    <SafeTenantPageShell
+    <TenantPageShell
       title="Lead pipeline"
       description="Stay on top of every inquiry—from first contact to conversion—and highlight prospects that need attention."
       contentClassName="space-y-8"
     >
-      <SafeResourceHero
+      <ResourceHero
         title="Lead pipeline"
         subtitle="Growth"
         description="Track how prospects move through each stage and spot opportunities for faster conversions."
@@ -419,7 +320,7 @@ export default function DashboardLeads() {
         rightSlot={headerActions}
       />
 
-      <SafeModernCard className="space-y-6 border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur">
+      <ModernCard className="space-y-6 border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-1">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -481,9 +382,9 @@ export default function DashboardLeads() {
             );
           })}
         </div>
-      </SafeModernCard>
+      </ModernCard>
 
-      <SafeModernCard className="space-y-6 border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur">
+      <ModernCard className="space-y-6 border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur">
         <div className="flex flex-col gap-1">
           <h2 className="text-lg font-semibold text-slate-900">
             Lead directory
@@ -494,7 +395,7 @@ export default function DashboardLeads() {
           </p>
         </div>
 
-        <SafeResourceDataExplorer
+        <ResourceDataExplorer
           columns={leadColumns}
           rows={filteredLeads}
           loading={isLeadsFetching}
@@ -511,23 +412,23 @@ export default function DashboardLeads() {
             description:
               "Start capturing opportunities by adding leads manually or importing from your CRM.",
             action: (
-              <SafeModernButton
+              <ModernButton
                 onClick={() => navigate("/dashboard/leads/create")}
                 className="flex items-center gap-2"
               >
                 <UserPlus className="h-4 w-4" />
                 Add your first lead
-              </SafeModernButton>
+              </ModernButton>
             ),
           }}
         />
-      </SafeModernCard>
+      </ModernCard>
 
       {isLeadStatsFetching && (
         <div className="flex h-24 items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
         </div>
       )}
-    </SafeTenantPageShell>
+    </TenantPageShell>
   );
 }

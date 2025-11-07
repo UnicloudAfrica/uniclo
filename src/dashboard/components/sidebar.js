@@ -4,7 +4,6 @@ import {
   ClipboardList,
   CreditCard,
   Database,
-  FileText,
   FolderKanban,
   Home,
   LifeBuoy,
@@ -16,6 +15,7 @@ import {
   X,
   Calculator,
   UserCheck,
+  Server,
 } from "lucide-react";
 import useAuthStore from "../../stores/userAuthStore";
 import { useFetchProfile } from "../../hooks/resource";
@@ -28,9 +28,9 @@ const PATH_TO_ITEM_MAP = {
   "/dashboard/leads/create": "Leads",
   "/dashboard/leads/details": "Leads",
   "/dashboard/products": "Products",
+  "/dashboard/instances": "Instances",
   "/dashboard/calculator": "Calculator",
-  "/dashboard/quote-calculator": "Quote Calculator",
-  "/dashboard/quotes": "Quotes",
+  "/dashboard/quote-invoice": "Quote Invoice",
   "/dashboard/object-storage": "Object Storage",
   "/dashboard/payment-history": "Payment History",
   "/dashboard/support-ticket": "Support Ticket",
@@ -44,12 +44,12 @@ const BASE_ICON_CLASS = "w-4 h-4 transition-colors duration-200";
 const menuDefinitions = [
   { name: "Home", path: "/dashboard", icon: Home },
   { name: "Projects", path: "/dashboard/projects", icon: FolderKanban },
+  { name: "Instances", path: "/dashboard/instances", icon: Server },
   { name: "Clients", path: "/dashboard/clients", icon: Users },
   { name: "Leads", path: "/dashboard/leads", icon: UserCheck },
   { name: "Products", path: "/dashboard/products", icon: Package },
   { name: "Calculator", path: "/dashboard/calculator", icon: Calculator },
-  { name: "Quote Calculator", path: "/dashboard/quote-calculator", icon: ClipboardList },
-  { name: "Quotes", path: "/dashboard/quotes", icon: FileText },
+  { name: "Quote Invoice", path: "/dashboard/quote-invoice", icon: ClipboardList },
   { name: "Object Storage", path: "/dashboard/object-storage", icon: Database },
   { name: "Payment History", path: "/dashboard/payment-history", icon: CreditCard },
   { name: "Support Ticket", path: "/dashboard/support-ticket", icon: LifeBuoy },

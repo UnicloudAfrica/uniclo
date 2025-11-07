@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { X, Loader2 } from "lucide-react";
-import { useCreateNewLead } from "../../../hooks/tenantHooks/leadsHook";
+import { useCreateNewLead, useFetchLeadTypes } from "../../../hooks/tenantHooks/leadsHook";
 import ToastUtils from "../../../utils/toastUtil";
 import { useFetchCountries } from "../../../hooks/resource";
+import {
+  buildLeadTypeOptions,
+  ensureLeadTypeValue,
+} from "../../../utils/leadTypes";
 
 const leadStatusOptions = [
   "new",
@@ -55,6 +59,10 @@ const CreateLead = ({ onClose }) => {
 
   const { mutate, isPending } = useCreateNewLead();
   const {
+    data: leadTypesData = [],
+    isLoading: leadTypesLoading,
+  } = useFetchLeadTypes();
+  const {
     data: countries,
     isLoading: countriesLoading,
     isError: countriesError,
@@ -83,6 +91,37 @@ const CreateLead = ({ onClose }) => {
     setErrors({});
   }, []);
 
+  const leadTypeOptions = useMemo(
+    () => buildLeadTypeOptions(leadTypesData),
+    [leadTypesData],
+  );
+
+  const leadTypeSet = useMemo(
+    () => new Set(leadTypeOptions.map((option) => option.value)),
+    [leadTypeOptions],
+  );
+
+  const normalizeLeadTypeValue = useCallback(
+    (value) => ensureLeadTypeValue(value, leadTypeOptions),
+    [leadTypeOptions],
+  );
+
+  useEffect(() => {
+    if (!formData.lead_type) {
+      return;
+    }
+
+    const normalized = normalizeLeadTypeValue(formData.lead_type);
+    if (!normalized) {
+      setFormData((prev) => ({ ...prev, lead_type: "" }));
+      return;
+    }
+
+    if (normalized !== formData.lead_type) {
+      setFormData((prev) => ({ ...prev, lead_type: normalized }));
+    }
+  }, [formData.lead_type, normalizeLeadTypeValue]);
+
   const formatDisplay = (str) => {
     return str.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   };
@@ -95,6 +134,12 @@ const CreateLead = ({ onClose }) => {
       newErrors.last_name = "Last name is required.";
     if (!formData.email.trim()) newErrors.email = "Email is required.";
     if (!formData.status) newErrors.status = "Status is required.";
+    if (
+      leadTypeOptions.length > 0 &&
+      (!formData.lead_type || !leadTypeSet.has(formData.lead_type))
+    ) {
+      newErrors.lead_type = "Lead type is required.";
+    }
 
     if (
       formData.lead_stage.stage_name ||
@@ -146,10 +191,11 @@ const CreateLead = ({ onClose }) => {
 
     mutate(leadData, {
       onSuccess: () => {
+        ToastUtils.success("Lead created successfully!");
         onClose();
       },
       onError: (error) => {
-        console.error(error);
+        ToastUtils.error(error?.message || "Failed to create lead.");
       },
     });
   };
@@ -284,15 +330,30 @@ const CreateLead = ({ onClose }) => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Lead Type
+                  Lead Type<span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
+                <select
                   value={formData.lead_type}
-                  onChange={(e) => updateFormData("lead_type", e.target.value)}
-                  placeholder="e.g., Enterprise, SMB"
-                  className="w-full rounded-[10px] border border-gray-300 px-3 py-2 text-sm input-field"
-                />
+                  onChange={(e) =>
+                    updateFormData("lead_type", normalizeLeadTypeValue(e.target.value))
+                  }
+                  className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
+                    errors.lead_type ? "border-red-500" : "border-gray-300"
+                  }`}
+                  disabled={leadTypesLoading && leadTypeOptions.length === 0}
+                >
+                  <option value="">
+                    {leadTypesLoading ? "Loading lead types..." : "Select a lead type"}
+                  </option>
+                  {leadTypeOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                {errors.lead_type && (
+                  <span className="text-red-500 text-xs">{errors.lead_type}</span>
+                )}
               </div>
 
               <div>

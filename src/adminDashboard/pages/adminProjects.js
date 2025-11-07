@@ -21,7 +21,6 @@ import {
   Server
 } from "lucide-react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import CreateProjectModal from "./projectComps/addProject";
 import { designTokens } from "../../styles/designTokens";
 import ToastUtils from "../../utils/toastUtil";
 
@@ -93,10 +92,13 @@ export default function AdminProjects() {
 
   const [selectedItem, setSelectedItem] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isAddProjectOpen, setAddProject] = useState(false);
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get("search") || "");
   const [filterStatus, setFilterStatus] = useState(() => searchParams.get("status") || "");
   const [filterRegion, setFilterRegion] = useState(() => searchParams.get("region") || "");
+  const goToCreateProject = useCallback(
+    () => navigate("/admin-dashboard/projects/create"),
+    [navigate]
+  );
 
   const updateSearchParams = useCallback(
     (updates) => {
@@ -120,9 +122,6 @@ export default function AdminProjects() {
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
   };
-
-  const openAddProject = () => setAddProject(true);
-  const closeAddProject = () => setAddProject(false);
 
   const defaultPerPage = isRevampedRoute ? 15 : 10;
 
@@ -420,7 +419,7 @@ export default function AdminProjects() {
         />
         Refresh
       </ModernButton>
-      <ModernButton onClick={openAddProject} className="flex items-center gap-2">
+      <ModernButton onClick={goToCreateProject} className="flex items-center gap-2">
         <Plus size={18} />
         Add Project
       </ModernButton>
@@ -490,10 +489,6 @@ export default function AdminProjects() {
             Loading projects...
           </p>
         </DashboardPageShell>
-        <CreateProjectModal
-          isOpen={isAddProjectOpen}
-          onClose={closeAddProject}
-        />
       </>
     );
   }
@@ -514,7 +509,7 @@ export default function AdminProjects() {
           contentClassName="flex min-h-[60vh] items-center justify-center"
           homeHref="/admin-dashboard"
         >
-          <ModernCard className="max-w-xl w-full">
+          <ModernCard className="w-full max-w-xl">
             <div className="text-center space-y-4">
               <div
                 className="text-lg font-medium"
@@ -535,14 +530,13 @@ export default function AdminProjects() {
                 >
                   Retry
                 </ModernButton>
-                <ModernButton onClick={openAddProject}>
+                <ModernButton onClick={goToCreateProject}>
                   Add Project
                 </ModernButton>
               </div>
             </div>
           </ModernCard>
         </DashboardPageShell>
-        <CreateProjectModal isOpen={isAddProjectOpen} onClose={closeAddProject} />
       </>
     );
   }
@@ -619,7 +613,6 @@ export default function AdminProjects() {
           tableActions={actions}
         />
       </DashboardPageShell>
-      <CreateProjectModal isOpen={isAddProjectOpen} onClose={closeAddProject} />
     </>
   );
 }

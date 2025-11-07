@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   BadgePercent,
   CircleDollarSign,
@@ -70,6 +71,7 @@ const CalculatorConfigStep = ({
   onAddStorageItem,
   onRemoveStorageItem,
   onCountryChange,
+  children,
 }) => {
   const [currentItem, setCurrentItem] = useState(createInitialItemState);
   const [searchTerms, setSearchTerms] = useState(createInitialSearchState);
@@ -579,8 +581,8 @@ const CalculatorConfigStep = ({
 
           <ModernCard padding="lg" className="space-y-5">
             <div className="space-y-1">
-              <h3 className="text-sm font-semibold text-slate-900">Billing settings</h3>
-              <p className="text-xs text-slate-500">
+              <h3 className="text-lg font-semibold text-slate-900">Billing settings</h3>
+              <p className="text-sm text-slate-500">
                 Align pricing with the customer’s billing country and currency.
               </p>
             </div>
@@ -621,8 +623,8 @@ const CalculatorConfigStep = ({
 
           <ModernCard padding="lg" className="space-y-6">
             <div className="space-y-1">
-              <h3 className="text-sm font-semibold text-slate-900">Virtual machine workload</h3>
-              <p className="text-xs text-slate-500">
+              <h3 className="text-lg font-semibold text-slate-900">Virtual machine workload</h3>
+              <p className="text-sm text-slate-500">
                 Choose the location, compute profile, operating system, and runtime term for this VM bundle.
               </p>
             </div>
@@ -779,8 +781,8 @@ const CalculatorConfigStep = ({
                   <HardDrive className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-900">Block storage</h3>
-                  <p className="text-xs text-slate-500">
+                  <h3 className="text-lg font-semibold text-slate-900">Block storage</h3>
+                  <p className="text-sm text-slate-500">
                     Track the storage tier and size attached to this workload.
                   </p>
                 </div>
@@ -848,10 +850,10 @@ const CalculatorConfigStep = ({
                     <Network className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-slate-900">
+                    <h3 className="text-lg font-semibold text-slate-900">
                       Networking (optional)
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-sm text-slate-500">
                       Attach bandwidth, floating IPs, and cross connects when needed.
                     </p>
                   </div>
@@ -864,9 +866,16 @@ const CalculatorConfigStep = ({
                   {isNetworkingOpen ? "Hide" : "Configure"}
                 </ModernButton>
               </div>
-              <div className="space-y-4">
+              <AnimatePresence initial={false}>
                 {isNetworkingOpen ? (
-                  <div className="space-y-4">
+                  <motion.div
+                    key="networking-expanded"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25, ease: "easeOut" }}
+                    className="space-y-4 overflow-hidden"
+                  >
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
@@ -1002,13 +1011,20 @@ const CalculatorConfigStep = ({
                         emptyMessage="No cross connects"
                       />
                     </div>
-                  </div>
+                  </motion.div>
                 ) : (
-                  <p className="text-sm text-slate-500">
+                  <motion.p
+                    key="networking-collapsed"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="text-sm text-slate-500"
+                  >
                     Expand to add bandwidth, floating IPs, or cross connects when needed.
-                  </p>
+                  </motion.p>
                 )}
-              </div>
+              </AnimatePresence>
             </ModernCard>
           </div>
 
@@ -1018,8 +1034,8 @@ const CalculatorConfigStep = ({
                 <Layers className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-slate-900">Object storage commitments</h3>
-                <p className="text-xs text-slate-500">
+                <h3 className="text-lg font-semibold text-slate-900">Object storage commitments</h3>
+                <p className="text-sm text-slate-500">
                   Add S3-compatible capacity commitments to include in this quote.
                 </p>
               </div>
@@ -1179,11 +1195,83 @@ const CalculatorConfigStep = ({
               </ModernButton>
             </div>
           </ModernCard>
+
+          <ModernCard padding="lg" variant="outlined" className="space-y-5">
+            <header className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+                <BadgePercent className="h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-slate-900">Total discount</h3>
+                <p className="text-sm text-slate-500">
+                  Apply an optional global discount before calculating totals.
+                </p>
+              </div>
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={calculatorData.apply_total_discount}
+                  onChange={(e) =>
+                    updateCalculatorData("apply_total_discount", e.target.checked)
+                  }
+                  className="h-4 w-4 rounded border-slate-300 text-primary-500 focus:ring-primary-200"
+                />
+                Enable
+              </label>
+            </header>
+
+            {calculatorData.apply_total_discount && (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    Discount type
+                  </label>
+                  <select
+                    value={calculatorData.total_discount_type}
+                    onChange={(e) =>
+                      updateCalculatorData("total_discount_type", e.target.value)
+                    }
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                  >
+                    <option value="percent">Percentage (%)</option>
+                    <option value="fixed">Fixed amount</option>
+                  </select>
+                </div>
+                <ModernInput
+                  label="Discount value"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={calculatorData.total_discount_value}
+                  onChange={(e) =>
+                    updateCalculatorData("total_discount_value", e.target.value)
+                  }
+                  error={errors.total_discount_value}
+                />
+                <div className="sm:col-span-2">
+                  <ModernInput
+                    label="Discount label"
+                    value={calculatorData.total_discount_label}
+                    onChange={(e) =>
+                      updateCalculatorData("total_discount_label", e.target.value)
+                    }
+                    placeholder="Optional note that appears on invoice/quote"
+                  />
+                </div>
+              </div>
+            )}
+          </ModernCard>
+
+          {children ? (
+            <div className="space-y-4">
+              {children}
+            </div>
+          ) : null}
         </div>
 
         <div className="space-y-6 xl:sticky xl:top-24">
           <ModernCard padding="lg" className="space-y-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+            <div className="flex items-center gap-2 text-lg font-semibold text-slate-900">
               <CircleDollarSign className="h-4 w-4 text-primary-500" />
               Live summary
             </div>
@@ -1207,8 +1295,8 @@ const CalculatorConfigStep = ({
                 <Layers className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-slate-900">Calculation queue</h3>
-                <p className="text-xs text-slate-500">
+                <h3 className="text-lg font-semibold text-slate-900">Calculation queue</h3>
+                <p className="text-sm text-slate-500">
                   Manage queued configurations before running the pricing engine.
                 </p>
               </div>
@@ -1281,71 +1369,6 @@ const CalculatorConfigStep = ({
             </div>
           </ModernCard>
 
-          <ModernCard padding="lg" variant="outlined" className="space-y-5">
-            <header className="flex items-start gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
-                <BadgePercent className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-base font-semibold text-slate-900">Total discount</h3>
-                <p className="text-sm text-slate-500">
-                  Apply an optional global discount before calculating totals.
-                </p>
-              </div>
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={calculatorData.apply_total_discount}
-                  onChange={(e) =>
-                    updateCalculatorData("apply_total_discount", e.target.checked)
-                  }
-                  className="h-4 w-4 rounded border-slate-300 text-primary-500 focus:ring-primary-200"
-                />
-                Enable
-              </label>
-            </header>
-
-            {calculatorData.apply_total_discount && (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Discount type
-                  </label>
-                  <select
-                    value={calculatorData.total_discount_type}
-                    onChange={(e) =>
-                      updateCalculatorData("total_discount_type", e.target.value)
-                    }
-                    className="w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
-                  >
-                    <option value="percent">Percentage (%)</option>
-                    <option value="fixed">Fixed amount</option>
-                  </select>
-                </div>
-                <ModernInput
-                  label="Discount value"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={calculatorData.total_discount_value}
-                  onChange={(e) =>
-                    updateCalculatorData("total_discount_value", e.target.value)
-                  }
-                  error={errors.total_discount_value}
-                />
-                <div className="sm:col-span-2">
-                  <ModernInput
-                    label="Discount label"
-                    value={calculatorData.total_discount_label}
-                    onChange={(e) =>
-                      updateCalculatorData("total_discount_label", e.target.value)
-                    }
-                    placeholder="Optional note that appears on invoice/quote"
-                  />
-                </div>
-              </div>
-            )}
-          </ModernCard>
         </div>
       </div>
     </div>

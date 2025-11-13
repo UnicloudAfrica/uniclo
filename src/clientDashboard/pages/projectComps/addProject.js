@@ -105,24 +105,6 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
     });
   };
 
-  const summaryItems = [
-    { label: "Project name", value: formData.name || "Not set" },
-    {
-      label: "Region",
-      value: formData.region ? formData.region.toUpperCase() : "Select region",
-    },
-    {
-      label: "Topology",
-      value: formData.type ? formData.type.toUpperCase() : "Choose type",
-    },
-  ];
-
-  const guidanceItems = [
-    "Use a descriptive name so collaborators quickly understand the workspace.",
-    "Pick the region closest to your workloads to minimize latency.",
-    "Switch between VPC or DVS depending on the network isolation you need.",
-  ];
-
   const sectionClasses =
     "rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm";
 
@@ -259,37 +241,57 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
     </div>
   );
 
-  const renderSummaryPanel = () => (
-    <div className="space-y-4">
-      <div className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm">
-        <h3 className="text-sm font-semibold text-slate-900">Live summary</h3>
-        <dl className="mt-4 space-y-3 text-sm">
-          {summaryItems.map((item) => (
-            <div
-              key={item.label}
-              className="flex items-center justify-between gap-3"
-            >
-              <dt className="text-slate-500">{item.label}</dt>
-              <dd className="text-right font-semibold text-slate-900">
-                {item.value}
-              </dd>
-            </div>
-          ))}
-        </dl>
+  const renderSummaryPanel = () => {
+    const summaryItems = [
+      { label: "Project name", value: formData.name || "Not set" },
+      {
+        label: "Region",
+        value: formData.region ? formData.region.toUpperCase() : "Select region",
+      },
+      {
+        label: "Topology",
+        value: formData.type ? formData.type.toUpperCase() : "Choose type",
+      },
+    ];
+
+    const guidanceItems = [
+      "Use a descriptive name so collaborators quickly understand the workspace.",
+      "Pick the region closest to your workloads to minimize latency.",
+      "Switch between VPC or DVS depending on the network isolation you need.",
+    ];
+
+    return (
+      <div className="space-y-4">
+        <div className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-slate-900">Live summary</h3>
+          <dl className="mt-4 space-y-3 text-sm">
+            {summaryItems.map((item) => (
+              <div
+                key={item.label}
+                className="flex items-center justify-between gap-3"
+              >
+                <dt className="text-slate-500">{item.label}</dt>
+                <dd className="text-right font-semibold text-slate-900">
+                  {item.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+        <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-5 text-white">
+          <p className="text-sm font-semibold">Launch checklist</p>
+          <ul className="mt-3 space-y-2 text-sm text-slate-100/80">
+            {guidanceItems.map((tip) => (
+              <li key={tip} className="flex items-start gap-2">
+                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-white/70" />
+                <span>{tip}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
-      <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-5 text-white">
-        <p className="text-sm font-semibold">Launch checklist</p>
-        <ul className="mt-3 space-y-2 text-sm text-slate-100/80">
-          {guidanceItems.map((tip) => (
-            <li key={tip} className="flex items-start gap-2">
-              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-white/70" />
-              <span>{tip}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  );
+    );
+  };
 
   if (!isPageMode && !isOpen) return null;
 

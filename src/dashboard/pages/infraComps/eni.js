@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { RefreshCw, Shield, Trash2 } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import {
   useFetchTenantNetworkInterfaces,
@@ -8,6 +9,20 @@ import {
 import AddEniModal from "../eniComps/addEni";
 import DeleteEniModal from "../eniComps/deleteEni";
 import ManageEniSecurityGroupsModal from "../eniComps/manageSecurityGroups";
+import ResourceSection from "../../../adminDashboard/components/ResourceSection";
+import ResourceEmptyState from "../../../adminDashboard/components/ResourceEmptyState";
+import ResourceListCard from "../../../adminDashboard/components/ResourceListCard";
+import ModernButton from "../../../adminDashboard/components/ModernButton";
+
+const ITEMS_PER_PAGE = 6;
+
+const getToneForStatus = (status = "") => {
+  const normalized = status.toString().toLowerCase();
+  if (["available", "active", "in-use", "inuse"].includes(normalized)) return "success";
+  if (["pending", "attaching", "detaching"].includes(normalized)) return "warning";
+  if (["failed", "error"].includes(normalized)) return "danger";
+  return "neutral";
+};
 
 const ENIs = ({
   projectId = "",
@@ -16,34 +31,85 @@ const ENIs = ({
   onActionHandled,
   onStatsUpdate,
 }) => {
-  const { data: enis, isFetching } = useFetchTenantNetworkInterfaces(
-    projectId,
-    region
-  );
-  const { mutate: syncEnis, isPending: isSyncing } =
-    useSyncTenantNetworkInterfaces();
-  const { mutate: deleteEni, isPending: isDeleting } =
-    useDeleteTenantNetworkInterface();
+  const { data: enis, isFetching } = useFetchTenantNetworkInterfaces(projectId, region);
+  const { mutate: syncEnis, isPending: isSyncing } = useSyncTenantNetworkInterfaces();
+  const { mutate: deleteEni, isPending: isDeleting } = useDeleteTenantNetworkInterface();
 
   const [currentPage, setCurrentPage] = useState(1);
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [deleteModal, setDeleteModal] = useState(null);
   const [manageModal, setManageModal] = useState(null);
-  const itemsPerPage = 6;
 
-  const items = useMemo(() => (Array.isArray(enis) ? enis : []), [enis]);
-  const totalItems = items.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentItems = items.slice(startIndex, startIndex + itemsPerPage);
+  const list = useMemo(() => (Array.isArray(enis) ? enis : []), [enis]);
+  const totalItems = list.length;
+  const totalPages = Math.max(1, Math.ceil(Math.max(totalItems, 1) / ITEMS_PER_PAGE));
+  const currentItems = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return list.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [list, currentPage]);
 
-  const handlePreviousPage = () => {
-    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
-  };
+  const stats = useMemo(() => {
+    let totalIps = 0;
+    let attachedCount = 0;
+    list.forEach((eni) => {
+      const record = eni.network_interface ?? eni;
+      const ips = record?.private_ip_addresses ?? eni.private_ip_addresses ?? [];
+      totalIps += ips.length;
+      if (record?.attachment?.instance_id || record?.attachment?.id) {
+        attachedCount += 1;
+      }
+    });
+    const summary = [
+      {
+        label: "Network Interfaces",
+        value: list.length,
+        tone: list.length ? "primary" : "neutral",
+      },
+      {
+        label: "IP Addresses",
+        value: totalIps,
+        tone: totalIps ? "info" : "neutral",
+      },
+    ];
+    if (attachedCount) {
+      summary.push({ label: "Attached", value: attachedCount, tone: "success" });
+    }
+    if (region) {
+      summary.push({ label: "Region", value: region, tone: "info" });
+    }
+    return summary;
+  }, [list, region]);
 
-  const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
-  };
+  const lastActionToken = useRef(null);
+  const lastCountRef = useRef(-1);
+
+  useEffect(() => {
+    if (!isFetching) {
+      if (lastCountRef.current !== list.length) {
+        lastCountRef.current = list.length;
+        onStatsUpdate?.(list.length);
+      }
+    }
+  }, [list, isFetching, onStatsUpdate]);
+
+  useEffect(() => {
+    if (!actionRequest || actionRequest.resource !== "enis") {
+      return;
+    }
+    if (lastActionToken.current === actionRequest.token) {
+      return;
+    }
+    lastActionToken.current = actionRequest.token;
+
+    if (actionRequest.type === "sync") {
+      handleSync();
+    } else if (actionRequest.type === "create") {
+      setCreateModalOpen(true);
+    }
+
+    onActionHandled?.(actionRequest);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actionRequest]);
 
   const handleSync = () => {
     if (!projectId) {
@@ -54,14 +120,10 @@ const ENIs = ({
     syncEnis(
       { project_id: projectId, region },
       {
-        onSuccess: () => {
-          ToastUtils.success("Network interfaces synced with provider.");
-        },
+        onSuccess: () => ToastUtils.success("Network interfaces synced with provider."),
         onError: (err) => {
           console.error("Failed to sync network interfaces:", err);
-          ToastUtils.error(
-            err?.message || "Failed to sync network interfaces."
-          );
+          ToastUtils.error(err?.message || "Failed to sync network interfaces.");
         },
       }
     );
@@ -87,149 +149,212 @@ const ENIs = ({
         },
         onError: (err) => {
           console.error("Failed to delete network interface:", err);
-          ToastUtils.error(
-            err?.message || "Failed to delete network interface."
-          );
+          ToastUtils.error(err?.message || "Failed to delete network interface.");
           setDeleteModal(null);
         },
       }
     );
   };
 
-  const lastActionToken = useRef(null);
-  const lastCountRef = useRef(-1);
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  };
 
-  useEffect(() => {
-    const count = Array.isArray(items) ? items.length : 0;
-    if (lastCountRef.current !== count) {
-      lastCountRef.current = count;
-      onStatsUpdate?.(count);
-    }
-  }, [items, onStatsUpdate]);
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+  };
 
-  useEffect(() => {
-    if (!actionRequest || actionRequest.resource !== "enis") {
-      return;
-    }
-    if (lastActionToken.current === actionRequest.token) {
-      return;
-    }
-    lastActionToken.current = actionRequest.token;
+  const actions = [
+    <ModernButton
+      key="sync"
+      variant="outline"
+      size="sm"
+      leftIcon={<RefreshCw size={16} />}
+      onClick={handleSync}
+      isDisabled={isSyncing || !projectId}
+      isLoading={isSyncing}
+    >
+      {isSyncing ? "Syncing..." : "Sync ENIs"}
+    </ModernButton>,
+    <ModernButton
+      key="add"
+      variant="primary"
+      size="sm"
+      onClick={() => setCreateModalOpen(true)}
+      isDisabled={!projectId}
+    >
+      Add ENI
+    </ModernButton>,
+  ];
 
-    if (actionRequest.type === "sync") {
-      handleSync();
-    } else if (actionRequest.type === "create") {
-      setCreateModalOpen(true);
-    }
-
-    onActionHandled?.(actionRequest);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [actionRequest]);
-
-  if (isFetching) {
-    return (
-      <div className="flex items-center justify-center p-6 bg-gray-50 rounded-[10px] font-Outfit">
-        <p className="text-gray-500 text-sm">Loading Network Interfaces...</p>
+  const paginationControls =
+    totalItems > ITEMS_PER_PAGE ? (
+      <div className="mt-6 flex items-center justify-between text-sm text-gray-500">
+        <ModernButton
+          variant="outline"
+          size="sm"
+          onClick={handlePreviousPage}
+          isDisabled={currentPage === 1}
+        >
+          Previous
+        </ModernButton>
+        <span>
+          Page {currentPage} of {totalPages}
+        </span>
+        <ModernButton
+          variant="outline"
+          size="sm"
+          onClick={handleNextPage}
+          isDisabled={currentPage === totalPages}
+        >
+          Next
+        </ModernButton>
       </div>
+    ) : null;
+
+  const emptyState = (
+    <ResourceEmptyState
+      title="No Network Interfaces"
+      message="Sync from your provider or create a network interface to expand connectivity."
+      action={
+        <ModernButton
+          variant="primary"
+          size="sm"
+          onClick={() => setCreateModalOpen(true)}
+          isDisabled={!projectId}
+        >
+          Create ENI
+        </ModernButton>
+      }
+    />
+  );
+
+  const renderIps = (eniRecord) => {
+    const ips = eniRecord?.private_ip_addresses ?? [];
+    if (!ips.length) {
+      return <p className="text-sm text-slate-500">No private addresses</p>;
+    }
+    return (
+      <ul className="space-y-1 text-sm text-slate-600">
+        {ips.map((ip, index) => {
+          const value = typeof ip === "string" ? ip : ip?.private_ip_address;
+          return (
+            <li key={`${eniRecord.id}-ip-${index}`}>{value || "—"}</li>
+          );
+        })}
+      </ul>
     );
-  }
+  };
+
+  const renderCard = (eni) => {
+    const record = eni.network_interface ?? eni;
+    const id = record?.id ?? eni.id;
+    const attachment = record?.attachment ?? eni.attachment;
+    const statusRaw = record?.state ?? record?.status ?? eni.state ?? eni.status ?? "unknown";
+    const status = statusRaw || "unknown";
+    const securityGroups = record?.security_groups ?? eni.security_groups ?? [];
+    const primaryIp =
+      record?.private_ip_address ||
+      record?.private_ip ||
+      securityGroups?.[0]?.private_ip_address ||
+      record?.private_ip_addresses?.[0]?.private_ip_address ||
+      "—";
+    const macAddress = record?.mac_address || record?.mac || eni.mac_address || null;
+    const zone = record?.availability_zone || eni.availability_zone || null;
+
+    return (
+      <ResourceListCard
+        key={id}
+        title={record?.name || id}
+        subtitle={id}
+        metadata={[
+          { label: "Primary IP", value: primaryIp },
+          {
+            label: "Attachment",
+            value: attachment?.instance_id || attachment?.id || "None",
+          },
+          {
+            label: "Security Groups",
+            value: securityGroups.length,
+          },
+          macAddress ? { label: "MAC Address", value: macAddress } : null,
+          zone ? { label: "Availability Zone", value: zone } : null,
+        ].filter(Boolean)}
+        statuses={[
+          {
+            label: status,
+            tone: getToneForStatus(status),
+          },
+        ]}
+        actions={[
+          {
+            key: "manage-sg",
+            label: "Manage Security Groups",
+            icon: <Shield size={16} />,
+            onClick: () => setManageModal({ eni }),
+            disabled: !projectId,
+          },
+          {
+            key: "delete",
+            label: "Delete",
+            icon: <Trash2 size={16} />,
+            variant: "danger",
+            onClick: () => setDeleteModal({ eni }),
+            disabled: isDeleting,
+          },
+        ]}
+        footer={
+          <div className="space-y-3">
+            <div>
+              <h4 className="text-sm font-semibold text-slate-700">Private IP Addresses</h4>
+              {renderIps(record)}
+            </div>
+            {Array.isArray(securityGroups) && securityGroups.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-slate-700">
+                  Attached Security Groups
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {securityGroups.map((sg) => {
+                    const sgId = sg.id || sg.provider_resource_id;
+                    return (
+                      <span
+                        key={`${id}-sg-${sgId}`}
+                        className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600"
+                      >
+                        {sg.name || sgId}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        }
+      />
+    );
+  };
 
   return (
-    <div className="bg-gray-50 rounded-[10px] font-Outfit">
-      <div className="flex justify-end items-center gap-3 mb-6">
-        <button
-          onClick={handleSync}
-          disabled={isSyncing || !projectId}
-          className="rounded-[30px] py-3 px-6 border border-[#288DD1] text-[#288DD1] bg-white font-normal text-base hover:bg-[#288DD1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSyncing ? "Syncing..." : "Sync ENIs"}
-        </button>
-        <button
-          onClick={() => setCreateModalOpen(true)}
-          className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
-          disabled={!projectId}
-        >
-          Add ENI
-        </button>
-      </div>
-
-      {currentItems.length > 0 ? (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {currentItems.map((eni) => (
-              <div
-                key={eni.id}
-                className="p-4 bg-white rounded-[10px] shadow-sm border border-gray-200 flex flex-col justify-between"
-              >
-                <div className="flex-grow space-y-2 text-sm text-gray-500">
-                  <h3
-                    className="font-medium text-gray-800 truncate"
-                    title={eni.provider_resource_id}
-                  >
-                    {eni.provider_resource_id}
-                  </h3>
-                  <p>
-                    Provider:{" "}
-                    {typeof eni.provider === "string" &&
-                    eni.provider.trim() !== ""
-                      ? eni.provider.toUpperCase()
-                      : "N/A"}
-                  </p>
-                  <p>Region: {eni.region || "N/A"}</p>
-                  <p>Private IP: {eni.private_ip_address || "N/A"}</p>
-                  <p>Status: {eni.status || "unknown"}</p>
-                  <p>
-                    Security Groups:{" "}
-                    {Array.isArray(eni.security_groups)
-                      ? eni.security_groups.length
-                      : 0}
-                  </p>
-                </div>
-                <div className="mt-4 pt-3 border-t flex flex-wrap gap-2 text-xs">
-                  <button
-                    onClick={() => setManageModal({ eni })}
-                    className="px-3 py-1 rounded-full border border-[#288DD1] text-[#288DD1] hover:bg-[#E6F2FA] transition-colors"
-                  >
-                    Manage Security Groups
-                  </button>
-                  <button
-                    onClick={() => setDeleteModal({ eni })}
-                    disabled={isDeleting}
-                    className="px-3 py-1 rounded-full border border-red-500 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6">
-              <button
-                onClick={handlePreviousPage}
-                disabled={currentPage === 1}
-                className="px-4 py-2 bg-[#288DD1] text-white rounded-[30px] font-medium text-sm hover:bg-[#1976D2] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-              <div className="text-sm text-gray-600">
-                Page {currentPage} of {totalPages}
-              </div>
-              <button
-                onClick={handleNextPage}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 bg-[#288DD1] text-white rounded-[30px] font-medium text-sm hover:bg-[#1976D2] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
+    <>
+      <ResourceSection
+        title="Elastic Network Interfaces"
+        description="Provision additional network adapters for granular connectivity and IP management."
+        actions={actions}
+        meta={stats}
+        isLoading={isFetching}
+      >
+        {currentItems.length > 0 ? (
+          <>
+            <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+              {currentItems.map(renderCard)}
             </div>
-          )}
-        </>
-      ) : (
-        <p className="text-gray-500 text-sm">
-          No Network Interfaces found for this project.
-        </p>
-      )}
+            {paginationControls}
+          </>
+        ) : (
+          emptyState
+        )}
+      </ResourceSection>
 
       <AddEniModal
         isOpen={isCreateModalOpen}
@@ -238,22 +363,20 @@ const ENIs = ({
         region={region}
       />
       <DeleteEniModal
-        isOpen={!!deleteModal}
+        isOpen={Boolean(deleteModal)}
         onClose={() => setDeleteModal(null)}
-        eniName={
-          deleteModal?.eni?.provider_resource_id || deleteModal?.eni?.id || ""
-        }
         onConfirm={handleDelete}
+        eniName={deleteModal?.eni?.provider_resource_id || deleteModal?.eni?.id || ""}
         isDeleting={isDeleting}
       />
       <ManageEniSecurityGroupsModal
-        isOpen={!!manageModal}
+        isOpen={Boolean(manageModal)}
         onClose={() => setManageModal(null)}
         projectId={projectId}
         region={region}
-        eni={manageModal?.eni}
+        eni={manageModal?.eni || null}
       />
-    </div>
+    </>
   );
 };
 

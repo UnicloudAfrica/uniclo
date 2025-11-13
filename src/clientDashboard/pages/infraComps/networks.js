@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Eye, RefreshCw, MapPin } from "lucide-react";
 import {
@@ -144,7 +144,7 @@ const NetworkDetailsModal = ({ network, isOpen, onClose }) => {
   );
 };
 
-const Networks = ({ projectId = "", region = "" }) => {
+const Networks = ({ projectId = "", region = "", onStatsUpdate }) => {
   const queryClient = useQueryClient();
   const { data: networks, isFetching } = useFetchClientNetworks(
     projectId,
@@ -166,6 +166,10 @@ const Networks = ({ projectId = "", region = "" }) => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredNetworks.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [filteredNetworks, currentPage]);
+
+  useEffect(() => {
+    onStatsUpdate?.(filteredNetworks.length);
+  }, [filteredNetworks, onStatsUpdate]);
 
   const stats = useMemo(() => {
     const uniqueVpcs = new Set(

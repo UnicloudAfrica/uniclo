@@ -1,14 +1,28 @@
-import { useEffect, useRef, useState } from "react";
-import { Eye, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Eye, Trash2, RefreshCw, ShieldCheck } from "lucide-react";
+import ModernButton from "../../../adminDashboard/components/ModernButton";
+import ResourceSection from "../../../adminDashboard/components/ResourceSection";
+import ResourceEmptyState from "../../../adminDashboard/components/ResourceEmptyState";
+import ResourceListCard from "../../../adminDashboard/components/ResourceListCard";
 import {
-  useDeleteTenantSecurityGroup,
   useFetchTenantSecurityGroups,
+  useDeleteTenantSecurityGroup,
   useSyncTenantSecurityGroups,
 } from "../../../hooks/securityGroupHooks";
 import AddSG from "../sgComps/addSG";
-import ViewSGModal from "../sgComps/viewSG";
 import DeleteSGModal from "../sgComps/deleteSG";
+import ViewSGModal from "../sgComps/viewSG";
 import ToastUtils from "../../../utils/toastUtil";
+
+const ITEMS_PER_PAGE = 6;
+
+const getToneForStatus = (status = "") => {
+  const normalized = status.toString().toLowerCase();
+  if (["active", "available", "in-use"].includes(normalized)) return "success";
+  if (["pending", "creating", "syncing"].includes(normalized)) return "warning";
+  if (["failed", "error"].includes(normalized)) return "danger";
+  return "neutral";
+};
 
 const SecurityGroup = ({
   projectId = "",
@@ -21,51 +35,47 @@ const SecurityGroup = ({
     useFetchTenantSecurityGroups(projectId, region);
   const { mutate: deleteSecurityGroup, isPending: isDeleting } =
     useDeleteTenantSecurityGroup();
-  const { mutate: syncSecurityGroups, isPending: isSyncing } =
-    useSyncTenantSecurityGroups();
+  const { mutate: syncSecurityGroups } = useSyncTenantSecurityGroups();
+
   const [isCreateModalOpen, setCreateModal] = useState(false);
-  const [deleteModal, setDeleteModal] = useState(null); // { id, name }
-  const [viewModal, setViewModal] = useState(null); // securityGroup object
-  const openCreateModal = () => setCreateModal(true);
-  const closeCreateModal = () => setCreateModal(false);
+  const [deleteModal, setDeleteModal] = useState(null);
+  const [viewModal, setViewModal] = useState(null);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const lastActionToken = useRef(null);
 
-  // Pagination logic
-  const totalItems = securityGroups?.length || 0;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentSecurityGroups =
-    securityGroups?.slice(startIndex, endIndex) || [];
+  const totalItems = securityGroups?.length ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const paginatedSecurityGroups = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return (securityGroups ?? []).slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [securityGroups, currentPage]);
 
-  const handlePreviousPage = () => {
-    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
-  };
-
-  const handleDelete = () => {
-    if (!deleteModal) return;
-    deleteSecurityGroup(deleteModal.id, {
-      onSuccess: () => {
-        setDeleteModal(null);
+  const stats = useMemo(() => {
+    const base = [
+      {
+        label: "Total Security Groups",
+        value: totalItems,
+        tone: totalItems ? "primary" : "neutral",
+        icon: <ShieldCheck size={16} />,
       },
-      onError: (err) => {
-        console.error("Failed to delete Security Group:", err);
-        setDeleteModal(null);
-      },
-    });
-  };
+    ];
+    if (region) {
+      base.push({
+        label: "Region",
+        value: region,
+        tone: "info",
+      });
+    }
+    return base;
+  }, [totalItems, region]);
 
   const handleSync = () => {
     if (!projectId) {
       ToastUtils.error("Project context is required to sync security groups.");
       return;
     }
-
+    setIsSyncing(true);
     syncSecurityGroups(
       { project_id: projectId, region },
       {
@@ -73,180 +83,207 @@ const SecurityGroup = ({
           ToastUtils.success("Security groups synced with provider.");
         },
         onError: (err) => {
-          console.error("Failed to sync security groups:", err);
           ToastUtils.error(err?.message || "Failed to sync security groups.");
+        },
+        onSettled: () => {
+          setIsSyncing(false);
         },
       }
     );
   };
 
-  const lastActionToken = useRef(null);
-  const lastCountRef = useRef(-1);
+  const handleDelete = () => {
+    if (!deleteModal) return;
+    deleteSecurityGroup(deleteModal.id, {
+      onSuccess: () => {
+        ToastUtils.success(`Deleted security group "${deleteModal.name}".`);
+        setDeleteModal(null);
+      },
+      onError: (err) => {
+        ToastUtils.error(err?.message || "Failed to delete security group.");
+        setDeleteModal(null);
+      },
+    });
+  };
 
-  useEffect(() => {
-    if (!isFetching) {
-      const count = Array.isArray(securityGroups)
-        ? securityGroups.length
-        : 0;
-      if (lastCountRef.current !== count) {
-        lastCountRef.current = count;
-        onStatsUpdate?.(count);
-      }
-    }
-  }, [isFetching, securityGroups, onStatsUpdate]);
+  const actions = [
+    <ModernButton
+      key="sync"
+      variant="outline"
+      size="sm"
+      leftIcon={<RefreshCw size={16} />}
+      onClick={handleSync}
+      isDisabled={!projectId || isSyncing}
+      isLoading={isSyncing}
+    >
+      {isSyncing ? "Syncing..." : "Sync Security Groups"}
+    </ModernButton>,
+    <ModernButton
+      key="add"
+      variant="primary"
+      size="sm"
+      onClick={() => setCreateModal(true)}
+      isDisabled={!projectId}
+    >
+      Add Security Group
+    </ModernButton>,
+  ];
 
-  useEffect(() => {
-    if (!actionRequest || actionRequest.resource !== "securityGroups") {
-      return;
-    }
-    if (lastActionToken.current === actionRequest.token) {
-      return;
-    }
+  const renderSecurityGroupCard = (securityGroup) => {
+    const inboundRules =
+      securityGroup.ingress_rules?.length ??
+      securityGroup.inbound_rules?.length ??
+      securityGroup.rules?.inbound?.length ??
+      0;
+    const outboundRules =
+      securityGroup.egress_rules?.length ??
+      securityGroup.outbound_rules?.length ??
+      securityGroup.rules?.outbound?.length ??
+      0;
+    const status =
+      securityGroup.status || securityGroup.state || "Not specified";
+
+    return (
+      <ResourceListCard
+        key={securityGroup.id}
+        title={securityGroup.name || securityGroup.id}
+        subtitle={securityGroup.id}
+        metadata={[
+          { label: "Region", value: securityGroup.region || region || "—" },
+          { label: "Inbound Rules", value: inboundRules },
+          { label: "Outbound Rules", value: outboundRules },
+          securityGroup.description
+            ? { label: "Description", value: securityGroup.description }
+            : null,
+        ].filter(Boolean)}
+        statuses={[
+          {
+            label: status,
+            tone: getToneForStatus(status),
+          },
+        ]}
+        actions={[
+          {
+            key: "inspect",
+            label: "Inspect",
+            icon: <Eye size={16} />,
+            variant: "ghost",
+            onClick: () => setViewModal(securityGroup),
+          },
+          {
+            key: "remove",
+            label: "Remove",
+            icon: <Trash2 size={16} />,
+            variant: "danger",
+            onClick: () =>
+              setDeleteModal({
+                id: securityGroup.id,
+                name: securityGroup.name,
+              }),
+            disabled: isDeleting,
+          },
+        ]}
+      />
+    );
+  };
+
+  const handleActionRequest = () => {
+    if (!actionRequest || actionRequest.resource !== "securityGroups") return;
+    if (lastActionToken.current === actionRequest.token) return;
     lastActionToken.current = actionRequest.token;
 
     if (actionRequest.type === "sync") {
       handleSync();
     } else if (actionRequest.type === "create") {
-      openCreateModal();
+      setCreateModal(true);
     }
 
     onActionHandled?.(actionRequest);
+  };
+
+  useEffect(() => {
+    handleActionRequest();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actionRequest]);
 
-  if (isFetching) {
-    return (
-      <div className="flex items-center justify-center p-6 bg-gray-50 rounded-lg">
-        <p>Loading security groups...</p>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!isFetching) {
+      onStatsUpdate?.(totalItems);
+    }
+  }, [isFetching, onStatsUpdate, totalItems]);
 
   return (
     <>
-      <div className="bg-gray-50 rounded-[10px] font-Outfit">
-        <div className="flex justify-end items-center gap-3 mb-6">
-          <button
-            onClick={handleSync}
-            disabled={isSyncing || !projectId}
-            className="rounded-[30px] py-3 px-6 border border-[#288DD1] text-[#288DD1] bg-white font-normal text-base hover:bg-[#288DD1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSyncing ? "Syncing..." : "Sync Security Groups"}
-          </button>
-          <button
-            onClick={openCreateModal}
-            className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
-          >
-            Add SG
-          </button>
-        </div>
-        {currentSecurityGroups && currentSecurityGroups.length > 0 ? (
+      <ResourceSection
+        title="Security Groups"
+        description="Manage firewall rules that control inbound and outbound access to project resources."
+        actions={actions}
+        meta={stats}
+        isLoading={isFetching}
+      >
+        {paginatedSecurityGroups.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {currentSecurityGroups.map((securityGroup) => (
-                <div
-                  key={securityGroup.id}
-                  className="p-4 bg-white rounded-[10px] shadow-sm border border-gray-200 flex flex-col justify-between"
-                >
-                  <div className="flex-grow">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3
-                        className="font-medium text-gray-800 truncate pr-2"
-                        title={securityGroup.name}
-                      >
-                        {securityGroup.name}
-                      </h3>
-                      <div className="flex-shrink-0 flex items-center space-x-2">
-                        <button
-                          onClick={() => setViewModal(securityGroup)}
-                          className="text-gray-400 hover:text-[#288DD1] transition-colors"
-                          title="View Security Group Details"
-                        >
-                          <Eye className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() =>
-                            setDeleteModal({
-                              id: securityGroup.id,
-                              name: securityGroup.name,
-                            })
-                          }
-                          disabled={isDeleting}
-                          className="text-gray-400 hover:text-red-500 transition-colors"
-                          title="Delete Security Group"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="space-y-1 text-sm text-gray-500">
-                      <p
-                        className="truncate"
-                        title={securityGroup.description || "No description"}
-                      >
-                        Description: {securityGroup.description || "N/A"}
-                      </p>
-                      <p>
-                        Provider:{" "}
-                        {typeof securityGroup.provider === "string" &&
-                        securityGroup.provider.trim() !== ""
-                          ? securityGroup.provider.toUpperCase()
-                          : "N/A"}
-                      </p>
-                      <p>Region: {securityGroup.region}</p>
-                      <p
-                        className="truncate"
-                        title={securityGroup.provider_resource_id}
-                      >
-                        Resource ID:{" "}
-                        {securityGroup.provider_resource_id || "N/A"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+              {paginatedSecurityGroups.map(renderSecurityGroupCard)}
             </div>
             {totalPages > 1 && (
-              <div className="flex items-center justify-between mt-6">
-                <button
-                  onClick={handlePreviousPage}
-                  disabled={currentPage === 1}
-                  className="px-4 py-2 bg-[#288DD1] text-white rounded-[30px] font-medium text-sm hover:bg-[#1976D2] disabled:opacity-50 disabled:cursor-not-allowed"
+              <div className="mt-6 flex items-center justify-between text-sm text-gray-500">
+                <ModernButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
+                  isDisabled={currentPage === 1}
                 >
                   Previous
-                </button>
-                <div className="text-sm text-gray-600">
+                </ModernButton>
+                <span>
                   Page {currentPage} of {totalPages}
-                </div>
-                <button
-                  onClick={handleNextPage}
-                  disabled={currentPage === totalPages}
-                  className="px-4 py-2 bg-[#288DD1] text-white rounded-[30px] font-medium text-sm hover:bg-[#1976D2] disabled:opacity-50 disabled:cursor-not-allowed"
+                </span>
+                <ModernButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                  }
+                  isDisabled={currentPage === totalPages}
                 >
                   Next
-                </button>
+                </ModernButton>
               </div>
             )}
           </>
         ) : (
-          <p className="text-gray-500">
-            No security groups found for this project.
-          </p>
+          <ResourceEmptyState
+            title="No Security Groups"
+            message="Create a security group or sync from your cloud account to begin defining access policies."
+            action={
+              <ModernButton
+                variant="primary"
+                onClick={() => setCreateModal(true)}
+                isDisabled={!projectId}
+              >
+                New Security Group
+              </ModernButton>
+            }
+          />
         )}
-      </div>
-      {/* Placeholder for modals */}
+      </ResourceSection>
+
       <AddSG
         isOpen={isCreateModalOpen}
-        onClose={closeCreateModal}
+        onClose={() => setCreateModal(false)}
         projectId={projectId}
+        region={region}
       />
       <ViewSGModal
-        isOpen={!!viewModal}
+        isOpen={Boolean(viewModal)}
         onClose={() => setViewModal(null)}
         securityGroup={viewModal}
       />
       <DeleteSGModal
-        isOpen={!!deleteModal}
+        isOpen={Boolean(deleteModal)}
         onClose={() => setDeleteModal(null)}
         securityGroupName={deleteModal?.name || ""}
         onConfirm={handleDelete}

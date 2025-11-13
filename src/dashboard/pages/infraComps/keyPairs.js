@@ -1,13 +1,19 @@
-import { useEffect, useRef, useState } from "react";
-import { Trash2, X, Loader2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { MapPin, RefreshCw, Trash2, KeyRound } from "lucide-react";
+import ModernButton from "../../../adminDashboard/components/ModernButton";
+import ResourceSection from "../../../adminDashboard/components/ResourceSection";
+import ResourceEmptyState from "../../../adminDashboard/components/ResourceEmptyState";
+import ResourceListCard from "../../../adminDashboard/components/ResourceListCard";
 import {
-  useDeleteTenantKeyPair,
   useFetchTenantKeyPairs,
+  useDeleteTenantKeyPair,
   useSyncTenantKeyPairs,
 } from "../../../hooks/keyPairsHook";
 import AddKeyTenantPair from "../keyPairComps/addKeyPair";
 import DeleteKeyPairModal from "../keyPairComps/deleteKeyPair";
 import ToastUtils from "../../../utils/toastUtil";
+
+const ITEMS_PER_PAGE = 6;
 
 const KeyPairs = ({
   projectId = "",
@@ -22,61 +28,48 @@ const KeyPairs = ({
   );
   const { mutate: deleteKeyPair, isPending: isDeleting } =
     useDeleteTenantKeyPair();
-  const { mutate: syncKeyPairs, isPending: isSyncing } =
-    useSyncTenantKeyPairs();
+  const { mutate: syncKeyPairs } = useSyncTenantKeyPairs();
+
   const [isCreateModalOpen, setCreateModal] = useState(false);
-  const [deleteModal, setDeleteModal] = useState(null); // { keyPairId, keyPairName } or null
+  const [deleteModal, setDeleteModal] = useState(null);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6; // Number of key pairs per page
 
-  const openCreateModal = () => setCreateModal(true);
-  const closeCreateModal = () => setCreateModal(false);
-  const openDeleteModal = (keyPairId, keyPairName) =>
-    setDeleteModal({ keyPairId, keyPairName });
-  const closeDeleteModal = () => setDeleteModal(null);
+  const lastActionToken = useRef(null);
 
-  // Pagination logic
-  const totalItems = keyPairs?.length || 0;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentKeyPairs = keyPairs?.slice(startIndex, endIndex) || [];
+  const totalItems = keyPairs?.length ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+  const paginatedKeyPairs = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return (keyPairs ?? []).slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [keyPairs, currentPage]);
 
-  const handlePreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
-    }
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
-
-  const handleDelete = () => {
-    if (!deleteModal) return;
-
-    const { keyPairId, keyPairName } = deleteModal;
-    deleteKeyPair(keyPairId, {
-      onSuccess: () => {
-        // ToastUtils.success(`Key pair "${keyPairName}" deleted successfully!`);
-        closeDeleteModal();
+  const stats = useMemo(() => {
+    const baseStats = [
+      {
+        label: "Total Key Pairs",
+        value: totalItems,
+        tone: "primary",
+        icon: <KeyRound size={16} />,
       },
-      onError: (err) => {
-        console.error("Failed to delete key pair:", err);
-        // ToastUtils.error("Failed to delete key pair. Please try again.");
-        closeDeleteModal();
-      },
-    });
-  };
+    ];
+    if (region) {
+      baseStats.push({
+        label: "Region",
+        value: region,
+        tone: "info",
+        icon: <MapPin size={16} />,
+      });
+    }
+    return baseStats;
+  }, [totalItems, region]);
 
   const handleSync = () => {
     if (!projectId) {
-      ToastUtils.error("Project context is required to sync key pairs.");
+      ToastUtils.error("Provide a project before syncing key pairs.");
       return;
     }
-
+    setIsSyncing(true);
     syncKeyPairs(
       { project_id: projectId, region },
       {
@@ -84,142 +77,182 @@ const KeyPairs = ({
           ToastUtils.success("Key pairs synced with provider.");
         },
         onError: (err) => {
-          console.error("Failed to sync key pairs:", err);
           ToastUtils.error(err?.message || "Failed to sync key pairs.");
+        },
+        onSettled: () => {
+          setIsSyncing(false);
         },
       }
     );
   };
 
-  const lastActionToken = useRef(null);
-  const lastCountRef = useRef(-1);
+  const handleDelete = () => {
+    if (!deleteModal) return;
+    deleteKeyPair(deleteModal.id, {
+      onSuccess: () => {
+        ToastUtils.success(`Deleted key pair "${deleteModal.name}".`);
+        setDeleteModal(null);
+      },
+      onError: (error) => {
+        ToastUtils.error(error?.message || "Failed to delete key pair.");
+        setDeleteModal(null);
+      },
+    });
+  };
 
-  useEffect(() => {
-    if (!isFetching) {
-      const count = Array.isArray(keyPairs) ? keyPairs.length : 0;
-      if (lastCountRef.current !== count) {
-        lastCountRef.current = count;
-        onStatsUpdate?.(count);
-      }
-    }
-  }, [isFetching, keyPairs, onStatsUpdate]);
+  const actions = [
+    <ModernButton
+      key="sync"
+      variant="outline"
+      size="sm"
+      leftIcon={<RefreshCw size={16} />}
+      onClick={handleSync}
+      isDisabled={!projectId || isSyncing}
+      isLoading={isSyncing}
+    >
+      {isSyncing ? "Syncing..." : "Sync Key Pairs"}
+    </ModernButton>,
+    <ModernButton
+      key="add"
+      variant="primary"
+      size="sm"
+      onClick={() => setCreateModal(true)}
+      isDisabled={!projectId}
+    >
+      Add Key Pair
+    </ModernButton>,
+  ];
 
-  useEffect(() => {
-    if (!actionRequest || actionRequest.resource !== "keyPairs") {
-      return;
-    }
-    if (lastActionToken.current === actionRequest.token) {
-      return;
-    }
+  const renderKeyPairCard = (keyPair) => (
+    <ResourceListCard
+      key={keyPair.id}
+      title={keyPair.name}
+      subtitle={keyPair.fingerprint}
+      metadata={[
+        { label: "Region", value: keyPair.region || region || "—" },
+        keyPair.created_at
+          ? {
+              label: "Created",
+              value: new Date(keyPair.created_at).toLocaleString(),
+            }
+          : null,
+      ].filter(Boolean)}
+      actions={[
+        {
+          key: "remove",
+          label: "Remove",
+          icon: <Trash2 size={16} />,
+          variant: "danger",
+          onClick: () =>
+            setDeleteModal({
+              id: keyPair.id,
+              name: keyPair.name,
+            }),
+          disabled: isDeleting,
+        },
+      ]}
+    />
+  );
+
+  const handleActionRequest = () => {
+    if (!actionRequest || actionRequest.resource !== "keyPairs") return;
+    if (lastActionToken.current === actionRequest.token) return;
     lastActionToken.current = actionRequest.token;
 
     if (actionRequest.type === "sync") {
       handleSync();
     } else if (actionRequest.type === "create") {
-      openCreateModal();
+      setCreateModal(true);
     }
 
     onActionHandled?.(actionRequest);
+  };
+
+  useEffect(() => {
+    handleActionRequest();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actionRequest]);
 
-  if (isFetching) {
-    return (
-      <div className="flex items-center justify-center mt-6 bg-gray-50 rounded-[10px] font-Outfit">
-        <p className="text-gray-500 text-sm">Loading key pairs...</p>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!isFetching) {
+      onStatsUpdate?.(totalItems);
+    }
+  }, [isFetching, onStatsUpdate, totalItems]);
 
   return (
-    <div className="bg-gray-50 rounded-[10px] pfont-Outfit">
-      <div className="flex justify-end items-center gap-3 mb-6">
-        {/* <h2 className="text-lg font-semibold text-[#575758]">Key Pairs</h2> */}
-        <button
-          onClick={handleSync}
-          disabled={isSyncing || !projectId}
-          className="rounded-[30px] py-3 px-6 border border-[#288DD1] text-[#288DD1] bg-white font-normal text-base hover:bg-[#288DD1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSyncing ? "Syncing..." : "Sync Key Pairs"}
-        </button>
-        <button
-          onClick={openCreateModal}
-          className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
-        >
-          Add Key Pair
-        </button>
-      </div>
-
-      {keyPairs && keyPairs.length > 0 ? (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {currentKeyPairs.map((keyPair) => (
-              <div
-                key={keyPair.id}
-                className="p-4 bg-white rounded-[10px] shadow-sm border border-gray-200 w-full max-w-full relative"
-              >
-                <h3 className="font-medium text-gray-800">{keyPair.name}</h3>
-                <p
-                  className="text-sm text-gray-500 mt-1 break-words"
-                  title={keyPair.fingerprint}
-                >
-                  Fingerprint: {keyPair.fingerprint}
-                </p>
-                <button
-                  onClick={() => openDeleteModal(keyPair.id, keyPair.name)}
-                  disabled={isDeleting}
-                  className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-colors"
-                  title="Delete Key Pair"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6">
-              <button
-                onClick={handlePreviousPage}
-                disabled={currentPage === 1}
-                className="px-4 py-2 bg-[#288DD1] text-white rounded-[30px] font-medium text-sm hover:bg-[#1976D2] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-              <div className="text-sm text-gray-600">
-                Page {currentPage} of {totalPages}
-              </div>
-              <button
-                onClick={handleNextPage}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 bg-[#288DD1] text-white rounded-[30px] font-medium text-sm hover:bg-[#1976D2] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
+    <>
+      <ResourceSection
+        title="Key Pairs"
+        description="Provision SSH key material to grant secure access to managed compute resources."
+        actions={actions}
+        meta={stats}
+        isLoading={isFetching}
+      >
+        {paginatedKeyPairs.length > 0 ? (
+          <>
+            <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+              {paginatedKeyPairs.map(renderKeyPairCard)}
             </div>
-          )}
-        </>
-      ) : (
-        <p className="text-gray-500 text-sm">
-          No key pairs found for this project.
-        </p>
-      )}
+
+            {totalPages > 1 && (
+              <div className="mt-6 flex items-center justify-between text-sm text-gray-500">
+                <ModernButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
+                  isDisabled={currentPage === 1}
+                >
+                  Previous
+                </ModernButton>
+                <span>
+                  Page {currentPage} of {totalPages}
+                </span>
+                <ModernButton
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                  }
+                  isDisabled={currentPage === totalPages}
+                >
+                  Next
+                </ModernButton>
+              </div>
+            )}
+          </>
+        ) : (
+          <ResourceEmptyState
+            title="No Key Pairs"
+            message="Synchronize key pairs from your cloud account or create a new key pair for secure SSH operations."
+            action={
+              <ModernButton
+                variant="primary"
+                onClick={() => setCreateModal(true)}
+                isDisabled={!projectId}
+              >
+                Create Key Pair
+              </ModernButton>
+            }
+          />
+        )}
+      </ResourceSection>
 
       <AddKeyTenantPair
         isOpen={isCreateModalOpen}
-        onClose={closeCreateModal}
+        onClose={() => setCreateModal(false)}
         projectId={projectId}
+        region={region}
       />
-
       <DeleteKeyPairModal
-        isOpen={!!deleteModal}
-        onClose={closeDeleteModal}
-        keyPairName={deleteModal?.keyPairName || ""}
+        isOpen={Boolean(deleteModal)}
+        onClose={() => setDeleteModal(null)}
+        keyPairName={deleteModal?.name || ""}
         onConfirm={handleDelete}
         isDeleting={isDeleting}
       />
-    </div>
+    </>
   );
 };
 

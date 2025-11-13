@@ -1,15 +1,30 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Activity, Link2, Link2Off, MapPin, RefreshCw, Trash2 } from "lucide-react";
 import {
   useDeleteTenantElasticIp,
   useFetchTenantElasticIps,
   useSyncTenantElasticIps,
 } from "../../../hooks/elasticIPHooks";
-import { Trash2 } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import AddEip from "../eipComponents/addEip";
 import DeleteEipModal from "../eipComponents/deleteEip";
 import AssociateEipModal from "../eipComponents/associateEip";
 import DisassociateEipModal from "../eipComponents/disassociateEip";
+import ResourceSection from "../../../adminDashboard/components/ResourceSection";
+import ResourceEmptyState from "../../../adminDashboard/components/ResourceEmptyState";
+import ResourceListCard from "../../../adminDashboard/components/ResourceListCard";
+import ModernButton from "../../../adminDashboard/components/ModernButton";
+
+const ITEMS_PER_PAGE = 6;
+
+const getToneForStatus = (status = "") => {
+  const normalized = status.toString().toLowerCase();
+  if (["in-use", "associated", "allocated"].includes(normalized)) return "success";
+  if (["available", "released"].includes(normalized)) return "info";
+  if (["pending", "allocating"].includes(normalized)) return "warning";
+  if (["error", "failed"].includes(normalized)) return "danger";
+  return "neutral";
+};
 
 const EIPs = ({
   projectId = "",
@@ -18,99 +33,66 @@ const EIPs = ({
   onActionHandled,
   onStatsUpdate,
 }) => {
-  const { data: eips, isFetching } = useFetchTenantElasticIps(
-    projectId,
-    region
-  );
-  const { mutate: deleteElasticIp, isPending: isDeleting } =
-    useDeleteTenantElasticIp();
-  const { mutate: syncElasticIps, isPending: isSyncing } =
-    useSyncTenantElasticIps();
+  const { data: eips, isFetching } = useFetchTenantElasticIps(projectId, region);
+  const { mutate: deleteElasticIp, isPending: isDeleting } = useDeleteTenantElasticIp();
+  const { mutate: syncElasticIps, isPending: isSyncing } = useSyncTenantElasticIps();
+
   const [isCreateModalOpen, setCreateModal] = useState(false);
-  const [deleteModal, setDeleteModal] = useState(null); // { id, name }
-  const [associateModal, setAssociateModal] = useState(null); // { eip }
-  const [disassociateModal, setDisassociateModal] = useState(null); // { eip }
-  const openCreateModal = () => setCreateModal(true);
-  const closeCreateModal = () => setCreateModal(false);
-  const openDeleteModal = (eip) =>
-    setDeleteModal({
-      id: eip.id ?? eip.provider_resource_id,
-      name: eip.address || eip.public_ip,
-      allocationId: eip.provider_resource_id || eip.public_ip,
-    });
-  const closeDeleteModal = () => setDeleteModal(null);
-
-  const handleDelete = () => {
-    if (!deleteModal) return;
-    const { id, allocationId } = deleteModal;
-    const payload = {
-      project_id: projectId,
-      region: region,
-      elastic_ip_id: allocationId,
-    };
-
-    deleteElasticIp(
-      { id, payload },
-      {
-        onSuccess: () => {
-          closeDeleteModal();
-        },
-        onError: (err) => {
-          console.error("Failed to delete EIP:", err);
-          closeDeleteModal();
-        },
-      }
-    );
-  };
-
+  const [deleteModal, setDeleteModal] = useState(null);
+  const [associateModal, setAssociateModal] = useState(null);
+  const [disassociateModal, setDisassociateModal] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
 
-  // Pagination logic
-  const totalItems = eips?.length || 0;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentEips = eips?.slice(startIndex, endIndex) || [];
+  const list = useMemo(() => (Array.isArray(eips) ? eips : []), [eips]);
+  const totalItems = list.length;
+  const totalPages = Math.max(1, Math.ceil(Math.max(totalItems, 1) / ITEMS_PER_PAGE));
+  const currentItems = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return list.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [list, currentPage]);
 
-  const handlePreviousPage = () => {
-    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
-  };
+  const availableCount = useMemo(
+    () => list.filter((eip) => (eip.status || "").toString().toLowerCase() === "available").length,
+    [list]
+  );
+  const allocatedCount = totalItems - availableCount;
 
-  const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
-  };
-
-  const handleSync = () => {
-    if (!projectId) {
-      ToastUtils.error("Project context is required to sync Elastic IPs.");
-      return;
-    }
-
-    syncElasticIps(
-      { project_id: projectId, region },
+  const stats = useMemo(() => {
+    const summary = [
       {
-        onSuccess: () => {
-          ToastUtils.success("Elastic IPs synced with provider.");
-        },
-        onError: (err) => {
-          console.error("Failed to sync Elastic IPs:", err);
-          ToastUtils.error(err?.message || "Failed to sync Elastic IPs.");
-        },
-      }
-    );
-  };
+        label: "Elastic IPs",
+        value: totalItems,
+        tone: totalItems ? "primary" : "neutral",
+        icon: <Activity size={16} />,
+      },
+      {
+        label: "Allocated",
+        value: allocatedCount,
+        tone: allocatedCount ? "success" : "neutral",
+      },
+      {
+        label: "Available",
+        value: availableCount,
+        tone: availableCount ? "info" : "neutral",
+      },
+    ];
+    if (region) {
+      summary.push({ label: "Region", value: region, tone: "info", icon: <MapPin size={16} /> });
+    }
+    return summary;
+  }, [totalItems, allocatedCount, availableCount, region]);
 
   const lastActionToken = useRef(null);
   const lastCountRef = useRef(-1);
 
   useEffect(() => {
-    const count = Array.isArray(eips) ? eips.length : 0;
-    if (lastCountRef.current !== count) {
-      lastCountRef.current = count;
-      onStatsUpdate?.(count);
+    if (!isFetching) {
+      if (lastCountRef.current !== list.length) {
+        lastCountRef.current = list.length;
+        onStatsUpdate?.(list.length);
+      }
     }
-  }, [eips, onStatsUpdate]);
+  }, [list, isFetching, onStatsUpdate]);
 
   useEffect(() => {
     if (!actionRequest || actionRequest.resource !== "eips") {
@@ -124,156 +106,253 @@ const EIPs = ({
     if (actionRequest.type === "sync") {
       handleSync();
     } else if (actionRequest.type === "create") {
-      openCreateModal();
+      setCreateModal(true);
     }
 
     onActionHandled?.(actionRequest);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actionRequest]);
 
-  if (isFetching) {
-    return (
-      <div className="flex items-center justify-center p-6 bg-gray-50 rounded-lg">
-        <p>Loading EIPs...</p>
-      </div>
+  const handleSync = () => {
+    if (!projectId) {
+      ToastUtils.error("Project context is required to sync Elastic IPs.");
+      return;
+    }
+
+    syncElasticIps(
+      { project_id: projectId, region },
+      {
+        onSuccess: () => ToastUtils.success("Elastic IPs synced with provider."),
+        onError: (err) => {
+          console.error("Failed to sync Elastic IPs:", err);
+          ToastUtils.error(err?.message || "Failed to sync Elastic IPs.");
+        },
+      }
     );
-  }
+  };
+
+  const handleDelete = () => {
+    if (!deleteModal) return;
+    const { id, allocationId } = deleteModal;
+    const payload = {
+      project_id: projectId,
+      region,
+      elastic_ip_id: allocationId,
+    };
+
+    deleteElasticIp(
+      { id, payload },
+      {
+        onSuccess: () => {
+          ToastUtils.success("Elastic IP released");
+          setDeleteModal(null);
+        },
+        onError: (err) => {
+          console.error("Failed to delete EIP:", err);
+          ToastUtils.error(err?.message || "Failed to release Elastic IP.");
+          setDeleteModal(null);
+        },
+      }
+    );
+  };
+
+  const openDeleteModal = (eip) => {
+    setDeleteModal({
+      id: eip.id ?? eip.provider_resource_id,
+      allocationId: eip.provider_resource_id || eip.public_ip,
+      name: eip.address || eip.public_ip,
+    });
+  };
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+  };
+
+  const actions = [
+    <ModernButton
+      key="sync"
+      variant="outline"
+      size="sm"
+      leftIcon={<RefreshCw size={16} />}
+      onClick={handleSync}
+      isDisabled={isSyncing || !projectId}
+      isLoading={isSyncing}
+    >
+      {isSyncing ? "Syncing..." : "Sync Elastic IPs"}
+    </ModernButton>,
+    <ModernButton
+      key="add"
+      variant="primary"
+      size="sm"
+      onClick={() => setCreateModal(true)}
+      isDisabled={!projectId}
+    >
+      Allocate Elastic IP
+    </ModernButton>,
+  ];
+
+  const paginationControls =
+    totalItems > ITEMS_PER_PAGE ? (
+      <div className="mt-6 flex items-center justify-between text-sm text-gray-500">
+        <ModernButton
+          variant="outline"
+          size="sm"
+          onClick={handlePreviousPage}
+          isDisabled={currentPage === 1}
+        >
+          Previous
+        </ModernButton>
+        <span>
+          Page {currentPage} of {totalPages}
+        </span>
+        <ModernButton
+          variant="outline"
+          size="sm"
+          onClick={handleNextPage}
+          isDisabled={currentPage === totalPages}
+        >
+          Next
+        </ModernButton>
+      </div>
+    ) : null;
+
+  const emptyState = (
+    <ResourceEmptyState
+      title="No Elastic IPs"
+      message="Sync from your provider or allocate an elastic IP to expose workloads."
+      action={
+        <ModernButton
+          variant="primary"
+          size="sm"
+          onClick={() => setCreateModal(true)}
+          isDisabled={!projectId}
+        >
+          Allocate Elastic IP
+        </ModernButton>
+      }
+    />
+  );
+
+  const renderCard = (eip) => {
+    const status = eip.status || "unknown";
+    const allocationId = eip.provider_resource_id || eip.id;
+    const association =
+      eip.associated_network_interface_id ||
+      eip.associated_instance_id ||
+      eip.network_interface_id ||
+      eip.instance_id ||
+      null;
+    const associatedLabel = association ? association : "Not assigned";
+
+    return (
+      <ResourceListCard
+        key={eip.id}
+        title={eip.address || eip.public_ip || "Elastic IP"}
+        subtitle={allocationId}
+        metadata={[
+          { label: "Region", value: eip.region || region || "—" },
+          { label: "Pool", value: eip.pool_id || "—" },
+          { label: "Attached To", value: associatedLabel },
+          eip.created_at
+            ? {
+                label: "Allocated",
+                value: new Date(eip.created_at).toLocaleString(),
+              }
+            : null,
+        ].filter(Boolean)}
+        statuses={[
+          {
+            label: status,
+            tone: getToneForStatus(status),
+          },
+        ]}
+        actions={[
+          {
+            key: "delete",
+            label: "Release",
+            icon: <Trash2 size={16} />,
+            variant: "danger",
+            onClick: () => openDeleteModal(eip),
+            disabled: isDeleting,
+          },
+        ]}
+        footer={
+          <div className="flex flex-wrap gap-2">
+            <ModernButton
+              variant="outline"
+              size="sm"
+              leftIcon={<Link2 size={14} />}
+              onClick={() => setAssociateModal({ eip })}
+              isDisabled={!projectId}
+            >
+              Associate
+            </ModernButton>
+            <ModernButton
+              variant="outline"
+              size="sm"
+              leftIcon={<Link2Off size={14} />}
+              onClick={() => setDisassociateModal({ eip })}
+              isDisabled={!(association && projectId)}
+            >
+              Disassociate
+            </ModernButton>
+          </div>
+        }
+      />
+    );
+  };
 
   return (
     <>
-      <div className="bg-gray-50 rounded-[10px] font-Outfit">
-        <div className="flex justify-end items-center gap-3 mb-6">
-          <button
-            onClick={handleSync}
-            disabled={isSyncing || !projectId}
-            className="rounded-[30px] py-3 px-6 border border-[#288DD1] text-[#288DD1] bg-white font-normal text-base hover:bg-[#288DD1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSyncing ? "Syncing..." : "Sync Elastic IPs"}
-          </button>
-          <button
-            onClick={openCreateModal}
-            className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
-          >
-            Add EIP
-          </button>
-        </div>
-        {currentEips && currentEips.length > 0 ? (
+      <ResourceSection
+        title="Elastic IPs"
+        description="Allocate and manage public IP addresses for compute workloads."
+        actions={actions}
+        meta={stats}
+        isLoading={isFetching}
+      >
+        {currentItems.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {currentEips.map((eip) => (
-                <div
-                  key={eip.id}
-                  className="p-4 bg-white rounded-[10px] shadow-sm border border-gray-200 flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex justify-between items-start mb-2">
-                      <h3
-                        className="font-medium text-gray-800 truncate pr-2"
-                        title={eip.address}
-                      >
-                        {eip.address}
-                      </h3>
-                      <button
-                        onClick={() => openDeleteModal(eip)}
-                        disabled={isDeleting}
-                        className="text-gray-400 hover:text-red-500 transition-colors"
-                        title="Delete Elastic IP"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                    <div className="space-y-1 text-sm text-gray-500">
-                      <p>
-                        Provider:{" "}
-                        {typeof eip.provider === "string" &&
-                        eip.provider.trim() !== ""
-                          ? eip.provider.toUpperCase()
-                          : "N/A"}
-                      </p>
-                      <p>Region: {eip.region}</p>
-                      <p>Pool ID: {eip.pool_id}</p>
-                      <p>
-                        Status: <span className="capitalize">{eip.status}</span>
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-4 pt-3 border-t flex flex-wrap gap-2 text-xs">
-                    <button
-                      onClick={() => setAssociateModal({ eip })}
-                      className="px-3 py-1 rounded-full border border-[#288DD1] text-[#288DD1] hover:bg-[#E6F2FA] transition-colors"
-                    >
-                      Associate
-                    </button>
-                    <button
-                      onClick={() => setDisassociateModal({ eip })}
-                      disabled={
-                        !(
-                          eip.associated_network_interface_id ||
-                          eip.associated_instance_id
-                        )
-                      }
-                      className="px-3 py-1 rounded-full border border-amber-500 text-amber-600 hover:bg-amber-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Disassociate
-                    </button>
-                  </div>
-                </div>
-              ))}
+            <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+              {currentItems.map(renderCard)}
             </div>
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between mt-6">
-                <button
-                  onClick={handlePreviousPage}
-                  disabled={currentPage === 1}
-                  className="px-4 py-2 bg-[#288DD1] text-white rounded-[30px] font-medium text-sm hover:bg-[#1976D2] disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-                <div className="text-sm text-gray-600">
-                  Page {currentPage} of {totalPages}
-                </div>
-                <button
-                  onClick={handleNextPage}
-                  disabled={currentPage === totalPages}
-                  className="px-4 py-2 bg-[#288DD1] text-white rounded-[30px] font-medium text-sm hover:bg-[#1976D2] disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-              </div>
-            )}
+            {paginationControls}
           </>
         ) : (
-          <p className="text-gray-500">
-            No Elastic IPs found for this project.
-          </p>
+          emptyState
         )}
-      </div>
+      </ResourceSection>
+
       <AddEip
         isOpen={isCreateModalOpen}
-        onClose={closeCreateModal}
+        onClose={() => setCreateModal(false)}
         projectId={projectId}
         region={region}
       />
       <DeleteEipModal
-        isOpen={!!deleteModal}
-        onClose={closeDeleteModal}
-        eipName={deleteModal?.name || ""}
+        isOpen={Boolean(deleteModal)}
+        onClose={() => setDeleteModal(null)}
         onConfirm={handleDelete}
+        eipName={deleteModal?.name || ""}
         isDeleting={isDeleting}
       />
       <AssociateEipModal
-        isOpen={!!associateModal}
+        isOpen={Boolean(associateModal)}
         onClose={() => setAssociateModal(null)}
         projectId={projectId}
         region={region}
-        elasticIp={associateModal?.eip}
+        elasticIp={associateModal?.eip || null}
       />
       <DisassociateEipModal
-        isOpen={!!disassociateModal}
+        isOpen={Boolean(disassociateModal)}
         onClose={() => setDisassociateModal(null)}
         projectId={projectId}
         region={region}
-        elasticIp={disassociateModal?.eip}
+        elasticIp={disassociateModal?.eip || null}
       />
     </>
   );

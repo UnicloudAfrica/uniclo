@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Activity,
@@ -33,6 +33,8 @@ import PaymentModal from "../../adminDashboard/components/PaymentModal";
 import {
   useClientProjectStatus,
   useFetchClientProjectById,
+  useClientProjectMembershipSuggestions,
+  useUpdateClientProject,
 } from "../../hooks/clientHooks/projectHooks";
 import { useClientProjectInfrastructureStatus } from "../../hooks/clientHooks/projectInfrastructureHooks";
 import KeyPairs from "./infraComps/keyPairs";
@@ -53,7 +55,10 @@ import {
   syncClientProjectEdgeConfig,
   useFetchClientProjectEdgeConfig,
 } from "../../hooks/clientHooks/edgeHooks";
+import { useFetchClientNetworks } from "../../hooks/clientHooks/networkHooks";
+import { useFetchClientKeyPairs } from "../../hooks/clientHooks/keyPairsHook";
 import useClientAuthStore from "../../stores/clientAuthStore";
+import ProjectMemberManagerModal from "../../shared/projects/ProjectMemberManagerModal";
 
 const decodeId = (encodedId) => {
   try {
@@ -156,6 +161,21 @@ const toTitleCase = (input = "") =>
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 
+const formatMemberName = (user = {}) => {
+  if (user.name) return user.name;
+  if (user.full_name) return user.full_name;
+  const parts = [
+    user.first_name || user.firstName || null,
+    user.middle_name || user.middleName || null,
+    user.last_name || user.lastName || null,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  if (parts) return parts;
+  return user.email || (user.id ? `User #${user.id}` : "Unknown user");
+};
+
 const NeutralPill = ({ icon: Icon, label }) => (
   <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/80">
     {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
@@ -179,6 +199,18 @@ const SummaryMetricCard = ({ icon: Icon, label, value, helper }) => (
     </div>
   </div>
 );
+
+const TEAM_TABS = [
+  { key: "provisioning", label: "Provisioning checklist" },
+  { key: "invite", label: "Invite external user" },
+];
+
+const INVITE_FORM_DEFAULT = {
+  name: "",
+  email: "",
+  role: "member",
+  note: "",
+};
 
 const getProjectStatusVariant = (status = "") => {
   const normalized = status.toString().toLowerCase();
@@ -284,6 +316,14 @@ export default function ClientProjectDetails() {
   const [activePaymentPayload, setActivePaymentPayload] = useState(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(null);
+  const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
+  const [selectedMemberIds, setSelectedMemberIds] = useState(new Set());
+  const [membershipError, setMembershipError] = useState("");
+  const [activeTeamTab, setActiveTeamTab] = useState("provisioning");
+  const [inviteForm, setInviteForm] = useState(INVITE_FORM_DEFAULT);
+  const [inviteErrors, setInviteErrors] = useState({});
+  const [isInviteSubmitting, setIsInviteSubmitting] = useState(false);
+  const [inviteSuccessMessage, setInviteSuccessMessage] = useState("");
   const contentRef = useRef(null);
 
   const queryParams = new URLSearchParams(location.search);
@@ -311,6 +351,14 @@ export default function ClientProjectDetails() {
     data: infraStatusData,
   } = useClientProjectInfrastructureStatus(projectId, { enabled: Boolean(projectId) });
 
+  useEffect(() => {
+    if (!inviteSuccessMessage) return;
+    const timer = setTimeout(() => setInviteSuccessMessage(""), 4000);
+    return () => clearTimeout(timer);
+  }, [inviteSuccessMessage]);
+
+  const { mutateAsync: updateProjectMembers, isPending: isMembershipUpdating } = useUpdateClientProject();
+
   const infrastructureComponents = infraStatusData?.data?.components;
   const vpcComponent = infrastructureComponents?.vpc;
   const keypairComponent = infrastructureComponents?.keypairs ?? infrastructureComponents?.keypair;
@@ -336,9 +384,61 @@ export default function ClientProjectDetails() {
     projectDetailsPayload?.status ||
     projectStatusData?.status ||
     null;
+
+  const projectTenantId = useMemo(
+    () =>
+      projectComposite?.tenant_id ||
+      projectComposite?.tenant?.id ||
+      project?.tenant_id ||
+      project?.tenant?.id ||
+      null,
+    [projectComposite, project]
+  );
+
+  const projectClientId = useMemo(() => {
+    if (projectComposite?.client_id) return projectComposite.client_id;
+    if (project?.client_id) return project.client_id;
+    if (Array.isArray(projectComposite?.clients) && projectComposite.clients.length) {
+      return projectComposite.clients[0]?.id ?? null;
+    }
+    if (Array.isArray(project?.clients) && project.clients.length) {
+      return project.clients[0]?.id ?? null;
+    }
+    return null;
+  }, [projectComposite, project]);
+
+  const assignmentScope =
+    projectComposite?.assignment_scope ||
+    project?.assignment_scope ||
+    (projectClientId ? "client" : projectTenantId ? "tenant" : "internal");
+
+  const membershipParams = useMemo(() => {
+    if (!assignmentScope && !projectTenantId && !projectClientId) {
+      return null;
+    }
+    return {
+      scope: assignmentScope || undefined,
+      tenant_id: projectTenantId || undefined,
+      client_id: projectClientId || undefined,
+    };
+  }, [assignmentScope, projectTenantId, projectClientId]);
+
+  const {
+    data: membershipSuggestions = [],
+    isFetching: isMembershipFetching,
+  } = useClientProjectMembershipSuggestions(membershipParams ?? {}, {
+    enabled: isMemberModalOpen && Boolean(membershipParams),
+  });
   const [displayStatus, setDisplayStatus] = useState(
     () => statusCandidate || "unknown"
   );
+  const [resourceCounts, setResourceCounts] = useState({});
+  const updateResourceCount = useCallback((resource, count) => {
+    setResourceCounts((prev) => {
+      if (prev[resource] === count) return prev;
+      return { ...prev, [resource]: count };
+    });
+  }, []);
 
   useEffect(() => {
     if (!statusCandidate) return;
@@ -356,6 +456,33 @@ export default function ClientProjectDetails() {
     : Array.isArray(project?.summary)
     ? project.summary
     : [];
+
+  const normalizeSummaryKey = (value = "") =>
+    value.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  const summaryStatusMap = useMemo(() => {
+    const map = new Map();
+    summary.forEach((item) => {
+      if (item?.title) {
+        map.set(normalizeSummaryKey(item.title), item);
+      }
+      if (item?.key) {
+        map.set(normalizeSummaryKey(item.key), item);
+      }
+    });
+    return map;
+  }, [summary]);
+
+  const summaryCompleted = (...labels) => {
+    for (const label of labels) {
+      const normalized = normalizeSummaryKey(label);
+      if (summaryStatusMap.has(normalized)) {
+        const item = summaryStatusMap.get(normalized);
+        return item?.completed ?? item?.complete ?? false;
+      }
+    }
+    return undefined;
+  };
 
   const {
     data: edgeConfig,
@@ -381,6 +508,8 @@ export default function ClientProjectDetails() {
   };
 
   const userBlock = resolveUserBlock() || {};
+  const providerLabel =
+    projectComposite?.region_name || projectComposite?.region || "Provider";
   const tenantAdminMissingUsers = Array.isArray(userBlock?.tenant_admin_missing)
     ? userBlock.tenant_admin_missing
     : Array.isArray(project?.users?.tenant_admin_missing)
@@ -392,7 +521,220 @@ export default function ClientProjectDetails() {
     ? project.users.local
     : [];
   const tenantAdminUsers = projectUsers.filter(isTenantAdmin);
-  const hasTenantAdmin = tenantAdminUsers.length > 0;
+  const tenantAdminCount = tenantAdminUsers.length;
+  const hasTenantAdmin = tenantAdminCount > 0;
+  const tenantAdminFullyReady = useMemo(
+    () =>
+      tenantAdminUsers.some(
+        (user) =>
+          isTenantAdmin(user) &&
+          user?.status?.provider_account &&
+          user?.status?.aws_policy &&
+          user?.status?.symp_policy
+      ),
+    [tenantAdminUsers]
+  );
+  const hasAssignedProjectUser = projectUsers.length > 0;
+  const hasProviderAccountUser = projectUsers.some((user) => Boolean(user?.status?.provider_account));
+  const hasStoragePolicyUser = projectUsers.some((user) => Boolean(user?.status?.aws_policy));
+  const hasNetworkPolicyUser = projectUsers.some((user) => Boolean(user?.status?.symp_policy));
+  const fallbackSetupConditionsMet =
+    hasAssignedProjectUser &&
+    hasProviderAccountUser &&
+    hasStoragePolicyUser &&
+    hasNetworkPolicyUser &&
+    tenantAdminFullyReady;
+  const userProvisioningStatusLabel = !projectUsers.length
+    ? "Pending"
+    : tenantAdminFullyReady
+    ? "Ready"
+    : "Pending configuration";
+  const userProvisioningBadgeTone = tenantAdminFullyReady
+    ? "success"
+    : projectUsers.length
+    ? "neutral"
+    : "danger";
+
+  const summaryPatternSets = useMemo(() => {
+    const normalizePatterns = (patterns = []) =>
+      patterns.map((pattern) => normalizeSummaryKey(pattern)).filter(Boolean);
+    return {
+      users: normalizePatterns([
+        "Users Assigned",
+        "Users Added",
+        "Users Added (Local)",
+        "Users Created",
+      ]),
+      accounts: normalizePatterns([
+        `${providerLabel} Accounts`,
+        "Users Assigned Accounts",
+        "Accounts Assigned",
+        "Accounts Provisioned",
+      ]),
+      storage: normalizePatterns(["Storage Policies Applied", "Storage Policies"]),
+      network: normalizePatterns(["Network Policies Applied", "Network Policies"]),
+      tenantAdmin: normalizePatterns(["Tenant Admin Role Assigned", "Tenant Admin"]),
+    };
+  }, [providerLabel]);
+
+  const matchesPatternSet = (patternSet = [], normalizedValue = "") =>
+    patternSet.some((pattern) => normalizedValue.includes(pattern));
+
+  const matchSummaryEntry = (patternSet = []) => {
+    if (!patternSet.length) return null;
+    for (const pattern of patternSet) {
+      if (summaryStatusMap.has(pattern)) {
+        return summaryStatusMap.get(pattern);
+      }
+    }
+    for (const [key, value] of summaryStatusMap.entries()) {
+      if (patternSet.some((pattern) => key.includes(pattern))) {
+        return value;
+      }
+    }
+    return null;
+  };
+
+  const fallbackRatioStats = useMemo(() => {
+    const totalUsers = projectUsers.length;
+    const accountsReady = projectUsers.filter((user) => Boolean(user?.status?.provider_account)).length;
+    const storageReady = projectUsers.filter((user) => Boolean(user?.status?.aws_policy)).length;
+    const networkReady = projectUsers.filter((user) => Boolean(user?.status?.symp_policy)).length;
+    const tenantAdminReady = tenantAdminUsers.length;
+    const fallbackTotal = Math.max(totalUsers, 1);
+
+    return {
+      users: { ready: totalUsers, total: fallbackTotal },
+      accounts: { ready: accountsReady, total: Math.max(totalUsers || accountsReady, 1) },
+      storage: { ready: storageReady, total: Math.max(totalUsers || storageReady, 1) },
+      network: { ready: networkReady, total: Math.max(totalUsers || networkReady, 1) },
+      tenantAdmin: { ready: tenantAdminReady, total: Math.max(totalUsers || tenantAdminReady, 1) },
+    };
+  }, [projectUsers, tenantAdminUsers]);
+
+  const formatFallbackRatio = (stats) => {
+    if (!stats) return null;
+    const denominator = Math.max(stats.total || stats.ready || 1, 1);
+    return `${stats.ready} / ${denominator}`;
+  };
+
+  const getRatioDisplay = (category) => {
+    const entry = matchSummaryEntry(summaryPatternSets[category]);
+    const fallback = fallbackRatioStats[category];
+    if (entry) {
+      const entryCompleted = entry.completed === true || entry.complete === true;
+      const ready = typeof entry.count === "number" ? entry.count : null;
+      const missing = typeof entry.missing_count === "number" ? entry.missing_count : null;
+      if (!entryCompleted && (ready !== null || missing !== null)) {
+        const denominator = (ready ?? 0) + (missing ?? 0);
+        const fallbackDenominator = Math.max(fallback?.total || fallback?.ready || 1, 1);
+        return `${ready ?? 0} / ${Math.max(denominator || fallbackDenominator, 1)}`;
+      }
+      if (entryCompleted && typeof ready === "number" && ready > 0) {
+        const denominator = ready + (missing ?? 0);
+        return `${ready} / ${Math.max(denominator || ready, 1)}`;
+      }
+      if (entryCompleted && (ready === null || ready === 0)) {
+        return formatFallbackRatio(fallback);
+      }
+    }
+    return formatFallbackRatio(fallback);
+  };
+
+  const isFallbackCategoryReady = (category) => {
+    const stats = fallbackRatioStats[category];
+    return Boolean(stats && stats.ready > 0);
+  };
+
+  const isSummaryCategoryReady = (patternSet, category) => {
+    const entry = matchSummaryEntry(patternSet);
+    if (!entry) {
+      return isFallbackCategoryReady(category);
+    }
+    if (entry.completed === true || entry.complete === true) return true;
+    const ready = entry.count ?? 0;
+    const missing = entry.missing_count ?? 0;
+    if (ready > 0 && missing <= 0) return true;
+    return isFallbackCategoryReady(category);
+  };
+
+  const summaryDrivenSetupMet =
+    isSummaryCategoryReady(summaryPatternSets.users, "users") &&
+    isSummaryCategoryReady(summaryPatternSets.accounts, "accounts") &&
+    isSummaryCategoryReady(summaryPatternSets.storage, "storage") &&
+    isSummaryCategoryReady(summaryPatternSets.network, "network") &&
+    isSummaryCategoryReady(summaryPatternSets.tenantAdmin, "tenantAdmin");
+
+  const setupConditionsMet = summaryDrivenSetupMet || fallbackSetupConditionsMet;
+  const projectUserIdSet = useMemo(
+    () =>
+      new Set(
+        projectUsers
+          .map((user) => Number(user.id))
+          .filter((id) => Number.isFinite(id))
+      ),
+    [projectUsers]
+  );
+
+  useEffect(() => {
+    if (!isMemberModalOpen) return;
+    setSelectedMemberIds(new Set(projectUserIdSet));
+    setMembershipError("");
+  }, [isMemberModalOpen, projectUserIdSet]);
+
+  const normalizedMembershipOptions = useMemo(() => {
+    const entries = Array.isArray(membershipSuggestions) ? membershipSuggestions : [];
+    const map = new Map();
+    const upsertMember = (user, { isCurrent = false, isOwner = false } = {}) => {
+      if (!user || user.id === undefined || user.id === null) return;
+      const id = Number(user.id);
+      if (!Number.isFinite(id)) return;
+      const existing = map.get(id) || {};
+      map.set(id, {
+        id,
+        name: existing.name || formatMemberName(user),
+        email: existing.email || user.email || "",
+        role:
+          existing.role ||
+          (Array.isArray(user.roles) ? user.roles.join(", ") : user.role || user.status?.role || ""),
+        isCurrent: existing.isCurrent || isCurrent,
+        isOwner: existing.isOwner || isOwner,
+      });
+    };
+
+    entries.forEach((user) => {
+      const numericId = Number(user?.id);
+      upsertMember(user, {
+        isCurrent: projectUserIdSet.has(numericId),
+        isOwner: tenantAdminUsers.some((admin) => Number(admin.id) === numericId),
+      });
+    });
+
+    projectUsers.forEach((user) => {
+      upsertMember(user, {
+        isCurrent: true,
+        isOwner: isTenantAdmin(user),
+      });
+    });
+
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [membershipSuggestions, projectUsers, projectUserIdSet, tenantAdminUsers]);
+
+  const pendingOwnerCount = useMemo(() => {
+    if (!selectedMemberIds || selectedMemberIds.size === 0) return 0;
+    return tenantAdminUsers.reduce((count, user) => {
+      const id = Number(user.id);
+      if (!Number.isFinite(id)) {
+        return count;
+      }
+      return selectedMemberIds.has(id) ? count + 1 : count;
+    }, 0);
+  }, [selectedMemberIds, tenantAdminUsers]);
+
+  const ownerWarningMessage =
+    tenantAdminCount > 0 && isMemberModalOpen && pendingOwnerCount === 0
+      ? "Add another owner before removing the last one."
+      : "";
 
   const projectInstances = useMemo(() => {
     if (Array.isArray(projectComposite?.instances)) {
@@ -410,21 +752,65 @@ export default function ClientProjectDetails() {
     return [];
   }, [projectComposite, project]);
 
-  const networksData = Array.isArray(projectComposite?.networks)
-    ? projectComposite.networks
-    : Array.isArray(project?.networks)
-    ? project.networks
-    : [];
-  const keyPairsData = Array.isArray(projectComposite?.key_pairs)
-    ? projectComposite.key_pairs
-    : Array.isArray(project?.key_pairs)
-    ? project.key_pairs
-    : [];
+  const networksData = useMemo(
+    () =>
+      Array.isArray(projectComposite?.networks)
+        ? projectComposite.networks
+        : Array.isArray(project?.networks)
+        ? project.networks
+        : [],
+    [projectComposite?.networks, project?.networks]
+  );
+  const keyPairsData = useMemo(
+    () =>
+      Array.isArray(projectComposite?.key_pairs)
+        ? projectComposite.key_pairs
+        : Array.isArray(project?.key_pairs)
+        ? project.key_pairs
+        : [],
+    [projectComposite?.key_pairs, project?.key_pairs]
+  );
   const securityGroupsData = Array.isArray(projectComposite?.security_groups)
     ? projectComposite.security_groups
     : Array.isArray(project?.security_groups)
     ? project.security_groups
     : [];
+
+  const { data: clientNetworkList = [] } = useFetchClientNetworks(
+    resolvedProjectId,
+    projectRegion,
+    { enabled: Boolean(resolvedProjectId && projectRegion) }
+  );
+
+  const { data: clientKeyPairList = [] } = useFetchClientKeyPairs(
+    resolvedProjectId,
+    projectRegion,
+    { enabled: Boolean(resolvedProjectId && projectRegion) }
+  );
+
+  useEffect(() => {
+    if (Array.isArray(networksData)) {
+      updateResourceCount("networks", networksData.length);
+    }
+  }, [networksData, updateResourceCount]);
+
+  useEffect(() => {
+    if (Array.isArray(clientNetworkList)) {
+      updateResourceCount("networks", clientNetworkList.length);
+    }
+  }, [clientNetworkList, updateResourceCount]);
+
+  useEffect(() => {
+    if (Array.isArray(keyPairsData)) {
+      updateResourceCount("keyPairs", keyPairsData.length);
+    }
+  }, [keyPairsData, updateResourceCount]);
+
+  useEffect(() => {
+    if (Array.isArray(clientKeyPairList)) {
+      updateResourceCount("keyPairs", clientKeyPairList.length);
+    }
+  }, [clientKeyPairList, updateResourceCount]);
   const subnetsData = Array.isArray(projectComposite?.subnets)
     ? projectComposite.subnets
     : Array.isArray(project?.subnets)
@@ -797,33 +1183,6 @@ export default function ClientProjectDetails() {
     }
   };
 
-  const normalizeSummaryKey = (value = "") =>
-    value.toLowerCase().replace(/[^a-z0-9]/g, "");
-
-  const summaryStatusMap = useMemo(() => {
-    const map = new Map();
-    summary.forEach((item) => {
-      if (item?.title) {
-        map.set(normalizeSummaryKey(item.title), item);
-      }
-      if (item?.key) {
-        map.set(normalizeSummaryKey(item.key), item);
-      }
-    });
-    return map;
-  }, [summary]);
-
-  const summaryCompleted = (...labels) => {
-    for (const label of labels) {
-      const normalized = normalizeSummaryKey(label);
-      if (summaryStatusMap.has(normalized)) {
-        const item = summaryStatusMap.get(normalized);
-        return item?.completed ?? item?.complete ?? false;
-      }
-    }
-    return undefined;
-  };
-
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
   const handleNavigateAddInstance = () => {
@@ -1000,6 +1359,29 @@ export default function ClientProjectDetails() {
     const action = user?.actions?.[actionKey];
     if (!action || !action.endpoint) return;
 
+    const actionKeyLower = (actionKey || "").toLowerCase();
+    const actionLabelLower = (action?.label || "").toLowerCase();
+    const isTenantAdminUser = isTenantAdmin(user);
+    const isDemoteAction =
+      demoteActionCandidates.includes(actionKey) ||
+      actionLabelLower.includes("member");
+    const isRemovalAction =
+      actionKeyLower.includes("remove") ||
+      actionKeyLower.includes("delete") ||
+      actionLabelLower.includes("remove") ||
+      actionLabelLower.includes("delete");
+
+    if (
+      isTenantAdminUser &&
+      tenantAdminCount <= 1 &&
+      (isDemoteAction || isRemovalAction)
+    ) {
+      ToastUtils.warning(
+        "Every project must keep at least one owner. Add another owner before changing this role."
+      );
+      return;
+    }
+
     const method = (action.method || "POST").toUpperCase();
     const endpoint = withBusinessPath(action.endpoint);
     const payload = action.payload_defaults || null;
@@ -1021,6 +1403,55 @@ export default function ClientProjectDetails() {
     }
   };
 
+  const handleOpenMemberModal = () => {
+    setMembershipError("");
+    setIsMemberModalOpen(true);
+  };
+
+  const handleToggleMember = (memberId) => {
+    const numericId = Number(memberId);
+    if (!Number.isFinite(numericId)) return;
+    setSelectedMemberIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(numericId)) {
+        next.delete(numericId);
+      } else {
+        next.add(numericId);
+      }
+      return next;
+    });
+  };
+
+  const handleSaveMembers = async () => {
+    if (!resolvedProjectId) return;
+    const nextIds = Array.from(selectedMemberIds).filter((id) => Number.isFinite(id));
+    if (!nextIds.length) {
+      setMembershipError("Every project must keep at least one user.");
+      return;
+    }
+    if (tenantAdminCount > 0 && pendingOwnerCount === 0) {
+      setMembershipError("At least one owner must remain on the project.");
+      return;
+    }
+    setMembershipError("");
+    try {
+      await updateProjectMembers({
+        id: resolvedProjectId,
+        projectData: { member_user_ids: nextIds },
+      });
+      ToastUtils.success("Project members updated");
+      setIsMemberModalOpen(false);
+      await Promise.all([
+        refetchProjectStatus?.(),
+        refetchProjectDetails?.(),
+      ]);
+    } catch (error) {
+      console.error("Failed to update project members:", error);
+      setMembershipError(error?.message || "Failed to update project members.");
+      ToastUtils.error(error?.message || "Failed to update project members");
+    }
+  };
+
   const renderStatusChip = (label, isActive) => (
     <span
       key={label}
@@ -1038,14 +1469,18 @@ export default function ClientProjectDetails() {
     </span>
   );
 
-  const providerLabel =
-    projectComposite?.region_name || projectComposite?.region || "Provider";
-
   const infrastructureSections = [
     {
       key: "setup",
       label: "Project Setup",
       icon: <CheckCircle size={16} />,
+    },
+    {
+      key: "user-provisioning",
+      label: "Team access",
+      icon: <Shield size={16} />,
+      description: "Manage provisioning-ready collaborators quickly.",
+      helper: "Keep collaborators aligned—invite operators or tweak roles fast.",
     },
     {
       key: "vpcs",
@@ -1063,14 +1498,14 @@ export default function ClientProjectDetails() {
       icon: <Key size={16} />,
     },
     {
-      key: "edge",
-      label: "Edge Network",
-      icon: <Wifi size={16} />,
-    },
-    {
       key: "security-groups",
       label: "Security Groups",
       icon: <Shield size={16} />,
+    },
+    {
+      key: "edge",
+      label: "Edge Network",
+      icon: <Wifi size={16} />,
     },
     {
       key: "subnets",
@@ -1165,8 +1600,10 @@ export default function ClientProjectDetails() {
 
   const getStatusForSection = (sectionKey) => {
     switch (sectionKey) {
+      case "user-provisioning":
+        return tenantAdminFullyReady;
       case "setup":
-        return areAllSummaryItemsComplete && hasTenantAdmin;
+        return setupConditionsMet;
       case "vpcs":
         {
           const summaryFlag = summaryCompleted(
@@ -1185,7 +1622,9 @@ export default function ClientProjectDetails() {
         }
       case "networks":
         {
+          if ((resourceCounts.networks ?? 0) > 0) return true;
           if (Array.isArray(networksData) && networksData.length > 0) return true;
+          if (Array.isArray(clientNetworkList) && clientNetworkList.length > 0) return true;
           const summaryFlag = summaryCompleted("network", "networks", "subnet", "subnets");
           if (summaryFlag === true) return true;
           const networksComponent = infrastructureComponents?.networks;
@@ -1198,7 +1637,9 @@ export default function ClientProjectDetails() {
         }
       case "keypairs":
         {
+          if ((resourceCounts.keyPairs ?? 0) > 0) return true;
           if (Array.isArray(keyPairsData) && keyPairsData.length > 0) return true;
+          if (Array.isArray(clientKeyPairList) && clientKeyPairList.length > 0) return true;
           const summaryFlag = summaryCompleted("keypair", "keypairs", "createkeypair");
           if (summaryFlag === true) return true;
           if (keypairComponent) {
@@ -1290,11 +1731,45 @@ export default function ClientProjectDetails() {
     return (
       <div className="space-y-4">
         {summary.map((item, index) => {
-          const isComplete = item?.completed ?? item?.complete ?? false;
+          const rawComplete = item?.completed ?? item?.complete ?? false;
           const actionKey = `action-${index}`;
           const normalizedTitle = normalizeSummaryKey(item?.title || "");
-          const tenantAdminSummaryKey = normalizeSummaryKey("Tenant Admin Role Assigned");
-          const showBulkAssign = normalizedTitle === tenantAdminSummaryKey && tenantAdminMissingUsers.length > 0;
+          const isTenantAdminSummary = matchesPatternSet(
+            summaryPatternSets.tenantAdmin,
+            normalizedTitle
+          );
+          const isUsersSummary = matchesPatternSet(summaryPatternSets.users, normalizedTitle);
+          const isAccountsSummary = matchesPatternSet(summaryPatternSets.accounts, normalizedTitle);
+          const isStorageSummary = matchesPatternSet(summaryPatternSets.storage, normalizedTitle);
+          const isNetworkSummary = matchesPatternSet(summaryPatternSets.network, normalizedTitle);
+          const resolvedComplete = isTenantAdminSummary ? tenantAdminFullyReady : rawComplete;
+          const showBulkAssign =
+            isTenantAdminSummary && tenantAdminMissingUsers.length > 0 && !tenantAdminFullyReady;
+          let ratioText = null;
+          if (isTenantAdminSummary) {
+            const total = Math.max(projectUsers.length, tenantAdminUsers.length, 1);
+            ratioText = `Tenant admins: ${tenantAdminUsers.length} / ${total} users`;
+          } else if (isUsersSummary) {
+            const ratioValue = getRatioDisplay("users");
+            if (ratioValue) {
+              ratioText = `Users assigned: ${ratioValue}`;
+            }
+          } else if (isAccountsSummary) {
+            const ratioValue = getRatioDisplay("accounts");
+            if (ratioValue) {
+              ratioText = `${providerLabel} accounts: ${ratioValue}`;
+            }
+          } else if (isStorageSummary) {
+            const ratioValue = getRatioDisplay("storage");
+            if (ratioValue) {
+              ratioText = `Storage policies: ${ratioValue}`;
+            }
+          } else if (isNetworkSummary) {
+            const ratioValue = getRatioDisplay("network");
+            if (ratioValue) {
+              ratioText = `Network policies: ${ratioValue}`;
+            }
+          }
           const isBulkLoading = actionLoading === "tenant_admin_bulk";
           const isThisActionLoading = actionLoading === actionKey;
           return (
@@ -1303,18 +1778,18 @@ export default function ClientProjectDetails() {
                 <div
                   className="h-10 w-10 flex items-center justify-center rounded-full border-2"
                   style={{
-                    borderColor: isComplete
+                    borderColor: resolvedComplete
                       ? designTokens.colors.success[400]
                       : designTokens.colors.neutral[300],
-                    backgroundColor: isComplete
+                    backgroundColor: resolvedComplete
                       ? designTokens.colors.success[50]
                       : designTokens.colors.neutral[0],
-                    color: isComplete
+                    color: resolvedComplete
                       ? designTokens.colors.success[600]
                       : designTokens.colors.neutral[400],
                   }}
                 >
-                  {isComplete ? <CheckCircle size={18} /> : <XCircle size={18} />}
+                  {resolvedComplete ? <CheckCircle size={18} /> : <XCircle size={18} />}
                 </div>
                 {index !== summary.length - 1 && (
                   <span
@@ -1339,15 +1814,15 @@ export default function ClientProjectDetails() {
                       ({item.count})
                     </span>
                   )}
-                  {typeof item.missing_count === "number" && item.missing_count > 0 && (
+                  {typeof item.missing_count === "number" && item.missing_count > 0 && !resolvedComplete && (
                     <span className="text-xs" style={{ color: designTokens.colors.warning[600] }}>
                       ({item.missing_count} missing)
                     </span>
                   )}
                   <StatusBadge
-                    label={isComplete ? "Completed" : "Needs attention"}
-                    active={isComplete}
-                    tone={isComplete ? "success" : "danger"}
+                    label={resolvedComplete ? "Completed" : "Needs attention"}
+                    active={resolvedComplete}
+                    tone={resolvedComplete ? "success" : "danger"}
                   />
                 </div>
                 {item.description && (
@@ -1356,6 +1831,11 @@ export default function ClientProjectDetails() {
                     style={{ color: designTokens.colors.neutral[600] }}
                   >
                     {item.description}
+                  </p>
+                )}
+                {ratioText && (
+                  <p className="mt-2 text-xs font-medium text-gray-600">
+                    {ratioText}
                   </p>
                 )}
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -1383,14 +1863,6 @@ export default function ClientProjectDetails() {
                     </ModernButton>
                   )}
                 </div>
-                {showBulkAssign && (
-                  <p className="mt-2 text-xs" style={{ color: designTokens.colors.neutral[500] }}>
-                    Users pending elevation:{" "}
-                    {tenantAdminMissingUsers
-                      .map((entry) => entry.name || entry.identifier || entry.id)
-                      .join(", ")}
-                  </p>
-                )}
               </div>
             </div>
           );
@@ -1485,6 +1957,8 @@ export default function ClientProjectDetails() {
           const roleLoadingKey = toggleActionKey ? `${user.id}-${toggleActionKey}` : null;
           const isRoleLoading = roleLoadingKey ? userActionLoading === roleLoadingKey : false;
           const flagged = annotateUser(user);
+          const isLastTenantAdminUser =
+            isTenantAdminUser && tenantAdminCount <= 1;
           const statusEntries = [
             {
               label: `${providerLabel} Account`,
@@ -1567,7 +2041,10 @@ export default function ClientProjectDetails() {
                       variant="outline"
                       className="flex items-center gap-2"
                       onClick={() => handleUserAction(user, toggleActionKey)}
-                      disabled={userActionLoading !== null}
+                      disabled={
+                        userActionLoading !== null ||
+                        (isTenantAdminUser && tenantAdminCount <= 1)
+                      }
                     >
                       {isRoleLoading && <Loader2 size={14} className="animate-spin" />}
                       {toggleAction.label ||
@@ -1578,6 +2055,11 @@ export default function ClientProjectDetails() {
                       Role switching is currently unavailable for this user. Verify backend permissions and retry.
                     </p>
                   )}
+                  {isLastTenantAdminUser && (
+                    <p className="mt-2 text-xs text-red-500">
+                      Add another owner before changing this role.
+                    </p>
+                  )}
                 </div>
               )}
               {visibleActions.length > 0 && (
@@ -1586,6 +2068,15 @@ export default function ClientProjectDetails() {
                     const action = actions[actionKey];
                     const loadingKey = `${user.id}-${actionKey}`;
                     const isLoading = userActionLoading === loadingKey;
+                    const actionLabelLower = (action.label || "").toLowerCase();
+                    const actionKeyLower = actionKey.toLowerCase();
+                    const blocksOwnership =
+                      isTenantAdminUser &&
+                      tenantAdminCount <= 1 &&
+                      (actionKeyLower.includes("remove") ||
+                        actionKeyLower.includes("delete") ||
+                        actionLabelLower.includes("remove") ||
+                        actionLabelLower.includes("delete"));
                     return (
                       <ModernButton
                         key={actionKey}
@@ -1593,7 +2084,7 @@ export default function ClientProjectDetails() {
                         variant="outline"
                         className="flex items-center gap-2"
                         onClick={() => handleUserAction(user, actionKey)}
-                        disabled={userActionLoading !== null}
+                        disabled={userActionLoading !== null || blocksOwnership}
                       >
                         {isLoading && <Loader2 size={14} className="animate-spin" />}
                         {action.label}
@@ -1609,8 +2100,305 @@ export default function ClientProjectDetails() {
     );
   };
 
+  const handleInviteFieldChange = (field, value) => {
+    setInviteForm((prev) => ({ ...prev, [field]: value }));
+    setInviteErrors((prev) => ({ ...prev, [field]: null, form: null }));
+  };
+
+  const validateInviteForm = () => {
+    const errors = {};
+    const email = inviteForm.email?.trim();
+    if (!email) {
+      errors.email = "Email is required.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.email = "Enter a valid email address.";
+    }
+    if (!inviteForm.role) {
+      errors.role = "Select an access level.";
+    }
+    return errors;
+  };
+
+  const handleInviteSubmit = async () => {
+    const errors = validateInviteForm();
+    if (Object.keys(errors).length) {
+      setInviteErrors(errors);
+      return;
+    }
+    if (!resolvedProjectId) {
+      setInviteErrors({ form: "Project identifier missing. Please reload the page." });
+      return;
+    }
+    const payload = {
+      name: inviteForm.name?.trim() || null,
+      email: inviteForm.email.trim(),
+      role: inviteForm.role,
+      note: inviteForm.note?.trim() || null,
+    };
+    try {
+      setIsInviteSubmitting(true);
+      setInviteErrors({});
+      const encodedId = encodeURIComponent(resolvedProjectId);
+      const endpoint = withBusinessPath(`/projects/${encodedId}/invitations`);
+      await clientApi("POST", endpoint, payload);
+      setInviteSuccessMessage("Invitation sent successfully.");
+      setInviteForm(INVITE_FORM_DEFAULT);
+      await Promise.all([
+        refetchProjectStatus?.(),
+        refetchProjectDetails?.(),
+      ]);
+    } catch (error) {
+      setInviteErrors({
+        form: error?.message || "Failed to send invitation. Please try again.",
+      });
+    } finally {
+      setIsInviteSubmitting(false);
+    }
+  };
+
+  const renderInvitePanel = () => (
+    <div className="rounded-2xl border border-dashed border-slate-300 bg-white/70 p-4 shadow-sm">
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <label className="block text-sm font-medium text-slate-700">
+            Full name <span className="text-slate-400">(optional)</span>
+          </label>
+          <input
+            type="text"
+            value={inviteForm.name}
+            onChange={(event) => handleInviteFieldChange("name", event.target.value)}
+            className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+            placeholder="Jane Doe"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700">
+            Email address<span className="text-red-500">*</span>
+          </label>
+          <input
+            type="email"
+            value={inviteForm.email}
+            onChange={(event) => handleInviteFieldChange("email", event.target.value)}
+            className={`mt-1 w-full rounded-xl border px-3 py-2 text-sm focus:outline-none ${
+              inviteErrors.email ? "border-red-500 focus:border-red-500" : "border-slate-200 focus:border-slate-400"
+            }`}
+            placeholder="teammate@example.com"
+          />
+          {inviteErrors.email && (
+            <p className="mt-1 text-xs text-red-500">{inviteErrors.email}</p>
+          )}
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700">
+            Access level<span className="text-red-500">*</span>
+          </label>
+          <select
+            value={inviteForm.role}
+            onChange={(event) => handleInviteFieldChange("role", event.target.value)}
+            className={`mt-1 w-full rounded-xl border px-3 py-2 text-sm focus:outline-none ${
+              inviteErrors.role ? "border-red-500 focus:border-red-500" : "border-slate-200 focus:border-slate-400"
+            }`}
+          >
+            <option value="member">Project member</option>
+            <option value="tenant_admin">Project owner</option>
+          </select>
+          {inviteErrors.role && (
+            <p className="mt-1 text-xs text-red-500">{inviteErrors.role}</p>
+          )}
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700">
+            Message <span className="text-slate-400">(optional)</span>
+          </label>
+          <textarea
+            rows={3}
+            value={inviteForm.note}
+            onChange={(event) => handleInviteFieldChange("note", event.target.value)}
+            className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+            placeholder="Add context for the invitee"
+          />
+        </div>
+      </div>
+      {inviteErrors.form && (
+        <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+          {inviteErrors.form}
+        </p>
+      )}
+      {inviteSuccessMessage && (
+        <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          {inviteSuccessMessage}
+        </p>
+      )}
+      <div className="mt-4 flex flex-wrap gap-3">
+        <ModernButton
+          onClick={handleInviteSubmit}
+          disabled={isInviteSubmitting || !resolvedProjectId}
+          className="flex items-center gap-2"
+        >
+          {isInviteSubmitting && <Loader2 size={16} className="animate-spin" />}
+          Send invite
+        </ModernButton>
+        <button
+          type="button"
+          className="text-sm font-medium text-slate-600 underline-offset-2 hover:underline"
+          onClick={() => {
+            setInviteForm(INVITE_FORM_DEFAULT);
+            setInviteErrors({});
+          }}
+          disabled={isInviteSubmitting}
+        >
+          Reset form
+        </button>
+      </div>
+      <p className="mt-3 text-xs text-slate-500">
+        Invitees get an email with acceptance steps. Once accepted, they’ll appear with the rest of your team.
+      </p>
+    </div>
+  );
+
+  const renderTeamAccessCard = () => (
+    <ModernCard padding="lg" className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Team access
+          </p>
+          <h3 className="text-base font-semibold text-slate-900">
+            Manage provisioning-ready collaborators
+          </h3>
+          <p className="text-sm text-slate-500">
+            Keep collaborators aligned—invite operators or tweak roles fast.
+          </p>
+        </div>
+        <StatusBadge
+          label={`User provisioning • ${userProvisioningStatusLabel}`}
+          active={tenantAdminFullyReady}
+          tone={userProvisioningBadgeTone}
+        />
+      </div>
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2">
+        {TEAM_TABS.map((tab) => {
+          const isActive = activeTeamTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+                isActive
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+              onClick={() => setActiveTeamTab(tab.key)}
+              disabled={isInviteSubmitting && tab.key === "invite"}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-2">
+        {activeTeamTab === "provisioning" ? userProvisioningBlock() : renderInvitePanel()}
+      </div>
+    </ModernCard>
+  );
+
+  const renderInfrastructureJourneyCard = () => (
+    <div>
+      <h3 className="mb-2 text-sm font-semibold" style={{ color: designTokens.colors.neutral[800] }}>
+        Infrastructure Journey
+      </h3>
+      <p className="text-xs" style={{ color: designTokens.colors.neutral[500] }}>
+        Track which layers are ready before launching workloads.
+      </p>
+      <div className="mt-3 space-y-3">
+        {infrastructureSections.map((section) => {
+          const isComplete = Boolean(getStatusForSection(section.key));
+          const isActive = activeSection === section.key;
+          const iconNode =
+            section.icon &&
+            React.cloneElement(section.icon, {
+              size: 18,
+              style: {
+                color: isComplete
+                  ? designTokens.colors.success[500]
+                  : designTokens.colors.neutral[400],
+              },
+            });
+          return (
+            <button
+              key={section.key}
+              type="button"
+              onClick={() => handleSectionClick(section.key)}
+              className={`w-full rounded-xl border px-4 py-3 text-left transition ${
+                isActive ? "border-slate-300 bg-slate-50 shadow-sm" : "border-slate-200 bg-white"
+              } hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-200`}
+            >
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border"
+                    style={{
+                      borderColor: isComplete
+                        ? designTokens.colors.success[200]
+                        : designTokens.colors.neutral[200],
+                      backgroundColor: isComplete
+                        ? designTokens.colors.success[50]
+                        : "#FFFFFF",
+                    }}
+                  >
+                    {iconNode}
+                  </div>
+                  <div>
+                    <p
+                      className="text-sm font-semibold"
+                      style={{
+                        color: isActive
+                          ? designTokens.colors.primary[700]
+                          : designTokens.colors.neutral[800],
+                      }}
+                    >
+                      {section.label}
+                    </p>
+                    {section.key === "user-provisioning" ? (
+                      <p className="text-xs" style={{ color: designTokens.colors.neutral[500] }}>
+                        Keep collaborators aligned—invite operators or tweak roles fast.
+                      </p>
+                    ) : (
+                      <p className="text-xs" style={{ color: designTokens.colors.neutral[500] }}>
+                        {isComplete ? "Ready to provision" : "Pending configuration"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <span
+                  className="rounded-full px-2 py-1 text-xs font-medium"
+                  style={{
+                    backgroundColor: isComplete
+                      ? designTokens.colors.success[50]
+                      : designTokens.colors.neutral[100],
+                    color: isComplete
+                      ? designTokens.colors.success[600]
+                      : designTokens.colors.neutral[600],
+                  }}
+                >
+                  {isComplete ? "Ready" : "Pending"}
+                </span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   const renderSectionContent = () => {
     switch (activeSection) {
+      case "user-provisioning":
+        return (
+          <div className="space-y-6">
+            {renderTeamAccessCard()}
+          </div>
+        );
       case "setup":
         {
           const completedSummaryCount = summary.filter(
@@ -1928,23 +2716,59 @@ export default function ClientProjectDetails() {
                 style={{ borderColor: designTokens.colors.neutral[200], backgroundColor: designTokens.colors.neutral[0] }}
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h3 className="text-base font-semibold" style={{ color: designTokens.colors.neutral[900] }}>
-                    User Provisioning
-                  </h3>
-                <StatusBadge
-                  label={hasTenantAdmin ? "Tenant admin ready" : "Tenant admin required"}
-                  active={hasTenantAdmin}
-                  tone={hasTenantAdmin ? "success" : "danger"}
-                />
-              </div>
-              <p className="mt-1 text-xs" style={{ color: designTokens.colors.neutral[500] }}>
-                A tenant admin must be active to unlock provisioning flows. Other users can be switched between member and tenant admin at any time.
-              </p>
-              <div className="mt-4">{userProvisioningBlock()}</div>
-            </div>
-          </div>
-        );
-        }
+                  <div>
+                    <h3 className="text-base font-semibold" style={{ color: designTokens.colors.neutral[900] }}>
+                      Team access
+                    </h3>
+                    <p className="mt-1 text-xs" style={{ color: designTokens.colors.neutral[500] }}>
+                      A tenant admin must be active to unlock provisioning flows. Other users can be switched between member and tenant admin at any time.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StatusBadge
+                      label={hasTenantAdmin ? "Tenant admin ready" : "Tenant admin required"}
+                      active={hasTenantAdmin}
+                      tone={hasTenantAdmin ? "success" : "danger"}
+                    />
+                    <ModernButton
+                      size="sm"
+                      variant="outline"
+                      onClick={handleOpenMemberModal}
+                      disabled={isMembershipUpdating}
+                    >
+                      Manage users
+                    </ModernButton>
+                  </div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2 border-b border-slate-200 pb-2">
+                  {TEAM_TABS.map((tab) => {
+                    const isActive = activeTeamTab === tab.key;
+                    return (
+                      <button
+                        key={tab.key}
+                        type="button"
+                        className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+                          isActive
+                            ? "bg-slate-900 text-white shadow-sm"
+                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        }`}
+                        onClick={() => setActiveTeamTab(tab.key)}
+                        disabled={isInviteSubmitting && tab.key === "invite"}
+                      >
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-4">
+                  {activeTeamTab === "provisioning" ? userProvisioningBlock() : renderInvitePanel()}
+                </div>
+      </div>
+    </div>
+  );
+
+
+  }
       case "vpcs":
         return (
           <VPCs
@@ -1955,7 +2779,11 @@ export default function ClientProjectDetails() {
         );
       case "networks":
         return (
-          <Networks projectId={resolvedProjectId} region={projectRegion} />
+          <Networks
+            projectId={resolvedProjectId}
+            region={projectRegion}
+            onStatsUpdate={(count) => updateResourceCount("networks", count)}
+          />
         );
       case "keypairs":
         return (
@@ -1963,6 +2791,7 @@ export default function ClientProjectDetails() {
             projectId={resolvedProjectId}
             region={projectComposite?.region}
             provider={projectComposite?.provider}
+            onStatsUpdate={(count) => updateResourceCount("keyPairs", count)}
           />
         );
       case "edge": {
@@ -2739,98 +3568,7 @@ export default function ClientProjectDetails() {
             </div>
           </div>
 
-            <div>
-              <h3 className="text-sm font-semibold mb-3" style={{ color: designTokens.colors.neutral[800] }}>
-                Infrastructure Journey
-              </h3>
-              <div className="relative pl-3">
-                <div className="absolute left-[23px] top-3 bottom-3 hidden w-px bg-gray-200 md:block" />
-                <div className="space-y-3">
-                  {infrastructureSections.map((section, index) => {
-                    const isComplete = getStatusForSection(section.key);
-                    const isActive = activeSection === section.key;
-                    const isFirst = index === 0;
-                    const iconNode = React.cloneElement(section.icon, {
-                      size: 18,
-                      style: {
-                        color: isComplete
-                          ? designTokens.colors.success[500]
-                          : designTokens.colors.neutral[400],
-                    },
-                    });
-
-                    return (
-                      <button
-                        key={section.key}
-                        onClick={() => handleSectionClick(section.key)}
-                        className="relative w-full rounded-xl border px-4 py-3 text-left transition"
-                        style={{
-                          backgroundColor: isActive
-                            ? designTokens.colors.primary[50]
-                            : "#FFFFFF",
-                          borderColor: isActive
-                            ? designTokens.colors.primary[200]
-                            : designTokens.colors.neutral[200],
-                          boxShadow: isActive ? "0 4px 8px rgba(11, 99, 206, 0.08)" : "none",
-                        }}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center">
-                            <div
-                              className="flex h-10 w-10 items-center justify-center rounded-full border"
-                              style={{
-                                borderColor: isComplete
-                                  ? designTokens.colors.success[200]
-                                  : designTokens.colors.neutral[200],
-                                backgroundColor: isComplete
-                                  ? designTokens.colors.success[50]
-                                  : "#FFFFFF",
-                              }}
-                            >
-                              {iconNode}
-                            </div>
-                            {!isFirst && (
-                              <div className="absolute -top-10 left-1/2 hidden h-10 w-px -translate-x-1/2 bg-gray-200 md:block" />
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <p
-                              className="text-sm font-semibold"
-                              style={{
-                                color: isActive
-                                  ? designTokens.colors.primary[700]
-                                  : designTokens.colors.neutral[800],
-                              }}
-                            >
-                              {section.label}
-                            </p>
-                            <p
-                              className="text-xs"
-                              style={{ color: designTokens.colors.neutral[500] }}
-                            >
-                              {isComplete ? "Ready to provision" : "Pending configuration"}
-                            </p>
-                          </div>
-                          <span
-                            className="rounded-full px-2 py-1 text-xs font-medium"
-                            style={{
-                              backgroundColor: isComplete
-                                ? designTokens.colors.success[50]
-                                : designTokens.colors.neutral[100],
-                              color: isComplete
-                                ? designTokens.colors.success[600]
-                                : designTokens.colors.neutral[600],
-                            }}
-                          >
-                            {isComplete ? "Ready" : "Pending"}
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
+            {renderInfrastructureJourneyCard()}
           </ModernCard>
 
           <ModernCard variant="outlined" padding="lg">
@@ -2838,6 +3576,18 @@ export default function ClientProjectDetails() {
           </ModernCard>
         </div>
       </ClientPageShell>
+      <ProjectMemberManagerModal
+        isOpen={isMemberModalOpen}
+        onClose={() => setIsMemberModalOpen(false)}
+        members={normalizedMembershipOptions}
+        selectedIds={selectedMemberIds}
+        onToggleMember={handleToggleMember}
+        onSave={handleSaveMembers}
+        isLoading={isMembershipFetching}
+        isSaving={isMembershipUpdating}
+        ownerWarning={ownerWarningMessage}
+        errorMessage={membershipError}
+      />
 
       {activePaymentPayload && (
       <PaymentModal

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { MapPin, RefreshCw, Trash2, KeyRound } from "lucide-react";
 import {
@@ -16,7 +16,7 @@ import ToastUtils from "../../../utils/toastUtil";
 
 const ITEMS_PER_PAGE = 6;
 
-const KeyPairs = ({ projectId = "", region = "" }) => {
+const KeyPairs = ({ projectId = "", region = "", onStatsUpdate }) => {
   const queryClient = useQueryClient();
   const { data: keyPairs, isFetching } = useFetchClientKeyPairs(
     projectId,
@@ -36,6 +36,10 @@ const KeyPairs = ({ projectId = "", region = "" }) => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return (keyPairs ?? []).slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [keyPairs, currentPage]);
+
+  useEffect(() => {
+    onStatsUpdate?.(totalItems);
+  }, [totalItems, onStatsUpdate]);
 
   const stats = useMemo(() => {
     const baseStats = [

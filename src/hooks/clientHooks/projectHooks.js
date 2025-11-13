@@ -21,6 +21,29 @@ const fetchClientProjectById = async (id) => {
   return res.data;
 };
 
+const fetchClientProjectMembershipSuggestions = async (params = {}) => {
+  const query = new URLSearchParams();
+  if (params.scope) {
+    query.append("scope", params.scope);
+  }
+  if (params.tenant_id) {
+    query.append("tenant_id", params.tenant_id);
+  }
+  if (params.client_id) {
+    query.append("client_id", params.client_id);
+  }
+
+  const uri = `/business/project-memberships/suggestions${
+    query.toString() ? `?${query.toString()}` : ""
+  }`;
+
+  const res = await clientSilentApi("GET", uri);
+  if (!res?.data) {
+    throw new Error("Failed to fetch project membership suggestions");
+  }
+  return res.data;
+};
+
 // GET: Fetch project status (provisioning + infrastructure checklist)
 const fetchClientProjectStatus = async (id) => {
   const encodedId = encodeURIComponent(id);
@@ -76,6 +99,18 @@ export const useFetchClientProjectById = (id, options = {}) => {
     queryFn: () => fetchClientProjectById(id),
     enabled: !!id, // Only fetch if ID is provided
     staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+
+export const useClientProjectMembershipSuggestions = (params = {}, options = {}) => {
+  const enabled = options.enabled ?? true;
+  return useQuery({
+    queryKey: ["client-project-memberships", params],
+    queryFn: () => fetchClientProjectMembershipSuggestions(params),
+    enabled,
+    staleTime: 0,
     refetchOnWindowFocus: false,
     ...options,
   });

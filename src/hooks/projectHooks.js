@@ -47,6 +47,29 @@ const fetchProjectById = async (id) => {
   return res.data;
 };
 
+const fetchTenantProjectMembershipSuggestions = async (params = {}) => {
+  const query = new URLSearchParams();
+  if (params.scope) {
+    query.append("scope", params.scope);
+  }
+  if (params.tenant_id) {
+    query.append("tenant_id", params.tenant_id);
+  }
+  if (params.client_id) {
+    query.append("client_id", params.client_id);
+  }
+
+  const uri = `/admin/project-memberships/suggestions${
+    query.toString() ? `?${query.toString()}` : ""
+  }`;
+
+  const res = await silentTenantApi("GET", uri);
+  if (!res?.data) {
+    throw new Error("Failed to fetch project membership suggestions");
+  }
+  return res.data;
+};
+
 // POST: Create a new project
 const createProject = async (projectData) => {
   const res = await tenantApi("POST", "/admin/projects", projectData);
@@ -106,6 +129,18 @@ export const useFetchProjectById = (id, options = {}) => {
     queryFn: () => fetchProjectById(id),
     enabled: !!id, // Only fetch if ID is provided
     staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+
+export const useTenantProjectMembershipSuggestions = (params = {}, options = {}) => {
+  const enabled = options.enabled ?? true;
+  return useQuery({
+    queryKey: ["tenant-project-memberships", params],
+    queryFn: () => fetchTenantProjectMembershipSuggestions(params),
+    enabled,
+    staleTime: 0,
     refetchOnWindowFocus: false,
     ...options,
   });

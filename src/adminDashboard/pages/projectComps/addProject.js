@@ -10,7 +10,6 @@ import { useFetchTenants } from "../../../hooks/adminHooks/tenantHooks";
 import { useFetchClients } from "../../../hooks/adminHooks/clientHooks";
 import { DropdownSelect } from "./dropdownSelect"; // Ensure this path is correct
 import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
-
 const MAX_ATTEMPTS = 10;
 
 const INITIAL_FORM_STATE = {
@@ -788,6 +787,93 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
     </div>
   );
 
+  function renderSummaryPanel() {
+    const summaryItems = [
+      { label: "Project name", value: formData.name || "Not set" },
+      {
+        label: "Default region",
+        value: formData.region ? formData.region.toUpperCase() : "Select region",
+      },
+      {
+        label: "Assignment scope",
+        value:
+          formData.assignment_scope === "internal"
+            ? "Internal"
+            : formData.assignment_scope === "tenant"
+            ? "Tenant workspace"
+            : "Client",
+      },
+      {
+        label: "Tenant link",
+        value: resolveTenantName || formData.tenant_id || "Not attached",
+      },
+      {
+        label: "Client link",
+        value: resolveClientName || formData.client_id || "Optional",
+      },
+      {
+        label: "Members selected",
+        value: selectedMembers.length
+          ? `${selectedMembers.length} team member(s)`
+          : "Using defaults",
+      },
+    ];
+
+    const guidanceItems = [
+      "Scope controls which directory the project belongs to and who can access it.",
+      "Attach tenants or clients to auto-populate members and accelerate onboarding.",
+      "Curate a core response team before provisioning to keep activity auditable.",
+    ];
+
+    return (
+      <div className="space-y-4">
+        <div className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm">
+          <p className="text-sm font-semibold text-slate-900">Live summary</p>
+          <dl className="mt-3 space-y-3 text-sm">
+            {summaryItems.map((item) => (
+              <div
+                key={item.label}
+                className="flex items-center justify-between gap-3"
+              >
+                <dt className="text-slate-500">{item.label}</dt>
+                <dd className="text-right font-semibold text-slate-900">
+                  {item.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+        <div className="rounded-2xl bg-slate-900 p-5 text-white shadow-lg">
+          <p className="text-sm font-semibold">Admin tips</p>
+          <ul className="mt-3 space-y-2 text-sm text-slate-100/80">
+            {guidanceItems.map((tip) => (
+              <li key={tip} className="flex items-start gap-2">
+                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-white/70" />
+                <span>{tip}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    );
+  }
+
+  const wrapperClasses = isPageMode
+    ? "font-Outfit w-full"
+    : "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit";
+
+  const cardClasses = isPageMode
+    ? "bg-white rounded-[24px] border border-slate-200 shadow-sm w-full max-w-4xl mx-auto my-6"
+    : "bg-white rounded-[24px] max-w-[650px] mx-4 w-full";
+
+  const bodyClasses = isPageMode
+    ? "px-6 py-6 w-full flex flex-col"
+    : "px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start";
+
+  const headerBackgroundClass = isPageMode ? "bg-white" : "bg-[#F2F2F2]";
+  const showCloseButton = !isPageMode;
+  const closeButtonLabel = isPageMode ? "Cancel" : "Close";
+
   if (isPageMode) {
     return (
       <div className="font-Outfit">
@@ -808,7 +894,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
             <div className="rounded-2xl border border-slate-200 bg-white/95 p-5 shadow-sm">
               {renderFormFields()}
             </div>
-            <aside>{summaryPanel}</aside>
+            <aside>{renderSummaryPanel()}</aside>
           </div>
         </div>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
@@ -842,95 +928,6 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
       </div>
     );
   }
-
-  if (!isOpen) {
-    return null;
-  }
-
-  const wrapperClasses = isPageMode
-    ? "font-Outfit w-full"
-    : "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit";
-
-  const cardClasses = isPageMode
-    ? "bg-white rounded-[24px] border border-slate-200 shadow-sm w-full max-w-4xl mx-auto my-6"
-    : "bg-white rounded-[24px] max-w-[650px] mx-4 w-full";
-
-  const bodyClasses = isPageMode
-    ? "px-6 py-6 w-full flex flex-col"
-    : "px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start";
-
-  const headerBackgroundClass = isPageMode ? "bg-white" : "bg-[#F2F2F2]";
-  const showCloseButton = !isPageMode;
-  const closeButtonLabel = isPageMode ? "Cancel" : "Close";
-
-  const summaryItems = [
-    { label: "Project name", value: formData.name || "Not set" },
-    {
-      label: "Default region",
-      value: formData.region ? formData.region.toUpperCase() : "Select region",
-    },
-    {
-      label: "Assignment scope",
-      value:
-        formData.assignment_scope === "internal"
-          ? "Internal"
-          : formData.assignment_scope === "tenant"
-          ? "Tenant workspace"
-          : "Client",
-    },
-    {
-      label: "Tenant link",
-      value: resolveTenantName || formData.tenant_id || "Not attached",
-    },
-    {
-      label: "Client link",
-      value: resolveClientName || formData.client_id || "Optional",
-    },
-    {
-      label: "Members selected",
-      value: selectedMembers.length
-        ? `${selectedMembers.length} team member(s)`
-        : "Using defaults",
-    },
-  ];
-
-  const summaryPanel = (
-    <div className="space-y-4">
-      <div className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm">
-        <p className="text-sm font-semibold text-slate-900">Live summary</p>
-        <dl className="mt-3 space-y-3 text-sm">
-          {summaryItems.map((item) => (
-            <div
-              key={item.label}
-              className="flex items-center justify-between gap-3"
-            >
-              <dt className="text-slate-500">{item.label}</dt>
-              <dd className="text-right font-semibold text-slate-900">
-                {item.value}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </div>
-      <div className="rounded-2xl bg-slate-900 p-5 text-white shadow-lg">
-        <p className="text-sm font-semibold">Admin tips</p>
-        <ul className="mt-3 space-y-2 text-sm text-slate-100/80">
-          {guidanceItems.map((tip) => (
-            <li key={tip} className="flex items-start gap-2">
-              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-white/70" />
-              <span>{tip}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  );
-
-  const guidanceItems = [
-    "Scope controls which directory the project belongs to and who can access it.",
-    "Attach tenants or clients to auto-populate members and accelerate onboarding.",
-    "Curate a core response team before provisioning to keep activity auditable.",
-  ];
 
   return (
     <div className={wrapperClasses}>

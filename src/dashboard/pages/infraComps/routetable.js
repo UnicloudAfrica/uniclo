@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link2, Plus, RefreshCw, Trash2 } from "lucide-react";
 import ToastUtils from "../../../utils/toastUtil";
 import {
   useFetchTenantRouteTables,
@@ -10,16 +11,20 @@ import AddRouteTableModal from "../routeTableComps/addRouteTable";
 import AddRouteModal from "../routeTableComps/addRoute";
 import DeleteRouteTableModal from "../routeTableComps/deleteRouteTable";
 import AssociateRouteTableModal from "../routeTableComps/associateRouteTable";
+import ResourceSection from "../../../adminDashboard/components/ResourceSection";
+import ResourceEmptyState from "../../../adminDashboard/components/ResourceEmptyState";
+import ResourceListCard from "../../../adminDashboard/components/ResourceListCard";
+import ModernButton from "../../../adminDashboard/components/ModernButton";
+
+const ITEMS_PER_PAGE = 6;
 
 const formatAssociationLabel = (assoc) => {
   if (assoc == null) {
-    return "unknown";
+    return "Unknown";
   }
-
   if (typeof assoc === "string" || typeof assoc === "number") {
     return String(assoc);
   }
-
   if (typeof assoc === "object") {
     if (assoc.subnet_id) return assoc.subnet_id;
     if (assoc.network_id) return assoc.network_id;
@@ -31,8 +36,16 @@ const formatAssociationLabel = (assoc) => {
     if (assoc.network_interface_id) return assoc.network_interface_id;
     return JSON.stringify(assoc);
   }
+  return "Unknown";
+};
 
-  return "unknown";
+const describeRouteTarget = (route = {}) => {
+  if (route.gateway_id) return `Gateway ${route.gateway_id}`;
+  if (route.instance_id) return `Instance ${route.instance_id}`;
+  if (route.network_interface_id) return `ENI ${route.network_interface_id}`;
+  if (route.nat_gateway_id) return `NAT ${route.nat_gateway_id}`;
+  if (route.vpc_peering_connection_id) return `Peering ${route.vpc_peering_connection_id}`;
+  return route.target || "Unknown target";
 };
 
 const RouteTables = ({
@@ -42,94 +55,66 @@ const RouteTables = ({
   onActionHandled,
   onStatsUpdate,
 }) => {
-  const { data: routeTables, isFetching } = useFetchTenantRouteTables(
-    projectId,
-    region
-  );
-  const { mutate: syncRouteTables, isPending: isSyncing } =
-    useSyncTenantRouteTables();
-  const { mutate: deleteRouteTable, isPending: isDeletingRouteTable } =
-    useDeleteTenantRouteTable();
-  const { mutate: deleteRoute, isPending: isDeletingRoute } =
-    useDeleteTenantRoute();
+  const { data: routeTables, isFetching } = useFetchTenantRouteTables(projectId, region);
+  const { mutate: syncRouteTables, isPending: isSyncing } = useSyncTenantRouteTables();
+  const { mutate: deleteRouteTable, isPending: isDeletingRouteTable } = useDeleteTenantRouteTable();
+  const { mutate: deleteRoute, isPending: isDeletingRoute } = useDeleteTenantRoute();
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
   const [isAddModalOpen, setAddModalOpen] = useState(false);
-  const [routeModal, setRouteModal] = useState(null); // { routeTable }
-  const [deleteModal, setDeleteModal] = useState(null); // { routeTable }
-  const [associateModal, setAssociateModal] = useState(null); // { routeTable }
+  const [routeModal, setRouteModal] = useState(null);
+  const [deleteModal, setDeleteModal] = useState(null);
+  const [associateModal, setAssociateModal] = useState(null);
 
-  const items = routeTables || [];
+  const items = useMemo(() => (Array.isArray(routeTables) ? routeTables : []), [routeTables]);
   const totalItems = items.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentItems = items.slice(startIndex, startIndex + itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(Math.max(totalItems, 1) / ITEMS_PER_PAGE));
+  const currentItems = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return items.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [items, currentPage]);
 
-  const handlePreviousPage = () => {
-    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
-  };
-
-  const handleSync = () => {
-    if (!projectId) {
-      ToastUtils.error("Project context is required to sync route tables.");
-      return;
-    }
-
-    syncRouteTables(
-      { project_id: projectId, region },
+  const stats = useMemo(() => {
+    const totalRoutes = items.reduce((sum, rt) => sum + ((rt.routes || []).length ?? 0), 0);
+    const mainTablesCount = items.filter(
+      (rt) =>
+        rt.main ||
+        rt.is_main ||
+        (rt.associations || []).some((assoc) => assoc?.main)
+    ).length;
+    const summary = [
       {
-        onSuccess: () => {
-          ToastUtils.success("Route tables synced with provider.");
-        },
-        onError: (err) => {
-          console.error("Failed to sync route tables:", err);
-          ToastUtils.error(err?.message || "Failed to sync route tables.");
-        },
-      }
-    );
-  };
-
-  const handleDeleteRouteTable = () => {
-    if (!deleteModal?.routeTable) return;
-    const rt = deleteModal.routeTable;
-    const payload = {
-      project_id: projectId,
-      region,
-    };
-    deleteRouteTable(
-      {
-        id: rt.id ?? rt.provider_resource_id,
-        payload,
+        label: "Route Tables",
+        value: items.length,
+        tone: items.length ? "primary" : "neutral",
       },
       {
-        onSuccess: () => {
-          ToastUtils.success("Route table deleted.");
-          setDeleteModal(null);
-        },
-        onError: (err) => {
-          console.error("Failed to delete route table:", err);
-          ToastUtils.error(err?.message || "Failed to delete route table.");
-          setDeleteModal(null);
-        },
-      }
-    );
-  };
+        label: "Routes",
+        value: totalRoutes,
+        tone: totalRoutes ? "info" : "neutral",
+      },
+    ];
+    if (mainTablesCount) {
+      summary.push({ label: "Main Tables", value: mainTablesCount, tone: "success" });
+    }
+    if (region) {
+      summary.push({ label: "Region", value: region, tone: "info" });
+    }
+    return summary;
+  }, [items, region]);
 
   const lastActionToken = useRef(null);
   const lastCountRef = useRef(-1);
 
   useEffect(() => {
-    const count = Array.isArray(items) ? items.length : 0;
-    if (lastCountRef.current !== count) {
-      lastCountRef.current = count;
-      onStatsUpdate?.(count);
+    if (!isFetching) {
+      const count = items.length;
+      if (lastCountRef.current !== count) {
+        lastCountRef.current = count;
+        onStatsUpdate?.(count);
+      }
     }
-  }, [items, onStatsUpdate]);
+  }, [items, isFetching, onStatsUpdate]);
 
   useEffect(() => {
     if (!actionRequest || actionRequest.resource !== "routeTables") {
@@ -150,6 +135,47 @@ const RouteTables = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actionRequest]);
 
+  const handleSync = () => {
+    if (!projectId) {
+      ToastUtils.error("Project context is required to sync route tables.");
+      return;
+    }
+
+    syncRouteTables(
+      { project_id: projectId, region },
+      {
+        onSuccess: () => ToastUtils.success("Route tables synced with provider."),
+        onError: (err) => {
+          console.error("Failed to sync route tables:", err);
+          ToastUtils.error(err?.message || "Failed to sync route tables.");
+        },
+      }
+    );
+  };
+
+  const handleDeleteRouteTable = () => {
+    if (!deleteModal?.routeTable) return;
+    const rt = deleteModal.routeTable;
+    const payload = { project_id: projectId, region };
+    deleteRouteTable(
+      {
+        id: rt.id ?? rt.provider_resource_id,
+        payload,
+      },
+      {
+        onSuccess: () => {
+          ToastUtils.success("Route table deleted.");
+          setDeleteModal(null);
+        },
+        onError: (err) => {
+          console.error("Failed to delete route table:", err);
+          ToastUtils.error(err?.message || "Failed to delete route table.");
+          setDeleteModal(null);
+        },
+      }
+    );
+  };
+
   const handleDeleteRoute = (rt, route) => {
     if (!rt || !route) return;
     const payload = {
@@ -159,15 +185,12 @@ const RouteTables = ({
       destination_cidr_block: route.destination_cidr_block,
     };
     if (route.gateway_id) payload.gateway_id = route.gateway_id;
-    if (route.network_interface_id)
-      payload.network_interface_id = route.network_interface_id;
+    if (route.network_interface_id) payload.network_interface_id = route.network_interface_id;
     if (route.instance_id) payload.instance_id = route.instance_id;
     if (route.nat_gateway_id) payload.nat_gateway_id = route.nat_gateway_id;
 
     deleteRoute(payload, {
-      onSuccess: () => {
-        ToastUtils.success("Route deleted.");
-      },
+      onSuccess: () => ToastUtils.success("Route deleted."),
       onError: (err) => {
         console.error("Failed to delete route:", err);
         ToastUtils.error(err?.message || "Failed to delete route.");
@@ -175,158 +198,238 @@ const RouteTables = ({
     });
   };
 
-  if (isFetching) {
-    return (
-      <div className="flex items-center justify-center p-6 bg-gray-50 rounded-[10px] font-Outfit">
-        <p className="text-gray-500 text-sm">Loading Route Tables...</p>
-      </div>
-    );
-  }
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  };
 
-  return (
-    <div className="bg-gray-50 rounded-[10px] font-Outfit">
-      <div className="flex justify-end items-center gap-3 mb-6">
-        <button
-          onClick={handleSync}
-          disabled={isSyncing || !projectId}
-          className="rounded-[30px] py-3 px-6 border border-[#288DD1] text-[#288DD1] bg-white font-normal text-base hover:bg-[#288DD1] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+  };
+
+  const actions = [
+    <ModernButton
+      key="sync"
+      variant="outline"
+      size="sm"
+      leftIcon={<RefreshCw size={16} />}
+      onClick={handleSync}
+      isDisabled={isSyncing || !projectId}
+      isLoading={isSyncing}
+    >
+      {isSyncing ? "Syncing..." : "Sync Route Tables"}
+    </ModernButton>,
+    <ModernButton
+      key="add"
+      variant="primary"
+      size="sm"
+      leftIcon={<Plus size={16} />}
+      onClick={() => setAddModalOpen(true)}
+      isDisabled={!projectId}
+    >
+      Add Route Table
+    </ModernButton>,
+  ];
+
+  const paginationControls =
+    totalItems > ITEMS_PER_PAGE ? (
+      <div className="mt-6 flex items-center justify-between text-sm text-gray-500">
+        <ModernButton
+          variant="outline"
+          size="sm"
+          onClick={handlePreviousPage}
+          isDisabled={currentPage === 1}
         >
-          {isSyncing ? "Syncing..." : "Sync Route Tables"}
-        </button>
-        <button
+          Previous
+        </ModernButton>
+        <span>
+          Page {currentPage} of {totalPages}
+        </span>
+        <ModernButton
+          variant="outline"
+          size="sm"
+          onClick={handleNextPage}
+          isDisabled={currentPage === totalPages}
+        >
+          Next
+        </ModernButton>
+      </div>
+    ) : null;
+
+  const emptyState = (
+    <ResourceEmptyState
+      title="No Route Tables"
+      message="Sync from your cloud account or create a route table to control traffic flow."
+      action={
+        <ModernButton
+          variant="primary"
+          size="sm"
           onClick={() => setAddModalOpen(true)}
-          className="rounded-[30px] py-3 px-9 bg-[#288DD1] text-white font-normal text-base hover:bg-[#1976D2] transition-colors"
-          disabled={!projectId}
+          isDisabled={!projectId}
         >
           Add Route Table
-        </button>
-      </div>
+        </ModernButton>
+      }
+    />
+  );
 
-      {currentItems.length > 0 ? (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {currentItems.map((rt) => (
-              <div
-                key={rt.id}
-                className="p-4 bg-white rounded-[10px] shadow-sm border border-gray-200 flex flex-col justify-between"
+  const renderRoutesSection = (rt) => {
+    const routes = rt.routes || [];
+    return (
+      <div className="space-y-3">
+        <h4 className="text-sm font-semibold text-slate-700">Routes</h4>
+        {routes.length === 0 ? (
+          <p className="text-sm text-slate-500">No routes defined</p>
+        ) : (
+          <div className="space-y-2">
+            {routes.map((route, idx) => {
+              const destination =
+                route.destination_cidr_block ||
+                route.destination_ipv6_cidr_block ||
+                "—";
+              return (
+                <div
+                  key={`${rt.id}-route-${idx}`}
+                  className="flex items-center justify-between rounded-2xl border border-slate-200 px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-slate-800">{destination}</p>
+                    <p className="text-xs text-slate-500">
+                      {describeRouteTarget(route)}
+                    </p>
+                  </div>
+                  <ModernButton
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteRoute(rt, route)}
+                    isDisabled={isDeletingRoute}
+                  >
+                    Remove
+                  </ModernButton>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderAssociations = (rt) => {
+    const associations = rt.associations || [];
+    return (
+      <div className="space-y-2">
+        <h4 className="text-sm font-semibold text-slate-700">Associations</h4>
+        {associations.length === 0 ? (
+          <p className="text-sm text-slate-500">No associations</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {associations.map((assoc, idx) => (
+              <span
+                key={`${rt.id}-assoc-${idx}`}
+                className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600"
               >
-                <div className="flex-grow space-y-2 text-sm text-gray-500">
-                  <h3
-                    className="font-medium text-gray-800 truncate"
-                    title={rt.name || rt.provider_resource_id}
-                  >
-                    {rt.name || rt.provider_resource_id || "Unnamed Route Table"}
-                  </h3>
-                  <p>
-                    Provider:{" "}
-                    {typeof rt.provider === "string" && rt.provider.trim() !== ""
-                      ? rt.provider.toUpperCase()
-                      : "N/A"}
-                  </p>
-                  <p>Region: {rt.region || "N/A"}</p>
-                  <div>
-                    <p className="font-medium text-xs text-gray-600 mb-1">
-                      Routes
-                    </p>
-                    <div className="space-y-1 max-h-32 overflow-y-auto pr-1">
-                      {(rt.routes || []).map((route, idx) => (
-                        <div
-                          key={`${route.destination_cidr_block}-${idx}`}
-                          className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs"
-                        >
-                          <span className="text-gray-700">
-                            {route.destination_cidr_block}
-                          </span>
-                          <button
-                            onClick={() => handleDeleteRoute(rt, route)}
-                            className="text-red-500 hover:text-red-600"
-                            disabled={isDeletingRoute}
-                            title="Delete route"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ))}
-                      {(!rt.routes || rt.routes.length === 0) && (
-                        <p className="text-xs text-gray-500">No routes</p>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="font-medium text-xs text-gray-600 mb-1">
-                      Associations
-                    </p>
-                    <div className="space-y-1 max-h-20 overflow-y-auto pr-1 text-xs">
-                      {(rt.associations || []).map((assoc, idx) => {
-                        const label = formatAssociationLabel(assoc);
-                        return (
-                          <div
-                            key={`${label}-${idx}`}
-                            className="bg-gray-50 border border-gray-200 rounded px-2 py-1 text-gray-600"
-                          >
-                            {label}
-                          </div>
-                        );
-                      })}
-                      {(!rt.associations || rt.associations.length === 0) && (
-                        <p className="text-xs text-gray-500">No associations</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-4 pt-3 border-t flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setRouteModal({ routeTable: rt })}
-                    className="px-3 py-1 rounded-full text-xs border border-[#288DD1] text-[#288DD1] hover:bg-[#E6F2FA] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={!projectId}
-                  >
-                    Add Route
-                  </button>
-                  <button
-                    onClick={() => setAssociateModal({ routeTable: rt })}
-                    className="px-3 py-1 rounded-full text-xs border border-amber-500 text-amber-600 hover:bg-amber-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={!projectId || !region}
-                  >
-                    Associate Subnet
-                  </button>
-                  <button
-                    onClick={() => setDeleteModal({ routeTable: rt })}
-                    disabled={isDeletingRouteTable}
-                    className="px-3 py-1 rounded-full text-xs border border-red-500 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
+                {formatAssociationLabel(assoc)}
+              </span>
             ))}
           </div>
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6">
-              <button
-                onClick={handlePreviousPage}
-                disabled={currentPage === 1}
-                className="px-4 py-2 bg-[#288DD1] text-white rounded-[30px] font-medium text-sm hover:bg-[#1976D2] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-              <div className="text-sm text-gray-600">
-                Page {currentPage} of {totalPages}
-              </div>
-              <button
-                onClick={handleNextPage}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 bg-[#288DD1] text-white rounded-[30px] font-medium text-sm hover:bg-[#1976D2] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
+        )}
+      </div>
+    );
+  };
+
+  const renderCard = (rt) => {
+    const rtId = rt.id || rt.provider_resource_id;
+    const routes = rt.routes || [];
+    const associations = rt.associations || [];
+    const isMainTable =
+      Boolean(rt.main) ||
+      Boolean(rt.is_main) ||
+      associations.some((assoc) => assoc?.main);
+    const statusLabel = rt.status || (isMainTable ? "Main Table" : "");
+
+    return (
+      <ResourceListCard
+        key={rtId}
+        title={rt.name || rtId || "Route Table"}
+        subtitle={rtId}
+        metadata={[
+          { label: "VPC", value: rt.vpc_id || "—" },
+          { label: "Routes", value: routes.length },
+          { label: "Associations", value: associations.length },
+          region ? { label: "Region", value: region } : null,
+        ].filter(Boolean)}
+        statuses={
+          statusLabel
+            ? [
+                {
+                  label: statusLabel,
+                  tone: isMainTable ? "primary" : "neutral",
+                },
+              ]
+            : isMainTable
+            ? [
+                {
+                  label: "Main Table",
+                  tone: "primary",
+                },
+              ]
+            : []
+        }
+        actions={[
+          {
+            key: "add-route",
+            label: "Add Route",
+            icon: <Plus size={16} />,
+            onClick: () => setRouteModal({ routeTableId: rtId, routeTable: rt }),
+            disabled: !projectId,
+          },
+          {
+            key: "associate",
+            label: "Associate",
+            icon: <Link2 size={16} />,
+            onClick: () => setAssociateModal({ routeTable: rt }),
+            disabled: !projectId,
+          },
+          {
+            key: "delete",
+            label: "Delete",
+            icon: <Trash2 size={16} />,
+            variant: "danger",
+            onClick: () => setDeleteModal({ routeTable: rt }),
+            disabled: isDeletingRouteTable,
+          },
+        ]}
+        footer={
+          <div className="space-y-5">
+            {renderAssociations(rt)}
+            {renderRoutesSection(rt)}
+          </div>
+        }
+      />
+    );
+  };
+
+  return (
+    <>
+      <ResourceSection
+        title="Route Tables"
+        description="Control how traffic flows between subnets and the internet."
+        actions={actions}
+        meta={stats}
+        isLoading={isFetching}
+      >
+        {currentItems.length > 0 ? (
+          <>
+            <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+              {currentItems.map(renderCard)}
             </div>
-          )}
-        </>
-      ) : (
-        <p className="text-gray-500 text-sm">
-          No Route Tables found for this project.
-        </p>
-      )}
+            {paginationControls}
+          </>
+        ) : (
+          emptyState
+        )}
+      </ResourceSection>
+
       <AddRouteTableModal
         isOpen={isAddModalOpen}
         onClose={() => setAddModalOpen(false)}
@@ -334,35 +437,33 @@ const RouteTables = ({
         region={region}
       />
       <AddRouteModal
-        isOpen={!!routeModal}
+        isOpen={Boolean(routeModal)}
         onClose={() => setRouteModal(null)}
         projectId={projectId}
         region={region}
-        routeTableId={
-          routeModal?.routeTable?.provider_resource_id ||
-          routeModal?.routeTable?.id
-        }
+        routeTableId={routeModal?.routeTableId || routeModal?.routeTable?.id}
         routeTables={items}
       />
-      <DeleteRouteTableModal
-        isOpen={!!deleteModal}
-        onClose={() => setDeleteModal(null)}
-        routeTableName={
-          deleteModal?.routeTable?.name ||
-          deleteModal?.routeTable?.provider_resource_id ||
-          ""
-        }
-        onConfirm={handleDeleteRouteTable}
-        isDeleting={isDeletingRouteTable}
-      />
       <AssociateRouteTableModal
-        isOpen={!!associateModal}
+        isOpen={Boolean(associateModal)}
         onClose={() => setAssociateModal(null)}
         projectId={projectId}
         region={region}
-        routeTable={associateModal?.routeTable}
+        routeTable={associateModal?.routeTable || null}
       />
-    </div>
+      <DeleteRouteTableModal
+        isOpen={Boolean(deleteModal)}
+        onClose={() => setDeleteModal(null)}
+        onConfirm={handleDeleteRouteTable}
+        routeTableName={
+          deleteModal?.routeTable?.name ||
+          deleteModal?.routeTable?.provider_resource_id ||
+          deleteModal?.routeTable?.id ||
+          ""
+        }
+        isDeleting={isDeletingRouteTable}
+      />
+    </>
   );
 };
 

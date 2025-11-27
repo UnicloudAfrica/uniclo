@@ -21,6 +21,7 @@ import {
   useFetchLeadById,
   useConvertLeadToUser,
 } from "../../hooks/tenantHooks/leadsHook";
+import DocumentViewerModal from "../../dashboard/pages/leadComps/documentViewer";
 
 const formatStatusForDisplay = (status) => {
   return status?.replace(/_/g, " ") || "N/A";
@@ -46,7 +47,7 @@ const DocumentItem = ({ doc, onUpdate, onView }) => (
       </div>
       <div className="flex items-center space-x-2 flex-shrink-0">
         <button
-          onClick={() => onView(doc.file, doc.name)}
+          onClick={() => onView(doc)}
           className="text-gray-600 hover:text-gray-800 transition-colors"
           title="View Document"
         >
@@ -131,8 +132,7 @@ export default function TenantLeadDetails() {
     leadNameFromUrl: "",
     editingStage: null,
     editingDocument: null,
-    viewingFile: null,
-    viewingFileName: null,
+    viewingDocument: null,
   });
 
   const [activeTab, setActiveTab] = useState("leads");
@@ -521,8 +521,8 @@ export default function TenantLeadDetails() {
                       updateDataState({ editingDocument: document });
                       updateUiState({ isUpdateDocModalOpen: true });
                     }}
-                    onView={(file, fileName) => {
-                      updateDataState({ viewingFile: file, viewingFileName: fileName });
+                    onView={(document) => {
+                      updateDataState({ viewingDocument: document });
                       updateUiState({ isViewerOpen: true });
                     }}
                   />
@@ -532,6 +532,14 @@ export default function TenantLeadDetails() {
           )}
         </div>
       </main>
+      <DocumentViewerModal
+        isOpen={uiState.isViewerOpen}
+        onClose={() => {
+          updateDataState({ viewingDocument: null });
+          updateUiState({ isViewerOpen: false });
+        }}
+        document={dataState.viewingDocument}
+      />
     </>
   );
 }

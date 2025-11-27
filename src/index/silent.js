@@ -1,5 +1,6 @@
 import config from "../config";
-import useAuthStore from "../stores/userAuthStore";
+import useTenantAuthStore from "../stores/tenantAuthStore";
+import { handleAuthRedirect } from "../utils/authRedirect";
 
 const parseJsonSafely = async (response) => {
   if (response.status === 204 || response.status === 205) {
@@ -29,7 +30,7 @@ const parseJsonSafely = async (response) => {
 
 const silentApi = async (method, uri, body = null) => {
   const url = config.baseURL + uri;
-  const { token, setToken, clearToken } = useAuthStore.getState();
+  const { token, setToken } = useTenantAuthStore.getState();
 
   const headers = {
     "Content-Type": "application/json",
@@ -60,9 +61,8 @@ const silentApi = async (method, uri, body = null) => {
 
       return res;
     } else {
-      // Handle 401 silently by clearing the token
-      if (response.status === 401) {
-        clearToken(); // Clear token without redirecting or showing toasts
+      const handled = handleAuthRedirect(response, res, "/sign-in");
+      if (handled) {
         throw new Error("Unauthorized");
       }
 

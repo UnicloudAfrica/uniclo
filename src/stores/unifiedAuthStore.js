@@ -51,10 +51,6 @@ const useUnifiedAuthStore = create(
           cloudRoles: [],
           cloudAbilities: [],
         });
-        // Clear all auth-related localStorage
-        localStorage.removeItem('unicloud_admin_auth');
-        localStorage.removeItem('unicloud_client_auth');
-        localStorage.removeItem('unicloud_user_auth');
       },
 
       // Role-based Permissions
@@ -176,7 +172,7 @@ const useUnifiedAuthStore = create(
           // Check for existing auth data from old stores
           const adminAuth = localStorage.getItem('unicloud_admin_auth');
           const clientAuth = localStorage.getItem('unicloud_client_auth');
-          const userAuth = localStorage.getItem('unicloud_user_auth');
+          const userAuth = localStorage.getItem('unicloud_tenant_auth');
 
           if (adminAuth) {
             const data = JSON.parse(adminAuth);
@@ -232,19 +228,22 @@ const useUnifiedAuthStore = create(
 
       isTokenExpired: () => {
         const { token } = get();
-        if (!token) return true;
-        
+        if (!token) return false;
+
         try {
           const payload = JSON.parse(atob(token.split('.')[1]));
           return payload.exp * 1000 < Date.now();
         } catch (error) {
-          return true; // If we can't parse, assume expired
+          return false; // If we can't parse, assume it's fine
         }
       },
 
       // Auto-logout on token expiration
       checkTokenExpiration: () => {
-        const { isTokenExpired, logout } = get();
+        const { token, isTokenExpired, logout } = get();
+        if (!token) {
+          return true;
+        }
         if (isTokenExpired()) {
           logout();
           return false;

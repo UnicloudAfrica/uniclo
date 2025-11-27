@@ -1,13 +1,11 @@
 import config from "../../config";
 import useAdminAuthStore from "../../stores/adminAuthStore";
+import { handleAuthRedirect } from "../../utils/authRedirect";
 import ToastUtils from "../../utils/toastUtil";
-
-// Global variable to track redirection state
-let isRedirecting = false;
 
 const multipartApi = async (method, uri, formData = null) => {
   const url = config.adminURL + uri;
-  const { token, setToken, clearToken } = useAdminAuthStore.getState();
+  const { token, setToken } = useAdminAuthStore.getState();
 
   const headers = {
     Accept: "application/json",
@@ -52,24 +50,8 @@ const multipartApi = async (method, uri, formData = null) => {
 
       return res;
     } else {
-      if (response.status === 401) {
-        if (!isRedirecting) {
-          isRedirecting = true;
-          clearToken();
-
-          if (window.location.pathname === "/admin-signin") {
-            ToastUtils.error("Please check your account details.");
-          } else {
-            ToastUtils.error("Session expired. Redirecting to login...", {
-              duration: 3000,
-            });
-            window.location = "/admin-signin";
-          }
-
-          setTimeout(() => {
-            isRedirecting = false;
-          }, 5000);
-        }
+      const handled = handleAuthRedirect(response, res, "/admin-signin");
+      if (handled) {
         return;
       }
 

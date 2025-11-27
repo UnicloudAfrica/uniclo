@@ -1,10 +1,10 @@
 import config from "../../config";
 import useClientAuthStore from "../../stores/clientAuthStore";
-import ToastUtils from "../../utils/toastUtil";
+import { handleAuthRedirect } from "../../utils/authRedirect";
 
 const clientSilentApi = async (method, uri, body = null) => {
   const url = config.baseURL + uri;
-  const { token, setToken, clearToken } = useClientAuthStore.getState();
+  const { token, setToken } = useClientAuthStore.getState();
 
   const headers = {
     "Content-Type": "application/json",
@@ -35,10 +35,9 @@ const clientSilentApi = async (method, uri, body = null) => {
 
       return res;
     } else {
-      // Handle 401 silently by clearing the token
-      if (response.status === 401) {
-        // clearToken(); // Clear token without redirecting or showing toasts
-        // throw new Error("Unauthorized");
+      const handled = handleAuthRedirect(response, res, "/sign-in");
+      if (handled) {
+        throw new Error("Unauthorized");
       }
 
       const errorMessage =

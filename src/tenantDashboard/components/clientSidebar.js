@@ -20,13 +20,13 @@ import {
   ClipboardList,
   HardDrive,
 } from "lucide-react";
-import useAuthStore from "../../stores/userAuthStore";
+import useTenantAuthStore from "../../stores/tenantAuthStore";
+import { clearAllAuthSessions } from "../../stores/sessionUtils";
 
 const Sidebar = ({ tenantData, activeTab, setActiveTab }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { clearToken } = useAuthStore.getState();
 
   // Map of paths to menu item names
   const pathToItemMap = {
@@ -127,7 +127,7 @@ const Sidebar = ({ tenantData, activeTab, setActiveTab }) => {
   };
 
   const handleLogout = () => {
-    clearToken(); // Clear the token from the store
+    clearAllAuthSessions();
     navigate("/login"); // Redirect to login page
     setIsMobileMenuOpen(false); // Close mobile menu if open
   };

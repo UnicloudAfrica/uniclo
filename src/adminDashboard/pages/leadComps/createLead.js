@@ -458,7 +458,7 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
       meta={meta}
       aside={asideContent}
       footer={footer}
-      maxWidthClass={isPageMode ? "max-w-6xl" : "max-w-4xl"}
+      maxWidthClass={isPageMode ? "max-w-full" : "max-w-4xl"}
     >
       <form id={formId} className="space-y-8" onSubmit={handleSubmit}>
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">

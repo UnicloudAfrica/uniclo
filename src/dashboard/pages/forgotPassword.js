@@ -4,13 +4,13 @@ import sideBg from "./assets/sideBg.svg";
 import logo from "./assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useForgotPassword } from "../../hooks/authHooks";
-import useAuthStore from "../../stores/userAuthStore";
+import useTenantAuthStore from "../../stores/tenantAuthStore";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState({});
   const { mutate: forgotPassword, isPending } = useForgotPassword();
-  const { userEmail, setUserEmail } = useAuthStore.getState();
+  const { userEmail, setUserEmail } = useTenantAuthStore.getState();
 
   const navigate = useNavigate();
 

@@ -54,7 +54,7 @@ import { designTokens } from "../../styles/designTokens";
 import ToastUtils from "../../utils/toastUtil";
 import tenantApi from "../../index/tenant/tenantApi";
 import silentTenantApi from "../../index/tenant/silentTenant";
-import useAuthStore from "../../stores/userAuthStore";
+import useTenantAuthStore from "../../stores/tenantAuthStore";
 import {
   syncTenantProjectEdgeConfig,
   useFetchProjectEdgeConfigTenant,
@@ -312,7 +312,7 @@ const StatusBadge = ({ label, active, tone = "primary" }) => {
 export default function ClientProjectDetails() {
   const location = useLocation();
   const navigate = useNavigate();
-  const tenantToken = useAuthStore((state) => state.token);
+  const tenantToken = useTenantAuthStore((state) => state.token);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("setup");
   const [isAssignEdgeOpen, setIsAssignEdgeOpen] = useState(false);

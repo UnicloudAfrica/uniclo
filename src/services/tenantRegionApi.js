@@ -6,8 +6,8 @@
  */
 
 import config from '../config';
-import useMultiTenantAuthStore from '../stores/multiTenantAuthStore';
 import useAdminAuthStore from '../stores/adminAuthStore';
+import useTenantAuthStore from '../stores/tenantAuthStore';
 import ToastUtils from '../utils/toastUtil';
 
 class TenantRegionApiService {
@@ -15,14 +15,24 @@ class TenantRegionApiService {
    * Get the authorization headers
    */
   getAuthHeaders() {
-    const tenantToken = useMultiTenantAuthStore.getState().token;
-    const adminToken = useAdminAuthStore.getState().token;
-    const token = tenantToken || adminToken;
-    return {
-      'Authorization': `Bearer ${token}`,
+    const adminState = useAdminAuthStore.getState();
+    const tenantState = useTenantAuthStore.getState();
+    const token = tenantState.token || adminState.token;
+    const headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    if (
+      adminState &&
+      adminState.isCentralDomain === false &&
+      adminState.currentTenant?.slug
+    ) {
+      headers['X-Tenant-Slug'] = adminState.currentTenant.slug;
+    }
+    return headers;
   }
 
   /**

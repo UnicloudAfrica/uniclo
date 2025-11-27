@@ -53,9 +53,7 @@ const fetchGeneralRegions = async () => {
 };
 const fetchProductPricing = async (region, productable_type, countryCode = "") => {
   const params = new URLSearchParams();
-  if (region) {
-    params.append("region", region);
-  }
+  params.append("region", region || "");
   if (productable_type) {
     params.append("productable_type", productable_type);
   }

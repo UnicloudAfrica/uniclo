@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCreateAccount } from "../../hooks/authHooks";
 import { useVerifyBusiness } from "../../hooks/businessHooks";
-import useAuthStore from "../../stores/userAuthStore";
+import useTenantAuthStore from "../../stores/tenantAuthStore";
 import sideBg from "./assets/sideBg.svg";
 import Header from "./signup/header";
 import { Loader2, ShieldCheck, AlertCircle } from "lucide-react";
@@ -30,7 +30,7 @@ const INITIAL_FORM = {
 
 export default function DashboardSignUpV2() {
   const navigate = useNavigate();
-  const setUserEmail = useAuthStore((state) => state.setUserEmail);
+  const setUserEmail = useTenantAuthStore((state) => state.setUserEmail);
   const { mutate, isPending } = useCreateAccount();
   const { mutate: verifyBusiness, isPending: isVerifying } =
     useVerifyBusiness();

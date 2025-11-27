@@ -393,7 +393,7 @@ const AdminAdvancedCalculatorRedesigned = () => {
             }
             contentBackground="transparent"
             disableContentPadding
-            contentClassName="space-y-8 max-w-7xl mx-auto p-6 lg:p-8"
+            contentClassName="space-y-8 p-6 lg:p-8"
           >
             <ModernCard>
               <div className="flex flex-col gap-4 p-6 lg:flex-row lg:items-center lg:justify-between">

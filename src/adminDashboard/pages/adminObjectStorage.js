@@ -1,112 +1,142 @@
 import React, { useMemo, useState } from "react";
-import { HardDrive, Plus, Rocket } from "lucide-react";
+import {
+  Activity,
+  AlertTriangle,
+  CheckCircle,
+  HardDrive,
+  Plus,
+  RefreshCw,
+  Rocket,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AdminSidebar from "../components/adminSidebar";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminPageShell from "../components/AdminPageShell";
-import ModernCard from "../components/ModernCard";
-import ModernButton from "../components/ModernButton";
-import StatusPill from "../components/StatusPill";
 import { useObjectStorage } from "../../contexts/ObjectStorageContext";
-
-const statusToneMap = {
-  pending_payment: "warning",
-  payment_confirmed: "info",
-  provisioning: "info",
-  active: "success",
-  suspended: "warning",
-  cancelled: "critical",
-};
+import useAdminAuthStore from "../../stores/adminAuthStore";
+import ObjectStorageTable from "../../shared/components/objectStorage/ObjectStorageTable";
+import ObjectStoragePlanActions from "../../shared/components/objectStorage/ObjectStoragePlanActions";
 
 const AdminObjectStorage = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const { orders } = useObjectStorage();
+  const adminTenant = useAdminAuthStore((state) => state?.tenant);
+  const currentTenant = useAdminAuthStore((state) => state?.currentTenant);
+  const {
+    accounts,
+    accountsLoading,
+    accountsError,
+    accountsMeta,
+    accountQuery,
+    refreshAccounts,
+    changeAccountsPage,
+    changeAccountsPerPage,
+    accountBuckets,
+    bucketLoading,
+    bucketErrors,
+    loadBuckets,
+    createBucket,
+    deleteBucket,
+  } = useObjectStorage();
 
-  const sortedOrders = useMemo(
-    () => [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
-    [orders]
+  const sortedAccounts = useMemo(
+    () =>
+      [...accounts].sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      ),
+    [accounts]
   );
 
-  const requestCounts = useMemo(
-    () => ({
-      total: sortedOrders.length,
-      pending: sortedOrders.filter((order) => order.status === "pending_payment").length,
-      provisioning: sortedOrders.filter((order) => order.status === "provisioning").length,
-      active: sortedOrders.filter((order) => order.status === "active").length,
-    }),
-    [sortedOrders]
-  );
+  const statusCounts = useMemo(() => {
+    const base = {
+      total: accounts.length,
+      active: 0,
+      provisioning: 0,
+      failed: 0,
+    };
+    accounts.forEach((account) => {
+      const status = (account.status || "").toLowerCase();
+      if (status.includes("active")) base.active += 1;
+      else if (status.includes("provision")) base.provisioning += 1;
+      else if (status.includes("fail")) base.failed += 1;
+    });
+    return base;
+  }, [accounts]);
 
-  const renderOrderCard = (order) => {
-    const statusTone = statusToneMap[order.status] || "info";
-    const paymentTone =
-      order.paymentStatus === "paid" || order.paymentStatus === "admin_approved"
-        ? "success"
-        : order.paymentStatus === "pending"
-        ? "warning"
-        : "info";
+  const handleCreateBucket = (accountId, name) =>
+    createBucket(accountId, {
+      name,
+    });
 
+  const handleDeleteBucket = (accountId, bucket) =>
+    deleteBucket(accountId, bucket.id);
+
+  const emptyStateConfig = {
+    title: "No storage accounts yet",
+    description:
+      "Create a plan or fast-track a tenant to provision their first Zadara object storage account.",
+    actions: [
+      {
+        label: "Process Storage Payment",
+        onClick: () => navigate("/admin-dashboard/object-storage/create"),
+        variant: "primary",
+      },
+      {
+        label: "Fast-track tenant",
+        onClick: () =>
+          navigate("/admin-dashboard/object-storage/create?mode=fast-track"),
+        variant: "secondary",
+      },
+    ],
+  };
+
+  const heroCards = [
+    {
+      key: "accounts",
+      label: "Accounts",
+      value: statusCounts.total,
+      description: "Provisioned records",
+      icon: HardDrive,
+    },
+    {
+      key: "active",
+      label: "Active",
+      value: statusCounts.active,
+      description: "Ready for requests",
+      icon: CheckCircle,
+    },
+    {
+      key: "provisioning",
+      label: "Provisioning",
+      value: statusCounts.provisioning,
+      description: "In-flight builds",
+      icon: Activity,
+    },
+    {
+      key: "failed",
+      label: "Failed",
+      value: statusCounts.failed,
+      description: "Action needed",
+      icon: AlertTriangle,
+    },
+  ];
+
+  const renderHeroCard = (card) => {
+    const Icon = card.icon;
     return (
-      <ModernCard key={order.id} variant="outlined" padding="lg" className="space-y-4">
-        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div className="space-y-1">
-            <h3 className="text-lg font-semibold text-slate-900">
-              {order.tierName || "Object storage tier"}
-            </h3>
-            <p className="text-sm text-slate-500">
-              Region {order.region?.toUpperCase() || "N/A"} • {order.quantity} unit
-              {order.quantity === 1 ? "" : "s"} • {order.months} month
-              {order.months === 1 ? "" : "s"}
-            </p>
-          </div>
-          <StatusPill
-            label={order.status.replace(/_/g, " ")}
-            tone={statusTone}
-          />
+      <div
+        key={card.key}
+        className="rounded-2xl border border-white/30 bg-white/10 p-4 backdrop-blur"
+      >
+        <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-white/70">
+          <span>{card.label}</span>
+          <Icon className="h-4 w-4" />
         </div>
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <ModernCard variant="filled" padding="sm" className="space-y-1">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Total
-            </p>
-            <p className="text-lg font-semibold text-slate-900">
-              {order.currencyCode} {order.billing.total.toFixed(2)}
-            </p>
-            <p className="text-xs text-slate-500">Unit price × quantity × term</p>
-          </ModernCard>
-
-          <ModernCard variant="filled" padding="sm" className="space-y-1">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Payment status
-            </p>
-            <StatusPill label={order.paymentStatus.replace(/_/g, " ")} tone={paymentTone} />
-            <p className="text-xs text-slate-500">Managed by finance workflows</p>
-          </ModernCard>
-
-          <ModernCard variant="filled" padding="sm" className="space-y-1">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Created
-            </p>
-            <p className="text-sm font-semibold text-slate-900">
-              {new Date(order.createdAt).toLocaleString()}
-            </p>
-            <p className="text-xs text-slate-500">Latest timeline update recorded below</p>
-          </ModernCard>
-        </div>
-
-        {order.status === "active" && (
-          <ModernCard
-            variant="filled"
-            padding="sm"
-            className="border border-emerald-200 bg-emerald-50 text-sm text-emerald-700"
-          >
-            Buckets, credentials, and usage will appear as soon as the Zadara API sync completes for
-            this tenant.
-          </ModernCard>
-        )}
-      </ModernCard>
+        <p className="mt-2 text-3xl font-semibold text-white">
+          {card.value}
+        </p>
+        <p className="text-xs text-white/70">{card.description}</p>
+      </div>
     );
   };
 
@@ -122,90 +152,69 @@ const AdminObjectStorage = () => {
           <AdminPageShell
             title="Object storage"
             description="Track tenant storage plans, approve fast-track requests, and oversee payment status."
-            actions={
-              <div className="flex items-center gap-2">
-                <ModernButton
-                  variant="ghost"
-                  onClick={() => navigate("/admin-dashboard/object-storage/create?mode=fast-track")}
-                  leftIcon={<Rocket className="h-4 w-4" />}
-                >
-                  Fast-track tenant
-                </ModernButton>
-                <ModernButton
-                  variant="primary"
-                  onClick={() => navigate("/admin-dashboard/object-storage/create")}
-                  leftIcon={<Plus className="h-4 w-4" />}
-                >
-                  Create storage plan
-                </ModernButton>
-              </div>
-            }
             contentClassName="space-y-6"
           >
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-              <ModernCard padding="md">
-                <p className="text-xs uppercase tracking-wide text-slate-500">
-                  Total plans
-                </p>
-                <p className="mt-1 text-2xl font-semibold text-slate-900">
-                  {requestCounts.total}
-                </p>
-              </ModernCard>
-              <ModernCard padding="md">
-                <p className="text-xs uppercase tracking-wide text-slate-500">
-                  Pending payment
-                </p>
-                <p className="mt-1 text-2xl font-semibold text-amber-600">
-                  {requestCounts.pending}
-                </p>
-              </ModernCard>
-              <ModernCard padding="md">
-                <p className="text-xs uppercase tracking-wide text-slate-500">
-                  Provisioning
-                </p>
-                <p className="mt-1 text-2xl font-semibold text-sky-600">
-                  {requestCounts.provisioning}
-                </p>
-              </ModernCard>
-              <ModernCard padding="md">
-                <p className="text-xs uppercase tracking-wide text-slate-500">
-                  Active plans
-                </p>
-                <p className="mt-1 text-2xl font-semibold text-emerald-600">
-                  {requestCounts.active}
-                </p>
-              </ModernCard>
-            </div>
-
-            {sortedOrders.length === 0 ? (
-              <ModernCard padding="xl" className="text-center space-y-3">
-                <HardDrive className="h-10 w-10 mx-auto text-primary-500" />
-                <h3 className="text-lg font-semibold text-slate-900">
-                  No storage plans yet
-                </h3>
-                <p className="text-sm text-slate-500">
-                  Start by creating a storage plan or fast-track a tenant who already has executive approval.
-                </p>
-                <div className="flex items-center justify-center gap-3">
-                  <ModernButton
-                    variant="primary"
-                    onClick={() => navigate("/admin-dashboard/object-storage/create")}
-                  >
-                    Create plan
-                  </ModernButton>
-                  <ModernButton
-                    variant="ghost"
-                    onClick={() => navigate("/admin-dashboard/object-storage/create?mode=fast-track")}
-                  >
-                    Fast-track tenant
-                  </ModernButton>
-                </div>
-              </ModernCard>
-            ) : (
-              <div className="grid grid-cols-1 gap-4">
-                {sortedOrders.map(renderOrderCard)}
+            <section className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#050F2C] via-[#0F3B68] to-[#1E80F9] text-white shadow-2xl">
+              <div className="absolute inset-0 opacity-60">
+                <div className="h-full w-full bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.2),_transparent_60%)]" />
               </div>
-            )}
+            <div className="relative flex flex-col gap-8 p-6 sm:p-8 lg:flex-row lg:items-start lg:justify-between lg:p-10">
+              <div className="max-w-xl space-y-5">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-white/70">
+                    Storage Ops
+                  </div>
+                  <div className="space-y-2">
+                    <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                      Approve, fast-track, and monitor tenant capacity
+                    </h2>
+                    <p className="text-sm text-white/80 sm:text-base">
+                      Keep Zadara accounts in sync, trigger payments, and react
+                      to provisioning issues before they impact customers.
+                    </p>
+                  </div>
+                  <ObjectStoragePlanActions
+                    persona="admin"
+                    hasTenantContext={Boolean(adminTenant || currentTenant)}
+                    enableFastTrack
+                    standardLabel="Process Storage Payment"
+                    fastTrackLabel="Fast-track Provisioning"
+                    onBack={() => navigate(-1)}
+                    onStandardPlan={() =>
+                      navigate("/admin-dashboard/object-storage/create")
+                    }
+                    onFastTrack={() =>
+                      navigate(
+                        "/admin-dashboard/object-storage/create?mode=fast-track"
+                      )
+                    }
+                    loading={accountsLoading}
+                  />
+                </div>
+                <div className="grid w-full max-w-xl gap-4 sm:grid-cols-2">
+                  {heroCards.map(renderHeroCard)}
+                </div>
+              </div>
+            </section>
+
+            <ObjectStorageTable
+              accounts={sortedAccounts}
+              loading={accountsLoading}
+              error={accountsError}
+              onRetry={refreshAccounts}
+              onRefresh={refreshAccounts}
+              bucketsByAccount={accountBuckets}
+              bucketLoading={bucketLoading}
+              bucketErrors={bucketErrors}
+              onLoadBuckets={loadBuckets}
+              onCreateBucket={handleCreateBucket}
+              onDeleteBucket={handleDeleteBucket}
+              enableBucketActions
+              emptyState={emptyStateConfig}
+              paginationMeta={accountsMeta}
+              paginationState={accountQuery}
+              onPageChange={changeAccountsPage}
+              onPerPageChange={changeAccountsPerPage}
+            />
           </AdminPageShell>
         </div>
       </main>

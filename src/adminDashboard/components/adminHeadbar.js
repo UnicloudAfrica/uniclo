@@ -14,7 +14,8 @@ import {
 import logo from "./assets/logo.png";
 import { Link, useLocation } from "react-router-dom";
 import { designTokens } from "../../styles/designTokens";
-import useAuthStore from "../../stores/userAuthStore";
+import useTenantAuthStore from "../../stores/tenantAuthStore";
+import { clearAllAuthSessions } from "../../stores/sessionUtils";
 
 const AdminHeadbar = ({ onMenuClick }) => {
   const location = useLocation();
@@ -26,7 +27,6 @@ const AdminHeadbar = ({ onMenuClick }) => {
 
   const profileRef = useRef(null);
   const notificationRef = useRef(null);
-  const { clearToken } = useAuthStore();
 
   // Map URL path segments to human-readable names - extended mapping
   const pathMap = {
@@ -91,7 +91,7 @@ const AdminHeadbar = ({ onMenuClick }) => {
   }, []);
 
   const handleLogout = () => {
-    clearToken();
+    clearAllAuthSessions();
     window.location.href = "/admin-signin";
   };
 

@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useClientAuthStore from "../stores/clientAuthStore";
 
 const useClientAuthRedirect = () => {
-  const [isLoading, setIsLoading] = useState(true); // Add loading state
   const navigate = useNavigate();
   const token = useClientAuthStore((state) => state.token); // Subscribe to token changes
+  const hasHydrated = useClientAuthStore((state) => state.hasHydrated);
 
   useEffect(() => {
+    if (!hasHydrated) return;
+
     const path = window.location.pathname;
 
     const isAuthPage = path === "/sign-in" || path === "/sign-up";
@@ -19,10 +21,9 @@ const useClientAuthRedirect = () => {
       navigate("/sign-in"); // Redirect unauthenticated users to sign-in
     }
 
-    setIsLoading(false); // Done checking
-  }, [token, navigate]); // Re-run if token or navigate changes
+  }, [token, navigate, hasHydrated]); // Re-run if token or navigate changes
 
-  return { isLoading };
+  return { isLoading: !hasHydrated };
 };
 
 export default useClientAuthRedirect;

@@ -1,11 +1,10 @@
 import config from "../../config";
 import useAdminAuthStore from "../../stores/adminAuthStore";
-
-let isRedirecting = false;
+import { handleAuthRedirect } from "../../utils/authRedirect";
 
 const fileApi = async (method, uri, body = null) => {
   const url = config.adminURL + uri;
-  const { token, setToken, clearToken } = useAdminAuthStore.getState();
+  const { token, setToken } = useAdminAuthStore.getState();
 
   const headers = {
     "Content-Type": "application/json",
@@ -60,22 +59,21 @@ const fileApi = async (method, uri, body = null) => {
 
       return res;
     } else {
-      if (response.status === 401) {
-        clearToken();
-        if (window.location.pathname === "/sign-in") {
-          return;
-        } else {
-          window.location = "/admin-signin";
-        }
-        setTimeout(() => {
-          isRedirecting = false;
-        }, 5000);
+      const text = await response.text();
+      let parsed;
+      try {
+        parsed = text ? JSON.parse(text) : {};
+      } catch {
+        parsed = {};
+      }
+
+      const handled = handleAuthRedirect(response, parsed, "/admin-signin");
+      if (handled) {
         throw new Error("Unauthorized");
       }
 
-      const text = await response.text(); // Get error message as text
       const errorMessage =
-        JSON.parse(text)?.error || text || "An error occurred";
+        parsed?.error || parsed?.message || text || "An error occurred";
       throw new Error(errorMessage);
     }
   } catch (err) {

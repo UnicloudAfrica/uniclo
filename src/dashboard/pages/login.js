@@ -4,7 +4,7 @@ import sideBg from "./assets/sideBg.svg";
 import logo from "./assets/logo.png";
 import { Link, useNavigate } from "react-router-dom"; // Added useNavigate
 import { useLoginAccount } from "../../hooks/authHooks";
-import useAuthStore from "../../stores/userAuthStore";
+import useTenantAuthStore from "../../stores/tenantAuthStore";
 import useAuthRedirect from "../../utils/authRedirect";
 
 export default function DashboardLogin() {
@@ -16,7 +16,7 @@ export default function DashboardLogin() {
   const [errors, setErrors] = useState({}); // Added errors state
   const { mutate, isPending } = useLoginAccount();
   const navigate = useNavigate(); // Added for navigation
-  const { userEmail, setUserEmail } = useAuthStore.getState();
+  const { userEmail, setUserEmail } = useTenantAuthStore.getState();
   const { isLoading } = useAuthRedirect();
 
   // Validation function

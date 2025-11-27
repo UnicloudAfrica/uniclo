@@ -1,11 +1,10 @@
 import config from "../../config";
-import useAuthStore from "../../stores/userAuthStore";
-
-let isRedirecting = false;
+import useTenantAuthStore from "../../stores/tenantAuthStore";
+import { handleAuthRedirect } from "../../utils/authRedirect";
 
 const silentTenantApi = async (method, uri, body = null) => {
   const url = config.tenantURL + uri;
-  const { token, setToken, clearToken } = useAuthStore.getState();
+  const { token, setToken } = useTenantAuthStore.getState();
 
   const headers = {
     "Content-Type": "application/json",
@@ -36,27 +35,8 @@ const silentTenantApi = async (method, uri, body = null) => {
 
       return res;
     } else {
-      // Handle 401 silently by clearing the token
-      if (response.status === 401) {
-        if (!isRedirecting) {
-          isRedirecting = true; // Prevent multiple redirects
-          clearToken(); // Clear Zustand token
-
-          if (window.location.pathname === "/sign-in") {
-            // ToastUtils.error("Please check your account details.");
-            return;
-          } else {
-            // ToastUtils.error("Session expired. Redirecting to login...", {
-            //   duration: 3000,
-            // });
-            window.location = "/sign-in";
-          }
-
-          // Reset redirection state after 5 seconds
-          setTimeout(() => {
-            isRedirecting = false;
-          }, 5000);
-        } // Clear token without redirecting or showing toasts
+      const handled = handleAuthRedirect(response, res, "/sign-in");
+      if (handled) {
         throw new Error("Unauthorized");
       }
 

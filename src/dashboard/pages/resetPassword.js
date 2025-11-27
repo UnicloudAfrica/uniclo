@@ -3,12 +3,12 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import sideBg from "./assets/sideBg.svg";
 import logo from "./assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
-import useAuthStore from "../../stores/userAuthStore";
+import useTenantAuthStore from "../../stores/tenantAuthStore";
 import { useResetPassword } from "../../hooks/authHooks";
 import { useResendOTP } from "../../hooks/authHooks";
 
 export default function ResetPassword() {
-  const { userEmail, clearUserEmail } = useAuthStore.getState();
+  const { userEmail, clearUserEmail } = useTenantAuthStore.getState();
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [showPassword, setShowPassword] = useState(false);

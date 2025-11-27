@@ -720,6 +720,15 @@ const InlinePaymentPanel = ({
     pricing_breakdown: pricingBreakdown = [],
   } = transactionData?.data || {};
   const paymentGatewayOptions = payment?.payment_gateway_options || [];
+  const { user: clientUser, userEmail: clientUserEmail } = useClientAuthStore.getState();
+  const paystackEmail = useMemo(
+    () =>
+      transaction?.user?.email ||
+      clientUser?.email ||
+      clientUserEmail ||
+      "",
+    [transaction?.user?.email, clientUser?.email, clientUserEmail]
+  );
 
   useEffect(() => {
     setPaymentStatus("pending");
@@ -871,13 +880,19 @@ const InlinePaymentPanel = ({
           return;
         }
 
-        const popup = window.PaystackPop.setup({
+        if (!paystackEmail) {
+          ToastUtils.error("Missing payer email. Please refresh and try again.");
+          return;
+        }
+
+        const paystackPayload = {
           key: paystackKey,
-          email: transaction?.user?.email || "user@example.com",
+          email: paystackEmail,
           amount: amountMinorUnits,
           reference: selectedPaymentOption.transaction_reference,
           channels: ["card"],
           onSuccess: (response) => {
+            console.info("[Paystack] Success response", response);
             setPaymentStatus("completed");
             onPaymentComplete?.(response);
           },
@@ -889,7 +904,16 @@ const InlinePaymentPanel = ({
             setPaymentStatus("failed");
             ToastUtils.error("Card payment failed. Please try again or use another method.");
           },
+        };
+
+        console.info("[Paystack] Opening payment", {
+          ...paystackPayload,
+          onSuccess: undefined,
+          onCancel: undefined,
+          onError: undefined,
         });
+
+        const popup = window.PaystackPop.setup(paystackPayload);
 
         if (popup && typeof popup.openIframe === "function") {
           popup.openIframe();
@@ -2268,7 +2292,7 @@ export default function ClientMultiInstanceCreation() {
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-primary-500" />
-                <span>Step 2: Review pricing, optionally fast-track, and kick off provisioning.</span>
+                <span>Step 2: Review pricing and kick off provisioning.</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-primary-500" />

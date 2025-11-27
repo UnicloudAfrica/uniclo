@@ -30,6 +30,7 @@ import ModernCard from "../components/ModernCard";
 import ModernButton from "../components/ModernButton";
 import ResourceListCard from "../components/ResourceListCard";
 import PaymentModal from "../components/PaymentModal";
+import config from "../../config";
 import {
   useFetchProjectById,
   useProjectStatus,
@@ -3384,6 +3385,7 @@ const projectInstances = useMemo(() => {
         transactionData={activePaymentPayload}
         onPaymentComplete={handlePaymentComplete}
         authToken={adminToken}
+        apiBaseUrl={config.adminURL}
       />
       )}
 

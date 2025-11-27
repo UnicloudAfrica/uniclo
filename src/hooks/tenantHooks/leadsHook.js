@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentTenant from "../../index/tenant/silentTenant";
 import tenantApi from "../../index/tenant/tenantApi";
+import config from "../../config";
+import useTenantAuthStore from "../../stores/tenantAuthStore";
 
 // GET: Fetch all leads
 const fetchLeads = async () => {
@@ -56,20 +58,55 @@ const fetchLeadById = async (id) => {
   return res.data;
 };
 
-// GET: Download doc
-const downloadDoc = async (id) => {
-  try {
-    const res = await silentTenant("GET", `/lead-download-document/${id}`);
-    console.log("Downloaded data type:", typeof res);
-    console.log("Downloaded data length:", res.byteLength || res.length);
-    if (!res) {
-      throw new Error(`Failed to fetch doc with ID ${id}`);
-    }
-    return res;
-  } catch (error) {
-    console.error("Download error:", error);
-    throw error;
+const extractFileNameFromDisposition = (header) => {
+  if (!header) return null;
+  const utfMatch = header.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utfMatch && utfMatch[1]) {
+    return decodeURIComponent(utfMatch[1]);
   }
+  const asciiMatch = header.match(/filename="?([^";]+)"?/i);
+  return asciiMatch ? asciiMatch[1] : null;
+};
+
+const downloadDoc = async (id) => {
+  if (!id) {
+    throw new Error("Document identifier is required");
+  }
+
+  const { token } = useTenantAuthStore.getState();
+  const response = await fetch(
+    `${config.tenantURL}/lead-documents/${id}/download`,
+    {
+      method: "GET",
+      headers: {
+        Accept: "application/octet-stream,application/pdf,image/*,*/*",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    }
+  );
+
+  if (!response.ok) {
+    let message = "Failed to download document";
+    try {
+      message = await response.text();
+    } catch (err) {
+      console.error("Unable to read tenant download error response", err);
+    }
+    throw new Error(message || "Failed to download document");
+  }
+
+  const blob = await response.blob();
+  const contentType =
+    response.headers.get("Content-Type") || "application/octet-stream";
+  const fileName = extractFileNameFromDisposition(
+    response.headers.get("Content-Disposition")
+  );
+
+  return {
+    blob,
+    contentType,
+    fileName,
+  };
 };
 
 // PATCH: Update a lead

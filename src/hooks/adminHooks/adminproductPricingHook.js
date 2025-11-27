@@ -11,6 +11,8 @@ const buildQueryString = ({
   perPage,
   search,
   productType,
+  countryCode,
+  currencyCode,
 }) => {
   const params = new URLSearchParams();
   if (region) params.append("region", region);
@@ -19,6 +21,8 @@ const buildQueryString = ({
   if (perPage) params.append("per_page", perPage);
   if (search) params.append("search", search);
   if (productType) params.append("productable_type", productType);
+  if (countryCode) params.append("country_code", countryCode.toUpperCase());
+  if (currencyCode) params.append("currency_code", currencyCode.toUpperCase());
   const query = params.toString();
   return query ? `?${query}` : "";
 };
@@ -42,14 +46,17 @@ const fetchProductPricing = async ({
   perPage,
   search,
   productType,
+  countryCode,
+  currencyCode,
 }) => {
   const queryString = buildQueryString({
     region,
-    provider,
     page,
     perPage,
     search,
     productType,
+    countryCode,
+    currencyCode,
   });
   const res = await silentApi("GET", `/product-pricing${queryString}`);
   const payload = normaliseCollectionResponse(res);
@@ -122,6 +129,8 @@ export const useFetchProductPricing = (
     perPage = 10,
     search = "",
     productType = "",
+    countryCode = "",
+    currencyCode = "",
   } = {},
   options = {}
 ) => {
@@ -134,6 +143,8 @@ export const useFetchProductPricing = (
       perPage,
       search,
       productType,
+      countryCode,
+      currencyCode,
     ],
     queryFn: () =>
       fetchProductPricing({
@@ -143,6 +154,8 @@ export const useFetchProductPricing = (
         perPage,
         search,
         productType,
+        countryCode,
+        currencyCode,
       }),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,

@@ -13,7 +13,7 @@ import {
   HardDrive,
 } from "lucide-react";
 import { useFetchClientProfile } from "../../hooks/clientHooks/resources";
-import useClientAuthStore from "../../stores/clientAuthStore";
+import { clearAllAuthSessions } from "../../stores/sessionUtils";
 import { useFetchClientProjects } from "../../hooks/clientHooks/projectHooks";
 import useClientTheme from "../../hooks/clientHooks/useClientTheme";
 
@@ -21,7 +21,6 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   const [activeItem, setActiveItem] = useState("Home");
   const navigate = useNavigate();
   const location = useLocation();
-  const { clearToken } = useClientAuthStore.getState();
   const { data: profile, isFetching: isProfileFetching } =
     useFetchClientProfile();
   const { data: projects = [], isFetching: isProjectsFetching } =
@@ -117,7 +116,7 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   };
 
   const handleLogout = () => {
-    clearToken(); // Clear the token from the store
+    clearAllAuthSessions();
     navigate("/sign-in"); // Redirect to sign-in page
     onCloseMobileMenu(); // Close mobile menu if open
   };

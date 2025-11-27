@@ -575,7 +575,7 @@ const renderSelect = (
             Cancel
           </ModernButton>
         }
-        contentClassName="space-y-6 max-w-4xl"
+        contentClassName="space-y-6"
       >
         <ModernCard padding="lg">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

@@ -3,7 +3,7 @@ import useAdminAuthStore from "../../stores/adminAuthStore";
 
 const adminSilentApiforUser = async (method, uri, body = null) => {
   const url = config.baseURL + uri;
-  const { token, setToken, clearToken } = useAdminAuthStore.getState();
+  const { token, setToken } = useAdminAuthStore.getState();
 
   const headers = {
     "Content-Type": "application/json",

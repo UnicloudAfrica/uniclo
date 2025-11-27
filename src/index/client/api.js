@@ -1,13 +1,11 @@
 import config from "../../config";
 import useClientAuthStore from "../../stores/clientAuthStore";
+import { handleAuthRedirect } from "../../utils/authRedirect";
 import ToastUtils from "../../utils/toastUtil";
-
-// Global variable to track redirection state
-let isRedirecting = false;
 
 const clientApi = async (method, uri, body = null) => {
   const url = config.baseURL + uri;
-  const { token, setToken, clearToken } = useClientAuthStore.getState();
+  const { token, setToken } = useClientAuthStore.getState();
 
   const headers = {
     "Content-Type": "application/json",
@@ -29,10 +27,35 @@ const clientApi = async (method, uri, body = null) => {
     const res = await response.json();
 
     if (response.ok || response.status === 201) {
-      if (res.access_token) {
-        setToken(res.access_token); // Handle old case
-      } else if (res.data?.message?.token) {
-        setToken(res.data.message.token); // Handle new structure
+      const dataPayload =
+        res && typeof res.data === "object" ? res.data : undefined;
+      const nestedDataPayload =
+        dataPayload && typeof dataPayload.data === "object"
+          ? dataPayload.data
+          : undefined;
+      const messagePayload =
+        dataPayload && typeof dataPayload.message === "object"
+          ? dataPayload.message
+          : undefined;
+      const nestedMessagePayload =
+        messagePayload && typeof messagePayload.data === "object"
+          ? messagePayload.data
+          : undefined;
+
+      const tokenToSet =
+        res?.access_token ||
+        res?.token ||
+        dataPayload?.access_token ||
+        dataPayload?.token ||
+        nestedDataPayload?.access_token ||
+        nestedDataPayload?.token ||
+        messagePayload?.access_token ||
+        messagePayload?.token ||
+        nestedMessagePayload?.access_token ||
+        nestedMessagePayload?.token;
+
+      if (tokenToSet) {
+        setToken(tokenToSet);
       }
 
       // Handle success message for Toast
@@ -55,37 +78,9 @@ const clientApi = async (method, uri, body = null) => {
     } else {
       const errorMessage =
         res?.data?.error || res?.error || res?.message || "An error occurred";
-      if (response.status === 401) {
-        const preventRedirectHeader =
-          response.headers.get("X-Prevent-Login-Redirect") || "";
-        const preventRedirectBody =
-          res?.prevent_redirect === true || res?.data?.prevent_redirect === true;
-        const shouldPreventRedirect =
-          preventRedirectHeader.toLowerCase() === "true" || preventRedirectBody;
 
-        if (shouldPreventRedirect) {
-          throw new Error(errorMessage || "Unauthorized");
-        }
-
-        if (!isRedirecting) {
-          isRedirecting = true; // Prevent multiple redirects
-          clearToken(); // Clear Zustand token
-
-          if (window.location.pathname === "/sign-in") {
-            ToastUtils.error("Please check your account details.");
-            return;
-          } else {
-            ToastUtils.error("Session expired. Redirecting to login...", {
-              duration: 3000,
-            });
-            window.location = "/sign-in";
-          }
-
-          // Reset redirection state after 5 seconds
-          setTimeout(() => {
-            isRedirecting = false;
-          }, 5000);
-        }
+      const handled = handleAuthRedirect(response, res, "/sign-in");
+      if (handled) {
         return;
       }
 

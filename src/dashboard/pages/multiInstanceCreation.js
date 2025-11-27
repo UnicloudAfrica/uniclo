@@ -38,13 +38,16 @@ import StatusPill from "../../adminDashboard/components/StatusPill";
 import StepProgress from "../components/instancesubcomps/stepProgress";
 import ToastUtils from "../../utils/toastUtil";
 import { designTokens } from "../../styles/designTokens";
+import { deriveFastTrackBreakdown, formatCurrencyValue } from "../../utils/fastTrackUtils";
 import { useFetchProductPricing, useFetchGeneralRegions } from "../../hooks/resource";
 import { useFetchProjects } from "../../hooks/projectHooks";
 import { useFetchTenantSecurityGroups } from "../../hooks/securityGroupHooks";
 import { useFetchTenantKeyPairs } from "../../hooks/keyPairsHook";
 import { useFetchTenantSubnets } from "../../hooks/subnetHooks";
 import { useFetchTenantNetworks } from "../../hooks/tenantHooks/networkHooks";
-import useAuthStore from "../../stores/userAuthStore";
+import { useFetchTenantPartners } from "../../hooks/tenantHooks/partnerHooks";
+import { useFetchClients } from "../../hooks/clientHooks";
+import useTenantAuthStore from "../../stores/tenantAuthStore";
 import config from "../../config";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -704,6 +707,8 @@ const InlinePaymentPanel = ({
   transactionData,
   onPaymentComplete,
   onModifyOrder,
+  fastTrackSummary,
+  customerContext,
 }) => {
   const [paymentStatus, setPaymentStatus] = useState("pending");
   const [timeRemaining, setTimeRemaining] = useState(null);
@@ -719,6 +724,23 @@ const InlinePaymentPanel = ({
     pricing_breakdown: pricingBreakdown = [],
   } = transactionData?.data || {};
   const paymentGatewayOptions = payment?.payment_gateway_options || [];
+  const summary = fastTrackSummary || transactionData?.data?.fast_track_summary || null;
+  const context = customerContext || transactionData?.data?.customer_context;
+  const { user: tenantUser, userEmail: tenantUserEmail } = useTenantAuthStore.getState();
+  const paystackEmail = useMemo(
+    () =>
+      transaction?.user?.email ||
+      context?.email ||
+      tenantUser?.email ||
+      tenantUserEmail ||
+      "",
+    [
+      transaction?.user?.email,
+      context?.email,
+      tenantUser?.email,
+      tenantUserEmail,
+    ]
+  );
 
   useEffect(() => {
     setPaymentStatus("pending");
@@ -772,7 +794,7 @@ const InlinePaymentPanel = ({
 
     setIsPolling(true);
     try {
-      const { token } = useAuthStore.getState();
+      const { token } = useTenantAuthStore.getState();
       const response = await fetch(
         `${config.baseURL}/business/transactions/${transaction.id}/status`,
         {
@@ -870,9 +892,14 @@ const InlinePaymentPanel = ({
           return;
         }
 
+        if (!paystackEmail) {
+          ToastUtils.error("Missing payer email. Please refresh and try again.");
+          return;
+        }
+
         const popup = window.PaystackPop.setup({
           key: paystackKey,
-          email: transaction?.user?.email || "user@example.com",
+          email: paystackEmail,
           amount: amountMinorUnits,
           reference: selectedPaymentOption.transaction_reference,
           channels: ["card"],
@@ -958,23 +985,8 @@ const InlinePaymentPanel = ({
           : "info";
 
   const currencyCode = transaction?.currency || order?.currency || "NGN";
-  const formatCurrency = (value, overrideCurrency) => {
-    const numeric = Number(value);
-    const currency = overrideCurrency || currencyCode;
-    if (!Number.isFinite(numeric)) {
-      return `${currency} 0.00`;
-    }
-    try {
-      return new Intl.NumberFormat("en-NG", {
-        style: "currency",
-        currency,
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(numeric);
-    } catch (err) {
-      return `${currency} ${numeric.toFixed(2)}`;
-    }
-  };
+  const formatCurrency = (value, overrideCurrency) =>
+    formatCurrencyValue(value, overrideCurrency || currencyCode);
 
   const breakdown = selectedPaymentOption?.charge_breakdown || {};
   const breakdownCurrency = breakdown.currency || currencyCode;
@@ -989,6 +1001,17 @@ const InlinePaymentPanel = ({
   );
   const percentageFee = Number(breakdown.percentage_fee ?? 0);
   const flatFee = Number(breakdown.flat_fee ?? 0);
+  const aggregatedLines = Array.isArray(pricingBreakdown)
+    ? pricingBreakdown.flatMap((bundle) => bundle.lines || [])
+    : [];
+  const fastTrackDetails = summary
+    ? deriveFastTrackBreakdown({
+        summary,
+        pricingLines: aggregatedLines,
+        instances: instances || [],
+        currency: summary.currency || breakdownCurrency,
+      })
+    : null;
 
   return (
     <div className="space-y-6">
@@ -1052,10 +1075,75 @@ const InlinePaymentPanel = ({
               </span>
             )}
           </div>
-        </div>
-      </ModernCard>
+      </div>
+    </ModernCard>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      {fastTrackDetails && (
+        <div className="mt-4 rounded-2xl border border-primary-100 bg-primary-50/70 p-4 text-sm text-slate-700">
+          <p className="font-semibold text-primary-900">Fast-track summary</p>
+          <div className="mt-2 grid gap-4 md:grid-cols-2">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Fast-trackable
+              </p>
+              <p className="text-lg font-semibold text-emerald-700">
+                {formatCurrencyValue(
+                  fastTrackDetails.fastTrack.total,
+                  fastTrackDetails.currency || breakdownCurrency
+                )}
+              </p>
+              <p className="text-xs text-slate-500">
+                {fastTrackDetails.fastTrack.count || 0} instance(s)
+              </p>
+              <p className="mt-1 text-xs text-slate-600">
+                {fastTrackDetails.eligibleRegions.length
+                  ? fastTrackDetails.eligibleRegions.join(", ")
+                  : "No regions eligible"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Requires payment
+              </p>
+              <p className="text-lg font-semibold text-slate-900">
+                {formatCurrencyValue(
+                  fastTrackDetails.pay.total,
+                  fastTrackDetails.currency || breakdownCurrency
+                )}
+              </p>
+              <p className="text-xs text-slate-500">
+                {fastTrackDetails.pay.count || 0} instance(s)
+              </p>
+              {fastTrackDetails.ineligibleRegions.length ? (
+                <ul className="mt-1 list-disc space-y-1 pl-5 text-xs">
+                  {fastTrackDetails.ineligibleRegions.map((entry) => (
+                    <li key={`${entry.region}-${entry.reason}`}>
+                      <span className="font-medium text-slate-900">{entry.region}</span>{" "}
+                      <span className="text-slate-600">({entry.reason})</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-1 text-xs text-slate-600">None</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {context && (
+        <div className="mt-4 rounded-2xl border border-slate-100 bg-white/60 p-4 text-sm text-slate-700">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Provisioning for
+          </p>
+          <p className="text-sm text-slate-900">
+            {context.tenant_name || "Current tenant"}
+            {context.user_name ? ` • ${context.user_name}` : ""}
+          </p>
+        </div>
+      )}
+
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="px-6 py-6">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div className="space-y-4">
@@ -1610,11 +1698,51 @@ export default function MultiInstanceCreation() {
   const [expandedConfigs, setExpandedConfigs] = useState(new Set([0]));
   const [currentStep, setCurrentStep] = useState(0);
   const [fastTrack, setFastTrack] = useState(false);
+  const [serverFastTrackEligible, setServerFastTrackEligible] = useState(null);
+  const [previewFastTrackSummary, setPreviewFastTrackSummary] = useState(null);
+  const [submissionFastTrackSummary, setSubmissionFastTrackSummary] = useState(null);
+  const [customerType, setCustomerType] = useState("self");
+  const [selectedPartnerId, setSelectedPartnerId] = useState("");
+  const [selectedClientId, setSelectedClientId] = useState("");
   // Payment state
   const [paymentTransactionData, setPaymentTransactionData] = useState(null);
+  const tenantToken = useTenantAuthStore((state) => state.token);
+  const isTenantContext = Boolean(tenantToken);
 
   // Fetch regions from API
   const { data: regions = [] } = useFetchGeneralRegions();
+  const { data: partners = [] } = useFetchTenantPartners({
+    enabled: isTenantContext,
+  });
+  const { data: clients = [] } = useFetchClients(null, {
+    enabled: isTenantContext,
+  });
+  const normalizedRegions = useMemo(() => {
+    if (!regions) return [];
+    if (Array.isArray(regions?.data)) {
+      return regions.data;
+    }
+    return Array.isArray(regions) ? regions : [];
+  }, [regions]);
+
+  useEffect(() => {
+    if (customerType !== "tenant") {
+      setSelectedPartnerId("");
+    }
+    if (customerType !== "client") {
+      setSelectedClientId("");
+    }
+  }, [customerType]);
+
+  const regionLookup = useMemo(() => {
+    return normalizedRegions.reduce((acc, region) => {
+      const code = extractRegionCode(region);
+      if (code) {
+        acc[code] = region;
+      }
+      return acc;
+    }, {});
+  }, [normalizedRegions]);
 
   // Read region/project from query params (from quote context)
   const location = useLocation();
@@ -1632,9 +1760,43 @@ export default function MultiInstanceCreation() {
   }, [location.search]);
 
   // For top-level loading indicator only; per-card fetches will handle region variations
-  const firstRegion = regions && regions.length > 0 ? regions[0] : null;
+  const firstRegion = normalizedRegions.length > 0 ? normalizedRegions[0] : null;
   const firstRegionCode = extractRegionCode(firstRegion);
   const selectedRegion = configurations[0]?.region || firstRegionCode;
+
+  const regionFastTrackEligible = useMemo(() => {
+    const requested = Array.from(
+      new Set(
+        configurations
+          .map((config) => config.region || "")
+          .filter((code) => !!code)
+      )
+    );
+    if (requested.length === 0) {
+      return false;
+    }
+    return requested.every((code) => {
+      const region = regionLookup[code];
+      return region && region.can_fast_track;
+    });
+  }, [configurations, regionLookup]);
+
+  const fastTrackEligible =
+    regionFastTrackEligible && serverFastTrackEligible !== false;
+
+  useEffect(() => {
+    if (!fastTrackEligible && fastTrack) {
+      setFastTrack(false);
+    }
+  }, [fastTrackEligible, fastTrack]);
+
+  useEffect(() => {
+    if (!isTenantContext) {
+      setCustomerType("self");
+      setSelectedPartnerId("");
+      setSelectedClientId("");
+    }
+  }, [isTenantContext]);
 
   // Use product-pricing API to fetch resources based on region (for first config as baseline)
   const { data: computeInstances, isFetching: isComputeInstancesFetching } =
@@ -1826,13 +1988,14 @@ export default function MultiInstanceCreation() {
   const getPricingPreview = async () => {
     // Local validation before calling API
     if (!validateForPricing()) return;
+    if (!ensureCustomerSelection()) return;
     // Auto-fill region for any config missing it
     setConfigurations(prev => prev.map(c => ({ ...c, region: c.region || selectedRegion || firstRegionCode || c.region })));
-
+    setPreviewFastTrackSummary(null);
     setPricingLoading(true);
 
     try {
-      const { token } = useAuthStore.getState();
+      const { token } = useTenantAuthStore.getState();
       const response = await fetch(`${config.baseURL}/business/instances/preview-pricing`, {
         method: 'POST',
         headers: {
@@ -1861,12 +2024,23 @@ export default function MultiInstanceCreation() {
             keypair_name: c.keypair_name || undefined,
           })),
           fast_track: fastTrack,
+          ...customerPayload,
         }),
       });
 
       const data = await response.json();
 
       if (data.success) {
+        const eligibleFromServer = data.data?.fast_track_eligible;
+        if (typeof eligibleFromServer !== "undefined") {
+          setServerFastTrackEligible(Boolean(eligibleFromServer));
+          if (!eligibleFromServer && fastTrack) {
+            setFastTrack(false);
+          }
+        } else {
+          setServerFastTrackEligible(null);
+        }
+        setPreviewFastTrackSummary(data.data?.fast_track_summary || null);
         setPricing(data.data);
         ToastUtils.success('Pricing calculated successfully');
       } else {
@@ -1881,6 +2055,7 @@ export default function MultiInstanceCreation() {
     } catch (err) {
       ToastUtils.error('Failed to calculate pricing: ' + err.message);
       setPricing(null);
+      setPreviewFastTrackSummary(null);
     } finally {
       setPricingLoading(false);
     }
@@ -1893,7 +2068,17 @@ export default function MultiInstanceCreation() {
     setPaymentTransactionData(null);
 
     try {
-      const { token } = useAuthStore.getState();
+      if (!ensureCustomerSelection()) {
+        setCreating(false);
+        return;
+      }
+      if (fastTrack && !fastTrackEligible) {
+        ToastUtils.error(fastTrackNotice || 'Fast track is unavailable for the selected regions.');
+        setFastTrack(false);
+        setCreating(false);
+        return;
+      }
+      const { token } = useTenantAuthStore.getState();
       const payload = {
         pricing_requests: configurations.map(c => ({
           region: c.region || selectedRegion || firstRegionCode || undefined,
@@ -1917,7 +2102,8 @@ export default function MultiInstanceCreation() {
           keypair_name: c.keypair_name || undefined,
         })),
         fast_track: fastTrack,
-        ...(configurations.some(c => (c.tags || []).length) ? { tags: Array.from(new Set((configurations.flatMap(c => c.tags || [])))) } : {})
+        ...(configurations.some(c => (c.tags || []).length) ? { tags: Array.from(new Set((configurations.flatMap(c => c.tags || [])))) } : {}),
+        ...customerPayload,
       };
       const idempotencyKey = `multi-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const response = await fetch(`${config.baseURL}/business/instances/create`, {
@@ -1934,6 +2120,7 @@ export default function MultiInstanceCreation() {
       const data = await response.json();
 
       if (data.success) {
+        setSubmissionFastTrackSummary(data.data?.fast_track_summary || null);
         if (data.data?.payment?.required && !data.data?.fast_track_completed) {
           setPaymentTransactionData(data);
           setCurrentStep(PAYMENT_STEP_INDEX);
@@ -1957,6 +2144,7 @@ export default function MultiInstanceCreation() {
       }
     } catch (err) {
       ToastUtils.error('Failed to create instances: ' + err.message);
+      setSubmissionFastTrackSummary(null);
     } finally {
       setCreating(false);
     }
@@ -1972,6 +2160,41 @@ export default function MultiInstanceCreation() {
   };
 
   const totalInstances = configurations.reduce((sum, config) => sum + (config.count || 0), 0);
+  const customerPayload = useMemo(() => {
+    if (customerType === "tenant" && selectedPartnerId) {
+      return { customer_tenant_id: selectedPartnerId };
+    }
+    if (customerType === "client" && selectedClientId) {
+      return { customer_user_id: selectedClientId };
+    }
+    return {};
+  }, [customerType, selectedPartnerId, selectedClientId]);
+
+  const ensureCustomerSelection = () => {
+    if (!isTenantContext) return true;
+    if (customerType === "tenant" && !selectedPartnerId) {
+      ToastUtils.error("Select a partner tenant before continuing.");
+      return false;
+    }
+    if (customerType === "client" && !selectedClientId) {
+      ToastUtils.error("Select a client before continuing.");
+      return false;
+    }
+    return true;
+  };
+  const fastTrackNotice = !regionFastTrackEligible
+    ? "Fast track is only available for regions you own that are approved and healthy."
+    : serverFastTrackEligible === false
+      ? "Fast track isn't available for this configuration. Please complete payment to continue."
+      : null;
+
+  const handleFastTrackToggle = () => {
+    if (!fastTrackEligible) {
+      ToastUtils.info(fastTrackNotice || "Fast track is unavailable for the selected regions.");
+      return;
+    }
+    setFastTrack((prev) => !prev);
+  };
   const configurationStepReady = useMemo(() => {
     if (!configurations.length) {
       return false;
@@ -2110,7 +2333,7 @@ export default function MultiInstanceCreation() {
               compute_instances: computeInstances || [],
               os_images: osImages || [],
               volume_types: volumeTypes || [],
-              regions: regions,
+              regions: normalizedRegions,
               projects: projects,
             }}
             errors={errors}
@@ -2129,119 +2352,318 @@ export default function MultiInstanceCreation() {
     </>
   );
 
-  const renderReviewStep = () => (
-    <ModernCard padding="lg" className="space-y-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <button
-          type="button"
-          onClick={() => setFastTrack(!fastTrack)}
-          className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm transition ${fastTrack
-              ? "border-emerald-300 bg-emerald-50 text-emerald-700"
-              : "border-slate-200 bg-white text-slate-600 hover:border-primary-200"
-            }`}
-        >
-          <div
-            className={`relative h-5 w-10 rounded-full transition ${fastTrack ? "bg-emerald-500/80" : "bg-slate-200"
-              }`}
-          >
-            <span
-              className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition ${fastTrack ? "right-1" : "left-1"
-                }`}
-            />
+  const renderFastTrackSummary = (summary, title = "Fast-track summary") => {
+    if (!summary) return null;
+    const breakdown = deriveFastTrackBreakdown({
+      summary,
+      configurations,
+      pricingRequests: pricing?.requests || [],
+      currency: pricing?.currency || "USD",
+    });
+    if (!breakdown) return null;
+    const currency = breakdown.currency || pricing?.currency || "USD";
+    return (
+      <div className="space-y-3 rounded-2xl border border-primary-100 bg-primary-50/60 p-4 text-sm text-slate-700">
+        <div className="flex items-center justify-between">
+          <p className="font-semibold text-primary-900">{title}</p>
+          <span className="text-xs font-medium text-primary-600">
+            {breakdown.eligibleRegions.length || 0} fast-track region(s)
+          </span>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Fast-trackable
+            </p>
+            <p className="text-lg font-semibold text-emerald-700">
+              {formatCurrencyValue(breakdown.fastTrack.total, currency)}
+            </p>
+            <p className="text-xs text-slate-500">
+              {breakdown.fastTrack.count || 0} instance(s)
+            </p>
+            <p className="mt-1 text-xs text-slate-600">
+              {breakdown.eligibleRegions.length
+                ? breakdown.eligibleRegions.join(", ")
+                : "No regions eligible"}
+            </p>
           </div>
           <div>
-            <p className="font-medium">
-              {fastTrack ? "Fast track enabled" : "Enable fast track"}
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Requires payment
             </p>
-            <p className="text-xs">
-              {fastTrack
-                ? "Instances begin provisioning immediately after payment."
-                : "Keep this off to review the order before provisioning."}
+            <p className="text-lg font-semibold text-slate-900">
+              {formatCurrencyValue(breakdown.pay.total, currency)}
             </p>
+            <p className="text-xs text-slate-500">
+              {breakdown.pay.count || 0} instance(s)
+            </p>
+            {breakdown.ineligibleRegions.length ? (
+              <ul className="mt-1 list-disc space-y-1 pl-5 text-xs">
+                {breakdown.ineligibleRegions.map((entry) => (
+                  <li key={`${entry.region}-${entry.reason}`}>
+                    <span className="font-medium text-slate-900">{entry.region}</span>{" "}
+                    <span className="text-slate-600">({entry.reason})</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-1 text-xs text-slate-600">None</p>
+            )}
           </div>
-        </button>
-        <div className="flex flex-wrap gap-3">
-          <ModernButton
-            variant="outline"
-            onClick={getPricingPreview}
-            isDisabled={pricingLoading || totalInstances === 0}
-            isLoading={pricingLoading}
-            leftIcon={<Calculator className="h-4 w-4" />}
-          >
-            Calculate pricing
-          </ModernButton>
-          <ModernButton
-            variant="ghost"
-            onClick={() => navigate("/dashboard/projects")}
-          >
-            Cancel
-          </ModernButton>
         </div>
       </div>
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-center gap-2 text-sm text-slate-600">
-          <Info className="h-4 w-4 text-primary-500" />
-          {totalInstances > 0
-            ? `Ready to create ${totalInstances} instance${totalInstances === 1 ? "" : "s"}`
-            : "Configure at least one instance to continue."}
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <ModernButton
-            variant="secondary"
-            onClick={() => {
-              if (!paymentTransactionData) {
-                ToastUtils.info("Launch an order first to generate payment instructions.");
-                return;
-              }
-              setCurrentStep(PAYMENT_STEP_INDEX);
-            }}
-            isDisabled={!paymentTransactionData || creating}
-            leftIcon={<CreditCard className="h-4 w-4" />}
-          >
-            Go to payment
-          </ModernButton>
-          <button
-            onClick={() => {
-              if (!pricing) {
-                ToastUtils.warning("Please calculate pricing before launching.");
-                return;
-              }
-              createInstances();
-            }}
-            disabled={creating || totalInstances === 0}
-            className="group relative inline-flex items-center justify-center overflow-hidden rounded-2xl px-6 py-3 text-sm font-semibold text-white transition focus:outline-none focus:ring-4 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-50"
-            style={{
-              background: fastTrack
-                ? `linear-gradient(135deg, ${designTokens.colors.success[400]} 0%, ${designTokens.colors.success[600]} 50%, ${designTokens.colors.success[700]} 100%)`
-                : `linear-gradient(135deg, ${designTokens.colors.primary[400]} 0%, ${designTokens.colors.primary[600]} 50%, ${designTokens.colors.primary[700]} 100%)`,
-              boxShadow: fastTrack
-                ? `0 12px 35px -8px ${designTokens.colors.success[500]}60`
-                : `0 12px 35px -8px ${designTokens.colors.primary[500]}60`,
-            }}
-          >
-            <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-30">
-              <div className="h-full w-full bg-white/60" />
+    );
+  };
+
+  const renderReviewStep = () => {
+    const activeSummary =
+      previewFastTrackSummary || submissionFastTrackSummary || null;
+    const billingByConfig = configurations.map((config, index) => {
+      const region = config.region || "";
+      const tier = activeSummary?.eligible_regions?.includes(region)
+        ? "Fast track"
+        : activeSummary?.ineligible_regions?.some((entry) => entry.region === region)
+          ? "Billable"
+          : "Pending";
+      const tone = tier === "Fast track" ? "success" : tier === "Billable" ? "warning" : "neutral";
+      return {
+        key: `${region}-${index}`,
+        region: region || "Region pending",
+        count: config.count || 0,
+        tier,
+        tone,
+      };
+    });
+
+    return (
+      <ModernCard padding="lg" className="space-y-6">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-primary-700">
+              <StatusPill
+                label={fastTrack ? "Fast track on" : "Fast track off"}
+                tone={fastTrack ? "success" : "neutral"}
+              />
+              <StatusPill
+                label={`${totalInstances} instance${totalInstances === 1 ? "" : "s"}`}
+                tone="info"
+              />
             </div>
-            <div className="relative flex items-center gap-2">
-              {creating ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>
-                    {fastTrack ? "Launching instances…" : "Creating order…"}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Play className="h-4 w-4" />
-                  <span>{fastTrack ? "Launch now" : "Create order"}</span>
-                </>
-              )}
-            </div>
-          </button>
+            <button
+              type="button"
+              onClick={handleFastTrackToggle}
+              disabled={!fastTrackEligible}
+              className={`flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm transition ${fastTrack
+                  ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-primary-200"
+                } ${!fastTrackEligible ? "cursor-not-allowed opacity-70" : ""}`}
+            >
+              <div
+                className={`relative h-5 w-10 rounded-full transition ${fastTrack ? "bg-emerald-500/80" : "bg-slate-200"
+                  }`}
+              >
+                <span
+                  className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition ${fastTrack ? "right-1" : "left-1"
+                    }`}
+                />
+              </div>
+              <div>
+                <p className="font-medium">
+                  {fastTrack ? "Fast track enabled" : "Enable fast track"}
+                </p>
+                <p className="text-xs">
+                  {fastTrack
+                    ? "Instances begin provisioning immediately after payment."
+                    : "Keep this off to review the order before provisioning."}
+                </p>
+              </div>
+            </button>
+            {fastTrackNotice && (
+              <p className="text-xs text-amber-600">{fastTrackNotice}</p>
+            )}
+          </div>
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+            <ModernButton
+              variant="outline"
+              onClick={getPricingPreview}
+              isDisabled={pricingLoading || totalInstances === 0}
+              isLoading={pricingLoading}
+              leftIcon={<Calculator className="h-4 w-4" />}
+            >
+              Calculate pricing
+            </ModernButton>
+            <ModernButton
+              variant="ghost"
+              onClick={() => navigate("/dashboard/projects")}
+            >
+              Cancel
+            </ModernButton>
+          </div>
         </div>
-      </div>
-    </ModernCard>
-  );
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Configurations overview
+            </p>
+            <div className="mt-3 space-y-2 divide-y divide-slate-100">
+              {billingByConfig.map((entry, idx) => (
+                <div key={entry.key} className="flex flex-wrap items-center justify-between gap-2 pt-2 first:pt-0">
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-slate-900">
+                      {configurations[idx]?.name || `Configuration ${idx + 1}`}
+                    </p>
+                    <p className="text-xs text-slate-600">{entry.region}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <StatusPill
+                      label={`${entry.count} ${entry.count === 1 ? "instance" : "instances"}`}
+                      tone="info"
+                    />
+                    <StatusPill label={entry.tier} tone={entry.tone} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Actions
+            </p>
+            <div className="mt-3 space-y-3">
+              <div className="flex items-center gap-2 text-sm text-slate-600">
+                <Info className="h-4 w-4 text-primary-500" />
+                {totalInstances > 0
+                  ? `Ready to create ${totalInstances} instance${totalInstances === 1 ? "" : "s"}`
+                  : "Configure at least one instance to continue."}
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                <ModernButton
+                  variant="secondary"
+                  onClick={() => {
+                    if (!paymentTransactionData) {
+                      ToastUtils.info("Launch an order first to generate payment instructions.");
+                      return;
+                    }
+                    setCurrentStep(PAYMENT_STEP_INDEX);
+                  }}
+                  isDisabled={!paymentTransactionData || creating}
+                  leftIcon={<CreditCard className="h-4 w-4" />}
+                  className="w-full sm:w-auto"
+                >
+                  Go to payment
+                </ModernButton>
+                <button
+                  onClick={() => {
+                    if (!pricing) {
+                      ToastUtils.warning("Please calculate pricing before launching.");
+                      return;
+                    }
+                    if (!ensureCustomerSelection()) return;
+                    createInstances();
+                  }}
+                  disabled={creating || totalInstances === 0}
+                  className="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-2xl px-6 py-3 text-sm font-semibold text-white transition focus:outline-none focus:ring-4 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                  style={{
+                    background: fastTrack
+                      ? `linear-gradient(135deg, ${designTokens.colors.success[400]} 0%, ${designTokens.colors.success[600]} 50%, ${designTokens.colors.success[700]} 100%)`
+                      : `linear-gradient(135deg, ${designTokens.colors.primary[400]} 0%, ${designTokens.colors.primary[600]} 50%, ${designTokens.colors.primary[700]} 100%)`,
+                    boxShadow: fastTrack
+                      ? `0 12px 35px -8px ${designTokens.colors.success[500]}60`
+                      : `0 12px 35px -8px ${designTokens.colors.primary[500]}60`,
+                  }}
+                >
+                  <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-30">
+                    <div className="h-full w-full bg-white/60" />
+                  </div>
+                  <div className="relative flex items-center gap-2">
+                    {creating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>
+                          {fastTrack ? "Launching instances…" : "Creating order…"}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-4 w-4" />
+                        <span>{fastTrack ? "Launch now" : "Create order"}</span>
+                      </>
+                    )}
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {isTenantContext && (
+          <div className="space-y-3 rounded-2xl border border-slate-100 bg-white/40 p-4">
+            <p className="text-sm font-semibold text-slate-900">Provisioning for</p>
+            <div className="flex flex-wrap gap-3">
+              {[
+                { key: "self", label: "My tenant" },
+                { key: "tenant", label: "Partner tenant" },
+                { key: "client", label: "Client" },
+              ].map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  onClick={() => setCustomerType(option.key)}
+                  className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition ${
+                    customerType === option.key
+                      ? "border-primary-300 bg-primary-50 text-primary-700"
+                      : "border-slate-200 text-slate-600 hover:border-slate-300"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            {customerType === "tenant" && (
+              <div className="space-y-1">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Select partner tenant
+                </label>
+                <select
+                  value={selectedPartnerId}
+                  onChange={(event) => setSelectedPartnerId(event.target.value)}
+                  className="w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm focus:border-primary-300 focus:ring-primary-200"
+                >
+                  <option value="">Select partner</option>
+                  {partners.map((partner) => (
+                    <option key={partner.id} value={partner.id}>
+                      {partner.name || partner.slug || partner.identifier || partner.id}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {customerType === "client" && (
+              <div className="space-y-1">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Select client
+                </label>
+                <select
+                  value={selectedClientId}
+                  onChange={(event) => setSelectedClientId(event.target.value)}
+                  className="w-full rounded-2xl border border-slate-200 px-4 py-2 text-sm focus:border-primary-300 focus:ring-primary-200"
+                >
+                  <option value="">Select client</option>
+                  {clients.map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {client.name || client.email || client.identifier || client.id}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+        )}
+        {renderFastTrackSummary(previewFastTrackSummary, "Fast-track evaluation")}
+      </ModernCard>
+    );
+  };
 
   const renderPaymentStep = () => {
     if (!paymentTransactionData) {
@@ -2269,6 +2691,11 @@ export default function MultiInstanceCreation() {
         transactionData={paymentTransactionData}
         onPaymentComplete={handlePaymentComplete}
         onModifyOrder={() => setCurrentStep(PAYMENT_STEP_INDEX - 1)}
+        fastTrackSummary={
+          paymentTransactionData?.data?.fast_track_summary ||
+          submissionFastTrackSummary
+        }
+        customerContext={paymentTransactionData?.data?.customer_context}
       />
     );
   };

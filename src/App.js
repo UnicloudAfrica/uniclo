@@ -72,6 +72,7 @@ import AdminProjects from "./adminDashboard/pages/adminProjects";
 import AdminProjectCreate from "./adminDashboard/pages/adminProjectCreate";
 import AdminProjectDetails from "./adminDashboard/pages/adminProjectDetails";
 import AdminAddInstance from "./adminDashboard/pages/adminAddInstance";
+import AdminCreateInstance from "./adminDashboard/pages/adminCreateInstance";
 import AdminOnboardingSettings from "./adminDashboard/pages/adminOnboardingSettings";
 import Settings from "./dashboard/pages/settings";
 import DashboardTaxConfigurations from "./dashboard/pages/taxConfiguration";
@@ -99,7 +100,11 @@ import ClientProjectDetails from "./clientDashboard/pages/clientProjectDetails";
 import ClientInstances from "./clientDashboard/pages/clientInstances";
 import ClientMultiInstanceCreation from "./clientDashboard/pages/clientMultiInstanceCreation";
 import ObjectStoragePage from "./clientDashboard/pages/ObjectStoragePage";
+import ClientObjectStoragePurchasePage from "./clientDashboard/pages/ObjectStoragePurchasePage";
+import ClientObjectStorageCreate from "./clientDashboard/pages/ObjectStorageCreate";
 import DashboardObjectStorage from "./dashboard/pages/objectStorage";
+import TenantObjectStorageCreate from "./dashboard/pages/objectStorageCreate";
+import TenantObjectStoragePurchase from "./dashboard/pages/objectStoragePurchase";
 import DashboardLeads from "./dashboard/pages/leads";
 import DashboardLeadCreate from "./dashboard/pages/leadCreate";
 import DashboardLeadDetails from "./dashboard/pages/leadDetails";
@@ -149,6 +154,7 @@ import RevenueDashboard from "./tenantDashboard/pages/RevenueDashboard";
 import ClientDashboardLayout from "./clientDashboard/components/ClientDashboardLayout";
 import Press from "./pages/press";
 import TenantRoute from "./routes/TenantRoute";
+import ClientRoute from "./routes/ClientRoute";
 import OnboardingDashboard from "./dashboard/onboarding";
 function App() {
   const location = useLocation();
@@ -423,6 +429,22 @@ function App() {
               </TenantRoute>
             }
           />
+          <Route
+            path="/dashboard/object-storage/create"
+            element={
+              <TenantRoute>
+                <TenantObjectStorageCreate />
+              </TenantRoute>
+            }
+          />
+          <Route
+            path="/dashboard/object-storage/purchase"
+            element={
+              <TenantRoute>
+                <TenantObjectStoragePurchase />
+              </TenantRoute>
+            }
+          />
 
           {/* Tenant Leads Routes */}
           <Route path="/tenant-dashboard/leads" element={<TenantLeads />} />
@@ -634,6 +656,10 @@ function App() {
             element={<AdminAddInstance />}
           />
           <Route
+            path="/admin-dashboard/create-instance"
+            element={<AdminCreateInstance />}
+          />
+          <Route
             path="/admin-dashboard/key-pairs"
             element={<AdminKeyPairs />}
           />
@@ -701,7 +727,13 @@ function App() {
           <Route path="/tenant-sign-up" element={<TenantRegister />} />
           <Route path="/tenant-sign-in" element={<TenantLogin />} />
           {/* client pages */}
-          <Route element={<ClientDashboardLayout />}>
+          <Route
+            element={
+              <ClientRoute>
+                <ClientDashboardLayout />
+              </ClientRoute>
+            }
+          >
             <Route path="/client-dashboard" element={<ClientDashboard />} />
             <Route
               path="/client-dashboard/projects"
@@ -726,6 +758,14 @@ function App() {
             <Route
               path="/client-dashboard/object-storage"
               element={<ObjectStoragePage />}
+            />
+            <Route
+              path="/client-dashboard/object-storage/purchase"
+              element={<ClientObjectStoragePurchasePage />}
+            />
+            <Route
+              path="/client-dashboard/object-storage/create"
+              element={<ClientObjectStorageCreate />}
             />
             <Route
               path="/client-dashboard/calculator"

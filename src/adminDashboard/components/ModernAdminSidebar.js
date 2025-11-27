@@ -24,7 +24,7 @@ import {
   BarChart3
 } from "lucide-react";
 import { designTokens } from "../../styles/designTokens";
-import useAuthStore from "../../stores/userAuthStore";
+import { clearAllAuthSessions } from "../../stores/sessionUtils";
 
 const ModernAdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   const [activeItem, setActiveItem] = useState("Home");
@@ -32,7 +32,6 @@ const ModernAdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   const [hoveredItem, setHoveredItem] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { clearToken } = useAuthStore();
 
   // Map of paths to menu item names
   const pathToItemMap = {
@@ -171,7 +170,7 @@ const ModernAdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   };
 
   const handleLogout = () => {
-    clearToken();
+    clearAllAuthSessions();
     navigate("/admin-signin");
     onCloseMobileMenu();
   };

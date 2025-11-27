@@ -3,13 +3,19 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import sideBg from "./assets/sideBg.svg";
 import logo from "./assets/logo.png";
 import VerificationCodeInput from "../../utils/codeInput";
-import useAuthStore from "../../stores/userAuthStore";
+import useTenantAuthStore from "../../stores/tenantAuthStore";
+import useClientAuthStore from "../../stores/clientAuthStore";
+import useAdminAuthStore from "../../stores/adminAuthStore";
+import { clearAuthSessionsExcept } from "../../stores/sessionUtils";
 import { useVerifyMail } from "../../hooks/authHooks";
 import { useNavigate } from "react-router-dom";
 
 export default function VerifyMail() {
   const [code, setCode] = useState(Array(6).fill("")); // Six-digit OTP input
-  const { userEmail, clearUserEmail } = useAuthStore.getState();
+  const tenantAuth = useTenantAuthStore.getState();
+  const clientAuth = useClientAuthStore.getState();
+  const adminAuth = useAdminAuthStore.getState();
+  const { userEmail, clearUserEmail } = tenantAuth;
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const { mutate: verifyEmail, isPending: isVerifyPending } = useVerifyMail();
@@ -52,6 +58,50 @@ export default function VerifyMail() {
         clearUserEmail();
 
         const userRole = res?.data?.role;
+        const accessToken =
+          res?.access_token ||
+          res?.token ||
+          res?.data?.access_token ||
+          res?.data?.token;
+        if (accessToken) {
+          const domainInfo =
+            res?.data?.domain ??
+            res?.data?.tenant?.domain ??
+            res?.data?.domain_account?.account_domain ??
+            null;
+
+          const availableTenants =
+            res?.data?.available_tenants ??
+            res?.data?.availableTenants ??
+            res?.data?.tenants ??
+            undefined;
+
+          const sessionPayload = {
+            token: accessToken,
+            user: res?.data ?? null,
+            role: userRole ?? undefined,
+            tenant: res?.data?.tenant ?? null,
+            domain: domainInfo,
+            availableTenants,
+            userEmail: res?.data?.email ?? email,
+            cloudRoles:
+              res?.data?.cloud_roles ?? res?.data?.cloudRoles ?? undefined,
+            cloudAbilities:
+              res?.data?.cloud_abilities ??
+              res?.data?.cloudAbilities ??
+              undefined,
+          };
+
+          if ((userRole || "").toLowerCase() === "client") {
+            clientAuth.setSession(sessionPayload);
+          } else if ((userRole || "").toLowerCase() === "admin") {
+            adminAuth.setSession(sessionPayload);
+          } else {
+            tenantAuth.setSession(sessionPayload);
+          }
+
+          clearAuthSessionsExcept((userRole || "tenant").toLowerCase());
+        }
 
         switch (userRole) {
           case "tenant":

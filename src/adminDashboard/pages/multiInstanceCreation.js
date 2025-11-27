@@ -40,6 +40,7 @@ import StatusPill from "../components/StatusPill";
 import StepProgress from "../../dashboard/components/instancesubcomps/stepProgress";
 import ToastUtils from "../../utils/toastUtil";
 import { designTokens } from "../../styles/designTokens";
+import { deriveFastTrackBreakdown, formatCurrencyValue } from "../../utils/fastTrackUtils";
 import { useFetchProductPricing, useFetchGeneralRegions } from "../../hooks/resource";
 import { useFetchProjects } from "../../hooks/adminHooks/projectHooks";
 import { useFetchSecurityGroups } from "../../hooks/adminHooks/securityGroupHooks";
@@ -75,7 +76,11 @@ const InstanceConfigCard = ({
   resources,
   errors = {},
   isExpanded,
-  onToggleExpand
+  onToggleExpand,
+  fastTrack = false,
+  fastTrackEligible = false,
+  fastTrackNotice = "",
+  handleLaunchModeChange = () => {},
 }) => {
   const isEqualValue = (a, b) => {
     if (Array.isArray(a) && Array.isArray(b)) {
@@ -263,6 +268,60 @@ const InstanceConfigCard = ({
               <Trash2 className="w-4 h-4" />
             </button>
           </div>
+        </div>
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-slate-500">
+            Launch mode
+          </label>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => handleLaunchModeChange("fast")}
+              className={`flex items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition ${
+                fastTrack
+                  ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-primary-200"
+              }`}
+            >
+              <div>
+                <p className="font-semibold">Fast track</p>
+                <p className="text-xs text-slate-500">
+                  Provision immediately after submitting.
+                </p>
+              </div>
+              <div
+                className={`h-4 w-4 rounded-full border ${
+                  fastTrack ? "border-emerald-500 bg-emerald-500" : "border-slate-300"
+                }`}
+              />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleLaunchModeChange("billable")}
+              className={`flex items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition ${
+                !fastTrack
+                  ? "border-primary-300 bg-primary-50 text-primary-700"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-primary-200"
+              }`}
+            >
+              <div>
+                <p className="font-semibold">Billable</p>
+                <p className="text-xs text-slate-500">
+                  Requires payment before provisioning.
+                </p>
+              </div>
+              <div
+                className={`h-4 w-4 rounded-full border ${
+                  !fastTrack ? "border-primary-500 bg-primary-500" : "border-slate-300"
+                }`}
+              />
+            </button>
+          </div>
+          {fastTrack && !fastTrackEligible && (
+            <p className="text-xs text-amber-600">
+              {fastTrackNotice || "Fast track is unavailable for the selected regions."}
+            </p>
+          )}
         </div>
       </div>
 
@@ -682,6 +741,7 @@ const InstanceConfigCard = ({
             />
             <p className="text-xs text-gray-500 mt-1">Separate multiple tags with commas</p>
           </div>
+
         </div>
       )}
     </ModernCard>
@@ -692,6 +752,8 @@ const InlinePaymentPanel = ({
   transactionData,
   onPaymentComplete,
   onModifyOrder,
+  fastTrackSummary,
+  customerContext,
 }) => {
   const [paymentStatus, setPaymentStatus] = useState("pending");
   const [timeRemaining, setTimeRemaining] = useState(null);
@@ -707,6 +769,24 @@ const InlinePaymentPanel = ({
     pricing_breakdown: pricingBreakdown = [],
   } = transactionData?.data || {};
   const paymentGatewayOptions = payment?.payment_gateway_options || [];
+  const summary =
+    fastTrackSummary || transactionData?.data?.fast_track_summary || null;
+  const context = customerContext || transactionData?.data?.customer_context;
+  const { user: adminUser, userEmail: adminUserEmail } = useAdminAuthStore.getState();
+  const paystackEmail = useMemo(
+    () =>
+      transaction?.user?.email ||
+      context?.email ||
+      adminUser?.email ||
+      adminUserEmail ||
+      "",
+    [
+      transaction?.user?.email,
+      context?.email,
+      adminUser?.email,
+      adminUserEmail,
+    ]
+  );
 
   useEffect(() => {
     setPaymentStatus("pending");
@@ -858,9 +938,14 @@ const InlinePaymentPanel = ({
           return;
         }
 
+        if (!paystackEmail) {
+          ToastUtils.error("Missing payer email. Please refresh and try again.");
+          return;
+        }
+
         const popup = window.PaystackPop.setup({
           key: paystackKey,
-          email: transaction?.user?.email || "user@example.com",
+          email: paystackEmail,
           amount: amountMinorUnits,
           reference: selectedPaymentOption.transaction_reference,
           channels: ["card"],
@@ -946,23 +1031,8 @@ const InlinePaymentPanel = ({
           : "info";
 
   const currencyCode = transaction?.currency || order?.currency || "NGN";
-  const formatCurrency = (value, overrideCurrency) => {
-    const numeric = Number(value);
-    const currency = overrideCurrency || currencyCode;
-    if (!Number.isFinite(numeric)) {
-      return `${currency} 0.00`;
-    }
-    try {
-      return new Intl.NumberFormat("en-NG", {
-        style: "currency",
-        currency,
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(numeric);
-    } catch (err) {
-      return `${currency} ${numeric.toFixed(2)}`;
-    }
-  };
+  const formatCurrency = (value, overrideCurrency) =>
+    formatCurrencyValue(value, overrideCurrency || currencyCode);
 
   const breakdown = selectedPaymentOption?.charge_breakdown || {};
   const breakdownCurrency = breakdown.currency || currencyCode;
@@ -977,6 +1047,21 @@ const InlinePaymentPanel = ({
   );
   const percentageFee = Number(breakdown.percentage_fee ?? 0);
   const flatFee = Number(breakdown.flat_fee ?? 0);
+  const aggregatedLines = Array.isArray(pricingBreakdown)
+    ? pricingBreakdown.flatMap((bundle) => bundle.lines || [])
+    : [];
+  const fastTrackDetails = summary
+    ? deriveFastTrackBreakdown({
+        summary,
+        pricingLines: aggregatedLines,
+        instances: instances || [],
+        currency: summary.currency || breakdownCurrency,
+        lineTotals:
+          transaction?.metadata?.line_totals ||
+          order?.metadata?.line_totals ||
+          [],
+      })
+    : null;
 
   return (
     <div className="space-y-6">
@@ -1040,8 +1125,73 @@ const InlinePaymentPanel = ({
               </span>
             )}
           </div>
+      </div>
+    </ModernCard>
+
+      {fastTrackDetails && (
+        <div className="mt-4 rounded-2xl border border-primary-100 bg-primary-50/70 p-4 text-sm text-slate-700">
+          <p className="font-semibold text-primary-900">Fast-track summary</p>
+          <div className="mt-2 grid gap-4 md:grid-cols-2">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Fast-trackable
+              </p>
+              <p className="text-lg font-semibold text-emerald-700">
+                {formatCurrencyValue(
+                  fastTrackDetails.fastTrack.total,
+                  fastTrackDetails.currency || breakdownCurrency
+                )}
+              </p>
+              <p className="text-xs text-slate-500">
+                {fastTrackDetails.fastTrack.count || 0} instance(s)
+              </p>
+              <p className="mt-1 text-xs text-slate-600">
+                {fastTrackDetails.eligibleRegions.length
+                  ? fastTrackDetails.eligibleRegions.join(", ")
+                  : "No regions eligible"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Requires payment
+              </p>
+              <p className="text-lg font-semibold text-slate-900">
+                {formatCurrencyValue(
+                  fastTrackDetails.pay.total,
+                  fastTrackDetails.currency || breakdownCurrency
+                )}
+              </p>
+              <p className="text-xs text-slate-500">
+                {fastTrackDetails.pay.count || 0} instance(s)
+              </p>
+              {fastTrackDetails.ineligibleRegions.length ? (
+                <ul className="mt-1 list-disc space-y-1 pl-5 text-xs">
+                  {fastTrackDetails.ineligibleRegions.map((entry) => (
+                    <li key={`${entry.region}-${entry.reason}`}>
+                      <span className="font-medium text-slate-900">{entry.region}</span>{" "}
+                      <span className="text-slate-600">({entry.reason})</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-1 text-xs text-slate-600">None</p>
+              )}
+            </div>
+          </div>
         </div>
-      </ModernCard>
+      )}
+
+      {context && (
+        <div className="mt-4 rounded-2xl border border-slate-100 bg-white/60 p-4 text-sm text-slate-700">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Provisioning for
+          </p>
+          <p className="text-sm text-slate-900">
+            {context.tenant_name || "Current tenant"}
+            {context.user_name ? ` • ${context.user_name}` : ""}
+          </p>
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="px-6 py-6">
@@ -1588,7 +1738,7 @@ export default function MultiInstanceCreation() {
     security_group_ids: [],
     keypair_name: '',
     floating_ip_count: 0,
-    tags: []
+    tags: [],
   }]);
 
   const [creating, setCreating] = useState(false);
@@ -1598,6 +1748,9 @@ export default function MultiInstanceCreation() {
   const [expandedConfigs, setExpandedConfigs] = useState(new Set([0]));
   const [currentStep, setCurrentStep] = useState(0);
   const [fastTrack, setFastTrack] = useState(false);
+  const [serverFastTrackEligible, setServerFastTrackEligible] = useState(null);
+  const [previewFastTrackSummary, setPreviewFastTrackSummary] = useState(null);
+  const [submissionFastTrackSummary, setSubmissionFastTrackSummary] = useState(null);
   // Admin assignment (optional)
   const [assignType, setAssignType] = useState(''); // '', 'tenant', 'user'
   const [selectedTenantId, setSelectedTenantId] = useState('');
@@ -1605,9 +1758,14 @@ export default function MultiInstanceCreation() {
 
   // Payment state
   const [paymentTransactionData, setPaymentTransactionData] = useState(null);
-
   // Fetch regions from API
-  const { data: regions = [] } = useFetchGeneralRegions();
+  const { data: regionsResponse = [] } = useFetchGeneralRegions();
+  const normalizedRegions = useMemo(() => {
+    if (Array.isArray(regionsResponse?.data)) {
+      return regionsResponse.data;
+    }
+    return Array.isArray(regionsResponse) ? regionsResponse : [];
+  }, [regionsResponse]);
 
   // Read region/project from query params (from quote context)
   const location = useLocation();
@@ -1631,9 +1789,45 @@ export default function MultiInstanceCreation() {
   const subTenantClients = subTenantClientsResp || [];
 
   // For top-level loading indicator only; per-card fetches will handle region variations
-  const firstRegion = regions && regions.length > 0 ? regions[0] : null;
+  const firstRegion = normalizedRegions.length > 0 ? normalizedRegions[0] : null;
   const firstRegionCode = extractRegionCode(firstRegion);
   const selectedRegion = configurations[0]?.region || firstRegionCode;
+  const regionLookup = useMemo(() => {
+    return normalizedRegions.reduce((acc, region) => {
+      const code = extractRegionCode(region);
+      if (code) {
+        acc[code] = region;
+      }
+      return acc;
+    }, {});
+  }, [normalizedRegions]);
+
+  const regionFastTrackEligible = useMemo(() => {
+    const requested = Array.from(
+      new Set(
+        configurations
+          .map((config) => config.region || "")
+          .filter((code) => !!code)
+      )
+    );
+    if (requested.length === 0) {
+      return true;
+    }
+    return requested.every((code) => {
+      const region = regionLookup[code];
+      return region && region.can_fast_track;
+    });
+  }, [configurations, regionLookup]);
+
+  const anyFastTrackRequested = fastTrack;
+  const fastTrackEligible =
+    regionFastTrackEligible && serverFastTrackEligible !== false;
+
+  useEffect(() => {
+    if (!fastTrackEligible && fastTrack) {
+      setFastTrack(false);
+    }
+  }, [fastTrackEligible, fastTrack]);
 
   // Use product-pricing API to fetch resources based on region (for first config as baseline)
   const { data: computeInstances, isFetching: isComputeInstancesFetching } =
@@ -1668,25 +1862,25 @@ export default function MultiInstanceCreation() {
 
   // Set default region when regions are loaded and no region is set
   useEffect(() => {
-    if (regions.length === 0) {
+    if (normalizedRegions.length === 0) {
       return;
     }
 
-    setConfigurations(prev => {
+    setConfigurations((prev) => {
       if (prev[0]?.region) {
         return prev;
       }
 
-      const defaultRegion = extractRegionCode(regions[0]);
+      const defaultRegion = extractRegionCode(normalizedRegions[0]);
       if (!defaultRegion) {
         return prev;
       }
       return [
         { ...prev[0], region: defaultRegion },
-        ...prev.slice(1)
+        ...prev.slice(1),
       ];
     });
-  }, [regions]);
+  }, [normalizedRegions]);
 
   // Update configuration
   const updateConfiguration = (index, updatedConfig) => {
@@ -1698,7 +1892,7 @@ export default function MultiInstanceCreation() {
 
   // Add new configuration
   const addConfiguration = () => {
-    const first = regions && regions.length > 0 ? regions[0] : null;
+    const first = normalizedRegions.length > 0 ? normalizedRegions[0] : null;
     const defaultRegionCode = extractRegionCode(first);
     const newConfig = {
       name: '',
@@ -1715,7 +1909,7 @@ export default function MultiInstanceCreation() {
       security_group_ids: [],
       key_pair_id: '',
       floating_ip_count: 0,
-      tags: []
+      tags: [],
     };
 
     const newConfigurations = [...configurations, newConfig];
@@ -1829,6 +2023,8 @@ export default function MultiInstanceCreation() {
     setConfigurations(prev => prev.map(c => ({ ...c, region: c.region || selectedRegion || firstRegionCode || c.region })));
 
     setPricingLoading(true);
+    setPreviewFastTrackSummary(null);
+    setServerFastTrackEligible(null);
 
     try {
       const { token } = useAdminAuthStore.getState();
@@ -1845,17 +2041,17 @@ export default function MultiInstanceCreation() {
             project_id: c.project_id || undefined,
             compute_instance_id: c.compute_instance_id ? Number(c.compute_instance_id) : undefined,
             os_image_id: c.os_image_id ? Number(c.os_image_id) : undefined,
-            months: Number(c.months),
-            number_of_instances: Number(c.count || 1),
-            volume_types: (c.volume_types || []).filter(v => v.volume_type_id).map(v => ({
-              volume_type_id: Number(v.volume_type_id),
-              storage_size_gb: Number(v.storage_size_gb),
-            })),
-            bandwidth_id: c.bandwidth_id ? Number(c.bandwidth_id) : undefined,
-            bandwidth_count: c.bandwidth_id ? Number(c.bandwidth_count || 1) : undefined,
-            ...(c.floating_ip_count > 0 ? { floating_ip_count: Number(c.floating_ip_count) } : {}),
-            network_id: c.network_id ? Number(c.network_id) : undefined,
-            subnet_id: c.subnet_id ? Number(c.subnet_id) : undefined,
+          months: Number(c.months),
+          number_of_instances: Number(c.count || 1),
+          volume_types: (c.volume_types || []).filter(v => v.volume_type_id).map(v => ({
+            volume_type_id: Number(v.volume_type_id),
+            storage_size_gb: Number(v.storage_size_gb),
+          })),
+          bandwidth_id: c.bandwidth_id ? Number(c.bandwidth_id) : undefined,
+          bandwidth_count: c.bandwidth_id ? Number(c.bandwidth_count || 1) : undefined,
+          ...(c.floating_ip_count > 0 ? { floating_ip_count: Number(c.floating_ip_count) } : {}),
+          network_id: c.network_id ? Number(c.network_id) : undefined,
+          subnet_id: c.subnet_id ? Number(c.subnet_id) : undefined,
             security_group_ids: (c.security_group_ids || []).length ? c.security_group_ids.map(Number) : undefined,
             keypair_name: c.keypair_name || undefined,
           })),
@@ -1869,6 +2065,15 @@ export default function MultiInstanceCreation() {
 
       if (data.success) {
         setPricing(data.data);
+        const eligibleFromServer = data.data?.fast_track_eligible;
+        setServerFastTrackEligible(
+          typeof eligibleFromServer === 'boolean' ? eligibleFromServer : null
+        );
+        const summary = data.data?.fast_track_summary || null;
+        setPreviewFastTrackSummary(summary);
+        if (eligibleFromServer === false && fastTrack) {
+          setFastTrack(false);
+        }
         ToastUtils.success('Pricing calculated successfully');
       } else {
         if (data.errors) {
@@ -1882,6 +2087,8 @@ export default function MultiInstanceCreation() {
     } catch (err) {
       ToastUtils.error('Failed to calculate pricing: ' + err.message);
       setPricing(null);
+      setPreviewFastTrackSummary(null);
+      setServerFastTrackEligible(null);
     } finally {
       setPricingLoading(false);
     }
@@ -1892,6 +2099,7 @@ export default function MultiInstanceCreation() {
     setCreating(true);
     setErrors({});
     setPaymentTransactionData(null);
+    setSubmissionFastTrackSummary(null);
 
     try {
       const { token } = useAdminAuthStore.getState();
@@ -1913,10 +2121,10 @@ export default function MultiInstanceCreation() {
           cross_connect_id: c.cross_connect_id ? Number(c.cross_connect_id) : undefined,
           cross_connect_count: c.cross_connect_id ? Number(c.cross_connect_count || 1) : undefined,
           network_id: c.network_id ? Number(c.network_id) : undefined,
-          subnet_id: c.subnet_id ? Number(c.subnet_id) : undefined,
-          security_group_ids: (c.security_group_ids || []).length ? c.security_group_ids.map(Number) : undefined,
-          keypair_name: c.keypair_name || undefined,
-        })),
+            subnet_id: c.subnet_id ? Number(c.subnet_id) : undefined,
+            security_group_ids: (c.security_group_ids || []).length ? c.security_group_ids.map(Number) : undefined,
+            keypair_name: c.keypair_name || undefined,
+          })),
         fast_track: fastTrack,
         ...(assignType === 'tenant' && selectedTenantId ? { tenant_id: Number(selectedTenantId) } : {}),
         ...(assignType === 'user' && selectedUserId ? { user_id: Number(selectedUserId) } : {}),
@@ -1937,6 +2145,7 @@ export default function MultiInstanceCreation() {
       const data = await response.json();
 
       if (data.success) {
+        setSubmissionFastTrackSummary(data.data?.fast_track_summary || null);
         if (data.data?.payment?.required && !data.data?.fast_track_completed) {
           setPaymentTransactionData(data);
           setCurrentStep(PAYMENT_STEP_INDEX);
@@ -1960,6 +2169,7 @@ export default function MultiInstanceCreation() {
       }
     } catch (err) {
       ToastUtils.error('Failed to create instances: ' + err.message);
+      setSubmissionFastTrackSummary(null);
     } finally {
       setCreating(false);
     }
@@ -1990,6 +2200,20 @@ export default function MultiInstanceCreation() {
   const selectedUser = scopedClients?.find(
     (client) => String(client.id) === String(selectedUserId)
   );
+
+  const fastTrackNotice = !regionFastTrackEligible
+    ? "Fast track is only available for approved partner regions."
+    : serverFastTrackEligible === false
+      ? "Fast track isn't available for this assignment. Complete payment to continue."
+      : null;
+
+  const handleLaunchModeChange = (mode) => {
+    if (mode === "fast") {
+      setFastTrack(true);
+    } else {
+      setFastTrack(false);
+    }
+  };
 
   const configurationStepReady = useMemo(() => {
     if (!configurations.length) {
@@ -2206,12 +2430,16 @@ export default function MultiInstanceCreation() {
               compute_instances: computeInstances || [],
               os_images: osImages || [],
               volume_types: volumeTypes || [],
-              regions: regions,
+              regions: normalizedRegions,
               projects: projects,
             }}
             errors={errors}
             isExpanded={expandedConfigs.has(index)}
             onToggleExpand={toggleConfigExpansion}
+            fastTrack={fastTrack}
+            fastTrackEligible={fastTrackEligible}
+            fastTrackNotice={fastTrackNotice}
+            handleLaunchModeChange={handleLaunchModeChange}
           />
         ))}
       </div>
@@ -2225,119 +2453,304 @@ export default function MultiInstanceCreation() {
     </>
   );
 
-  const renderReviewStep = () => (
-    <ModernCard padding="lg" className="space-y-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <button
-          type="button"
-          onClick={() => setFastTrack(!fastTrack)}
-          className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm transition ${fastTrack
-              ? "border-emerald-300 bg-emerald-50 text-emerald-700"
-              : "border-slate-200 bg-white text-slate-600 hover:border-primary-200"
-            }`}
-        >
-          <div
-            className={`relative h-5 w-10 rounded-full transition ${fastTrack ? "bg-emerald-500/80" : "bg-slate-200"
-              }`}
-          >
-            <span
-              className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition ${fastTrack ? "right-1" : "left-1"
-                }`}
-            />
+  const renderFastTrackSummary = (
+    summary,
+    title = "Fast-track summary",
+    options = {}
+  ) => {
+    if (!summary) return null;
+    const breakdown = deriveFastTrackBreakdown({
+      summary,
+      configurations: options.configurations || configurations,
+      pricingRequests: options.pricingRequests || pricing?.requests || [],
+      pricingLines: options.pricingLines || [],
+      instances: options.instances || [],
+      currency: options.currency || pricing?.currency || "USD",
+      lineTotals: options.lineTotals || summary?.line_totals || [],
+    });
+    if (!breakdown) return null;
+    const currency = breakdown.currency || pricing?.currency || "USD";
+    return (
+      <div className="space-y-3 rounded-2xl border border-primary-100 bg-primary-50/80 p-4 text-sm text-slate-700">
+        <div className="flex items-center justify-between">
+          <p className="font-semibold text-primary-900">{title}</p>
+          <span className="text-xs font-medium text-primary-600">
+            {breakdown.eligibleRegions.length || 0} fast-track region(s)
+          </span>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Fast-trackable
+            </p>
+            <p className="text-lg font-semibold text-emerald-700">
+              {formatCurrencyValue(breakdown.fastTrack.total, currency)}
+            </p>
+            <p className="text-xs text-slate-500">
+              {breakdown.fastTrack.count || 0} instance(s)
+            </p>
+            <p className="mt-1 text-xs text-slate-600">
+              {breakdown.eligibleRegions.length
+                ? breakdown.eligibleRegions.join(", ")
+                : "No regions eligible"}
+            </p>
           </div>
           <div>
-            <p className="font-medium">
-              {fastTrack ? "Fast track enabled" : "Enable fast track"}
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Requires payment
             </p>
-            <p className="text-xs">
-              {fastTrack
-                ? "Instances begin provisioning immediately after payment."
-                : "Keep this off to review the order before provisioning."}
+            <p className="text-lg font-semibold text-slate-900">
+              {formatCurrencyValue(breakdown.pay.total, currency)}
             </p>
+            <p className="text-xs text-slate-500">
+              {breakdown.pay.count || 0} instance(s)
+            </p>
+            {breakdown.ineligibleRegions.length ? (
+              <ul className="mt-1 list-disc space-y-1 pl-5 text-xs">
+                {breakdown.ineligibleRegions.map((entry) => (
+                  <li key={`${entry.region}-${entry.reason}`}>
+                    <span className="font-medium text-slate-900">{entry.region}</span>{" "}
+                    <span className="text-slate-600">({entry.reason})</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-1 text-xs text-slate-600">None</p>
+            )}
           </div>
-        </button>
-        <div className="flex flex-wrap gap-3">
-          <ModernButton
-            variant="outline"
-            onClick={getPricingPreview}
-            isDisabled={pricingLoading || totalInstances === 0}
-            isLoading={pricingLoading}
-            leftIcon={<Calculator className="h-4 w-4" />}
-          >
-            Calculate pricing
-          </ModernButton>
-          <ModernButton
-            variant="ghost"
-            onClick={() => (window.location.href = "/admin-dashboard/projects")}
-          >
-            Cancel
-          </ModernButton>
         </div>
       </div>
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-center gap-2 text-sm text-slate-600">
-          <Info className="h-4 w-4 text-primary-500" />
-          {totalInstances > 0
-            ? `Ready to create ${totalInstances} instance${totalInstances === 1 ? "" : "s"}`
-            : "Configure at least one instance to continue."}
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <ModernButton
-            variant="secondary"
-            onClick={() => {
-              if (!paymentTransactionData) {
-                ToastUtils.info("Launch an order first to generate payment instructions.");
-                return;
-              }
-              setCurrentStep(PAYMENT_STEP_INDEX);
-            }}
-            isDisabled={!paymentTransactionData || creating}
-            leftIcon={<CreditCard className="h-4 w-4" />}
-          >
-            Go to payment
-          </ModernButton>
-          <button
-            onClick={() => {
-              if (!pricing) {
-                ToastUtils.warning("Please calculate pricing before launching.");
-                return;
-              }
-              createInstances();
-            }}
-            disabled={creating || totalInstances === 0}
-            className="group relative inline-flex items-center justify-center overflow-hidden rounded-2xl px-6 py-3 text-sm font-semibold text-white transition focus:outline-none focus:ring-4 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-50"
-            style={{
-              background: fastTrack
-                ? `linear-gradient(135deg, ${designTokens.colors.success[400]} 0%, ${designTokens.colors.success[600]} 50%, ${designTokens.colors.success[700]} 100%)`
-                : `linear-gradient(135deg, ${designTokens.colors.primary[400]} 0%, ${designTokens.colors.primary[600]} 50%, ${designTokens.colors.primary[700]} 100%)`,
-              boxShadow: fastTrack
-                ? `0 12px 35px -8px ${designTokens.colors.success[500]}60`
-                : `0 12px 35px -8px ${designTokens.colors.primary[500]}60`,
-            }}
-          >
-            <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-30">
-              <div className="h-full w-full bg-white/60" />
+    );
+  };
+
+  const renderReviewStep = () => {
+    const activeSummary =
+      previewFastTrackSummary || submissionFastTrackSummary || null;
+    const billingByConfig = configurations.map((config, index) => {
+      const region = config.region || "";
+      let tier = "Pending";
+      if (activeSummary?.eligible_regions?.includes(region)) {
+        tier = "Fast track";
+      } else if (
+        activeSummary?.ineligible_regions?.some((entry) => entry.region === region)
+      ) {
+        tier = "Billable";
+      }
+      const tone =
+        tier === "Fast track" ? "success" : tier === "Billable" ? "warning" : "neutral";
+      return {
+        key: `${region}-${index}`,
+        region: region || "Region pending",
+        count: config.count || 0,
+        tier,
+        tone,
+      };
+    });
+
+    return (
+      <ModernCard padding="lg" className="space-y-6">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-primary-700">
+                  <StatusPill
+                    label={anyFastTrackRequested ? "Fast track on" : "Fast track off"}
+                    tone={anyFastTrackRequested ? "success" : "neutral"}
+                  />
+              <StatusPill
+                label={`${totalInstances} instance${totalInstances === 1 ? "" : "s"}`}
+                tone="info"
+              />
             </div>
-            <div className="relative flex items-center gap-2">
-              {creating ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>
-                    {fastTrack ? "Launching instances…" : "Creating order…"}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Play className="h-4 w-4" />
-                  <span>{fastTrack ? "Launch now" : "Create order"}</span>
-                </>
-              )}
-            </div>
-          </button>
+                  <div className="space-y-1 rounded-2xl border border-slate-100 bg-white p-3 text-xs text-slate-600">
+                    <div className="flex items-center gap-2">
+                      <StatusPill
+                        label={fastTrack ? "Fast track" : "Billable"}
+                        tone={fastTrack ? "success" : "warning"}
+                      />
+                      <span>
+                        {fastTrack
+                          ? "Instances will provision immediately on submit."
+                          : "Payment must complete before provisioning starts."}
+                      </span>
+                    </div>
+                    {fastTrackNotice && fastTrack && (
+                      <p className="text-amber-600">{fastTrackNotice}</p>
+                    )}
+                  </div>
+          </div>
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+            <ModernButton
+              variant="outline"
+              onClick={getPricingPreview}
+              isDisabled={pricingLoading || totalInstances === 0}
+              isLoading={pricingLoading}
+              leftIcon={<Calculator className="h-4 w-4" />}
+            >
+              Calculate pricing
+            </ModernButton>
+            <ModernButton
+              variant="ghost"
+              onClick={() => (window.location.href = "/admin-dashboard/projects")}
+            >
+              Cancel
+            </ModernButton>
+          </div>
         </div>
-      </div>
-    </ModernCard>
-  );
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Configurations overview
+            </p>
+            <div className="mt-3 space-y-2 divide-y divide-slate-100">
+              {billingByConfig.map((entry, idx) => (
+                <div key={entry.key} className="flex flex-wrap items-center justify-between gap-2 pt-2 first:pt-0">
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-slate-900">
+                      {configurations[idx]?.name || `Configuration ${idx + 1}`}
+                    </p>
+                    <p className="text-xs text-slate-600">{entry.region}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <StatusPill
+                      label={`${entry.count} ${entry.count === 1 ? "instance" : "instances"}`}
+                      tone="info"
+                    />
+                    <StatusPill
+                      label={entry.tier}
+                      tone={entry.tone}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Actions
+            </p>
+            <div className="mt-3 space-y-3">
+              <div className="space-y-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Launch mode
+                </p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => handleLaunchModeChange("fast")}
+                    className={`flex items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition ${
+                      fastTrack
+                        ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-primary-200"
+                    }`}
+                  >
+                    <div>
+                      <p className="font-semibold">Fast track</p>
+                      <p className="text-xs text-slate-500">
+                        Provision immediately after submitting.
+                      </p>
+                    </div>
+                    <div
+                      className={`h-4 w-4 rounded-full border ${
+                        fastTrack ? "border-emerald-500 bg-emerald-500" : "border-slate-300"
+                      }`}
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleLaunchModeChange("billable")}
+                    className={`flex items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition ${
+                      !fastTrack
+                        ? "border-primary-300 bg-primary-50 text-primary-700"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-primary-200"
+                    }`}
+                  >
+                    <div>
+                      <p className="font-semibold">Billable</p>
+                      <p className="text-xs text-slate-500">
+                        Requires payment before provisioning.
+                      </p>
+                    </div>
+                    <div
+                      className={`h-4 w-4 rounded-full border ${
+                        !fastTrack ? "border-primary-500 bg-primary-500" : "border-slate-300"
+                      }`}
+                    />
+                  </button>
+                </div>
+                {!fastTrackEligible && fastTrack && (
+                  <p className="text-xs text-amber-600">{fastTrackNotice}</p>
+                )}
+              </div>
+              <div className="flex items-center gap-2 text-sm text-slate-600">
+                <Info className="h-4 w-4 text-primary-500" />
+                {totalInstances > 0
+                  ? `Ready to create ${totalInstances} instance${totalInstances === 1 ? "" : "s"}`
+                  : "Configure at least one instance to continue."}
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                <ModernButton
+                  variant="secondary"
+                  onClick={() => {
+                    if (!paymentTransactionData) {
+                      ToastUtils.info("Launch an order first to generate payment instructions.");
+                      return;
+                    }
+                    setCurrentStep(PAYMENT_STEP_INDEX);
+                  }}
+                  isDisabled={!paymentTransactionData || creating}
+                  leftIcon={<CreditCard className="h-4 w-4" />}
+                  className="w-full sm:w-auto"
+                >
+                  Go to payment
+                </ModernButton>
+                <button
+                  onClick={() => {
+                    if (!pricing) {
+                      ToastUtils.warning("Please calculate pricing before launching.");
+                      return;
+                    }
+                    createInstances();
+                  }}
+                  disabled={creating || totalInstances === 0}
+                  className="group relative inline-flex w-full items-center justify-center overflow-hidden rounded-2xl px-6 py-3 text-sm font-semibold text-white transition focus:outline-none focus:ring-4 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                  style={{
+                    background: fastTrack
+                      ? `linear-gradient(135deg, ${designTokens.colors.success[400]} 0%, ${designTokens.colors.success[600]} 50%, ${designTokens.colors.success[700]} 100%)`
+                      : `linear-gradient(135deg, ${designTokens.colors.primary[400]} 0%, ${designTokens.colors.primary[600]} 50%, ${designTokens.colors.primary[700]} 100%)`,
+                    boxShadow: fastTrack
+                      ? `0 12px 35px -8px ${designTokens.colors.success[500]}60`
+                      : `0 12px 35px -8px ${designTokens.colors.primary[500]}60`,
+                  }}
+                >
+                  <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-30">
+                    <div className="h-full w-full bg-white/60" />
+                  </div>
+                  <div className="relative flex items-center gap-2">
+                    {creating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>
+                          {fastTrack ? "Launching instances…" : "Creating order…"}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-4 w-4" />
+                        <span>{fastTrack ? "Launch now" : "Create order"}</span>
+                      </>
+                    )}
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {renderFastTrackSummary(previewFastTrackSummary, "Fast-track evaluation")}
+      </ModernCard>
+    );
+  };
 
   const renderPaymentStep = () => {
     if (!paymentTransactionData) {
@@ -2365,6 +2778,11 @@ export default function MultiInstanceCreation() {
         transactionData={paymentTransactionData}
         onPaymentComplete={handlePaymentComplete}
         onModifyOrder={() => setCurrentStep(PAYMENT_STEP_INDEX - 1)}
+        fastTrackSummary={
+          paymentTransactionData?.data?.fast_track_summary ||
+          submissionFastTrackSummary
+        }
+        customerContext={paymentTransactionData?.data?.customer_context}
       />
     );
   };
@@ -2387,30 +2805,45 @@ export default function MultiInstanceCreation() {
   const renderSidebarContent = () => {
     if (currentStep === 0) {
       return (
-        <div className="space-y-6 2xl:sticky 2xl:top-24">
-          <ModernCard padding="lg" className="space-y-3">
-            <h3 className="text-sm font-semibold text-slate-900">
-              Deployment guide
-            </h3>
-            <ul className="space-y-2 text-xs text-slate-500">
-              <li className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-primary-500" />
-                <span>Step 1: Assign the deployment so billing and notifications go to the right workspace.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-primary-500" />
-                <span>Step 2: Build configurations for each workload you want to launch.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-primary-500" />
-                <span>Step 3: Review pricing, optionally fast-track, and kick off provisioning.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-primary-500" />
-                <span>Step 4: Complete payment and monitor provisioning automatically.</span>
-              </li>
-            </ul>
-          </ModernCard>
+        <div className="space-y-4 2xl:sticky 2xl:top-24">
+          <div className="overflow-hidden rounded-3xl border border-primary-100 bg-gradient-to-br from-primary-600 via-primary-500 to-amber-400 p-[1px] shadow-lg shadow-primary-200/50">
+            <div className="relative h-full rounded-[22px] bg-white/90 p-5 backdrop-blur">
+              <div className="absolute right-4 top-4 h-14 w-14 rounded-full bg-gradient-to-br from-white/80 via-primary-100 to-primary-200 opacity-80 blur-2xl" />
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.12em] text-primary-600">Command hints</p>
+                  <h3 className="text-lg font-semibold text-slate-900">Launch playbook</h3>
+                </div>
+                <div className="flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-[11px] font-semibold text-primary-700">
+                  <CheckCircle className="h-4 w-4" />
+                  Guided
+                </div>
+              </div>
+              <div className="mt-4 space-y-3 text-sm text-slate-700">
+                <div className="flex gap-3 rounded-2xl border border-primary-50 bg-primary-50/60 p-3 shadow-inner shadow-primary-100">
+                  <div className="mt-1 h-2 w-2 rounded-full bg-primary-500" />
+                  <div>
+                    <p className="font-semibold text-slate-900">Assign ownership</p>
+                    <p className="text-xs text-slate-600">Route billing and notifications to the right tenant or user before you model the workload.</p>
+                  </div>
+                </div>
+                <div className="flex gap-3 rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
+                  <div className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
+                  <div>
+                    <p className="font-semibold text-slate-900">Design the topology</p>
+                    <p className="text-xs text-slate-600">Capture regions, compute shapes, networks, and storage per configuration.</p>
+                  </div>
+                </div>
+                <div className="flex gap-3 rounded-2xl border border-amber-100 bg-amber-50/70 p-3 shadow-sm">
+                  <div className="mt-1 h-2 w-2 rounded-full bg-amber-500" />
+                  <div>
+                    <p className="font-semibold text-slate-900">Preview budgets</p>
+                    <p className="text-xs text-slate-600">Run pricing, decide on fast-track, and share the recap before launch.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       );
     }
@@ -2419,34 +2852,54 @@ export default function MultiInstanceCreation() {
       const paymentMeta = paymentTransactionData?.data?.payment;
 
       return (
-        <div className="space-y-6 2xl:sticky 2xl:top-24">
-          <ModernCard padding="lg" className="space-y-3">
-            <h3 className="text-sm font-semibold text-slate-900">
-              Payment summary
-            </h3>
-            <dl className="space-y-2 text-sm text-slate-600">
-              <div className="flex items-center justify-between">
-                <dt>Amount</dt>
-                <dd className="font-semibold text-slate-900">
-                  {transaction?.currency} {transaction?.amount?.toLocaleString()}
-                </dd>
+        <div className="space-y-4 2xl:sticky 2xl:top-24">
+          <div className="overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-500/90 via-emerald-400 to-sky-400 p-[1px] shadow-lg shadow-emerald-200/60">
+            <div className="relative h-full rounded-[22px] bg-white/95 p-5 backdrop-blur">
+              <div className="absolute left-[-22%] top-[-20%] h-40 w-40 rounded-full bg-emerald-200/50 blur-3xl" />
+              <div className="absolute right-[-10%] bottom-[-25%] h-44 w-44 rounded-full bg-sky-200/60 blur-3xl" />
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.12em] text-emerald-700">Payment tunnel</p>
+                  <h3 className="text-xl font-semibold text-slate-900">Transaction pulse</h3>
+                  <p className="mt-1 text-xs text-slate-600">Live status and meta for this order.</p>
+                </div>
+                <StatusPill
+                  label={paymentMeta?.status || transaction?.status || "pending"}
+                  tone={(paymentMeta?.status || transaction?.status) === "successful" ? "success" : "warning"}
+                />
               </div>
-              <div className="flex items-center justify-between">
-                <dt>Transaction ID</dt>
-                <dd className="font-mono text-xs text-slate-500">
-                  {transaction?.identifier || transaction?.id || "—"}
-                </dd>
+              <dl className="mt-4 space-y-3 rounded-2xl border border-slate-100 bg-slate-50/70 p-3 text-sm text-slate-700">
+                <div className="flex items-center justify-between">
+                  <dt className="text-slate-500">Amount</dt>
+                  <dd className="font-semibold text-slate-900">
+                    {transaction?.currency} {transaction?.amount?.toLocaleString()}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <dt className="text-slate-500">Transaction ID</dt>
+                  <dd className="font-mono text-xs text-slate-600">
+                    {transaction?.identifier || transaction?.id || "—"}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between">
+                  <dt className="text-slate-500">Verification</dt>
+                  <dd className="text-xs font-semibold text-emerald-700">
+                    {paymentMeta?.expires_at
+                      ? `Expires ${new Date(paymentMeta.expires_at).toLocaleString()}`
+                      : "Auto-verifies on gateway response"}
+                  </dd>
+                </div>
+              </dl>
+              <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
+                <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700">
+                  Auto reconciling
+                </span>
+                <span className="rounded-full bg-white px-3 py-1 font-semibold text-slate-700 shadow-inner">
+                  Use “Check status” for manual refresh
+                </span>
               </div>
-              <div className="flex items-center justify-between">
-                <dt>Expires</dt>
-                <dd className="text-sm text-slate-500">
-                  {paymentMeta?.expires_at
-                    ? new Date(paymentMeta.expires_at).toLocaleString()
-                    : "—"}
-                </dd>
-              </div>
-            </dl>
-          </ModernCard>
+            </div>
+          </div>
           <ModernCard padding="lg" className="space-y-3">
             <h3 className="text-sm font-semibold text-slate-900">
               Need help?
@@ -2460,82 +2913,105 @@ export default function MultiInstanceCreation() {
     }
 
     return (
-      <div className="space-y-6 2xl:sticky 2xl:top-24">
-        <ModernCard padding="lg" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-900">
-              Pricing snapshot
-            </h3>
-            <StatusPill
-              label={pricing ? "Preview ready" : "Action needed"}
-              tone={pricing ? "success" : "warning"}
-            />
-          </div>
-          {pricing ? (
-            <div className="space-y-3 text-sm text-slate-600">
-              {Array.isArray(pricing.previews) &&
-                pricing.previews.map((preview) => (
-                  <div
-                    key={preview.index}
-                    className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
-                  >
-                    <p className="font-semibold text-slate-800">
-                      Config {preview.index + 1} • {preview.count} item
-                      {preview.count === 1 ? "" : "s"}
-                    </p>
-                    <p className="text-xs">
-                      {preview.currency} {preview.total_price} total • {preview.currency}{" "}
-                      {preview.unit_price} / instance
+      <div className="space-y-4 2xl:sticky 2xl:top-24">
+        <div className="overflow-hidden rounded-3xl border border-slate-100 bg-gradient-to-br from-white via-slate-50 to-primary-50 p-[1px] shadow-lg shadow-primary-100/60">
+          <div className="relative rounded-[22px] bg-white/95 p-5 backdrop-blur">
+            <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(40,141,209,0.18),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(251,191,36,0.18),transparent_32%)]" />
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.12em] text-primary-700">Financials</p>
+                <h3 className="text-lg font-semibold text-slate-900">Pricing snapshot</h3>
+              </div>
+              <StatusPill
+                label={pricing ? "Preview ready" : "Action needed"}
+                tone={pricing ? "success" : "warning"}
+              />
+            </div>
+            {pricing ? (
+              <div className="mt-4 space-y-3 text-sm text-slate-600">
+                {Array.isArray(pricing.previews) &&
+                  pricing.previews.map((preview) => (
+                    <div
+                      key={preview.index}
+                      className="rounded-2xl border border-slate-100 bg-slate-50/80 px-3 py-2 shadow-inner shadow-slate-100"
+                    >
+                      <p className="font-semibold text-slate-900">
+                        Config {preview.index + 1} • {preview.count} item
+                        {preview.count === 1 ? "" : "s"}
+                      </p>
+                      <p className="text-xs">
+                        {preview.currency} {preview.total_price} total • {preview.currency}{" "}
+                        {preview.unit_price} / instance
+                      </p>
+                    </div>
+                  ))}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="rounded-2xl border border-slate-100 bg-white px-3 py-3">
+                    <p className="text-[11px] uppercase tracking-wide text-slate-500">Currency</p>
+                    <p className="text-lg font-semibold text-slate-900">{pricing.currency}</p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-100 bg-white px-3 py-3">
+                    <p className="text-[11px] uppercase tracking-wide text-slate-500">Grand total</p>
+                    <p className="text-lg font-semibold text-slate-900">
+                      {pricing.currency} {pricing.grand_total}
                     </p>
                   </div>
-                ))}
-              <div className="rounded-xl bg-white px-3 py-3">
-                <p className="text-xs uppercase tracking-wide text-slate-500">
-                  Grand total
-                </p>
-                <p className="text-lg font-semibold text-slate-900">
-                  {pricing.currency} {pricing.grand_total}
-                </p>
+                  <div className="rounded-2xl border border-slate-100 bg-white px-3 py-3">
+                    <p className="text-[11px] uppercase tracking-wide text-slate-500">Configs</p>
+                    <p className="text-lg font-semibold text-slate-900">
+                      {pricing.previews?.length || configurations.length}
+                    </p>
+                  </div>
+                </div>
               </div>
-            </div>
-          ) : (
-            <p className="text-xs text-slate-500">
-              Run a pricing preview to unlock cost projections and payment options.
-            </p>
-          )}
-        </ModernCard>
+            ) : (
+              <p className="mt-4 text-xs text-slate-600">
+                Run a pricing preview to unlock cost projections and payment options.
+              </p>
+            )}
+          </div>
+        </div>
 
-        <ModernCard padding="lg" className="space-y-3">
-          <h3 className="text-sm font-semibold text-slate-900">
-            Assignment summary
-          </h3>
-          <dl className="space-y-2 text-sm text-slate-600">
+        <div className="overflow-hidden rounded-3xl border border-primary-100 bg-gradient-to-br from-primary-600/20 via-white to-primary-50 p-[1px] shadow-lg shadow-primary-100/80">
+          <div className="rounded-[22px] bg-white/95 p-5 backdrop-blur">
             <div className="flex items-center justify-between">
-              <dt>Scope</dt>
-              <dd className="font-medium text-slate-900">
-                {assignType ? assignType.toUpperCase() : "Not assigned"}
-              </dd>
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.12em] text-primary-700">Routing</p>
+                <h3 className="text-lg font-semibold text-slate-900">Assignment summary</h3>
+              </div>
+              <StatusPill
+                label={assignType ? assignType.toUpperCase() : "Unassigned"}
+                tone={assignType ? "info" : "warning"}
+              />
             </div>
-            <div className="flex items-center justify-between">
-              <dt>Tenant</dt>
-              <dd className="font-medium text-slate-900">
-                {selectedTenant
-                  ? selectedTenant.name || selectedTenant.company_name
-                  : "—"}
-              </dd>
-            </div>
-            <div className="flex items-center justify-between">
-              <dt>User</dt>
-              <dd className="font-medium text-slate-900">
-                {selectedUser
-                  ? selectedUser.name ||
-                  `${selectedUser.first_name || ""} ${selectedUser.last_name || ""}`.trim() ||
-                  selectedUser.email
-                  : "—"}
-              </dd>
-            </div>
-          </dl>
-        </ModernCard>
+            <dl className="mt-4 space-y-3 text-sm text-slate-700">
+              <div className="flex items-center justify-between">
+                <dt className="text-slate-500">Tenant</dt>
+                <dd className="font-semibold text-slate-900">
+                  {selectedTenant
+                    ? selectedTenant.name || selectedTenant.company_name
+                    : "Unassigned"}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between">
+                <dt className="text-slate-500">User</dt>
+                <dd className="font-semibold text-slate-900">
+                  {selectedUser
+                    ? selectedUser.name ||
+                    `${selectedUser.first_name || ""} ${selectedUser.last_name || ""}`.trim() ||
+                    selectedUser.email
+                    : "Unassigned"}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between">
+                <dt className="text-slate-500">Configurations</dt>
+                <dd className="font-semibold text-slate-900">
+                  {configurations.length} set{configurations.length === 1 ? "" : "s"}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </div>
 
         <ModernCard padding="lg" className="space-y-3">
           <h3 className="text-sm font-semibold text-slate-900">
@@ -2582,28 +3058,35 @@ export default function MultiInstanceCreation() {
       currentStep < steps.length - 1 && currentStep !== PAYMENT_STEP_INDEX - 1;
 
     return (
-      <ModernCard
-        padding="lg"
-        className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-      >
-        <div className="text-sm text-slate-600">{nextStepMessage}</div>
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
-          {currentStep > 0 && (
-            <ModernButton variant="ghost" onClick={handleBackStep}>
-              Back
-            </ModernButton>
-          )}
-          {showContinue && (
-            <ModernButton
-              variant="primary"
-              onClick={handleNextStep}
-              isDisabled={disableContinue}
-            >
-              Continue
-            </ModernButton>
-          )}
+      <div className="overflow-hidden rounded-3xl border border-primary-100 bg-gradient-to-r from-primary-600 via-primary-500 to-amber-400 p-[1px] shadow-lg shadow-primary-200/60">
+        <div className="flex flex-col gap-4 rounded-[22px] bg-gradient-to-r from-slate-900 via-slate-900 to-slate-800 px-5 py-4 text-white sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.16em] text-amber-200/90">Next up</p>
+            <p className="text-base font-semibold text-white">{nextStepMessage}</p>
+          </div>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
+            {currentStep > 0 && (
+              <button
+                type="button"
+                onClick={handleBackStep}
+                className="inline-flex items-center justify-center rounded-full border border-white/30 px-4 py-2 text-sm font-semibold text-white transition hover:border-white/60 hover:bg-white/10"
+              >
+                Back
+              </button>
+            )}
+            {showContinue && (
+              <button
+                type="button"
+                onClick={handleNextStep}
+                disabled={disableContinue}
+                className="inline-flex items-center justify-center rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-900 shadow-md shadow-white/30 transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-white/40 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Continue
+              </button>
+            )}
+          </div>
         </div>
-      </ModernCard>
+      </div>
     );
   };
 
@@ -2637,42 +3120,9 @@ export default function MultiInstanceCreation() {
     </div>
   );
 
-  if (isInitialLoading) {
-    return (
-      <>
-        <AdminHeadbar onMenuClick={toggleMobileMenu} />
-        <AdminSidebar
-          isMobileMenuOpen={isMobileMenuOpen}
-          onCloseMobileMenu={closeMobileMenu}
-        />
-        <AdminPageShell
-          breadcrumbs={[
-            { label: "Home", href: "/admin-dashboard" },
-            { label: "Instances", href: "/admin-dashboard/instances" },
-            { label: "Multi Instance Creation" },
-          ]}
-          title="Multi-Instance Creation"
-          description="Create multiple instances with different configurations in a single request."
-          subHeaderContent={headerMeta}
-          contentClassName="flex min-h-[60vh] items-center justify-center"
-        >
-          <div className="text-center space-y-2">
-            <Loader2
-              className="w-8 h-8 animate-spin mx-auto"
-              style={{ color: designTokens.colors.primary[500] }}
-            />
-            <p style={{ color: designTokens.colors.neutral[700] }}>
-              Loading resources...
-            </p>
-          </div>
-        </AdminPageShell>
-      </>
-    );
-  }
-
   const sidebarContent = renderSidebarContent();
   const layoutClass = sidebarContent
-    ? "grid gap-8 2xl:grid-cols-[minmax(0,1fr)_minmax(320px,360px)] 2xl:items-start"
+    ? "grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)] lg:items-start"
     : "space-y-8";
 
   return (
@@ -2691,45 +3141,129 @@ export default function MultiInstanceCreation() {
         title="Multi-Instance Creation"
         description="Create multiple instances with different configurations in a single request."
         subHeaderContent={headerMeta}
-        contentClassName="space-y-8"
+        contentClassName="space-y-10"
       >
-        <ModernCard
-          padding="lg"
-          className="overflow-hidden border border-primary-100 bg-gradient-to-br from-primary-50 via-white to-primary-100 shadow-sm"
-        >
-          <div className="flex flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center gap-2 text-xs text-primary-700">
-                <StatusPill
-                  label={`Step ${currentStep + 1} of ${steps.length}`}
-                  tone={currentStep + 1 === steps.length ? "success" : "info"}
-                />
-                <span className="text-sm font-medium text-primary-700">
-                  {steps[currentStep]}
-                </span>
+        <div className="relative overflow-hidden rounded-3xl border border-slate-800/40 bg-gradient-to-br from-slate-900 via-slate-900 to-primary-900 p-[1px] shadow-2xl shadow-primary-900/20">
+          <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 px-6 py-7 text-white">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(40,141,209,0.35),transparent_30%),radial-gradient(circle_at_80%_10%,rgba(251,191,36,0.28),transparent_28%),radial-gradient(circle_at_70%_70%,rgba(16,185,129,0.22),transparent_32%)]" />
+            {isInitialLoading && (
+              <div className="mb-4 flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-xs text-slate-200">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Preparing regions, projects, and catalogs...
               </div>
-              <h2 className="text-2xl font-semibold text-slate-900 md:text-3xl">
-                Multi-instance launch console
-              </h2>
-              <p className="max-w-2xl text-sm text-primary-700 md:text-base">
-                {stepDescription}
-              </p>
-              <div className="flex flex-wrap items-center gap-3 text-xs text-primary-700 sm:text-sm">
-                <StatusPill
-                  label={`${totalInstances} instance${totalInstances === 1 ? "" : "s"}`}
-                  tone="info"
-                />
-                <StatusPill
-                  label={`${configurations.length} configuration${configurations.length === 1 ? "" : "s"}`}
-                  tone="neutral"
-                />
+            )}
+            <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:items-center">
+              <div className="space-y-5">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-100 shadow-inner shadow-white/10">
+                  <div className="h-2 w-2 rounded-full bg-emerald-300" />
+                  Launchpad
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-3xl font-semibold leading-tight text-white md:text-4xl">
+                    Multi-instance launch console
+                  </h2>
+                  <p className="max-w-2xl text-sm text-slate-200 md:text-base">
+                    {stepDescription}
+                  </p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-white/10">
+                    <p className="text-[11px] uppercase tracking-[0.12em] text-slate-200/80">Instances</p>
+                    <p className="text-2xl font-semibold">{totalInstances}</p>
+                    <p className="text-xs text-slate-200">across all configs</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-white/10">
+                    <p className="text-[11px] uppercase tracking-[0.12em] text-slate-200/80">Configurations</p>
+                    <p className="text-2xl font-semibold">{configurations.length}</p>
+                    <p className="text-xs text-slate-200">ready to review</p>
+                  </div>
+                  <div className="rounded-2xl border border-emerald-300/40 bg-emerald-400/15 p-4 shadow-inner shadow-emerald-200/20">
+                    <p className="text-[11px] uppercase tracking-[0.12em] text-emerald-100">Mode</p>
+                    <p className="text-2xl font-semibold">
+                      {fastTrack ? "Fast-track" : "Billable"}
+                    </p>
+                    <p className="text-xs text-emerald-50">
+                      {fastTrack ? "Starts provisioning on submit" : "Queued after payment"}
+                    </p>
+                  </div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => handleLaunchModeChange("fast")}
+                    className={`group flex items-start gap-3 rounded-2xl border px-4 py-3 text-left transition ${
+                      fastTrack
+                        ? "border-emerald-300 bg-emerald-400/20 shadow-lg shadow-emerald-300/30"
+                        : "border-white/10 bg-white/5 hover:border-emerald-200/60 hover:bg-emerald-400/10"
+                    }`}
+                  >
+                    <div className="mt-1 rounded-full bg-emerald-500/80 p-2 text-white shadow-inner shadow-emerald-300/40">
+                      <Play className="h-4 w-4" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-white">Fast track</p>
+                      <p className="text-xs text-emerald-50">Provision immediately after submitting.</p>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleLaunchModeChange("billable")}
+                    className={`group flex items-start gap-3 rounded-2xl border px-4 py-3 text-left transition ${
+                      !fastTrack
+                        ? "border-amber-200 bg-amber-400/15 shadow-lg shadow-amber-200/40"
+                        : "border-white/10 bg-white/5 hover:border-amber-200/70 hover:bg-amber-400/10"
+                    }`}
+                  >
+                    <div className="mt-1 rounded-full bg-amber-400/90 p-2 text-slate-900 shadow-inner shadow-amber-200/50">
+                      <CreditCard className="h-4 w-4" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-white">Billable</p>
+                      <p className="text-xs text-amber-50">Requires payment before provisioning.</p>
+                    </div>
+                  </button>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-200">
+                  <StatusPill
+                    label={`Step ${currentStep + 1} of ${steps.length}`}
+                    tone={currentStep + 1 === steps.length ? "success" : "info"}
+                  />
+                  <StatusPill label={`${totalInstances} instances`} tone="info" />
+                  <StatusPill
+                    label={`${configurations.length} configuration${configurations.length === 1 ? "" : "s"}`}
+                    tone="neutral"
+                  />
+                  {paymentTransactionData && (
+                    <StatusPill
+                      label={`Payment ${paymentTransactionData?.data?.transaction?.status || "pending"}`}
+                      tone="warning"
+                    />
+                  )}
+                </div>
               </div>
-            </div>
-            <div className="w-full max-w-xl rounded-2xl border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur">
-              <StepProgress currentStep={currentStep} steps={steps} />
+              <div className="relative rounded-2xl border border-white/15 bg-white/10 p-4 shadow-xl shadow-slate-900/30 backdrop-blur">
+                <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-white/10 blur-3xl" />
+                <div className="absolute -left-16 bottom-0 h-32 w-32 rounded-full bg-primary-400/20 blur-3xl" />
+                <p className="text-[11px] uppercase tracking-[0.12em] text-slate-200">Progress</p>
+                <div className="mt-3 rounded-xl border border-white/10 bg-slate-900/50 p-3 shadow-inner shadow-slate-900/40">
+                  <StepProgress currentStep={currentStep} steps={steps} />
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-100">
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                    <p className="text-[11px] uppercase tracking-[0.12em] text-slate-300">Current step</p>
+                    <p className="text-base font-semibold text-white">{steps[currentStep]}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                    <p className="text-[11px] uppercase tracking-[0.12em] text-slate-300">Next</p>
+                    <p className="text-base font-semibold text-white">
+                      {steps[currentStep + 1] || "Launch"}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </ModernCard>
+        </div>
 
         <div className={layoutClass}>
           <div className="space-y-6">

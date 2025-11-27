@@ -17,7 +17,8 @@ import {
   UserCheck,
   Server,
 } from "lucide-react";
-import useAuthStore from "../../stores/userAuthStore";
+import useTenantAuthStore from "../../stores/tenantAuthStore";
+import { clearAllAuthSessions } from "../../stores/sessionUtils";
 import { useFetchProfile } from "../../hooks/resource";
 
 const PATH_TO_ITEM_MAP = {
@@ -62,7 +63,6 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   const [activeItem, setActiveItem] = useState("Home");
   const navigate = useNavigate();
   const location = useLocation();
-  const { clearToken } = useAuthStore.getState();
   const { data: profile } = useFetchProfile();
 
   useEffect(() => {
@@ -87,7 +87,7 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   };
 
   const handleLogout = () => {
-    clearToken();
+    clearAllAuthSessions();
     navigate("/sign-in");
     onCloseMobileMenu();
   };

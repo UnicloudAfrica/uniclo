@@ -1,7 +1,7 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
-import useAuthStore from "../stores/userAuthStore";
+import useTenantAuthStore from "../stores/tenantAuthStore";
 import { useOnboardingState } from "../hooks/onboardingHooks";
 
 const LoaderScreen = () => (
@@ -11,18 +11,25 @@ const LoaderScreen = () => (
 );
 
 export default function TenantRoute({ children }) {
-  const token = useAuthStore((s) => s.token);
+  const token = useTenantAuthStore((s) => s.token);
+  const role = useTenantAuthStore((s) => s.role);
+  const hasHydrated = useTenantAuthStore((s) => s.hasHydrated);
   const location = useLocation();
+
+  const isTenant = role === "tenant";
 
   const {
     data: onboarding,
     isLoading,
     isFetching,
     error,
-  } = useOnboardingState({ enabled: Boolean(token) });
+  } = useOnboardingState({ enabled: Boolean(token) && hasHydrated && isTenant });
 
+  if (!hasHydrated) {
+    return <LoaderScreen />;
+  }
 
-  if (!token) return <Navigate to="/sign-in" replace />;
+  if (!token || !isTenant) return <Navigate to="/sign-in" replace />;
 
   const isOnboardingPath = location.pathname.startsWith("/dashboard/onboarding");
 

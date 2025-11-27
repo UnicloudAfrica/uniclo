@@ -12,7 +12,8 @@ import {
   Menu
 } from 'lucide-react';
 import { designTokens } from '../../styles/designTokens';
-import useAuthStore from '../../stores/userAuthStore';
+import useTenantAuthStore from '../../stores/tenantAuthStore';
+import { clearAllAuthSessions } from "../../stores/sessionUtils";
 
 const ModernAdminHeader = ({ 
   onMenuClick,
@@ -28,7 +29,6 @@ const ModernAdminHeader = ({
   
   const profileRef = useRef(null);
   const notificationRef = useRef(null);
-  const { clearToken } = useAuthStore();
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -46,7 +46,7 @@ const ModernAdminHeader = ({
   }, []);
 
   const handleLogout = () => {
-    clearToken();
+    clearAllAuthSessions();
     window.location.href = '/admin-signin';
   };
 

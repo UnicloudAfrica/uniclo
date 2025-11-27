@@ -3,7 +3,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import logo from "./assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useLoginAccount } from "../../hooks/authHooks";
-import useAuthStore from "../../stores/userAuthStore";
+import useTenantAuthStore from "../../stores/tenantAuthStore";
 import useAuthRedirect from "../../utils/authRedirect";
 
 const TenantLogin = ({ tenant = "Tenant" }) => {
@@ -13,7 +13,7 @@ const TenantLogin = ({ tenant = "Tenant" }) => {
   const [errors, setErrors] = useState({});
   const { mutate, isPending } = useLoginAccount();
   const navigate = useNavigate();
-  const { userEmail, setUserEmail } = useAuthStore.getState();
+  const { userEmail, setUserEmail } = useTenantAuthStore.getState();
   const { isLoading } = useAuthRedirect();
   const [tenantData, setTenantData] = useState({
     name: tenant,

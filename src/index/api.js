@@ -1,15 +1,13 @@
 import config from "../config";
 import useClientAuthStore from "../stores/clientAuthStore";
-import useAuthStore from "../stores/userAuthStore";
+import useTenantAuthStore from "../stores/tenantAuthStore";
+import { handleAuthRedirect } from "../utils/authRedirect";
 import ToastUtils from "../utils/toastUtil";
-
-// Global variable to track redirection state
-let isRedirecting = false;
 
 const api = async (method, uri, body = null) => {
   const url = config.baseURL + uri;
   // Attempt to get token from either store, prioritizing the main auth store
-  const partnerToken = useAuthStore.getState().token;
+  const partnerToken = useTenantAuthStore.getState().token;
   const clientToken = useClientAuthStore.getState().token;
   const token = partnerToken || clientToken;
 
@@ -33,14 +31,47 @@ const api = async (method, uri, body = null) => {
     const res = await response.json();
 
     if (response.ok || response.status === 201) {
-      const tokenToSet = res.access_token || res.data?.message?.token;
+      const dataPayload =
+        res && typeof res.data === "object" ? res.data : undefined;
+      const nestedDataPayload =
+        dataPayload && typeof dataPayload.data === "object"
+          ? dataPayload.data
+          : undefined;
+      const messagePayload =
+        dataPayload && typeof dataPayload.message === "object"
+          ? dataPayload.message
+          : undefined;
+      const nestedMessagePayload =
+        messagePayload && typeof messagePayload.data === "object"
+          ? messagePayload.data
+          : undefined;
+
+      const tokenToSet =
+        res?.access_token ||
+        res?.token ||
+        dataPayload?.access_token ||
+        dataPayload?.token ||
+        nestedDataPayload?.access_token ||
+        nestedDataPayload?.token ||
+        messagePayload?.access_token ||
+        messagePayload?.token ||
+        nestedMessagePayload?.access_token ||
+        nestedMessagePayload?.token;
+
       if (tokenToSet) {
-        const role = res.data?.role;
-        if (role === "client") {
+        const rawRole =
+          dataPayload?.role ||
+          nestedDataPayload?.role ||
+          messagePayload?.role ||
+          nestedMessagePayload?.role;
+        const normalizedRole =
+          typeof rawRole === "string" ? rawRole.toLowerCase() : undefined;
+
+        if (normalizedRole === "client") {
           const { setToken: setClientToken } = useClientAuthStore.getState();
           setClientToken(tokenToSet);
         } else {
-          const { setToken: setPartnerToken } = useAuthStore.getState();
+          const { setToken: setPartnerToken } = useTenantAuthStore.getState();
           setPartnerToken(tokenToSet);
         }
       }
@@ -65,39 +96,9 @@ const api = async (method, uri, body = null) => {
     } else {
       const errorMessage =
         res?.data?.error || res?.error || res?.message || "An error occurred";
-      if (response.status === 401) {
-        const preventRedirectHeader =
-          response.headers.get("X-Prevent-Login-Redirect") || "";
-        const preventRedirectBody =
-          res?.prevent_redirect === true || res?.data?.prevent_redirect === true;
-        const shouldPreventRedirect =
-          preventRedirectHeader.toLowerCase() === "true" || preventRedirectBody;
 
-        if (shouldPreventRedirect) {
-          throw new Error(errorMessage || "Unauthorized");
-        }
-
-        if (!isRedirecting) {
-          isRedirecting = true; // Prevent multiple redirects
-          // Clear tokens from both stores to be safe
-          useAuthStore.getState().clearToken();
-          useClientAuthStore.getState().clearToken();
-
-          if (window.location.pathname === "/sign-in") {
-            ToastUtils.error("Please check your account details.");
-            return;
-          } else {
-            ToastUtils.error("Session expired. Redirecting to login...", {
-              duration: 3000,
-            });
-            window.location = "/sign-in";
-          }
-
-          // Reset redirection state after 5 seconds
-          setTimeout(() => {
-            isRedirecting = false;
-          }, 5000);
-        }
+      const handled = handleAuthRedirect(response, res, "/sign-in");
+      if (handled) {
         return;
       }
 

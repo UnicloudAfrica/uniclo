@@ -14,7 +14,7 @@ import {
   useFetchCitiesById,
   useFetchStatesById,
 } from "../../hooks/resource";
-import useAuthStore from "../../stores/userAuthStore";
+import useTenantAuthStore from "../../stores/tenantAuthStore";
 import useAuthRedirect from "../../utils/authRedirect";
 
 export default function DashboardSignUp() {
@@ -24,7 +24,7 @@ export default function DashboardSignUp() {
   const { data: industries, isFetching: isIndustriesFetching } =
     useFetchIndustries();
 
-  const { userEmail, setUserEmail } = useAuthStore.getState();
+  const { userEmail, setUserEmail } = useTenantAuthStore.getState();
   const { mutate, isPending } = useCreateAccount();
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState("partner");

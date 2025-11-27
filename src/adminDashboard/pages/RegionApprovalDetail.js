@@ -17,6 +17,7 @@ import {
   Ban,
 } from "lucide-react";
 import adminRegionApi from "../../services/adminRegionApi";
+import { useFetchTenants } from "../../hooks/adminHooks/tenantHooks";
 import ToastUtils from "../../utils/toastUtil";
 import AdminSidebar from "../components/adminSidebar";
 import AdminHeadbar from "../components/adminHeadbar";
@@ -50,12 +51,18 @@ const RegionApprovalDetail = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showCredentialModal, setShowCredentialModal] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [fastTrackMode, setFastTrackMode] = useState("owner_only");
+  const [fastTrackNotes, setFastTrackNotes] = useState("");
+  const [updatingFastTrack, setUpdatingFastTrack] = useState(false);
+  const [grantTenantId, setGrantTenantId] = useState("");
+  const [grantingFastTrack, setGrantingFastTrack] = useState(false);
   const [credentials, setCredentials] = useState({
     username: "",
     password: "",
     domain: "",
     domain_id: "",
   });
+  const { data: allTenants = [] } = useFetchTenants();
 
   useEffect(() => {
     fetchRegionDetail();
@@ -67,6 +74,8 @@ const RegionApprovalDetail = () => {
       setLoading(true);
       const response = await adminRegionApi.fetchRegionApprovalById(id);
       setRegion(response.data);
+      setFastTrackMode(response.data?.fast_track_mode || "owner_only");
+      setFastTrackNotes(response.data?.fast_track_notes || "");
     } catch (error) {
       console.error("Error fetching region:", error);
       ToastUtils.error("Failed to load region details");
@@ -128,6 +137,48 @@ const RegionApprovalDetail = () => {
     navigate(`/admin-dashboard/region-approvals/${id}/edit?action=update_fee`);
   };
 
+  const handleFastTrackSave = async () => {
+    try {
+      setUpdatingFastTrack(true);
+      await adminRegionApi.updateFastTrackSettings(id, {
+        fast_track_mode: fastTrackMode,
+        fast_track_notes: fastTrackNotes,
+      });
+      await fetchRegionDetail();
+    } catch (error) {
+      console.error("Error updating fast track:", error);
+    } finally {
+      setUpdatingFastTrack(false);
+    }
+  };
+
+  const handleGrantFastTrack = async () => {
+    if (!grantTenantId) {
+      ToastUtils.error("Select a tenant to grant access.");
+      return;
+    }
+    try {
+      setGrantingFastTrack(true);
+      await adminRegionApi.grantFastTrack(id, grantTenantId);
+      setGrantTenantId("");
+      await fetchRegionDetail();
+    } catch (error) {
+      console.error("Error granting fast track:", error);
+    } finally {
+      setGrantingFastTrack(false);
+    }
+  };
+
+  const handleRevokeFastTrack = async (tenantId) => {
+    if (!window.confirm("Revoke fast-track access for this tenant?")) return;
+    try {
+      await adminRegionApi.revokeFastTrack(id, tenantId);
+      await fetchRegionDetail();
+    } catch (error) {
+      console.error("Error revoking fast track:", error);
+    }
+  };
+
   const credentialSummary = region?.msp_credential_summary || {};
   const hasMspCredentials = Boolean(region?.has_msp_credentials);
   const recentRevenue = region?.recent_revenue_shares || [];
@@ -187,6 +238,126 @@ const RegionApprovalDetail = () => {
 
   const statusTone = statusToneMap[region?.approval_status] || "warning";
   const statusLabel = statusLabelMap[region?.approval_status] || "Pending Approval";
+  const fastTrackGrants = region?.fast_track_grants || [];
+  const grantOptions = useMemo(() => {
+    const grantedIds = new Set(fastTrackGrants.map((grant) => grant.tenant_id));
+    return (allTenants || []).filter((tenant) => !grantedIds.has(tenant.id));
+  }, [fastTrackGrants, allTenants]);
+
+  const renderFastTrackSection = () => (
+    <ModernCard padding="lg" className="space-y-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">Fast-track Controls</h2>
+          <p className="text-sm text-gray-500">
+            Decide who can skip payments when provisioning through this region.
+          </p>
+        </div>
+      </div>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="space-y-2 rounded-2xl border border-gray-100 bg-gray-50/60 p-4">
+          <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Fast-track mode
+          </label>
+          <select
+            value={fastTrackMode}
+            onChange={(event) => setFastTrackMode(event.target.value)}
+            className="w-full rounded-2xl border border-gray-200 px-4 py-2 text-sm focus:border-primary-300 focus:ring-primary-200"
+          >
+            <option value="owner_only">Owner only</option>
+            <option value="grant_only">Grants only</option>
+            <option value="disabled">Disabled</option>
+          </select>
+          <textarea
+            value={fastTrackNotes}
+            onChange={(event) => setFastTrackNotes(event.target.value)}
+            placeholder="Notes for ops teams (optional)"
+            className="mt-2 h-20 w-full resize-none rounded-2xl border border-gray-200 px-4 py-2 text-sm focus:border-primary-300 focus:ring-primary-200"
+          />
+          <ModernButton
+            variant="primary"
+            size="sm"
+            isLoading={updatingFastTrack}
+            onClick={handleFastTrackSave}
+            className="mt-2"
+          >
+            Save fast-track settings
+          </ModernButton>
+        </div>
+        <div className="space-y-2 rounded-2xl border border-gray-100 bg-gray-50/60 p-4">
+          <label className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Add fast-track grant
+          </label>
+          <select
+            value={grantTenantId}
+            onChange={(event) => setGrantTenantId(event.target.value)}
+            disabled={fastTrackMode === "disabled"}
+            className="w-full rounded-2xl border border-gray-200 px-4 py-2 text-sm focus:border-primary-300 focus:ring-primary-200 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <option value="">Select tenant</option>
+            {grantOptions.map((tenant) => (
+              <option key={tenant.id} value={tenant.id}>
+                {tenant.name || tenant.slug || tenant.identifier || tenant.id}
+              </option>
+            ))}
+          </select>
+          <ModernButton
+            variant="outline"
+            size="sm"
+            disabled={!grantTenantId || fastTrackMode === "disabled"}
+            isLoading={grantingFastTrack}
+            onClick={handleGrantFastTrack}
+          >
+            Grant access
+          </ModernButton>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-gray-900">Current grants</h3>
+        {fastTrackGrants.length === 0 ? (
+          <p className="text-sm text-gray-500">No tenants have explicit fast-track access.</p>
+        ) : (
+          <div className="overflow-x-auto rounded-2xl border border-gray-100">
+            <table className="min-w-full divide-y divide-gray-100 text-sm">
+              <thead className="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <tr>
+                  <th className="px-4 py-2 text-left">Tenant</th>
+                  <th className="px-4 py-2 text-left">Granted At</th>
+                  <th className="px-4 py-2 text-left">Notes</th>
+                  <th className="px-4 py-2 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 bg-white">
+                {fastTrackGrants.map((grant) => (
+                  <tr key={grant.id}>
+                    <td className="px-4 py-2 text-gray-800">
+                      {grant.tenant_name || grant.tenant_id}
+                    </td>
+                    <td className="px-4 py-2 text-gray-600">
+                      {grant.granted_at
+                        ? new Date(grant.granted_at).toLocaleString()
+                        : "—"}
+                    </td>
+                    <td className="px-4 py-2 text-gray-600">{grant.notes || "—"}</td>
+                    <td className="px-4 py-2">
+                      <button
+                        type="button"
+                        className="text-xs font-semibold text-rose-600 hover:text-rose-700"
+                        onClick={() => handleRevokeFastTrack(grant.tenant_id)}
+                      >
+                        Revoke
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </ModernCard>
+  );
 
   const headerMeta = region ? (
     <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-gray-500">
@@ -590,6 +761,8 @@ const RegionApprovalDetail = () => {
             </div>
           )}
         </ModernCard>
+
+        {renderFastTrackSection()}
 
         {renderRevenueSection()}
 

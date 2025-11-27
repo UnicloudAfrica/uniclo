@@ -1,28 +1,32 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; // Replace useRouter with useNavigate
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import useAdminAuthStore from "../stores/adminAuthStore";
 
+const AUTH_PAGES = new Set(["/admin-signin", "/admin-signup"]);
+
 const useAuthRedirect = () => {
-  const [isLoading, setIsLoading] = useState(true); // Add loading state
   const navigate = useNavigate();
-  const token = useAdminAuthStore((state) => state.token); // Subscribe to token changes
+  const token = useAdminAuthStore((state) => state.token);
+  const hasHydrated = useAdminAuthStore((state) => state.hasHydrated);
 
   useEffect(() => {
-    const path = window.location.pathname;
+    if (!hasHydrated) return;
 
-    const isAuthPage = path === "/admin-signin" || path === "/admin-signup";
+    const path = window.location.pathname;
+    const isAuthPage = AUTH_PAGES.has(path);
     const isDashboard = path.startsWith("/admin-dashboard");
 
     if (token && isAuthPage) {
-      navigate("/admin-dashboard"); // Redirect signed-in users to dashboard
-    } else if (!token && isDashboard) {
-      navigate("/admin-signin"); // Redirect unauthenticated users to sign-in
+      navigate("/admin-dashboard");
+      return;
     }
 
-    setIsLoading(false); // Done checking
-  }, [token, navigate]); // Re-run if token or navigate changes
+    if (!token && isDashboard) {
+      navigate("/admin-signin");
+    }
+  }, [token, hasHydrated, navigate]);
 
-  return { isLoading };
+  return { isLoading: !hasHydrated };
 };
 
 export default useAuthRedirect;

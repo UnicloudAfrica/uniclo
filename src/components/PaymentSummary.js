@@ -21,6 +21,7 @@ const PaymentSummary = ({
   const [isPolling, setIsPolling] = useState(false);
 
   const { transaction, order, instances, payment } = transactionData?.data || {};
+  const savedCards = Array.isArray(payment?.saved_cards) ? payment.saved_cards : [];
 
   // Calculate time remaining for payment
   useEffect(() => {
@@ -176,11 +177,11 @@ const PaymentSummary = ({
               <DollarSign className="w-5 h-5 mr-2" />
               Payment Details
             </h4>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Amount:</span>
-                <span className="font-medium">
-                  {transaction?.currency} {transaction?.amount?.toLocaleString()}
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Amount:</span>
+              <span className="font-medium">
+                {transaction?.currency} {transaction?.amount?.toLocaleString()}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -189,14 +190,43 @@ const PaymentSummary = ({
                   {payment?.gateway || 'Paystack'}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Reference:</span>
-                <span className="font-medium text-xs">
-                  {payment?.payment_reference || 'Generating...'}
-                </span>
-              </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Reference:</span>
+              <span className="font-medium text-xs">
+                {payment?.payment_reference || 'Generating...'}
+              </span>
             </div>
+            {savedCards.length > 0 && (
+              <div className="pt-2">
+                <div className="flex items-center text-gray-600 text-xs font-semibold uppercase tracking-wide mb-1">
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  Saved Cards
+                </div>
+                <div className="space-y-2">
+                  {savedCards.map((card, index) => (
+                    <div
+                      key={card.identifier || card.id || index}
+                      className="flex items-center justify-between rounded border border-gray-100 px-3 py-2 bg-white"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {(card.card_type || 'Card').toUpperCase()} •••• {card.last4 || '----'}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Expires {card.exp_month}/{card.exp_year}
+                          {card.bank ? ` · ${card.bank}` : ''}
+                        </p>
+                      </div>
+                      <span className="text-xs text-gray-500 uppercase font-semibold">
+                        {card.payment_gateway || 'Paystack'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
+        </div>
 
           {/* Instance Information */}
           <div className="space-y-4">
@@ -258,13 +288,13 @@ const PaymentSummary = ({
 
             {paymentStatus === 'completed' && (
               <button
-                onClick={() => window.location.href = '/admin-dashboard/instances'}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-              >
-                <CheckCircle className="w-4 h-4 mr-2" />
-                View Instances
-              </button>
-            )}
+            onClick={() => window.location.href = window.location.pathname.includes('object-storage') ? '/admin-dashboard/object-storage' : '/admin-dashboard/instances'}
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+          >
+            <CheckCircle className="w-4 h-4 mr-2" />
+            {window.location.pathname.includes('object-storage') ? 'View Storage' : 'View Instances'}
+          </button>
+        )}
 
             {(paymentStatus === 'failed' || paymentStatus === 'expired') && (
               <button

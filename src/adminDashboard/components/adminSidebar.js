@@ -25,13 +25,13 @@ import {
 } from "lucide-react";
 import lapapi from "../../index/admin/lapapi";
 import useAdminAuthStore from "../../stores/adminAuthStore";
+import { clearAllAuthSessions } from "../../stores/sessionUtils";
 
 const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   const [activeItem, setActiveItem] = useState("Home");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const clearToken = useAdminAuthStore((state) => state.clearToken);
   const clearUserEmail = useAdminAuthStore((state) => state.clearUserEmail);
 
   // Map of paths to menu item names
@@ -212,7 +212,7 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     } catch (error) {
       console.error("Admin logout failed:", error);
     } finally {
-      clearToken?.();
+      clearAllAuthSessions();
       clearUserEmail?.();
       if (onCloseMobileMenu && typeof onCloseMobileMenu === "function") {
         onCloseMobileMenu();

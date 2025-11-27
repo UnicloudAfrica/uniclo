@@ -211,6 +211,74 @@ class AdminRegionApiService {
     }
   }
 
+  async updateFastTrackSettings(id, payload) {
+    try {
+      const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
+        method: 'PATCH',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({
+          action: 'update_fast_track',
+          ...payload,
+        }),
+      });
+      const data = await response.json();
+      if (data.success || response.ok) {
+        ToastUtils.success(data.message || 'Fast-track settings updated');
+        return { success: true, data: data.data };
+      }
+      throw new Error(data.message || 'Failed to update fast-track settings');
+    } catch (error) {
+      console.error(`Error updating fast-track ${id}:`, error);
+      ToastUtils.error(error.message);
+      throw error;
+    }
+  }
+
+  async grantFastTrack(id, tenantId, notes = '') {
+    try {
+      const response = await fetch(
+        `${config.adminURL}/region-approvals/${id}/fast-track-grants`,
+        {
+          method: 'POST',
+          headers: this.getAuthHeaders(),
+          body: JSON.stringify({ tenant_id: tenantId, notes }),
+        }
+      );
+      const data = await response.json();
+      if (data.success || response.ok) {
+        ToastUtils.success('Fast-track access granted.');
+        return { success: true, data: data.data };
+      }
+      throw new Error(data.message || 'Failed to grant fast-track');
+    } catch (error) {
+      console.error(`Error granting fast track ${id}:`, error);
+      ToastUtils.error(error.message);
+      throw error;
+    }
+  }
+
+  async revokeFastTrack(id, tenantId) {
+    try {
+      const response = await fetch(
+        `${config.adminURL}/region-approvals/${id}/fast-track-grants/${tenantId}`,
+        {
+          method: 'DELETE',
+          headers: this.getAuthHeaders(),
+        }
+      );
+      const data = await response.json();
+      if (data.success || response.ok) {
+        ToastUtils.success(data.message || 'Fast-track access revoked.');
+        return { success: true };
+      }
+      throw new Error(data.message || 'Failed to revoke fast-track');
+    } catch (error) {
+      console.error(`Error revoking fast track ${id}:`, error);
+      ToastUtils.error(error.message);
+      throw error;
+    }
+  }
+
   /**
    * Update platform fee
    */

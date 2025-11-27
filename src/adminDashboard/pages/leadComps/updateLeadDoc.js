@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, FileText, Loader2 } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import {
   useDownloadDoc,
   useUpdateDoc,
@@ -18,6 +18,15 @@ const documentStatusOptions = [
   //   "pending_review",
 ];
 
+const inferMimeTypeFromName = (fileName) => {
+  const name = fileName?.toLowerCase() || "";
+  if (name.endsWith(".pdf")) return "application/pdf";
+  if (name.endsWith(".png")) return "image/png";
+  if (name.endsWith(".jpg") || name.endsWith(".jpeg")) return "image/jpeg";
+  if (name.endsWith(".gif")) return "image/gif";
+  return "application/octet-stream";
+};
+
 const UpdateLeadDoc = ({ isOpen, onClose, document, leadId }) => {
   const [status, setStatus] = useState("");
   const [reviewNotes, setReviewNotes] = useState("");
@@ -34,6 +43,12 @@ const UpdateLeadDoc = ({ isOpen, onClose, document, leadId }) => {
   });
 
   useEffect(() => {
+    if (isOpen && document?.identifier) {
+      fetchDownloadLink();
+    }
+  }, [isOpen, document?.identifier, fetchDownloadLink]);
+
+  useEffect(() => {
     if (isOpen && document) {
       setStatus(document.status || "");
       setReviewNotes(document.review_notes || "");
@@ -42,49 +57,17 @@ const UpdateLeadDoc = ({ isOpen, onClose, document, leadId }) => {
     }
   }, [isOpen, document]);
 
-  console.log(fetchedDownloadData);
-
   useEffect(() => {
-    if (fetchedDownloadData) {
-      let blob;
-      let mimeType = "application/pdf"; // Default to PDF
-
-      // Handle ArrayBuffer (binary data)
-      if (fetchedDownloadData instanceof ArrayBuffer) {
-        // Infer MIME type from Content-Type or filename
-        mimeType = document?.name?.endsWith(".pdf")
-          ? "application/pdf"
-          : document?.name?.endsWith(".png")
-          ? "image/png"
-          : document?.name?.endsWith(".jpg") ||
-            document?.name?.endsWith(".jpeg")
-          ? "image/jpeg"
-          : "application/octet-stream";
-        blob = new Blob([fetchedDownloadData], { type: mimeType });
-      } else {
-        console.error("Unexpected data format:", typeof fetchedDownloadData);
-        return;
-      }
-
-      // Create object URL for rendering
-      const url = URL.createObjectURL(blob);
+    if (fetchedDownloadData?.blob) {
+      const mimeType =
+        fetchedDownloadData.contentType?.split(";")[0] ||
+        inferMimeTypeFromName(document?.name);
+      const url = URL.createObjectURL(fetchedDownloadData.blob);
       setDocumentUrl(url);
       setDocumentType(mimeType);
-
-      // Cleanup on unmount or when new data is fetched
-      return () => {
-        URL.revokeObjectURL(url);
-      };
+      return () => URL.revokeObjectURL(url);
     }
   }, [fetchedDownloadData, document?.name]);
-
-  const handleViewDocument = () => {
-    if (document?.identifier) {
-      fetchDownloadLink(); // Trigger the query to fetch the binary/base64 data
-    } else {
-      console.log("Document ID is not available.");
-    }
-  };
 
   const handleSubmit = () => {
     const payload = {
@@ -124,28 +107,6 @@ const UpdateLeadDoc = ({ isOpen, onClose, document, leadId }) => {
           </button>
         </div>
         <div className="px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[600px] justify-start">
-          {/* <div className="space-y-3 w-full mb-6 text-sm text-gray-600">
-            <div className="flex items-center">
-              <FileText className="w-5 h-5 text-gray-500 mr-2" />
-              <span className="font-medium text-gray-800">
-                File Name: {document?.name || "N/A"}
-              </span>
-            </div>
-
-            <button
-              onClick={handleViewDocument}
-              disabled={isDownloading}
-              className="flex items-center px-4 py-2 bg-[#288DD1] text-white rounded-full hover:bg-blue-600 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isDownloading ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <FileText className="w-4 h-4 mr-2" />
-              )}
-              {isDownloading ? "Loading..." : "View Document"}
-            </button>
-          </div> */}
-
           {/* Render the document */}
           {documentUrl && (
             <div className="w-full max-h-[400px] overflow-auto mb-6">

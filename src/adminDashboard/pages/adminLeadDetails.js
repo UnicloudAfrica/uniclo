@@ -62,7 +62,7 @@ const DocumentItem = ({ doc, onUpdate, onView }) => (
       </div>
       <div className="flex items-center space-x-2 flex-shrink-0">
         <button
-          onClick={() => onView(doc.file, doc.name)}
+          onClick={() => onView(doc)}
           className="text-gray-600 hover:text-gray-800 transition-colors"
           title="View Document"
         >
@@ -147,8 +147,7 @@ export default function AdminLeadDetails() {
     leadNameFromUrl: "",
     editingStage: null,
     editingDocument: null,
-    viewingFile: null,
-    viewingFileName: null,
+    viewingDocument: null,
   });
 
   // Extract URL parameters
@@ -222,19 +221,13 @@ export default function AdminLeadDetails() {
     updateUiState({ isUpdateDocModalOpen: true });
   };
 
-  const handleViewDoc = (fileUrl, fileName) => {
-    updateDataState({
-      viewingFile: fileUrl,
-      viewingFileName: fileName,
-    });
+  const handleViewDoc = (document) => {
+    updateDataState({ viewingDocument: document });
     updateUiState({ isViewerOpen: true });
   };
 
   const closeViewer = () => {
-    updateDataState({
-      viewingFile: null,
-      viewingFileName: null,
-    });
+    updateDataState({ viewingDocument: null });
     updateUiState({ isViewerOpen: false });
   };
 
@@ -717,8 +710,7 @@ export default function AdminLeadDetails() {
       <DocumentViewerModal
         isOpen={uiState.isViewerOpen}
         onClose={closeViewer}
-        fileUrl={dataState.viewingFile}
-        fileName={dataState.viewingFileName}
+        document={dataState.viewingDocument}
       />
     </>
   );

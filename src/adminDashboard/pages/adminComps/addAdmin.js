@@ -317,7 +317,7 @@ export const AddAdminModal = ({ isOpen, onClose, mode = "modal" }) => {
       meta={meta}
       aside={asideContent}
       footer={footer}
-      maxWidthClass="max-w-6xl"
+      maxWidthClass={isPageMode ? "max-w-full" : "max-w-6xl"}
     >
       <form
         id={formId}

@@ -1,13 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import config from "../config";
 import useAdminAuthStore from "../stores/adminAuthStore";
-import useAuthStore from "../stores/userAuthStore";
+import useTenantAuthStore from "../stores/tenantAuthStore";
 import ToastUtils from "../utils/toastUtil";
 
 // Determine if user is admin or tenant and get appropriate token and base URL
 const getAuthConfig = () => {
   const adminAuth = useAdminAuthStore.getState();
-  const tenantAuth = useAuthStore.getState();
+  const tenantAuth = useTenantAuthStore.getState();
   
   // Check if admin is authenticated
   if (adminAuth.token) {

@@ -4,12 +4,12 @@ import logo from "./assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useCreateAccount } from "../../hooks/authHooks";
 import { useFetchCountries } from "../../hooks/resource";
-import useAuthStore from "../../stores/userAuthStore";
+import useTenantAuthStore from "../../stores/tenantAuthStore";
 import useAuthRedirect from "../../utils/authRedirect";
 
 const TenantRegister = ({ tenant = "Tenant" }) => {
   const navigate = useNavigate();
-  const { userEmail, setUserEmail } = useAuthStore.getState();
+  const { userEmail, setUserEmail } = useTenantAuthStore.getState();
   const { mutate, isPending } = useCreateAccount();
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});

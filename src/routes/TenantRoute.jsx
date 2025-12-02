@@ -1,12 +1,12 @@
 import React from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation, Outlet } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import useTenantAuthStore from "../stores/tenantAuthStore";
 import { useOnboardingState } from "../hooks/onboardingHooks";
 
 const LoaderScreen = () => (
   <div className="w-full h-svh flex items-center justify-center">
-    <Loader2 className="w-10 h-10 text-[--theme-color] animate-spin" />
+    <Loader2 className="w-10 h-10 text-[#288DD1] animate-spin" />
   </div>
 );
 
@@ -38,7 +38,7 @@ export default function TenantRoute({ children }) {
   }
 
   if (error) {
-    return children;
+    return children || <Outlet />;
   }
 
   const status = onboarding?.status ?? "pending";
@@ -51,5 +51,5 @@ export default function TenantRoute({ children }) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  return children;
+  return children || <Outlet />;
 }

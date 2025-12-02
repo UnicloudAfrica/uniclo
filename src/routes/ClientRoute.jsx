@@ -9,22 +9,14 @@ const LoaderScreen = () => (
   </div>
 );
 
+// Minimal guard: blocks until hydrated, then checks for a client token.
 export default function ClientRoute({ children }) {
-  const { token, role, hasHydrated } = useClientAuthStore((s) => ({
-    token: s.token,
-    role: s.role,
-    hasHydrated: s.hasHydrated,
-  }));
+  const token = useClientAuthStore((s) => s.token);
+  const role = useClientAuthStore((s) => s.role);
+  const hasHydrated = useClientAuthStore((s) => s.hasHydrated);
 
-  if (!hasHydrated) {
-    return <LoaderScreen />;
-  }
-
-  const isClient = role === "client";
-
-  if (!token || !isClient) {
-    return <Navigate to="/sign-in" replace />;
-  }
+  if (!hasHydrated) return <LoaderScreen />;
+  if (!token || role !== "client") return <Navigate to="/sign-in" replace />;
 
   return children;
 }

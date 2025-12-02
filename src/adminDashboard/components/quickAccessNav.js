@@ -15,10 +15,10 @@ const QuickAccessNav = () => {
 
   const quickLinks = [
     {
-      title: "Multi-Instance Creation",
-      description: "Create and provision multiple instances",
+      title: "Create Instance",
+      description: "Launch and price new instances",
       icon: Server,
-      path: "/admin-dashboard/multi-instance-creation",
+      path: "/admin-dashboard/create-instance",
       color: "bg-unicloud-blue/10 text-unicloud-blue",
       bgColor: "hover:bg-unicloud-blue/20",
     },
@@ -34,7 +34,7 @@ const QuickAccessNav = () => {
       title: "Advanced Calculator",
       description: "Calculate pricing and generate quotes",
       icon: Terminal,
-      path: "/admin-dashboard/advanced-calculator",
+      path: "/admin-dashboard/pricing-calculator",
       color: "bg-unicloud-blue/10 text-unicloud-blue",
       bgColor: "hover:bg-unicloud-blue/20",
     },

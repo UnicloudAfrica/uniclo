@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUpRight,
   BarChart3,
@@ -8,6 +9,9 @@ import {
   Loader2,
   UserPlus,
   Users,
+  Mail,
+  Phone,
+  Filter,
 } from "lucide-react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
@@ -20,6 +24,19 @@ import {
 import AdminPageShell from "../components/AdminPageShell";
 import ResourceHero from "../components/ResourceHero";
 import ResourceDataExplorer from "../components/ResourceDataExplorer";
+import TrendIndicator from "../components/TrendIndicator";
+import LeadScoreIndicator from "../components/LeadScoreIndicator";
+import PipelineFunnel from "../components/PipelineFunnel";
+import LeadCard from "../components/LeadCard";
+import ViewToggle from "../components/ViewToggle";
+import QuickActionsMenu from "../components/QuickActionsMenu";
+import AdvancedFilterPanel from "../components/AdvancedFilterPanel";
+import BulkActionBar from "../components/BulkActionBar";
+import FilterPresets from "../components/FilterPresets";
+import UserSelectModal from "../components/UserSelectModal";
+import adminSilentApi from "../../index/admin/silent";
+import ToastUtil from "../../utils/toastUtil";
+import useAdminAuthStore from "../../stores/adminAuthStore";
 
 const formatCreatedAt = (dateString) => {
   const date = new Date(dateString);
@@ -34,6 +51,10 @@ const encodeId = (id) => {
   return encodeURIComponent(btoa(id));
 };
 
+const getLeadIdentifier = (lead) => lead?.identifier || lead?.id;
+const normalizeId = (id) =>
+  id !== undefined && id !== null ? String(id) : "";
+
 // Helper function to format the status string for display
 const formatStatusForDisplay = (status) => {
   return status.replace(/_/g, " ");
@@ -45,48 +66,56 @@ const STATUS_CONFIG = {
     description: "Entire pipeline",
     tone: "bg-slate-900 text-white",
     chip: "bg-slate-800 text-slate-100",
+    color: "bg-gradient-to-r from-slate-600 to-slate-700",
   },
   new: {
     label: "New",
     description: "Awaiting contact",
     tone: "bg-sky-500/10 text-sky-600",
     chip: "bg-sky-500/15 text-sky-600",
+    color: "bg-gradient-to-r from-sky-500 to-sky-600",
   },
   contacted: {
     label: "Contacted",
     description: "Initial outreach",
     tone: "bg-amber-500/10 text-amber-600",
     chip: "bg-amber-500/15 text-amber-600",
+    color: "bg-gradient-to-r from-amber-500 to-amber-600",
   },
   qualified: {
     label: "Qualified",
     description: "Ready for proposal",
     tone: "bg-green-500/10 text-green-600",
     chip: "bg-green-500/15 text-green-600",
+    color: "bg-gradient-to-r from-green-500 to-green-600",
   },
   proposal_sent: {
     label: "Proposal sent",
     description: "Awaiting feedback",
     tone: "bg-indigo-500/10 text-indigo-600",
     chip: "bg-indigo-500/15 text-indigo-600",
+    color: "bg-gradient-to-r from-indigo-500 to-indigo-600",
   },
   negotiating: {
     label: "Negotiating",
     description: "In discussion",
     tone: "bg-purple-500/10 text-purple-600",
     chip: "bg-purple-500/15 text-purple-600",
+    color: "bg-gradient-to-r from-purple-500 to-purple-600",
   },
   closed_won: {
     label: "Closed won",
     description: "Converted clients",
     tone: "bg-emerald-500/10 text-emerald-600",
     chip: "bg-emerald-500/15 text-emerald-600",
+    color: "bg-gradient-to-r from-emerald-500 to-emerald-600",
   },
   closed_lost: {
     label: "Closed lost",
     description: "Lost opportunities",
     tone: "bg-rose-500/10 text-rose-600",
     chip: "bg-rose-500/15 text-rose-600",
+    color: "bg-gradient-to-r from-rose-500 to-rose-600",
   },
 };
 
@@ -102,12 +131,89 @@ const STATUS_ORDER = [
 ];
 
 export default function AdminLeads() {
+  const queryClient = useQueryClient();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeStatus, setActiveStatus] = useState("all");
   const [searchValue, setSearchValue] = useState("");
+  const [view, setView] = useState("table"); // table or card
+  const [selectedLeads, setSelectedLeads] = useState([]);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [activePreset, setActivePreset] = useState("all");
+  const [advancedFilters, setAdvancedFilters] = useState({
+    dateRange: "all",
+    source: "all",
+    leadType: "all",
+    minScore: 0,
+  });
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [assignTarget, setAssignTarget] = useState(null); // 'bulk' or lead object
   const navigate = useNavigate();
 
   const openCreateLead = () => navigate("/admin-dashboard/leads/create");
+
+  const pruneLeadsFromCache = (idsToRemove) => {
+    const removeSet = new Set(
+      (idsToRemove || []).map(normalizeId).filter(Boolean)
+    );
+
+    if (removeSet.size === 0) return;
+
+    queryClient.setQueriesData({ queryKey: ["admin-leads"] }, (old) => {
+      const filterList = (list) =>
+        list.filter((lead) => {
+          const idStr = normalizeId(lead.id);
+          const identStr = normalizeId(lead.identifier);
+          return !removeSet.has(idStr) && !removeSet.has(identStr);
+        });
+
+      if (Array.isArray(old)) {
+        return filterList(old);
+      }
+
+      if (old && Array.isArray(old.data)) {
+        return { ...old, data: filterList(old.data) };
+      }
+
+      return old;
+    });
+  };
+
+  // Build filter params for API
+  const filterParams = useMemo(() => {
+    const params = {};
+
+    if (activeStatus && activeStatus !== "all") {
+      params.status = activeStatus;
+    }
+
+    if (advancedFilters.dateRange && advancedFilters.dateRange !== "all") {
+      params.date_range = advancedFilters.dateRange;
+    }
+
+    if (advancedFilters.source && advancedFilters.source !== "all") {
+      params.source = advancedFilters.source;
+    }
+
+    if (advancedFilters.leadType && advancedFilters.leadType !== "all") {
+      params.lead_type = advancedFilters.leadType;
+    }
+
+    if (advancedFilters.minScore && advancedFilters.minScore > 0) {
+      params.min_score = advancedFilters.minScore;
+    }
+
+    if (activePreset === "favorites") {
+      params.is_favorite = true;
+    }
+
+    return params;
+  }, [activeStatus, advancedFilters, activePreset]);
+
+  const {
+    data: leads = [],
+    isLoading: isLeadsFetching,
+    refetch: refetchLeads,
+  } = useFetchLeads(filterParams);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -117,7 +223,6 @@ export default function AdminLeads() {
     setIsMobileMenuOpen(false);
   };
 
-  const { data: leads = [], isFetching: isLeadsFetching } = useFetchLeads();
   const { data: leadStats, isFetching: isLeadStatsFetching } = useFetchLeadStats();
 
   const leadsByStatus = useMemo(
@@ -135,6 +240,13 @@ export default function AdminLeads() {
   const conversionRate = totalLeadCount
     ? Math.round((wonCount / totalLeadCount) * 100)
     : 0;
+
+  // Mock trend data (replace with real data from API)
+  const trends = {
+    pipeline: 12,
+    conversion: 5,
+    engaged: -3,
+  };
 
   const statusSegments = useMemo(() => {
     return STATUS_ORDER.map((statusId) => {
@@ -155,6 +267,48 @@ export default function AdminLeads() {
       };
     }).filter((segment) => segment.id === "all" || segment.count > 0);
   }, [leadsByStatus, totalLeadCount]);
+
+  // Prepare funnel data
+  const funnelStages = useMemo(() => {
+    return [
+      {
+        id: "new",
+        label: "New",
+        count: leadsByStatus.new ?? 0,
+        color: STATUS_CONFIG.new.color,
+      },
+      {
+        id: "contacted",
+        label: "Contacted",
+        count: leadsByStatus.contacted ?? 0,
+        color: STATUS_CONFIG.contacted.color,
+      },
+      {
+        id: "qualified",
+        label: "Qualified",
+        count: leadsByStatus.qualified ?? 0,
+        color: STATUS_CONFIG.qualified.color,
+      },
+      {
+        id: "proposal_sent",
+        label: "Proposal",
+        count: leadsByStatus.proposal_sent ?? 0,
+        color: STATUS_CONFIG.proposal_sent.color,
+      },
+      {
+        id: "negotiating",
+        label: "Negotiating",
+        count: leadsByStatus.negotiating ?? 0,
+        color: STATUS_CONFIG.negotiating.color,
+      },
+      {
+        id: "closed_won",
+        label: "Won",
+        count: leadsByStatus.closed_won ?? 0,
+        color: STATUS_CONFIG.closed_won.color,
+      },
+    ].filter((stage) => stage.count > 0);
+  }, [leadsByStatus]);
 
   const filteredLeads = useMemo(() => {
     if (!Array.isArray(leads)) return [];
@@ -200,6 +354,250 @@ export default function AdminLeads() {
     }
   };
 
+  const handleViewLead = (lead) => {
+    navigate(
+      `/admin-dashboard/leads/details?name=${encodeURIComponent(
+        `${lead.first_name} ${lead.last_name}`
+      )}&id=${encodeId(lead.id)}`
+    );
+  };
+
+  const handleEmailLead = (lead) => {
+    window.location.href = `mailto:${lead.email}`;
+  };
+
+  const handleCallLead = (lead) => {
+    if (lead.phone) {
+      window.location.href = `tel:${lead.phone}`;
+    }
+  };
+
+  // Bulk selection handlers
+  const handleSelectLead = (leadId) => {
+    const normalized = normalizeId(leadId);
+    setSelectedLeads((prev) =>
+      prev.includes(normalized)
+        ? prev.filter((id) => id !== normalized)
+        : [...prev, normalized]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedLeads.length === filteredLeads.length) {
+      setSelectedLeads([]);
+    } else {
+      setSelectedLeads(
+        filteredLeads
+          .map((lead) => normalizeId(getLeadIdentifier(lead)))
+          .filter(Boolean)
+      );
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedLeads([]);
+  };
+
+  const handleBulkAssign = async () => {
+    setAssignTarget('bulk');
+    setShowAssignModal(true);
+  };
+
+  const handleUserSelected = async (user) => {
+    try {
+      if (assignTarget === 'bulk') {
+        // Bulk assign
+        await adminSilentApi("POST", "/leads/bulk-assign", {
+          lead_ids: selectedLeads,
+          assigned_to: user.id,
+        });
+        ToastUtil.success(`Successfully assigned ${selectedLeads.length} lead(s) to ${user.name}`);
+        setSelectedLeads([]);
+        refetchLeads();
+      } else if (assignTarget) {
+        // Individual assign
+        const identifier = getLeadIdentifier(assignTarget);
+        if (!identifier) {
+          throw new Error("Missing lead identifier");
+        }
+
+        await adminSilentApi("PATCH", `/leads/${identifier}`, {
+          assigned_to: user.id,
+        });
+        ToastUtil.success(`Successfully assigned lead to ${user.name}`);
+        refetchLeads();
+      }
+    } catch (error) {
+      ToastUtil.error("Failed to assign lead(s)");
+      console.error("Assign error:", error);
+    } finally {
+      setAssignTarget(null);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Are you sure you want to delete ${selectedLeads.length} lead(s)? This action cannot be undone.`)) {
+      return;
+    }
+
+    const idsToRemove = selectedLeads.map(normalizeId).filter(Boolean);
+    const previousCaches = queryClient.getQueriesData({ queryKey: ["admin-leads"] });
+
+    // Optimistically update UI immediately
+    pruneLeadsFromCache(idsToRemove);
+
+    try {
+      await adminSilentApi("DELETE", "/leads/bulk-delete", {
+        lead_ids: idsToRemove,
+      });
+      ToastUtil.success(`Successfully deleted ${selectedLeads.length} lead(s)`);
+      setSelectedLeads([]);
+      // Background revalidation; don't block UI
+      queryClient.invalidateQueries({ queryKey: ["admin-leads"] });
+    } catch (error) {
+      // Roll back UI on failure
+      previousCaches.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data);
+      });
+      ToastUtil.error("Failed to delete leads");
+      console.error("Bulk delete error:", error);
+    }
+  };
+
+  const handleBulkExport = async () => {
+    try {
+      // Use the file API client to handle CSV download
+      const token = useAdminAuthStore.getState().token;
+      const response = await fetch(`${window.location.origin.replace(':3000', ':8000')}/admin/v1/leads/bulk-export`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ lead_ids: selectedLeads }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Export failed");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `leads_export_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      ToastUtil.success(`Successfully exported ${selectedLeads.length} lead(s)`);
+    } catch (error) {
+      ToastUtil.error(error.message || "Failed to export leads");
+      console.error("Bulk export error:", error);
+    }
+  };
+
+  // Filter handlers
+  const handlePresetChange = (presetId) => {
+    setActivePreset(presetId);
+
+    // Apply preset logic
+    switch (presetId) {
+      case "hot":
+        setAdvancedFilters({ ...advancedFilters, minScore: 80 });
+        break;
+      case "engaged":
+        setActiveStatus("contacted");
+        break;
+      case "favorites":
+        // TODO: Implement favorites filter
+        break;
+      default:
+        setActiveStatus("all");
+        setAdvancedFilters({
+          dateRange: "all",
+          source: "all",
+          leadType: "all",
+          minScore: 0,
+        });
+    }
+  };
+
+  const handleApplyFilters = () => {
+    setShowAdvancedFilters(false);
+    // Filters are applied via useMemo
+  };
+
+  const handleResetFilters = () => {
+    setAdvancedFilters({
+      dateRange: "all",
+      source: "all",
+      leadType: "all",
+      minScore: 0,
+    });
+  };
+
+  const handleEditLead = (lead) => {
+    // TODO: Navigate to edit page or open modal
+    ToastUtil.info("Edit lead feature coming soon");
+  };
+
+  const handleDeleteLead = async (lead) => {
+    if (!window.confirm(`Are you sure you want to delete ${lead.first_name} ${lead.last_name}?`)) {
+      return;
+    }
+
+    let previousCaches = [];
+
+    try {
+      const identifier = getLeadIdentifier(lead);
+      if (!identifier) {
+        throw new Error("Missing lead identifier");
+      }
+
+      const normalized = normalizeId(identifier);
+      previousCaches = queryClient.getQueriesData({ queryKey: ["admin-leads"] });
+
+      // Optimistic UI update
+      pruneLeadsFromCache([normalized]);
+      await adminSilentApi("DELETE", `/leads/${normalized}`);
+      ToastUtil.success("Lead deleted successfully");
+      setSelectedLeads((prev) => prev.filter((id) => id !== normalized));
+      queryClient.invalidateQueries({ queryKey: ["admin-leads"] });
+    } catch (error) {
+      // Restore cache on failure
+      previousCaches.forEach(([key, data]) => {
+        queryClient.setQueryData(key, data);
+      });
+      ToastUtil.error("Failed to delete lead");
+      console.error("Delete error:", error);
+    }
+  };
+
+  const handleAssignLead = (lead) => {
+    setAssignTarget(lead);
+    setShowAssignModal(true);
+  };
+
+  const handleToggleFavorite = async (lead) => {
+    try {
+      const identifier = getLeadIdentifier(lead);
+      if (!identifier) {
+        throw new Error("Missing lead identifier");
+      }
+
+      await adminSilentApi("POST", `/leads/${identifier}/toggle-favorite`);
+      ToastUtil.success(lead.is_favorite ? "Removed from favorites" : "Added to favorites");
+      await refetchLeads();
+    } catch (error) {
+      ToastUtil.error("Failed to update favorite status");
+      console.error("Toggle favorite error:", error);
+    }
+  };
+
+
   const headerActions = (
     <ModernButton onClick={openCreateLead} className="inline-flex items-center gap-2">
       <UserPlus className="h-4 w-4" />
@@ -209,6 +607,25 @@ export default function AdminLeads() {
 
   const leadColumns = useMemo(
     () => [
+      {
+        header: (
+          <input
+            type="checkbox"
+            checked={selectedLeads.length === filteredLeads.length && filteredLeads.length > 0}
+            onChange={handleSelectAll}
+            className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-2 focus:ring-primary-500/20"
+          />
+        ),
+        key: "select",
+        render: (row) => (
+          <input
+            type="checkbox"
+            checked={selectedLeads.includes(normalizeId(getLeadIdentifier(row)))}
+            onChange={() => handleSelectLead(getLeadIdentifier(row))}
+            className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-2 focus:ring-primary-500/20"
+          />
+        ),
+      },
       {
         header: "Lead",
         key: "name",
@@ -245,6 +662,17 @@ export default function AdminLeads() {
         ),
       },
       {
+        header: "Score",
+        key: "score",
+        render: (row) => (
+          <LeadScoreIndicator
+            score={row.score || 0}
+            size="sm"
+            showLabel={false}
+          />
+        ),
+      },
+      {
         header: "Source",
         key: "source",
         render: (row) => (
@@ -276,24 +704,19 @@ export default function AdminLeads() {
         key: "actions",
         align: "right",
         render: (row) => (
-          <button
-            type="button"
-            onClick={() =>
-              navigate(
-                `/admin-dashboard/leads/details?name=${encodeURIComponent(
-                  `${row.first_name} ${row.last_name}`
-                )}&id=${encodeId(row.id)}`
-              )
-            }
-            className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-500 transition hover:border-primary-200 hover:text-primary-600"
-          >
-            <Eye className="h-3 w-3" />
-            View
-          </button>
+          <QuickActionsMenu
+            lead={row}
+            onView={handleViewLead}
+            onEdit={handleEditLead}
+            onEmail={handleEmailLead}
+            onCall={handleCallLead}
+            onDelete={handleDeleteLead}
+            onAssign={handleAssignLead}
+          />
         ),
       },
     ],
-    [navigate]
+    [navigate, selectedLeads, filteredLeads]
   );
 
   return (
@@ -315,25 +738,60 @@ export default function AdminLeads() {
             {
               label: "Pipeline volume",
               value: totalLeadCount,
-              description: "All leads across every stage",
+              description: (
+                <div className="flex items-center gap-2">
+                  <span>All leads across every stage</span>
+                  <TrendIndicator value={trends.pipeline} />
+                </div>
+              ),
               icon: <Users className="h-4 w-4" />,
             },
             {
               label: "Conversion rate",
               value: `${conversionRate}%`,
-              description: "Closed won vs. total leads",
+              description: (
+                <div className="flex items-center gap-2">
+                  <span>Closed won vs. total leads</span>
+                  <TrendIndicator value={trends.conversion} />
+                </div>
+              ),
               icon: <CheckCircle2 className="h-4 w-4" />,
             },
             {
               label: "Engaged leads",
               value: engagedCount,
-              description: "In conversation right now",
+              description: (
+                <div className="flex items-center gap-2">
+                  <span>In conversation right now</span>
+                  <TrendIndicator value={trends.engaged} />
+                </div>
+              ),
               icon: <BarChart3 className="h-4 w-4" />,
             },
           ]}
           accent="midnight"
           rightSlot={headerActions}
         />
+
+        {/* Pipeline Funnel Visualization */}
+        {funnelStages.length > 0 && (
+          <ModernCard className="space-y-4 border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur">
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Conversion funnel
+                </p>
+                <h2 className="text-lg font-semibold text-slate-900">
+                  Pipeline health at a glance
+                </h2>
+                <p className="text-sm text-slate-500">
+                  Watch how leads flow through each stage and identify bottlenecks.
+                </p>
+              </div>
+            </div>
+            <PipelineFunnel stages={funnelStages} onStageClick={setActiveStatus} />
+          </ModernCard>
+        )}
 
         <ModernCard className="space-y-6 border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -363,32 +821,28 @@ export default function AdminLeads() {
                   key={segment.id}
                   type="button"
                   onClick={() => setActiveStatus(segment.id)}
-                  className={`group flex flex-col gap-3 rounded-2xl border px-4 py-4 text-left transition ${
-                    isActive
-                      ? "border-slate-900 bg-slate-900 text-white shadow-lg"
-                      : "border-slate-200 bg-white hover:border-slate-300"
-                  }`}
+                  className={`group flex flex-col gap-3 rounded-2xl border px-4 py-4 text-left transition ${isActive
+                    ? "border-slate-900 bg-slate-900 text-white shadow-lg"
+                    : "border-slate-200 bg-white hover:border-slate-300"
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
-                        isActive ? "bg-white/20 text-white" : config.tone
-                      }`}
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${isActive ? "bg-white/20 text-white" : config.tone
+                        }`}
                     >
                       {config.label}
                     </span>
                     <span
-                      className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
-                        isActive ? "bg-white/20 text-white" : config.chip
-                      }`}
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${isActive ? "bg-white/20 text-white" : config.chip
+                        }`}
                     >
                       {segment.count}
                     </span>
                   </div>
                   <p
-                    className={`text-sm ${
-                      isActive ? "text-white/80" : "text-slate-500"
-                    }`}
+                    className={`text-sm ${isActive ? "text-white/80" : "text-slate-500"
+                      }`}
                   >
                     {config.description}
                   </p>
@@ -399,39 +853,120 @@ export default function AdminLeads() {
         </ModernCard>
 
         <ModernCard className="space-y-6 border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur">
-          <div className="flex flex-col gap-1">
-            <h2 className="text-lg font-semibold text-slate-900">
-              Lead directory
-            </h2>
-            <p className="text-sm text-slate-500">
-              Explore every prospect, understand where they are in the journey, and dig into the context behind each opportunity.
-            </p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-1">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Lead directory
+              </h2>
+              <p className="text-sm text-slate-500">
+                Explore every prospect, understand where they are in the journey, and dig into the context behind each opportunity.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition ${showAdvancedFilters
+                  ? "border-primary-500 bg-primary-50 text-primary-700"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                  }`}
+              >
+                <Filter className="h-4 w-4" />
+                Filters
+              </button>
+              <ViewToggle view={view} onViewChange={setView} />
+            </div>
           </div>
 
-          <ResourceDataExplorer
-            columns={leadColumns}
-            rows={filteredLeads}
-            loading={isLeadsFetching}
-            searchValue={searchValue}
-            onSearch={setSearchValue}
-            highlight
-            emptyState={{
-              icon: (
-                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-500/10 text-primary-500">
-                  <UserPlus className="h-5 w-5" />
-                </span>
-              ),
-              title: "No leads yet",
-              description:
-                "Start capturing opportunities by adding leads manually or importing from your CRM.",
-              action: (
-                <ModernButton onClick={openCreateLead} className="flex items-center gap-2">
-                  <UserPlus className="h-4 w-4" />
-                  Add your first lead
-                </ModernButton>
-              ),
-            }}
+          {/* Filter Presets */}
+          <FilterPresets
+            activePreset={activePreset}
+            onPresetChange={handlePresetChange}
           />
+
+          {/* Advanced Filter Panel */}
+          {showAdvancedFilters && (
+            <AdvancedFilterPanel
+              isOpen={showAdvancedFilters}
+              onClose={() => setShowAdvancedFilters(false)}
+              filters={advancedFilters}
+              onFilterChange={setAdvancedFilters}
+              onApply={handleApplyFilters}
+              onReset={handleResetFilters}
+            />
+          )}
+
+          {view === "table" ? (
+            <ResourceDataExplorer
+              columns={leadColumns}
+              rows={filteredLeads}
+              loading={isLeadsFetching}
+              searchValue={searchValue}
+              onSearch={setSearchValue}
+              highlight
+              emptyState={{
+                icon: (
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-500/10 text-primary-500">
+                    <UserPlus className="h-5 w-5" />
+                  </span>
+                ),
+                title: "No leads yet",
+                description:
+                  "Start capturing opportunities by adding leads manually or importing from your CRM.",
+                action: (
+                  <ModernButton onClick={openCreateLead} className="flex items-center gap-2">
+                    <UserPlus className="h-4 w-4" />
+                    Add your first lead
+                  </ModernButton>
+                ),
+              }}
+            />
+          ) : (
+            <div className="space-y-4">
+              {/* Search for card view */}
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search leads..."
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  className="w-full rounded-lg border border-slate-200 px-4 py-2.5 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                />
+              </div>
+
+              {/* Card Grid */}
+              {isLeadsFetching ? (
+                <div className="flex h-48 items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
+                </div>
+              ) : filteredLeads.length > 0 ? (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {filteredLeads.map((lead) => (
+                    <LeadCard
+                      key={lead.id}
+                      lead={lead}
+                      onView={handleViewLead}
+                      onEmail={handleEmailLead}
+                      onCall={handleCallLead}
+                      onToggleFavorite={handleToggleFavorite}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-16">
+                  <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary-500/10 text-primary-500">
+                    <UserPlus className="h-5 w-5" />
+                  </span>
+                  <h3 className="mb-2 text-lg font-semibold text-slate-900">
+                    No leads found
+                  </h3>
+                  <p className="mb-4 text-sm text-slate-500">
+                    Try adjusting your search or filter criteria
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </ModernCard>
 
         {isLeadStatsFetching && (
@@ -440,6 +975,26 @@ export default function AdminLeads() {
           </div>
         )}
       </AdminPageShell>
+
+      {/* Bulk Action Bar */}
+      <BulkActionBar
+        selectedCount={selectedLeads.length}
+        onAssign={handleBulkAssign}
+        onDelete={handleBulkDelete}
+        onExport={handleBulkExport}
+        onClearSelection={handleClearSelection}
+      />
+
+      {/* User Select Modal */}
+      <UserSelectModal
+        isOpen={showAssignModal}
+        onClose={() => {
+          setShowAssignModal(false);
+          setAssignTarget(null);
+        }}
+        onSelect={handleUserSelected}
+        title={assignTarget === 'bulk' ? `Assign ${selectedLeads.length} Lead(s)` : "Assign Lead"}
+      />
     </>
   );
 }

@@ -101,6 +101,45 @@ const ModernTable = ({
 
   const totalPages = Math.ceil(sortedData.length / pageSize);
 
+  const getActionToneStyles = (tone = "neutral") => {
+    const { neutral, primary, error, success } = designTokens.colors;
+    const tones = {
+      primary: {
+        color: primary[700],
+        bg: primary[50],
+        border: primary[200],
+        hoverBg: primary[100],
+        hoverBorder: primary[300],
+        shadow: "0 6px 14px -10px rgba(40, 141, 209, 0.45)",
+      },
+      danger: {
+        color: error[700],
+        bg: error[50],
+        border: error[200],
+        hoverBg: error[100],
+        hoverBorder: error[300],
+        shadow: "0 6px 14px -10px rgba(239, 68, 68, 0.45)",
+      },
+      success: {
+        color: success[700],
+        bg: success[50],
+        border: success[200],
+        hoverBg: success[100],
+        hoverBorder: success[300],
+        shadow: "0 6px 14px -10px rgba(34, 197, 94, 0.45)",
+      },
+      neutral: {
+        color: neutral[700],
+        bg: neutral[50],
+        border: neutral[200],
+        hoverBg: neutral[100],
+        hoverBorder: neutral[300],
+        shadow: "0 4px 10px -8px rgba(15, 23, 42, 0.25)",
+      },
+    };
+    return tones[tone] || tones.neutral;
+  };
+
   // Effect for table load animation
   useEffect(() => {
     if (!loading) {
@@ -437,49 +476,56 @@ const ModernTable = ({
                     {actions.length > 0 && (
                       <td style={tableStyles.td}>
                         <div style={{ display: "flex", gap: "8px" }}>
-                          {actions.map((action, actionIndex) => (
-                            <button
-                              key={actionIndex}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                action.onClick(row);
-                              }}
-                              style={{
-                                padding: "4px 8px",
-                                border: "none",
-                                borderRadius: designTokens.borderRadius.md,
-                                backgroundColor: "transparent",
-                                color: designTokens.colors.neutral[600],
-                                cursor: "pointer",
-                                transition: prefersReducedMotion
-                                  ? "color 0.2s ease"
-                                  : "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                                transform: "scale(1)",
-                              }}
-                              className={
-                                enableAnimations && !prefersReducedMotion
-                                  ? "modern-button-action"
-                                  : ""
-                              }
-                              onMouseEnter={(e) => {
-                                if (!prefersReducedMotion) {
-                                  e.target.style.backgroundColor =
-                                    designTokens.colors.neutral[100];
-                                  e.target.style.transform = "scale(1.05)";
+                          {actions.map((action, actionIndex) => {
+                            const tone = getActionToneStyles(action.tone);
+                            return (
+                              <button
+                                key={actionIndex}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  action.onClick(row);
+                                }}
+                                style={{
+                                  padding: "6px 10px",
+                                  border: `1px solid ${tone.border}`,
+                                  borderRadius: designTokens.borderRadius.main,
+                                  backgroundColor: tone.bg,
+                                  color: tone.color,
+                                  cursor: "pointer",
+                                  transition: prefersReducedMotion
+                                    ? "color 0.2s ease"
+                                    : "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                                  transform: "scale(1)",
+                                  boxShadow: tone.shadow,
+                                  fontWeight:
+                                    designTokens.typography.fontWeight.medium,
+                                  fontSize: designTokens.typography.fontSize.sm[0],
+                                }}
+                                className={
+                                  enableAnimations && !prefersReducedMotion
+                                    ? "modern-button-action"
+                                    : ""
                                 }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (!prefersReducedMotion) {
-                                  e.target.style.backgroundColor =
-                                    "transparent";
-                                  e.target.style.transform = "scale(1)";
-                                }
-                              }}
-                            >
-                              {action.icon && action.icon}
-                              {action.label}
-                            </button>
-                          ))}
+                                onMouseEnter={(e) => {
+                                  if (!prefersReducedMotion) {
+                                    e.target.style.backgroundColor = tone.hoverBg;
+                                    e.target.style.border = `1px solid ${tone.hoverBorder}`;
+                                    e.target.style.transform = "scale(1.05)";
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!prefersReducedMotion) {
+                                    e.target.style.backgroundColor = tone.bg;
+                                    e.target.style.border = `1px solid ${tone.border}`;
+                                    e.target.style.transform = "scale(1)";
+                                  }
+                                }}
+                              >
+                                {action.icon && action.icon}
+                                {action.label}
+                              </button>
+                            );
+                          })}
                         </div>
                       </td>
                     )}

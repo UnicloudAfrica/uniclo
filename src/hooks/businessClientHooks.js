@@ -205,21 +205,21 @@ const businessResetPasswordOtp = async (resetData) => {
 
 // Setup 2FA
 const setup2FA = async (setupData) => {
-  const res = await clientApi("POST", "/business/2fa-setup", setupData);
+  const res = await clientApi("GET", "/2fa-setup", setupData);
   if (!res.data) throw new Error("Failed to setup 2FA");
   return res.data;
 };
 
 // Disable 2FA
 const disable2FA = async (disableData) => {
-  const res = await clientApi("POST", "/business/2fa-disable", disableData);
+  const res = await clientApi("POST", "/2fa-disable", disableData);
   if (!res.data) throw new Error("Failed to disable 2FA");
   return res.data;
 };
 
 // Enable 2FA
 const enable2FA = async (enableData) => {
-  const res = await clientApi("POST", "/business/2fa-enable", enableData);
+  const res = await clientApi("POST", "/2fa-enable", enableData);
   if (!res.data) throw new Error("Failed to enable 2FA");
   return res.data;
 };

@@ -339,7 +339,7 @@ export default function TenantLeadDetails() {
       <HeaderBar tenantData={tenantData} onMenuClick={toggleMobileMenu} />
       <BreadcrumbNav tenantData={tenantData} activeTab={activeTab} />
       <main className="dashboard-content-shell p-6 md:p-8 overflow-y-auto">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-8xl mx-auto">
           {/* Header Section */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-4">
@@ -468,13 +468,12 @@ export default function TenantLeadDetails() {
                         {formatStatusForDisplay(stage.stage_name)}
                       </h4>
                       <div className="flex items-center space-x-2">
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          stage.status === 'completed' 
+                        <span className={`px-2 py-1 text-xs rounded-full ${stage.status === 'completed'
                             ? 'bg-green-100 text-green-800'
                             : stage.status === 'in_progress'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
                           {formatStatusForDisplay(stage.status)}
                         </span>
                         <button

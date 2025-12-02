@@ -3,6 +3,8 @@ import api from "../index/api";
 import silentApi from "../index/silent";
 import adminApi from "../index/admin/api";
 import silentAdminApi from "../index/admin/silent";
+import adminSettingsApi from "../index/admin/settingsApi";
+import silentAdminSettingsApi from "../index/admin/silentSettingsApi";
 
 /**
  * Settings Management Hooks
@@ -20,43 +22,43 @@ import silentAdminApi from "../index/admin/silent";
 // ================================
 
 const fetchProfileSettings = async () => {
-  const res = await silentApi("GET", "/business/settings/profile");
+  const res = await silentAdminSettingsApi("GET", "/settings/profile");
   if (!res.data) throw new Error("Failed to fetch profile settings");
   return res.data;
 };
 
 const updateProfileSettings = async (settingsData) => {
-  const res = await api("PUT", "/business/settings/profile", settingsData);
+  const res = await adminSettingsApi("PUT", "/settings/profile", settingsData);
   if (!res.data) throw new Error("Failed to update profile settings");
   return res.data;
 };
 
 const updateProfileSettingsBatch = async (settingsData) => {
-  const res = await api("PUT", "/business/settings/profile/batch", settingsData);
+  const res = await adminSettingsApi("PUT", "/settings/profile/batch", settingsData);
   if (!res.data) throw new Error("Failed to batch update profile settings");
   return res.data;
 };
 
 const fetchProfileSettingsSchema = async () => {
-  const res = await silentApi("GET", "/business/settings/profile/schema");
+  const res = await silentAdminSettingsApi("GET", "/settings/profile/schema");
   if (!res.data) throw new Error("Failed to fetch profile settings schema");
   return res.data;
 };
 
 const resetProfileSettings = async (resetData = {}) => {
-  const res = await api("POST", "/business/settings/profile/reset", resetData);
+  const res = await adminSettingsApi("POST", "/settings/profile/reset", resetData);
   if (!res.data) throw new Error("Failed to reset profile settings");
   return res.data;
 };
 
 const exportProfileSettings = async () => {
-  const res = await silentApi("GET", "/business/settings/profile/export");
+  const res = await silentAdminSettingsApi("GET", "/settings/profile/export");
   if (!res.data) throw new Error("Failed to export profile settings");
   return res.data;
 };
 
 const importProfileSettings = async (settingsFile) => {
-  const res = await api("POST", "/business/settings/profile/import", settingsFile);
+  const res = await adminSettingsApi("POST", "/settings/profile/import", settingsFile);
   if (!res.data) throw new Error("Failed to import profile settings");
   return res.data;
 };
@@ -471,7 +473,7 @@ export const useResetTenantCategorySettings = () => {
 // Hook that provides access to all settings operations based on user role
 export const useSettingsOperations = () => {
   const queryClient = useQueryClient();
-  
+
   const invalidateAllSettings = () => {
     queryClient.invalidateQueries({ queryKey: ["profile-settings"] });
     queryClient.invalidateQueries({ queryKey: ["system-settings"] });
@@ -483,15 +485,15 @@ export const useSettingsOperations = () => {
     profileSettings: useFetchProfileSettings(),
     updateProfileSettings: useUpdateProfileSettings(),
     resetProfileSettings: useResetProfileSettings(),
-    
+
     // Admin settings (if admin)
     systemSettings: useFetchSystemSettings(),
     updateSystemSettings: useUpdateSystemSettings(),
-    
+
     // Tenant settings (if admin or tenant)
     tenantSettings: useFetchAllTenantSettings(),
     updateTenantBusinessSettings: useUpdateTenantBusinessSettings(),
-    
+
     // Utility functions
     invalidateAllSettings,
   };

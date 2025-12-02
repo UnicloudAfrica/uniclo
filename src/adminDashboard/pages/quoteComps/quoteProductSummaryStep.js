@@ -13,13 +13,12 @@ const SummaryTile = ({ icon: Icon, label, value, tone }) => (
   <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
     <div className="flex items-center gap-3">
       <div
-        className={`flex h-10 w-10 items-center justify-center rounded-2xl ${
-          tone === "primary"
-            ? "bg-primary-50 text-primary-600"
-            : tone === "success"
+        className={`flex h-10 w-10 items-center justify-center rounded-2xl ${tone === "primary"
+          ? "bg-primary-50 text-primary-600"
+          : tone === "success"
             ? "bg-emerald-50 text-emerald-600"
             : "bg-slate-100 text-slate-500"
-        }`}
+          }`}
       >
         <Icon className="h-5 w-5" />
       </div>
@@ -33,7 +32,8 @@ const SummaryTile = ({ icon: Icon, label, value, tone }) => (
   </div>
 );
 
-const ProductSummaryStep = ({ pricingRequests, formData }) => {
+const ProductSummaryStep = ({ pricingRequests, objectStorageRequests, formData }) => {
+  const hasItems = pricingRequests.length > 0 || objectStorageRequests?.length > 0;
   const groupedItems = useMemo(() => {
     const groups = {
       compute: [],
@@ -63,18 +63,16 @@ const ProductSummaryStep = ({ pricingRequests, formData }) => {
         ...base,
         label: "Compute instance",
         highlight: `${base.instances}× ${base.compute}`,
-        description: `${base.os} • ${base.months} month${
-          base.months === 1 ? "" : "s"
-        }`,
+        description: `${base.os} • ${base.months} month${base.months === 1 ? "" : "s"
+          }`,
       });
 
       groups.storage.push({
         ...base,
         label: "Storage",
         highlight: base.storage,
-        description: `${base.instances} attachment${
-          base.instances === 1 ? "" : "s"
-        } • ${base.months} month${base.months === 1 ? "" : "s"}`,
+        description: `${base.instances} attachment${base.instances === 1 ? "" : "s"
+          } • ${base.months} month${base.months === 1 ? "" : "s"}`,
       });
 
       if (base.bandwidth) {
@@ -82,9 +80,8 @@ const ProductSummaryStep = ({ pricingRequests, formData }) => {
           ...base,
           label: "Bandwidth",
           highlight: base.bandwidth,
-          description: `${base.months} month${
-            base.months === 1 ? "" : "s"
-          } • Region ${base.region}`,
+          description: `${base.months} month${base.months === 1 ? "" : "s"
+            } • Region ${base.region}`,
         });
       }
 
@@ -93,9 +90,8 @@ const ProductSummaryStep = ({ pricingRequests, formData }) => {
           ...base,
           label: "Floating IPs",
           highlight: base.floatingIps,
-          description: `${base.months} month${
-            base.months === 1 ? "" : "s"
-          } • Region ${base.region}`,
+          description: `${base.months} month${base.months === 1 ? "" : "s"
+            } • Region ${base.region}`,
         });
       }
 
@@ -104,9 +100,8 @@ const ProductSummaryStep = ({ pricingRequests, formData }) => {
           ...base,
           label: "Cross connect",
           highlight: "Dedicated connectivity",
-          description: `${base.months} month${
-            base.months === 1 ? "" : "s"
-          } • Region ${base.region}`,
+          description: `${base.months} month${base.months === 1 ? "" : "s"
+            } • Region ${base.region}`,
         });
       }
     });
@@ -120,16 +115,15 @@ const ProductSummaryStep = ({ pricingRequests, formData }) => {
   const Section = ({ icon: Icon, title, items, tone }) => {
     if (!items.length) return null;
     return (
-      <ModernCard padding="lg" variant="outlined" className="space-y-4">
+      <ModernCard padding="none" variant="outlined" className="space-y-4 p-4 md:p-6 lg:p-8">
         <header className="flex items-center gap-3">
           <div
-            className={`flex h-10 w-10 items-center justify-center rounded-2xl ${
-              tone === "primary"
-                ? "bg-primary-50 text-primary-600"
-                : tone === "success"
+            className={`flex h-10 w-10 items-center justify-center rounded-2xl ${tone === "primary"
+              ? "bg-primary-50 text-primary-600"
+              : tone === "success"
                 ? "bg-emerald-50 text-emerald-600"
                 : "bg-slate-100 text-slate-500"
-            }`}
+              }`}
           >
             <Icon className="h-5 w-5" />
           </div>
@@ -206,7 +200,7 @@ const ProductSummaryStep = ({ pricingRequests, formData }) => {
 
       {discountApplied && (
         <ModernCard
-          padding="lg"
+          padding="xl"
           variant="filled"
           className="flex flex-wrap items-center justify-between gap-4"
         >
@@ -227,6 +221,59 @@ const ProductSummaryStep = ({ pricingRequests, formData }) => {
                   : ""}
               </p>
             </div>
+          </div>
+        </ModernCard>
+      )}
+
+      {objectStorageRequests?.length > 0 && (
+        <ModernCard padding="xl" className="space-y-6">
+          <header className="flex items-start gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+              <HardDrive className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-slate-900">
+                Object Storage Items
+              </h3>
+              <p className="text-sm text-slate-500">
+                {objectStorageRequests.length} storage configuration{objectStorageRequests.length === 1 ? "" : "s"}
+              </p>
+            </div>
+          </header>
+
+          <div className="overflow-hidden rounded-2xl border border-slate-200">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+                    Configuration
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+                    Region
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+                    Details
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 bg-white">
+                {objectStorageRequests.map((item, idx) => (
+                  <tr key={`os-${idx}`}>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <div className="text-sm font-medium text-slate-900">
+                        {item._display?.name || "Object Storage"}
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-500">
+                      {item.region}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-slate-500">
+                      {item.quantity} GB for {item.months} month{item.months === 1 ? "" : "s"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </ModernCard>
       )}

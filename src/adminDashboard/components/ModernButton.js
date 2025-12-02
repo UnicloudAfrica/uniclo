@@ -10,6 +10,7 @@ const ModernButton = ({
   leftIcon,
   rightIcon,
   className = "",
+  style: customStyle = {},
   onClick,
   ...props
 }) => {
@@ -17,16 +18,13 @@ const ModernButton = ({
   const transition = `all ${designTokens.transitions.duration.normal} ${designTokens.transitions.easing.inOut}`;
 
   const getVariantStyles = () => {
-    const primary = designTokens.colors.primary;
-    const secondary = designTokens.colors.secondary;
-    const neutral = designTokens.colors.neutral;
-    const success = designTokens.colors.success;
-    const error = designTokens.colors.error;
+    const { primary, secondary, neutral, error, success } = designTokens.colors;
 
     const base = {
       backgroundColor: neutral[0],
       color: neutral[900],
       border: "1px solid transparent",
+      boxShadow: "0 1px 3px rgba(15, 23, 42, 0.08)",
     };
 
     switch (variant) {
@@ -36,13 +34,18 @@ const ModernButton = ({
             ...base,
             backgroundColor: primary[500],
             color: neutral[0],
-            border: "1px solid transparent",
+            border: `1px solid ${primary[500]}`,
+            boxShadow: `0 10px 18px -10px ${primary[500]}`,
           },
           hover: {
-            // backgroundColor: primary[600],
+            backgroundColor: primary[600],
+            color: neutral[0],
+            border: `1px solid ${primary[600]}`,
+            boxShadow: `0 14px 24px -12px ${primary[500]}`,
           },
           active: {
             backgroundColor: primary[700],
+            border: `1px solid ${primary[700]}`,
           },
         };
       case "secondary":
@@ -51,13 +54,18 @@ const ModernButton = ({
             ...base,
             backgroundColor: secondary[500],
             color: neutral[0],
-            border: "1px solid transparent",
+            border: `1px solid ${secondary[500]}`,
+            boxShadow: `0 10px 18px -10px ${secondary[500]}`,
           },
           hover: {
             backgroundColor: secondary[600],
+            color: neutral[0],
+            border: `1px solid ${secondary[600]}`,
+            boxShadow: `0 14px 24px -12px ${secondary[500]}`,
           },
           active: {
             backgroundColor: secondary[700],
+            border: `1px solid ${secondary[700]}`,
           },
         };
       case "outline":
@@ -67,10 +75,12 @@ const ModernButton = ({
             backgroundColor: "transparent",
             color: primary[500],
             border: `1px solid ${primary[500]}`,
+            boxShadow: "none",
           },
           hover: {
             backgroundColor: primary[50],
-            border: `1px solid ${primary[400]}`,
+            color: primary[600],
+            border: `1px solid ${primary[600]}`,
           },
           active: {
             backgroundColor: primary[100],
@@ -84,6 +94,7 @@ const ModernButton = ({
             backgroundColor: "transparent",
             color: neutral[700],
             border: "1px solid transparent",
+            boxShadow: "none",
           },
           hover: {
             backgroundColor: neutral[100],
@@ -99,13 +110,18 @@ const ModernButton = ({
             ...base,
             backgroundColor: error[500],
             color: neutral[0],
-            border: "1px solid transparent",
+            border: `1px solid ${error[500]}`,
+            boxShadow: `0 10px 18px -10px ${error[500]}`,
           },
           hover: {
             backgroundColor: error[600],
+            color: neutral[0],
+            border: `1px solid ${error[600]}`,
+            boxShadow: `0 14px 24px -12px ${error[500]}`,
           },
           active: {
             backgroundColor: error[700],
+            border: `1px solid ${error[700]}`,
           },
         };
       case "success":
@@ -114,23 +130,29 @@ const ModernButton = ({
             ...base,
             backgroundColor: success[500],
             color: neutral[0],
-            border: "1px solid transparent",
+            border: `1px solid ${success[500]}`,
+            boxShadow: `0 10px 18px -10px ${success[500]}`,
           },
           hover: {
             backgroundColor: success[600],
+            color: neutral[0],
+            border: `1px solid ${success[600]}`,
+            boxShadow: `0 14px 24px -12px ${success[500]}`,
           },
           active: {
             backgroundColor: success[700],
+            border: `1px solid ${success[700]}`,
           },
         };
       default:
         return {
           base,
           hover: {
-            backgroundColor: neutral[100],
+            backgroundColor: neutral[50],
+            color: neutral[900],
           },
           active: {
-            backgroundColor: neutral[200],
+            backgroundColor: neutral[100],
           },
         };
     }
@@ -184,34 +206,27 @@ const ModernButton = ({
   };
 
   const { base, hover = {}, active = {} } = getVariantStyles();
+  const sizeStyles = getSizeStyles();
 
   const controlBaseStyles = {
     fontFamily: fontStack,
-    fontWeight: designTokens.typography.fontWeight.normal,
+    fontWeight: designTokens.typography.fontWeight.semibold,
     borderRadius: designTokens.borderRadius.main,
-    transition,
+    transition: "all 0.2s ease",
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    gap: designTokens.spacing[2],
+    gap: "0.5rem",
     outline: "none",
     textDecoration: "none",
+    cursor: isDisabled || isLoading ? "not-allowed" : "pointer",
+    opacity: isDisabled ? 0.5 : 1,
+    ...sizeStyles,
   };
 
   const buttonStyles = {
     ...controlBaseStyles,
-    ...getSizeStyles(),
-    opacity: isDisabled ? 0.6 : 1,
-    pointerEvents: isDisabled ? "none" : "auto",
-    cursor: isDisabled ? "not-allowed" : "pointer",
-    "--btn-bg": base.backgroundColor || "transparent",
-    "--btn-color": base.color || designTokens.colors.neutral[900],
-    "--btn-border": base.border || "1px solid transparent",
-    "--btn-hover-bg": hover.backgroundColor,
-    "--btn-hover-color": hover.color,
-    "--btn-hover-border": hover.border,
-    "--btn-active-bg": active.backgroundColor,
-    "--btn-active-border": active.border,
+    ...base,
   };
 
   const handleClick = (event) => {
@@ -222,10 +237,31 @@ const ModernButton = ({
 
   return (
     <button
+      type="button"
       className={`modern-button modern-button--${variant} modern-button--${size} ${className}`}
-      style={buttonStyles}
+      style={{ ...buttonStyles, ...customStyle }}
       onClick={handleClick}
       disabled={isDisabled || isLoading}
+      onMouseEnter={(e) => {
+        if (!isDisabled && !isLoading) {
+          Object.assign(e.currentTarget.style, hover);
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isDisabled && !isLoading) {
+          Object.assign(e.currentTarget.style, base);
+        }
+      }}
+      onMouseDown={(e) => {
+        if (!isDisabled && !isLoading) {
+          Object.assign(e.currentTarget.style, active);
+        }
+      }}
+      onMouseUp={(e) => {
+        if (!isDisabled && !isLoading) {
+          Object.assign(e.currentTarget.style, hover);
+        }
+      }}
       {...props}
     >
       {isLoading && (

@@ -26,6 +26,8 @@ import { useFetchTenants } from "../../hooks/adminHooks/tenantHooks";
 import { useFetchClients } from "../../hooks/adminHooks/clientHooks";
 import { useFetchCountries } from "../../hooks/resource";
 import { useFetchProductPricing } from "../../hooks/resource";
+import { useCustomerContext } from "../../hooks/adminHooks/useCustomerContext";
+import CustomerContextSelector from "../components/CustomerContextSelector";
 import ObjectStoragePlanSelector from "../../shared/components/objectStorage/ObjectStoragePlanSelector";
 
 const COUNTRY_OPTIONS = [{ value: "US", label: "United States (US)" }];
@@ -373,9 +375,23 @@ const AdminObjectStorageCreate = () => {
   const [formData, setFormData] = useState(initialFormState);
   const [isCountryLocked, setIsCountryLocked] = useState(false);
   const [serviceProfiles, setServiceProfiles] = useState([createServiceProfile()]);
-  const [assignmentType, setAssignmentType] = useState("");
-  const [assignmentTenantId, setAssignmentTenantId] = useState("");
-  const [assignmentUserId, setAssignmentUserId] = useState("");
+
+  const {
+    contextType,
+    setContextType,
+    selectedTenantId,
+    setSelectedTenantId,
+    selectedUserId,
+    setSelectedUserId,
+    tenants,
+    isTenantsFetching,
+    userPool,
+    isUsersFetching,
+  } = useCustomerContext();
+
+  // const [assignmentType, setAssignmentType] = useState("");
+  // const [assignmentTenantId, setAssignmentTenantId] = useState("");
+  // const [assignmentUserId, setAssignmentUserId] = useState("");
   const [errors, setErrors] = useState({});
   const [profileErrors, setProfileErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -387,8 +403,8 @@ const AdminObjectStorageCreate = () => {
   const isFirstStep = activeStep === 0;
 
   const { data: regions = [], isFetching: isRegionsLoading } = useFetchRegions();
-  const { data: tenants = [], isFetching: isTenantsLoading } = useFetchTenants();
-  const { data: clients = [], isFetching: isClientsLoading } = useFetchClients();
+  // const { data: tenants = [], isFetching: isTenantsLoading } = useFetchTenants();
+  // const { data: clients = [], isFetching: isClientsLoading } = useFetchClients();
   const { data: sharedCountries = [], isFetching: isCountriesLoading } = useFetchCountries();
   const selectedCountryCode = useMemo(
     () => (formData.countryCode || "").toUpperCase(),
@@ -569,8 +585,8 @@ const AdminObjectStorageCreate = () => {
   }, [tenants]);
 
   const clientOptions = useMemo(() => {
-    if (!Array.isArray(clients)) return [];
-    return clients
+    if (!Array.isArray(userPool)) return [];
+    return userPool
       .map((client) => {
         const tenantId =
           client.tenant_id ??
@@ -596,16 +612,16 @@ const AdminObjectStorageCreate = () => {
         };
       })
       .filter(Boolean);
-  }, [clients]);
+  }, [userPool]);
 
   const filteredClientOptions = useMemo(() => {
-    if (!assignmentTenantId) {
+    if (!selectedTenantId) {
       return clientOptions;
     }
     return clientOptions.filter((client) =>
-      client.tenantId ? client.tenantId === String(assignmentTenantId) : true
+      client.tenantId ? client.tenantId === String(selectedTenantId) : true
     );
-  }, [clientOptions, assignmentTenantId]);
+  }, [clientOptions, selectedTenantId]);
 
   const resolveTenantName = (tenantId) => {
     if (!tenantId) return "";
@@ -627,14 +643,14 @@ const AdminObjectStorageCreate = () => {
   };
 
   const assignmentLabel = useMemo(() => {
-    if (assignmentType === "tenant") {
-      return resolveTenantName(assignmentTenantId) || "Tenant order";
+    if (contextType === "tenant") {
+      return resolveTenantName(selectedTenantId) || "Tenant order";
     }
-    if (assignmentType === "user") {
-      return resolveClientName(assignmentUserId) || "Client order";
+    if (contextType === "user") {
+      return resolveClientName(selectedUserId) || "Client order";
     }
     return "Internal order";
-  }, [assignmentType, assignmentTenantId, assignmentUserId, tenantOptions, clientOptions]);
+  }, [contextType, selectedTenantId, selectedUserId, tenantOptions, clientOptions]);
 
   const resolvedProfiles = useMemo(() => {
     return serviceProfiles.map((profile) => {
@@ -778,11 +794,11 @@ const AdminObjectStorageCreate = () => {
   const fallbackPlanLabel = useMemo(() => {
     const tierName =
       getTierDisplayName(primaryProfile?.tierRow) || "Object storage tier";
-    if (assignmentType) {
+    if (contextType) {
       return `${assignmentLabel} • ${tierName}`;
     }
     return tierName;
-  }, [primaryProfile, assignmentType, assignmentLabel]);
+  }, [primaryProfile, contextType, assignmentLabel]);
 
   const countryOptions = useMemo(() => {
     const apiCountries = Array.isArray(sharedCountries) ? sharedCountries : [];
@@ -834,19 +850,19 @@ const AdminObjectStorageCreate = () => {
   }, [formData.countryCode, sharedCountries]);
 
   const billingCountryHelper = useMemo(() => {
-    if (assignmentType === "tenant") {
-      if (!assignmentTenantId) {
+    if (contextType === "tenant") {
+      if (!selectedTenantId) {
         return "Optional. Leave empty to bill in USD by default.";
       }
       return isCountryLocked
         ? "Synced from the tenant's profile."
         : "Tenant has no billing country on file; set it manually or leave empty for USD.";
     }
-    if (assignmentType === "user") {
-      if (!assignmentTenantId) {
+    if (contextType === "user") {
+      if (!selectedTenantId) {
         return "Optional. Leave empty to bill in USD by default.";
       }
-      if (!assignmentUserId) {
+      if (!selectedUserId) {
         return isCountryLocked
           ? "Using the tenant's billing country while you select a user."
           : "Select a user or choose a country manually (empty defaults to USD).";
@@ -857,9 +873,9 @@ const AdminObjectStorageCreate = () => {
     }
     return "Optional. Leave empty to bill in USD by default.";
   }, [
-    assignmentType,
-    assignmentTenantId,
-    assignmentUserId,
+    contextType,
+    selectedTenantId,
+    selectedUserId,
     isCountryLocked,
   ]);
 
@@ -892,13 +908,13 @@ const AdminObjectStorageCreate = () => {
       }));
     };
 
-    if (assignmentType === "tenant") {
-      if (!assignmentTenantId) {
+    if (contextType === "tenant") {
+      if (!selectedTenantId) {
         setIsCountryLocked(false);
         return;
       }
       const tenantEntry = tenantOptions.find(
-        (option) => option.value === String(assignmentTenantId)
+        (option) => option.value === String(selectedTenantId)
       );
       const tenantCountry = resolveCountryCodeFromEntity(tenantEntry?.raw);
       if (tenantCountry) {
@@ -909,20 +925,20 @@ const AdminObjectStorageCreate = () => {
       return;
     }
 
-    if (assignmentType === "user") {
-      if (!assignmentTenantId && !assignmentUserId) {
+    if (contextType === "user") {
+      if (!selectedTenantId && !selectedUserId) {
         setIsCountryLocked(false);
         return;
       }
 
       const userEntry = clientOptions.find(
-        (client) => client.value === String(assignmentUserId)
+        (client) => client.value === String(selectedUserId)
       );
       let detectedCountry = resolveCountryCodeFromEntity(userEntry?.raw);
 
-      if (!detectedCountry && assignmentTenantId) {
+      if (!detectedCountry && selectedTenantId) {
         const tenantEntry = tenantOptions.find(
-          (option) => option.value === String(assignmentTenantId)
+          (option) => option.value === String(selectedTenantId)
         );
         detectedCountry = resolveCountryCodeFromEntity(tenantEntry?.raw);
       }
@@ -937,9 +953,9 @@ const AdminObjectStorageCreate = () => {
 
     setIsCountryLocked(false);
   }, [
-    assignmentType,
-    assignmentTenantId,
-    assignmentUserId,
+    contextType,
+    selectedTenantId,
+    selectedUserId,
     tenantOptions,
     clientOptions,
     formData.countryCode,
@@ -1056,13 +1072,13 @@ const AdminObjectStorageCreate = () => {
   const validateWorkflowStep = () => {
     const workflowErrors = {};
 
-    if (assignmentType === "tenant" && !assignmentTenantId) {
+    if (contextType === "tenant" && !selectedTenantId) {
       workflowErrors.assignment = "Select the tenant for this request.";
     }
-    if (assignmentType === "user") {
-      if (!assignmentTenantId) {
+    if (contextType === "user") {
+      if (!selectedTenantId) {
         workflowErrors.assignment = "Select the tenant before choosing a user.";
-      } else if (!assignmentUserId) {
+      } else if (!selectedUserId) {
         workflowErrors.assignment = "Select the user to charge for this request.";
       }
     }
@@ -1188,13 +1204,13 @@ const AdminObjectStorageCreate = () => {
       nextErrors.serviceProfiles = "Add at least one service profile.";
     }
 
-    if (assignmentType === "tenant" && !assignmentTenantId) {
+    if (contextType === "tenant" && !selectedTenantId) {
       nextErrors.assignment = "Select the tenant for this request.";
     }
-    if (assignmentType === "user") {
-      if (!assignmentTenantId) {
+    if (contextType === "user") {
+      if (!selectedTenantId) {
         nextErrors.assignment = "Select the tenant before choosing a user.";
-      } else if (!assignmentUserId) {
+      } else if (!selectedUserId) {
         nextErrors.assignment = "Select the user to charge for this request.";
       }
     }
@@ -1233,9 +1249,9 @@ const AdminObjectStorageCreate = () => {
     setFormData(initialFormState);
     setIsCountryLocked(false);
     setServiceProfiles([createServiceProfile()]);
-    setAssignmentType("");
-    setAssignmentTenantId("");
-    setAssignmentUserId("");
+    setContextType("");
+    setSelectedTenantId("");
+    setSelectedUserId("");
     setErrors({});
     setProfileErrors({});
   };
@@ -1274,24 +1290,24 @@ const AdminObjectStorageCreate = () => {
     setIsSubmitting(true);
     try {
       const derivedCustomerType =
-        assignmentType === "tenant"
+        contextType === "tenant"
           ? "tenant"
-          : assignmentType === "user"
+          : contextType === "user"
             ? "tenant_client"
             : "tenant";
-      const customerName = assignmentType ? assignmentLabel : "";
+      const customerName = contextType ? assignmentLabel : "";
       const customerEmail =
-        assignmentType === "user"
+        contextType === "user"
           ? (() => {
             const match = clientOptions.find(
-              (client) => client.value === assignmentUserId
+              (client) => client.value === selectedUserId
             );
             return match?.raw?.email || "";
           })()
           : "";
-  const lineItems = resolvedProfiles.map((profile) => {
-    const tierName =
-      profile.name || getTierDisplayName(profile.tierRow) || "Object storage tier";
+      const lineItems = resolvedProfiles.map((profile) => {
+        const tierName =
+          profile.name || getTierDisplayName(profile.tierRow) || "Object storage tier";
         const rawTierId =
           profile.tierRow?.productable_id ??
           profile.tierRow?.product_id ??
@@ -1299,13 +1315,13 @@ const AdminObjectStorageCreate = () => {
           profile.tierRow?.product?.productable_id ??
           profile.tierRow?.product?.id ??
           profile.tierKey;
-    return {
-      id: profile.id,
-      name: profile.name || "",
-      region: profile.region,
-      tierKey: profile.tierKey,
-      tierId: rawTierId ? String(rawTierId) : "",
-      tierName,
+        return {
+          id: profile.id,
+          name: profile.name || "",
+          region: profile.region,
+          tierKey: profile.tierKey,
+          tierId: rawTierId ? String(rawTierId) : "",
+          tierName,
           months: Number(profile.months) || 0,
           quantity: Number(profile.quantity) || 1,
           currency: profile.currency,
@@ -1321,10 +1337,10 @@ const AdminObjectStorageCreate = () => {
       }
 
       const tenantIdForRequest =
-        assignmentType === "tenant" || assignmentType === "user"
-          ? assignmentTenantId || null
+        contextType === "tenant" || contextType === "user"
+          ? selectedTenantId || null
           : null;
-      const userIdForRequest = assignmentType === "user" ? assignmentUserId || null : null;
+      const userIdForRequest = contextType === "user" ? selectedUserId || null : null;
 
       const objectStorageItems = lineItems.map((line, index) => {
         const productableId = Number.parseInt(line.tierId, 10);
@@ -1349,7 +1365,7 @@ const AdminObjectStorageCreate = () => {
             unit_price: line.unitPrice,
             subtotal: line.subtotal,
             assignment: {
-              type: assignmentType || "unassigned",
+              type: contextType || "unassigned",
               label: assignmentLabel,
               tenant_id: tenantIdForRequest,
               user_id: userIdForRequest,
@@ -1807,99 +1823,28 @@ const AdminObjectStorageCreate = () => {
                     </div>
                     <StatusPill
                       label={
-                        assignmentType === "tenant"
+                        contextType === "tenant"
                           ? "Tenant assignment"
-                          : assignmentType === "user"
+                          : contextType === "user"
                             ? "User assignment"
                             : "Unassigned"
                       }
-                      tone={assignmentType ? "info" : "neutral"}
+                      tone={contextType ? "info" : "neutral"}
                     />
                   </div>
                   <div className="space-y-4">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {[{ value: "", label: "Unassigned" }, { value: "tenant", label: "Tenant" }, { value: "user", label: "User" }].map((option) => (
-                        <button
-                          key={option.value || "none"}
-                          type="button"
-                          onClick={() => {
-                            setAssignmentType(option.value);
-                            setAssignmentTenantId("");
-                            setAssignmentUserId("");
-                            setErrors((prev) => ({ ...prev, assignment: null }));
-                          }}
-                          className={`rounded-2xl border px-3 py-2 text-sm font-medium transition ${assignmentType === option.value
-                            ? "border-primary-400 bg-primary-50 text-primary-700"
-                            : "border-slate-200 bg-white text-slate-600 hover:border-primary-200"
-                            }`}
-                        >
-                          {option.label}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="grid gap-4 md:grid-cols-3">
-                      <ModernSelect
-                        label="Assignment"
-                        value={assignmentType}
-                        onChange={(event) => {
-                          const nextValue = event.target.value;
-                          setAssignmentType(nextValue);
-                          setAssignmentTenantId("");
-                          setAssignmentUserId("");
-                          setErrors((prev) => ({ ...prev, assignment: null }));
-                        }}
-                        options={[
-                          { value: "", label: "Unassigned" },
-                          { value: "tenant", label: "Tenant" },
-                          { value: "user", label: "User" },
-                        ]}
-                        error={errors.assignment}
-                        helper="Route this order to a tenant or user when you need visibility."
-                      />
-                      <ModernSelect
-                        label="Tenant"
-                        value={assignmentTenantId}
-                        onChange={(event) => {
-                          setAssignmentTenantId(event.target.value);
-                          setAssignmentUserId("");
-                          setErrors((prev) => ({ ...prev, assignment: null }));
-                        }}
-                        options={[{ value: "", label: assignmentType ? "Select tenant" : "Choose assignment" }, ...tenantOptions]}
-                        disabled={!assignmentType || isTenantsLoading}
-                        helper={
-                          !assignmentType
-                            ? "Choose assignment type first."
-                            : isTenantsLoading
-                              ? "Loading tenants..."
-                              : "Tenant workspace to receive this order."
-                        }
-                      />
-                      <ModernSelect
-                        label="User"
-                        value={assignmentUserId}
-                        onChange={(event) => {
-                          setAssignmentUserId(event.target.value);
-                          setErrors((prev) => ({ ...prev, assignment: null }));
-                        }}
-                        options={[{ value: "", label: assignmentType === "user" ? "Select user" : "Choose assignment" }, ...filteredClientOptions.map((client) => ({ value: client.value, label: client.label }))]}
-                        disabled={assignmentType !== "user" || isClientsLoading}
-                        helper={
-                          assignmentType === "user"
-                            ? isClientsLoading
-                              ? "Loading users..."
-                              : filteredClientOptions.length
-                                ? "Client user under the selected tenant."
-                                : "No users available for the selected tenant yet."
-                            : "Only required for user assignments."
-                        }
-                      />
-                    </div>
-                    {errors.assignment && (
-                      <p className="text-xs text-red-500">{errors.assignment}</p>
-                    )}
-                    <p className="text-xs text-slate-500">
-                      Current assignment: <span className="font-medium text-slate-700">{assignmentType ? assignmentLabel : "Unassigned"}</span>
-                    </p>
+                    <CustomerContextSelector
+                      contextType={contextType}
+                      setContextType={setContextType}
+                      selectedTenantId={selectedTenantId}
+                      setSelectedTenantId={setSelectedTenantId}
+                      selectedUserId={selectedUserId}
+                      setSelectedUserId={setSelectedUserId}
+                      tenants={tenants}
+                      isTenantsFetching={isTenantsFetching}
+                      userPool={userPool}
+                      isUsersFetching={isUsersFetching}
+                    />
                     <ModernSelect
                       label="Billing country"
                       value={formData.countryCode}
@@ -2254,12 +2199,12 @@ const AdminObjectStorageCreate = () => {
                         }}
                         isDisabled={isNextDisabled}
                       >
-                      {steps[activeStep]?.id === "payment" ? "Verify and Provision" : nextStepLabel}
-                    </ModernButton>
-                  )}
-                </div>
-              </ModernCard>
-            )}
+                        {steps[activeStep]?.id === "payment" ? "Verify and Provision" : nextStepLabel}
+                      </ModernButton>
+                    )}
+                  </div>
+                </ModernCard>
+              )}
 
               {(isFastTrack ? activeStep === 2 : activeStep === 3) && (
                 <ModernCard variant="outlined" padding="lg" className="space-y-5">
@@ -2283,7 +2228,7 @@ const AdminObjectStorageCreate = () => {
                         Assignment
                       </dt>
                       <dd className="font-semibold text-slate-900">
-                        {assignmentType ? assignmentLabel : "Unassigned"}
+                        {contextType ? assignmentLabel : "Unassigned"}
                       </dd>
                     </div>
                     <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">

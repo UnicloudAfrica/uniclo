@@ -1,7 +1,5 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import useTenantAuthStore from "../stores/tenantAuthStore";
-import { clearAllAuthSessions, resolveActivePersona } from "../stores/sessionUtils";
+import { resolveActivePersona } from "../stores/sessionUtils";
 import ToastUtils from "./toastUtil";
 
 let isRedirecting = false;
@@ -30,12 +28,10 @@ export const handleAuthRedirect = (response, body, fallbackPath = "/sign-in") =>
   if (isRedirecting) return true;
   isRedirecting = true;
 
-  clearAllAuthSessions();
-
   const { key: activeRole } = resolveActivePersona();
   const targetPath = (activeRole && LOGIN_PATHS[activeRole]) || fallbackPath;
 
-  const alreadyOnTarget = window.location.pathname === targetPath;
+  const alreadyOnTarget = typeof window !== "undefined" && window.location.pathname === targetPath;
   const message =
     status === 403
       ? "Access denied. Please sign in again."
@@ -45,7 +41,7 @@ export const handleAuthRedirect = (response, body, fallbackPath = "/sign-in") =>
 
   ToastUtils.error(message, { duration: 3000 });
 
-  if (!alreadyOnTarget) {
+  if (!alreadyOnTarget && typeof window !== "undefined") {
     window.location = targetPath;
   }
 
@@ -56,31 +52,9 @@ export const handleAuthRedirect = (response, body, fallbackPath = "/sign-in") =>
   return true;
 };
 
-// Tenant-facing hook used across dashboard pages and auth pages
-const AUTH_PAGES = new Set(["/sign-in", "/sign-up", "/tenant-sign-in", "/tenant-sign-up"]);
-
+// Lightweight hydration helper; routing is enforced by route guards (TenantRoute/ClientRoute/AdminRoute)
 const useAuthRedirect = () => {
-  const navigate = useNavigate();
-  const token = useTenantAuthStore((state) => state.token);
   const hasHydrated = useTenantAuthStore((state) => state.hasHydrated);
-
-  useEffect(() => {
-    if (!hasHydrated) return;
-
-    const path = window.location.pathname;
-    const isAuthPage = AUTH_PAGES.has(path);
-    const isDashboard = path.startsWith("/dashboard") || path.startsWith("/tenant-dashboard");
-
-    if (token && isAuthPage) {
-      navigate("/dashboard");
-      return;
-    }
-
-    if (!token && isDashboard) {
-      navigate("/sign-in");
-    }
-  }, [token, hasHydrated, navigate]);
-
   return { isLoading: !hasHydrated };
 };
 

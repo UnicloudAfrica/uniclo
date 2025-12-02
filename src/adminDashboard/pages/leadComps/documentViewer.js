@@ -64,7 +64,7 @@ const DocumentViewerModal = ({ isOpen, onClose, document: documentData }) => {
       setObjectUrl(url);
       setMimeType(
         data.contentType?.split(";")[0] ||
-          inferMimeTypeFromName(documentData?.name)
+        inferMimeTypeFromName(documentData?.name)
       );
       return () => URL.revokeObjectURL(url);
     }
@@ -204,7 +204,7 @@ const DocumentViewerModal = ({ isOpen, onClose, document: documentData }) => {
 
   return createPortal(
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] p-4 font-Outfit">
-      <div className="bg-white rounded-[24px] max-w-6xl max-h-[90vh] w-full h-full flex flex-col shadow-2xl">
+      <div className="bg-white rounded-[24px] max-w-8xl max-h-[90vh] w-full h-full flex flex-col shadow-2xl">
         <div className="flex items-center justify-between px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] flex-shrink-0">
           <h2 className="text-lg font-semibold text-[#575758] truncate pr-4">
             {documentName}

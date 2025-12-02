@@ -33,11 +33,11 @@ const OnboardingDashboard = () => {
   const persona = state?.persona ?? state?.target ?? "tenant";
   const hasTenantAssociation = Boolean(
     state?.tenant_id ??
-      state?.tenant?.id ??
-      state?.account?.tenant_id ??
-      state?.workspace?.tenant_id ??
-      state?.relationships?.tenant_id ??
-      state?.context?.tenant_id
+    state?.tenant?.id ??
+    state?.account?.tenant_id ??
+    state?.workspace?.tenant_id ??
+    state?.relationships?.tenant_id ??
+    state?.context?.tenant_id
   );
 
   const definitions = useMemo(() => {
@@ -264,10 +264,10 @@ const OnboardingDashboard = () => {
       definition?.custom === "businessProfile"
         ? ensureBusinessProfileDefaults(formValues)
         : definition?.custom === "brandingTheme"
-        ? ensureBrandingThemeDefaults(formValues)
-        : definition?.custom === "partnerRegion"
-        ? normalisePartnerRegionFormValues(formValues)
-        : formValues;
+          ? ensureBrandingThemeDefaults(formValues)
+          : definition?.custom === "partnerRegion"
+            ? normalisePartnerRegionFormValues(formValues)
+            : formValues;
 
     try {
       await updateMutation.mutateAsync({
@@ -333,7 +333,7 @@ const OnboardingDashboard = () => {
 
   return (
     <div className="min-h-screen w-full bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 md:px-6 py-10">
+      <div className="max-w-8xl mx-auto px-4 md:px-6 py-10">
         <header className="mb-8">
           <h1 className="text-3xl font-semibold text-gray-900">Complete your onboarding</h1>
           <p className="text-gray-600 mt-1 max-w-2xl">
@@ -354,11 +354,10 @@ const OnboardingDashboard = () => {
                   key={step.id}
                   type="button"
                   onClick={() => setActiveStep(step.id)}
-                  className={`w-full text-left px-4 py-3 rounded-lg border transition-colors ${
-                    activeStep === step.id
+                  className={`w-full text-left px-4 py-3 rounded-lg border transition-colors ${activeStep === step.id
                       ? "border-[--theme-color] bg-[--theme-color-10]"
                       : "border-transparent hover:border-gray-200"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium text-gray-800">{step.label}</p>
@@ -657,8 +656,8 @@ const FieldInput = ({ field, value, onChange, onFileChange }) => {
     const computedOptions = hasValueOption
       ? options
       : value
-      ? [...options, { value, label: value }]
-      : options;
+        ? [...options, { value, label: value }]
+        : options;
 
     return (
       <div>

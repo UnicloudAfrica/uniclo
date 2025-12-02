@@ -9,10 +9,12 @@ import EBSImages from "./inventoryComponents/ebsImages";
 import Vms from "./inventoryComponents/vms";
 import FloatingIP from "./inventoryComponents/floatingIP";
 import CrossConnect from "./inventoryComponents/crossConnect";
+
 import ObjectStorageInventory from "./inventoryComponents/objectStorage";
+
 import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Wifi, HardDrive, Database, Server, Globe, Cable } from "lucide-react";
+import { Wifi, HardDrive, Database, Server, Globe, Cable, FileText } from "lucide-react";
 import ResourceHero from "../components/ResourceHero";
 import ModernCard from "../components/ModernCard";
 
@@ -140,7 +142,6 @@ export default function AdminInventory() {
           metrics: [
             { label: "Storage accounts", value: "—", description: "Tenant accounts" },
             { label: "Buckets", value: "—", description: "Provisioned containers" },
-            { label: "Quota (GiB)", value: "—", description: "Assigned capacity" },
           ],
         },
       },

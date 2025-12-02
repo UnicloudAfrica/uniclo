@@ -1,32 +1,10 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  Loader2,
   Plus,
   Search,
-  Filter,
   RefreshCw,
-  MoreHorizontal,
-  ChevronDown,
-  ChevronRight,
-  Play,
-  Square,
-  RotateCw,
-  Pause,
-  Moon,
-  Terminal,
-  Trash2,
-  Eye,
-  CheckSquare,
-  Square as UncheckedSquare,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Server,
-  HardDrive,
-  Network,
-  Copy,
   Sparkles,
-  Zap,
+  ChevronDown,
 } from "lucide-react";
 
 import Headbar from "../components/clientHeadbar";
@@ -38,408 +16,12 @@ import EmbeddedConsole, {
 } from "../../components/Console/EmbeddedConsole";
 import ToastUtils from "../../utils/toastUtil";
 import { useFetchClientPurchasedInstances } from "../../hooks/clientHooks/instanceHooks";
-import ModernCard from "../../adminDashboard/components/ModernCard";
-import ModernButton from "../../adminDashboard/components/ModernButton";
-import StatusPill from "../../adminDashboard/components/StatusPill";
-import ModernInput from "../../adminDashboard/components/ModernInput";
-import ModernStatsCard from "../../adminDashboard/components/ModernStatsCard";
+import ModernCard from "../../components/modern/ModernCard";
+import ModernButton from "../../components/modern/ModernButton";
+import ModernInput from "../../components/modern/ModernInput";
 
-const StatusBadge = ({ status, size = "sm" }) => {
-  const getStatusInfo = (value) => {
-    const statusMap = {
-      active: {
-        color: "bg-green-100 text-green-800 border-green-200",
-        icon: CheckCircle,
-        label: "Active",
-      },
-      running: {
-        color: "bg-green-100 text-green-800 border-green-200",
-        icon: CheckCircle,
-        label: "Running",
-      },
-      stopped: {
-        color: "bg-red-100 text-red-800 border-red-200",
-        icon: Square,
-        label: "Stopped",
-      },
-      shutoff: {
-        color: "bg-red-100 text-red-800 border-red-200",
-        icon: Square,
-        label: "Shut Off",
-      },
-      paused: {
-        color: "bg-yellow-100 text-yellow-800 border-yellow-200",
-        icon: Pause,
-        label: "Paused",
-      },
-      suspended: {
-        color: "bg-yellow-100 text-yellow-800 border-yellow-200",
-        icon: Pause,
-        label: "Suspended",
-      },
-      hibernated: {
-        color: "bg-purple-100 text-purple-800 border-purple-200",
-        icon: Moon,
-        label: "Hibernated",
-      },
-      reboot: {
-        color: "bg-blue-100 text-blue-800 border-blue-200",
-        icon: RotateCw,
-        label: "Rebooting",
-      },
-      hard_reboot: {
-        color: "bg-blue-100 text-blue-800 border-blue-200",
-        icon: RotateCw,
-        label: "Rebooting",
-      },
-      provisioning: {
-        color: "bg-blue-100 text-blue-800 border-blue-200",
-        icon: Loader2,
-        label: "Provisioning",
-      },
-      building: {
-        color: "bg-blue-100 text-blue-800 border-blue-200",
-        icon: Loader2,
-        label: "Building",
-      },
-      error: {
-        color: "bg-red-100 text-red-800 border-red-200",
-        icon: AlertCircle,
-        label: "Error",
-      },
-      deleted: {
-        color: "bg-gray-100 text-gray-800 border-gray-200",
-        icon: Trash2,
-        label: "Deleted",
-      },
-    };
-
-    return (
-      statusMap[value?.toLowerCase()] || {
-        color: "bg-gray-100 text-gray-800 border-gray-200",
-        icon: AlertCircle,
-        label: value || "Unknown",
-      }
-    );
-  };
-
-  const statusInfo = getStatusInfo(status);
-  const Icon = statusInfo.icon;
-  const iconSize = size === "xs" ? "w-3 h-3" : "w-4 h-4";
-  const textSize = size === "xs" ? "text-xs" : "text-sm";
-
-  return (
-    <span
-      className={`inline-flex items-center px-2 py-1 rounded-full ${textSize} font-medium border ${statusInfo.color}`}
-    >
-      <Icon
-        className={`${iconSize} mr-1 ${
-          statusInfo.icon === Loader2 ? "animate-spin" : ""
-        }`}
-      />
-      {statusInfo.label}
-    </span>
-  );
-};
-
-const InstanceRow = ({
-  instance,
-  isSelected,
-  onSelect,
-  onAction,
-  onConsoleAccess,
-  onNavigateToDetails,
-  actionLoading,
-}) => {
-  const [showActions, setShowActions] = useState(false);
-  const [expanded, setExpanded] = useState(false);
-
-  const handleAction = (action) => {
-    setShowActions(false);
-    onAction(instance.id, action);
-  };
-
-  const quickActions = [
-    {
-      key: "start",
-      label: "Start",
-      icon: Play,
-      condition: instance.status === "stopped",
-    },
-    {
-      key: "stop",
-      label: "Stop",
-      icon: Square,
-      condition: instance.status === "running",
-    },
-    {
-      key: "reboot",
-      label: "Reboot",
-      icon: RotateCw,
-      condition: instance.status === "running",
-    },
-    { key: "console", label: "Console", icon: Terminal, condition: true },
-  ];
-
-  const availableActions = quickActions.filter((action) => action.condition);
-
-  return (
-    <>
-      <tr className="transition-colors hover:bg-slate-50/70">
-        <td className="px-5 py-4">
-          <button
-            onClick={() => onSelect(instance.id)}
-            className="text-slate-300 transition hover:text-primary-500"
-          >
-            {isSelected ? (
-              <CheckSquare className="h-5 w-5 text-primary-500" />
-            ) : (
-              <UncheckedSquare className="h-5 w-5" />
-            )}
-          </button>
-        </td>
-        <td className="px-3 py-4">
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="text-slate-300 transition hover:text-primary-500"
-          >
-            {expanded ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            )}
-          </button>
-        </td>
-        <td className="px-5 py-4">
-          <div className="flex items-center gap-3">
-            <div className="hidden rounded-lg bg-slate-100 p-2 text-slate-500 md:block">
-              <Server className="h-4 w-4" />
-            </div>
-            <div>
-              <button
-                onClick={() => onNavigateToDetails(instance)}
-                className="text-sm font-semibold text-primary-600 transition hover:text-primary-700"
-              >
-                {instance.name || `Instance-${instance.identifier?.slice(-8)}`}
-              </button>
-              <p className="font-mono text-xs text-slate-400">
-                {instance.identifier}
-              </p>
-            </div>
-          </div>
-        </td>
-        <td className="px-5 py-4">
-          <StatusBadge status={instance.status} size="xs" />
-        </td>
-        <td className="px-5 py-4 text-sm text-slate-800">
-          <div className="flex items-center">
-            <Server className="mr-2 h-4 w-4 text-slate-400" />
-            <span>{instance.compute?.name || "N/A"}</span>
-          </div>
-        </td>
-        <td className="px-5 py-4 text-sm text-slate-800">
-          <div className="space-y-1.5">
-            <div className="flex items-center">
-              <Zap className="mr-1 h-3 w-3 text-primary-500" />
-              <span>{instance.compute?.vcpus || 0} vCPU</span>
-            </div>
-            <div className="flex items-center">
-              <HardDrive className="mr-1 h-3 w-3 text-emerald-500" />
-              <span>
-                {instance.compute?.memory_mb
-                  ? Math.round(instance.compute.memory_mb / 1024)
-                  : 0}{" "}
-                GB
-              </span>
-            </div>
-          </div>
-        </td>
-        <td className="px-5 py-4 text-sm text-slate-800">
-          <div className="flex items-center">
-            <Network className="mr-2 h-4 w-4 text-slate-400" />
-            <span>
-              {instance.floating_ip?.ip_address || instance.private_ip || "N/A"}
-            </span>
-            {(instance.floating_ip?.ip_address || instance.private_ip) && (
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(
-                    instance.floating_ip?.ip_address || instance.private_ip
-                  );
-                  ToastUtils.success("IP copied to clipboard");
-                }}
-                className="ml-2 rounded-full p-1 text-slate-300 transition hover:bg-slate-100 hover:text-primary-500"
-              >
-                <Copy className="h-3 w-3" />
-              </button>
-            )}
-          </div>
-        </td>
-        <td className="px-5 py-4 text-sm text-slate-500">
-          <div className="flex items-center">
-            <Clock className="mr-2 h-4 w-4 text-slate-300" />
-            {instance.created_at
-              ? new Date(instance.created_at).toLocaleDateString()
-              : "N/A"}
-          </div>
-        </td>
-        <td className="px-5 py-4">
-          <div className="flex items-center gap-2">
-            {availableActions.slice(0, 3).map((action) => (
-              <button
-                key={action.key}
-                onClick={() => {
-                  if (action.key === "console") {
-                    onConsoleAccess(instance.id);
-                  } else {
-                    handleAction(action.key);
-                  }
-                }}
-                disabled={actionLoading[instance.id]?.[action.key]}
-                className="rounded-full border border-slate-200 p-1.5 text-slate-500 transition hover:border-primary-200 hover:text-primary-500 disabled:cursor-not-allowed disabled:opacity-40"
-                title={action.label}
-              >
-                {actionLoading[instance.id]?.[action.key] ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <action.icon className="h-4 w-4" />
-                )}
-              </button>
-            ))}
-            <div className="relative">
-              <button
-                onClick={() => setShowActions(!showActions)}
-                className="rounded-full border border-slate-200 p-1.5 text-slate-400 transition hover:border-primary-200 hover:text-primary-500"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </button>
-              {showActions && (
-                <div className="absolute right-0 mt-2 w-52 rounded-2xl border border-slate-100 bg-white p-2 shadow-xl">
-                  <div className="space-y-1 text-sm text-slate-600">
-                    <button
-                      onClick={() => onNavigateToDetails(instance)}
-                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 transition hover:bg-slate-50"
-                    >
-                      <Eye className="h-4 w-4 text-primary-500" />
-                      View Details
-                    </button>
-                    <button
-                      onClick={() => handleAction("suspend")}
-                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 transition hover:bg-slate-50"
-                    >
-                      <Pause className="h-4 w-4 text-amber-500" />
-                      Suspend
-                    </button>
-                    <button
-                      onClick={() => handleAction("hibernate")}
-                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 transition hover:bg-slate-50"
-                    >
-                      <Moon className="h-4 w-4 text-violet-500" />
-                      Hibernate
-                    </button>
-                    <div className="h-px bg-slate-100" />
-                    <button
-                      onClick={() => handleAction("destroy")}
-                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-red-600 transition hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Destroy
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </td>
-      </tr>
-      {expanded && (
-        <tr className="bg-slate-50/60">
-          <td colSpan="9" className="px-5 py-4">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              <div>
-                <h4 className="mb-2 text-sm font-semibold text-slate-800">
-                  Instance details
-                </h4>
-                <dl className="space-y-1">
-                  <div className="flex justify-between">
-                    <dt className="text-xs text-slate-500">Region:</dt>
-                    <dd className="text-xs text-slate-800">
-                      {instance.region || "N/A"}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-xs text-slate-500">Provider:</dt>
-                    <dd className="text-xs text-slate-800">
-                      {instance.provider || "N/A"}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-xs text-slate-500">OS image:</dt>
-                    <dd className="text-xs text-slate-800">
-                      {instance.os_image?.name || "N/A"}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-              <div>
-                <h4 className="mb-2 text-sm font-semibold text-slate-800">
-                  Network
-                </h4>
-                <dl className="space-y-1">
-                  <div className="flex justify-between">
-                    <dt className="text-xs text-slate-500">Private IP:</dt>
-                    <dd className="text-xs text-slate-800">
-                      {instance.private_ip || "N/A"}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-xs text-slate-500">Floating IP:</dt>
-                    <dd className="text-xs text-slate-800">
-                      {instance.floating_ip?.ip_address || "N/A"}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-xs text-slate-500">
-                      Security group:
-                    </dt>
-                    <dd className="text-xs text-slate-800">
-                      {instance.security_group || "N/A"}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-              <div>
-                <h4 className="mb-2 text-sm font-semibold text-slate-800">
-                  Storage
-                </h4>
-                <dl className="space-y-1">
-                  <div className="flex justify-between">
-                    <dt className="text-xs text-slate-500">Storage size:</dt>
-                    <dd className="text-xs text-slate-800">
-                      {instance.storage_size_gb || "N/A"} GB
-                    </dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-xs text-slate-500">Volume type:</dt>
-                    <dd className="text-xs text-slate-800">
-                      {instance.volume_type?.name || "N/A"}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-xs text-slate-500">Boot from:</dt>
-                    <dd className="text-xs text-slate-800">
-                      {instance.boot_from_volume ? "Volume" : "Image"}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-            </div>
-          </td>
-        </tr>
-      )}
-    </>
-  );
-};
+import InstanceRow from "../components/InstanceRow";
+import InstanceStats from "../components/InstanceStats";
 
 export default function ClientInstances() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -458,7 +40,6 @@ export default function ClientInstances() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("created_at");
   const [sortOrder, setSortOrder] = useState("desc");
-  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     let filtered = [...instances];
@@ -563,74 +144,15 @@ export default function ClientInstances() {
   const uniqueStatuses = [...new Set(instances.map((instance) => instance.status))].filter(
     Boolean
   );
-  const totalInstancesCount = instances.length;
-  const runningCount = instances.filter((instance) =>
-    ["running", "active"].includes((instance.status || "").toLowerCase())
-  ).length;
-  const stoppedCount = instances.filter((instance) =>
-    ["stopped", "shutoff", "paused", "suspended"].includes(
-      (instance.status || "").toLowerCase()
-    )
-  ).length;
+
   const provisioningCount = instances.filter((instance) =>
     ["provisioning", "building", "reboot", "hard_reboot"].includes(
       (instance.status || "").toLowerCase()
     )
   ).length;
-  const statusBreakdown = uniqueStatuses
-    .map((status) => ({
-      status,
-      count: instances.filter((instance) => instance.status === status).length,
-    }))
-    .sort((a, b) => b.count - a.count);
-  const recentInstances = instances
-    .slice()
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-    .slice(0, 4);
+
   const actionLoading = useMemo(() => ({}), []);
-  const fleetStats = [
-    {
-      key: "total",
-      title: "Total Instances",
-      value: totalInstancesCount.toLocaleString(),
-      description: `${runningCount} running`,
-      icon: <Server size={24} />,
-      color: "info",
-    },
-    {
-      key: "running",
-      title: "Active",
-      value: runningCount.toLocaleString(),
-      description: provisioningCount
-        ? `${provisioningCount} provisioning`
-        : "All healthy",
-      icon: <Play size={24} />,
-      color: "success",
-    },
-    {
-      key: "idle",
-      title: "Idle / Stopped",
-      value: stoppedCount.toLocaleString(),
-      description:
-        stoppedCount > 0
-          ? `${Math.round(
-              (stoppedCount / Math.max(totalInstancesCount, 1)) * 100
-            )}% of fleet`
-          : "No idle instances",
-      icon: <Square size={24} />,
-      color: "warning",
-    },
-    {
-      key: "bandwidth",
-      title: "Bandwidth Ready",
-      value: instances
-        .filter((instance) => Number(instance.bandwidth_count || 0) > 0)
-        .length.toLocaleString(),
-      description: "Floating IP or dedicated bandwidth attached",
-      icon: <Network size={24} />,
-      color: "info",
-    },
-  ];
+
   const selectedInstanceList = filteredInstances.filter((instance) =>
     selectedInstances.has(instance.id)
   );
@@ -707,9 +229,8 @@ export default function ClientInstances() {
                 </p>
                 <p className="mt-2 text-lg font-semibold text-white">
                   {consoles.length
-                    ? `${consoles.length} session${
-                        consoles.length === 1 ? "" : "s"
-                      } active`
+                    ? `${consoles.length} session${consoles.length === 1 ? "" : "s"
+                    } active`
                     : "Ready for on-demand access"}
                 </p>
               </div>
@@ -727,18 +248,7 @@ export default function ClientInstances() {
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {fleetStats.map((stat) => (
-            <ModernStatsCard
-              key={stat.key}
-              title={stat.title}
-              value={stat.value}
-              description={stat.description}
-              icon={stat.icon}
-              color={stat.color}
-            />
-          ))}
-        </div>
+        <InstanceStats instances={instances} />
 
         <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] 2xl:items-start">
           <ModernCard padding="lg" className="space-y-6">
@@ -800,135 +310,127 @@ export default function ClientInstances() {
                 <ModernButton
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowFilters((previous) => !previous)}
-                  leftIcon={<Filter className="h-4 w-4" />}
+                  onClick={() => {
+                    setSearchTerm("");
+                    setStatusFilter("all");
+                    setSortBy("created_at");
+                    setSortOrder("desc");
+                  }}
+                  className="mb-0.5"
                 >
-                  {showFilters ? "Hide filters" : "More filters"}
+                  Reset
                 </ModernButton>
               </div>
             </div>
 
-            {showFilters && (
-              <div className="space-y-4 rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-slate-700">
-                    Quick status focus
-                  </p>
+            {selectedInstances.size > 0 && (
+              <div className="flex items-center justify-between rounded-xl border border-primary-100 bg-primary-50 px-4 py-3 text-primary-900">
+                <span className="text-sm font-medium">
+                  {selectedInstances.size} instance
+                  {selectedInstances.size === 1 ? "" : "s"} selected
+                </span>
+                <div className="flex items-center gap-2">
+                  <ModernButton
+                    variant="white"
+                    size="xs"
+                    onClick={() => executeBulkAction("start")}
+                    className="text-primary-700"
+                  >
+                    Start
+                  </ModernButton>
+                  <ModernButton
+                    variant="white"
+                    size="xs"
+                    onClick={() => executeBulkAction("stop")}
+                    className="text-primary-700"
+                  >
+                    Stop
+                  </ModernButton>
+                  <ModernButton
+                    variant="white"
+                    size="xs"
+                    onClick={() => executeBulkAction("reboot")}
+                    className="text-primary-700"
+                  >
+                    Reboot
+                  </ModernButton>
+                  <div className="mx-1 h-4 w-px bg-primary-200" />
                   <ModernButton
                     variant="ghost"
                     size="xs"
-                    onClick={() => {
-                      setStatusFilter("all");
-                      setSearchTerm("");
-                    }}
+                    onClick={() => setSelectedInstances(new Set())}
+                    className="text-primary-700 hover:bg-primary-100"
                   >
-                    Reset filters
+                    Clear
                   </ModernButton>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {statusBreakdown.slice(0, 6).map((item) => (
-                    <button
-                      key={item.status}
-                      type="button"
-                      onClick={() => setStatusFilter(item.status)}
-                      className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
-                        statusFilter === item.status
-                          ? "border-primary-400 bg-primary-50 text-primary-700"
-                          : "border-slate-200 bg-white text-slate-600 hover:border-primary-200"
-                      }`}
-                    >
-                      {item.status} • {item.count}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-xs text-slate-500">
-                  Use advanced filters to target lifecycle states quickly and keep medium-sized screens clutter free.
-                </p>
               </div>
             )}
 
-            {selectedInstanceList.length > 0 && (
-              <div className="flex flex-col gap-3 rounded-2xl border border-primary-200 bg-primary-50/60 p-4 md:flex-row md:items-center md:justify-between">
-                <div className="flex flex-wrap items-center gap-3">
-                  <StatusPill
-                    label={`${selectedInstanceList.length} selected`}
-                    tone="info"
-                  />
-                  <p className="text-sm font-medium text-primary-700">
-                    Choose a bulk action to apply across the highlighted instances.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { action: "start", label: "Start", icon: Play },
-                    { action: "stop", label: "Stop", icon: Square },
-                    { action: "reboot", label: "Reboot", icon: RotateCw },
-                    { action: "destroy", label: "Destroy", icon: Trash2 },
-                  ].map(({ action, label, icon: Icon }) => (
-                    <ModernButton
-                      key={action}
-                      variant={action === "destroy" ? "danger" : "outline"}
-                      size="sm"
-                      onClick={() => executeBulkAction(action)}
-                      leftIcon={<Icon className="h-4 w-4" />}
-                    >
-                      {label}
-                    </ModernButton>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="rounded-2xl border border-slate-100 shadow-sm">
-              {isInstancesFetching ? (
-                <div className="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
-                  <p className="text-sm text-slate-500">
-                    Pulling latest instance telemetry…
-                  </p>
-                </div>
-              ) : filteredInstances.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
-                  <Server className="h-10 w-10 text-slate-400" />
-                  <p className="text-base font-semibold text-slate-700">
-                    No instances match the current view
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    {searchTerm || statusFilter !== "all"
-                      ? "Try adjusting your search or filters."
-                      : "Spin up a new instance to see it appear instantly."}
-                  </p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-slate-100">
-                    <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <div className="overflow-hidden rounded-2xl border border-slate-200">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[1000px]">
+                  <thead>
+                    <tr className="bg-slate-50/50 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      <th className="w-12 px-5 py-4">
+                        <button
+                          onClick={handleSelectAll}
+                          className="text-slate-300 transition hover:text-primary-500"
+                        >
+                          <ChevronDown className="h-4 w-4" />
+                        </button>
+                      </th>
+                      <th className="w-8 px-3 py-4"></th>
+                      <th className="px-5 py-4">Instance</th>
+                      <th className="px-5 py-4">Status</th>
+                      <th className="px-5 py-4">Compute</th>
+                      <th className="px-5 py-4">Specs</th>
+                      <th className="px-5 py-4">IP Address</th>
+                      <th className="px-5 py-4">Created</th>
+                      <th className="px-5 py-4">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white">
+                    {isInstancesFetching ? (
                       <tr>
-                        <th className="px-5 py-3 text-left">
-                          <button
-                            onClick={handleSelectAll}
-                            className="text-slate-400 hover:text-primary-500"
-                          >
-                            {selectedInstances.size === filteredInstances.length &&
-                            filteredInstances.length > 0 ? (
-                              <CheckSquare className="h-5 w-5 text-primary-500" />
-                            ) : (
-                              <UncheckedSquare className="h-5 w-5" />
-                            )}
-                          </button>
-                        </th>
-                        <th className="px-3 py-3" />
-                        <th className="px-5 py-3 text-left">Instance</th>
-                        <th className="px-5 py-3 text-left">Status</th>
-                        <th className="px-5 py-3 text-left">Type</th>
-                        <th className="px-5 py-3 text-left">Resources</th>
-                        <th className="px-5 py-3 text-left">IP</th>
-                        <th className="px-5 py-3 text-left">Created</th>
-                        <th className="px-5 py-3 text-left">Actions</th>
+                        <td colSpan="9" className="px-5 py-12 text-center">
+                          <div className="flex flex-col items-center justify-center">
+                            <RefreshCw className="mb-4 h-8 w-8 animate-spin text-primary-500" />
+                            <p className="text-sm font-medium text-slate-600">
+                              Loading instances...
+                            </p>
+                          </div>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-sm text-slate-600">
-                      {filteredInstances.map((instance) => (
+                    ) : filteredInstances.length === 0 ? (
+                      <tr>
+                        <td colSpan="9" className="px-5 py-12 text-center">
+                          <div className="flex flex-col items-center justify-center">
+                            <div className="mb-4 rounded-full bg-slate-100 p-3">
+                              <Search className="h-6 w-6 text-slate-400" />
+                            </div>
+                            <p className="text-sm font-medium text-slate-900">
+                              No instances found
+                            </p>
+                            <p className="mt-1 text-sm text-slate-500">
+                              Try adjusting your filters or create a new instance.
+                            </p>
+                            <ModernButton
+                              variant="outline"
+                              size="sm"
+                              className="mt-4"
+                              onClick={() => {
+                                setSearchTerm("");
+                                setStatusFilter("all");
+                              }}
+                            >
+                              Clear Filters
+                            </ModernButton>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredInstances.map((instance) => (
                         <InstanceRow
                           key={instance.id}
                           instance={instance}
@@ -939,128 +441,29 @@ export default function ClientInstances() {
                           onNavigateToDetails={navigateToInstanceDetails}
                           actionLoading={actionLoading}
                         />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <div className="border-t border-slate-200 bg-slate-50 px-5 py-3 text-xs text-slate-500">
+                Showing {filteredInstances.length} of {instances.length} instances
+              </div>
             </div>
           </ModernCard>
 
-          <div className="space-y-6">
-            <ModernCard padding="lg" className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-slate-900">
-                  Fleet breakdown
-                </h3>
-                <StatusPill label={`${totalInstancesCount} total`} tone="neutral" />
-              </div>
-              <div className="space-y-3">
-                {statusBreakdown.slice(0, 6).map((item) => {
-                  const percentage = totalInstancesCount
-                    ? Math.round((item.count / totalInstancesCount) * 100)
-                    : 0;
-                  return (
-                    <div key={item.status} className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium text-slate-700">
-                          {item.status}
-                        </span>
-                        <span className="text-xs text-slate-500">
-                          {item.count} • {percentage}%
-                        </span>
-                      </div>
-                      <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
-                        <div
-                          className="h-full rounded-full bg-primary-400"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </ModernCard>
-
-            {recentInstances.length > 0 && (
-              <ModernCard padding="lg" className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-slate-900">
-                    Recent activity
-                  </h3>
-                  <StatusPill label="Last 4 events" tone="info" />
-                </div>
-                <ul className="space-y-3 text-sm">
-                  {recentInstances.map((instance) => (
-                    <li
-                      key={instance.id}
-                      className="rounded-xl border border-slate-200 bg-white px-3 py-2"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Server className="h-4 w-4 text-slate-400" />
-                          <span className="font-semibold text-slate-800">
-                            {instance.name ||
-                              `Instance-${instance.identifier?.slice(-6)}`}
-                          </span>
-                        </div>
-                        <span className="text-xs text-slate-500">
-                          {instance.created_at
-                            ? new Date(instance.created_at).toLocaleString()
-                            : "Unknown"}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {instance.region || "Any region"} • {instance.status}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              </ModernCard>
-            )}
-
-            <ModernCard padding="lg" className="space-y-4">
-              <h3 className="text-sm font-semibold text-slate-900">
-                Smart shortcuts
-              </h3>
-              <div className="space-y-3 text-sm text-slate-600">
-                <button
-                  type="button"
-                  onClick={() =>
-                    (window.location.href = "/client-dashboard/multi-instance-creation")
-                  }
-                  className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-left transition hover:border-primary-200 hover:bg-primary-50"
-                >
-                  <span>Launch multi-instance workflow</span>
-                  <ChevronRight className="h-4 w-4 text-primary-500" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => refetch()}
-                  className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-left transition hover:border-primary-200 hover:bg-primary-50"
-                >
-                  <span>Force refresh metrics</span>
-                  <RotateCw className="h-4 w-4 text-primary-500" />
-                </button>
-                <p className="text-xs text-slate-500">
-                  Need deeper visibility? Export instance metadata or jump into a console session directly from the actions column.
-                </p>
-              </div>
-            </ModernCard>
-          </div>
+          {/* Sidebar/Details Panel could go here if needed */}
         </div>
-
-        {consoles.map((console) => (
-          <EmbeddedConsole
-            key={console.id}
-            instanceId={console.instanceId}
-            isVisible
-            onClose={() => closeConsole(console.instanceId)}
-            initialPosition={console.position}
-            initialSize={console.size}
-          />
-        ))}
       </ClientPageShell>
+
+      {/* Console Overlay */}
+      {consoles.map((consoleId) => (
+        <EmbeddedConsole
+          key={consoleId}
+          instanceId={consoleId}
+          onClose={() => closeConsole(consoleId)}
+        />
+      ))}
     </>
   );
 }

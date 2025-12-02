@@ -92,6 +92,7 @@ const DashboardPageShell = ({
   contentStyle = {},
   disableContentPadding = false,
   backgroundColor = designTokens.colors.neutral[25],
+  customHeader,
 }) => {
   const location = useLocation();
   const computedBreadcrumbs = useMemo(() => {
@@ -125,45 +126,49 @@ const DashboardPageShell = ({
         .join(" ")
         .trim()}
     >
-      <header
-        className={[
-          "bg-white border-b border-gray-200 px-6 md:px-8 py-6 space-y-4",
-          headerClassName,
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .trim()}
-      >
-        <BreadcrumbTrail breadcrumbs={computedBreadcrumbs} />
+      {customHeader ? (
+        customHeader
+      ) : (
+        <header
+          className={[
+            "bg-white border-b border-gray-200 px-6 md:px-8 py-6 space-y-4",
+            headerClassName,
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .trim()}
+        >
+          <BreadcrumbTrail breadcrumbs={computedBreadcrumbs} />
 
-        {(headerTitle || description || actions || subHeaderContent) && (
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-col gap-3">
-              {headerTitle && (
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {headerTitle}
-                </h1>
-              )}
-              {description &&
-                (typeof description === "string" ? (
-                  <p className="mt-1 text-sm text-gray-500">{description}</p>
-                ) : (
-                  <div className="mt-1">{description}</div>
-                ))}
-              {subHeaderContent ? (
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                  {subHeaderContent}
-                </div>
-              ) : null}
-            </div>
-            {actions && (
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                {actions}
+          {(headerTitle || description || actions || subHeaderContent) && (
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-3">
+                {headerTitle && (
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    {headerTitle}
+                  </h1>
+                )}
+                {description &&
+                  (typeof description === "string" ? (
+                    <p className="mt-1 text-sm text-gray-500">{description}</p>
+                  ) : (
+                    <div className="mt-1">{description}</div>
+                  ))}
+                {subHeaderContent ? (
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    {subHeaderContent}
+                  </div>
+                ) : null}
               </div>
-            )}
-          </div>
-        )}
-      </header>
+              {actions && (
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  {actions}
+                </div>
+              )}
+            </div>
+          )}
+        </header>
+      )}
 
       <ContentWrapper
         className={sectionClasses}

@@ -128,14 +128,14 @@ export default function AdminDashboard() {
             ]}
             actions={[
               {
-                label: "View",
                 icon: <Eye size={16} />,
                 onClick: (partner) => console.log("View partner:", partner),
+                title: "View Partner",
               },
               {
-                label: "Edit",
                 icon: <Edit size={16} />,
                 onClick: (partner) => console.log("Edit partner:", partner),
+                title: "Edit Partner",
               },
             ]}
             searchable

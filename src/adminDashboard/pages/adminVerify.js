@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import sideBg from "./assets/sideBg.svg";
 import logo from "./assets/logo.png";
 
@@ -13,12 +13,18 @@ import { useVerifyAdminMail } from "../../hooks/adminHooks/authHooks";
 
 export default function VerifyAdminMail() {
   const [code, setCode] = useState(Array(6).fill("")); // Six-digit OTP input
-  const adminAuth = useAdminAuthStore.getState();
+  const {
+    userEmail,
+    clearUserEmail,
+    twoFactorRequired,
+    clearTwoFactorRequirement,
+    setTwoFactorRequired,
+    setSession,
+  } = useAdminAuthStore();
   const tenantAuth = useTenantAuthStore.getState();
   const clientAuth = useClientAuthStore.getState();
-  const { userEmail, clearUserEmail } = adminAuth;
-  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [twoFactorCode, setTwoFactorCode] = useState("");
   const { mutate: verifyEmail, isPending: isVerifyPending } =
     useVerifyAdminMail();
   const navigate = useNavigate();
@@ -43,31 +49,50 @@ export default function VerifyAdminMail() {
       newErrors.email = "Email is required";
     }
 
+    if (twoFactorRequired) {
+      const authCode = twoFactorCode.trim();
+      if (!authCode || authCode.length !== 6) {
+        newErrors.twoFactor = "Authenticator code is required";
+      }
+    } else if (twoFactorCode && twoFactorCode.trim().length !== 6) {
+      newErrors.twoFactor = "Authenticator codes are 6 digits";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   // Handle form submission for email verification
-  const handleSubmit = (otp = code.join("")) => {
-    // No e.preventDefault needed since we're not relying on form events directly
+  const handleSubmit = (otpValue) => {
+    if (otpValue?.preventDefault) {
+      otpValue.preventDefault();
+    }
+
+    const resolvedOtp =
+      typeof otpValue === "string" && otpValue.trim().length
+        ? otpValue
+        : code.join("");
+
     if (!validateForm()) return;
 
     const email = userEmail;
-    const userData = { email, otp };
+    const trimmedTwoFactor = twoFactorCode.trim();
+    const userData = {
+      email,
+      otp: resolvedOtp,
+    };
 
-    // verifyEmail(userData, {
-    //   onSuccess: () => {
-    //     clearUserEmail();
-    //     navigate("/admin-dashboard"); // Redirect on success
-    //   },
-    //   onError: (err) => {
-    //     setErrors({ general: err.message || "Failed to verify email" });
-    //     console.log(err);
-    //   },
-    // });
+    if (trimmedTwoFactor) {
+      userData.google2fa_code = trimmedTwoFactor;
+      userData.two_factor_code = trimmedTwoFactor;
+      userData.code = trimmedTwoFactor;
+    }
+
     verifyEmail(userData, {
       onSuccess: (res) => {
         clearUserEmail();
+        clearTwoFactorRequirement();
+        setTwoFactorCode("");
 
         const userRole = res?.data?.role;
         const accessToken =
@@ -112,7 +137,7 @@ export default function VerifyAdminMail() {
           } else if (normalizedRole === "tenant") {
             tenantAuth.setSession(sessionPayload);
           } else {
-            adminAuth.setSession(sessionPayload);
+            setSession(sessionPayload);
           }
 
           clearAuthSessionsExcept(normalizedRole);
@@ -133,8 +158,12 @@ export default function VerifyAdminMail() {
             break;
         }
       },
-      onError: () => {
-        // setErrors({ general: err.message || "Failed to verify email" });
+      onError: (err) => {
+        const message = err?.message || "Failed to verify email";
+        setErrors({ general: message });
+        if (/2fa|two[-\\s]?factor|authenticator/i.test(message)) {
+          setTwoFactorRequired(true);
+        }
       },
     });
   };
@@ -174,16 +203,39 @@ export default function VerifyAdminMail() {
               onComplete={handleSubmit} // Pass handleSubmit directly
             />
 
-            {/* Display errors */}
             {errors.otp && (
               <p className="text-red-500 text-xs mt-1">{errors.otp}</p>
             )}
-            {/* {errors.email && (
-              <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-            )}
+
+            {twoFactorRequired ? (
+              <div className="space-y-2">
+                <label
+                  htmlFor="two-factor-code"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Authenticator code
+                </label>
+                <input
+                  id="two-factor-code"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={twoFactorCode}
+                  onChange={(event) =>
+                    setTwoFactorCode(event.target.value.replace(/\D/g, ""))
+                  }
+                  placeholder="Enter 6-digit code"
+                  className="w-full input-field"
+                />
+                {errors.twoFactor && (
+                  <p className="text-red-500 text-xs">{errors.twoFactor}</p>
+                )}
+              </div>
+            ) : null}
+
             {errors.general && (
               <p className="text-red-500 text-xs mt-1">{errors.general}</p>
-            )} */}
+            )}
 
             {/* Submit Button */}
             <button

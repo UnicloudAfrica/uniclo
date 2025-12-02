@@ -1,17 +1,24 @@
 import { useMemo, useState } from "react";
-import { Eye, MapPin, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  Eye,
+  MapPin,
+  Plus,
+  RefreshCw,
+  Trash2,
+} from "lucide-react";
+import {
+  useDeleteTenantVpc,
+  useFetchTenantVpcs,
+  useSyncTenantVpcs,
+} from "../../../hooks/tenantHooks/vpcHooks";
 import ModernButton from "../../../adminDashboard/components/ModernButton";
 import ResourceSection from "../../../adminDashboard/components/ResourceSection";
 import ResourceEmptyState from "../../../adminDashboard/components/ResourceEmptyState";
 import ResourceListCard from "../../../adminDashboard/components/ResourceListCard";
-import {
-  useFetchTenantVpcs,
-  useDeleteTenantVpc,
-  useSyncTenantVpcs,
-} from "../../../hooks/vpcHooks";
-import AddTenantVpc from "../VpcComps/addVpc";
-import DeleteVpcModal from "../VpcComps/deleteVpc";
-import ViewVpcModal from "../VpcComps/viewVpc";
+import TenantAddVpc from "../VpcComps/TenantAddVpcComponent";
+import DeleteVpcModal from "../../../adminDashboard/pages/vpcComps/deleteVpc";
+import ViewVpcModal from "../../../adminDashboard/pages/vpcComps/viewVpc";
 import ToastUtils from "../../../utils/toastUtil";
 
 const ITEMS_PER_PAGE = 6;
@@ -40,13 +47,14 @@ const getToneForStatus = (status) => {
 };
 
 const VPCs = ({ projectId = "", region = "" }) => {
+  const queryClient = useQueryClient();
   const { data: vpcs, isFetching } = useFetchTenantVpcs(projectId, region);
   const { mutate: deleteVpc, isPending: isDeleting } = useDeleteTenantVpc();
-  const { mutate: syncVpcs, isPending: isSyncing } = useSyncTenantVpcs();
+  const { mutateAsync: syncVpcs, isPending: isSyncing } = useSyncTenantVpcs();
 
   const [isCreateModalOpen, setCreateModal] = useState(false);
-  const [deleteModal, setDeleteModal] = useState(null);
-  const [viewModal, setViewModal] = useState(null);
+  const [deleteModal, setDeleteModal] = useState(null); // stores vpc object
+  const [viewModal, setViewModal] = useState(null); // stores vpc object
   const [currentPage, setCurrentPage] = useState(1);
 
   const totalItems = vpcs?.length ?? 0;
@@ -70,8 +78,16 @@ const VPCs = ({ projectId = "", region = "" }) => {
     ).length;
 
     const baseStats = [
-      { label: "Total VPCs", value: totalItems, tone: "primary" },
-      { label: "Healthy", value: healthy, tone: healthy ? "success" : "neutral" },
+      {
+        label: "Total VPCs",
+        value: totalItems,
+        tone: "primary",
+      },
+      {
+        label: "Healthy",
+        value: healthy,
+        tone: healthy ? "success" : "neutral",
+      },
       {
         label: "Pending Actions",
         value: pending,
@@ -103,33 +119,31 @@ const VPCs = ({ projectId = "", region = "" }) => {
   const openViewModal = (vpc) => setViewModal(vpc);
   const closeViewModal = () => setViewModal(null);
 
-  const handleSync = () => {
+  const handleSync = async () => {
     if (!projectId || !region) {
       ToastUtils.error("Provide a project and region to sync VPCs.");
       return;
     }
 
-    syncVpcs(
-      { project_id: projectId, region },
-      {
-        onSuccess: () => {
-          ToastUtils.success("VPCs synced successfully.");
-        },
-        onError: (error) => {
-          ToastUtils.error(error?.message || "Unable to sync VPCs right now.");
-        },
-      }
-    );
+    try {
+      await syncVpcs({ project_id: projectId, region });
+      await queryClient.invalidateQueries({
+        queryKey: ["vpcs", { projectId, region }],
+      });
+      ToastUtils.success("VPCs synced successfully.");
+    } catch (error) {
+      ToastUtils.error(error?.message || "Unable to sync VPCs right now.");
+    }
   };
 
   const handleDelete = () => {
     if (!deleteModal) return;
-
     deleteVpc(deleteModal.id, {
       onSuccess: () => {
-        ToastUtils.success(
-          `Deleted VPC "${deleteModal.name || deleteModal.id || "item"}".`
-        );
+        ToastUtils.success(`Deleted VPC "${deleteModal.name}".`);
+        queryClient.invalidateQueries({
+          queryKey: ["vpcs", { projectId, region }],
+        });
         closeDeleteModal();
       },
       onError: (error) => {
@@ -157,7 +171,6 @@ const VPCs = ({ projectId = "", region = "" }) => {
       size="sm"
       leftIcon={<Plus size={16} />}
       onClick={openCreateModal}
-      isDisabled={!projectId}
     >
       Add VPC
     </ModernButton>,
@@ -177,9 +190,9 @@ const VPCs = ({ projectId = "", region = "" }) => {
             <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
               {currentVpcs.map((vpc) => (
                 <ResourceListCard
-                  key={vpc.id || vpc.uuid}
+                  key={vpc.id}
                   title={vpc.name || "Unnamed VPC"}
-                  subtitle={vpc.id || vpc.uuid || "Unknown ID"}
+                  subtitle={vpc.id || "Unknown ID"}
                   metadata={[
                     { label: "Region", value: vpc.region || region || "—" },
                     { label: "CIDR", value: vpc.cidr_block || "—" },
@@ -189,34 +202,32 @@ const VPCs = ({ projectId = "", region = "" }) => {
                     },
                   ]}
                   statuses={[
-                    vpc.state
-                      ? {
-                          label: normalizeStatus(vpc.state) || "unknown",
-                          tone: getToneForStatus(vpc.state),
-                        }
-                      : null,
+                    {
+                      label: normalizeStatus(vpc.state) || "unknown",
+                      tone: getToneForStatus(vpc.state),
+                    },
                     vpc.status
                       ? {
-                          label: normalizeStatus(vpc.status) || "unknown",
-                          tone: getToneForStatus(vpc.status),
-                        }
+                        label: normalizeStatus(vpc.status) || "unknown",
+                        tone: getToneForStatus(vpc.status),
+                      }
                       : null,
                   ].filter(Boolean)}
                   actions={[
                     {
                       key: "inspect",
-                      label: "Inspect",
                       icon: <Eye size={16} />,
                       variant: "ghost",
                       onClick: () => openViewModal(vpc),
+                      title: "Inspect VPC",
                     },
                     {
                       key: "remove",
-                      label: "Remove",
                       icon: <Trash2 size={16} />,
                       variant: "danger",
                       onClick: () => openDeleteModal(vpc),
                       disabled: isDeleting,
+                      title: "Remove VPC",
                     },
                   ]}
                 />
@@ -259,27 +270,26 @@ const VPCs = ({ projectId = "", region = "" }) => {
             message="Create a VPC or sync from your cloud account to start structuring your project networks."
             action={
               <ModernButton
-                onClick={openCreateModal}
-                size="sm"
+                variant="primary"
                 leftIcon={<Plus size={16} />}
-                isDisabled={!projectId}
+                onClick={openCreateModal}
               >
-                Add your first VPC
+                Create VPC
               </ModernButton>
             }
           />
         )}
       </ResourceSection>
 
-      <AddTenantVpc
-          isOpen={isCreateModalOpen}
-          onClose={closeCreateModal}
-          projectId={projectId}
+      <TenantAddVpc
+        isOpen={isCreateModalOpen}
+        onClose={closeCreateModal}
+        projectId={projectId}
       />
       <DeleteVpcModal
         isOpen={Boolean(deleteModal)}
         onClose={closeDeleteModal}
-        vpcName={deleteModal?.name || deleteModal?.id || "VPC"}
+        vpcName={deleteModal?.name || deleteModal?.id || ""}
         onConfirm={handleDelete}
         isDeleting={isDeleting}
       />

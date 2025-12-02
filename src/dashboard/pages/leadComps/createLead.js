@@ -457,7 +457,7 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
       meta={meta}
       aside={asideContent}
       footer={footer}
-      maxWidthClass={isPageMode ? "max-w-6xl" : "max-w-4xl"}
+      maxWidthClass={isPageMode ? "max-w-8xl" : "max-w-4xl"}
     >
       <form id={formId} className="space-y-8" onSubmit={handleSubmit}>
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -562,9 +562,8 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
                 value={formData.country}
                 onChange={(e) => updateFormData("country", e.target.value)}
                 disabled={countriesLoading}
-                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
-                  errors.country ? "border-red-500" : "border-gray-300"
-                }`}
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${errors.country ? "border-red-500" : "border-gray-300"
+                  }`}
               >
                 <option value="" disabled>
                   {countriesLoading
@@ -596,9 +595,8 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
                 onChange={(e) =>
                   updateFormData("lead_type", normalizeLeadTypeValue(e.target.value))
                 }
-                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
-                  errors.lead_type ? "border-red-500" : "border-gray-300"
-                }`}
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${errors.lead_type ? "border-red-500" : "border-gray-300"
+                  }`}
                 disabled={leadTypesLoading && leadTypeOptions.length === 0}
               >
                 <option value="">
@@ -633,9 +631,8 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
               <select
                 value={formData.status}
                 onChange={(e) => updateFormData("status", e.target.value)}
-                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
-                  errors.status ? "border-red-500" : "border-gray-300"
-                }`}
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${errors.status ? "border-red-500" : "border-gray-300"
+                  }`}
               >
                 <option value="" disabled>
                   Select a status
@@ -658,9 +655,8 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
                 value={formData.assigned_to}
                 onChange={(e) => updateFormData("assigned_to", e.target.value)}
                 disabled={adminsLoading}
-                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
-                  errors.assigned_to ? "border-red-500" : "border-gray-300"
-                }`}
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${errors.assigned_to ? "border-red-500" : "border-gray-300"
+                  }`}
               >
                 <option value="">
                   {adminsLoading ? "Loading owners..." : "Unassigned"}
@@ -705,9 +701,8 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
                 onChange={(e) =>
                   updateLeadStageFormData("stage_name", e.target.value)
                 }
-                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
-                  errors.stage_name ? "border-red-500" : "border-gray-300"
-                }`}
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${errors.stage_name ? "border-red-500" : "border-gray-300"
+                  }`}
               >
                 <option value="">Select a stage name</option>
                 {leadStageNameOptions.map((name) => (
@@ -727,9 +722,8 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
               <select
                 value={formData.lead_stage.status}
                 onChange={(e) => updateLeadStageFormData("status", e.target.value)}
-                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
-                  errors.stage_status ? "border-red-500" : "border-gray-300"
-                }`}
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${errors.stage_status ? "border-red-500" : "border-gray-300"
+                  }`}
               >
                 <option value="">Select a status</option>
                 {leadStageStatusOptions.map((status) => (
@@ -752,9 +746,8 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
                   updateLeadStageFormData("assigned_to", e.target.value)
                 }
                 disabled={adminsLoading}
-                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
-                  errors.stage_assigned_to ? "border-red-500" : "border-gray-300"
-                }`}
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${errors.stage_assigned_to ? "border-red-500" : "border-gray-300"
+                  }`}
               >
                 <option value="">
                   {adminsLoading ? "Loading owners..." : "Unassigned"}
@@ -786,9 +779,8 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
                 }
                 rows={2}
                 placeholder="Describe the stage of this lead."
-                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
-                  errors.stage_description ? "border-red-500" : "border-gray-300"
-                }`}
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${errors.stage_description ? "border-red-500" : "border-gray-300"
+                  }`}
               />
               {errors.stage_description && (
                 <p className="text-red-500 text-xs mt-1">

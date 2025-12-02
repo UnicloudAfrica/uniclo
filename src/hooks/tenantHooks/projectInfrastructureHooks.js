@@ -109,7 +109,7 @@ export const useTenantProjectInfrastructureStatus = (projectId, options = {}) =>
 
       const response = await tenantApi(
         "GET",
-        `/business/project-infrastructure/${projectId}`
+        `/admin/project-infrastructure/${projectId}`
       );
       const convertedData = convertBackendResponse(response?.data ?? response);
       return { data: convertedData };

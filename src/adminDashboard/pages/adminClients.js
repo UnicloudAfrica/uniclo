@@ -1,3 +1,4 @@
+import React, { useState, useMemo } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -12,7 +13,6 @@ import {
   Plus,
   SquarePen,
 } from "lucide-react";
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/adminSidebar";
@@ -24,18 +24,24 @@ import ModernButton from "../components/ModernButton";
 import { useFetchClients } from "../../hooks/adminHooks/clientHooks";
 import DeleteClientModal from "./clientComps/deleteClient";
 import EditClientModal from "./clientComps/editClient";
+import TableActionButtons from "../components/TableActionButtons";
+import BulkSelectionBar from "../components/BulkSelectionBar";
+import SortableTableHeader from "../components/SortableTableHeader";
+import BulkActionsDropdown from "../components/BulkActionsDropdown";
 
 const encodeId = (id) => encodeURIComponent(btoa(id));
 
 const AdminClients = () => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTenantId, setSelectedTenantId] = useState("");
+  const [sortConfig, setSortConfig] = useState({ key: "created_at", direction: "desc" });
   const [isDeleteClientModalOpen, setIsDeleteClientModalOpen] = useState(false);
   const [isEditClientModalOpen, setIsEditClientModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
+  const [selectedClients, setSelectedClients] = useState([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { data: clients, isFetching: isClientsFetching } = useFetchClients();
 
@@ -64,8 +70,27 @@ const AdminClients = () => {
     return matchesSearch && matchesTenant;
   });
 
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
-  const currentData = filteredData.slice(
+  // Apply sorting
+  const sortedData = [...filteredData].sort((a, b) => {
+    const aValue = a[sortConfig.key];
+    const bValue = b[sortConfig.key];
+
+    if (aValue === null || aValue === undefined) return 1;
+    if (bValue === null || bValue === undefined) return -1;
+
+    if (typeof aValue === 'string') {
+      return sortConfig.direction === 'asc'
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
+    }
+
+    if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const totalPages = Math.ceil(sortedData.length / itemsPerPage) || 1;
+  const currentData = sortedData.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -79,6 +104,7 @@ const AdminClients = () => {
 
   const headerActions = (
     <ModernButton
+      variant="primary"
       onClick={() => navigate("/admin-dashboard/clients/create")}
       className="flex items-center gap-2"
     >
@@ -126,6 +152,192 @@ const AdminClients = () => {
     closeDeleteClientModal();
   };
 
+  // Bulk selection handlers
+  const handleSelectClient = (clientId) => {
+    setSelectedClients((prev) =>
+      prev.includes(clientId)
+        ? prev.filter((id) => id !== clientId)
+        : [...prev, clientId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedClients.length === currentData.length) {
+      setSelectedClients([]);
+    } else {
+      setSelectedClients(currentData.map((client) => client.identifier));
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedClients([]);
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Delete ${selectedClients.length} client(s)?`)) return;
+
+    try {
+      const { adminSilentApi } = await import("../../index/admin/api");
+      await adminSilentApi("DELETE", "/clients/bulk-delete", {
+        client_ids: selectedClients,
+      });
+
+      const ToastUtil = (await import("../../utils/toastUtil")).default;
+      ToastUtil.success(`Successfully deleted ${selectedClients.length} client(s)`);
+      setSelectedClients([]);
+      window.location.reload();
+    } catch (error) {
+      const ToastUtil = (await import("../../utils/toastUtil")).default;
+      ToastUtil.error("Failed to delete clients");
+      console.error("Bulk delete error:", error);
+    }
+  };
+
+  const handleBulkExport = async (format = 'csv') => {
+    try {
+      const { adminSilentApi } = await import("../../index/admin/api");
+      const response = await adminSilentApi("POST", "/clients/bulk-export", {
+        client_ids: selectedClients,
+        format: format,
+      }, {
+        responseType: 'blob'
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `clients_${Date.now()}.${format}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      const ToastUtil = (await import("../../utils/toastUtil")).default;
+      ToastUtil.success(`Successfully exported ${selectedClients.length} client(s)`);
+    } catch (error) {
+      const ToastUtil = (await import("../../utils/toastUtil")).default;
+      ToastUtil.error("Failed to export clients");
+      console.error("Bulk export error:", error);
+    }
+  };
+
+  const handleBulkDuplicate = async () => {
+    if (!window.confirm(`Duplicate ${selectedClients.length} client(s)?`)) return;
+
+    try {
+      const { adminSilentApi } = await import("../../index/admin/api");
+      await adminSilentApi("POST", "/clients/bulk-duplicate", {
+        client_ids: selectedClients,
+      });
+
+      const ToastUtil = (await import("../../utils/toastUtil")).default;
+      ToastUtil.success(`Successfully duplicated ${selectedClients.length} client(s)`);
+      setSelectedClients([]);
+      window.location.reload();
+    } catch (error) {
+      const ToastUtil = (await import("../../utils/toastUtil")).default;
+      ToastUtil.error("Failed to duplicate clients");
+      console.error("Bulk duplicate error:", error);
+    }
+  };
+
+  const handleBulkArchive = async () => {
+    if (!window.confirm(`Archive ${selectedClients.length} client(s)?`)) return;
+
+    try {
+      const { adminSilentApi } = await import("../../index/admin/api");
+      await adminSilentApi("POST", "/clients/bulk-archive", {
+        client_ids: selectedClients,
+      });
+
+      const ToastUtil = (await import("../../utils/toastUtil")).default;
+      ToastUtil.success(`Successfully archived ${selectedClients.length} client(s)`);
+      setSelectedClients([]);
+      window.location.reload();
+    } catch (error) {
+      const ToastUtil = (await import("../../utils/toastUtil")).default;
+      ToastUtil.error("Failed to archive clients");
+      console.error("Bulk archive error:", error);
+    }
+  };
+
+  // Single item operations
+  const handleDuplicateClient = async (client) => {
+    if (!window.confirm(`Duplicate ${client.first_name} ${client.last_name}?`)) return;
+
+    try {
+      const { adminSilentApi } = await import("../../index/admin/api");
+      await adminSilentApi("POST", `/clients/${client.identifier}/duplicate`);
+
+      const ToastUtil = (await import("../../utils/toastUtil")).default;
+      ToastUtil.success("Client duplicated successfully");
+      window.location.reload();
+    } catch (error) {
+      const ToastUtil = (await import("../../utils/toastUtil")).default;
+      ToastUtil.error("Failed to duplicate client");
+      console.error("Duplicate error:", error);
+    }
+  };
+
+  const handleArchiveClient = async (client) => {
+    if (!window.confirm(`Archive ${client.first_name} ${client.last_name}?`)) return;
+
+    try {
+      const { adminSilentApi } = await import("../../index/admin/api");
+      await adminSilentApi("POST", `/clients/${client.identifier}/archive`);
+
+      const ToastUtil = (await import("../../utils/toastUtil")).default;
+      ToastUtil.success("Client archived successfully");
+      window.location.reload();
+    } catch (error) {
+      const ToastUtil = (await import("../../utils/toastUtil")).default;
+      ToastUtil.error("Failed to archive client");
+      console.error("Archive error:", error);
+    }
+  };
+
+  // Sorting handler
+  const handleSort = (key, direction) => {
+    setSortConfig({ key, direction });
+  };
+
+  // Bulk actions configuration
+  const bulkActions = [
+    {
+      key: 'export-csv',
+      label: 'Export as CSV',
+      onClick: () => handleBulkExport('csv'),
+    },
+    {
+      key: 'export-excel',
+      label: 'Export as Excel',
+      onClick: () => handleBulkExport('xlsx'),
+    },
+    {
+      key: 'duplicate',
+      label: 'Duplicate',
+      onClick: handleBulkDuplicate,
+    },
+    {
+      key: 'archive',
+      label: 'Archive',
+      onClick: handleBulkArchive,
+    },
+    {
+      key: 'delete',
+      label: 'Delete',
+      variant: 'danger',
+      onClick: handleBulkDelete,
+    },
+  ];
+
+  const tableColumns = [
+    { key: 'first_name', label: 'Name', sortable: true },
+    { key: 'email', label: 'Email Address', sortable: true },
+    { key: 'tenant_name', label: 'Tenant Name', sortable: true },
+    { key: 'created_at', label: 'Created', sortable: true },
+    { key: 'actions', label: 'Actions', sortable: false },
+  ];
+
   const filterBar = (
     <div className="flex flex-col md:flex-row items-center gap-4">
       <div className="w-full md:flex-1">
@@ -153,10 +365,6 @@ const AdminClients = () => {
           ))}
         </select>
       </div>
-      <ModernButton variant="outline" size="sm" className="flex items-center gap-2">
-        <Settings2 className="w-4 h-4" />
-        Advanced Filters
-      </ModernButton>
     </div>
   );
 
@@ -169,29 +377,27 @@ const AdminClients = () => {
     <>
       <div className="hidden md:block overflow-x-auto rounded-2xl border border-gray-100">
         <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                S/N
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                Email Address
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                Tenant Name
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                Actions
-              </th>
-            </tr>
-          </thead>
+          <SortableTableHeader
+            columns={[
+              { key: 'select', label: '', sortable: false },
+              { key: 'sn', label: 'S/N', sortable: false },
+              ...tableColumns
+            ]}
+            sortConfig={sortConfig}
+            onSort={handleSort}
+          />
           <tbody className="bg-white divide-y divide-gray-100">
             {currentData.length > 0 ? (
               currentData.map((item, index) => (
                 <tr key={item.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedClients.includes(item.identifier)}
+                      onChange={() => handleSelectClient(item.identifier)}
+                      className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-2 focus:ring-primary-500/20"
+                    />
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
                     {(currentPage - 1) * itemsPerPage + index + 1}
                   </td>
@@ -203,35 +409,19 @@ const AdminClients = () => {
                     {item.tenant?.name || "N/A"}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      <ModernButton
-                        variant="primary"
-                        size="sm"
-                        className="gap-2 text-xs"
-                        onClick={() => handleEditClient(item)}
-                      >
-                        <SquarePen className="h-4 w-4" />
-                        Edit
-                      </ModernButton>
-                      <ModernButton
-                        variant="outline"
-                        size="sm"
-                        className="gap-2 text-xs"
-                        onClick={() => handleViewDetails(item)}
-                      >
-                        <Eye className="h-4 w-4" />
-                        View
-                      </ModernButton>
-                      <ModernButton
-                        variant="danger"
-                        size="sm"
-                        className="gap-2 text-xs"
-                        onClick={() => handleDeleteClient(item)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Delete
-                      </ModernButton>
-                    </div>
+                    <TableActionButtons
+                      onView={() => handleViewDetails(item)}
+                      onEdit={() => handleEditClient(item)}
+                      onDelete={() => handleDeleteClient(item)}
+                      onDuplicate={() => handleDuplicateClient(item)}
+                      onArchive={() => handleArchiveClient(item)}
+                      showView
+                      showEdit
+                      showDelete={!item.deleted_at}
+                      showDuplicate
+                      showArchive={!item.archived}
+                      itemName={`${item.first_name} ${item.last_name}`}
+                    />
                   </td>
                 </tr>
               ))
@@ -261,33 +451,19 @@ const AdminClients = () => {
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <ModernButton
-                    variant="primary"
-                    size="sm"
-                    className="gap-1 text-xs"
-                    onClick={() => handleEditClient(item)}
-                  >
-                    <SquarePen className="h-4 w-4" />
-                    Edit
-                  </ModernButton>
-                  <ModernButton
-                    variant="outline"
-                    size="sm"
-                    className="gap-1 text-xs"
-                    onClick={() => handleViewDetails(item)}
-                  >
-                    <Eye className="h-4 w-4" />
-                    View
-                  </ModernButton>
-                  <ModernButton
-                    variant="danger"
-                    size="sm"
-                    className="gap-1 text-xs"
-                    onClick={() => handleDeleteClient(item)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Delete
-                  </ModernButton>
+                  <TableActionButtons
+                    onView={() => handleViewDetails(item)}
+                    onEdit={() => handleEditClient(item)}
+                    onDelete={() => handleDeleteClient(item)}
+                    onDuplicate={() => handleDuplicateClient(item)}
+                    onArchive={() => handleArchiveClient(item)}
+                    showView
+                    showEdit
+                    showDelete={!item.deleted_at}
+                    showDuplicate
+                    showArchive={!item.archived}
+                    itemName={`${item.first_name} ${item.last_name}`}
+                  />
                 </div>
               </div>
             </div>
@@ -375,6 +551,16 @@ const AdminClients = () => {
           />
         </div>
 
+        {/* Bulk Actions Dropdown */}
+        {selectedClients.length > 0 && (
+          <div className="flex justify-end mb-4">
+            <BulkActionsDropdown
+              selectedCount={selectedClients.length}
+              actions={bulkActions}
+            />
+          </div>
+        )}
+
         <ModernCard>
           {filterBar}
           <div className="mt-6 space-y-6">
@@ -397,6 +583,14 @@ const AdminClients = () => {
         onClose={closeDeleteClientModal}
         client={selectedClient}
         onDeleteConfirm={onClientDeleteConfirm}
+      />
+
+      <BulkSelectionBar
+        selectedCount={selectedClients.length}
+        onDelete={handleBulkDelete}
+        onClear={handleClearSelection}
+        itemType="client"
+        showExport={false}
       />
     </>
   );

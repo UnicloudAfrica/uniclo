@@ -30,8 +30,9 @@ const PATH_TO_ITEM_MAP = {
   "/dashboard/leads/details": "Leads",
   "/dashboard/products": "Products",
   "/dashboard/instances": "Instances",
-  "/dashboard/calculator": "Calculator",
-  "/dashboard/quote-invoice": "Quote Invoice",
+  "/dashboard/instances": "Instances",
+  "/dashboard/pricing-calculator": "Pricing Calculator",
+  "/dashboard/create-invoice": "Generate Invoice",
   "/dashboard/object-storage": "Object Storage",
   "/dashboard/payment-history": "Payment History",
   "/dashboard/support-ticket": "Support Ticket",
@@ -49,8 +50,8 @@ const menuDefinitions = [
   { name: "Clients", path: "/dashboard/clients", icon: Users },
   { name: "Leads", path: "/dashboard/leads", icon: UserCheck },
   { name: "Products", path: "/dashboard/products", icon: Package },
-  { name: "Calculator", path: "/dashboard/calculator", icon: Calculator },
-  { name: "Quote Invoice", path: "/dashboard/quote-invoice", icon: ClipboardList },
+  { name: "Pricing Calculator", path: "/dashboard/pricing-calculator", icon: Calculator },
+  { name: "Generate Invoice", path: "/dashboard/create-invoice", icon: ClipboardList },
   { name: "Object Storage", path: "/dashboard/object-storage", icon: Database },
   { name: "Payment History", path: "/dashboard/payment-history", icon: CreditCard },
   { name: "Support Ticket", path: "/dashboard/support-ticket", icon: LifeBuoy },
@@ -100,18 +101,16 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       <li key={item.name}>
         <button
           onClick={() => handleItemClick(item.name, item.path)}
-          className={`w-full flex items-center py-2 px-3.5 space-x-2 text-left transition-all duration-200 hover:bg-gray-50 ${
-            isActive ? "text-[#1C1C1C]" : "text-[#676767] hover:text-[#1C1C1C]"
-          }`}
+          className={`w-full flex items-center py-2 px-3.5 space-x-2 text-left transition-all duration-200 hover:bg-gray-50 ${isActive ? "text-[#1C1C1C]" : "text-[#676767] hover:text-[#1C1C1C]"
+            }`}
         >
           <div className="relative flex items-center justify-center w-5 h-5 flex-shrink-0">
             {isActive && (
-              <div className="absolute left-[-14px] w-1 h-4 bg-[--theme-color] rounded-[3px]" />
+              <div className="absolute left-[-14px] w-1 h-4 bg-black rounded-[3px]" />
             )}
             <Icon
-              className={`${BASE_ICON_CLASS} ${
-                isActive ? "text-[--theme-color]" : "text-[#676767]"
-              }`}
+              className={`${BASE_ICON_CLASS} ${isActive ? "text-[#1C1C1C]" : "text-[#676767]"
+                }`}
             />
           </div>
           <span className="text-sm font-normal md:hidden lg:block font-Outfit">
@@ -133,15 +132,13 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       <li key={item.name}>
         <button
           onClick={() => handleItemClick(item.name, item.path)}
-          className={`w-full flex items-center py-2 px-4 space-x-3 text-left transition-all duration-200 rounded-lg ${
-            isActive ? activeMobileClasses : inactiveMobileClasses
-          }`}
+          className={`w-full flex items-center py-2 px-4 space-x-3 text-left transition-all duration-200 rounded-lg ${isActive ? activeMobileClasses : inactiveMobileClasses
+            }`}
         >
           <div className="flex items-center justify-center w-4 h-4 flex-shrink-0">
             <Icon
-              className={`${BASE_ICON_CLASS} ${
-                isActive ? "text-white" : "text-gray-200"
-              }`}
+              className={`${BASE_ICON_CLASS} ${isActive ? "text-white" : "text-gray-200"
+                }`}
             />
           </div>
           <span className="text-xs font-medium">{item.name}</span>
@@ -184,18 +181,15 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       {/* Mobile Overlay Sidebar */}
       <div className="md:hidden font-Outfit">
         <div
-          className={`fixed inset-0 bg-black z-[999] transition-all duration-300 ease-in-out ${
-            isMobileMenuOpen
-              ? "bg-opacity-50 pointer-events-auto"
-              : "bg-opacity-0 pointer-events-none"
-          }`}
+          className={`fixed inset-0 bg-black z-[999] transition-all duration-300 ease-in-out ${isMobileMenuOpen
+            ? "bg-opacity-50 pointer-events-auto"
+            : "bg-opacity-0 pointer-events-none"
+            }`}
           onClick={onCloseMobileMenu}
         >
           <div
-            className={`fixed top-0 left-0 h-full w-[280px] text-white flex flex-col transform transition-transform duration-300 ease-in-out ${
-              isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-            }`}
-            style={{ backgroundColor: "var(--theme-color, #14547F)" }}
+            className={`fixed top-0 left-0 h-full w-[280px] bg-[#14547F] text-white flex flex-col transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+              }`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center p-6">

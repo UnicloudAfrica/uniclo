@@ -1,18 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Eye, Trash2, RefreshCw, ShieldCheck } from "lucide-react";
-import ModernButton from "../../../adminDashboard/components/ModernButton";
-import ResourceSection from "../../../adminDashboard/components/ResourceSection";
-import ResourceEmptyState from "../../../adminDashboard/components/ResourceEmptyState";
-import ResourceListCard from "../../../adminDashboard/components/ResourceListCard";
 import {
   useFetchTenantSecurityGroups,
   useDeleteTenantSecurityGroup,
   useSyncTenantSecurityGroups,
 } from "../../../hooks/securityGroupHooks";
-import AddSG from "../sgComps/addSG";
-import DeleteSGModal from "../sgComps/deleteSG";
-import ViewSGModal from "../sgComps/viewSG";
+import TenantAddSG from "../sgComps/TenantAddSG";
+import DeleteSGModal from "../../../adminDashboard/pages/sgComps/deleteSG";
+import ViewSGModal from "../../../adminDashboard/pages/sgComps/viewSGModal";
+import { useQueryClient } from "@tanstack/react-query";
 import ToastUtils from "../../../utils/toastUtil";
+import ResourceSection from "../../../adminDashboard/components/ResourceSection";
+import ResourceEmptyState from "../../../adminDashboard/components/ResourceEmptyState";
+import ResourceListCard from "../../../adminDashboard/components/ResourceListCard";
+import ModernButton from "../../../adminDashboard/components/ModernButton";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -24,86 +25,59 @@ const getToneForStatus = (status = "") => {
   return "neutral";
 };
 
-const SecurityGroup = ({
-  projectId = "",
-  region = "",
-  actionRequest,
-  onActionHandled,
-  onStatsUpdate,
-}) => {
+const SecurityGroup = ({ projectId = "", region = "" }) => {
+  const queryClient = useQueryClient();
   const { data: securityGroups, isFetching } =
     useFetchTenantSecurityGroups(projectId, region);
   const { mutate: deleteSecurityGroup, isPending: isDeleting } =
     useDeleteTenantSecurityGroup();
-  const { mutate: syncSecurityGroups } = useSyncTenantSecurityGroups();
+  const { mutateAsync: syncSecurityGroups, isPending: isSyncing } =
+    useSyncTenantSecurityGroups();
 
   const [isCreateModalOpen, setCreateModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(null);
   const [viewModal, setViewModal] = useState(null);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const lastActionToken = useRef(null);
 
   const totalItems = securityGroups?.length ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
-  const paginatedSecurityGroups = useMemo(() => {
+
+  const currentSecurityGroups = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return (securityGroups ?? []).slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [securityGroups, currentPage]);
-
-  const stats = useMemo(() => {
-    const base = [
-      {
-        label: "Total Security Groups",
-        value: totalItems,
-        tone: totalItems ? "primary" : "neutral",
-        icon: <ShieldCheck size={16} />,
-      },
-    ];
-    if (region) {
-      base.push({
-        label: "Region",
-        value: region,
-        tone: "info",
-      });
-    }
-    return base;
-  }, [totalItems, region]);
-
-  const handleSync = () => {
-    if (!projectId) {
-      ToastUtils.error("Project context is required to sync security groups.");
-      return;
-    }
-    setIsSyncing(true);
-    syncSecurityGroups(
-      { project_id: projectId, region },
-      {
-        onSuccess: () => {
-          ToastUtils.success("Security groups synced with provider.");
-        },
-        onError: (err) => {
-          ToastUtils.error(err?.message || "Failed to sync security groups.");
-        },
-        onSettled: () => {
-          setIsSyncing(false);
-        },
-      }
+    return (securityGroups ?? []).slice(
+      startIndex,
+      startIndex + ITEMS_PER_PAGE
     );
-  };
+  }, [securityGroups, currentPage]);
 
   const handleDelete = () => {
     if (!deleteModal) return;
     deleteSecurityGroup(deleteModal.id, {
       onSuccess: () => {
-        ToastUtils.success(`Deleted security group "${deleteModal.name}".`);
         setDeleteModal(null);
       },
       onError: (err) => {
-        ToastUtils.error(err?.message || "Failed to delete security group.");
+        console.error("Failed to delete Security Group:", err);
         setDeleteModal(null);
       },
     });
+  };
+
+  const handleSync = async () => {
+    if (!projectId) {
+      ToastUtils.error("Project is required to sync security groups");
+      return;
+    }
+    try {
+      await syncSecurityGroups({ project_id: projectId, region });
+      await queryClient.invalidateQueries({
+        queryKey: ["securityGroups", { projectId, region }],
+      });
+      ToastUtils.success("Security groups synced successfully!");
+    } catch (error) {
+      console.error("Failed to sync Security Groups:", error);
+      ToastUtils.error(error?.message || "Failed to sync security groups.");
+    }
   };
 
   const actions = [
@@ -123,11 +97,29 @@ const SecurityGroup = ({
       variant="primary"
       size="sm"
       onClick={() => setCreateModal(true)}
-      isDisabled={!projectId}
     >
       Add Security Group
     </ModernButton>,
   ];
+
+  const stats = useMemo(() => {
+    const base = [
+      {
+        label: "Total Security Groups",
+        value: totalItems,
+        tone: totalItems ? "primary" : "neutral",
+        icon: <ShieldCheck size={16} />,
+      },
+    ];
+    if (region) {
+      base.push({
+        label: "Region",
+        value: region,
+        tone: "info",
+      });
+    }
+    return base;
+  }, [totalItems, region]);
 
   const renderSecurityGroupCard = (securityGroup) => {
     const inboundRules =
@@ -149,11 +141,23 @@ const SecurityGroup = ({
         title={securityGroup.name || securityGroup.id}
         subtitle={securityGroup.id}
         metadata={[
-          { label: "Region", value: securityGroup.region || region || "—" },
-          { label: "Inbound Rules", value: inboundRules },
-          { label: "Outbound Rules", value: outboundRules },
+          {
+            label: "Region",
+            value: securityGroup.region || region || "—",
+          },
+          {
+            label: "Inbound Rules",
+            value: inboundRules,
+          },
+          {
+            label: "Outbound Rules",
+            value: outboundRules,
+          },
           securityGroup.description
-            ? { label: "Description", value: securityGroup.description }
+            ? {
+              label: "Description",
+              value: securityGroup.description,
+            }
             : null,
         ].filter(Boolean)}
         statuses={[
@@ -187,31 +191,6 @@ const SecurityGroup = ({
     );
   };
 
-  const handleActionRequest = () => {
-    if (!actionRequest || actionRequest.resource !== "securityGroups") return;
-    if (lastActionToken.current === actionRequest.token) return;
-    lastActionToken.current = actionRequest.token;
-
-    if (actionRequest.type === "sync") {
-      handleSync();
-    } else if (actionRequest.type === "create") {
-      setCreateModal(true);
-    }
-
-    onActionHandled?.(actionRequest);
-  };
-
-  useEffect(() => {
-    handleActionRequest();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [actionRequest]);
-
-  useEffect(() => {
-    if (!isFetching) {
-      onStatsUpdate?.(totalItems);
-    }
-  }, [isFetching, onStatsUpdate, totalItems]);
-
   return (
     <>
       <ResourceSection
@@ -221,10 +200,10 @@ const SecurityGroup = ({
         meta={stats}
         isLoading={isFetching}
       >
-        {paginatedSecurityGroups.length > 0 ? (
+        {currentSecurityGroups.length > 0 ? (
           <>
             <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-              {paginatedSecurityGroups.map(renderSecurityGroupCard)}
+              {currentSecurityGroups.map(renderSecurityGroupCard)}
             </div>
             {totalPages > 1 && (
               <div className="mt-6 flex items-center justify-between text-sm text-gray-500">
@@ -259,11 +238,7 @@ const SecurityGroup = ({
             title="No Security Groups"
             message="Create a security group or sync from your cloud account to begin defining access policies."
             action={
-              <ModernButton
-                variant="primary"
-                onClick={() => setCreateModal(true)}
-                isDisabled={!projectId}
-              >
+              <ModernButton variant="primary" onClick={() => setCreateModal(true)}>
                 New Security Group
               </ModernButton>
             }
@@ -271,19 +246,19 @@ const SecurityGroup = ({
         )}
       </ResourceSection>
 
-      <AddSG
+      <TenantAddSG
         isOpen={isCreateModalOpen}
         onClose={() => setCreateModal(false)}
         projectId={projectId}
         region={region}
       />
       <ViewSGModal
-        isOpen={Boolean(viewModal)}
+        isOpen={!!viewModal}
         onClose={() => setViewModal(null)}
         securityGroup={viewModal}
       />
       <DeleteSGModal
-        isOpen={Boolean(deleteModal)}
+        isOpen={!!deleteModal}
         onClose={() => setDeleteModal(null)}
         securityGroupName={deleteModal?.name || ""}
         onConfirm={handleDelete}

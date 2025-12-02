@@ -4,9 +4,17 @@ import api from "../../index/admin/api";
 import config from "../../config";
 import useAdminAuthStore from "../../stores/adminAuthStore";
 
-// GET: Fetch all leads
-const fetchLeads = async () => {
-  const res = await silentApi("GET", "/leads");
+// GET: Fetch all leads with optional filters
+const fetchLeads = async (params = {}) => {
+  // Build query string from params
+  const queryParams = Object.keys(params)
+    .filter((key) => params[key] !== undefined && params[key] !== null && params[key] !== "" && params[key] !== "all")
+    .map((key) => `${key}=${encodeURIComponent(params[key])}`)
+    .join("&");
+
+  const uri = `/leads${queryParams ? `?${queryParams}` : ""}`;
+
+  const res = await silentApi("GET", uri);
   if (!res.data) {
     throw new Error("Failed to fetch leads");
   }
@@ -188,11 +196,11 @@ const convertLeadToUser = async (id) => {
   return res.data;
 };
 
-// Hook to fetch all leads
-export const useFetchLeads = (options = {}) => {
+// Hook to fetch all leads with optional filters
+export const useFetchLeads = (params = {}, options = {}) => {
   return useQuery({
-    queryKey: ["admin-leads"],
-    queryFn: fetchLeads,
+    queryKey: ["admin-leads", params],
+    queryFn: () => fetchLeads(params),
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     refetchOnWindowFocus: false,
     ...options,

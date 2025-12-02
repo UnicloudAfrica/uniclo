@@ -2,13 +2,17 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import config from "../config";
 import useAdminAuthStore from "../stores/adminAuthStore";
 import useTenantAuthStore from "../stores/tenantAuthStore";
+import useClientAuthStore from "../stores/clientAuthStore";
 import ToastUtils from "../utils/toastUtil";
+import silentApi from "../index/silent";
+import silentAdminApi from "../index/admin/silent";
 
 // Determine if user is admin or tenant and get appropriate token and base URL
 const getAuthConfig = () => {
   const adminAuth = useAdminAuthStore.getState();
   const tenantAuth = useTenantAuthStore.getState();
-  
+  const clientAuth = useClientAuthStore.getState();
+
   // Check if admin is authenticated
   if (adminAuth.token) {
     return {
@@ -16,7 +20,7 @@ const getAuthConfig = () => {
       baseURL: config.adminURL // Use admin API endpoints
     };
   }
-  
+
   // Check if tenant is authenticated  
   if (tenantAuth.token) {
     return {
@@ -24,7 +28,15 @@ const getAuthConfig = () => {
       baseURL: config.tenantURL + '/admin' // Use tenant admin API endpoints
     };
   }
-  
+
+  // Check if client is authenticated
+  if (clientAuth.token) {
+    return {
+      token: clientAuth.token,
+      baseURL: config.baseURL // Use public API endpoints
+    };
+  }
+
   // No authentication - this shouldn't happen for calculator/pricing
   return {
     token: null,
@@ -54,12 +66,12 @@ const sharedApiCall = async (method, uri, body = null) => {
 
   try {
     const response = await fetch(url, options);
-    
+
     // Check if response is ok before trying to parse JSON
     if (!response.ok && response.status !== 201) {
       // Try to get error message from response
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-      
+
       try {
         const errorData = await response.json();
         errorMessage = errorData?.data?.error || errorData?.error || errorData?.message || errorMessage;
@@ -67,16 +79,16 @@ const sharedApiCall = async (method, uri, body = null) => {
         // Response might not be JSON, use status text
         console.warn('Could not parse error response as JSON:', jsonError);
       }
-      
+
       if (response.status === 401) {
         ToastUtils.error("Session expired. Please login again.");
         // Let individual auth stores handle redirect logic
         return null;
       }
-      
+
       throw new Error(errorMessage);
     }
-    
+
     // Try to parse successful response
     try {
       const res = await response.json();
@@ -85,7 +97,7 @@ const sharedApiCall = async (method, uri, body = null) => {
       console.error('Failed to parse successful response as JSON:', jsonError);
       throw new Error('Server returned invalid JSON response');
     }
-    
+
   } catch (err) {
     // Handle network errors and other fetch failures
     if (err.name === 'TypeError' && err.message.includes('fetch')) {
@@ -140,7 +152,7 @@ const calculatePricing = async (pricingData) => {
     console.log('Calculating pricing with payload:', pricingData);
     const res = await sharedApiCall("POST", "/calculator/pricing", pricingData);
     console.log('Pricing calculation response:', res);
-    
+
     // Handle different response structures
     if (res?.data) {
       return res.data;
@@ -221,15 +233,39 @@ export const useSharedMultiQuotePreviews = () => {
 // Shared Client Fetching Hook
 const fetchClients = async () => {
   const { token, baseURL } = getAuthConfig();
-  
+
   // Use appropriate endpoint based on user type
   const endpoint = baseURL.includes('/admin') ? '/clients' : '/clients';
   const res = await sharedApiCall("GET", endpoint);
-  
+
   if (!res?.data) {
     throw new Error("Failed to fetch clients");
   }
   return res.data;
+};
+
+// Shared Regions Hook
+const fetchRegions = async (mode) => {
+  if (mode === 'admin') {
+    const res = await silentAdminApi("GET", "/regions");
+    if (!res?.data) throw new Error("Failed to fetch regions");
+    return res.data;
+  } else {
+    // Use public regions endpoint for tenants/clients
+    const res = await silentApi("GET", "/regions");
+    if (!res?.data) throw new Error("Failed to fetch regions");
+    return res.data;
+  }
+};
+
+export const useSharedFetchRegions = (mode = 'client', options = {}) => {
+  return useQuery({
+    queryKey: ["shared-regions", mode],
+    queryFn: () => fetchRegions(mode),
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
 };
 
 export const useSharedClients = (tenantId = null, options = {}) => {
@@ -239,7 +275,7 @@ export const useSharedClients = (tenantId = null, options = {}) => {
     select: (data) => {
       // Filter clients based on tenantId for admin users
       if (tenantId && Array.isArray(data)) {
-        return data.filter(client => 
+        return data.filter(client =>
           client.tenant_id === parseInt(tenantId) || client.tenant_id === tenantId
         );
       }

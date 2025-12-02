@@ -21,6 +21,8 @@ import adminApi from "../../index/admin/api";
 import ToastUtils from "../../utils/toastUtil";
 import { useFetchTenants } from "../../hooks/adminHooks/tenantHooks";
 import { useFetchClients } from "../../hooks/adminHooks/clientHooks";
+import { useCustomerContext } from "../../hooks/adminHooks/useCustomerContext";
+import CustomerContextSelector from "../components/CustomerContextSelector";
 import {
   useFetchCountries,
   useFetchProductPricing,
@@ -232,9 +234,9 @@ const InstanceConfigurationCard = ({
   billingCountry,
   isLoadingResources,
   showActionRow = false,
-  onAddConfiguration = () => {},
-  onBackToWorkflow = () => {},
-  onSubmitConfigurations = () => {},
+  onAddConfiguration = () => { },
+  onBackToWorkflow = () => { },
+  onSubmitConfigurations = () => { },
   isSubmitting = false,
 }) => {
   const selectedRegion = cfg.region || "";
@@ -425,8 +427,8 @@ const InstanceConfigurationCard = ({
     const list = Array.isArray(networksResponse)
       ? networksResponse
       : Array.isArray(networksResponse?.data)
-      ? networksResponse.data
-      : [];
+        ? networksResponse.data
+        : [];
     return list
       .map((network) => {
         const value =
@@ -949,9 +951,19 @@ const AdminCreateInstance = () => {
     searchParams.get("mode") === "fast-track" ? "fast-track" : "standard";
   const [mode, setMode] = useState(initialMode);
   const [activeStep, setActiveStep] = useState(0);
-  const [assignmentType, setAssignmentType] = useState("");
-  const [selectedTenant, setSelectedTenant] = useState("");
-  const [selectedUser, setSelectedUser] = useState("");
+  const {
+    contextType,
+    setContextType,
+    selectedTenantId,
+    setSelectedTenantId,
+    selectedUserId,
+    setSelectedUserId,
+    tenants,
+    isTenantsFetching,
+    userPool,
+    isUsersFetching,
+  } = useCustomerContext();
+
   const [billingCountry, setBillingCountry] = useState("US");
   const [isCountryLocked, setIsCountryLocked] = useState(false);
   const [resources, setResources] = useState({
@@ -975,7 +987,6 @@ const AdminCreateInstance = () => {
   const adminToken = useAdminAuthStore.getState()?.token || null;
 
   const isFastTrack = mode === "fast-track";
-  const { data: tenants = [], isFetching: isTenantsLoading } = useFetchTenants();
   const { data: clients = [], isFetching: isClientsLoading } = useFetchClients();
   const { data: sharedCountries = [], isFetching: isCountriesLoading } = useFetchCountries();
   const { data: generalRegions = [], isFetching: isGeneralRegionsLoading } = useFetchGeneralRegions();
@@ -1045,14 +1056,8 @@ const AdminCreateInstance = () => {
   }, [tenants]);
 
   const clientOptions = useMemo(() => {
-    if (!Array.isArray(clients)) return [];
-    const scoped = selectedTenant
-      ? clients.filter((client) => {
-          const tId = client.tenant_id || client.tenantId || client.tenant?.id;
-          return !tId || String(tId) === String(selectedTenant);
-        })
-      : clients;
-    return scoped
+    if (!Array.isArray(userPool)) return [];
+    return userPool
       .map((client) => {
         const value = client.id ?? client.identifier ?? client.code ?? client.slug ?? "";
         if (!value) return null;
@@ -1065,17 +1070,17 @@ const AdminCreateInstance = () => {
         return { value: String(value), label, raw: client };
       })
       .filter(Boolean);
-  }, [clients, selectedTenant]);
+  }, [userPool]);
 
   const selectedTenantLabel = useMemo(() => {
-    const match = tenantOptions.find((t) => t.value === String(selectedTenant));
+    const match = tenantOptions.find((t) => t.value === String(selectedTenantId));
     return match?.label || "";
-  }, [tenantOptions, selectedTenant]);
+  }, [tenantOptions, selectedTenantId]);
 
   const selectedUserLabel = useMemo(() => {
-    const match = clientOptions.find((c) => c.value === String(selectedUser));
+    const match = clientOptions.find((c) => c.value === String(selectedUserId));
     return match?.label || "";
-  }, [clientOptions, selectedUser]);
+  }, [clientOptions, selectedUserId]);
 
   const countryOptions = useMemo(() => {
     const apiCountries = Array.isArray(sharedCountries) ? sharedCountries : [];
@@ -1085,13 +1090,13 @@ const AdminCreateInstance = () => {
           const code =
             normalizeCountryCandidate(
               item?.code ||
-                item?.iso2 ||
-                item?.country_code ||
-                item?.iso_code ||
-                item?.iso ||
-                item?.id ||
-                item?.country ||
-                ""
+              item?.iso2 ||
+              item?.country_code ||
+              item?.iso_code ||
+              item?.iso ||
+              item?.id ||
+              item?.country ||
+              ""
             ) || "";
           if (!code) return null;
           const upper = code.toUpperCase();
@@ -1145,16 +1150,16 @@ const AdminCreateInstance = () => {
   }, [countryOptions, billingCountry]);
 
   const assignmentSummary = useMemo(() => {
-    if (assignmentType === "tenant") {
-      if (!selectedTenant) return "Select tenant";
+    if (contextType === "tenant") {
+      if (!selectedTenantId) return "Select tenant";
       return selectedTenantLabel || "Tenant selected";
     }
-    if (assignmentType === "user") {
-      if (!selectedUser) return "Select user";
+    if (contextType === "user") {
+      if (!selectedUserId) return "Select user";
       return selectedUserLabel || "User selected";
     }
     return "Unassigned";
-  }, [assignmentType, selectedTenantLabel, selectedUserLabel]);
+  }, [contextType, selectedTenantLabel, selectedUserId, selectedUserLabel]);
 
   const regionSelectOptions = useMemo(() => {
     const primary = Array.isArray(generalRegions) && generalRegions.length > 0 ? generalRegions : resources.regions || [];
@@ -1318,55 +1323,55 @@ const AdminCreateInstance = () => {
 
   let summaryGrandTotalValue = toNumber(
     paymentBreakdown?.total ??
-      paymentBreakdown?.grand_total ??
-      paymentBreakdown?.amount_due ??
-      effectivePaymentOption?.charge_breakdown?.total ??
-      effectivePaymentOption?.charge_breakdown?.amount_due ??
-      effectivePaymentOption?.total ??
-      effectivePaymentOption?.amount ??
-      effectivePaymentOption?.payable_amount ??
-      orderReceipt?.order?.total ??
-      submissionResult?.order?.total ??
-      orderReceipt?.transaction?.amount ??
-      submissionResult?.transaction?.amount ??
-      0
+    paymentBreakdown?.grand_total ??
+    paymentBreakdown?.amount_due ??
+    effectivePaymentOption?.charge_breakdown?.total ??
+    effectivePaymentOption?.charge_breakdown?.amount_due ??
+    effectivePaymentOption?.total ??
+    effectivePaymentOption?.amount ??
+    effectivePaymentOption?.payable_amount ??
+    orderReceipt?.order?.total ??
+    submissionResult?.order?.total ??
+    orderReceipt?.transaction?.amount ??
+    submissionResult?.transaction?.amount ??
+    0
   );
   let summarySubtotalValue = toNumber(
     paymentBreakdown?.subtotal ??
-      paymentBreakdown?.base_amount ??
-      paymentBreakdown?.amount_before_fees ??
-      effectivePaymentOption?.charge_breakdown?.subtotal ??
-      effectivePaymentOption?.charge_breakdown?.base_amount ??
-      effectivePaymentOption?.subtotal ??
-      effectivePaymentOption?.base_amount ??
-      orderReceipt?.order?.subtotal ??
-      submissionResult?.order?.subtotal ??
-      0
+    paymentBreakdown?.base_amount ??
+    paymentBreakdown?.amount_before_fees ??
+    effectivePaymentOption?.charge_breakdown?.subtotal ??
+    effectivePaymentOption?.charge_breakdown?.base_amount ??
+    effectivePaymentOption?.subtotal ??
+    effectivePaymentOption?.base_amount ??
+    orderReceipt?.order?.subtotal ??
+    submissionResult?.order?.subtotal ??
+    0
   );
   let summaryTaxValue = toNumber(
     paymentBreakdown?.tax ??
-      paymentBreakdown?.taxes ??
-      paymentBreakdown?.tax_amount ??
-      paymentBreakdown?.vat ??
-      effectivePaymentOption?.charge_breakdown?.tax ??
-      effectivePaymentOption?.charge_breakdown?.tax_amount ??
-      effectivePaymentOption?.tax ??
-      effectivePaymentOption?.taxes ??
-      orderReceipt?.order?.tax_total ??
-      submissionResult?.order?.tax_total ??
-      0
+    paymentBreakdown?.taxes ??
+    paymentBreakdown?.tax_amount ??
+    paymentBreakdown?.vat ??
+    effectivePaymentOption?.charge_breakdown?.tax ??
+    effectivePaymentOption?.charge_breakdown?.tax_amount ??
+    effectivePaymentOption?.tax ??
+    effectivePaymentOption?.taxes ??
+    orderReceipt?.order?.tax_total ??
+    submissionResult?.order?.tax_total ??
+    0
   );
   let summaryGatewayFeesValue = toNumber(
     paymentBreakdown?.gateway_fees ??
-      paymentBreakdown?.fees ??
-      paymentBreakdown?.gatewayFees ??
-      paymentBreakdown?.processing_fee ??
-      effectivePaymentOption?.charge_breakdown?.total_fees ??
-      effectivePaymentOption?.total_fees ??
-      effectivePaymentOption?.fees ??
-      orderReceipt?.order?.gateway_fees ??
-      submissionResult?.order?.gateway_fees ??
-      0
+    paymentBreakdown?.fees ??
+    paymentBreakdown?.gatewayFees ??
+    paymentBreakdown?.processing_fee ??
+    effectivePaymentOption?.charge_breakdown?.total_fees ??
+    effectivePaymentOption?.total_fees ??
+    effectivePaymentOption?.fees ??
+    orderReceipt?.order?.gateway_fees ??
+    submissionResult?.order?.gateway_fees ??
+    0
   );
 
   const taxRateCandidates = [
@@ -1495,11 +1500,10 @@ const AdminCreateInstance = () => {
                       <p className="text-xs text-slate-500">{summary.regionLabel}</p>
                     </div>
                     <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${
-                        summary.isComplete
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-amber-50 text-amber-700"
-                      }`}
+                      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${summary.isComplete
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "bg-amber-50 text-amber-700"
+                        }`}
                     >
                       {summary.statusLabel}
                     </span>
@@ -1599,12 +1603,12 @@ const AdminCreateInstance = () => {
                 {summaryDisplayCurrency} {formatCurrencyValue(summarySubtotalValue)}
               </span>
             </div>
-          <div className="flex items-center justify-between">
-            <span>{estimatedTaxLabel}</span>
-            <span className="font-semibold text-slate-900">
-              {summaryDisplayCurrency} {formatCurrencyValue(summaryTaxValue)}
-            </span>
-          </div>
+            <div className="flex items-center justify-between">
+              <span>{estimatedTaxLabel}</span>
+              <span className="font-semibold text-slate-900">
+                {summaryDisplayCurrency} {formatCurrencyValue(summaryTaxValue)}
+              </span>
+            </div>
             <div className="flex items-center justify-between">
               <span>Gateway fees</span>
               <span className="font-semibold text-slate-900">
@@ -1711,9 +1715,9 @@ const AdminCreateInstance = () => {
     summaryDisplayCurrency;
   const paymentAmountLabel = formatCurrencyValue(
     effectivePaymentOption?.charge_breakdown?.total ??
-      effectivePaymentOption?.total ??
-      effectivePaymentOption?.amount ??
-      summaryGrandTotalValue
+    effectivePaymentOption?.total ??
+    effectivePaymentOption?.amount ??
+    summaryGrandTotalValue
   );
   const paymentTransactionLabel =
     effectivePaymentOption?.transaction_reference ||
@@ -1734,12 +1738,12 @@ const AdminCreateInstance = () => {
     "—";
 
   useEffect(() => {
-    if (assignmentType === "tenant") {
-      if (!selectedTenant) {
+    if (contextType === "tenant") {
+      if (!selectedTenantId) {
         setIsCountryLocked(false);
         return;
       }
-      const tenantEntry = tenantOptions.find((option) => option.value === String(selectedTenant));
+      const tenantEntry = tenantOptions.find((option) => option.value === String(selectedTenantId));
       const tenantCountry = resolveCountryCodeFromEntity(tenantEntry?.raw, countryOptions);
       if (tenantCountry) {
         setIsCountryLocked(true);
@@ -1752,17 +1756,17 @@ const AdminCreateInstance = () => {
       return;
     }
 
-    if (assignmentType === "user") {
-      if (!selectedTenant && !selectedUser) {
+    if (contextType === "user") {
+      if (!selectedTenantId && !selectedUserId) {
         setIsCountryLocked(false);
         return;
       }
 
-      const userEntry = clientOptions.find((client) => client.value === String(selectedUser));
+      const userEntry = clientOptions.find((client) => client.value === String(selectedUserId));
       let detectedCountry = resolveCountryCodeFromEntity(userEntry?.raw, countryOptions);
 
-      if (!detectedCountry && selectedTenant) {
-        const tenantEntry = tenantOptions.find((option) => option.value === String(selectedTenant));
+      if (!detectedCountry && selectedTenantId) {
+        const tenantEntry = tenantOptions.find((option) => option.value === String(selectedTenantId));
         detectedCountry = resolveCountryCodeFromEntity(tenantEntry?.raw, countryOptions);
       }
 
@@ -1778,7 +1782,7 @@ const AdminCreateInstance = () => {
     }
 
     setIsCountryLocked(false);
-  }, [assignmentType, selectedTenant, selectedUser, tenantOptions, clientOptions, countryOptions]);
+  }, [contextType, selectedTenantId, selectedUserId, tenantOptions, clientOptions, countryOptions]);
 
   const handleModeChange = (nextMode) => {
     if (nextMode === mode) return;
@@ -1972,13 +1976,22 @@ const AdminCreateInstance = () => {
 
     const anyFastTrack = isFastTrack || pricing_requests.some((req) => req.fast_track);
 
-    return {
-      customer_tenant_id: assignmentType === "tenant" ? selectedTenant : null,
-      customer_user_id: assignmentType === "user" ? selectedUser : null,
+    const payload = {
       fast_track: anyFastTrack,
       country_iso: billingCountry || undefined,
       pricing_requests,
     };
+
+    if (contextType === "tenant" && selectedTenantId) {
+      payload.tenant_id = selectedTenantId;
+    } else if (contextType === "user" && selectedUserId) {
+      payload.client_id = selectedUserId;
+      if (selectedTenantId) {
+        payload.tenant_id = selectedTenantId;
+      }
+    }
+
+    return payload;
   };
 
   const handlePaymentCompleted = useCallback(
@@ -2123,8 +2136,8 @@ const AdminCreateInstance = () => {
       const data = res?.data || res;
       const normalizedGatewayOptions = normalizePaymentOptions(
         data?.payment?.payment_gateway_options ||
-          data?.payment?.options ||
-          data?.payment_options
+        data?.payment?.options ||
+        data?.payment_options
       );
       const pricingBreakdownPayload =
         data?.pricing_breakdown ||
@@ -2133,12 +2146,12 @@ const AdminCreateInstance = () => {
         null;
       const mergedTransaction = data?.transaction
         ? {
-            ...data.transaction,
-            metadata: {
-              ...(data.transaction.metadata || {}),
-              ...(pricingBreakdownPayload ? { pricing_breakdown: pricingBreakdownPayload } : {}),
-            },
-          }
+          ...data.transaction,
+          metadata: {
+            ...(data.transaction.metadata || {}),
+            ...(pricingBreakdownPayload ? { pricing_breakdown: pricingBreakdownPayload } : {}),
+          },
+        }
         : null;
       const mergedResult = {
         ...data,
@@ -2160,9 +2173,9 @@ const AdminCreateInstance = () => {
       setSelectedPaymentOption(normalizedGatewayOptions[0] || null);
       ToastUtils.success(
         mergedResult?.message ||
-          (mergedResult?.payment?.required
-            ? "Order created. Complete payment to proceed."
-            : "Instances initiated.")
+        (mergedResult?.payment?.required
+          ? "Order created. Complete payment to proceed."
+          : "Instances initiated.")
       );
       if (payload.fast_track) {
         setActiveStep(steps.length - 1);
@@ -2302,7 +2315,7 @@ const AdminCreateInstance = () => {
                       ? "border-sky-200 bg-sky-50"
                       : "border-slate-200 hover:border-slate-300",
                   ].join(" ")}
-                  >
+                >
                   <div className="flex items-center gap-2 text-slate-900">
                     <span className="text-sm font-semibold">
                       {index + 1}
@@ -2348,100 +2361,29 @@ const AdminCreateInstance = () => {
                 </div>
                 <StatusPill
                   label={
-                    assignmentType === "tenant"
+                    contextType === "tenant" && selectedTenantId
                       ? "Tenant"
-                      : assignmentType === "user"
-                      ? "User"
-                      : "Unassigned"
+                      : contextType === "user" && selectedUserId
+                        ? "User"
+                        : "Unassigned"
                   }
-                  tone={assignmentType ? "info" : "neutral"}
+                  tone={contextType ? "info" : "neutral"}
                 />
               </div>
 
               <div className="space-y-5">
-                <div className="flex flex-wrap items-center gap-2">
-                  {[
-                    { value: "", label: "Unassigned" },
-                    { value: "tenant", label: "Tenant" },
-                    { value: "user", label: "User" },
-                  ].map((option) => (
-                    <button
-                      key={option.value || "none"}
-                      type="button"
-                      onClick={() => {
-                        setAssignmentType(option.value);
-                        setSelectedTenant("");
-                        setSelectedUser("");
-                      }}
-                      className={[
-                        "rounded-2xl border px-3 py-2 text-sm font-medium transition",
-                        assignmentType === option.value
-                          ? "border-primary-400 bg-primary-50 text-primary-700"
-                          : "border-slate-200 bg-white text-slate-600 hover:border-primary-200",
-                      ].join(" ")}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-3">
-                  <ModernSelect
-                    label="Assignment"
-                    value={assignmentType}
-                  onChange={(event) => {
-                    setAssignmentType(event.target.value);
-                    setSelectedTenant("");
-                    setSelectedUser("");
-                  }}
-                  options={[
-                    { value: "", label: "Unassigned" },
-                    { value: "tenant", label: "Tenant" },
-                    { value: "user", label: "User" },
-                  ]}
-                  helper="Route this order to a tenant or user when you need visibility."
+                <CustomerContextSelector
+                  contextType={contextType}
+                  setContextType={setContextType}
+                  selectedTenantId={selectedTenantId}
+                  setSelectedTenantId={setSelectedTenantId}
+                  selectedUserId={selectedUserId}
+                  setSelectedUserId={setSelectedUserId}
+                  tenants={tenants}
+                  isTenantsFetching={isTenantsFetching}
+                  userPool={userPool}
+                  isUsersFetching={isUsersFetching}
                 />
-                <ModernSelect
-                  label="Tenant"
-                  value={selectedTenant}
-                  onChange={(event) => {
-                    setSelectedTenant(event.target.value);
-                    setSelectedUser("");
-                  }}
-                  options={[
-                    { value: "", label: assignmentType ? "Select tenant" : "Choose assignment" },
-                    ...tenantOptions,
-                  ]}
-                  disabled={!assignmentType || isTenantsLoading}
-                  helper={
-                    assignmentType
-                      ? "Tenant workspace to receive this order."
-                      : "Choose assignment type first."
-                  }
-                />
-                <ModernSelect
-                  label="User"
-                  value={selectedUser}
-                  onChange={(event) => setSelectedUser(event.target.value)}
-                  options={[
-                    { value: "", label: assignmentType === "user" ? "Select user" : "Choose assignment" },
-                    ...clientOptions,
-                  ]}
-                  disabled={assignmentType !== "user" || isClientsLoading}
-                  helper={
-                    assignmentType === "user"
-                      ? "Only required for user assignments."
-                      : "Select assignment type first."
-                  }
-                  />
-                </div>
-
-                <p className="text-xs text-slate-600">
-                  Current assignment:{" "}
-                  <span className="font-semibold text-slate-800">
-                    {assignmentType || "Unassigned"}
-                  </span>
-                </p>
 
                 <ModernSelect
                   label="Billing country"

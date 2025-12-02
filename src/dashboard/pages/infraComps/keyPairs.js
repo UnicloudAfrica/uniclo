@@ -1,41 +1,30 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { MapPin, RefreshCw, Trash2, KeyRound } from "lucide-react";
+import {
+  useDeleteTenantKeyPair,
+  useFetchTenantKeyPairs,
+  useSyncTenantKeyPairs,
+} from "../../../hooks/keyPairsHook";
 import ModernButton from "../../../adminDashboard/components/ModernButton";
 import ResourceSection from "../../../adminDashboard/components/ResourceSection";
 import ResourceEmptyState from "../../../adminDashboard/components/ResourceEmptyState";
 import ResourceListCard from "../../../adminDashboard/components/ResourceListCard";
-import {
-  useFetchTenantKeyPairs,
-  useDeleteTenantKeyPair,
-  useSyncTenantKeyPairs,
-} from "../../../hooks/keyPairsHook";
-import AddKeyTenantPair from "../keyPairComps/addKeyPair";
-import DeleteKeyPairModal from "../keyPairComps/deleteKeyPair";
+import TenantAddKeyPair from "../keyPairComps/TenantAddKeyPair";
+import DeleteKeyPairModal from "../../../adminDashboard/pages/keyPairComps/deleteKeyPair";
 import ToastUtils from "../../../utils/toastUtil";
 
 const ITEMS_PER_PAGE = 6;
 
-const KeyPairs = ({
-  projectId = "",
-  region = "",
-  actionRequest,
-  onActionHandled,
-  onStatsUpdate,
-}) => {
-  const { data: keyPairs, isFetching } = useFetchTenantKeyPairs(
-    projectId,
-    region
-  );
-  const { mutate: deleteKeyPair, isPending: isDeleting } =
-    useDeleteTenantKeyPair();
-  const { mutate: syncKeyPairs } = useSyncTenantKeyPairs();
+const KeyPairs = ({ projectId = "", region = "", onStatsUpdate }) => {
+  const queryClient = useQueryClient();
+  const { data: keyPairs, isFetching } = useFetchTenantKeyPairs(projectId, region);
+  const { mutate: deleteKeyPair, isPending: isDeleting } = useDeleteTenantKeyPair();
+  const { mutateAsync: syncKeyPairs, isPending: isSyncing } = useSyncTenantKeyPairs();
 
   const [isCreateModalOpen, setCreateModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(null);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-
-  const lastActionToken = useRef(null);
 
   const totalItems = keyPairs?.length ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
@@ -43,6 +32,10 @@ const KeyPairs = ({
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return (keyPairs ?? []).slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [keyPairs, currentPage]);
+
+  useEffect(() => {
+    onStatsUpdate?.(totalItems);
+  }, [totalItems, onStatsUpdate]);
 
   const stats = useMemo(() => {
     const baseStats = [
@@ -64,26 +57,21 @@ const KeyPairs = ({
     return baseStats;
   }, [totalItems, region]);
 
-  const handleSync = () => {
+  const handleSync = async () => {
     if (!projectId) {
       ToastUtils.error("Provide a project before syncing key pairs.");
       return;
     }
-    setIsSyncing(true);
-    syncKeyPairs(
-      { project_id: projectId, region },
-      {
-        onSuccess: () => {
-          ToastUtils.success("Key pairs synced with provider.");
-        },
-        onError: (err) => {
-          ToastUtils.error(err?.message || "Failed to sync key pairs.");
-        },
-        onSettled: () => {
-          setIsSyncing(false);
-        },
-      }
-    );
+    try {
+      await syncKeyPairs({ project_id: projectId, region });
+      // Invalidation is handled by the hook, but we can double check
+      await queryClient.invalidateQueries({
+        queryKey: ["keyPairs", { projectId, region }],
+      });
+      ToastUtils.success("Key pairs synced successfully.");
+    } catch (error) {
+      ToastUtils.error(error?.message || "Unable to sync key pairs.");
+    }
   };
 
   const handleDelete = () => {
@@ -91,6 +79,9 @@ const KeyPairs = ({
     deleteKeyPair(deleteModal.id, {
       onSuccess: () => {
         ToastUtils.success(`Deleted key pair "${deleteModal.name}".`);
+        queryClient.invalidateQueries({
+          queryKey: ["keyPairs", { projectId, region }],
+        });
         setDeleteModal(null);
       },
       onError: (error) => {
@@ -117,7 +108,6 @@ const KeyPairs = ({
       variant="primary"
       size="sm"
       onClick={() => setCreateModal(true)}
-      isDisabled={!projectId}
     >
       Add Key Pair
     </ModernButton>,
@@ -132,15 +122,14 @@ const KeyPairs = ({
         { label: "Region", value: keyPair.region || region || "—" },
         keyPair.created_at
           ? {
-              label: "Created",
-              value: new Date(keyPair.created_at).toLocaleString(),
-            }
+            label: "Created",
+            value: new Date(keyPair.created_at).toLocaleString(),
+          }
           : null,
       ].filter(Boolean)}
       actions={[
         {
           key: "remove",
-          label: "Remove",
           icon: <Trash2 size={16} />,
           variant: "danger",
           onClick: () =>
@@ -149,35 +138,11 @@ const KeyPairs = ({
               name: keyPair.name,
             }),
           disabled: isDeleting,
+          title: "Remove Key Pair",
         },
       ]}
     />
   );
-
-  const handleActionRequest = () => {
-    if (!actionRequest || actionRequest.resource !== "keyPairs") return;
-    if (lastActionToken.current === actionRequest.token) return;
-    lastActionToken.current = actionRequest.token;
-
-    if (actionRequest.type === "sync") {
-      handleSync();
-    } else if (actionRequest.type === "create") {
-      setCreateModal(true);
-    }
-
-    onActionHandled?.(actionRequest);
-  };
-
-  useEffect(() => {
-    handleActionRequest();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [actionRequest]);
-
-  useEffect(() => {
-    if (!isFetching) {
-      onStatsUpdate?.(totalItems);
-    }
-  }, [isFetching, onStatsUpdate, totalItems]);
 
   return (
     <>
@@ -227,11 +192,7 @@ const KeyPairs = ({
             title="No Key Pairs"
             message="Synchronize key pairs from your cloud account or create a new key pair for secure SSH operations."
             action={
-              <ModernButton
-                variant="primary"
-                onClick={() => setCreateModal(true)}
-                isDisabled={!projectId}
-              >
+              <ModernButton variant="primary" onClick={() => setCreateModal(true)}>
                 Create Key Pair
               </ModernButton>
             }
@@ -239,12 +200,13 @@ const KeyPairs = ({
         )}
       </ResourceSection>
 
-      <AddKeyTenantPair
+      <TenantAddKeyPair
         isOpen={isCreateModalOpen}
         onClose={() => setCreateModal(false)}
         projectId={projectId}
         region={region}
       />
+
       <DeleteKeyPairModal
         isOpen={Boolean(deleteModal)}
         onClose={() => setDeleteModal(null)}

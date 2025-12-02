@@ -1,6 +1,18 @@
 import { useMutation } from "@tanstack/react-query";
 import api from "../index/api";
 
+const tryTwoFactorEndpoints = async (attempts = []) => {
+  let lastError;
+  for (const attempt of attempts) {
+    try {
+      return await api(attempt.method, attempt.path, attempt.body);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError;
+};
+
 // **POST**: Create a new account
 const createAccount = async (userData) => {
   return await api("POST", "/business/auth/register", userData);
@@ -24,16 +36,22 @@ const resendOTP = async (userData) => {
   return await api("POST", "/business/auth/send-email", userData);
 };
 
-const setupTwoFactor = async () => {
-  return await api("GET", "/business/2fa-setup");
+const setupTwoFactor = async (payload = {}) => {
+  return await tryTwoFactorEndpoints([
+    { method: "GET", path: "/2fa-setup" },
+  ]);
 };
 
 const enableTwoFactor = async (payload) => {
-  return await api("POST", "/business/2fa-enable", payload);
+  return await tryTwoFactorEndpoints([
+    { method: "POST", path: "/2fa-enable", body: payload },
+  ]);
 };
 
 const disableTwoFactor = async (payload) => {
-  return await api("POST", "/business/2fa-disable", payload);
+  return await tryTwoFactorEndpoints([
+    { method: "POST", path: "/2fa-disable", body: payload },
+  ]);
 };
 
 // Hook to create a new account

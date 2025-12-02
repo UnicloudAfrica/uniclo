@@ -266,9 +266,9 @@ const AddPartner = ({ isOpen, onClose, mode = "modal" }) => {
   const toTitle = (value) =>
     value
       ? value
-          .toString()
-          .replace(/[_-]+/g, " ")
-          .replace(/\b\w/g, (char) => char.toUpperCase())
+        .toString()
+        .replace(/[_-]+/g, " ")
+        .replace(/\b\w/g, (char) => char.toUpperCase())
       : "Not provided";
 
   const ActiveStep = steps[currentStep].component;
@@ -493,7 +493,7 @@ const AddPartner = ({ isOpen, onClose, mode = "modal" }) => {
       meta={meta}
       aside={asideContent}
       footer={footer}
-      maxWidthClass="max-w-6xl"
+      maxWidthClass="max-w-8xl"
     >
       {activeStepContent}
     </FormLayout>

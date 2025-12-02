@@ -11,6 +11,7 @@ import {
   CheckCircle,
   Briefcase,
   ArrowRight,
+  HardDrive,
 } from "lucide-react";
 import ModernCard from "../../components/ModernCard";
 import ModernButton from "../../components/ModernButton";
@@ -75,8 +76,8 @@ const CalculatorSummaryStep = ({ calculatorData, pricingResult, onRecalculate })
     quantity: Number(line.quantity || 0),
     unit_price: Number(
       line.unit_price ??
-        line.unit_amount ??
-        0
+      line.unit_amount ??
+      0
     ),
     total: Number(line.total || 0),
     currency: line.currency || primaryCurrency,
@@ -116,9 +117,9 @@ const CalculatorSummaryStep = ({ calculatorData, pricingResult, onRecalculate })
   const storageSubtotal = hasApiStorage
     ? Number(apiStorage.subtotal || 0)
     : storageLines.reduce(
-        (sum, line) => sum + Number(line.total || 0),
-        0
-      );
+      (sum, line) => sum + Number(line.total || 0),
+      0
+    );
 
   const baseSubtotal = Number(pricingMeta?.subtotal || 0);
   const baseTax = Number(pricingMeta?.tax || 0);
@@ -145,12 +146,18 @@ const CalculatorSummaryStep = ({ calculatorData, pricingResult, onRecalculate })
     combinedTotal = Number(pricingMeta?.total || 0) + storageSubtotal + storageTax;
   }
 
+  const effectiveTaxRate = baseSubtotal > 0 ? baseTax / baseSubtotal : 0;
+
   const storageMonthly = storageLines.reduce((sum, line) => {
     const months = line.term_months || line.meta?.object_storage?.months || 1;
     return sum + (months > 0 ? Number(line.total || 0) / months : Number(line.total || 0));
   }, 0);
+
+  // Apply tax to storage monthly
+  const storageMonthlyWithTax = storageMonthly * (1 + effectiveTaxRate);
+
   const combinedMonthly =
-    Number(pricingMeta?.monthly_total || 0) + storageMonthly;
+    Number(pricingMeta?.monthly_total || 0) + storageMonthlyWithTax;
   const combinedTotalFormatted = formatCurrency(combinedTotal, primaryCurrency);
 
   const {
@@ -159,27 +166,27 @@ const CalculatorSummaryStep = ({ calculatorData, pricingResult, onRecalculate })
   } = useFetchCountries();
   const countryOptions = Array.isArray(countries)
     ? countries
-        .map((country, index) => {
-          if (!country) return null;
-          if (typeof country === "string") {
-            return {
-              key: `country-${index}-${country}`,
-              value: country,
-              label: country,
-            };
-          }
-          const name =
-            country.name || country.country || country.code || country.iso2;
-          if (!name) return null;
-          const emoji = country.emoji || country.flag || null;
-          const label = [emoji, name].filter(Boolean).join(" ").trim();
+      .map((country, index) => {
+        if (!country) return null;
+        if (typeof country === "string") {
           return {
-            key: country.id || country.code || name || `country-${index}`,
-            value: name,
-            label: label || name,
+            key: `country-${index}-${country}`,
+            value: country,
+            label: country,
           };
-        })
-        .filter(Boolean)
+        }
+        const name =
+          country.name || country.country || country.code || country.iso2;
+        if (!name) return null;
+        const emoji = country.emoji || country.flag || null;
+        const label = [emoji, name].filter(Boolean).join(" ").trim();
+        return {
+          key: country.id || country.code || name || `country-${index}`,
+          value: name,
+          label: label || name,
+        };
+      })
+      .filter(Boolean)
     : [];
 
   const computeConfigurations = calculatorData.pricing_requests.length;
@@ -190,16 +197,22 @@ const CalculatorSummaryStep = ({ calculatorData, pricingResult, onRecalculate })
   const totalRegions = hasApiStorage
     ? new Set(summaryMeta.regions || []).size
     : new Set([
-        ...calculatorData.pricing_requests.map((req) => req.region),
-        ...storageItems.map((item) => item.region),
-      ]).size;
+      ...calculatorData.pricing_requests.map((req) => req.region),
+      ...storageItems.map((item) => item.region),
+    ]).size;
 
   const invoicePayloadBase = (additional = {}) => {
     const payload = {
       ...additional,
       pricing_requests: calculatorData.pricing_requests.map((req) => {
-        const { _display, ...rest } = req;
-        return rest;
+        const { _display, volumes, ...rest } = req;
+        return {
+          ...rest,
+          volume_types: volumes?.map((vol) => ({
+            volume_type_id: vol.volume_type_id,
+            storage_size_gb: vol.storage_size_gb,
+          })) || [],
+        };
       }),
     };
 
@@ -207,7 +220,10 @@ const CalculatorSummaryStep = ({ calculatorData, pricingResult, onRecalculate })
       payload.object_storage_items = calculatorData.object_storage_items.map(
         (item) => {
           const { _display, ...rest } = item;
-          return rest;
+          return {
+            ...rest,
+            productable_id: item.tier_id,
+          };
         }
       );
     }
@@ -250,6 +266,9 @@ const CalculatorSummaryStep = ({ calculatorData, pricingResult, onRecalculate })
       notes: invoiceData.notes,
       tenant_id: calculatorData.tenant_id || null,
       create_lead: true,
+      // Add root level fields to prevent backend errors with empty strings
+      first_name: invoiceData.bill_to_name?.split(" ")[0] || "",
+      last_name: invoiceData.bill_to_name?.split(" ").slice(1).join(" ") || "",
       lead_info: {
         first_name: invoiceData.bill_to_name?.split(" ")[0] || "",
         last_name: invoiceData.bill_to_name?.split(" ").slice(1).join(" ") || "",
@@ -307,15 +326,19 @@ const CalculatorSummaryStep = ({ calculatorData, pricingResult, onRecalculate })
 
     const payload = invoicePayloadBase({
       tenant_id: calculatorData.tenant_id || null,
-      subject: `Calculator Lead - ${
-        combinedTotal > 0 ? combinedTotalFormatted : "Quote Request"
-      }`,
+      subject: `Calculator Lead - ${combinedTotal > 0 ? combinedTotalFormatted : "Quote Request"
+        }`,
       email: leadData.email,
       bill_to_name: `${leadData.first_name} ${leadData.last_name}`,
       notes: leadData.company
         ? `Lead created from advanced calculator for ${leadData.company}. Estimated total: ${combinedTotalFormatted}.`
         : `Lead created from advanced calculator. Estimated total: ${combinedTotalFormatted}.`,
       create_lead: true,
+      // Add root level fields to prevent backend errors with empty strings
+      first_name: leadData.first_name,
+      last_name: leadData.last_name,
+      phone: leadData.phone,
+      company: leadData.company,
       lead_info: {
         first_name: leadData.first_name,
         last_name: leadData.last_name,
@@ -363,9 +386,9 @@ const CalculatorSummaryStep = ({ calculatorData, pricingResult, onRecalculate })
           ? calculatorData.total_discount_type === "percent"
             ? `${calculatorData.total_discount_value}%`
             : formatCurrency(
-                calculatorData.total_discount_value,
-                primaryCurrency
-              )
+              calculatorData.total_discount_value,
+              primaryCurrency
+            )
           : "None",
       tone: calculatorData.apply_total_discount ? "success" : undefined,
     },
@@ -461,8 +484,17 @@ const CalculatorSummaryStep = ({ calculatorData, pricingResult, onRecalculate })
                     {item._display?.compute || "Compute"}
                   </span>{" "}
                   • {formatRegionName(item.region)} • {item.number_of_instances}{" "}
-                  instance{item.number_of_instances === 1 ? "" : "s"} for{" "}
-                  {item.months} month{item.months === 1 ? "" : "s"}
+                  instance{item.number_of_instances === 1 ? "" : "s"}
+                  {item.volume_types?.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-2">
+                      {item.volume_types.map((vol, vIdx) => (
+                        <span key={vIdx} className="inline-flex items-center gap-1 rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+                          <HardDrive className="h-3 w-3" />
+                          {vol.storage_size_gb}GB
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
               {storageItems.map((item, idx) => (

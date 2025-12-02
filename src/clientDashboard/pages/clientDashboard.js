@@ -268,8 +268,9 @@ export default function ClientDashboard() {
   );
 
   const accentGradient = useMemo(() => {
-    const start = theme?.themeColor || "var(--theme-color)";
-    const end = theme?.secondaryColor || "var(--secondary-color)";
+    // Default to admin colors if theme is missing or using old defaults
+    const start = theme?.themeColor || "#1C1C1C";
+    const end = theme?.secondaryColor || "#14547F";
     return `linear-gradient(135deg, ${start} 0%, ${end} 100%)`;
   }, [theme?.themeColor, theme?.secondaryColor]);
 

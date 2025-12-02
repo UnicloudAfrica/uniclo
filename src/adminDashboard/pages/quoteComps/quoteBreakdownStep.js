@@ -96,7 +96,7 @@ const QuoteBreakdownStep = ({ apiResponse }) => {
           return (
             <ModernCard
               key={invoice.invoice_number}
-              padding="lg"
+              padding="xl"
               className="space-y-6"
             >
               <div className="flex flex-wrap items-start justify-between gap-4">

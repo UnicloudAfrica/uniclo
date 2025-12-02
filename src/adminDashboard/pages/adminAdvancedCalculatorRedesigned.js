@@ -13,6 +13,8 @@ import { useFetchClients } from "../../hooks/adminHooks/clientHooks";
 import AdminPageShell from "../components/AdminPageShell";
 import ModernCard from "../components/ModernCard";
 import ModernButton from "../components/ModernButton";
+import { useCustomerContext } from "../../hooks/adminHooks/useCustomerContext";
+import CustomerContextSelector from "../components/CustomerContextSelector";
 
 const AdminAdvancedCalculatorRedesigned = () => {
   const navigate = useNavigate();
@@ -31,9 +33,22 @@ const AdminAdvancedCalculatorRedesigned = () => {
     currency_code: "USD",
   });
 
-  const [assignType, setAssignType] = useState("");
-  const [selectedTenantId, setSelectedTenantId] = useState("");
-  const [selectedUserId, setSelectedUserId] = useState("");
+  const {
+    contextType,
+    setContextType,
+    selectedTenantId,
+    setSelectedTenantId,
+    selectedUserId,
+    setSelectedUserId,
+    tenants,
+    isTenantsFetching,
+    userPool,
+    isUsersFetching,
+  } = useCustomerContext();
+
+  // const [assignType, setAssignType] = useState("");
+  // const [selectedTenantId, setSelectedTenantId] = useState("");
+  // const [selectedUserId, setSelectedUserId] = useState("");
 
   const [pricingResult, setPricingResult] = useState(null);
   const [errors, setErrors] = useState({});
@@ -46,16 +61,16 @@ const AdminAdvancedCalculatorRedesigned = () => {
   const { mutate: calculatePricingMutation, isPending: isCalculatingMutation } =
     useSharedCalculatorPricing();
 
-  const { data: tenants = [] } = useFetchTenants();
-  const { data: adminClients = [] } = useFetchClients();
-  const { data: tenantClients = [] } = useSharedClients(selectedTenantId, {
-    enabled: !!selectedTenantId,
-  });
+  // const { data: tenants = [] } = useFetchTenants();
+  // const { data: adminClients = [] } = useFetchClients();
+  // const { data: tenantClients = [] } = useSharedClients(selectedTenantId, {
+  //   enabled: !!selectedTenantId,
+  // });
 
-  const updateCalculatorData = (field, value) => {
+  const updateCalculatorData = React.useCallback((field, value) => {
     setCalculatorData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: null }));
-  };
+  }, []);
 
   const handleCountryChange = (countryCode, currencyCode) => {
     const normalizedCountry = countryCode ? countryCode.toUpperCase() : "";
@@ -166,9 +181,9 @@ const AdminAdvancedCalculatorRedesigned = () => {
       return;
     }
 
-    if (assignType === "tenant" && selectedTenantId) {
+    if (contextType === "tenant" && selectedTenantId) {
       payload.tenant_id = selectedTenantId;
-    } else if (assignType === "user" && selectedUserId) {
+    } else if (contextType === "user" && selectedUserId) {
       payload.client_id = selectedUserId;
       if (selectedTenantId) payload.tenant_id = selectedTenantId;
     }
@@ -207,7 +222,7 @@ const AdminAdvancedCalculatorRedesigned = () => {
       },
     });
   };
-  
+
   const handlePrimaryAction = () => {
     if (isFinalStep) {
       navigate("/admin-dashboard");
@@ -215,7 +230,7 @@ const AdminAdvancedCalculatorRedesigned = () => {
     }
     calculatePricing();
   };
-  
+
   const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
 
   const renderStep = () => {
@@ -248,21 +263,21 @@ const AdminAdvancedCalculatorRedesigned = () => {
     );
   };
 
-  const selectedTenant = tenants.find(
-    (tenant) => String(tenant.id) === String(selectedTenantId)
-  );
-  const userPool = selectedTenantId ? tenantClients : adminClients;
-  const selectedUser = userPool?.find(
-    (user) => String(user.id) === String(selectedUserId)
-  );
+  // const selectedTenant = tenants.find(
+  //   (tenant) => String(tenant.id) === String(selectedTenantId)
+  // );
+  // const userPool = selectedTenantId ? tenantClients : adminClients;
+  // const selectedUser = userPool?.find(
+  //   (user) => String(user.id) === String(selectedUserId)
+  // );
 
   const isProcessing = isCalculating || isCalculatingMutation;
   const isFinalStep = currentStep === steps.length - 1;
   const primaryActionLabel = isFinalStep
     ? "Finish & Exit"
     : isProcessing
-    ? "Calculating..."
-    : "Calculate Pricing";
+      ? "Calculating..."
+      : "Calculate Pricing";
 
   const disablePrimary =
     (!isFinalStep && (calculatorData.pricing_requests.length === 0 && calculatorData.object_storage_items.length === 0)) ||
@@ -281,94 +296,22 @@ const AdminAdvancedCalculatorRedesigned = () => {
           </p>
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <button
-          type="button"
-          onClick={() => {
-            setAssignType("");
-            setSelectedTenantId("");
-            setSelectedUserId("");
-          }}
-          className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${
-            assignType === ""
-              ? "bg-primary-500 text-white shadow-sm"
-              : "bg-white text-slate-600 hover:bg-slate-100"
-          }`}
-        >
-          None
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setAssignType("tenant");
-            setSelectedUserId("");
-          }}
-          className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${
-            assignType === "tenant"
-              ? "bg-primary-500 text-white shadow-sm"
-              : "bg-white text-slate-600 hover:bg-slate-100"
-          }`}
-        >
-          Tenant
-        </button>
-        <button
-          type="button"
-          onClick={() => setAssignType("user")}
-          className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${
-            assignType === "user"
-              ? "bg-primary-500 text-white shadow-sm"
-              : "bg-white text-slate-600 hover:bg-slate-100"
-          }`}
-        >
-          User
-        </button>
-      </div>
 
-      <select
-        value={selectedTenantId}
-        onChange={(event) => {
-          setSelectedTenantId(event.target.value);
-          setSelectedUserId("");
-        }}
-        disabled={!assignType}
-        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:bg-slate-100"
-      >
-        <option value="">{assignType ? "Select tenant" : "Choose assignment type first"}</option>
-        {tenants.map((tenant) => (
-          <option key={tenant.id} value={tenant.id}>
-            {tenant.name}
-          </option>
-        ))}
-      </select>
-
-      <select
-        value={selectedUserId}
-        onChange={(event) => setSelectedUserId(event.target.value)}
-        disabled={assignType !== "user"}
-        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:bg-slate-100"
-      >
-        <option value="">{assignType === "user" ? "Select user" : "Choose user assignment"}</option>
-        {userPool.map((user) => (
-          <option key={user.id} value={user.id}>
-            {`${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() || user.email}
-          </option>
-        ))}
-      </select>
-
-      <div className="rounded-xl bg-white px-4 py-3 text-sm text-slate-600">
-        <p className="text-xs uppercase tracking-wide text-slate-400">Current selection</p>
-        <p className="mt-1 font-semibold text-primary-600">
-          {assignType === "user" && selectedUser
-            ? `${selectedUser.first_name ?? ""} ${selectedUser.last_name ?? ""}`.trim() ||
-              selectedUser.email
-            : assignType === "tenant" && selectedTenant
-            ? selectedTenant.name
-            : "None"}
-        </p>
-      </div>
+      <CustomerContextSelector
+        contextType={contextType}
+        setContextType={setContextType}
+        selectedTenantId={selectedTenantId}
+        setSelectedTenantId={setSelectedTenantId}
+        selectedUserId={selectedUserId}
+        setSelectedUserId={setSelectedUserId}
+        tenants={tenants}
+        isTenantsFetching={isTenantsFetching}
+        userPool={userPool}
+        isUsersFetching={isUsersFetching}
+      />
     </ModernCard>
   );
-    
+
   return (
     <div className="flex h-screen bg-slate-100">
       <AdminSidebar isMobileMenuOpen={isMobileMenuOpen} onCloseMobileMenu={() => setIsMobileMenuOpen(false)} />
@@ -407,20 +350,18 @@ const AdminAdvancedCalculatorRedesigned = () => {
                   {steps.map((step, index) => (
                     <div key={step.title} className="flex items-center gap-2">
                       <div
-                        className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
-                          currentStep > index
-                            ? "bg-emerald-500 text-white"
-                            : currentStep === index
+                        className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${currentStep > index
+                          ? "bg-emerald-500 text-white"
+                          : currentStep === index
                             ? "bg-primary-500 text-white"
                             : "bg-slate-200 text-slate-500"
-                        }`}
+                          }`}
                       >
                         {currentStep > index ? <Check size={16} /> : index + 1}
                       </div>
                       <span
-                        className={`text-sm font-medium ${
-                          currentStep >= index ? "text-slate-800" : "text-slate-400"
-                        }`}
+                        className={`text-sm font-medium ${currentStep >= index ? "text-slate-800" : "text-slate-400"
+                          }`}
                       >
                         {step.title}
                       </span>

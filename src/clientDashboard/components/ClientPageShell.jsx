@@ -5,6 +5,7 @@ const ClientPageShell = (props) => (
   <DashboardPageShell
     homeHref="/client-dashboard"
     mainClassName="client-dashboard-shell"
+    backgroundColor="#F9FAFB"
     {...props}
   />
 );

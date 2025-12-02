@@ -575,7 +575,7 @@ export default function AdminInstances() {
         variant="primary"
         size="sm"
         onClick={() =>
-          (window.location.href = "/admin-dashboard/multi-instance-creation")
+          (window.location.href = "/admin-dashboard/create-instance")
         }
         leftIcon={<Plus className="h-4 w-4" />}
       >
@@ -951,11 +951,11 @@ export default function AdminInstances() {
                   type="button"
                   onClick={() =>
                     (window.location.href =
-                      "/admin-dashboard/multi-instance-creation")
+                      "/admin-dashboard/create-instance")
                   }
                   className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-left transition hover:border-primary-200 hover:bg-primary-50"
                 >
-                  <span>Launch multi-instance workflow</span>
+                  <span>Launch instance creation</span>
                   <ChevronRight className="h-4 w-4 text-primary-500" />
                 </button>
                 <button

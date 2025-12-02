@@ -1,4 +1,6 @@
 import React from "react";
+import { designTokens } from "../../styles/designTokens";
+import BreadcrumbTrail from "../../shared/components/BreadcrumbTrail";
 
 const palette = {
   neutral: {
@@ -37,6 +39,8 @@ const palette = {
   },
 };
 
+
+
 const ResourceHero = ({
   title,
   subtitle,
@@ -44,6 +48,7 @@ const ResourceHero = ({
   metrics = [],
   accent = "neutral",
   rightSlot,
+  breadcrumbs,
 }) => {
   const theme = palette[accent] || palette.neutral;
 
@@ -51,6 +56,14 @@ const ResourceHero = ({
     <section className={theme.container}>
       <div className="flex flex-col gap-6 px-6 py-8 sm:px-10 sm:py-10 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-2xl space-y-3">
+          {breadcrumbs && (
+            <div className="mb-2">
+              <BreadcrumbTrail
+                breadcrumbs={breadcrumbs}
+                color={accent === 'midnight' ? designTokens.colors.neutral[300] : designTokens.colors.primary[500]}
+              />
+            </div>
+          )}
           <span className={theme.badge}>{subtitle || "Administrative"}</span>
           <h1 className={theme.title}>{title}</h1>
           {description && <p className={theme.description}>{description}</p>}
@@ -69,13 +82,13 @@ const ResourceHero = ({
               const iconNode = metric.icon
                 ? React.isValidElement(metric.icon)
                   ? React.cloneElement(metric.icon, {
-                      className: [
-                        theme.metricIconColor,
-                        metric.icon.props.className,
-                      ]
-                        .filter(Boolean)
-                        .join(" "),
-                    })
+                    className: [
+                      theme.metricIconColor,
+                      metric.icon.props.className,
+                    ]
+                      .filter(Boolean)
+                      .join(" "),
+                  })
                   : metric.icon
                 : null;
               return (
@@ -83,18 +96,18 @@ const ResourceHero = ({
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className={theme.metricLabel}>{metric.label}</p>
-                      <p className={`${theme.metricValue} mt-2`}>
+                      <div className={`${theme.metricValue} mt-2`}>
                         {metric.value}
-                      </p>
+                      </div>
                     </div>
                     {iconNode && (
                       <span className={theme.metricIcon}>{iconNode}</span>
                     )}
                   </div>
                   {metric.description && (
-                    <p className={theme.metricDescription}>
+                    <div className={theme.metricDescription}>
                       {metric.description}
-                    </p>
+                    </div>
                   )}
                 </div>
               );

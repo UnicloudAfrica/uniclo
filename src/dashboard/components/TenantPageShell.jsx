@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Loader2 } from "lucide-react";
 import Headbar from "./headbar";
 import Sidebar from "./sidebar";
 import ActiveTab from "./activeTab";
@@ -24,7 +25,11 @@ const TenantPageShell = ({
   };
 
   if (isLoading) {
-    return null;
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-gray-50">
+        <Loader2 className="h-10 w-10 animate-spin text-[#288DD1]" />
+      </div>
+    );
   }
 
   return (
@@ -40,7 +45,7 @@ const TenantPageShell = ({
         title={title}
         description={description}
         subHeaderContent={subHeaderContent}
-        backgroundColor="transparent"
+        backgroundColor="#F9FAFB"
         {...shellProps}
       >
         {children}

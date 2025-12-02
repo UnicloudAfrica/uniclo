@@ -1,5 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import silentApi from "../../index/silent";
+import ToastUtils from "../../utils/toastUtil";
 
 const buildQueryString = (params) => {
   const searchParams = new URLSearchParams();
@@ -30,6 +31,18 @@ const fetchTenantNetworks = async ({ project_id, region, refresh = false }) => {
   return response.data;
 };
 
+const createTenantNetwork = async (payload) => {
+  const response = await silentApi("POST", "/business/networks", payload);
+  if (!response) throw new Error("Failed to create network");
+  return response;
+};
+
+const deleteTenantNetwork = async (networkId) => {
+  const response = await silentApi("DELETE", `/business/networks/${networkId}`);
+  if (!response) throw new Error("Failed to delete network");
+  return response;
+};
+
 export const useFetchTenantNetworks = (projectId, region, options = {}) =>
   useQuery({
     queryKey: ["tenantNetworks", { projectId, region }],
@@ -40,5 +53,36 @@ export const useFetchTenantNetworks = (projectId, region, options = {}) =>
     ...options,
   });
 
+export const useCreateTenantNetwork = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createTenantNetwork,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["tenantNetworks", { projectId: variables.project_id }],
+      });
+      ToastUtils.success("Network created successfully");
+    },
+    onError: (error) => {
+      ToastUtils.error(error.message || "Failed to create network");
+    },
+  });
+};
+
+export const useDeleteTenantNetwork = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteTenantNetwork,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tenantNetworks"] });
+      ToastUtils.success("Network deleted successfully");
+    },
+    onError: (error) => {
+      ToastUtils.error(error.message || "Failed to delete network");
+    },
+  });
+};
+
 export const syncTenantNetworksFromProvider = async ({ project_id, region }) =>
   fetchTenantNetworks({ project_id, region, refresh: true });
+

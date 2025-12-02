@@ -211,26 +211,26 @@ const VPCs = ({ projectId = "", region = "" }) => {
                     },
                     vpc.status
                       ? {
-                          label: normalizeStatus(vpc.status) || "unknown",
-                          tone: getToneForStatus(vpc.status),
-                        }
+                        label: normalizeStatus(vpc.status) || "unknown",
+                        tone: getToneForStatus(vpc.status),
+                      }
                       : null,
                   ].filter(Boolean)}
                   actions={[
                     {
                       key: "inspect",
-                      label: "Inspect",
                       icon: <Eye size={16} />,
                       variant: "ghost",
                       onClick: () => openViewModal(vpc),
+                      title: "Inspect VPC",
                     },
                     {
                       key: "remove",
-                      label: "Remove",
                       icon: <Trash2 size={16} />,
                       variant: "danger",
                       onClick: () => openDeleteModal(vpc),
                       disabled: isDeleting,
+                      title: "Remove VPC",
                     },
                   ]}
                 />

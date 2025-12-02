@@ -1,69 +1,11 @@
 import config from "../../config";
 import useAdminAuthStore from "../../stores/adminAuthStore";
-import { handleAuthRedirect } from "../../utils/authRedirect";
-import ToastUtils from "../../utils/toastUtil";
+import { createApiClient } from "../../utils/createApiClient";
 
-const lapapi = async (method, uri, body = null) => {
-  const url = config.baseURL + uri;
-  const { token, setToken } = useAdminAuthStore.getState();
-
-  const headers = {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-  };
-
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  const options = {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : null,
-  };
-
-  try {
-    const response = await fetch(url, options);
-    const res = await response.json();
-
-    if (response.ok || response.status === 201) {
-      if (res.access_token) {
-        setToken(res.access_token); // Handle old case
-      } else if (res.data?.message?.token) {
-        setToken(res.data.message.token); // Handle new structure
-      }
-
-      // Handle success message for Toast
-      let successMessage = "";
-      if (res.data?.message) {
-        // Check if message is an object with a 'message' field
-        successMessage =
-          typeof res.data.message === "object" && res.data.message.message
-            ? res.data.message.message
-            : res.data.message;
-      } else if (res.message) {
-        successMessage = res.message;
-      }
-
-      if (successMessage) {
-        ToastUtils.success(successMessage);
-      }
-
-      return res;
-    } else {
-      const handled = handleAuthRedirect(response, res, "/admin-signin");
-      if (handled) {
-        return;
-      }
-
-      const errorMessage =
-        res?.data?.error || res?.error || res?.message || "An error occurred";
-      throw new Error(errorMessage);
-    }
-  } catch (err) {
-    ToastUtils.error(err.message);
-    throw err;
-  }
-};
-
-export default lapapi;
+export default createApiClient({
+  baseURL: config.baseURL,
+  authStore: useAdminAuthStore,
+  showToasts: true,
+  redirectPath: "/admin-signin",
+  useSafeJsonParsing: false,
+});

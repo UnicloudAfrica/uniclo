@@ -11,7 +11,7 @@ export const designTokens = {
       200: "#A3D3F7",
       300: "#75BDF3",
       400: "#47A7EF",
-      500: "#288DD1", // Main UniCloud brand color
+      500: "#14547F", // Main UniCloud brand color (Dark Blue - Admin Default)
       600: "#0891b2",
       700: "#0e7490",
       800: "#155e75",

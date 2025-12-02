@@ -3,8 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import silentApi from "../index/silent";
 import clientSilentApi from "../index/client/silent";
 
-const DEFAULT_ACCENT = "#288DD1";
-const DEFAULT_PRIMARY = "#3272CA";
+// Default colors matching admin dashboard's neutral scheme
+// Using black/dark colors instead of bright cyan/blue until tenant customizes
+const DEFAULT_ACCENT = "#1C1C1C"; // Black (matches admin active states)
+const DEFAULT_PRIMARY = "#14547F"; // Dark blue (matches admin mobile drawer)
 
 const mapBrandingPayload = (payload = {}) => {
   const brand = payload.brand ?? {};
@@ -130,7 +132,7 @@ export const applyBrandingToCss = (theme, { fallbackLogo } = {}) => {
   );
   root.style.setProperty(
     "--theme-heading-color",
-    palette.heading ?? primary
+    "#111827"
   );
   root.style.setProperty("--theme-text-color", palette.text ?? "#1F2937");
   root.style.setProperty("--theme-muted-color", palette.muted ?? "#6B7280");

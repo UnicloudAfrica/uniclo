@@ -16,6 +16,7 @@ import { useFetchClientProfile } from "../../hooks/clientHooks/resources";
 import { clearAllAuthSessions } from "../../stores/sessionUtils";
 import { useFetchClientProjects } from "../../hooks/clientHooks/projectHooks";
 import useClientTheme from "../../hooks/clientHooks/useClientTheme";
+import { designTokens } from "../../styles/designTokens";
 
 const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   const [activeItem, setActiveItem] = useState("Home");
@@ -35,7 +36,7 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/client-dashboard/instances": "Instances",
     "/client-dashboard/multi-instance-creation": "Instances",
     "/client-dashboard/object-storage": "Object Storage",
-    "/client-dashboard/calculator": "Calculator",
+    "/client-dashboard/pricing-calculator": "Pricing Calculator",
     "/client-dashboard/orders-payments": "Orders & Payments",
     // "/client-dashboard/security": "Security",
     "/client-dashboard/support": "Support",
@@ -65,12 +66,12 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
 
     ...(projects.length > 0
       ? [
-          {
-            name: "Instances",
-            Icon: Server,
-            path: "/client-dashboard/instances",
-          },
-        ]
+        {
+          name: "Instances",
+          Icon: Server,
+          path: "/client-dashboard/instances",
+        },
+      ]
       : []),
     {
       name: "Object Storage",
@@ -79,9 +80,9 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     },
 
     {
-      name: "Calculator",
+      name: "Pricing Calculator",
       Icon: Calculator,
-      path: "/client-dashboard/calculator",
+      path: "/client-dashboard/pricing-calculator",
     },
     {
       name: "Orders & Payments",
@@ -129,13 +130,12 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       <li key={item.name} className={isBottom ? "mt-auto" : ""}>
         <button
           onClick={() => handleItemClick(item.name, item.path)}
-          className={`w-full flex items-center py-2 px-3.5 space-x-2 text-left transition-all duration-200 hover:bg-gray-50 ${
-            isActive ? "text-[#1C1C1C]" : "text-[#676767] hover:text-[#1C1C1C]"
-          }`}
+          className={`w-full flex items-center py-2 px-3.5 space-x-2 text-left transition-all duration-200 hover:bg-gray-50 ${isActive ? "text-[#1C1C1C]" : "text-[#676767] hover:text-[#1C1C1C]"
+            }`}
         >
           <div className="relative flex items-center justify-center w-5 h-5 flex-shrink-0">
             {isActive && (
-              <div className="absolute left-[-14px] w-1 h-4 bg-[--theme-color] rounded-[3px]" />
+              <div className="absolute left-[-14px] w-1 h-4 bg-black rounded-[3px]" />
             )}
             <Icon className="w-4 h-4" />
           </div>
@@ -155,11 +155,10 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       <li key={item.name}>
         <button
           onClick={() => handleItemClick(item.name, item.path)}
-          className={`w-full flex items-center py-2 px-4 space-x-3 text-left transition-all duration-200 rounded-lg ${
-            isActive
-              ? "bg-[#ffffff15] text-white"
-              : "text-gray-200 hover:bg-[#ffffff15] hover:text-white"
-          }`}
+          className={`w-full flex items-center py-2 px-4 space-x-3 text-left transition-all duration-200 rounded-lg ${isActive
+            ? "bg-[#ffffff15] text-white"
+            : "text-gray-200 hover:bg-[#ffffff15] hover:text-white"
+            }`}
         >
           <div className="flex items-center justify-center w-4 h-4 flex-shrink-0">
             <Icon className="w-4 h-4" />
@@ -173,7 +172,10 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className="hidden md:block fixed top-[74px] left-0 z-[999] w-[80%] md:w-20 lg:w-[20%] h-full border-r border-[#C8CBD9] bg-[#fff] font-Outfit">
+      <div
+        className="hidden md:block fixed top-[74px] left-0 z-[999] w-[80%] md:w-20 lg:w-[20%] h-full border-r bg-white font-Outfit"
+        style={{ borderColor: designTokens.colors.neutral[200] }}
+      >
         <div className="flex flex-col h-full">
           <div className="px-3 py-4 md:px-3.5 md:py-6 w-full border-b border-[#ECEDF0]">
             <button className="py-1 px-2 text-[#676767] font-normal text-sm lg:text-sm">
@@ -203,19 +205,16 @@ const Sidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       <div className="md:hidden font-Outfit">
         {/* Overlay Background */}
         <div
-          className={`fixed inset-0 bg-black z-[999] transition-all duration-300 ease-in-out ${
-            isMobileMenuOpen
-              ? "bg-opacity-50 pointer-events-auto"
-              : "bg-opacity-0 pointer-events-none"
-          }`}
+          className={`fixed inset-0 bg-black z-[999] transition-all duration-300 ease-in-out ${isMobileMenuOpen
+            ? "bg-opacity-50 pointer-events-auto"
+            : "bg-opacity-0 pointer-events-none"
+            }`}
           onClick={onCloseMobileMenu}
         >
           {/* Sidebar Panel */}
           <div
-            className={`fixed top-0 left-0 h-full w-[280px] text-white flex flex-col transform transition-transform duration-300 ease-in-out ${
-              isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-            }`}
-            style={{ backgroundColor: theme?.themeColor || "#14547F" }}
+            className={`fixed top-0 left-0 h-full w-[280px] bg-[#14547F] text-white flex flex-col transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+              }`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header with User Info */}

@@ -14,8 +14,7 @@ const friendlyPathMap = {
   details: "Details",
   products: "Products",
   calculator: "Calculator",
-  "calculator-new": "Calculator",
-  instances: "Instances",
+  "pricing-calculator": "Calculator",
   pricing: "Pricing",
   product: "Product",
   inventory: "Inventory",
@@ -81,6 +80,7 @@ const AdminPageShell = ({
   contentBackground,
   disableContentPadding = false,
   contentWrapper = "section",
+  onOpenMobileMenu,
 }) => {
   const location = useLocation();
   const autoBreadcrumbs = useMemo(
@@ -128,6 +128,7 @@ const AdminPageShell = ({
         description={description}
         actions={actions}
         subHeaderContent={subHeaderContent}
+        onOpenMobileMenu={onOpenMobileMenu}
       />
       <ContentTag
         className={sectionClasses}

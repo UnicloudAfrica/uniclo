@@ -36,6 +36,12 @@ const QuoteResourceStep = ({
   onAddRequest,
   pricingRequests,
   onRemoveRequest,
+  // Object Storage Props
+  objectStorageProducts,
+  isObjectStorageProductsFetching,
+  onAddObjectStorageRequest,
+  objectStorageRequests,
+  onRemoveObjectStorageRequest,
 }) => {
   const formatCurrency = (amount, currency) => {
     if (amount === null || amount === undefined) return "N/A";
@@ -45,7 +51,12 @@ const QuoteResourceStep = ({
     }).format(amount);
   };
 
-  const hasQueuedItems = pricingRequests.length > 0;
+  const hasQueuedItems = pricingRequests.length > 0 || objectStorageRequests?.length > 0;
+
+  const selectedOsImage = osImages?.find(
+    (img) => img.product.productable_id == formData.os_image_id
+  );
+
 
   return (
     <div className="space-y-6">
@@ -56,7 +67,7 @@ const QuoteResourceStep = ({
       )}
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
-        <ModernCard padding="lg" className="space-y-6">
+        <ModernCard padding="xl" className="space-y-6">
           <header className="flex items-start gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-50 text-primary-600">
               <Server className="h-5 w-5" />
@@ -80,9 +91,8 @@ const QuoteResourceStep = ({
               <select
                 value={formData.region}
                 onChange={(e) => updateFormData("region", e.target.value)}
-                className={`${selectBaseClass} ${
-                  errors.region ? "border-red-400" : ""
-                }`}
+                className={`${selectBaseClass} ${errors.region ? "border-red-400" : ""
+                  }`}
                 disabled={isRegionsFetching}
               >
                 <option value="">Select a region</option>
@@ -114,9 +124,8 @@ const QuoteResourceStep = ({
                 onChange={(e) =>
                   updateFormData("compute_instance_id", e.target.value)
                 }
-                className={`${selectBaseClass} ${
-                  errors.compute_instance_id ? "border-red-400" : ""
-                }`}
+                className={`${selectBaseClass} ${errors.compute_instance_id ? "border-red-400" : ""
+                  }`}
                 disabled={isComputerInstancesFetching || !formData.region}
               >
                 <option value="">Select compute profile</option>
@@ -149,10 +158,11 @@ const QuoteResourceStep = ({
               </label>
               <select
                 value={formData.os_image_id || ""}
-                onChange={(e) => updateFormData("os_image_id", e.target.value)}
-                className={`${selectBaseClass} ${
-                  errors.os_image_id ? "border-red-400" : ""
-                }`}
+                onChange={(e) => {
+                  updateFormData("os_image_id", e.target.value);
+                }}
+                className={`${selectBaseClass} ${errors.os_image_id ? "border-red-400" : ""
+                  }`}
                 disabled={isOsImagesFetching || !formData.region}
               >
                 <option value="">Select OS image</option>
@@ -178,6 +188,8 @@ const QuoteResourceStep = ({
                 </p>
               )}
             </div>
+
+
 
             <ModernInput
               label="Term (months)"
@@ -221,9 +233,8 @@ const QuoteResourceStep = ({
                       onChange={(e) =>
                         updateFormData("volume_type_id", e.target.value)
                       }
-                      className={`${selectBaseClass} ${
-                        errors.volume_type_id ? "border-red-400" : ""
-                      }`}
+                      className={`${selectBaseClass} ${errors.volume_type_id ? "border-red-400" : ""
+                        }`}
                       disabled={isEbsVolumesFetching || !formData.region}
                     >
                       <option value="">Select volume type</option>
@@ -414,7 +425,114 @@ const QuoteResourceStep = ({
           </div>
         </ModernCard>
 
-        <ModernCard padding="lg" className="space-y-6">
+        <ModernCard padding="xl" className="space-y-6">
+          <header className="flex items-start gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+              <HardDrive className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-slate-900">
+                Object Storage
+              </h3>
+              <p className="text-sm text-slate-500">
+                Add scalable S3-compatible storage.
+              </p>
+            </div>
+          </header>
+
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Region<span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.object_storage_region}
+                onChange={(e) => updateFormData("object_storage_region", e.target.value)}
+                className={`${selectBaseClass} ${errors.object_storage_region ? "border-red-400" : ""
+                  }`}
+                disabled={isRegionsFetching}
+              >
+                <option value="">Select a region</option>
+                {regions?.map((region) => (
+                  <option key={region.code} value={region.code}>
+                    {region.name}
+                  </option>
+                ))}
+              </select>
+              {errors.object_storage_region && (
+                <p className="mt-2 text-xs font-medium text-red-600">
+                  {errors.object_storage_region}
+                </p>
+              )}
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Storage Tier<span className="text-red-500">*</span>
+              </label>
+              <select
+                value={formData.object_storage_product_id || ""}
+                onChange={(e) =>
+                  updateFormData("object_storage_product_id", e.target.value)
+                }
+                className={`${selectBaseClass} ${errors.object_storage_product_id ? "border-red-400" : ""
+                  }`}
+                disabled={isObjectStorageProductsFetching || !formData.object_storage_region}
+              >
+                <option value="">Select storage tier</option>
+                {isObjectStorageProductsFetching ? (
+                  <option disabled>Loading tiers…</option>
+                ) : objectStorageProducts && objectStorageProducts.length > 0 ? (
+                  objectStorageProducts.map(({ product, pricing }) => (
+                    <option key={product.id} value={product.productable_id}>
+                      {product.name} •{" "}
+                      {formatCurrency(
+                        pricing.effective.price_local,
+                        pricing.effective.currency
+                      )}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>No tiers available</option>
+                )}
+              </select>
+              {errors.object_storage_product_id && (
+                <p className="mt-2 text-xs font-medium text-red-600">
+                  {errors.object_storage_product_id}
+                </p>
+              )}
+            </div>
+
+            <ModernInput
+              label="Quantity (GB)"
+              type="number"
+              min="1"
+              value={formData.object_storage_quantity}
+              onChange={(e) => updateFormData("object_storage_quantity", e.target.value)}
+              error={errors.object_storage_quantity}
+            />
+            <ModernInput
+              label="Term (months)"
+              type="number"
+              min="1"
+              value={formData.object_storage_months}
+              onChange={(e) => updateFormData("object_storage_months", e.target.value)}
+              error={errors.object_storage_months}
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <ModernButton
+              variant="primary"
+              onClick={onAddObjectStorageRequest}
+              leftIcon={<Plus className="h-4 w-4" />}
+            >
+              Add Object Storage
+            </ModernButton>
+          </div>
+        </ModernCard>
+
+        <ModernCard padding="xl" className="space-y-6">
           <header className="flex items-start gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
               <Layers className="h-5 w-5" />
@@ -431,8 +549,7 @@ const QuoteResourceStep = ({
 
           {!hasQueuedItems && (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-6 text-center text-sm text-slate-500">
-              No configurations added yet. Start by defining a compute profile
-              and storage requirement on the left.
+              No configurations added yet. Start by defining resources on the left.
             </div>
           )}
 
@@ -489,21 +606,54 @@ const QuoteResourceStep = ({
                         </span>
                         <p className="mt-1 text-slate-500">
                           {item.bandwidth_count
-                            ? `${item.bandwidth_count} bandwidth unit${
-                                item.bandwidth_count === 1 ? "" : "s"
-                              }`
+                            ? `${item.bandwidth_count} bandwidth unit${item.bandwidth_count === 1 ? "" : "s"
+                            }`
                             : ""}
                           {item.bandwidth_count && item.floating_ip_count
                             ? " • "
                             : ""}
                           {item.floating_ip_count
-                            ? `${item.floating_ip_count} floating IP${
-                                item.floating_ip_count === 1 ? "" : "s"
-                              }`
+                            ? `${item.floating_ip_count} floating IP${item.floating_ip_count === 1 ? "" : "s"
+                            }`
                             : ""}
                         </p>
                       </div>
                     )}
+                  </div>
+                </div>
+              ))}
+
+              {objectStorageRequests?.map((item, idx) => (
+                <div
+                  key={`os-${item.region}-${idx}`}
+                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <p className="text-xs uppercase tracking-wide text-slate-400">
+                        Object Storage {idx + 1}
+                      </p>
+                      <h4 className="text-sm font-semibold text-slate-900">
+                        {item._display?.name || "Object Storage"}
+                      </h4>
+                      <div className="text-xs text-slate-500">
+                        Region:{" "}
+                        <span className="font-medium text-slate-600">
+                          {item.region}
+                        </span>{" "}
+                        · {item.quantity} GB for{" "}
+                        {item.months} month{item.months === 1 ? "" : "s"}
+                      </div>
+                    </div>
+                    <ModernButton
+                      size="sm"
+                      variant="danger"
+                      onClick={() => onRemoveObjectStorageRequest(idx)}
+                      className="shrink-0"
+                      leftIcon={<Trash2 className="h-4 w-4" />}
+                    >
+                      Remove
+                    </ModernButton>
                   </div>
                 </div>
               ))}

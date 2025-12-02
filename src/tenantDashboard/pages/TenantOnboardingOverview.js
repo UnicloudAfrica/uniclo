@@ -128,11 +128,10 @@ const SubjectList = ({ label, items, selectedKey, onSelect }) => (
             <button
               key={item.subjectKey}
               onClick={() => onSelect(item)}
-              className={`w-full rounded-xl border px-3 py-3 text-left transition ${
-                isActive
+              className={`w-full rounded-xl border px-3 py-3 text-left transition ${isActive
                   ? "border-blue-500 bg-blue-50 shadow-sm"
                   : "border-gray-200 hover:border-gray-300"
-              }`}
+                }`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -175,9 +174,8 @@ const StepList = ({ steps, activeStepId, onSelectStep }) => (
         <button
           key={step.id}
           onClick={() => onSelectStep(step.id)}
-          className={`w-full rounded-xl border px-4 py-3 text-left transition ${
-            isActive ? "border-blue-500 bg-blue-50 shadow-sm" : "border-gray-200 hover:border-gray-300"
-          }`}
+          className={`w-full rounded-xl border px-4 py-3 text-left transition ${isActive ? "border-blue-500 bg-blue-50 shadow-sm" : "border-gray-200 hover:border-gray-300"
+            }`}
         >
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -226,7 +224,7 @@ const TenantOnboardingOverview = () => {
   const tenantData = {
     name: "Your Organisation",
     logo: "",
-    color: "#288DD1",
+    color: "var(--theme-color)",
   };
 
   const updateStatusMutation = useUpdateOnboardingStatus();
@@ -260,11 +258,11 @@ const TenantOnboardingOverview = () => {
       const lookup =
         selectedSubject.target === "tenant"
           ? tenantSubjects.find(
-              (subject) => String(subject.id) === String(selectedSubject.id)
-            )
+            (subject) => String(subject.id) === String(selectedSubject.id)
+          )
           : clientSubjects.find(
-              (subject) => String(subject.id) === String(selectedSubject.id)
-            );
+            (subject) => String(subject.id) === String(selectedSubject.id)
+          );
 
       if (lookup) {
         setSelectedSubject(lookup);
@@ -628,7 +626,7 @@ const TenantOnboardingOverview = () => {
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[360px_1fr]">
-            <div className="space-y-6">
+          <div className="space-y-6">
             <div className="rounded-2xl border border-gray-200 bg-white">
               <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
                 <SectionHeading title="Backlog" count={reviewQueue.length} />
@@ -693,9 +691,8 @@ const TenantOnboardingOverview = () => {
                               <tr
                                 key={entry.key}
                                 onClick={() => handleQueueSelect(entry)}
-                                className={`cursor-pointer transition ${
-                                  isActive ? "bg-blue-50/60" : "hover:bg-gray-50"
-                                }`}
+                                className={`cursor-pointer transition ${isActive ? "bg-blue-50/60" : "hover:bg-gray-50"
+                                  }`}
                               >
                                 <td className="max-w-[180px] px-4 py-3 align-top">
                                   <div className="space-y-1">
@@ -774,11 +771,10 @@ const TenantOnboardingOverview = () => {
                           <button
                             key={entry.key}
                             onClick={() => handleQueueSelect(entry)}
-                            className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
-                              isActive
+                            className={`w-full rounded-2xl border px-4 py-3 text-left transition ${isActive
                                 ? "border-blue-500 bg-blue-50 shadow-sm"
                                 : "border-gray-200 hover:border-gray-300"
-                            }`}
+                              }`}
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="space-y-1">
@@ -791,9 +787,8 @@ const TenantOnboardingOverview = () => {
                                 </p>
                               </div>
                               <StatusPill
-                                label={`${entry.total_pending} ${
-                                  entry.total_pending === 1 ? "step" : "steps"
-                                }`}
+                                label={`${entry.total_pending} ${entry.total_pending === 1 ? "step" : "steps"
+                                  }`}
                                 tone="info"
                               />
                             </div>
@@ -967,11 +962,10 @@ const TenantOnboardingOverview = () => {
                                 <button
                                   key={option.value}
                                   onClick={() => setDecision(option.value)}
-                                  className={`rounded-lg border px-3 py-2 text-left text-sm transition ${
-                                    decision === option.value
+                                  className={`rounded-lg border px-3 py-2 text-left text-sm transition ${decision === option.value
                                       ? "border-blue-500 bg-blue-50 text-blue-700"
                                       : "border-gray-200 hover:border-gray-300"
-                                  }`}
+                                    }`}
                                   disabled={!canDecide}
                                 >
                                   {option.label}

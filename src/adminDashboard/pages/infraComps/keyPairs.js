@@ -124,15 +124,14 @@ const KeyPairs = ({ projectId = "", region = "", onStatsUpdate }) => {
         { label: "Region", value: keyPair.region || region || "—" },
         keyPair.created_at
           ? {
-              label: "Created",
-              value: new Date(keyPair.created_at).toLocaleString(),
-            }
+            label: "Created",
+            value: new Date(keyPair.created_at).toLocaleString(),
+          }
           : null,
       ].filter(Boolean)}
       actions={[
         {
           key: "remove",
-          label: "Remove",
           icon: <Trash2 size={16} />,
           variant: "danger",
           onClick: () =>
@@ -141,6 +140,7 @@ const KeyPairs = ({ projectId = "", region = "", onStatsUpdate }) => {
               name: keyPair.name,
             }),
           disabled: isDeleting,
+          title: "Remove Key Pair",
         },
       ]}
     />

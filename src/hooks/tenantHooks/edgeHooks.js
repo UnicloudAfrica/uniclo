@@ -104,3 +104,35 @@ export const useAssignTenantProjectEdge = () => {
     },
   });
 };
+
+const fetchTenantProjectEdgeConfig = async (projectId, region, refresh = false) => {
+  if (!projectId) throw new Error("projectId is required");
+  if (!region) throw new Error("region is required");
+  try {
+    const params = new URLSearchParams();
+    params.append("project_id", projectId);
+    params.append("region", region);
+    if (refresh) params.append("refresh", "1");
+    const res = await silentTenantApi(
+      "GET",
+      `/admin/edge-config?${params.toString()}`
+    );
+    return res?.data ?? res;
+  } catch (e) {
+    return null;
+  }
+};
+
+export const useFetchTenantProjectEdgeConfig = (projectId, region, options = {}) => {
+  return useQuery({
+    queryKey: ["tenantProjectEdgeConfig", { projectId, region }],
+    queryFn: () => fetchTenantProjectEdgeConfig(projectId, region),
+    enabled: !!projectId && !!region,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+
+export const syncTenantProjectEdgeConfig = async ({ project_id, region }) =>
+  fetchTenantProjectEdgeConfig(project_id, region, true);

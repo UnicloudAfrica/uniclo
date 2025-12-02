@@ -19,6 +19,7 @@ import {
   DollarSign,
   ClipboardList,
   HardDrive,
+  Calculator,
 } from "lucide-react";
 import useTenantAuthStore from "../../stores/tenantAuthStore";
 import { clearAllAuthSessions } from "../../stores/sessionUtils";
@@ -39,6 +40,8 @@ const Sidebar = ({ tenantData, activeTab, setActiveTab }) => {
     "/tenant-dashboard/onboarding": "Onboarding Review",
     "/tenant-dashboard/onboarding-review": "Onboarding Review",
     "/tenant-dashboard/object-storage": "Object Storage",
+    "/dashboard/pricing-calculator": "Pricing Calculator",
+    "/dashboard/create-invoice": "Generate Invoice",
     "/dashboard/payment-history": "Payment History",
     "/dashboard/support-ticket": "Support Ticket",
     "/dashboard/app-settings": "App Settings",
@@ -100,6 +103,20 @@ const Sidebar = ({ tenantData, activeTab, setActiveTab }) => {
       isLucide: true,
     },
     {
+      name: "Pricing Calculator",
+      icon: Calculator, // Using Lucide Calculator
+      activeIcon: Calculator,
+      path: "/dashboard/pricing-calculator",
+      isLucide: true,
+    },
+    {
+      name: "Generate Invoice",
+      icon: ClipboardList, // Using Lucide ClipboardList as placeholder or import FileText
+      activeIcon: ClipboardList,
+      path: "/dashboard/create-invoice",
+      isLucide: true,
+    },
+    {
       name: "Payment History",
       icon: paymentHistory,
       activeIcon: activePaymentHistory,
@@ -139,9 +156,8 @@ const Sidebar = ({ tenantData, activeTab, setActiveTab }) => {
       <li key={item.name} className={isBottom ? "mt-auto" : ""}>
         <button
           onClick={() => handleItemClick(item.name, item.path)}
-          className={`w-full flex items-center py-2 px-3.5 space-x-2 text-left transition-all duration-200 hover:bg-gray-50 ${
-            isActive ? "text-[#1C1C1C]" : "text-[#676767] hover:text-[#1C1C1C]"
-          }`}
+          className={`w-full flex items-center py-2 px-3.5 space-x-2 text-left transition-all duration-200 hover:bg-gray-50 ${isActive ? "text-[#1C1C1C]" : "text-[#676767] hover:text-[#1C1C1C]"
+            }`}
           style={{
             backgroundColor: isActive ? tenantData.color + "15" : "transparent",
             transition: "background-color 0.3s",
@@ -176,11 +192,10 @@ const Sidebar = ({ tenantData, activeTab, setActiveTab }) => {
       <li key={item.name}>
         <button
           onClick={() => handleItemClick(item.name, item.path)}
-          className={`w-full flex items-center py-2 px-4 space-x-3 text-left transition-all duration-200 rounded-lg ${
-            isActive
-              ? "bg-[tenantData.color] text-white"
-              : "text-gray-200 hover:bg-[tenantData.color] hover:text-white"
-          }`}
+          className={`w-full flex items-center py-2 px-4 space-x-3 text-left transition-all duration-200 rounded-lg ${isActive
+            ? "bg-[tenantData.color] text-white"
+            : "text-gray-200 hover:bg-[tenantData.color] hover:text-white"
+            }`}
           style={{
             transition: "background-color 0.3s, color 0.3s",
           }}
@@ -208,9 +223,6 @@ const Sidebar = ({ tenantData, activeTab, setActiveTab }) => {
       <div className="hidden md:block fixed top-[74px] left-0 z-[999] w-[80%] md:w-20 lg:w-[20%] h-full border-r border-[tenantData.color]20 bg-white font-Outfit">
         <div className="flex flex-col h-full">
           <div className="px-3 py-4 md:px-3.5 md:py-6 w-full border-b border-[tenantData.color]20">
-            <button className="py-1 px-2 text-[#676767] font-normal text-sm lg:text-sm">
-              Menu
-            </button>
             <nav className="flex-1 overflow-y-auto w-full mt-3 px-2">
               <ul className="flex flex-col h-full w-full">
                 {menuItems.map((item) => renderMenuItem(item))}
@@ -237,18 +249,16 @@ const Sidebar = ({ tenantData, activeTab, setActiveTab }) => {
       <div className="md:hidden">
         {/* Overlay Background */}
         <div
-          className={`fixed inset-0 bg-black z-[999] transition-all duration-300 ease-in-out ${
-            isMobileMenuOpen
-              ? "bg-opacity-50 pointer-events-auto"
-              : "bg-opacity-0 pointer-events-none"
-          }`}
+          className={`fixed inset-0 bg-black z-[999] transition-all duration-300 ease-in-out ${isMobileMenuOpen
+            ? "bg-opacity-50 pointer-events-auto"
+            : "bg-opacity-0 pointer-events-none"
+            }`}
           onClick={() => setIsMobileMenuOpen(false)}
         >
           {/* Sidebar Panel */}
           <div
-            className={`fixed top-0 left-0 h-full w-[280px] bg-[tenantData.color] text-white flex flex-col transform transition-transform duration-300 ease-in-out ${
-              isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-            }`}
+            className={`fixed top-0 left-0 h-full w-[280px] bg-[tenantData.color] text-white flex flex-col transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+              }`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center p-6 border-b border-[tenantData.color]20">

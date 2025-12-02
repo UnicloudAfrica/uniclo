@@ -319,7 +319,7 @@ const ProfileAvatar = ({ name, email, avatarUrl, onAvatarChange }) => {
       .join("")
       .slice(0, 2) || "U";
 
-  const uploadEndpoint = `${config.baseURL}/business/settings/profile/avatar`;
+  const uploadEndpoint = `${config.baseURL}/settings/profile/avatar`;
 
   const handleFileChange = async (event) => {
     const file = event.target.files?.[0];
@@ -515,16 +515,14 @@ const FieldControl = ({ field, value, onChange }) => {
         <button
           type="button"
           onClick={() => onChange(!active)}
-          className={`relative inline-flex h-9 w-16 items-center rounded-full border transition ${
-            active
-              ? "border-primary-200 bg-primary-500/90"
-              : "border-slate-200 bg-slate-200/60"
-          }`}
+          className={`relative inline-flex h-9 w-16 items-center rounded-full border transition ${active
+            ? "border-primary-200 bg-primary-500/90"
+            : "border-slate-200 bg-slate-200/60"
+            }`}
         >
           <span
-            className={`ml-1 inline-flex h-7 w-7 transform items-center justify-center rounded-full bg-white text-xs font-semibold transition ${
-              active ? "translate-x-7 text-primary-600" : "translate-x-0 text-slate-500"
-            }`}
+            className={`ml-1 inline-flex h-7 w-7 transform items-center justify-center rounded-full bg-white text-xs font-semibold transition ${active ? "translate-x-7 text-primary-600" : "translate-x-0 text-slate-500"
+              }`}
           >
             {active ? "On" : "Off"}
           </span>
@@ -537,9 +535,8 @@ const FieldControl = ({ field, value, onChange }) => {
       <div className="relative">
         {Icon && (
           <Icon
-            className={`pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 ${
-              isFocused ? "text-primary-500" : ""
-            }`}
+            className={`pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 ${isFocused ? "text-primary-500" : ""
+              }`}
           />
         )}
         <input
@@ -550,11 +547,10 @@ const FieldControl = ({ field, value, onChange }) => {
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
           readOnly={readOnly}
-          className={`w-full rounded-xl border ${
-            readOnly
-              ? "border-slate-200 bg-slate-50 text-slate-500"
-              : "border-slate-200 bg-white text-slate-700 shadow-sm transition focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100"
-          } px-4 py-3 text-sm ${Icon ? "pl-11" : ""}`}
+          className={`w-full rounded-xl border ${readOnly
+            ? "border-slate-200 bg-slate-50 text-slate-500"
+            : "border-slate-200 bg-white text-slate-700 shadow-sm transition focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-100"
+            } px-4 py-3 text-sm ${Icon ? "pl-11" : ""}`}
         />
       </div>
     );
@@ -609,7 +605,11 @@ const SecurityTwoFactorPanel = ({
           <ModernButton
             size="sm"
             variant={enabled ? "outline" : "primary"}
-            className="flex items-center gap-2"
+            className={`flex items-center gap-2 ${
+              enabled
+                ? "hover:!bg-[#e8f4fd] !text-[#288DD1] !border-[#288DD1]"
+                : "!bg-[#288DD1] hover:!bg-[#0f6cad] !text-white !border-transparent"
+            }`}
             onClick={enabled ? onDisable : onEnable}
             disabled={isBusy || isFetching}
           >
@@ -685,6 +685,7 @@ export default function EnhancedProfileSettings() {
     open: false,
     mode: "enable",
     qrCodeSvg: "",
+    qrCodeUrl: "",
     secret: "",
   });
   const [twoFactorOtp, setTwoFactorOtp] = useState("");
@@ -702,7 +703,8 @@ export default function EnhancedProfileSettings() {
     mutateAsync: updateSettingsBatch,
     isPending: isUpdatingSettings,
   } = useUpdateProfileSettingsBatch();
-  const { mutateAsync: resetProfileSettings } = useResetProfileSettings();
+  const { mutateAsync: resetSettings, isPending: isResetting } =
+    useResetProfileSettings();
   const { mutateAsync: exportProfileSettings, isPending: isExporting } =
     useExportProfileSettings();
   const { mutateAsync: importProfileSettings } = useImportProfileSettings();
@@ -794,31 +796,84 @@ export default function EnhancedProfileSettings() {
     formState["security.two_factor_enabled"]
   );
 
+  const normalizeTwoFactorSetup = (response) => {
+    const data = response?.data ?? response?.message ?? response ?? {};
+    const rawQrCode = data.qrCode ?? data.qr_code ?? null;
+    let qrCodeSvg =
+      data.qrCodeSvg ||
+      data.qr_code_svg ||
+      data.qr_svg ||
+      (typeof rawQrCode === "string" && rawQrCode.startsWith("<svg")
+        ? rawQrCode
+        : null) ||
+      null;
+    const qrCodeUrl =
+      data.qrCodeUrl ||
+      data.qr_code_url ||
+      data.qr_url ||
+      (typeof rawQrCode === "string" && !rawQrCode.startsWith("<svg")
+        ? rawQrCode
+        : null) ||
+      null;
+
+    let secret =
+      data.secret ||
+      data.google2fa_secret ||
+      data.manual_entry_key ||
+      data.base32 ||
+      data.base32_secret ||
+      null;
+
+    if (!secret && typeof data.otpauth_url === "string") {
+      const match = data.otpauth_url.match(/secret=([^&]+)/i);
+      if (match?.[1]) {
+        secret = match[1];
+      }
+    }
+
+    return { qrCodeSvg, qrCodeUrl, secret };
+  };
+
   const closeTwoFactorModal = () => {
-    setTwoFactorModal({ open: false, mode: "enable", qrCodeSvg: "", secret: "" });
+    setTwoFactorModal({
+      open: false,
+      mode: "enable",
+      qrCodeSvg: "",
+      qrCodeUrl: "",
+      secret: "",
+    });
     setTwoFactorOtp("");
     setIsFetchingTwoFactor(false);
     setIsTwoFactorProcessing(false);
   };
 
-  const startEnableTwoFactor = async () => {
+  const startEnableTwoFactor = async (event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    console.log("Starting 2FA setup...");
     if (isFetchingTwoFactor || isTwoFactorProcessing) return;
     setIsFetchingTwoFactor(true);
     try {
       const response = await setupTwoFactor();
-      const data = response?.data ?? response?.message ?? {};
-      if (!data?.qrCodeSvg || !data?.secret) {
+      console.log("2FA Setup Response:", response);
+      const data = normalizeTwoFactorSetup(response);
+      console.log("Normalized 2FA Data:", data);
+
+      if (!data?.qrCodeSvg && !data?.qrCodeUrl && !data?.secret) {
         throw new Error("Failed to initialize two-factor authentication.");
       }
       setTwoFactorModal({
         open: true,
         mode: "enable",
-        qrCodeSvg: data.qrCodeSvg,
-        secret: data.secret,
+        qrCodeSvg: data.qrCodeSvg || "",
+        qrCodeUrl: data.qrCodeUrl || "",
+        secret: data.secret || "",
       });
       setTwoFactorOtp("");
     } catch (error) {
-      console.error(error);
+      console.error("2FA Setup Error:", error);
       ToastUtils.error(
         error.message || "Unable to start two-factor authentication setup."
       );
@@ -827,9 +882,19 @@ export default function EnhancedProfileSettings() {
     }
   };
 
-  const startDisableTwoFactor = () => {
+  const startDisableTwoFactor = (event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
     if (isFetchingTwoFactor || isTwoFactorProcessing) return;
-    setTwoFactorModal({ open: true, mode: "disable", qrCodeSvg: "", secret: "" });
+    setTwoFactorModal({
+      open: true,
+      mode: "disable",
+      qrCodeSvg: "",
+      qrCodeUrl: "",
+      secret: "",
+    });
     setTwoFactorOtp("");
   };
 
@@ -842,7 +907,11 @@ export default function EnhancedProfileSettings() {
 
     setIsTwoFactorProcessing(true);
     try {
-      await enableTwoFactor({ otp: sanitizedOtp });
+      await enableTwoFactor({
+        otp: sanitizedOtp,
+        code: sanitizedOtp,
+        google2fa_code: sanitizedOtp,
+      });
       setFormState((prev) => ({
         ...prev,
         "security.two_factor_enabled": true,
@@ -869,7 +938,11 @@ export default function EnhancedProfileSettings() {
 
     setIsTwoFactorProcessing(true);
     try {
-      await disableTwoFactor({ otp: sanitizedOtp });
+      await disableTwoFactor({
+        otp: sanitizedOtp,
+        code: sanitizedOtp,
+        google2fa_code: sanitizedOtp,
+      });
       setFormState((prev) => ({
         ...prev,
         "security.two_factor_enabled": false,
@@ -944,7 +1017,7 @@ export default function EnhancedProfileSettings() {
     try {
       await Promise.all(
         tab.categories.map((category) =>
-          resetProfileSettings({ category }).catch((error) => {
+          resetSettings({ category }).catch((error) => {
             console.error(error);
             throw error;
           })
@@ -1030,6 +1103,20 @@ export default function EnhancedProfileSettings() {
 
   const isLoading = isFetching && !profileSettingsData;
 
+  const qrCodeSrc = useMemo(() => {
+    if (twoFactorModal.qrCodeSvg) {
+      const trimmed = twoFactorModal.qrCodeSvg.trim();
+      const isRawSvg = trimmed.startsWith("<svg");
+      return isRawSvg
+        ? `data:image/svg+xml;utf8,${encodeURIComponent(trimmed)}`
+        : `data:image/svg+xml;base64,${trimmed}`;
+    }
+    if (twoFactorModal.qrCodeUrl) {
+      return twoFactorModal.qrCodeUrl;
+    }
+    return "";
+  }, [twoFactorModal]);
+
   return (
     <>
       <AdminHeadbar onMenuClick={() => setIsMobileMenuOpen((prev) => !prev)} />
@@ -1112,7 +1199,7 @@ export default function EnhancedProfileSettings() {
           </ModernCard>
         ) : (
           <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-4 lg:flex-row">
+            <div className="flex flex-col gap-4 lg:flex-row">
               <div className="flex w-full max-w-full flex-wrap gap-2 rounded-3xl border border-slate-200 bg-white/70 p-2 shadow-sm lg:w-72 lg:flex-col">
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
@@ -1122,18 +1209,16 @@ export default function EnhancedProfileSettings() {
                       key={tab.id}
                       type="button"
                       onClick={() => setActiveTab(tab.id)}
-                      className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition ${
-                        isActive
-                          ? "bg-primary-500 text-white shadow-md"
-                          : "text-slate-600 hover:bg-slate-100"
-                      }`}
+                      className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition ${isActive
+                        ? "bg-primary-500 text-white shadow-md"
+                        : "text-slate-600 hover:bg-slate-100"
+                        }`}
                     >
                       <span
-                        className={`flex h-9 w-9 items-center justify-center rounded-xl ${
-                          isActive
-                            ? "bg-white/20 text-white"
-                            : "bg-slate-100 text-slate-500"
-                        }`}
+                        className={`flex h-9 w-9 items-center justify-center rounded-xl ${isActive
+                          ? "bg-white/20 text-white"
+                          : "bg-slate-100 text-slate-500"
+                          }`}
                       >
                         <Icon className="h-4 w-4" />
                       </span>
@@ -1142,9 +1227,8 @@ export default function EnhancedProfileSettings() {
                           {tab.name}
                         </span>
                         <span
-                          className={`block text-xs ${
-                            isActive ? "text-white/80" : "text-slate-400"
-                          }`}
+                          className={`block text-xs ${isActive ? "text-white/80" : "text-slate-400"
+                            }`}
                         >
                           {tab.description}
                         </span>
@@ -1184,11 +1268,10 @@ export default function EnhancedProfileSettings() {
 
                       {group.fields?.length ? (
                         <div
-                          className={`grid gap-5 ${
-                            group.layout === "grid"
-                              ? "sm:grid-cols-2"
-                              : "grid-cols-1"
-                          }`}
+                          className={`grid gap-5 ${group.layout === "grid"
+                            ? "sm:grid-cols-2"
+                            : "grid-cols-1"
+                            }`}
                         >
                           {group.fields.map((field) => (
                             <FieldControl
@@ -1215,11 +1298,11 @@ export default function EnhancedProfileSettings() {
                       ) : null}
 
                       <div className="flex flex-wrap justify-end gap-2 pt-2">
-                        <ModernButton
-                          variant="outline"
-                          className="flex items-center gap-2"
-                          onClick={() => handleResetSection(activeTabConfig)}
-                          disabled={
+          <ModernButton
+            variant="outline"
+            className="flex items-center gap-2"
+            onClick={() => handleResetSection(activeTabConfig)}
+            disabled={
                             resettingSection === activeTabConfig.id ||
                             isUpdatingSettings
                           }
@@ -1231,18 +1314,19 @@ export default function EnhancedProfileSettings() {
                           )}
                           Reset to defaults
                         </ModernButton>
-                        <ModernButton
-                          className="flex items-center gap-2"
-                          onClick={() => handleSaveSection(activeTabConfig)}
-                          disabled={
-                            savingSection === activeTabConfig.id ||
-                            isUpdatingSettings
-                          }
-                        >
-                          {savingSection === activeTabConfig.id ||
-                          isUpdatingSettings ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
+          <ModernButton
+            variant="primary"
+            className="flex items-center gap-2 !bg-[#288DD1] hover:!bg-[#0f6cad] !text-white !border-transparent"
+            onClick={() => handleSaveSection(activeTabConfig)}
+            disabled={
+              savingSection === activeTabConfig.id ||
+              isUpdatingSettings
+            }
+          >
+            {savingSection === activeTabConfig.id ||
+              isUpdatingSettings ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
                             <Save className="h-4 w-4" />
                           )}
                           Save changes
@@ -1286,9 +1370,9 @@ export default function EnhancedProfileSettings() {
             {twoFactorModal.mode === "enable" && (
               <div className="space-y-4">
                 <div className="flex flex-col items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 p-4">
-                  {twoFactorModal.qrCodeSvg ? (
+                  {qrCodeSrc ? (
                     <img
-                      src={`data:image/svg+xml;base64,${twoFactorModal.qrCodeSvg}`}
+                      src={qrCodeSrc}
                       alt="Authenticator QR code"
                       className="h-40 w-40"
                     />
@@ -1304,7 +1388,7 @@ export default function EnhancedProfileSettings() {
                 <div className="rounded-2xl border border-dashed border-slate-200 bg-white/90 p-4 text-sm text-slate-600">
                   <span className="font-medium text-slate-700">Manual code:</span>{" "}
                   <code className="select-all break-all text-primary-600">
-                    {twoFactorModal.secret}
+                    {twoFactorModal.secret || "Not provided"}
                   </code>
                 </div>
               </div>
@@ -1335,6 +1419,7 @@ export default function EnhancedProfileSettings() {
                 Cancel
               </ModernButton>
               <ModernButton
+                variant="primary"
                 onClick={
                   twoFactorModal.mode === "enable"
                     ? handleConfirmEnableTwoFactor
@@ -1343,7 +1428,7 @@ export default function EnhancedProfileSettings() {
                 disabled={
                   isTwoFactorProcessing || twoFactorOtp.trim().length !== 6
                 }
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 !bg-[#288DD1] hover:!bg-[#0f6cad] !text-white !border-transparent"
               >
                 {isTwoFactorProcessing ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

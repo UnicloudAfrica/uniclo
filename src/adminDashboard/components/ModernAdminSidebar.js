@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { 
-  Home, 
-  Users, 
-  TrendingUp, 
-  CreditCard, 
-  Package, 
+import {
+  Home,
+  Users,
+  TrendingUp,
+  CreditCard,
+  Package,
   Database,
   DollarSign,
   FolderOpen,
@@ -46,8 +46,8 @@ const ModernAdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/admin-dashboard/projects": "Projects",
     "/admin-dashboard/instances": "Instances",
     "/admin-dashboard/regions": "Regions",
-    "/admin-dashboard/advanced-calculator": "Calculator",
-    "/admin-dashboard/quote": "Generate Invoice",
+    "/admin-dashboard/pricing-calculator": "Calculator",
+    "/admin-dashboard/create-invoice": "Generate Invoice",
     "/admin-dashboard/tax-configuration": "Tax Configuration",
     "/admin-dashboard/support-ticket": "Support Ticket",
     "/admin-dashboard/enhanced-profile-settings": "Profile Settings",
@@ -124,13 +124,13 @@ const ModernAdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     {
       name: "Calculator",
       icon: Calculator,
-      path: "/admin-dashboard/advanced-calculator",
+      path: "/admin-dashboard/pricing-calculator",
       category: "tools"
     },
     {
       name: "Generate Invoice",
       icon: FileText,
-      path: "/admin-dashboard/quote",
+      path: "/admin-dashboard/create-invoice",
       category: "tools"
     },
     {
@@ -186,7 +186,7 @@ const ModernAdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
   const MenuItem = ({ item, isActive }) => {
     const Icon = item.icon;
     const isHovered = hoveredItem === item.name;
-    
+
     const menuItemStyles = {
       display: 'flex',
       alignItems: 'center',
@@ -199,7 +199,7 @@ const ModernAdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       fontSize: designTokens.typography.fontSize.sm[0],
       fontWeight: isActive ? designTokens.typography.fontWeight.medium : designTokens.typography.fontWeight.normal,
       color: isActive ? designTokens.colors.primary[700] : designTokens.colors.neutral[600],
-      backgroundColor: isActive 
+      backgroundColor: isActive
         ? `${designTokens.colors.primary[50]}`
         : (isHovered ? designTokens.colors.neutral[50] : 'transparent'),
       border: isActive ? `1px solid ${designTokens.colors.primary[100]}` : '1px solid transparent',
@@ -234,7 +234,7 @@ const ModernAdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
             borderRadius: '0 2px 2px 0'
           }} />
         )}
-        
+
         <Icon style={iconStyles} />
         {!isCollapsed && (
           <span style={{
@@ -251,7 +251,7 @@ const ModernAdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
 
   const CategoryLabel = ({ label }) => {
     if (isCollapsed) return null;
-    
+
     return (
       <div style={{
         padding: '16px 16px 8px 16px',
@@ -362,7 +362,7 @@ const ModernAdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     <>
       {/* Mobile Overlay */}
       <div style={mobileOverlayStyles} onClick={onCloseMobileMenu} />
-      
+
       {/* Sidebar */}
       <div style={{
         ...sidebarStyles,
@@ -391,7 +391,7 @@ const ModernAdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
             </div>
             <span style={logoTextStyles}>UniCloud Admin</span>
           </div>
-          
+
           {/* Mobile close button */}
           {isMobileMenuOpen && window.innerWidth < 1024 && (
             <button
@@ -404,7 +404,7 @@ const ModernAdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
               <X size={20} />
             </button>
           )}
-          
+
           {/* Desktop collapse toggle */}
           {window.innerWidth >= 1024 && (
             <button

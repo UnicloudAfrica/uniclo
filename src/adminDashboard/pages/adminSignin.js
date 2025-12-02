@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import sideBg from "./assets/sideBg.svg";
 import logo from "./assets/logo.png";
@@ -17,8 +17,17 @@ export default function AdminLogin() {
   const [errors, setErrors] = useState({}); // Added errors state
   const { mutate, isPending } = useLoginAdminAccount();
   const navigate = useNavigate(); // Added for navigation
-  const { userEmail, setUserEmail } = useAdminAuthStore.getState();
+  const {
+    userEmail,
+    setUserEmail,
+    setTwoFactorRequired,
+    clearTwoFactorRequirement,
+  } = useAdminAuthStore();
   const { isLoading } = useAuthRedirect();
+
+  useEffect(() => {
+    clearTwoFactorRequirement();
+  }, [clearTwoFactorRequirement]);
 
   // Validation function
   const validateForm = () => {
@@ -52,7 +61,19 @@ export default function AdminLogin() {
     };
 
     mutate(userData, {
-      onSuccess: () => {
+      onSuccess: (res) => {
+        const requiresTwoFactor =
+          res?.data?.two_factor_enabled ??
+          res?.data?.two_factor_required ??
+          res?.data?.requires_two_factor ??
+          res?.data?.settings?.security?.two_factor_enabled ??
+          res?.data?.profile?.two_factor_enabled ??
+          res?.requires_two_factor ??
+          res?.two_factor_required ??
+          res?.data?.user?.two_factor_enabled ??
+          false;
+
+        setTwoFactorRequired(Boolean(requiresTwoFactor));
         setUserEmail(email);
         navigate("/verify-admin-mail"); // Redirect on success
       },
@@ -183,9 +204,9 @@ export default function AdminLogin() {
             </div>
 
             {/* General Error */}
-            {/* {errors.general && (
+            {errors.general && (
               <p className="text-red-500 text-xs mt-1">{errors.general}</p>
-            )} */}
+            )}
 
             {/* Login Button */}
             <button

@@ -1,23 +1,31 @@
 import config from "../config";
 import useClientAuthStore from "../stores/clientAuthStore";
 import useTenantAuthStore from "../stores/tenantAuthStore";
+import useAdminAuthStore from "../stores/adminAuthStore";
 import { handleAuthRedirect } from "../utils/authRedirect";
 import ToastUtils from "../utils/toastUtil";
 
 const api = async (method, uri, body = null) => {
   const url = config.baseURL + uri;
-  // Attempt to get token from either store, prioritizing the main auth store
-  const partnerToken = useTenantAuthStore.getState().token;
-  const clientToken = useClientAuthStore.getState().token;
-  const token = partnerToken || clientToken;
-
-  const headers = {
+  // Build headers, preferring admin store (handles tenant slug for admin too)
+  const adminState = useAdminAuthStore.getState();
+  const baseHeaders = {
     "Content-Type": "application/json",
     Accept: "application/json",
   };
 
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+  const headers = adminState?.getAuthHeaders
+    ? { ...baseHeaders, ...adminState.getAuthHeaders() }
+    : { ...baseHeaders };
+
+  // Fallback to tenant/client tokens if no admin token is present
+  if (!headers.Authorization) {
+    const partnerToken = useTenantAuthStore.getState().token;
+    const clientToken = useClientAuthStore.getState().token;
+    const token = partnerToken || clientToken;
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
   }
 
   const options = {
@@ -70,6 +78,8 @@ const api = async (method, uri, body = null) => {
         if (normalizedRole === "client") {
           const { setToken: setClientToken } = useClientAuthStore.getState();
           setClientToken(tokenToSet);
+        } else if (normalizedRole === "admin") {
+          useAdminAuthStore.getState().setToken(tokenToSet);
         } else {
           const { setToken: setPartnerToken } = useTenantAuthStore.getState();
           setPartnerToken(tokenToSet);

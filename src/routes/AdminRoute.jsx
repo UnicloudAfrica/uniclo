@@ -10,11 +10,9 @@ const LoaderScreen = () => (
 );
 
 export default function AdminRoute({ children }) {
-  const { token, role, hasHydrated } = useAdminAuthStore((s) => ({
-    token: s.token,
-    role: s.role,
-    hasHydrated: s.hasHydrated,
-  }));
+  const token = useAdminAuthStore((s) => s.token);
+  const role = useAdminAuthStore((s) => s.role);
+  const hasHydrated = useAdminAuthStore((s) => s.hasHydrated);
 
   if (!hasHydrated) {
     return <LoaderScreen />;

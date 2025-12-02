@@ -35,6 +35,7 @@ const createInitialState = (context = baseContext) => ({
   tenant: null,
   domain: null,
   isAuthenticated: false,
+  twoFactorRequired: false,
   cloudRoles: [],
   cloudAbilities: [],
   currentTenant: context.currentTenant,
@@ -79,6 +80,9 @@ const useAdminAuthStore = create(
         clearToken: resetState,
         setUserEmail: (newEmail) => set({ userEmail: newEmail }),
         clearUserEmail: () => set({ userEmail: null }),
+        setTwoFactorRequired: (value) =>
+          set({ twoFactorRequired: Boolean(value) }),
+        clearTwoFactorRequirement: () => set({ twoFactorRequired: false }),
         setUser: (user) => set({ user }),
         setRole: (role) => set({ role }),
         setTenant: (tenant) => set({ tenant }),
@@ -150,20 +154,21 @@ const useAdminAuthStore = create(
     {
       name: "unicloud_admin_auth", // storage key in localStorage
       getStorage: () => localStorage,
-     partialize: (state) => ({
-       token: state.token,
-       userEmail: state.userEmail,
-       user: state.user,
-       role: state.role,
-       tenant: state.tenant,
+      partialize: (state) => ({
+        token: state.token,
+        userEmail: state.userEmail,
+        user: state.user,
+        role: state.role,
+        tenant: state.tenant,
         domain: state.domain,
-       isAuthenticated: state.isAuthenticated,
+        isAuthenticated: state.isAuthenticated,
         cloudRoles: state.cloudRoles,
         cloudAbilities: state.cloudAbilities,
         currentTenant: state.currentTenant,
         isCentralDomain: state.isCentralDomain,
         currentDomain: state.currentDomain,
         availableTenants: state.availableTenants,
+        twoFactorRequired: state.twoFactorRequired,
       }),
       onRehydrateStorage: () => () => {
         setAdminHasHydrated?.(true);

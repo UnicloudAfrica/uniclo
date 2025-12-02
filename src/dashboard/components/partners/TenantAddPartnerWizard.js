@@ -219,9 +219,9 @@ const TenantAddPartnerWizard = ({ onClose }) => {
   const toTitle = (value) =>
     value
       ? value
-          .toString()
-          .replace(/[_-]+/g, " ")
-          .replace(/\b\w/g, (char) => char.toUpperCase())
+        .toString()
+        .replace(/[_-]+/g, " ")
+        .replace(/\b\w/g, (char) => char.toUpperCase())
       : "Not provided";
 
   const ActiveStep = steps[currentStep].component;
@@ -393,7 +393,7 @@ const TenantAddPartnerWizard = ({ onClose }) => {
       meta={meta}
       aside={asideContent}
       footer={footer}
-      maxWidthClass="max-w-6xl"
+      maxWidthClass="max-w-8xl"
     >
       {activeStepContent}
     </FormLayout>

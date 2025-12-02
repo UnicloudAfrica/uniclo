@@ -229,8 +229,8 @@ const AddClientModal = ({ isOpen, onClose, mode = "modal" }) => {
   const tenantList = Array.isArray(tenants?.data)
     ? tenants.data
     : Array.isArray(tenants)
-    ? tenants
-    : [];
+      ? tenants
+      : [];
   const selectedTenant = tenantList.find(
     (tenant) => String(tenant.id) === String(formData.tenant_id)
   );
@@ -444,7 +444,7 @@ const AddClientModal = ({ isOpen, onClose, mode = "modal" }) => {
       meta={meta}
       aside={asideContent}
       footer={footer}
-      maxWidthClass={isPageMode ? "max-w-full" : "max-w-6xl"}
+      maxWidthClass={isPageMode ? "max-w-full" : "max-w-8xl"}
     >
       <form
         id={formId}

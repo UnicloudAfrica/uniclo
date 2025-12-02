@@ -60,10 +60,9 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
     "/admin-dashboard/region-approvals": "Region Approvals",
     "/admin-dashboard/onboarding-review": "Onboarding Review",
     "/admin-dashboard/onboarding-settings": "Onboarding Settings",
-    "/admin-dashboard/calculator": "Calculator",
-    "/admin-dashboard/calculator-new": "Calculator",
-    "/admin-dashboard/advanced-calculator": "Calculator",
-    "/admin-dashboard/quote": "Generate Invoice",
+    "/admin-dashboard/calculator": "Pricing Calculator",
+    "/admin-dashboard/pricing-calculator": "Pricing Calculator",
+    "/admin-dashboard/create-invoice": "Generate Invoice",
   };
 
   // Update activeItem based on the current path
@@ -165,16 +164,16 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
       path: "/admin-dashboard/onboarding-settings",
     },
     {
-      name: "Calculator",
+      name: "Pricing Calculator",
       icon: Calculator,
       isLucide: true,
-      path: "/admin-dashboard/advanced-calculator",
+      path: "/admin-dashboard/pricing-calculator",
     },
     {
       name: "Generate Invoice",
       icon: FileText,
       isLucide: true,
-      path: "/admin-dashboard/quote",
+      path: "/admin-dashboard/create-invoice",
     },
     {
       name: "Tax Configuration",
@@ -265,8 +264,8 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
         <button
           onClick={() => handleItemClick(item.name, item.path)}
           className={`w-full flex items-center py-2 px-4 space-x-3 text-left transition-all duration-200 rounded-lg ${isActive
-              ? "bg-[#ffffff15] text-white"
-              : "text-gray-200 hover:bg-[#ffffff15] hover:text-white"
+            ? "bg-[#ffffff15] text-white"
+            : "text-gray-200 hover:bg-[#ffffff15] hover:text-white"
             }`}
         >
           <div className="flex items-center justify-center w-4 h-4 flex-shrink-0">
@@ -323,8 +322,8 @@ const AdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
         {/* Overlay Background */}
         <div
           className={`fixed inset-0 bg-black z-[999] transition-all duration-300 ease-in-out ${isMobileMenuOpen
-              ? "bg-opacity-50 pointer-events-auto"
-              : "bg-opacity-0 pointer-events-none"
+            ? "bg-opacity-50 pointer-events-auto"
+            : "bg-opacity-0 pointer-events-none"
             }`}
           onClick={onCloseMobileMenu}
         >

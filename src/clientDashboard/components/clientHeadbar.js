@@ -2,6 +2,8 @@ import { BellRing, CircleHelp, Menu } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useFetchClientProfile } from "../../hooks/clientHooks/resources";
 import useClientTheme from "../../hooks/clientHooks/useClientTheme";
+import logo from "./assets/logo.png";
+import { designTokens } from "../../styles/designTokens";
 
 const Headbar = ({ onMenuClick }) => {
   const location = useLocation();
@@ -46,7 +48,13 @@ const Headbar = ({ onMenuClick }) => {
   return (
     <>
       {/* Desktop View */}
-      <div className="w-full fixed top-0 left-0 h-[74px] px-6 md:px-8 py-3 z-[999] border-b bg-[#fff] border-[#C8CBD9] hidden md:flex justify-between items-center font-Outfit">
+      <div
+        className="w-full fixed top-0 left-0 h-[74px] px-6 md:px-8 py-3 z-[999] border-b bg-white hidden md:flex justify-between items-center font-Outfit"
+        style={{
+          borderColor: designTokens.colors.neutral[200],
+          boxShadow: designTokens.shadows.xs,
+        }}
+      >
         {isThemeFetching ? (
           <div className="w-[110px] h-[48px] bg-gray-200 rounded animate-pulse" />
         ) : (
@@ -56,7 +64,7 @@ const Headbar = ({ onMenuClick }) => {
             aria-label="Client home"
           >
             <img
-              src={theme?.businessLogoHref}
+              src={theme?.businessLogoHref || logo}
               className="w-auto h-[54px] max-w-[160px] object-contain"
               alt={
                 theme?.company?.name
@@ -108,7 +116,13 @@ const Headbar = ({ onMenuClick }) => {
       </div>
 
       {/* Mobile View */}
-      <div className="w-full fixed top-0 left-0 h-[74px] px-6 md:px-8 py-3 z-[999] border-b bg-[#fff] border-[#C8CBD9] flex md:hidden justify-between items-center font-Outfit">
+      <div
+        className="w-full fixed top-0 left-0 h-[74px] px-6 py-3 z-[999] border-b bg-white flex md:hidden justify-between items-center font-Outfit"
+        style={{
+          borderColor: designTokens.colors.neutral[200],
+          boxShadow: designTokens.shadows.xs,
+        }}
+      >
         <div className="flex items-center space-x-3">
           <button onClick={onMenuClick}>
             <Menu />

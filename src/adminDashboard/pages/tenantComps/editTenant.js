@@ -209,9 +209,9 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
   const toTitle = (value, fallback = "—") =>
     value
       ? value
-          .toString()
-          .replace(/[_-]+/g, " ")
-          .replace(/\b\w/g, (char) => char.toUpperCase())
+        .toString()
+        .replace(/[_-]+/g, " ")
+        .replace(/\b\w/g, (char) => char.toUpperCase())
       : fallback;
 
   const accent = formAccent.primary;
@@ -225,7 +225,7 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
   const uploadedDocs = docKeys.filter((key) => !!formData[key]).length;
   const statusText = toTitle(
     partnerDetails?.status ||
-      (partnerDetails?.verified ? "verified" : "pending verification"),
+    (partnerDetails?.verified ? "verified" : "pending verification"),
     "Draft"
   );
   const lastUpdated = partnerDetails?.updated_at
@@ -468,7 +468,7 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
       meta={meta}
       aside={asideContent}
       footer={footer}
-      maxWidthClass="max-w-6xl"
+      maxWidthClass="max-w-8xl"
     >
       <form
         id={formId}
@@ -509,9 +509,8 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 value={formData.name}
                 onChange={(e) => updateFormData("name", e.target.value)}
                 placeholder="Enter partner name"
-                className={`w-full input-field ${
-                  errors.name ? "border-red-500" : "border-slate-300"
-                }`}
+                className={`w-full input-field ${errors.name ? "border-red-500" : "border-slate-300"
+                  }`}
                 disabled={isPending}
               />
               {errors.name && (
@@ -529,9 +528,8 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 id="type"
                 value={formData.type}
                 onChange={(e) => updateFormData("type", e.target.value)}
-                className={`w-full input-field ${
-                  errors.type ? "border-red-500" : "border-slate-300"
-                }`}
+                className={`w-full input-field ${errors.type ? "border-red-500" : "border-slate-300"
+                  }`}
                 disabled={isPending}
               >
                 <option value="">Select a type</option>
@@ -556,9 +554,8 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 id="industry"
                 value={formData.industry}
                 onChange={(e) => updateFormData("industry", e.target.value)}
-                className={`w-full input-field ${
-                  errors.industry ? "border-red-500" : "border-slate-300"
-                }`}
+                className={`w-full input-field ${errors.industry ? "border-red-500" : "border-slate-300"
+                  }`}
                 disabled={isPending || isIndustriesFetching}
               >
                 <option value="">
@@ -591,11 +588,10 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                   updateFormData("registration_number", e.target.value)
                 }
                 placeholder="Enter registration number"
-                className={`w-full input-field ${
-                  errors.registration_number
+                className={`w-full input-field ${errors.registration_number
                     ? "border-red-500"
                     : "border-slate-300"
-                }`}
+                  }`}
                 disabled={isPending}
               />
             </div>
@@ -612,9 +608,8 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 value={formData.tin_number}
                 onChange={(e) => updateFormData("tin_number", e.target.value)}
                 placeholder="Enter TIN number"
-                className={`w-full input-field ${
-                  errors.tin_number ? "border-red-500" : "border-slate-300"
-                }`}
+                className={`w-full input-field ${errors.tin_number ? "border-red-500" : "border-slate-300"
+                  }`}
                 disabled={isPending}
               />
             </div>
@@ -646,9 +641,8 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 value={formData.email}
                 onChange={(e) => updateFormData("email", e.target.value)}
                 placeholder="name@company.com"
-                className={`w-full input-field ${
-                  errors.email ? "border-red-500" : "border-slate-300"
-                }`}
+                className={`w-full input-field ${errors.email ? "border-red-500" : "border-slate-300"
+                  }`}
                 disabled={isPending}
               />
               {errors.email && (
@@ -668,9 +662,8 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 value={formData.phone}
                 onChange={(e) => updateFormData("phone", e.target.value)}
                 placeholder="+234 801 234 5678"
-                className={`w-full input-field ${
-                  errors.phone ? "border-red-500" : "border-slate-300"
-                }`}
+                className={`w-full input-field ${errors.phone ? "border-red-500" : "border-slate-300"
+                  }`}
                 disabled={isPending}
               />
               {errors.phone && (
@@ -690,9 +683,8 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 value={formData.website}
                 onChange={(e) => updateFormData("website", e.target.value)}
                 placeholder="https://example.com"
-                className={`w-full input-field ${
-                  errors.website ? "border-red-500" : "border-slate-300"
-                }`}
+                className={`w-full input-field ${errors.website ? "border-red-500" : "border-slate-300"
+                  }`}
                 disabled={isPending}
               />
             </div>
@@ -724,9 +716,8 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 value={formData.address}
                 onChange={(e) => updateFormData("address", e.target.value)}
                 placeholder="Enter street address"
-                className={`w-full input-field ${
-                  errors.address ? "border-red-500" : "border-slate-300"
-                }`}
+                className={`w-full input-field ${errors.address ? "border-red-500" : "border-slate-300"
+                  }`}
                 disabled={isPending}
               />
             </div>
@@ -743,9 +734,8 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 value={formData.city}
                 onChange={(e) => updateFormData("city", e.target.value)}
                 placeholder="Enter city"
-                className={`w-full input-field ${
-                  errors.city ? "border-red-500" : "border-slate-300"
-                }`}
+                className={`w-full input-field ${errors.city ? "border-red-500" : "border-slate-300"
+                  }`}
                 disabled={isPending}
               />
             </div>
@@ -762,9 +752,8 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 value={formData.state}
                 onChange={(e) => updateFormData("state", e.target.value)}
                 placeholder="Enter state"
-                className={`w-full input-field ${
-                  errors.state ? "border-red-500" : "border-slate-300"
-                }`}
+                className={`w-full input-field ${errors.state ? "border-red-500" : "border-slate-300"
+                  }`}
                 disabled={isPending}
               />
             </div>
@@ -781,9 +770,8 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 value={formData.zip}
                 onChange={(e) => updateFormData("zip", e.target.value)}
                 placeholder="Enter zip code"
-                className={`w-full input-field ${
-                  errors.zip ? "border-red-500" : "border-slate-300"
-                }`}
+                className={`w-full input-field ${errors.zip ? "border-red-500" : "border-slate-300"
+                  }`}
                 disabled={isPending}
               />
             </div>
@@ -798,9 +786,8 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 id="country"
                 value={formData.country}
                 onChange={(e) => updateFormData("country", e.target.value)}
-                className={`w-full input-field ${
-                  errors.country ? "border-red-500" : "border-slate-300"
-                }`}
+                className={`w-full input-field ${errors.country ? "border-red-500" : "border-slate-300"
+                  }`}
                 disabled={isPending || isCountriesFetching}
               >
                 <option value="">
@@ -848,11 +835,10 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                   updateFormData("privacy_policy_url", e.target.value)
                 }
                 placeholder="https://..."
-                className={`w-full input-field ${
-                  errors.privacy_policy_url
+                className={`w-full input-field ${errors.privacy_policy_url
                     ? "border-red-500"
                     : "border-slate-300"
-                }`}
+                  }`}
                 disabled={isPending}
               />
               {errors.privacy_policy_url && (
@@ -876,11 +862,10 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                   updateFormData("unsubscription_url", e.target.value)
                 }
                 placeholder="https://..."
-                className={`w-full input-field ${
-                  errors.unsubscription_url
+                className={`w-full input-field ${errors.unsubscription_url
                     ? "border-red-500"
                     : "border-slate-300"
-                }`}
+                  }`}
                 disabled={isPending}
               />
               {errors.unsubscription_url && (
@@ -904,11 +889,10 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                   updateFormData("help_center_url", e.target.value)
                 }
                 placeholder="https://..."
-                className={`w-full input-field ${
-                  errors.help_center_url
+                className={`w-full input-field ${errors.help_center_url
                     ? "border-red-500"
                     : "border-slate-300"
-                }`}
+                  }`}
                 disabled={isPending}
               />
               {errors.help_center_url && (
@@ -930,9 +914,8 @@ const EditPartnerModal = ({ isOpen, onClose, partnerDetails }) => {
                 value={formData.logo_href}
                 onChange={(e) => updateFormData("logo_href", e.target.value)}
                 placeholder="https://..."
-                className={`w-full input-field ${
-                  errors.logo_href ? "border-red-500" : "border-slate-300"
-                }`}
+                className={`w-full input-field ${errors.logo_href ? "border-red-500" : "border-slate-300"
+                  }`}
                 disabled={isPending}
               />
               {errors.logo_href && (

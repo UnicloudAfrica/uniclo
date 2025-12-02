@@ -689,12 +689,11 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }) {
       title={activeConfig.tableTitle}
       description={activeConfig.tableDescription}
       columns={columns}
-        rows={pricingRows}
-        rows={filteredRows}
-        loading={isRegionsFetching || isPricingFetching}
-        page={meta?.current_page ?? page}
-        perPage={meta?.per_page ?? perPage}
-        total={total}
+      rows={filteredRows}
+      loading={isRegionsFetching || isPricingFetching}
+      page={meta?.current_page ?? page}
+      perPage={meta?.per_page ?? perPage}
+      total={total}
       meta={meta}
       onPageChange={setPage}
       onPerPageChange={(next) => {

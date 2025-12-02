@@ -12,6 +12,7 @@ import {
 import { useFetchCountries } from "../../../hooks/adminHooks/countriesHooks";
 import ModernCard from "../../components/ModernCard";
 import ModernInput from "../../components/ModernInput";
+import ModernButton from "../../components/ModernButton";
 
 const selectBaseClass =
   "w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:cursor-wait disabled:bg-slate-50";
@@ -19,6 +20,7 @@ const selectBaseClass =
 const QuoteFinalReviewStep = ({
   formData,
   pricingRequests,
+  objectStorageRequests,
   tenants,
   updateFormData,
   errors = {},
@@ -36,16 +38,16 @@ const QuoteFinalReviewStep = ({
   const selectedUser = assignedUser || null;
   const tenantLabel = selectedTenant
     ? selectedTenant.name ||
-      selectedTenant.company_name ||
-      `Tenant ${selectedTenant.id}`
+    selectedTenant.company_name ||
+    `Tenant ${selectedTenant.id}`
     : null;
   const userLabel = selectedUser
     ? selectedUser.business_name ||
-      [selectedUser.first_name, selectedUser.last_name]
-        .filter(Boolean)
-        .join(" ") ||
-      selectedUser.email ||
-      `User ${selectedUser.id}`
+    [selectedUser.first_name, selectedUser.last_name]
+      .filter(Boolean)
+      .join(" ") ||
+    selectedUser.email ||
+    `User ${selectedUser.id}`
     : null;
   const assignmentType =
     assignmentMode ||
@@ -54,16 +56,16 @@ const QuoteFinalReviewStep = ({
     assignmentType === "user" && userLabel
       ? userLabel
       : assignmentType === "tenant" && tenantLabel
-      ? tenantLabel
-      : "Not assigned";
+        ? tenantLabel
+        : "Not assigned";
   const assignmentSublabel =
     assignmentType === "user"
       ? tenantLabel
         ? `User under ${tenantLabel}`
         : "User assignment"
       : assignmentType === "tenant"
-      ? "Tenant assignment"
-      : "Quote remains unassigned until submission.";
+        ? "Tenant assignment"
+        : "Quote remains unassigned until submission.";
 
   const totalInstances = pricingRequests.reduce(
     (sum, req) => sum + (req.number_of_instances || 1),
@@ -86,9 +88,9 @@ const QuoteFinalReviewStep = ({
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,400px)]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,400px)]">
         <div className="space-y-6">
-          <ModernCard padding="lg" className="space-y-5">
+          <ModernCard padding="xl" className="space-y-5">
             <header className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-50 text-primary-600">
                 <FileText className="h-5 w-5" />
@@ -203,7 +205,7 @@ const QuoteFinalReviewStep = ({
             )}
           </ModernCard>
 
-          <ModernCard padding="lg" className="space-y-5">
+          <ModernCard padding="xl" className="space-y-5">
             <header className="flex items-start gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
                 <ShieldCheck className="h-5 w-5" />
@@ -290,9 +292,8 @@ const QuoteFinalReviewStep = ({
                         updateFormData("lead_country", e.target.value)
                       }
                       disabled={isCountriesLoading}
-                      className={`${selectBaseClass} ${
-                        errors.lead_country ? "border-red-400" : ""
-                      }`}
+                      className={`${selectBaseClass} ${errors.lead_country ? "border-red-400" : ""
+                        }`}
                       required
                     >
                       <option value="">
@@ -325,7 +326,64 @@ const QuoteFinalReviewStep = ({
         </div>
 
         <div className="space-y-6">
-          <ModernCard padding="lg" className="space-y-4">
+          <ModernCard padding="xl" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-semibold text-slate-900">
+                Items ({pricingRequests.length + (objectStorageRequests?.length || 0)})
+              </h3>
+              <ModernButton
+                variant="ghost"
+                size="sm"
+                className="text-primary-600 hover:text-primary-700"
+              >
+                Edit
+              </ModernButton>
+            </div>
+            <div className="space-y-3">
+              {pricingRequests.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">
+                      {item._display?.compute}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {item.region} • {item.number_of_instances} instance
+                      {item.number_of_instances === 1 ? "" : "s"}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-slate-900">
+                      {item._display?.storage}
+                    </p>
+                    <p className="text-xs text-slate-500">Storage</p>
+                  </div>
+                </div>
+              ))}
+              {objectStorageRequests?.map((item, idx) => (
+                <div
+                  key={`os-${idx}`}
+                  className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">
+                      {item._display?.name || "Object Storage"}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {item.region} • {item.quantity} GB
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-slate-900">
+                      {item.months} mo
+                    </p>
+                    <p className="text-xs text-slate-500">Term</p>
+                  </div>
+                </div>
+              ))}
+            </div>
             <header className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
                 <Download className="h-5 w-5" />
@@ -361,7 +419,7 @@ const QuoteFinalReviewStep = ({
             </ul>
           </ModernCard>
 
-          <ModernCard padding="lg" variant="outlined" className="space-y-4">
+          <ModernCard padding="xl" variant="outlined" className="space-y-4">
             <header>
               <h4 className="text-sm font-semibold text-slate-900">
                 Delivery checklist

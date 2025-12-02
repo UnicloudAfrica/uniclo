@@ -22,7 +22,7 @@ const updateUserProfile = async (profileData) => {
 
 // **POST**: Enable 2FA
 const enableTwoFactorAuth = async (payload) => {
-  const res = await clientApi("POST", "/business/2fa-enable", payload);
+  const res = await clientApi("POST", "/2fa-enable", payload);
   if (!res.data) {
     throw new Error(res.message || "Failed to enable 2FA");
   }
@@ -31,7 +31,7 @@ const enableTwoFactorAuth = async (payload) => {
 
 // **POST**: Disable 2FA
 const disableTwoFactorAuth = async (payload) => {
-  const res = await clientApi("POST", "/business/2fa-disable", payload);
+  const res = await clientApi("POST", "/2fa-disable", payload);
   if (!res.data) {
     throw new Error(res.message || "Failed to disable 2FA");
   }

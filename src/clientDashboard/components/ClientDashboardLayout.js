@@ -3,14 +3,16 @@ import { Outlet } from "react-router-dom";
 import Headbar from "./clientHeadbar";
 import Sidebar from "./clientSidebar";
 import useClientTheme from "../../hooks/clientHooks/useClientTheme";
-import useClientAuthRedirect from "../../utils/clientAuthRedirect";
-import { Loader2 } from "lucide-react";
 import { useApplyBrandingTheme } from "../../hooks/useBrandingTheme";
+import useClientAuthStore from "../../stores/clientAuthStore";
 
 const ClientDashboardLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { data: theme } = useClientTheme();
-  const { isLoading: isAuthLoading } = useClientAuthRedirect();
+  const token = useClientAuthStore((s) => s.token);
+  const hasHydrated = useClientAuthStore((s) => s.hasHydrated);
+  const { data: theme, isFetching } = useClientTheme({
+    enabled: Boolean(token) && hasHydrated,
+  });
 
   useApplyBrandingTheme(theme?.branding, {
     fallbackLogo: theme?.businessLogoHref,
@@ -18,14 +20,6 @@ const ClientDashboardLayout = () => {
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
-
-  if (isAuthLoading) {
-    return (
-      <div className="w-full h-svh flex items-center justify-center">
-        <Loader2 className="w-12 text-[--theme-color] animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <>

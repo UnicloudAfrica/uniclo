@@ -131,7 +131,7 @@ export default function TenantLeads() {
               <div className="flex-1 p-4 w-full rounded-[12px] bg-[#288DD10D] border border-[#288dd12d]">
                 <p className="text-xs text-[#676767] capitalize">Total Leads</p>
                 <div className="flex items-center mt-4 space-x-1.5">
-                  <p className="text-lg md:text-2xl font-medium text-[#3272CA]">
+                  <p className="text-lg md:text-2xl font-medium text-[--secondary-color]">
                     {leadStats?.message?.leads || 0}
                   </p>
                 </div>
@@ -147,7 +147,7 @@ export default function TenantLeads() {
                         {formatStatusForDisplay(status)} Leads
                       </p>
                       <div className="flex items-center mt-4 space-x-1.5">
-                        <p className="text-lg md:text-2xl font-medium text-[#3272CA]">
+                        <p className="text-lg md:text-2xl font-medium text-[--secondary-color]">
                           {leadStats?.message.leads_by_status[status]}
                         </p>
                       </div>
@@ -338,11 +338,10 @@ export default function TenantLeads() {
                             <button
                               key={pageNumber}
                               onClick={() => handlePageChange(pageNumber)}
-                              className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                                currentPage === pageNumber
-                                  ? "bg-[#288DD1] text-white"
-                                  : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
-                              }`}
+                              className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${currentPage === pageNumber
+                                ? "bg-[#288DD1] text-white"
+                                : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                                }`}
                             >
                               {pageNumber}
                             </button>
@@ -358,11 +357,10 @@ export default function TenantLeads() {
                     {totalPages > 5 && (
                       <button
                         onClick={() => handlePageChange(totalPages)}
-                        className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                          currentPage === totalPages
-                            ? "bg-[#288DD1] text-white"
-                            : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
-                        }`}
+                        className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-md ${currentPage === totalPages
+                          ? "bg-[#288DD1] text-white"
+                          : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                          }`}
                       >
                         {totalPages}
                       </button>

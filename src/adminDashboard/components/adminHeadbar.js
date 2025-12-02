@@ -41,9 +41,8 @@ const AdminHeadbar = ({ onMenuClick }) => {
     inventory: "Inventory",
     pricing: "Pricing",
     calculator: "Calculator",
-    "calculator-new": "Calculator",
-    "advanced-calculator": "Calculator",
-    quote: "Generate Invoice",
+    "pricing-calculator": "Calculator",
+    "create-invoice": "Generate Invoice",
     projects: "Projects",
     regions: "Regions",
     "tax-configuration": "Tax Configuration",
@@ -66,7 +65,7 @@ const AdminHeadbar = ({ onMenuClick }) => {
     return (
       pathMap[lastSegment] ||
       lastSegment.charAt(0).toUpperCase() +
-        lastSegment.slice(1).replace(/-/g, " ")
+      lastSegment.slice(1).replace(/-/g, " ")
     );
   };
 

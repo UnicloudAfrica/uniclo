@@ -317,7 +317,7 @@ export const AddAdminModal = ({ isOpen, onClose, mode = "modal" }) => {
       meta={meta}
       aside={asideContent}
       footer={footer}
-      maxWidthClass={isPageMode ? "max-w-full" : "max-w-6xl"}
+      maxWidthClass={isPageMode ? "max-w-full" : "max-w-8xl"}
     >
       <form
         id={formId}
@@ -344,9 +344,8 @@ export const AddAdminModal = ({ isOpen, onClose, mode = "modal" }) => {
             value={formData.first_name}
             onChange={handleChange}
             placeholder="Enter first name"
-            className={`w-full input-field ${
-              errors.first_name ? "border-red-500" : "border-slate-300"
-            }`}
+            className={`w-full input-field ${errors.first_name ? "border-red-500" : "border-slate-300"
+              }`}
             disabled={isPending}
           />
           {errors.first_name && (
@@ -368,9 +367,8 @@ export const AddAdminModal = ({ isOpen, onClose, mode = "modal" }) => {
             value={formData.last_name}
             onChange={handleChange}
             placeholder="Enter last name"
-            className={`w-full input-field ${
-              errors.last_name ? "border-red-500" : "border-slate-300"
-            }`}
+            className={`w-full input-field ${errors.last_name ? "border-red-500" : "border-slate-300"
+              }`}
             disabled={isPending}
           />
           {errors.last_name && (
@@ -392,9 +390,8 @@ export const AddAdminModal = ({ isOpen, onClose, mode = "modal" }) => {
             value={formData.phone}
             onChange={handleChange}
             placeholder="+234 801 234 5678"
-            className={`w-full input-field ${
-              errors.phone ? "border-red-500" : "border-slate-300"
-            }`}
+            className={`w-full input-field ${errors.phone ? "border-red-500" : "border-slate-300"
+              }`}
             disabled={isPending}
           />
           {errors.phone && (
@@ -416,9 +413,8 @@ export const AddAdminModal = ({ isOpen, onClose, mode = "modal" }) => {
             value={formData.email}
             onChange={handleChange}
             placeholder="name@company.com"
-            className={`w-full input-field ${
-              errors.email ? "border-red-500" : "border-slate-300"
-            }`}
+            className={`w-full input-field ${errors.email ? "border-red-500" : "border-slate-300"
+              }`}
             disabled={isPending}
           />
           {errors.email && (
@@ -440,9 +436,8 @@ export const AddAdminModal = ({ isOpen, onClose, mode = "modal" }) => {
             value={formData.password}
             onChange={handleChange}
             placeholder="Enter password"
-            className={`w-full input-field ${
-              errors.password ? "border-red-500" : "border-slate-300"
-            }`}
+            className={`w-full input-field ${errors.password ? "border-red-500" : "border-slate-300"
+              }`}
             disabled={isPending}
           />
           {errors.password && (
@@ -464,11 +459,10 @@ export const AddAdminModal = ({ isOpen, onClose, mode = "modal" }) => {
             value={formData.password_confirmation}
             onChange={handleChange}
             placeholder="Confirm password"
-            className={`w-full input-field ${
-              errors.password_confirmation
+            className={`w-full input-field ${errors.password_confirmation
                 ? "border-red-500"
                 : "border-slate-300"
-            }`}
+              }`}
             disabled={isPending}
           />
           {errors.password_confirmation && (

@@ -10,7 +10,7 @@ import {
   Send,
 } from "lucide-react";
 import Sidebar from "../components/TenantSidebar";
-import HeaderBar from "../components/clientHeadbar";
+import HeaderBar from "../components/TenantHeadbar";
 import BreadcrumbNav from "../components/clientAciveTab";
 import { useTenantClientOnboardingState } from "../../hooks/tenantHooks/useTenantClientOnboardingState";
 import { useTenantSubjectOnboarding } from "../../hooks/tenantHooks/useTenantSubjectOnboarding";

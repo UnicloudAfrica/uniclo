@@ -16,7 +16,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import Sidebar from "../components/TenantSidebar";
-import HeaderBar from "../components/clientHeadbar";
+import HeaderBar from "../components/TenantHeadbar";
 import BreadcrumbNav from "../components/clientAciveTab";
 import { useFetchLeadById, useConvertLeadToUser } from "../../hooks/tenantHooks/leadsHook";
 import DocumentViewerModal from "../../dashboard/pages/leadComps/documentViewer";

@@ -48,6 +48,12 @@ const menuItems: MenuEntry[] = [
     isLucide: true,
     path: "/admin-dashboard/analytics",
   },
+  {
+    name: "Support Tickets",
+    icon: HelpCircle,
+    isLucide: true,
+    path: "/admin-dashboard/tickets",
+  },
   // Customer Management Group
   {
     name: "Customer Management",
@@ -214,12 +220,6 @@ const menuItems: MenuEntry[] = [
     icon: Layers,
     isLucide: true,
     path: "/admin-dashboard/inventory",
-  },
-  {
-    name: "Ticket",
-    icon: HelpCircle,
-    isLucide: true,
-    path: "/admin-dashboard/support-ticket",
   },
   {
     name: "Profile Settings",

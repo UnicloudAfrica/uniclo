@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { DashboardHeadbar } from "../../shared/components/headbar";
-import { useFetchClientProfile } from "../../hooks/clientHooks/resources";
+import { useDashboardProfile } from "../../shared/hooks/useDashboardProfile";
 import useClientTheme from "../../hooks/clientHooks/useClientTheme";
 import useSidebarStore from "../../stores/sidebarStore";
 import logo from "./assets/logo.png";
@@ -10,8 +10,8 @@ interface ClientHeadbarProps {
   onMenuClick?: () => void;
 }
 
-const ClientHeadbar: React.FC<ClientHeadbarProps> = ({ onMenuClick }: any) => {
-  const { data: profile, isFetching: isProfileFetching } = useFetchClientProfile();
+const ClientHeadbar: React.FC<ClientHeadbarProps> = ({ onMenuClick }) => {
+  const { profile, isFetching: isProfileFetching } = useDashboardProfile("client");
   const { data: theme, isFetching: isThemeFetching } = useClientTheme();
   const { toggleMobile } = useSidebarStore();
 
@@ -28,9 +28,11 @@ const ClientHeadbar: React.FC<ClientHeadbarProps> = ({ onMenuClick }: any) => {
       dashboardType="client"
       onMobileMenuToggle={handleMobileMenuToggle}
       userProfile={{
-        email: profile?.email,
-        firstName: profile?.first_name,
-        lastName: profile?.last_name,
+        email: profile.email,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        initials: profile.initials,
+        avatar: profile.avatar,
       }}
       logo={{
         src: theme?.businessLogoHref || logo,

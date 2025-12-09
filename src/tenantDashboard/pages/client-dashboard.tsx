@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState } from "react";
 import Sidebar from "../components/TenantSidebar";
-import HeaderBar from "../components/clientHeadbar";
+import HeaderBar from "../components/TenantHeadbar";
 import BreadcrumbNav from "../components/clientAciveTab";
 import logo from "./assets/logo.png";
 import cloudCheck from "./assets/cloucCheck.svg";

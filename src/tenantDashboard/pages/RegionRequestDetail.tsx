@@ -4,7 +4,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import tenantRegionApi from "../../services/tenantRegionApi";
 import ToastUtils from "../../utils/toastUtil";
 import Sidebar from "../components/TenantSidebar";
-import HeaderBar from "../components/clientHeadbar";
+import HeaderBar from "../components/TenantHeadbar";
 import BreadcrumbNav from "../components/clientAciveTab";
 
 const RegionRequestDetail = () => {

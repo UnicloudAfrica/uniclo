@@ -79,7 +79,6 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
       projects: "Projects",
       regions: "Regions",
       "tax-configuration": "Tax Configuration",
-      "support-ticket": "Support Ticket",
       "profile-settings": "Profile Settings",
       instances: "Instances",
       "object-storage": "Object Storage",

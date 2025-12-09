@@ -27,7 +27,6 @@ import AdminOnboardingSettings from "../adminDashboard/pages/adminOnboardingSett
 import AdminLeads from "../adminDashboard/pages/adminLeads";
 import AdminLeadCreate from "../adminDashboard/pages/adminLeadCreate";
 import AdminLeadDetails from "../adminDashboard/pages/adminLeadDetails";
-import AdminSupportTicket from "../adminDashboard/pages/AdminSupport";
 import AdminRegion from "../adminDashboard/pages/adminRegion";
 import AdminKeyPairs from "../adminDashboard/pages/adminKeyPairs";
 import AdminPricing from "../adminDashboard/pages/adminPricing";
@@ -57,6 +56,7 @@ import WalletDashboard from "../adminDashboard/pages/WalletDashboard";
 import SettlementsDashboard from "../adminDashboard/pages/SettlementsDashboard";
 import PayoutsDashboard from "../adminDashboard/pages/PayoutsDashboard";
 import AnalyticsDashboard from "../adminDashboard/pages/AnalyticsDashboard";
+import TicketsDashboard from "../adminDashboard/pages/TicketsDashboard";
 
 const AdminRoutes = (): React.JSX.Element => {
   return (
@@ -117,12 +117,12 @@ const AdminRoutes = (): React.JSX.Element => {
       <Route path="/admin-dashboard/object-storage" element={<AdminObjectStorage />} />
       <Route path="/admin-dashboard/object-storage/create" element={<AdminObjectStorageCreate />} />
       <Route path="/admin-dashboard/tax-configuration" element={<AdminTax />} />
-      <Route path="/admin-dashboard/support-ticket" element={<AdminSupportTicket />} />
       <Route path="/admin-dashboard/subscription-plans" element={<AdminSubscriptionPlans />} />
       <Route path="/admin-dashboard/wallet" element={<WalletDashboard />} />
       <Route path="/admin-dashboard/settlements" element={<SettlementsDashboard />} />
       <Route path="/admin-dashboard/payouts" element={<PayoutsDashboard />} />
       <Route path="/admin-dashboard/analytics" element={<AnalyticsDashboard />} />
+      <Route path="/admin-dashboard/tickets" element={<TicketsDashboard />} />
     </>
   );
 };

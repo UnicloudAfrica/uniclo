@@ -11,7 +11,6 @@ const friendlyPathMap: Record<string, string> = {
   partners: "Partners",
   clients: "Clients",
   payment: "Payments",
-  "support-ticket": "Support",
   overview: "Overview",
   details: "Details",
   products: "Products",

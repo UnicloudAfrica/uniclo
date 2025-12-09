@@ -7,6 +7,7 @@ import {
   Home,
   Layers,
   Server,
+  Users,
   UserPlus,
   MapPin,
   DollarSign,
@@ -18,6 +19,10 @@ import {
   HelpCircle,
   Settings,
   Percent,
+  FolderKanban,
+  Package,
+  Wallet,
+  TrendingUp,
 } from "lucide-react";
 import { clearAllAuthSessions } from "../../stores/sessionUtils";
 import { CollapsibleMenu, MenuEntry } from "../../shared/components/sidebar";
@@ -47,21 +52,27 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({ tenantData, activeTab, se
     const currentPath = location.pathname;
     // Simple path matching for active tab
     if (currentPath.includes("modules")) setActiveTab("modules");
-    else if (currentPath.includes("instances-request")) setActiveTab("instances request");
-    else if (currentPath.includes("object-storage")) setActiveTab("object storage");
+    else if (currentPath.includes("clients")) setActiveTab("clients");
     else if (currentPath.includes("leads")) setActiveTab("leads");
-    else if (currentPath.includes("region-requests")) setActiveTab("region requests");
-    else if (currentPath.includes("onboarding")) setActiveTab("onboarding review");
+    else if (currentPath.includes("projects")) setActiveTab("projects");
+    else if (currentPath.includes("instances")) setActiveTab("instances");
+    else if (currentPath.includes("object-storage")) setActiveTab("object-storage");
+    else if (currentPath.includes("region-requests")) setActiveTab("region-requests");
+    else if (currentPath.includes("onboarding")) setActiveTab("onboarding");
     else if (currentPath.includes("revenue")) setActiveTab("revenue");
-    else if (currentPath.includes("pricing-calculator")) setActiveTab("pricing calculator");
-    else if (currentPath.includes("create-invoice")) setActiveTab("generate invoice");
-    else if (currentPath.includes("payment-history")) setActiveTab("payment history");
-    else if (currentPath.includes("support-ticket")) setActiveTab("support ticket");
-    else if (currentPath.includes("app-settings")) setActiveTab("app settings");
+    else if (currentPath.includes("pricing-calculator")) setActiveTab("pricing-calculator");
+    else if (currentPath.includes("create-invoice")) setActiveTab("create-invoice");
+    else if (currentPath.includes("payment-history")) setActiveTab("payment-history");
+    else if (currentPath.includes("discounts")) setActiveTab("discounts");
+    else if (currentPath.includes("payouts")) setActiveTab("payouts");
+    else if (currentPath.includes("products")) setActiveTab("products");
+    else if (currentPath.includes("support")) setActiveTab("support");
+    else if (currentPath.includes("settings") || currentPath.includes("app-settings"))
+      setActiveTab("settings");
     else setActiveTab("home");
   }, [location.pathname, setActiveTab]);
 
-  // Menu items with collapsible groups
+  // Unified Menu Items - All using /dashboard prefix
   const menuItems: MenuEntry[] = [
     {
       name: "Home",
@@ -75,29 +86,49 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({ tenantData, activeTab, se
       isLucide: true,
       path: "/dashboard/modules",
     },
-    // Client Management Group
+    // Customer Management Group
     {
-      name: "Client Management",
-      icon: Server,
+      name: "Customer Management",
+      icon: Users,
       isLucide: true,
       children: [
         {
-          name: "Instances Request",
-          icon: Server,
+          name: "Clients",
+          icon: Users,
           isLucide: true,
-          path: "/dashboard/instances-request",
-        },
-        {
-          name: "Object Storage",
-          icon: HardDrive,
-          isLucide: true,
-          path: "/tenant-dashboard/object-storage",
+          path: "/dashboard/clients",
         },
         {
           name: "Leads",
           icon: UserPlus,
           isLucide: true,
-          path: "/tenant-dashboard/leads",
+          path: "/dashboard/leads",
+        },
+      ],
+    },
+    // Infrastructure Group
+    {
+      name: "Infrastructure",
+      icon: Server,
+      isLucide: true,
+      children: [
+        {
+          name: "Projects",
+          icon: FolderKanban,
+          isLucide: true,
+          path: "/dashboard/projects",
+        },
+        {
+          name: "Instances",
+          icon: Server,
+          isLucide: true,
+          path: "/dashboard/instances",
+        },
+        {
+          name: "Object Storage",
+          icon: HardDrive,
+          isLucide: true,
+          path: "/dashboard/object-storage",
         },
       ],
     },
@@ -111,27 +142,27 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({ tenantData, activeTab, se
           name: "Region Requests",
           icon: MapPin,
           isLucide: true,
-          path: "/tenant-dashboard/region-requests",
+          path: "/dashboard/region-requests",
         },
         {
           name: "Onboarding Review",
           icon: ClipboardList,
           isLucide: true,
-          path: "/tenant-dashboard/onboarding",
+          path: "/dashboard/onboarding",
         },
       ],
     },
-    // Billing Group
+    // Billing & Revenue Group
     {
-      name: "Billing",
+      name: "Billing & Revenue",
       icon: DollarSign,
       isLucide: true,
       children: [
         {
           name: "Revenue",
-          icon: DollarSign,
+          icon: TrendingUp,
           isLucide: true,
-          path: "/tenant-dashboard/revenue",
+          path: "/dashboard/revenue",
         },
         {
           name: "Pricing Calculator",
@@ -155,170 +186,128 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({ tenantData, activeTab, se
           name: "Discounts & Margins",
           icon: Percent,
           isLucide: true,
-          path: "/tenant-dashboard/discounts",
+          path: "/dashboard/discounts",
+        },
+        {
+          name: "Payouts & Banking",
+          icon: Wallet,
+          isLucide: true,
+          path: "/dashboard/payouts",
         },
       ],
     },
     // Standalone items
     {
-      name: "Support Ticket",
-      icon: HelpCircle,
+      name: "Products",
+      icon: Package,
       isLucide: true,
-      path: "/dashboard/support-ticket",
+      path: "/dashboard/products",
     },
     {
-      name: "App Settings",
+      name: "Support",
+      icon: HelpCircle,
+      isLucide: true,
+      path: "/dashboard/support",
+    },
+    {
+      name: "Settings",
       icon: Settings,
       isLucide: true,
-      path: "/dashboard/app-settings",
+      path: "/dashboard/settings",
     },
   ];
 
-  const handleItemClick = () => {
-    setIsMobileMenuOpen(false);
+  const themeColor = tenantData?.color || "#1C1C1C";
+
+  const handleLogout = async () => {
+    try {
+      clearAllAuthSessions();
+      navigate("/tenant-signin");
+    } catch (error) {
+      console.error("Failed to logout:", error);
+    }
   };
 
-  const handleLogout = () => {
-    clearAllAuthSessions();
-    navigate("/login");
-    setIsMobileMenuOpen(false);
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  const themeColor = tenantData?.color || "#14547F";
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
 
   return (
     <>
       {/* Desktop Sidebar */}
-      <div
-        className="hidden md:block fixed top-[74px] left-0 z-[999] w-[80%] md:w-20 lg:w-[20%] h-full border-r bg-white font-Outfit"
-        style={{ borderColor: `${themeColor}20` }}
+      <aside
+        className="hidden md:flex flex-col fixed left-0 top-[74px] h-[calc(100vh-74px)] w-20 lg:w-[20%] bg-white border-r border-gray-200 z-40"
+        style={{ borderColor: "rgb(229, 231, 235)" }}
       >
-        <div className="flex flex-col h-full">
-          <div
-            className="px-3 py-4 md:px-3.5 md:py-6 w-full border-b"
-            style={{ borderColor: `${themeColor}20` }}
-          >
-            <button className="py-1 px-2 text-[#676767] font-normal text-sm lg:text-sm hidden lg:block">
-              TENANT
-            </button>
-          </div>
-
-          <nav className="flex-1 overflow-y-auto w-full mt-3 px-2">
-            <CollapsibleMenu
-              items={menuItems}
-              onItemClick={handleItemClick}
-              themeColor={themeColor}
-            />
-            <ul className="mt-4">
-              <li>
-                <button
-                  className="w-full flex items-center py-2 px-4 space-x-2 text-left text-[#DC3F41] hover:bg-red-50 rounded-lg transition-colors duration-200"
-                  onClick={handleLogout}
-                >
-                  <div className="flex items-center justify-center w-4 h-4 flex-shrink-0">
-                    <LogOut size={16} />
-                  </div>
-                  <span className="text-sm font-medium hidden lg:flex">Logout</span>
-                </button>
-              </li>
-            </ul>
-          </nav>
+        {/* Sidebar Header */}
+        <div className="px-4 py-4 border-b border-gray-200">
+          <span className="text-xs font-semibold tracking-wider" style={{ color: themeColor }}>
+            TENANT
+          </span>
         </div>
-      </div>
 
-      {/* Mobile Overlay Sidebar */}
-      <div className="md:hidden">
-        {/* Overlay Background */}
-        <div
-          className={`fixed inset-0 bg-black z-[999] transition-all duration-300 ease-in-out ${
-            isMobileMenuOpen
-              ? "bg-opacity-50 pointer-events-auto"
-              : "bg-opacity-0 pointer-events-none"
-          }`}
-          onClick={() => setIsMobileMenuOpen(false)}
-        >
-          {/* Sidebar Panel */}
-          <div
-            className={`fixed top-0 left-0 h-full w-[280px] text-white flex flex-col transform transition-transform duration-300 ease-in-out ${
-              isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-            }`}
-            style={{ backgroundColor: themeColor }}
-            onClick={(e) => e.stopPropagation()}
+        {/* Menu Items */}
+        <nav className="flex-1 overflow-y-auto py-4 px-2">
+          <CollapsibleMenu items={menuItems} themeColor={themeColor} />
+        </nav>
+
+        {/* Logout Button */}
+        <div className="p-4 border-t border-gray-200">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 w-full px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
           >
-            <div
-              className="flex justify-between items-center p-6 border-b"
-              style={{ borderColor: `${themeColor}20` }}
-            >
-              <div className="flex items-center">
-                {tenantData?.logo && (
-                  <img
-                    src={tenantData.logo}
-                    className="w-[40px] mr-2 rounded"
-                    alt={`${tenantData.name} Logo`}
-                  />
-                )}
-                <h2 className="text-lg font-semibold">{tenantData?.name}</h2>
-              </div>
-              <button
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors duration-200"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <nav className="flex-1 overflow-y-auto py-4">
-              <CollapsibleMenu
-                items={menuItems}
-                isMobile={true}
-                onItemClick={handleItemClick}
-                themeColor={themeColor}
-              />
-              <ul className="space-y-1 px-4 mt-2">
-                <li>
-                  <button
-                    className="w-full flex items-center py-3 px-4 space-x-3 text-left text-[#DC3F41] hover:bg-white/15 rounded-lg transition-colors duration-200"
-                    onClick={handleLogout}
-                  >
-                    <div className="flex items-center justify-center w-5 h-5 flex-shrink-0">
-                      <LogOut size={16} />
-                    </div>
-                    <span className="text-xs font-medium">Logout</span>
-                  </button>
-                </li>
-              </ul>
-            </nav>
-
-            <div
-              className="text-xs text-white/80 font-Outfit px-6 py-4 border-t"
-              style={{ borderColor: `${themeColor}20` }}
-            >
-              Version 1.0 - Live • Terms of Service
-            </div>
-          </div>
+            <LogOut size={20} />
+            <span className="hidden lg:inline">Logout</span>
+          </button>
         </div>
-      </div>
+      </aside>
 
-      {/* Mobile Menu Toggle Button */}
-      <button
-        className="md:hidden fixed top-4 left-4 z-[1000] p-2 bg-white rounded-lg shadow-md"
-        onClick={() => setIsMobileMenuOpen(true)}
+      {/* Mobile Sidebar Overlay */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 md:hidden" onClick={closeMobileMenu} />
+      )}
+
+      {/* Mobile Sidebar */}
+      <aside
+        className={`fixed left-0 top-0 h-full w-[280px] bg-white z-50 transform transition-transform duration-300 md:hidden ${
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M4 6h16M4 12h16m-7 6h7"
+        {/* Mobile Header */}
+        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
+          <span className="text-xs font-semibold tracking-wider" style={{ color: themeColor }}>
+            TENANT
+          </span>
+          <button onClick={closeMobileMenu} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Mobile Menu Items */}
+        <nav className="flex-1 overflow-y-auto py-4 px-2">
+          <CollapsibleMenu
+            items={menuItems}
+            themeColor={themeColor}
+            onItemClick={closeMobileMenu}
           />
-        </svg>
-      </button>
+        </nav>
+
+        {/* Mobile Logout */}
+        <div className="p-4 border-t border-gray-200">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 w-full px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          >
+            <LogOut size={20} />
+            <span>Logout</span>
+          </button>
+        </div>
+      </aside>
     </>
   );
 };

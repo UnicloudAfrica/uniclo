@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import HeaderBar from "../components/clientHeadbar";
+import HeaderBar from "../components/TenantHeadbar";
 import Sidebar from "../components/TenantSidebar";
 import DashboardPageShell from "../../shared/layouts/DashboardPageShell";
 import { ObjectStorageCreateContent } from "../../shared/components/object-storage";

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Sidebar from "./TenantSidebar";
-import HeaderBar from "./clientHeadbar";
+import HeaderBar from "./TenantHeadbar";
 import BreadcrumbNav from "./clientAciveTab";
 import { useTenantBrandingTheme } from "../../hooks/useBrandingTheme";
 

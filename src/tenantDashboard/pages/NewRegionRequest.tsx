@@ -3,7 +3,7 @@ import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import tenantRegionApi from "../../services/tenantRegionApi";
 import Sidebar from "../components/TenantSidebar";
-import HeaderBar from "../components/clientHeadbar";
+import HeaderBar from "../components/TenantHeadbar";
 import BreadcrumbNav from "../components/clientAciveTab";
 
 const NewRegionRequest = () => {

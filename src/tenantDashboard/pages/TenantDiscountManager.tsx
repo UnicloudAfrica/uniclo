@@ -11,7 +11,7 @@ import {
   Calculator,
   Download,
 } from "lucide-react";
-import TenantHeadbar from "../components/clientHeadbar";
+import TenantHeadbar from "../components/TenantHeadbar";
 import TenantSidebar from "../components/TenantSidebar";
 import tenantApi from "../../services/tenantRegionApi";
 

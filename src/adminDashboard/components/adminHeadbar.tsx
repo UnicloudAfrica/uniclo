@@ -2,25 +2,24 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardHeadbar } from "../../shared/components/headbar";
-import useAdminAuthStore from "../../stores/adminAuthStore";
+import { useDashboardProfile } from "../../shared/hooks/useDashboardProfile";
 import { clearAllAuthSessions } from "../../stores/sessionUtils";
 import useSidebarStore from "../../stores/sidebarStore";
 import logo from "./assets/logo.png";
 
 const AdminHeadbar: React.FC = () => {
   const navigate = useNavigate();
-  const clearUserEmail = useAdminAuthStore((state) => state.clearUserEmail);
+  const { profile, isFetching: isProfileFetching } = useDashboardProfile("admin");
   const { toggleMobile } = useSidebarStore();
 
   const handleLogout = async () => {
     try {
       // Admin logout API call would go here
-      // await lapapi("POST", "/business/auth/logout");
+      // await adminApi.post("/logout");
     } catch (error) {
       console.error("Admin logout failed:", error);
     } finally {
       clearAllAuthSessions();
-      clearUserEmail?.();
       navigate("/admin-signin");
     }
   };
@@ -30,10 +29,11 @@ const AdminHeadbar: React.FC = () => {
       dashboardType="admin"
       onMobileMenuToggle={toggleMobile}
       userProfile={{
-        initials: "AD",
-        email: "admin@unicloudafrica.com",
-        firstName: "Admin",
-        lastName: "User",
+        initials: profile.initials,
+        email: profile.email,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        avatar: profile.avatar,
       }}
       logo={{
         src: logo,
@@ -45,7 +45,8 @@ const AdminHeadbar: React.FC = () => {
       profilePath="/admin-dashboard/profile-settings"
       showNotifications={true}
       showHelp={true}
-      helpPath="/admin-dashboard/support-ticket"
+      helpPath="/admin-dashboard/tickets"
+      isProfileLoading={isProfileFetching}
     />
   );
 };

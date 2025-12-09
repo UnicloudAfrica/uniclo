@@ -53,51 +53,43 @@ interface AnalyticsData {
   }>;
 }
 
-// API hook
+// API hooks
 const useAnalytics = () => {
   return useQuery({
     queryKey: ["analytics", "dashboard"],
     queryFn: async () => {
-      // TODO: Create actual analytics endpoint
-      // For now, return mock data
-      return {
-        revenue: {
-          total: 15750000,
-          this_month: 2450000,
-          last_month: 2100000,
-          growth_percent: 16.7,
-        },
-        users: {
-          total: 1245,
-          new_this_month: 89,
-          active: 876,
-        },
-        subscriptions: {
-          active: 342,
-          canceled: 23,
-          revenue: 1850000,
-        },
-        payouts: {
-          pending: 5,
-          completed: 47,
-          total_amount: 8500000,
-        },
-        top_tenants: [
-          { id: 1, name: "Acme Corp", revenue: 2500000 },
-          { id: 2, name: "TechStart Ltd", revenue: 1800000 },
-          { id: 3, name: "Cloud Solutions", revenue: 1500000 },
-          { id: 4, name: "DataFlow Inc", revenue: 1200000 },
-          { id: 5, name: "WebServices Pro", revenue: 950000 },
-        ],
-        monthly_revenue: [
-          { month: "Jul", revenue: 1200000 },
-          { month: "Aug", revenue: 1450000 },
-          { month: "Sep", revenue: 1600000 },
-          { month: "Oct", revenue: 1850000 },
-          { month: "Nov", revenue: 2100000 },
-          { month: "Dec", revenue: 2450000 },
-        ],
-      } as AnalyticsData;
+      const response = await adminApi.get("/analytics/dashboard");
+      return response.data.data;
+    },
+  });
+};
+
+const useTopTenants = () => {
+  return useQuery({
+    queryKey: ["analytics", "top-tenants"],
+    queryFn: async () => {
+      const response = await adminApi.get("/analytics/top-tenants");
+      return response.data.data;
+    },
+  });
+};
+
+const useMonthlyRevenue = () => {
+  return useQuery({
+    queryKey: ["analytics", "monthly-revenue"],
+    queryFn: async () => {
+      const response = await adminApi.get("/analytics/monthly-revenue");
+      return response.data.data;
+    },
+  });
+};
+
+const useRecentActivity = () => {
+  return useQuery({
+    queryKey: ["analytics", "recent-activity"],
+    queryFn: async () => {
+      const response = await adminApi.get("/analytics/recent-activity");
+      return response.data.data;
     },
   });
 };
@@ -113,19 +105,39 @@ const formatNumber = (num: number): string => {
 
 const AnalyticsDashboard: React.FC = () => {
   const { data: analytics, isLoading } = useAnalytics();
+  const { data: topTenants } = useTopTenants();
+  const { data: monthlyRevenue } = useMonthlyRevenue();
+  const { data: recentActivity } = useRecentActivity();
+
+  // Format multi-currency revenue
+  const formatMultiCurrency = (
+    byCurrency: Record<string, { total: number; symbol: string }> | undefined
+  ): string => {
+    if (!byCurrency || Object.keys(byCurrency).length === 0) {
+      return formatCurrency(analytics?.revenue?.total || 0);
+    }
+    return (
+      Object.entries(byCurrency)
+        .filter(([_, data]) => data.total > 0)
+        .map(([_, data]) => `${data.symbol}${(data.total / 100).toLocaleString()}`)
+        .join(" + ") || formatCurrency(0)
+    );
+  };
 
   // Summary cards
   const summaryCards = useMemo(
     () => [
       {
         title: "Total Revenue",
-        value: formatCurrency(analytics?.revenue?.total || 0),
+        value: formatMultiCurrency(analytics?.revenue?.by_currency),
+
         change: analytics?.revenue?.growth_percent || 0,
         changeType: (analytics?.revenue?.growth_percent || 0) >= 0 ? "positive" : "negative",
         icon: DollarSign,
         color: "text-green-600",
         bgColor: "bg-green-50",
       },
+
       {
         title: "Active Users",
         value: formatNumber(analytics?.users?.active || 0),
@@ -168,7 +180,21 @@ const AnalyticsDashboard: React.FC = () => {
     );
   }
 
-  const maxRevenue = Math.max(...(analytics?.monthly_revenue || []).map((m) => m.revenue));
+  const maxRevenue = Math.max(...(monthlyRevenue || []).map((m: any) => m.revenue), 1);
+
+  const getActivityIcon = (icon: string) => {
+    if (icon === "dollar") return DollarSign;
+    if (icon === "users") return Users;
+    if (icon === "credit-card") return CreditCard;
+    return Activity;
+  };
+
+  const getActivityColor = (color: string) => {
+    if (color === "green") return { bg: "bg-green-100", text: "text-green-600" };
+    if (color === "blue") return { bg: "bg-blue-100", text: "text-blue-600" };
+    if (color === "purple") return { bg: "bg-purple-100", text: "text-purple-600" };
+    return { bg: "bg-gray-100", text: "text-gray-600" };
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -220,7 +246,7 @@ const AnalyticsDashboard: React.FC = () => {
                 <BarChart3 className="w-5 h-5 text-gray-400" />
               </div>
               <div className="flex items-end gap-4 h-48">
-                {analytics?.monthly_revenue?.map((month, index) => (
+                {(monthlyRevenue || []).map((month: any, index: number) => (
                   <div key={index} className="flex-1 flex flex-col items-center">
                     <div
                       className="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-t-md transition-all hover:from-blue-600 hover:to-blue-500"
@@ -239,7 +265,7 @@ const AnalyticsDashboard: React.FC = () => {
                 <PieChart className="w-5 h-5 text-gray-400" />
               </div>
               <div className="space-y-4">
-                {analytics?.top_tenants?.map((tenant, index) => (
+                {(topTenants || []).map((tenant: any, index: number) => (
                   <div key={tenant.id} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <span
@@ -272,36 +298,28 @@ const AnalyticsDashboard: React.FC = () => {
               <Activity className="w-5 h-5 text-gray-400" />
             </div>
             <div className="space-y-4">
-              <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                  <DollarSign className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">New subscription</p>
-                  <p className="text-xs text-gray-500">Acme Corp upgraded to Enterprise plan</p>
-                </div>
-                <span className="ml-auto text-xs text-gray-400">2 hours ago</span>
-              </div>
-              <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Users className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">New tenant onboarded</p>
-                  <p className="text-xs text-gray-500">TechStart Ltd completed setup</p>
-                </div>
-                <span className="ml-auto text-xs text-gray-400">5 hours ago</span>
-              </div>
-              <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                  <CreditCard className="w-5 h-5 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Payout processed</p>
-                  <p className="text-xs text-gray-500">₦185,000 sent to Cloud Solutions</p>
-                </div>
-                <span className="ml-auto text-xs text-gray-400">1 day ago</span>
-              </div>
+              {(recentActivity || []).length === 0 ? (
+                <div className="text-center text-gray-500 py-4">No recent activity</div>
+              ) : (
+                (recentActivity || []).map((activity: any, index: number) => {
+                  const IconComponent = getActivityIcon(activity.icon);
+                  const colors = getActivityColor(activity.color);
+                  return (
+                    <div key={index} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                      <div
+                        className={`w-10 h-10 ${colors.bg} rounded-full flex items-center justify-center`}
+                      >
+                        <IconComponent className={`w-5 h-5 ${colors.text}`} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">{activity.title}</p>
+                        <p className="text-xs text-gray-500">{activity.description}</p>
+                      </div>
+                      <span className="ml-auto text-xs text-gray-400">{activity.time_ago}</span>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </AdminPageShell>

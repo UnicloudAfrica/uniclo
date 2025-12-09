@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { DashboardHeadbar } from "../../shared/components/headbar";
-import { useFetchProfile } from "../../hooks/resource";
+import { useDashboardProfile } from "../../shared/hooks/useDashboardProfile";
 import useSidebarStore from "../../stores/sidebarStore";
 
 interface TenantHeadbarProps {
@@ -14,8 +14,8 @@ interface TenantHeadbarProps {
   onMenuClick?: () => void;
 }
 
-const TenantHeadbar: React.FC<TenantHeadbarProps> = ({ tenantData, onMenuClick }: any) => {
-  const { data: profile, isFetching: isProfileFetching } = useFetchProfile();
+const TenantHeadbar: React.FC<TenantHeadbarProps> = ({ tenantData, onMenuClick }) => {
+  const { profile, isFetching: isProfileFetching } = useDashboardProfile("tenant");
   const { toggleMobile } = useSidebarStore();
 
   const handleMobileMenuToggle = () => {
@@ -31,9 +31,11 @@ const TenantHeadbar: React.FC<TenantHeadbarProps> = ({ tenantData, onMenuClick }
       dashboardType="tenant"
       onMobileMenuToggle={handleMobileMenuToggle}
       userProfile={{
-        email: profile?.email,
-        firstName: profile?.first_name,
-        lastName: profile?.last_name,
+        email: profile.email,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        initials: profile.initials,
+        avatar: profile.avatar,
       }}
       logo={{
         src: tenantData?.logo || "/logo.png",

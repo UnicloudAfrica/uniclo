@@ -14,7 +14,6 @@ import {
   Calculator,
   FileText,
   Settings,
-  HelpCircle,
   LogOut,
   X,
   Menu,
@@ -50,7 +49,6 @@ const ModernAdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }: any) => {
     "/admin-dashboard/pricing-calculator": "Calculator",
     "/admin-dashboard/create-invoice": "Generate Invoice",
     "/admin-dashboard/tax-configuration": "Tax Configuration",
-    "/admin-dashboard/support-ticket": "Support Ticket",
     "/admin-dashboard/enhanced-profile-settings": "Profile Settings",
   };
 
@@ -141,12 +139,6 @@ const ModernAdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }: any) => {
       category: "settings",
     },
     {
-      name: "Support Ticket",
-      icon: HelpCircle,
-      path: "/admin-dashboard/support-ticket",
-      category: "support",
-    },
-    {
       name: "Profile Settings",
       icon: Settings,
       path: "/admin-dashboard/enhanced-profile-settings",
@@ -161,7 +153,6 @@ const ModernAdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }: any) => {
     financial: "Financial",
     tools: "Tools",
     settings: "Settings",
-    support: "Support",
   };
 
   const handleItemClick = (itemName: any, path: any) => {

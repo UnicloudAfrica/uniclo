@@ -12,18 +12,14 @@ const ExtResouce1 = () => {
       <Navbar />
       <div className="mt-[10em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
         <div>
-          <p className="gradient-txt text-center font-medium text-base">
-            Published by ITPULSE
-          </p>
+          <p className="gradient-txt text-center font-medium text-base">Published by ITPULSE</p>
           <p className="font-medium text-2xl md:text-[40px] md:leading-[50px] mt-3 md:px-[12%] text-center">
-            Benue State to build modern data center and cloud system with
-            UniCloud Africa
+            Benue State to build modern data center and cloud system with UniCloud Africa
           </p>
           <p className="font-medium text-lg md:text-xl mt-3 md:px-[12%] text-center text-[#676767]">
-            This project is a significant step forward for Benue’s digital
-            transformation. The in-country cloud solution offered by UniCloud
-            Africa ensures that the state’s data remains within Nigeria’s
-            borders.
+            This project is a significant step forward for Benue’s digital transformation. The
+            in-country cloud solution offered by UniCloud Africa ensures that the state’s data
+            remains within Nigeria’s borders.
           </p>
           <button className=" bg-[#3DC8F91A] px-4 py-2 mx-auto rounded-[30px] block mt-6 text-sm md:text-base">
             <p className=" gradient-text">Technology</p>
@@ -42,58 +38,50 @@ const ExtResouce1 = () => {
             style={{ whiteSpace: "pre-line" }}
             className=" mt-3 text-base text-[#676767]  text-justify font-normal md:px-[15%] whitespace-pre-line"
           >
-            UniCloud Africa, a company specializing in local cloud solutions,
-            has partnered with Benue State, North Central Nigeria to construct a
-            state-of-the-art data center and cloud ecosystem in Makurdi, the
-            state capital.
+            UniCloud Africa, a company specializing in local cloud solutions, has partnered with
+            Benue State, North Central Nigeria to construct a state-of-the-art data center and cloud
+            ecosystem in Makurdi, the state capital.
             <br />
             <br />
-            This agreement, signed in Abuja yesterday, will see UniCloud Africa
-            provide the necessary cloud infrastructure for the data center.
-            They’ll also partner with Africa Data Centres, a renowned
-            pan-African operator, to establish a disaster recovery site in
+            This agreement, signed in Abuja yesterday, will see UniCloud Africa provide the
+            necessary cloud infrastructure for the data center. They’ll also partner with Africa
+            Data Centres, a renowned pan-African operator, to establish a disaster recovery site in
             Abuja.
             <br />
             <br />
-            Joining UniCloud Africa in this project are several other partners
-            like Cedarview Communication Limited, which will be responsible for
-            building the high-availability network infrastructure that will
-            connect government institutions and other local entities within
-            Benue State.
+            Joining UniCloud Africa in this project are several other partners like Cedarview
+            Communication Limited, which will be responsible for building the high-availability
+            network infrastructure that will connect government institutions and other local
+            entities within Benue State.
             <br />
             <br />
-            The other partner is SIT Consulting, tasked with developing
-            innovative software applications specifically designed to meet the
-            needs of Benue’s users.
+            The other partner is SIT Consulting, tasked with developing innovative software
+            applications specifically designed to meet the needs of Benue’s users.
             <br />
             <br />
-            This project is a significant step forward for Benue’s digital
-            transformation. The in-country cloud solution offered by UniCloud
-            Africa ensures that the state’s data remains within Nigeria’s
-            borders.
+            This project is a significant step forward for Benue’s digital transformation. The
+            in-country cloud solution offered by UniCloud Africa ensures that the state’s data
+            remains within Nigeria’s borders.
             <br />
             <br />
-            Speaking at the signing ceremony, Dr. Joy Smart Francis, Executive
-            Director at UniCloud Africa, encouraged other states in Nigeria to
-            follow Benue’s lead in promoting Nigeria’s digital economy.
+            Speaking at the signing ceremony, Dr. Joy Smart Francis, Executive Director at UniCloud
+            Africa, encouraged other states in Nigeria to follow Benue’s lead in promoting Nigeria’s
+            digital economy.
             <br />
             <br />
-            She highlighted the benefits of the project to include improved
-            efficiency of Benue’s digital ecosystem, enhanced data security for
-            the state government, creation of new technical skills and job
-            opportunities for Benue youths and the potential to serve as a model
-            for nationwide digitalization and data localization.
+            She highlighted the benefits of the project to include improved efficiency of Benue’s
+            digital ecosystem, enhanced data security for the state government, creation of new
+            technical skills and job opportunities for Benue youths and the potential to serve as a
+            model for nationwide digitalization and data localization.
             <br />
             <br />
-            According to the MOU, the project timeline and additional details
-            are:
+            According to the MOU, the project timeline and additional details are:
             <br />
             <br />
             1. Completion is targeted within six months.
             <br />
             <br />
-            2. UniCloud Africa and partners will provide comprehensive support
-            including:
+            2. UniCloud Africa and partners will provide comprehensive support including:
             <br />
             {"  "} i. Technical expertise for construction and operations.
             <br />
@@ -104,21 +92,19 @@ const ExtResouce1 = () => {
             {"  "} iv. High-speed fiber optic connection for disaster recovery.
             <br />
             <br />
-            3. Training programs to equip Benue youths and BDIC staff with
-            necessary data center management skills.
+            3. Training programs to equip Benue youths and BDIC staff with necessary data center
+            management skills.
             <br />
             <br />
-            Responding, the Benue State Deputy Governor, His Excellency Dr.
-            Barr. Sam Ode, expressed that this collaboration aligns perfectly
-            with Governor Hyacinth Alia’s vision to develop the state’s ICT
-            infrastructure and empower its youth. He believes this initiative
-            has the potential to unlock a brighter future for Benue and its
-            people.
+            Responding, the Benue State Deputy Governor, His Excellency Dr. Barr. Sam Ode, expressed
+            that this collaboration aligns perfectly with Governor Hyacinth Alia’s vision to develop
+            the state’s ICT infrastructure and empower its youth. He believes this initiative has
+            the potential to unlock a brighter future for Benue and its people.
             <br />
             <br />
-            “We are delighted to be part of this initiative, which is capable of
-            putting Benue State in a high position in tandem with the Federal
-            Government’s digital economy pursuit,” he said.
+            “We are delighted to be part of this initiative, which is capable of putting Benue State
+            in a high position in tandem with the Federal Government’s digital economy pursuit,” he
+            said.
           </p>
         </div>
         <div className=" mt-16 md:px-[15%] w-full">
@@ -141,12 +127,9 @@ const ExtResouce1 = () => {
               className="z-10 absolute top-0 h-full w-full object-cover block md:hidden"
               alt=""
             />
-            <p className=" font-semibold text-xl md:text-3xl">
-              Want product news and updates
-            </p>
+            <p className=" font-semibold text-xl md:text-3xl">Want product news and updates</p>
             <p className=" font-normal px-4 md:px-0 text-lg md:text-xl">
-              Subscribe to UniCloud Africa blog to get update right in your
-              inbox
+              Subscribe to UniCloud Africa blog to get update right in your inbox
             </p>
             <div className=" flex flex-col md:flex-row items-center justify-center z-20  mt-4 md:space-x-6 space-y-4 md:space-y-0">
               <input

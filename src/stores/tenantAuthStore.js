@@ -15,9 +15,7 @@ const inferTenantContext = () => {
 
   const hostname = window.location.hostname;
   const isCentral =
-    hostname === "unicloudafrica.com" ||
-    hostname === "localhost" ||
-    hostname.includes("127.0.0.1");
+    hostname === "unicloudafrica.com" || hostname === "localhost" || hostname.includes("127.0.0.1");
   const tenantSlug = !isCentral ? hostname.split(".")[0] : null;
 
   return {
@@ -79,8 +77,7 @@ const useTenantAuthStore = create(
         setIsCentralDomain: (value) => set({ isCentralDomain: value }),
         setCurrentDomain: (value) => set({ currentDomain: value }),
         setCloudRoles: (roles) => set({ cloudRoles: roles ?? [] }),
-        setCloudAbilities: (abilities) =>
-          set({ cloudAbilities: abilities ?? [] }),
+        setCloudAbilities: (abilities) => set({ cloudAbilities: abilities ?? [] }),
         setSession: (session = {}) =>
           set((state) => ({
             token: session.token ?? state.token,
@@ -90,14 +87,11 @@ const useTenantAuthStore = create(
             tenant: session.tenant ?? state.tenant,
             domain: session.domain ?? state.domain,
             isAuthenticated:
-              session.token !== undefined
-                ? Boolean(session.token)
-                : state.isAuthenticated,
+              session.token !== undefined ? Boolean(session.token) : state.isAuthenticated,
             cloudRoles: session.cloudRoles ?? state.cloudRoles,
             cloudAbilities: session.cloudAbilities ?? state.cloudAbilities,
             currentTenant: session.currentTenant ?? state.currentTenant,
-            isCentralDomain:
-              session.isCentralDomain ?? state.isCentralDomain,
+            isCentralDomain: session.isCentralDomain ?? state.isCentralDomain,
             currentDomain: session.currentDomain ?? state.currentDomain,
           })),
         clearSession: resetState,

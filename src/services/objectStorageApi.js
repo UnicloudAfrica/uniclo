@@ -120,10 +120,7 @@ const objectStorageApi = {
 
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const message =
-        data?.message ||
-        data?.error ||
-        "Failed to fetch object storage accounts.";
+      const message = data?.message || data?.error || "Failed to fetch object storage accounts.";
       throw new Error(message);
     }
 
@@ -172,8 +169,8 @@ const objectStorageApi = {
       const items = Array.isArray(payload?.data)
         ? payload.data
         : Array.isArray(payload)
-        ? payload
-        : [];
+          ? payload
+          : [];
 
       return {
         items,

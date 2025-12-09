@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TenantPageShell from "../../components/TenantPageShell";
-import ModernCard from "../../../adminDashboard/components/ModernCard";
-import ModernButton from "../../../adminDashboard/components/ModernButton";
-import ModernInput from "../../../adminDashboard/components/ModernInput";
-import ToastUtils from "../../../utils/toastUtil";
+import { ModernCard } from "../../../shared/components/ui";
+import { ModernButton } from "../../../shared/components/ui";
+import { ModernInput } from "../../../shared/components/ui";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import {
   useFetchTenantPartnerById,
   useUpdateTenantPartner,
@@ -34,12 +34,8 @@ export default function EditPartnerPage() {
   const [form, setForm] = useState(defaultForm);
   const [isDirty, setIsDirty] = useState(false);
 
-  const {
-    data: partner,
-    isFetching: isLoading,
-  } = useFetchTenantPartnerById(partnerId);
-  const { mutateAsync: updatePartner, isPending: isSaving } =
-    useUpdateTenantPartner();
+  const { data: partner, isFetching: isLoading } = useFetchTenantPartnerById(partnerId);
+  const { mutateAsync: updatePartner, isPending: isSaving } = useUpdateTenantPartner();
 
   useEffect(() => {
     if (partner) {
@@ -57,10 +53,7 @@ export default function EditPartnerPage() {
   }, [partner]);
 
   const updateField = (key) => (event) => {
-    const value =
-      event.target.type === "checkbox"
-        ? event.target.checked
-        : event.target.value;
+    const value = event.target.type === "checkbox" ? event.target.checked : event.target.value;
     setIsDirty(true);
     setForm((prev) => ({ ...prev, [key]: value }));
   };
@@ -87,9 +80,7 @@ export default function EditPartnerPage() {
       ToastUtils.success("Partner updated.");
       navigate(`/dashboard/partners/${partnerId}`);
     } catch (error) {
-      ToastUtils.error(
-        error?.response?.data?.message || "Failed to update partner."
-      );
+      ToastUtils.error(error?.response?.data?.message || "Failed to update partner.");
     }
   };
 
@@ -114,17 +105,10 @@ export default function EditPartnerPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Company name">
-                <ModernInput
-                  value={form.name}
-                  onChange={updateField("name")}
-                  required
-                />
+                <ModernInput value={form.name} onChange={updateField("name")} required />
               </Field>
               <Field label="Company type">
-                <ModernInput
-                  value={form.company_type}
-                  onChange={updateField("company_type")}
-                />
+                <ModernInput value={form.company_type} onChange={updateField("company_type")} />
               </Field>
               <Field label="Registration number">
                 <ModernInput
@@ -133,27 +117,18 @@ export default function EditPartnerPage() {
                 />
               </Field>
               <Field label="Industry">
-                <ModernInput
-                  value={form.industry}
-                  onChange={updateField("industry")}
-                />
+                <ModernInput value={form.industry} onChange={updateField("industry")} />
               </Field>
             </div>
             <div className="grid gap-4 md:grid-cols-3">
               <Field label="Address">
-                <ModernInput
-                  value={form.address}
-                  onChange={updateField("address")}
-                />
+                <ModernInput value={form.address} onChange={updateField("address")} />
               </Field>
               <Field label="City">
                 <ModernInput value={form.city} onChange={updateField("city")} />
               </Field>
               <Field label="State">
-                <ModernInput
-                  value={form.state}
-                  onChange={updateField("state")}
-                />
+                <ModernInput value={form.state} onChange={updateField("state")} />
               </Field>
             </div>
             <label className="inline-flex items-center gap-2 text-sm text-slate-700">

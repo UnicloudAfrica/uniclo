@@ -1,6 +1,6 @@
 import React from "react";
 import { X, Loader2 } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import { useDeleteTenantAdmin } from "../../../hooks/adminUserHooks";
 
 export const DeleteAdminModal = ({ isOpen, onClose, admin }) => {
@@ -43,9 +43,7 @@ export const DeleteAdminModal = ({ isOpen, onClose, admin }) => {
       <div className="bg-white rounded-[24px] max-w-[500px] mx-4 w-full">
         {/* Header */}
         <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] w-full">
-          <h2 className="text-lg font-semibold text-red-600">
-            Confirm Delete Admin
-          </h2>
+          <h2 className="text-lg font-semibold text-red-600">Confirm Delete Admin</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
@@ -97,9 +95,7 @@ export const DeleteAdminModal = ({ isOpen, onClose, admin }) => {
               className="px-8 py-3 bg-red-600 text-white font-medium rounded-full hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Delete Admin
-              {isPending && (
-                <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-              )}
+              {isPending && <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />}
             </button>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, X } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import { useCreateTenantRoute } from "../../../hooks/routeTable";
 import { useFetchTenantInternetGateways } from "../../../hooks/internetGatewayHooks";
 import { useFetchTenantNetworkInterfaces } from "../../../hooks/eni";
@@ -23,14 +23,20 @@ const AddRouteModal = ({
   const [errors, setErrors] = useState({});
 
   const { mutate: createRoute, isPending } = useCreateTenantRoute();
-  const { data: igwsRaw, isFetching: isFetchingIgws } =
-    useFetchTenantInternetGateways(projectId, form.region, {
+  const { data: igwsRaw, isFetching: isFetchingIgws } = useFetchTenantInternetGateways(
+    projectId,
+    form.region,
+    {
       enabled: isOpen && !!projectId && !!form.region,
-    });
-  const { data: enisRaw, isFetching: isFetchingEnis } =
-    useFetchTenantNetworkInterfaces(projectId, form.region, {
+    }
+  );
+  const { data: enisRaw, isFetching: isFetchingEnis } = useFetchTenantNetworkInterfaces(
+    projectId,
+    form.region,
+    {
       enabled: isOpen && !!projectId && !!form.region,
-    });
+    }
+  );
 
   const igws = useMemo(() => igwsRaw || [], [igwsRaw]);
   const enis = useMemo(() => enisRaw || [], [enisRaw]);
@@ -53,8 +59,7 @@ const AddRouteModal = ({
     const next = {};
     if (!form.region) next.region = "Region is required";
     if (!form.route_table_id) next.route_table_id = "Route table is required";
-    if (!form.destination_cidr_block)
-      next.destination_cidr_block = "CIDR is required";
+    if (!form.destination_cidr_block) next.destination_cidr_block = "CIDR is required";
     if (!form.target_id) next.target_id = "Target is required";
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -98,19 +103,14 @@ const AddRouteModal = ({
       return (
         <select
           value={form.target_id}
-          onChange={(e) =>
-            setForm((prev) => ({ ...prev, target_id: e.target.value }))
-          }
+          onChange={(e) => setForm((prev) => ({ ...prev, target_id: e.target.value }))}
           className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
             errors.target_id ? "border-red-500" : "border-gray-300"
           }`}
         >
-          <option value="">
-            {isFetchingIgws ? "Loading IGWs..." : "Select Internet Gateway"}
-          </option>
+          <option value="">{isFetchingIgws ? "Loading IGWs..." : "Select Internet Gateway"}</option>
           {igws.map((g) => {
-            const value =
-              g.provider_resource_id || g.id || g.uuid || g.name || "";
+            const value = g.provider_resource_id || g.id || g.uuid || g.name || "";
             return (
               <option key={value} value={value}>
                 {g.name || value}
@@ -125,9 +125,7 @@ const AddRouteModal = ({
       return (
         <select
           value={form.target_id}
-          onChange={(e) =>
-            setForm((prev) => ({ ...prev, target_id: e.target.value }))
-          }
+          onChange={(e) => setForm((prev) => ({ ...prev, target_id: e.target.value }))}
           className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
             errors.target_id ? "border-red-500" : "border-gray-300"
           }`}
@@ -136,8 +134,7 @@ const AddRouteModal = ({
             {isFetchingEnis ? "Loading ENIs..." : "Select Network Interface"}
           </option>
           {enis.map((eni) => {
-            const value =
-              eni.provider_resource_id || eni.id || eni.uuid || eni.name || "";
+            const value = eni.provider_resource_id || eni.id || eni.uuid || eni.name || "";
             return (
               <option key={value} value={value}>
                 {value}
@@ -152,12 +149,8 @@ const AddRouteModal = ({
       <input
         type="text"
         value={form.target_id}
-        onChange={(e) =>
-          setForm((prev) => ({ ...prev, target_id: e.target.value }))
-        }
-        placeholder={
-          form.target_type === "instance_id" ? "Instance ID" : "NAT Gateway ID"
-        }
+        onChange={(e) => setForm((prev) => ({ ...prev, target_id: e.target.value }))}
+        placeholder={form.target_type === "instance_id" ? "Instance ID" : "NAT Gateway ID"}
         className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
           errors.target_id ? "border-red-500" : "border-gray-300"
         }`}
@@ -187,16 +180,12 @@ const AddRouteModal = ({
               <input
                 type="text"
                 value={form.region}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, region: e.target.value }))
-                }
+                onChange={(e) => setForm((prev) => ({ ...prev, region: e.target.value }))}
                 className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
                   errors.region ? "border-red-500" : "border-gray-300"
                 }`}
               />
-              {errors.region && (
-                <p className="text-xs text-red-500 mt-1">{errors.region}</p>
-              )}
+              {errors.region && <p className="text-xs text-red-500 mt-1">{errors.region}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -225,9 +214,7 @@ const AddRouteModal = ({
                 })}
               </select>
               {errors.route_table_id && (
-                <p className="text-xs text-red-500 mt-1">
-                  {errors.route_table_id}
-                </p>
+                <p className="text-xs text-red-500 mt-1">{errors.route_table_id}</p>
               )}
             </div>
           </div>
@@ -247,23 +234,17 @@ const AddRouteModal = ({
               }
               placeholder="0.0.0.0/0"
               className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
-                errors.destination_cidr_block
-                  ? "border-red-500"
-                  : "border-gray-300"
+                errors.destination_cidr_block ? "border-red-500" : "border-gray-300"
               }`}
             />
             {errors.destination_cidr_block && (
-              <p className="text-xs text-red-500 mt-1">
-                {errors.destination_cidr_block}
-              </p>
+              <p className="text-xs text-red-500 mt-1">{errors.destination_cidr_block}</p>
             )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Target Type
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Target Type</label>
               <select
                 value={form.target_type}
                 onChange={(e) =>
@@ -286,9 +267,7 @@ const AddRouteModal = ({
                 Target<span className="text-red-500">*</span>
               </label>
               {renderTargetSelect()}
-              {errors.target_id && (
-                <p className="text-xs text-red-500 mt-1">{errors.target_id}</p>
-              )}
+              {errors.target_id && <p className="text-xs text-red-500 mt-1">{errors.target_id}</p>}
             </div>
           </div>
         </form>
@@ -308,9 +287,7 @@ const AddRouteModal = ({
             className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
             Add Route
-            {isPending && (
-              <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-            )}
+            {isPending && <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />}
           </button>
         </div>
       </div>

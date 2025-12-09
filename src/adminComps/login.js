@@ -3,11 +3,7 @@ import { initializeApp } from "firebase/app";
 import load from "./assets/load.gif";
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  getAuth,
-  signInWithEmailAndPassword,
-  onAuthStateChanged,
-} from "firebase/auth";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 
 const Login = () => {
   const [generalitem, setGeneralItem] = useContext(GeneralContext);
@@ -97,10 +93,7 @@ const Login = () => {
             Log into your Admin
           </p>
           <div className=" flex justify-center items-center flex-col mt-8">
-            <label
-              className=" font-Outfit text-sm text-left w-full font-normal"
-              for="first-name"
-            >
+            <label className=" font-Outfit text-sm text-left w-full font-normal" for="first-name">
               Email
             </label>
             <input
@@ -116,10 +109,7 @@ const Login = () => {
             >
               Please fill in your Email
             </p>
-            <label
-              className=" font-Outfit text-sm text-left w-full font-normal"
-              for="first-name"
-            >
+            <label className=" font-Outfit text-sm text-left w-full font-normal" for="first-name">
               Password
             </label>
             <input
@@ -138,9 +128,7 @@ const Login = () => {
               className=" w-full flex h-[45px] mt-6 rounded-[20px]  bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] hover:bg-opacity-75 transition-all justify-center font-Outfit text-base text-white font-medium items-center"
             >
               {loadValue === "No" && "Sign In"}
-              {loadValue === "Yes" && (
-                <img src={load} className=" w-6 h-6" alt="" />
-              )}
+              {loadValue === "Yes" && <img src={load} className=" w-6 h-6" alt="" />}
             </button>
           </div>
         </div>

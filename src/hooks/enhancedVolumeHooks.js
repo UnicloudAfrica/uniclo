@@ -4,7 +4,7 @@ import silentApi from "../index/silent";
 
 /**
  * Enhanced Volume Management Hooks
- * 
+ *
  * These hooks provide comprehensive volume management functionality including:
  * - Volume CRUD operations
  * - Volume attachments/detachments
@@ -60,7 +60,10 @@ const updateVolumeMeta = async ({ id, metaData }) => {
 
 const fetchVolumeTypes = async (params = {}) => {
   const queryString = new URLSearchParams(params).toString();
-  const res = await silentApi("GET", `/business/volume-types${queryString ? `?${queryString}` : ""}`);
+  const res = await silentApi(
+    "GET",
+    `/business/volume-types${queryString ? `?${queryString}` : ""}`
+  );
   if (!res.data) throw new Error("Failed to fetch volume types");
   return res;
 };
@@ -71,7 +74,10 @@ const fetchVolumeTypes = async (params = {}) => {
 
 const fetchVolumeAttachments = async (params = {}) => {
   const queryString = new URLSearchParams(params).toString();
-  const res = await silentApi("GET", `/business/volume-attachments${queryString ? `?${queryString}` : ""}`);
+  const res = await silentApi(
+    "GET",
+    `/business/volume-attachments${queryString ? `?${queryString}` : ""}`
+  );
   if (!res.data) throw new Error("Failed to fetch volume attachments");
   return res;
 };
@@ -295,14 +301,14 @@ export const useFetchVolumeWithAttachments = (volumeId, options = {}) => {
     refetch: () => {
       volumeQuery.refetch();
       attachmentsQuery.refetch();
-    }
+    },
   };
 };
 
 // Hook for volume operations that affect both the volume and its attachments
 export const useVolumeOperations = () => {
   const queryClient = useQueryClient();
-  
+
   const invalidateVolumeData = (volumeId) => {
     queryClient.invalidateQueries({ queryKey: ["volumes"] });
     queryClient.invalidateQueries({ queryKey: ["volume-attachments"] });
@@ -335,5 +341,5 @@ export {
   detachVolume,
   detachVolumeById,
   resizeVolume,
-  updateVolumeMeta
+  updateVolumeMeta,
 };

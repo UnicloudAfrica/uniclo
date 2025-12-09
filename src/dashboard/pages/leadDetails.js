@@ -17,22 +17,18 @@ import {
   Building,
 } from "lucide-react";
 import TenantPageShell from "../components/TenantPageShell";
-import ModernCard from "../leads/components/ModernCard";
-import ModernButton from "../leads/components/ModernButton";
-import {
-  useFetchLeadById,
-  useConvertLeadToUser,
-} from "../../hooks/tenantHooks/leadsHook";
+import { ModernCard } from "../../shared/components/ui";
+import { ModernButton } from "../../shared/components/ui";
+import { useFetchLeadById, useConvertLeadToUser } from "../../hooks/tenantHooks/leadsHook";
 import EditLead from "./leadComps/editLead";
 import AddLeadStage from "./leadComps/addLeadStage";
 import { EditLeadStage } from "./leadComps/editLeadStage";
 import AddLeadDocument from "./leadComps/addLeadDoc";
 import UpdateLeadDoc from "./leadComps/updateLeadDoc";
 import DocumentViewerModal from "./leadComps/documentViewer";
-import ToastUtils from "../../utils/toastUtil";
+import ToastUtils from "../../utils/toastUtil.ts";
 
-const formatStatusForDisplay = (status) =>
-  status?.replace(/_/g, " ") || "N/A";
+const formatStatusForDisplay = (status) => status?.replace(/_/g, " ") || "N/A";
 
 const DetailItem = ({ label, value, className = "" }) => (
   <div className={`flex flex-col ${className}`}>
@@ -46,9 +42,7 @@ const DocumentItem = ({ doc, onUpdate, onView }) => (
     <div className="flex items-center justify-between mb-2">
       <div className="flex items-center min-w-0 flex-1">
         <ExternalLink className="w-5 h-5 text-gray-500 mr-2 flex-shrink-0" />
-        <span className="text-sm font-medium text-gray-800 truncate">
-          {doc.name}
-        </span>
+        <span className="text-sm font-medium text-gray-800 truncate">{doc.name}</span>
       </div>
       <div className="flex items-center space-x-2 flex-shrink-0">
         <button
@@ -75,9 +69,7 @@ const DocumentItem = ({ doc, onUpdate, onView }) => (
       </div>
       <div>
         <span className="font-medium">Type:</span>{" "}
-        <span className="capitalize">
-          {formatStatusForDisplay(doc.document_type)}
-        </span>
+        <span className="capitalize">{formatStatusForDisplay(doc.document_type)}</span>
       </div>
       <div className="col-span-2">
         <span className="font-medium">Uploaded By:</span>{" "}
@@ -163,18 +155,11 @@ const DashboardLeadDetails = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const {
-    data: leadDetails,
-    isFetching,
-    isError,
-  } = useFetchLeadById(dataState.leadId);
-  const { mutate: convertLead, isPending: isConverting } =
-    useConvertLeadToUser();
+  const { data: leadDetails, isFetching, isError } = useFetchLeadById(dataState.leadId);
+  const { mutate: convertLead, isPending: isConverting } = useConvertLeadToUser();
 
-  const updateUiState = (updates) =>
-    setUiState((prev) => ({ ...prev, ...updates }));
-  const updateDataState = (updates) =>
-    setDataState((prev) => ({ ...prev, ...updates }));
+  const updateUiState = (updates) => setUiState((prev) => ({ ...prev, ...updates }));
+  const updateDataState = (updates) => setDataState((prev) => ({ ...prev, ...updates }));
 
   const handleGoBack = () => navigate("/dashboard/leads");
 
@@ -212,8 +197,7 @@ const DashboardLeadDetails = () => {
     updateUiState({ isViewerOpen: false });
   };
 
-  const formatDate = (dateString) =>
-    dateString ? new Date(dateString).toLocaleString() : "N/A";
+  const formatDate = (dateString) => (dateString ? new Date(dateString).toLocaleString() : "N/A");
 
   const headerActions = (
     <div className="flex items-center gap-3">
@@ -302,9 +286,7 @@ const DashboardLeadDetails = () => {
         contentClassName="p-6 md:p-8 flex flex-col items-center justify-center text-center gap-4"
       >
         <AlertTriangle className="w-12 h-12 text-red-500" />
-        <p className="text-lg font-semibold text-gray-700">
-          This lead could not be found.
-        </p>
+        <p className="text-lg font-semibold text-gray-700">This lead could not be found.</p>
         <ModernButton onClick={handleGoBack} variant="primary" size="lg">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to leads
@@ -333,9 +315,7 @@ const DashboardLeadDetails = () => {
   } = leadDetails;
 
   const fullName =
-    `${first_name || ""} ${last_name || ""}`.trim() ||
-    dataState.leadNameFromUrl ||
-    "Lead";
+    `${first_name || ""} ${last_name || ""}`.trim() || dataState.leadNameFromUrl || "Lead";
 
   return (
     <TenantPageShell
@@ -347,9 +327,7 @@ const DashboardLeadDetails = () => {
       {isConverting && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-2xl bg-white/80 backdrop-blur-sm">
           <Loader2 className="w-10 h-10 animate-spin text-[--theme-color]" />
-          <p className="mt-3 text-base font-medium text-gray-700">
-            Converting lead to user...
-          </p>
+          <p className="mt-3 text-base font-medium text-gray-700">Converting lead to user...</p>
         </div>
       )}
 
@@ -446,9 +424,7 @@ const DashboardLeadDetails = () => {
                 <div>
                   <p className="text-sm text-gray-500">Follow Up Date</p>
                   <p className="font-medium">
-                    {follow_up_date
-                      ? new Date(follow_up_date).toLocaleDateString()
-                      : "N/A"}
+                    {follow_up_date ? new Date(follow_up_date).toLocaleDateString() : "N/A"}
                   </p>
                 </div>
               </div>
@@ -480,17 +456,12 @@ const DashboardLeadDetails = () => {
                 value={`${pricing_summary.total} ${pricing_summary.currency}`}
               />
               <div className="grid grid-cols-2 gap-3">
-                <DetailItem
-                  label="Instances"
-                  value={pricing_summary.instances}
-                />
+                <DetailItem label="Instances" value={pricing_summary.instances} />
                 <DetailItem label="Months" value={pricing_summary.months} />
               </div>
             </div>
           ) : (
-            <p className="text-gray-500 text-sm">
-              No pricing information captured.
-            </p>
+            <p className="text-gray-500 text-sm">No pricing information captured.</p>
           )}
         </ModernCard>
       </div>
@@ -499,10 +470,7 @@ const DashboardLeadDetails = () => {
         {stages && stages.length > 0 ? (
           <div className="space-y-4">
             {stages.map((stage) => (
-              <div
-                key={stage.id}
-                className="border-l-4 border-blue-500 pl-4 py-2 space-y-4"
-              >
+              <div key={stage.id} className="border-l-4 border-blue-500 pl-4 py-2 space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-gray-800 capitalize">
                     {formatStatusForDisplay(stage.name)}
@@ -519,18 +487,9 @@ const DashboardLeadDetails = () => {
                   {stage.description || "No description provided."}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-sm">
-                  <DetailItem
-                    label="Status"
-                    value={formatStatusForDisplay(stage.status)}
-                  />
-                  <DetailItem
-                    label="Started"
-                    value={formatDate(stage.started_at)}
-                  />
-                  <DetailItem
-                    label="Completed"
-                    value={formatDate(stage.completed_at)}
-                  />
+                  <DetailItem label="Status" value={formatStatusForDisplay(stage.status)} />
+                  <DetailItem label="Started" value={formatDate(stage.started_at)} />
+                  <DetailItem label="Completed" value={formatDate(stage.completed_at)} />
                   <DetailItem
                     label="Assigned To"
                     value={
@@ -557,18 +516,14 @@ const DashboardLeadDetails = () => {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500">
-                      No documents uploaded for this stage.
-                    </p>
+                    <p className="text-sm text-gray-500">No documents uploaded for this stage.</p>
                   )}
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-center py-4 text-gray-500">
-            No stages have been added for this lead.
-          </p>
+          <p className="text-center py-4 text-gray-500">No stages have been added for this lead.</p>
         )}
       </ModernCard>
 
@@ -614,9 +569,7 @@ const DashboardLeadDetails = () => {
             ))}
           </div>
         ) : (
-          <p className="text-center py-4 text-gray-500">
-            No documents uploaded for this lead.
-          </p>
+          <p className="text-center py-4 text-gray-500">No documents uploaded for this lead.</p>
         )}
       </ModernCard>
 

@@ -50,8 +50,7 @@ const FaqPage = () => {
         "Yes, UniCloud Africa is dedicated to providing excellent customer support. Our team of local experts is available 24/7 to assist you with technical inquiries, ensuring a smooth experience with our cloud solutions.",
     },
     {
-      question:
-        "How can my business collaborate with UniCloud Africa's ecosystem?",
+      question: "How can my business collaborate with UniCloud Africa's ecosystem?",
       answer:
         "UniCloud Africa actively engages with local ecosystems and offers a Cloud Marketplace, fostering collaboration within a robust partner ecosystem. Contact us to explore partnership opportunities and join the digital transformation journey.",
     },
@@ -94,9 +93,7 @@ const FaqPage = () => {
               }`}
             >
               <div className="flex flex-row justify-between w-full space-y-2 items-center">
-                <p className="font-Outfit text-base md:text-lg font-normal">
-                  {faq.question}
-                </p>
+                <p className="font-Outfit text-base md:text-lg font-normal">{faq.question}</p>
                 <img
                   src={arrowDown}
                   className={`${
@@ -119,12 +116,9 @@ const FaqPage = () => {
           <div className=" w-full h-[400px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] relative ">
             <img src={adbg} className=" absolute h-[300px]" alt="" />
             <img src={avatar} className="" alt="" />
-            <p className=" font-semibold px-4 md:px-0 text-2xl">
-              Still have questions?
-            </p>
+            <p className=" font-semibold px-4 md:px-0 text-2xl">Still have questions?</p>
             <p className=" font-normal px-4 md:px-0 text-base text-[#FFFFFFCC]">
-              Can’t find the answer you’re looking for? Please chat to our
-              friendly team.
+              Can’t find the answer you’re looking for? Please chat to our friendly team.
             </p>
             <Link to="/contact" className="z-20">
               <button className=" px-9 z-20 py-4 bg-[#fff] rounded-[30px] text-base text-[#000] mt-4">

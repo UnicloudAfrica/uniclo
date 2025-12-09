@@ -4,7 +4,7 @@ import { useCreateProject } from "../../hooks/projectHooks";
 import { useFetchGeneralRegions } from "../../hooks/resource";
 import { useFetchClients } from "../../hooks/clientHooks";
 import { useNavigate } from "react-router-dom";
-import ToastUtils from "../../utils/toastUtil";
+import ToastUtils from "../../utils/toastUtil.ts";
 
 const INITIAL_FORM_STATE = {
   name: "",
@@ -18,13 +18,8 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
   const isPageMode = mode === "page";
   const navigate = useNavigate();
   const { mutate: createProject, isPending } = useCreateProject();
-  const { isFetching: isRegionsFetching, data: regions } =
-    useFetchGeneralRegions();
-  const {
-    data: clients,
-    isFetching: isClientsFetching,
-    refetch,
-  } = useFetchClients();
+  const { isFetching: isRegionsFetching, data: regions } = useFetchGeneralRegions();
+  const { data: clients, isFetching: isClientsFetching, refetch } = useFetchClients();
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
   const [errors, setErrors] = useState({});
   const [selectedClients, setSelectedClients] = useState([]);
@@ -102,8 +97,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
     if (!formData.name) {
       newErrors.name = "Project Name is required";
     }
-    if (!formData.region)
-      newErrors.region = "Default Region is required";
+    if (!formData.region) newErrors.region = "Default Region is required";
     if (!formData.type) {
       newErrors.type = "Type is required";
     }
@@ -129,10 +123,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
     if (isSelected) {
       setSelectedClients(selectedClients.filter((c) => c.id !== clientId));
     } else {
-      setSelectedClients([
-        ...selectedClients,
-        { id: clientId, name: clientName },
-      ]);
+      setSelectedClients([...selectedClients, { id: clientId, name: clientName }]);
     }
   };
 
@@ -200,20 +191,14 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
   const closeButtonLabel = isPageMode ? "Cancel" : "Close";
 
   const getFullName = (client) => {
-    const parts = [
-      client.first_name,
-      client.middle_name,
-      client.last_name,
-    ].filter(Boolean);
+    const parts = [client.first_name, client.middle_name, client.last_name].filter(Boolean);
     return parts.join(" ");
   };
 
   const filteredClients =
     clients?.filter(
       (client) =>
-        getFullName(client)
-          .toLowerCase()
-          .includes(clientSearch.toLowerCase()) ||
+        getFullName(client).toLowerCase().includes(clientSearch.toLowerCase()) ||
         client.email.toLowerCase().includes(clientSearch.toLowerCase())
     ) || [];
 
@@ -224,9 +209,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
       { label: "Project name", value: formData.name || "Not set" },
       {
         label: "Region",
-        value: formData.region
-          ? formData.region.toUpperCase()
-          : "Select a region",
+        value: formData.region ? formData.region.toUpperCase() : "Select a region",
       },
       {
         label: "Topology",
@@ -234,9 +217,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
       },
       {
         label: "Assigned clients",
-        value: formData.user_ids.length
-          ? `${formData.user_ids.length} selected`
-          : "Optional",
+        value: formData.user_ids.length ? `${formData.user_ids.length} selected` : "Optional",
       },
     ];
 
@@ -252,14 +233,9 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
           <h3 className="text-sm font-semibold text-slate-900">Live summary</h3>
           <dl className="mt-4 space-y-3 text-sm">
             {summaryItems.map((item) => (
-              <div
-                key={item.label}
-                className="flex items-center justify-between gap-4"
-              >
+              <div key={item.label} className="flex items-center justify-between gap-4">
                 <dt className="text-slate-500">{item.label}</dt>
-                <dd className="text-right font-semibold text-slate-900">
-                  {item.value}
-                </dd>
+                <dd className="text-right font-semibold text-slate-900">{item.value}</dd>
               </div>
             ))}
           </dl>
@@ -279,8 +255,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
     );
   };
 
-  const sectionClasses =
-    "rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm";
+  const sectionClasses = "rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm";
 
   const structuredForm = (
     <div className="space-y-6">
@@ -298,47 +273,35 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
         </div>
         <div className="mt-5 space-y-4">
           <div>
-            <label
-              htmlFor="name"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Project Name<span className="text-red-500">*</span>
-              </label>
-              <input
-                id="name"
-                type="text"
-                value={formData.name}
-                onChange={(e) => updateFormData("name", e.target.value)}
-                placeholder="Enter project name"
-                className={`w-full input-field ${
-                  errors.name ? "border-red-500" : "border-gray-300"
-                }`}
-              />
-              {errors.name && (
-                <p className="text-red-500 text-xs mt-1">{errors.name}</p>
-              )}
-            </div>
-            <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Project Description
-              </label>
-              <textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => updateFormData("description", e.target.value)}
-                placeholder="Enter project description (optional)"
-                rows="3"
-                className={`w-full input-field ${
-                  errors.description ? "border-red-500" : "border-gray-300"
-                }`}
-              ></textarea>
-              {errors.description && (
-                <p className="text-red-500 text-xs mt-1">
-                {errors.description}
-              </p>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+              Project Name<span className="text-red-500">*</span>
+            </label>
+            <input
+              id="name"
+              type="text"
+              value={formData.name}
+              onChange={(e) => updateFormData("name", e.target.value)}
+              placeholder="Enter project name"
+              className={`w-full input-field ${errors.name ? "border-red-500" : "border-gray-300"}`}
+            />
+            {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+          </div>
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+              Project Description
+            </label>
+            <textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => updateFormData("description", e.target.value)}
+              placeholder="Enter project description (optional)"
+              rows="3"
+              className={`w-full input-field ${
+                errors.description ? "border-red-500" : "border-gray-300"
+              }`}
+            ></textarea>
+            {errors.description && (
+              <p className="text-red-500 text-xs mt-1">{errors.description}</p>
             )}
           </div>
         </div>
@@ -352,10 +315,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
         </h3>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <label
-              htmlFor="region"
-              className="block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="region" className="block text-sm font-medium text-gray-700">
               Default region<span className="text-red-500">*</span>
             </label>
             <select
@@ -376,9 +336,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
                 </option>
               ))}
             </select>
-            {errors.region && (
-              <p className="text-red-500 text-xs mt-1">{errors.region}</p>
-            )}
+            {errors.region && <p className="text-red-500 text-xs mt-1">{errors.region}</p>}
           </div>
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
@@ -404,16 +362,12 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
                   />
                   <span className="font-semibold uppercase">{type}</span>
                   <span className="text-xs text-slate-500">
-                    {type === "vpc"
-                      ? "Standard network workspace"
-                      : "Dedicated virtual segment"}
+                    {type === "vpc" ? "Standard network workspace" : "Dedicated virtual segment"}
                   </span>
                 </label>
               ))}
             </div>
-            {errors.type && (
-              <p className="text-red-500 text-xs mt-1">{errors.type}</p>
-            )}
+            {errors.type && <p className="text-red-500 text-xs mt-1">{errors.type}</p>}
           </div>
         </div>
       </div>
@@ -425,8 +379,8 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
           Grant client access on day one
         </h3>
         <p className="text-sm text-slate-500">
-          Select clients to attach to this project. They capture context during
-          provisioning but are optional.
+          Select clients to attach to this project. They capture context during provisioning but are
+          optional.
         </p>
         <div className="mt-4">
           <div className="relative w-full" ref={dropdownRef}>
@@ -479,9 +433,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
                     {client.name}
                     <button
                       type="button"
-                      onClick={() =>
-                        toggleClientSelection(client.id, client.name)
-                      }
+                      onClick={() => toggleClientSelection(client.id, client.name)}
                       className="ml-1 text-white hover:text-gray-200"
                     >
                       <X className="h-3 w-3" />
@@ -505,13 +457,9 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
                       Loading clients...
                     </div>
                   ) : clients && clients.length === 0 ? (
-                    <div className="px-3 py-2 text-sm text-gray-500">
-                      No clients yet
-                    </div>
+                    <div className="px-3 py-2 text-sm text-gray-500">No clients yet</div>
                   ) : filteredClients.length === 0 ? (
-                    <div className="px-3 py-2 text-sm text-gray-500">
-                      No clients found
-                    </div>
+                    <div className="px-3 py-2 text-sm text-gray-500">No clients found</div>
                   ) : (
                     <>
                       {filteredClients.map((client) => (
@@ -522,12 +470,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
                           <input
                             type="checkbox"
                             checked={formData.user_ids.includes(client.id)}
-                            onChange={() =>
-                              toggleClientSelection(
-                                client.id,
-                                getFullName(client)
-                              )
-                            }
+                            onChange={() => toggleClientSelection(client.id, getFullName(client))}
                             className="h-4 w-4 text-[#288DD1] border-gray-300 rounded focus:ring-[#288DD1] mr-2"
                           />
                           <span className="text-sm">
@@ -559,17 +502,12 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
               {formData.user_ids.length} client(s) selected
             </p>
           )}
-          {errors.user_ids && (
-            <p className="text-red-500 text-xs mt-1">{errors.user_ids}</p>
-          )}
+          {errors.user_ids && <p className="text-red-500 text-xs mt-1">{errors.user_ids}</p>}
         </div>
       </div>
-      {errors.general && (
-        <p className="text-red-500 text-xs mt-1">{errors.general}</p>
-      )}
+      {errors.general && <p className="text-red-500 text-xs mt-1">{errors.general}</p>}
     </div>
   );
-
 
   if (isPageMode) {
     return (
@@ -583,8 +521,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
               Define your new workspace blueprint
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Capture the essential context your team needs to start deploying
-              workloads right away.
+              Capture the essential context your team needs to start deploying workloads right away.
             </p>
           </div>
           <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1.8fr),minmax(260px,1fr)]">
@@ -624,9 +561,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
         <div
           className={`flex justify-between items-center px-6 py-4 border-b rounded-t-[24px] w-full ${headerBackgroundClass}`}
         >
-          <h2 className="text-lg font-semibold text-[#575758]">
-            Create New Project
-          </h2>
+          <h2 className="text-lg font-semibold text-[#575758]">Create New Project</h2>
           {showCloseButton && (
             <button
               onClick={handleClose}
@@ -636,9 +571,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
             </button>
           )}
         </div>
-        <div className={bodyClasses}>
-          {structuredForm}
-        </div>
+        <div className={bodyClasses}>{structuredForm}</div>
         <div className="flex items-center justify-end px-6 py-4 border-t rounded-b-[24px]">
           <div className="flex gap-3">
             <button
@@ -653,9 +586,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
               className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Create Project
-              {isPending && (
-                <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-              )}
+              {isPending && <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />}
             </button>
           </div>
         </div>

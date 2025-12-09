@@ -39,7 +39,6 @@ const useFirestoreData = (db, collectionName) => {
 };
 
 const ContextProvider = (props) => {
-  
   const firebaseConfig = {
     apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
     authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
@@ -54,30 +53,29 @@ const ContextProvider = (props) => {
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  const [page, setPage] = useState('General');
+  const [page, setPage] = useState("General");
 
   // Define your context values using the custom hook
-  const blogArray = useFirestoreData(db, 'blog');
-  const eventArray = useFirestoreData(db, 'events');
-  const resourceArray = useFirestoreData(db, 'resources');
-  const solutionArray = useFirestoreData(db, 'solutions');
-  const caseArray = useFirestoreData(db, 'cases');
-  const partnersArray = useFirestoreData(db, 'Partner');
-  const boardArray = useFirestoreData(db, 'board');
-  const manageArray = useFirestoreData(db, 'manage');
-  const careerArray = useFirestoreData(db, 'career');
-  const [generalitem, setGeneralItem] = useState([])
-  
-  useEffect(()=>{
-    const colRef = collection(db, 'general');
-    const q = query(colRef)
-    onSnapshot(q,(snapshot)=>{
-      snapshot.docs.forEach((doc)=>{
-          setGeneralItem(doc.data())
-      })
-    })
-        
-},[auth, db]);
+  const blogArray = useFirestoreData(db, "blog");
+  const eventArray = useFirestoreData(db, "events");
+  const resourceArray = useFirestoreData(db, "resources");
+  const solutionArray = useFirestoreData(db, "solutions");
+  const caseArray = useFirestoreData(db, "cases");
+  const partnersArray = useFirestoreData(db, "Partner");
+  const boardArray = useFirestoreData(db, "board");
+  const manageArray = useFirestoreData(db, "manage");
+  const careerArray = useFirestoreData(db, "career");
+  const [generalitem, setGeneralItem] = useState([]);
+
+  useEffect(() => {
+    const colRef = collection(db, "general");
+    const q = query(colRef);
+    onSnapshot(q, (snapshot) => {
+      snapshot.docs.forEach((doc) => {
+        setGeneralItem(doc.data());
+      });
+    });
+  }, [auth, db]);
 
   return (
     <>

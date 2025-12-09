@@ -47,14 +47,12 @@ const Services = () => {
   const data = [
     {
       topic: "Infrastructure-as-a-Service (IaaS)",
-      content:
-        "Provision of  scalable and customizable virtualized infrastructure resources.",
+      content: "Provision of  scalable and customizable virtualized infrastructure resources.",
       img: cpu,
     },
     {
       topic: "Platform-as-a-Service (PaaS)",
-      content:
-        "Offering a platform for application development, deployment, and management.",
+      content: "Offering a platform for application development, deployment, and management.",
       img: driver,
     },
     {
@@ -77,8 +75,7 @@ const Services = () => {
     },
     {
       topic: "Analytics and Business Intelligence",
-      content:
-        "Enabling data analysis, and reporting for valuable insights and decision-making.",
+      content: "Enabling data analysis, and reporting for valuable insights and decision-making.",
       img: chart,
     },
     {
@@ -131,20 +128,15 @@ const Services = () => {
             Our Services
           </p>
           <p className=" text-center font-normal text-[#676767] mt-1 text-lg md:text-xl ">
-            Discover a range of cloud services that empower your business to
-            grow and succeed
+            Discover a range of cloud services that empower your business to grow and succeed
           </p>
           <div className=" grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[32px] w-full mt-12">
             {data.map((item, index) => (
               <div key={index} className="w-full text-center">
                 <div className=" w-full bg-gradient-to-r from-[#288DD11A] to-[#3FE0C81A] relative md:h-[300px] rounded-[20px] p-6">
                   <img src={item.img} className=" w-16 h-16" alt="" />
-                  <p className="text-left mt-6 text-lg md:text-xl font-medium">
-                    {item.topic}
-                  </p>
-                  <p className="text-left mt-1 text-[#1E1E1ECC] text-sm">
-                    {item.content}
-                  </p>
+                  <p className="text-left mt-6 text-lg md:text-xl font-medium">{item.topic}</p>
+                  <p className="text-left mt-1 text-[#1E1E1ECC] text-sm">{item.content}</p>
                 </div>
               </div>
             ))}
@@ -225,9 +217,7 @@ const Services = () => {
                       backgroundPosition: "center",
                     }}
                   ></div>
-                  <p className="text-left mt-6 text-xl md:text-2xl font-medium">
-                    {item.title}
-                  </p>
+                  <p className="text-left mt-6 text-xl md:text-2xl font-medium">{item.title}</p>
                   <p className="text-left mt-3 text-[#1E1E1ECC] text-sm">
                     {item.tagline.substring(0, 200) + "..."}
                   </p>
@@ -251,12 +241,9 @@ const Services = () => {
                 className="z-10 absolute top-0 h-full w-full object-cover block md:hidden"
                 alt=""
               />
-              <p className=" font-semibold text-xl md:text-3xl">
-                Want product news and updates
-              </p>
+              <p className=" font-semibold text-xl md:text-3xl">Want product news and updates</p>
               <p className=" font-normal px-4 md:px-0 text-lg md:text-xl">
-                Subscribe to UniCloud Africa blog to get update right in your
-                inbox
+                Subscribe to UniCloud Africa blog to get update right in your inbox
               </p>
               <div className=" flex flex-col md:flex-row items-center justify-center z-20  mt-4 md:space-x-6 space-y-4 md:space-y-0">
                 <input

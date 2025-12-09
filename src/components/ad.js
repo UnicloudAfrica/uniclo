@@ -23,8 +23,7 @@ const Ads = () => {
           />
           <p className="font-semibold text-3xl md:text-[40px]">Start today</p>
           <p className="font-normal px-4 md:px-0 text-xl">
-            Sign up now and you'll be up and running on UniCloud Africa in just
-            minutes.
+            Sign up now and you'll be up and running on UniCloud Africa in just minutes.
           </p>
           <Link to="/contact" className=" z-20">
             <button className="px-9 py-4 bg-[#fff] rounded-[30px] text-base text-[#000] mt-4">

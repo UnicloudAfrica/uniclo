@@ -1,23 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Menu, Button, message, Spin } from 'antd';
-import { UserOutlined, SettingOutlined, BellOutlined, CreditCardOutlined } from '@ant-design/icons';
-import { 
-  getAvailableSettings, 
-  getSettingNavigation, 
-  SETTINGS_API 
-} from '../../config/settingsConfig';
-import PersonalSettings from './PersonalSettings';
-import InterfaceSettings from './InterfaceSettings';
-import NotificationSettings from './NotificationSettings';
-import BillingSettings from './BillingSettings';
-import BusinessSettings from './BusinessSettings';
-import IntegrationSettings from './IntegrationSettings';
-import SystemSettings from './SystemSettings';
-import ReportingSettings from './ReportingSettings';
-import { useAuth } from '../../hooks/useAuth'; // Assuming you have this hook
-import { apiCall } from '../../utils/api'; // Assuming you have this utility
-
-const { Sider, Content } = Layout;
+import React, { useState, useEffect } from "react";
+import { Card, Row, Col, Menu, Button, message, Spin } from "antd";
+import {
+  UserOutlined,
+  SettingOutlined,
+  BellOutlined,
+  CreditCardOutlined,
+  BuildingOutlined,
+  LinkOutlined,
+  ServerOutlined,
+  BarChartOutlined,
+} from "@ant-design/icons";
+import {
+  getAvailableSettings,
+  getSettingNavigation,
+  SETTINGS_API,
+} from "../../config/settingsConfig";
+import PersonalSettings from "./PersonalSettings";
+import InterfaceSettings from "./InterfaceSettings";
+import NotificationSettings from "./NotificationSettings";
+import BillingSettings from "./BillingSettings";
+import BusinessSettings from "./BusinessSettings";
+import IntegrationSettings from "./IntegrationSettings";
+import SystemSettings from "./SystemSettings";
+import ReportingSettings from "./ReportingSettings";
+import { useAuth } from "../../hooks/useAuth"; // Assuming you have this hook
+import { apiCall } from "../../utils/api"; // Assuming you have this utility
 
 const COMPONENT_MAP = {
   personal: PersonalSettings,
@@ -43,12 +50,12 @@ const ICON_MAP = {
 
 const SettingsPage = () => {
   const { user } = useAuth();
-  const [activeKey, setActiveKey] = useState('personal');
+  const [activeKey, setActiveKey] = useState("personal");
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  
-  const userRole = user?.role?.toUpperCase() || 'CLIENT';
+
+  const userRole = user?.role?.toUpperCase() || "CLIENT";
   const availableSettings = getAvailableSettings(userRole);
   const navigation = getSettingNavigation(userRole);
 
@@ -59,12 +66,12 @@ const SettingsPage = () => {
   const loadSettings = async () => {
     try {
       setLoading(true);
-      const response = await apiCall('GET', SETTINGS_API.profile);
+      const response = await apiCall("GET", SETTINGS_API.profile);
       if (response.success) {
         setSettings(response.data.settings);
       }
     } catch (error) {
-      message.error('Failed to load settings');
+      message.error("Failed to load settings");
     } finally {
       setLoading(false);
     }
@@ -73,24 +80,24 @@ const SettingsPage = () => {
   const updateSetting = async (category, key, value) => {
     try {
       setSaving(true);
-      const response = await apiCall('PUT', SETTINGS_API.profile, {
+      const response = await apiCall("PUT", SETTINGS_API.profile, {
         category,
         key,
         value,
       });
-      
+
       if (response.success) {
-        setSettings(prev => ({
+        setSettings((prev) => ({
           ...prev,
           [category]: {
             ...prev[category],
             [key]: value,
           },
         }));
-        message.success('Setting updated successfully');
+        message.success("Setting updated successfully");
       }
     } catch (error) {
-      message.error('Failed to update setting');
+      message.error("Failed to update setting");
     } finally {
       setSaving(false);
     }
@@ -99,10 +106,10 @@ const SettingsPage = () => {
   const updateMultipleSettings = async (updates) => {
     try {
       setSaving(true);
-      const response = await apiCall('PUT', `${SETTINGS_API.profile}/batch`, {
+      const response = await apiCall("PUT", `${SETTINGS_API.profile}/batch`, {
         settings: updates,
       });
-      
+
       if (response.success) {
         const newSettings = { ...settings };
         updates.forEach(({ category, key, value }) => {
@@ -110,10 +117,10 @@ const SettingsPage = () => {
           newSettings[category][key] = value;
         });
         setSettings(newSettings);
-        message.success('Settings updated successfully');
+        message.success("Settings updated successfully");
       }
     } catch (error) {
-      message.error('Failed to update settings');
+      message.error("Failed to update settings");
     } finally {
       setSaving(false);
     }
@@ -122,14 +129,14 @@ const SettingsPage = () => {
   const resetCategorySettings = async (category) => {
     try {
       setSaving(true);
-      const response = await apiCall('POST', SETTINGS_API.reset, { category });
-      
+      const response = await apiCall("POST", SETTINGS_API.reset, { category });
+
       if (response.success) {
         await loadSettings();
-        message.success('Settings reset successfully');
+        message.success("Settings reset successfully");
       }
     } catch (error) {
-      message.error('Failed to reset settings');
+      message.error("Failed to reset settings");
     } finally {
       setSaving(false);
     }
@@ -137,30 +144,30 @@ const SettingsPage = () => {
 
   const exportSettings = async () => {
     try {
-      const response = await apiCall('GET', SETTINGS_API.export);
+      const response = await apiCall("GET", SETTINGS_API.export);
       if (response.success) {
         const blob = new Blob([JSON.stringify(response.data.settings, null, 2)], {
-          type: 'application/json',
+          type: "application/json",
         });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
+        const a = document.createElement("a");
         a.href = url;
-        a.download = `settings-${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `settings-${new Date().toISOString().split("T")[0]}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        message.success('Settings exported successfully');
+        message.success("Settings exported successfully");
       }
     } catch (error) {
-      message.error('Failed to export settings');
+      message.error("Failed to export settings");
     }
   };
 
   const menuItems = navigation.map(({ key, path }) => {
     const config = availableSettings[key];
     const IconComponent = ICON_MAP[key];
-    
+
     return {
       key,
       icon: IconComponent ? <IconComponent /> : null,
@@ -173,52 +180,50 @@ const SettingsPage = () => {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '100px 0' }}>
+      <div style={{ textAlign: "center", padding: "100px 0" }}>
         <Spin size="large" />
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+    <div style={{ minHeight: "100vh", backgroundColor: "#f5f5f5" }}>
       <Row>
         <Col span={6}>
-          <Card style={{ margin: '24px', minHeight: 'calc(100vh - 48px)' }}>
-            <div style={{ marginBottom: '24px' }}>
+          <Card style={{ margin: "24px", minHeight: "calc(100vh - 48px)" }}>
+            <div style={{ marginBottom: "24px" }}>
               <h2>Settings</h2>
-              <p style={{ color: '#666', fontSize: '14px' }}>
+              <p style={{ color: "#666", fontSize: "14px" }}>
                 Manage your {userRole.toLowerCase()} preferences
               </p>
             </div>
-            
+
             <Menu
               mode="vertical"
               selectedKeys={[activeKey]}
               items={menuItems}
               onClick={({ key }) => setActiveKey(key)}
-              style={{ border: 'none' }}
+              style={{ border: "none" }}
             />
 
-            <div style={{ marginTop: '24px', borderTop: '1px solid #f0f0f0', paddingTop: '16px' }}>
-              <Button 
-                type="link" 
-                size="small" 
+            <div style={{ marginTop: "24px", borderTop: "1px solid #f0f0f0", paddingTop: "16px" }}>
+              <Button
+                type="link"
+                size="small"
                 onClick={exportSettings}
-                style={{ padding: 0, color: '#666' }}
+                style={{ padding: 0, color: "#666" }}
               >
                 Export Settings
               </Button>
             </div>
           </Card>
         </Col>
-        
+
         <Col span={18}>
-          <Card style={{ margin: '24px' }}>
-            <div style={{ marginBottom: '24px' }}>
+          <Card style={{ margin: "24px" }}>
+            <div style={{ marginBottom: "24px" }}>
               <h2>{activeConfig?.label}</h2>
-              <p style={{ color: '#666', marginBottom: '24px' }}>
-                {activeConfig?.description}
-              </p>
+              <p style={{ color: "#666", marginBottom: "24px" }}>{activeConfig?.description}</p>
             </div>
 
             {ActiveComponent && (
@@ -240,7 +245,7 @@ const SettingsPage = () => {
             )}
 
             {!ActiveComponent && (
-              <div style={{ textAlign: 'center', padding: '50px 0', color: '#999' }}>
+              <div style={{ textAlign: "center", padding: "50px 0", color: "#999" }}>
                 <h3>Coming Soon</h3>
                 <p>This settings section is under development.</p>
               </div>

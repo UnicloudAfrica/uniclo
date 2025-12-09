@@ -1,21 +1,13 @@
 import { X } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import { useDisassociateTenantElasticIp } from "../../../hooks/elasticIPHooks";
 
-const DisassociateEipModal = ({
-  isOpen,
-  onClose,
-  projectId,
-  region,
-  elasticIp,
-}) => {
-  const { mutate: disassociateEip, isPending } =
-    useDisassociateTenantElasticIp();
+const DisassociateEipModal = ({ isOpen, onClose, projectId, region, elasticIp }) => {
+  const { mutate: disassociateEip, isPending } = useDisassociateTenantElasticIp();
 
   if (!isOpen || !elasticIp) return null;
 
-  const allocationId =
-    elasticIp.provider_resource_id || elasticIp.public_ip || elasticIp.id;
+  const allocationId = elasticIp.provider_resource_id || elasticIp.public_ip || elasticIp.id;
 
   const handleConfirm = () => {
     if (!allocationId) {
@@ -46,9 +38,7 @@ const DisassociateEipModal = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[520px] w-full mx-4">
         <div className="flex items-center justify-between px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
-          <h2 className="text-lg font-semibold text-[#575758]">
-            Disassociate Elastic IP
-          </h2>
+          <h2 className="text-lg font-semibold text-[#575758]">Disassociate Elastic IP</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-[#1E1E1EB2] transition-colors"
@@ -59,10 +49,8 @@ const DisassociateEipModal = ({
 
         <div className="px-6 py-6 space-y-3 text-sm text-gray-700">
           <p>
-            Are you sure you want to disassociate
-            {" "}
-            <span className="font-semibold text-gray-900">{allocationId}</span>
-            ?
+            Are you sure you want to disassociate{" "}
+            <span className="font-semibold text-gray-900">{allocationId}</span>?
           </p>
           <p>This will release the Elastic IP from its current resource.</p>
         </div>

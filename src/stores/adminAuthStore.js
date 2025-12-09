@@ -13,9 +13,7 @@ const inferTenantContext = () => {
 
   const hostname = window.location.hostname;
   const isCentral =
-    hostname === "unicloudafrica.com" ||
-    hostname === "localhost" ||
-    hostname.includes("127.0.0.1");
+    hostname === "unicloudafrica.com" || hostname === "localhost" || hostname.includes("127.0.0.1");
   const tenantSlug = !isCentral ? hostname.split(".")[0] : null;
 
   return {
@@ -80,14 +78,12 @@ const useAdminAuthStore = create(
         clearToken: resetState,
         setUserEmail: (newEmail) => set({ userEmail: newEmail }),
         clearUserEmail: () => set({ userEmail: null }),
-        setTwoFactorRequired: (value) =>
-          set({ twoFactorRequired: Boolean(value) }),
+        setTwoFactorRequired: (value) => set({ twoFactorRequired: Boolean(value) }),
         clearTwoFactorRequirement: () => set({ twoFactorRequired: false }),
         setUser: (user) => set({ user }),
         setRole: (role) => set({ role }),
         setTenant: (tenant) => set({ tenant }),
-        setCloudRoles: (roles = []) =>
-          set({ cloudRoles: Array.isArray(roles) ? roles : [] }),
+        setCloudRoles: (roles = []) => set({ cloudRoles: Array.isArray(roles) ? roles : [] }),
         setCloudAbilities: (abilities = []) =>
           set({ cloudAbilities: Array.isArray(abilities) ? abilities : [] }),
         setAvailableTenants: (tenants = []) =>
@@ -102,17 +98,13 @@ const useAdminAuthStore = create(
             tenant: session.tenant ?? state.tenant,
             domain: session.domain ?? state.domain,
             isAuthenticated:
-              session.token !== undefined
-                ? Boolean(session.token)
-                : state.isAuthenticated,
+              session.token !== undefined ? Boolean(session.token) : state.isAuthenticated,
             cloudRoles: session.cloudRoles ?? state.cloudRoles,
             cloudAbilities: session.cloudAbilities ?? state.cloudAbilities,
             currentTenant: session.currentTenant ?? state.currentTenant,
-            isCentralDomain:
-              session.isCentralDomain ?? state.isCentralDomain,
+            isCentralDomain: session.isCentralDomain ?? state.isCentralDomain,
             currentDomain: session.currentDomain ?? state.currentDomain,
-            availableTenants:
-              session.availableTenants ?? state.availableTenants,
+            availableTenants: session.availableTenants ?? state.availableTenants,
           })),
         clearSession: resetState,
         initializeTenantContext: () => {

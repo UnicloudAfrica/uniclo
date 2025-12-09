@@ -28,14 +28,11 @@ const About = () => {
       <Navbar />
       <motion.div>
         <div className=" mt-[10em] w-full font-Outfit">
-          <p className=" text-3xl md:text-[50px] font-medium text-center">
-            About us
-          </p>
+          <p className=" text-3xl md:text-[50px] font-medium text-center">About us</p>
           <p className=" text-base md:text-lg mt-6 font-normal text-center text-[#676767] px-4 md:px-[15%]">
-            At UniCloud Africa, we are committed to revolutionizing the way
-            businesses operate in Africa. With a team of experienced cloud
-            experts and a passion for innovation, we aim to provide secure,
-            scalable, and reliable cloud solutions that empower African
+            At UniCloud Africa, we are committed to revolutionizing the way businesses operate in
+            Africa. With a team of experienced cloud experts and a passion for innovation, we aim to
+            provide secure, scalable, and reliable cloud solutions that empower African
             organisations to thrive in the digital age.
           </p>
           <div className=" px-0 md:px-8 lg:px-6 w-full">
@@ -49,48 +46,39 @@ const About = () => {
               Crafting a Cloud Computing Legacy for African Businesses
             </p> */}
             <p className=" px-4 md:px-8 lg:px-16 my-6 text-base text-[#676767] text-justify font-normal">
-              Founded in 2023 in the vibrant city of Lagos, Nigeria, UniCloud
-              Africa emerged from the vision of a group of seasoned
-              entrepreneurs. Fueled by a profound understanding of the
-              challenges faced by African businesses—ranging from limited access
-              to capital and unreliable infrastructure to a scarcity of skilled
-              IT professionals—our founders embarked on a mission to
-              revolutionize the cloud computing landscape for the African
+              Founded in 2023 in the vibrant city of Lagos, Nigeria, UniCloud Africa emerged from
+              the vision of a group of seasoned entrepreneurs. Fueled by a profound understanding of
+              the challenges faced by African businesses—ranging from limited access to capital and
+              unreliable infrastructure to a scarcity of skilled IT professionals—our founders
+              embarked on a mission to revolutionize the cloud computing landscape for the African
               continent.<br></br>
               <br></br>
-              Recognizing the increasing adoption of cloud computing as a
-              catalyst for enhancing agility, scalability, and operational
-              efficiency among African businesses, the founders set out to
-              create a cloud computing provider that would not only be
-              affordable and reliable but also tailored to the unique needs of
-              the region.<br></br>
+              Recognizing the increasing adoption of cloud computing as a catalyst for enhancing
+              agility, scalability, and operational efficiency among African businesses, the
+              founders set out to create a cloud computing provider that would not only be
+              affordable and reliable but also tailored to the unique needs of the region.<br></br>
               <br></br>
-              Today, UniCloud Africa stands as a beacon in the African tech
-              landscape, proudly holding its position as one of the leading
-              cloud computing providers on the continent. Our comprehensive
-              suite of cloud services spans compute, storage, networking, and
-              managed services, catering to businesses of all sizes—from dynamic
-              startups to multinational corporations and government parastatals.
+              Today, UniCloud Africa stands as a beacon in the African tech landscape, proudly
+              holding its position as one of the leading cloud computing providers on the continent.
+              Our comprehensive suite of cloud services spans compute, storage, networking, and
+              managed services, catering to businesses of all sizes—from dynamic startups to
+              multinational corporations and government parastatals.
               <br></br>
               <br></br>
-              At the core of UniCloud Africa's mission is a steadfast commitment
-              to supporting the growth and development of African businesses. We
-              have instituted various programs and initiatives designed to
-              facilitate the seamless adoption of cloud computing, enabling
-              businesses to harness its transformative power to their advantage.
-              In collaboration with local universities and training
-              organizations, we are actively nurturing the next generation of
-              African professionals, equipping them with the skills essential
-              for success in the dynamic realm of cloud computing.<br></br>
+              At the core of UniCloud Africa's mission is a steadfast commitment to supporting the
+              growth and development of African businesses. We have instituted various programs and
+              initiatives designed to facilitate the seamless adoption of cloud computing, enabling
+              businesses to harness its transformative power to their advantage. In collaboration
+              with local universities and training organizations, we are actively nurturing the next
+              generation of African professionals, equipping them with the skills essential for
+              success in the dynamic realm of cloud computing.<br></br>
               <br></br>
-              UniCloud Africa is more than just a cloud computing provider; it
-              is a testament to innovation and entrepreneurship. From its
-              visionary beginnings, the company has evolved into a crucial
-              player in Africa's tech ecosystem, playing a pivotal role in
-              steering the growth and development of businesses across the
-              continent. Our story is one of dedication, empowerment, and a
-              relentless pursuit of excellence in supporting the digital
-              transformation journey of African enterprises.
+              UniCloud Africa is more than just a cloud computing provider; it is a testament to
+              innovation and entrepreneurship. From its visionary beginnings, the company has
+              evolved into a crucial player in Africa's tech ecosystem, playing a pivotal role in
+              steering the growth and development of businesses across the continent. Our story is
+              one of dedication, empowerment, and a relentless pursuit of excellence in supporting
+              the digital transformation journey of African enterprises.
             </p>
 
             <div className=" mt-[5em] px-4 md:px-8 lg:px-16">
@@ -113,25 +101,19 @@ const About = () => {
                 ></div>
 
                 <div className=" flex flex-col items-start lg:w-[48%]">
-                  <p className=" text-2xl mt-4 lg:mt-0 md:text-3xl font-medium">
-                    Our Vision
-                  </p>
+                  <p className=" text-2xl mt-4 lg:mt-0 md:text-3xl font-medium">Our Vision</p>
                   <p className=" whitespace-pre-line mt-3 text-base text-[#676767] text-justify font-normal">
-                    To create a truly Pan-African cloud platform that serves as
-                    the catalyst for technological innovation, economic growth,
-                    and sustainable development in Africa.
+                    To create a truly Pan-African cloud platform that serves as the catalyst for
+                    technological innovation, economic growth, and sustainable development in
+                    Africa.
                   </p>
-                  <p className=" text-2xl mt-3 md:mt-8 md:text-3xl font-medium">
-                    Our Mission
-                  </p>
+                  <p className=" text-2xl mt-3 md:mt-8 md:text-3xl font-medium">Our Mission</p>
                   <p className=" whitespace-pre-line mt-3 text-base text-[#676767] text-justify font-normal">
-                    To foster digital excellence across Africa, and responsibly
-                    deliver innovative and dependable cloud solutions that
-                    empower businesses, and governments across the continent.
+                    To foster digital excellence across Africa, and responsibly deliver innovative
+                    and dependable cloud solutions that empower businesses, and governments across
+                    the continent.
                   </p>
-                  <p className=" text-2xl mt-3 md:mt-8 md:text-3xl font-medium">
-                    Our Mantra
-                  </p>
+                  <p className=" text-2xl mt-3 md:mt-8 md:text-3xl font-medium">Our Mantra</p>
                   <p className=" whitespace-pre-line mt-3 text-base text-[#676767] text-justify font-normal">
                     One Cloud, One Africa - Empowering Africa's Digital Future
                   </p>
@@ -155,14 +137,12 @@ const About = () => {
                     R<span className=" text-lg">esponsibility </span>
                   </p>
                   <p className=" mt-2 font-normal text-base text-[#676767] text-justify">
-                    We believe in the profound impact of responsible business
-                    practices. Our commitment extends beyond delivering
-                    cutting-edge cloud solutions; it encompasses a
-                    responsibility to the communities we serve, the environment
-                    we operate in, and the trust our clients place in us. We
-                    take ownership, act with integrity, and foster an
-                    environment where responsibility is woven into the fabric of
-                    our daily operations.
+                    We believe in the profound impact of responsible business practices. Our
+                    commitment extends beyond delivering cutting-edge cloud solutions; it
+                    encompasses a responsibility to the communities we serve, the environment we
+                    operate in, and the trust our clients place in us. We take ownership, act with
+                    integrity, and foster an environment where responsibility is woven into the
+                    fabric of our daily operations.
                   </p>
                 </span>
                 <span className=" text-left">
@@ -170,12 +150,11 @@ const About = () => {
                     I<span className=" text-lg">nnovation </span>
                   </p>
                   <p className=" mt-2 font-normal text-base text-[#676767] text-justify">
-                    Innovation is the heartbeat of Unicloud Africa. We strive to
-                    be at the forefront of technological advancement, constantly
-                    seeking novel solutions to propel our clients into the
-                    future. Our culture nurtures creativity and embraces the
-                    spirit of exploration, fostering an environment where
-                    innovation isn't just a goal but a way of life.
+                    Innovation is the heartbeat of Unicloud Africa. We strive to be at the forefront
+                    of technological advancement, constantly seeking novel solutions to propel our
+                    clients into the future. Our culture nurtures creativity and embraces the spirit
+                    of exploration, fostering an environment where innovation isn't just a goal but
+                    a way of life.
                   </p>
                 </span>
                 <span className=" text-left">
@@ -183,12 +162,11 @@ const About = () => {
                     D<span className=" text-lg">ependability </span>
                   </p>
                   <p className=" mt-2 font-normal text-base text-[#676767] text-justify">
-                    Dependability forms the bedrock of our relationships—with
-                    clients, partners, and within our team. Unicloud Africa is
-                    synonymous with reliability; we honor commitments, meet
-                    deadlines, and consistently deliver solutions that our
-                    clients can depend on. Dependability is not just a promise;
-                    it's a practice embedded in our organizational DNA.
+                    Dependability forms the bedrock of our relationships—with clients, partners, and
+                    within our team. Unicloud Africa is synonymous with reliability; we honor
+                    commitments, meet deadlines, and consistently deliver solutions that our clients
+                    can depend on. Dependability is not just a promise; it's a practice embedded in
+                    our organizational DNA.
                   </p>
                 </span>
                 <span className=" text-left">
@@ -196,22 +174,19 @@ const About = () => {
                     E<span className=" text-lg">xcellence</span>
                   </p>
                   <p className=" mt-2 font-normal text-base text-[#676767] text-justify">
-                    Excellence is not just a standard at Unicloud Africa; it's
-                    our aspiration. We relentlessly pursue excellence in every
-                    aspect of our operations, from the quality of our services
-                    to the depth of our client relationships. We believe that
-                    excellence is not a destination but a journey—one that we
-                    embark on daily to surpass expectations and set new
-                    benchmarks.
+                    Excellence is not just a standard at Unicloud Africa; it's our aspiration. We
+                    relentlessly pursue excellence in every aspect of our operations, from the
+                    quality of our services to the depth of our client relationships. We believe
+                    that excellence is not a destination but a journey—one that we embark on daily
+                    to surpass expectations and set new benchmarks.
                   </p>
                 </span>
               </div>
               <p className=" mt-9 font-normal text-base text-[#676767] text-justify">
-                As we RIDE on the path of Responsibility, Innovation,
-                Dependability, and Excellence, we invite you to join us on this
-                journey, where these core values steer our actions, shape our
-                culture, and define our commitment to delivering unparalleled
-                value in the world of cloud solutions.
+                As we RIDE on the path of Responsibility, Innovation, Dependability, and Excellence,
+                we invite you to join us on this journey, where these core values steer our actions,
+                shape our culture, and define our commitment to delivering unparalleled value in the
+                world of cloud solutions.
               </p>
             </div>
 
@@ -247,45 +222,40 @@ const About = () => {
                   <span className=" text-left">
                     <p className=" font-medium text-xl">Education</p>
                     <p className=" font-normal text-base text-[#676767]">
-                      We support programs that provide access to quality
-                      education for children, women and adults in Africa.
+                      We support programs that provide access to quality education for children,
+                      women and adults in Africa.
                     </p>
                   </span>
 
                   <span className=" text-left">
                     <p className=" font-medium text-xl">Environment</p>
                     <p className=" font-normal text-base text-[#676767]">
-                      We are committed to supporting sustainable development
-                      initiatives that promotes socio-economic advancement and
-                      reduces the environmental impact.
+                      We are committed to supporting sustainable development initiatives that
+                      promotes socio-economic advancement and reduces the environmental impact.
                     </p>
                   </span>
 
                   <span className=" text-left">
-                    <p className=" font-medium text-xl">
-                      Diversity and Inclusion
-                    </p>
+                    <p className=" font-medium text-xl">Diversity and Inclusion</p>
                     <p className=" font-normal text-base text-[#676767]">
-                      We believe that diversity and inclusion are essential to
-                      building a better world. That's why we are committed to
-                      creating a workplace where everyone feels welcome and
-                      respected.
+                      We believe that diversity and inclusion are essential to building a better
+                      world. That's why we are committed to creating a workplace where everyone
+                      feels welcome and respected.
                     </p>
                   </span>
 
                   <span className=" text-left">
                     <p className=" font-medium text-xl">Community engagement</p>
                     <p className=" font-normal text-base text-[#676767]">
-                      We give back to the communities where we live and work by
-                      supporting local charities and volunteering our time.
+                      We give back to the communities where we live and work by supporting local
+                      charities and volunteering our time.
                     </p>
                   </span>
                   <span className=" text-left">
                     <p className=" font-medium text-xl">Enterprise</p>
                     <p className=" font-normal text-base text-[#676767]">
-                      We provide cost effective solutions that enable
-                      enterprises maximize profit, enjoy unparalleled
-                      reliability, data sovereignty and security.
+                      We provide cost effective solutions that enable enterprises maximize profit,
+                      enjoy unparalleled reliability, data sovereignty and security.
                     </p>
                   </span>
                 </div>

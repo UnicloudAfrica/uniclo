@@ -2,9 +2,9 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { User, Mail, Phone, Building } from "lucide-react";
 import { useCreateNewLead, useFetchLeadTypes } from "../../../hooks/tenantHooks/leadsHook";
 import { useFetchTenantAdmins } from "../../../hooks/adminUserHooks";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import { useFetchCountries } from "../../../hooks/resource";
-import ModernInput from "../../../adminDashboard/components/ModernInput";
+import { ModernInput } from "../../../shared/components/ui";
 import FormLayout, {
   formAccent,
   getAccentRgba,
@@ -25,12 +25,7 @@ const leadStatusOptions = [
   "closed_lost",
 ];
 
-const leadStageStatusOptions = [
-  "pending",
-  "in_progress",
-  "completed",
-  "skipped",
-];
+const leadStageStatusOptions = ["pending", "in_progress", "completed", "skipped"];
 
 const leadStageNameOptions = [
   "initial_contact",
@@ -66,10 +61,7 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
   const [errors, setErrors] = useState({});
 
   const { mutate, isPending } = useCreateNewLead();
-  const {
-    data: leadTypesData = [],
-    isLoading: leadTypesLoading,
-  } = useFetchLeadTypes();
+  const { data: leadTypesData = [], isLoading: leadTypesLoading } = useFetchLeadTypes();
   const { data: admins = [], isLoading: adminsLoading } = useFetchTenantAdmins();
   const {
     data: countries,
@@ -77,19 +69,16 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
     isError: countriesError,
   } = useFetchCountries();
 
-  const leadTypeOptions = useMemo(
-    () => buildLeadTypeOptions(leadTypesData),
-    [leadTypesData],
-  );
+  const leadTypeOptions = useMemo(() => buildLeadTypeOptions(leadTypesData), [leadTypesData]);
 
   const leadTypeSet = useMemo(
     () => new Set(leadTypeOptions.map((option) => option.value)),
-    [leadTypeOptions],
+    [leadTypeOptions]
   );
 
   const normalizeLeadTypeValue = useCallback(
     (value) => ensureLeadTypeValue(value, leadTypeOptions),
-    [leadTypeOptions],
+    [leadTypeOptions]
   );
 
   const getLeadTypeLabel = (value) => {
@@ -142,15 +131,12 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
     }
   }, [isOpen, isPageMode]);
 
-  const formatDisplay = (str) =>
-    str.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const formatDisplay = (str) => str.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.first_name.trim())
-      newErrors.first_name = "First name is required.";
-    if (!formData.last_name.trim())
-      newErrors.last_name = "Last name is required.";
+    if (!formData.first_name.trim()) newErrors.first_name = "First name is required.";
+    if (!formData.last_name.trim()) newErrors.last_name = "Last name is required.";
     if (!formData.email.trim()) newErrors.email = "Email is required.";
     if (!formData.status) newErrors.status = "Status is required.";
     if (
@@ -170,8 +156,7 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
         newErrors.stage_name = "Stage name is required if providing a stage.";
       if (!formData.lead_stage.description)
         newErrors.stage_description = "Stage description is required.";
-      if (!formData.lead_stage.status)
-        newErrors.stage_status = "Stage status is required.";
+      if (!formData.lead_stage.status) newErrors.stage_status = "Stage status is required.";
     }
 
     setErrors(newErrors);
@@ -203,9 +188,7 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
 
     const leadData = {
       ...formData,
-      lead_stage: formData.lead_stage.stage_name
-        ? formData.lead_stage
-        : undefined,
+      lead_stage: formData.lead_stage.stage_name ? formData.lead_stage : undefined,
     };
 
     mutate(leadData, {
@@ -232,9 +215,7 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
         items: [
           {
             label: "Full name",
-            value:
-              [formData.first_name, formData.last_name].filter(Boolean).join(" ") ||
-              "Pending",
+            value: [formData.first_name, formData.last_name].filter(Boolean).join(" ") || "Pending",
           },
           { label: "Email", value: formData.email || "Not provided" },
           { label: "Phone", value: formData.phone || "Not provided" },
@@ -283,7 +264,7 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
       formData.lead_stage.stage_name,
       formData.lead_stage.status,
       selectedLeadTypeLabel,
-    ],
+    ]
   );
 
   const guidanceItems = [
@@ -323,8 +304,7 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
               Lead summary
             </p>
             <p className="text-lg font-semibold text-slate-800">
-              {[formData.first_name, formData.last_name].filter(Boolean).join(" ") ||
-                "New lead"}
+              {[formData.first_name, formData.last_name].filter(Boolean).join(" ") || "New lead"}
             </p>
           </div>
           <span
@@ -350,9 +330,7 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
           </div>
           <div className="flex items-center justify-between">
             <dt>Company</dt>
-            <dd className="font-medium text-slate-800">
-              {formData.company || "—"}
-            </dd>
+            <dd className="font-medium text-slate-800">{formData.company || "—"}</dd>
           </div>
           <div className="flex items-center justify-between">
             <dt>Status</dt>
@@ -362,8 +340,7 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
           </div>
         </dl>
         <p className="mt-3 text-xs text-slate-500">
-          Keep lead details concise; supplementary notes appear in the lead
-          profile after creation.
+          Keep lead details concise; supplementary notes appear in the lead profile after creation.
         </p>
       </div>
 
@@ -372,9 +349,7 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
           key={section.title}
           className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
         >
-          <h3 className="text-sm font-semibold text-slate-800">
-            {section.title}
-          </h3>
+          <h3 className="text-sm font-semibold text-slate-800">{section.title}</h3>
           <dl className="mt-3 space-y-3 text-sm">
             {section.items.map((item) => (
               <div
@@ -463,9 +438,7 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <header className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="text-base font-semibold text-slate-900">
-                Personal information
-              </h3>
+              <h3 className="text-base font-semibold text-slate-900">Personal information</h3>
               <p className="text-sm text-slate-500">
                 Basic contact details for following up with the prospect.
               </p>
@@ -528,9 +501,7 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Notes
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
               <textarea
                 value={formData.notes}
                 onChange={(e) => updateFormData("notes", e.target.value)}
@@ -545,9 +516,7 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <header className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="text-base font-semibold text-slate-900">
-                Lead qualification
-              </h3>
+              <h3 className="text-base font-semibold text-slate-900">Lead qualification</h3>
               <p className="text-sm text-slate-500">
                 Qualify the lead with pipeline status and ownership details.
               </p>
@@ -555,20 +524,17 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
           </header>
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Country
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
               <select
                 value={formData.country}
                 onChange={(e) => updateFormData("country", e.target.value)}
                 disabled={countriesLoading}
-                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${errors.country ? "border-red-500" : "border-gray-300"
-                  }`}
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
+                  errors.country ? "border-red-500" : "border-gray-300"
+                }`}
               >
                 <option value="" disabled>
-                  {countriesLoading
-                    ? "Loading countries..."
-                    : "Select a country"}
+                  {countriesLoading ? "Loading countries..." : "Select a country"}
                 </option>
                 {countriesError && (
                   <option value="" disabled>
@@ -582,9 +548,7 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
                     </option>
                   ))}
               </select>
-              {errors.country && (
-                <p className="text-red-500 text-xs mt-1">{errors.country}</p>
-              )}
+              {errors.country && <p className="text-red-500 text-xs mt-1">{errors.country}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -595,8 +559,9 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
                 onChange={(e) =>
                   updateFormData("lead_type", normalizeLeadTypeValue(e.target.value))
                 }
-                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${errors.lead_type ? "border-red-500" : "border-gray-300"
-                  }`}
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
+                  errors.lead_type ? "border-red-500" : "border-gray-300"
+                }`}
                 disabled={leadTypesLoading && leadTypeOptions.length === 0}
               >
                 <option value="">
@@ -608,14 +573,10 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
                   </option>
                 ))}
               </select>
-              {errors.lead_type && (
-                <p className="text-red-500 text-xs mt-1">{errors.lead_type}</p>
-              )}
+              {errors.lead_type && <p className="text-red-500 text-xs mt-1">{errors.lead_type}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Source
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Source</label>
               <input
                 type="text"
                 value={formData.source}
@@ -631,8 +592,9 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
               <select
                 value={formData.status}
                 onChange={(e) => updateFormData("status", e.target.value)}
-                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${errors.status ? "border-red-500" : "border-gray-300"
-                  }`}
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
+                  errors.status ? "border-red-500" : "border-gray-300"
+                }`}
               >
                 <option value="" disabled>
                   Select a status
@@ -643,9 +605,7 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
                   </option>
                 ))}
               </select>
-              {errors.status && (
-                <p className="text-red-500 text-xs mt-1">{errors.status}</p>
-              )}
+              {errors.status && <p className="text-red-500 text-xs mt-1">{errors.status}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -655,12 +615,11 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
                 value={formData.assigned_to}
                 onChange={(e) => updateFormData("assigned_to", e.target.value)}
                 disabled={adminsLoading}
-                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${errors.assigned_to ? "border-red-500" : "border-gray-300"
-                  }`}
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
+                  errors.assigned_to ? "border-red-500" : "border-gray-300"
+                }`}
               >
-                <option value="">
-                  {adminsLoading ? "Loading owners..." : "Unassigned"}
-                </option>
+                <option value="">{adminsLoading ? "Loading owners..." : "Unassigned"}</option>
                 {!adminsLoading &&
                   admins?.map((admin) => (
                     <option key={admin.id} value={admin.identifier || admin.id}>
@@ -672,9 +631,7 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
                   ))}
               </select>
               {errors.assigned_to && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.assigned_to}
-                </p>
+                <p className="text-red-500 text-xs mt-1">{errors.assigned_to}</p>
               )}
             </div>
           </div>
@@ -683,9 +640,7 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <header className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="text-base font-semibold text-slate-900">
-                Lead stage information
-              </h3>
+              <h3 className="text-base font-semibold text-slate-900">Lead stage information</h3>
               <p className="text-sm text-slate-500">
                 Optionally capture the current workflow stage for this lead.
               </p>
@@ -693,16 +648,13 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
           </header>
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Stage Name
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Stage Name</label>
               <select
                 value={formData.lead_stage.stage_name}
-                onChange={(e) =>
-                  updateLeadStageFormData("stage_name", e.target.value)
-                }
-                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${errors.stage_name ? "border-red-500" : "border-gray-300"
-                  }`}
+                onChange={(e) => updateLeadStageFormData("stage_name", e.target.value)}
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
+                  errors.stage_name ? "border-red-500" : "border-gray-300"
+                }`}
               >
                 <option value="">Select a stage name</option>
                 {leadStageNameOptions.map((name) => (
@@ -716,14 +668,13 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Stage Status
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Stage Status</label>
               <select
                 value={formData.lead_stage.status}
                 onChange={(e) => updateLeadStageFormData("status", e.target.value)}
-                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${errors.stage_status ? "border-red-500" : "border-gray-300"
-                  }`}
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
+                  errors.stage_status ? "border-red-500" : "border-gray-300"
+                }`}
               >
                 <option value="">Select a status</option>
                 {leadStageStatusOptions.map((status) => (
@@ -742,16 +693,13 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
               </label>
               <select
                 value={formData.lead_stage.assigned_to}
-                onChange={(e) =>
-                  updateLeadStageFormData("assigned_to", e.target.value)
-                }
+                onChange={(e) => updateLeadStageFormData("assigned_to", e.target.value)}
                 disabled={adminsLoading}
-                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${errors.stage_assigned_to ? "border-red-500" : "border-gray-300"
-                  }`}
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
+                  errors.stage_assigned_to ? "border-red-500" : "border-gray-300"
+                }`}
               >
-                <option value="">
-                  {adminsLoading ? "Loading owners..." : "Unassigned"}
-                </option>
+                <option value="">{adminsLoading ? "Loading owners..." : "Unassigned"}</option>
                 {!adminsLoading &&
                   admins?.map((admin) => (
                     <option key={admin.id} value={admin.identifier || admin.id}>
@@ -763,9 +711,7 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
                   ))}
               </select>
               {errors.stage_assigned_to && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.stage_assigned_to}
-                </p>
+                <p className="text-red-500 text-xs mt-1">{errors.stage_assigned_to}</p>
               )}
             </div>
             <div className="sm:col-span-2">
@@ -774,18 +720,15 @@ const CreateLead = ({ isOpen = false, onClose, mode = "modal" }) => {
               </label>
               <textarea
                 value={formData.lead_stage.description}
-                onChange={(e) =>
-                  updateLeadStageFormData("description", e.target.value)
-                }
+                onChange={(e) => updateLeadStageFormData("description", e.target.value)}
                 rows={2}
                 placeholder="Describe the stage of this lead."
-                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${errors.stage_description ? "border-red-500" : "border-gray-300"
-                  }`}
+                className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
+                  errors.stage_description ? "border-red-500" : "border-gray-300"
+                }`}
               />
               {errors.stage_description && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.stage_description}
-                </p>
+                <p className="text-red-500 text-xs mt-1">{errors.stage_description}</p>
               )}
             </div>
           </div>

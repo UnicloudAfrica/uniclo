@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Loader2, X } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import { useCreateTenantElasticIp } from "../../../hooks/elasticIPHooks";
 
 const AddEip = ({ isOpen, onClose, projectId = "", region = "" }) => {
@@ -52,9 +52,7 @@ const AddEip = ({ isOpen, onClose, projectId = "", region = "" }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full">
         <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] w-full">
-          <h2 className="text-lg font-semibold text-[#575758]">
-            Add New Elastic IP
-          </h2>
+          <h2 className="text-lg font-semibold text-[#575758]">Add New Elastic IP</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
@@ -66,10 +64,7 @@ const AddEip = ({ isOpen, onClose, projectId = "", region = "" }) => {
         <div className="px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start">
           <div className="space-y-4 w-full">
             <div>
-              <label
-                htmlFor="address"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
                 Address<span className="text-red-500">*</span>
               </label>
               <input
@@ -82,16 +77,11 @@ const AddEip = ({ isOpen, onClose, projectId = "", region = "" }) => {
                   errors.address ? "border-red-500" : "border-gray-300"
                 }`}
               />
-              {errors.address && (
-                <p className="text-red-500 text-xs mt-1">{errors.address}</p>
-              )}
+              {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
             </div>
 
             <div>
-              <label
-                htmlFor="pool_id"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="pool_id" className="block text-sm font-medium text-gray-700 mb-2">
                 Pool ID<span className="text-red-500">*</span>
               </label>
               <input
@@ -104,9 +94,7 @@ const AddEip = ({ isOpen, onClose, projectId = "", region = "" }) => {
                   errors.pool_id ? "border-red-500" : "border-gray-300"
                 }`}
               />
-              {errors.pool_id && (
-                <p className="text-red-500 text-xs mt-1">{errors.pool_id}</p>
-              )}
+              {errors.pool_id && <p className="text-red-500 text-xs mt-1">{errors.pool_id}</p>}
             </div>
           </div>
         </div>
@@ -125,9 +113,7 @@ const AddEip = ({ isOpen, onClose, projectId = "", region = "" }) => {
               className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Create Elastic IP
-              {isPending && (
-                <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-              )}
+              {isPending && <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />}
             </button>
           </div>
         </div>

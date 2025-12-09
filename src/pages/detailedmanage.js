@@ -3,15 +3,7 @@ import Navbar from "../components/navbar";
 import { useParams, Link } from "react-router-dom";
 import { useRef, useEffect, useState } from "react";
 import { initializeApp } from "firebase/app";
-import {
-  getFirestore,
-  getDoc,
-  doc,
-  getDocs,
-  collection,
-  query,
-  where,
-} from "firebase/firestore";
+import { getFirestore, getDoc, doc, getDocs, collection, query, where } from "firebase/firestore";
 import { motion } from "framer-motion";
 import copy from "./assets/copy.svg";
 import adbg from "./assets/adBG.svg";
@@ -60,10 +52,7 @@ const DetailedManage = () => {
             // console.log('Document data:', manages);
             setSelectedManageItem(manages);
           } else {
-            console.log(
-              "Document does not exist for decoded title:",
-              decodedName
-            );
+            console.log("Document does not exist for decoded title:", decodedName);
           }
         })
         .catch((error) => {
@@ -94,9 +83,7 @@ const DetailedManage = () => {
     <>
       <Navbar />
       <div className="mt-[10em] px-4 md:px-8 lg:px-16 w-full flex flex-col justify-center items-center font-Outfit text-[#121212]">
-        <p className=" md:text-5xl text-center font-medium">
-          {selectedManageItem.name}
-        </p>
+        <p className=" md:text-5xl text-center font-medium">{selectedManageItem.name}</p>
         <div
           className=" mt-8 w-full md:w-[250px] md:bg-center h-[330px] bg-[#f5f5f4] rounded-[20px]"
           style={{
@@ -123,9 +110,7 @@ const DetailedManage = () => {
             className="z-10 absolute top-0 h-full w-full object-cover block md:hidden"
             alt=""
           />
-          <p className=" font-semibold text-3xl md:text-4xl">
-            Partner with us today
-          </p>
+          <p className=" font-semibold text-3xl md:text-4xl">Partner with us today</p>
           <p className=" font-normal px-4 md:px-0 text-xl">
             Partner with us to deliver unmatched cloud solutions.
           </p>

@@ -15,9 +15,7 @@ const fetchInstanceRequests = async (params = {}) => {
 
   // Build query string from parameters
   const queryString = Object.keys(queryParams)
-    .filter(
-      (key) => queryParams[key] !== undefined && queryParams[key] !== null
-    )
+    .filter((key) => queryParams[key] !== undefined && queryParams[key] !== null)
     .map((key) => `${key}=${encodeURIComponent(queryParams[key])}`)
     .join("&");
 
@@ -43,9 +41,7 @@ const fetchPurchasedInstances = async (params = {}) => {
 
   // Build query string from parameters
   const queryString = Object.keys(queryParams)
-    .filter(
-      (key) => queryParams[key] !== undefined && queryParams[key] !== null
-    )
+    .filter((key) => queryParams[key] !== undefined && queryParams[key] !== null)
     .map((key) => `${key}=${encodeURIComponent(queryParams[key])}`)
     .join("&");
 
@@ -57,7 +53,10 @@ const fetchPurchasedInstances = async (params = {}) => {
     throw new Error("Failed to fetch instance requests");
   }
   // Emulate instances behavior by filtering out pending_payment
-  const filtered = { ...res, data: (res.data || []).filter((it) => it.status !== "pending_payment") };
+  const filtered = {
+    ...res,
+    data: (res.data || []).filter((it) => it.status !== "pending_payment"),
+  };
   return filtered;
 };
 
@@ -261,7 +260,7 @@ export const useGetInstanceDetails = (identifier, options = {}) => {
 export const useExecuteInstanceAction = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ identifier, action, params }) => 
+    mutationFn: ({ identifier, action, params }) =>
       executeInstanceAction(identifier, action, params),
     onSuccess: (data, { identifier }) => {
       // Invalidate queries to refresh instance data
@@ -303,15 +302,15 @@ export const useGetTransactionDetails = (transactionId, options = {}) => {
 // Hook to poll transaction status until completion
 export const useTransactionPolling = (transactionId, onComplete) => {
   const queryClient = useQueryClient();
-  
+
   return useQuery({
     queryKey: ["transactionPolling", transactionId],
     queryFn: () => getTransactionStatus(transactionId),
     enabled: !!transactionId,
     refetchInterval: (data) => {
       // Stop polling if transaction is completed, failed, or cancelled
-      if (data?.status && ['successful', 'failed', 'cancelled', 'expired'].includes(data.status)) {
-        if (data.status === 'successful' && onComplete) {
+      if (data?.status && ["successful", "failed", "cancelled", "expired"].includes(data.status)) {
+        if (data.status === "successful" && onComplete) {
           onComplete(data);
         }
         return false;
@@ -319,7 +318,7 @@ export const useTransactionPolling = (transactionId, onComplete) => {
       return 30000; // Poll every 30 seconds
     },
     onSuccess: (data) => {
-      if (data?.status === 'successful') {
+      if (data?.status === "successful") {
         // Invalidate related queries when payment is successful
         queryClient.invalidateQueries(["instanceRequests"]);
         queryClient.invalidateQueries(["transactionDetails", transactionId]);

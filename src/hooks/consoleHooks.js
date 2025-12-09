@@ -5,13 +5,13 @@ import silentApi from "../index/silent";
 
 /**
  * Console Access Hooks
- * 
+ *
  * These hooks provide functionality for accessing instance consoles
  * using the re-enabled console access functionality.
  */
 
 // GET: Fetch console URL for an instance
-const fetchConsoleUrl = async (instanceId, consoleType = 'novnc') => {
+const fetchConsoleUrl = async (instanceId, consoleType = "novnc") => {
   return await instanceApiService.getConsoleUrl(instanceId, consoleType);
 };
 
@@ -25,7 +25,7 @@ const fetchConsoleUrlDirect = async (instanceId) => {
 };
 
 // Hook to get console URL for an instance
-export const useGetConsoleUrl = (instanceId, consoleType = 'novnc', options = {}) => {
+export const useGetConsoleUrl = (instanceId, consoleType = "novnc", options = {}) => {
   return useQuery({
     queryKey: ["console-url", instanceId, consoleType],
     queryFn: () => fetchConsoleUrl(instanceId, consoleType),
@@ -53,16 +53,12 @@ export const useGetConsoleUrlDirect = (instanceId, options = {}) => {
 // Hook to refresh console URL (useful when console sessions expire)
 export const useRefreshConsoleUrl = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ instanceId, consoleType = 'novnc' }) => 
-      fetchConsoleUrl(instanceId, consoleType),
+    mutationFn: ({ instanceId, consoleType = "novnc" }) => fetchConsoleUrl(instanceId, consoleType),
     onSuccess: (data, variables) => {
       // Update the cache with new console URL
-      queryClient.setQueryData(
-        ["console-url", variables.instanceId, variables.consoleType], 
-        data
-      );
+      queryClient.setQueryData(["console-url", variables.instanceId, variables.consoleType], data);
     },
     onError: (error) => {
       console.error("Error refreshing console URL:", error);
@@ -77,15 +73,15 @@ export const useConsoleAccessCheck = (instanceId, options = {}) => {
     queryFn: async () => {
       try {
         const result = await fetchConsoleUrl(instanceId);
-        return { 
-          available: true, 
+        return {
+          available: true,
           consoleUrl: result.consoleUrl,
-          data: result.data 
+          data: result.data,
         };
       } catch (error) {
-        return { 
-          available: false, 
-          error: error.message 
+        return {
+          available: false,
+          error: error.message,
         };
       }
     },
@@ -98,7 +94,4 @@ export const useConsoleAccessCheck = (instanceId, options = {}) => {
 };
 
 // Export individual functions for direct use if needed
-export {
-  fetchConsoleUrl,
-  fetchConsoleUrlDirect
-};
+export { fetchConsoleUrl, fetchConsoleUrlDirect };

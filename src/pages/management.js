@@ -25,20 +25,17 @@ const Management = () => {
           Advisory Board
         </p>
         <p className=" text-center font-normal mt-3 text-lg md:text-xl">
-          Team and Leadership at UniCloud Africa: Pioneering Excellence in the
-          Digital Frontier
+          Team and Leadership at UniCloud Africa: Pioneering Excellence in the Digital Frontier
         </p>
         <p className=" text-base font-normal mt-6 text-justify text-[#676767]">
-          At UniCloud Africa, our strength lies in a dynamic team led by
-          visionary leaders with a passion for innovation. From seasoned
-          executives with over decades of hands-on experience to experts in
-          cloud computing, our diverse team is united by a common goal: to
+          At UniCloud Africa, our strength lies in a dynamic team led by visionary leaders with a
+          passion for innovation. From seasoned executives with over decades of hands-on experience
+          to experts in cloud computing, our diverse team is united by a common goal: to
           revolutionize the way businesses operate in Africa.
           <br />
           <br />
-          Our leadership brings a wealth of expertise in operations, finance,
-          telecommunications, and technology, steering UniCloud Africa towards
-          new heights of success.
+          Our leadership brings a wealth of expertise in operations, finance, telecommunications,
+          and technology, steering UniCloud Africa towards new heights of success.
         </p>
 
         <div className="mt-16 w-full">
@@ -60,9 +57,7 @@ const Management = () => {
                   <p className="text-left mt-4 text-lg lg:text-xl font-medium lg:h-[1.5em]">
                     {item.name}
                   </p>
-                  <p className="text-left text-sm lg:h-[8em] mt-2">
-                    {item.desc}
-                  </p>
+                  <p className="text-left text-sm lg:h-[8em] mt-2">{item.desc}</p>
                   <p className=" gradient-text text-left text-sm">View More</p>
                 </div>
               </Link>

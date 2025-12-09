@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import {
   useFetchCountries,
   useFetchStatesById,
@@ -15,8 +15,7 @@ const UserProfileSettings = () => {
     isFetching: isProfileFetching,
     refetch: refetchProfile,
   } = useFetchProfile();
-  const { mutate: updateUserProfile, isPending: isSaving } =
-    useUserUpdateProfile();
+  const { mutate: updateUserProfile, isPending: isSaving } = useUserUpdateProfile();
 
   const [formData, setFormData] = useState({
     first_name: "",
@@ -35,16 +34,13 @@ const UserProfileSettings = () => {
   });
   const [errors, setErrors] = useState({});
 
-  const { data: countries, isFetching: isCountriesFetching } =
-    useFetchCountries();
-  const { data: states, isFetching: isStatesFetching } = useFetchStatesById(
-    formData.country_id,
-    { enabled: !!formData.country_id }
-  );
-  const { data: cities, isFetching: isCitiesFetching } = useFetchCitiesById(
-    formData.state_id,
-    { enabled: !!formData.state_id }
-  );
+  const { data: countries, isFetching: isCountriesFetching } = useFetchCountries();
+  const { data: states, isFetching: isStatesFetching } = useFetchStatesById(formData.country_id, {
+    enabled: !!formData.country_id,
+  });
+  const { data: cities, isFetching: isCitiesFetching } = useFetchCitiesById(formData.state_id, {
+    enabled: !!formData.state_id,
+  });
 
   const hasLoadedProfileRef = useRef(false);
 
@@ -67,9 +63,7 @@ const UserProfileSettings = () => {
 
   useEffect(() => {
     if (formData.country_id && countries) {
-      const selectedCountry = countries.find(
-        (c) => c.id === parseInt(formData.country_id)
-      );
+      const selectedCountry = countries.find((c) => c.id === parseInt(formData.country_id));
       if (selectedCountry) {
         setFormData((prev) => ({ ...prev, country: selectedCountry.name }));
       }
@@ -94,9 +88,7 @@ const UserProfileSettings = () => {
 
   useEffect(() => {
     if (formData.state_id && states) {
-      const selectedState = states.find(
-        (s) => s.id === parseInt(formData.state_id)
-      );
+      const selectedState = states.find((s) => s.id === parseInt(formData.state_id));
       if (selectedState) {
         setFormData((prev) => ({ ...prev, state: selectedState.name }));
       }
@@ -108,9 +100,7 @@ const UserProfileSettings = () => {
 
   useEffect(() => {
     if (formData.city_id && cities) {
-      const selectedCity = cities.find(
-        (c) => c.id === parseInt(formData.city_id)
-      );
+      const selectedCity = cities.find((c) => c.id === parseInt(formData.city_id));
       if (selectedCity) {
         setFormData((prev) => ({ ...prev, city: selectedCity.name }));
       }
@@ -168,10 +158,8 @@ const UserProfileSettings = () => {
 
   const validateProfileForm = () => {
     const newErrors = {};
-    if (!formData.first_name.trim())
-      newErrors.first_name = "First Name is required";
-    if (!formData.last_name.trim())
-      newErrors.last_name = "Last Name is required";
+    if (!formData.first_name.trim()) newErrors.first_name = "First Name is required";
+    if (!formData.last_name.trim()) newErrors.last_name = "Last Name is required";
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
@@ -191,10 +179,8 @@ const UserProfileSettings = () => {
 
   const validatePasswordForm = () => {
     const newErrors = {};
-    if (!formData.current_password)
-      newErrors.current_password = "Current password is required.";
-    if (!formData.new_password)
-      newErrors.new_password = "New password is required.";
+    if (!formData.current_password) newErrors.current_password = "Current password is required.";
+    if (!formData.new_password) newErrors.new_password = "New password is required.";
     else if (formData.new_password.length < 6)
       newErrors.new_password = "New password must be at least 6 characters.";
     if (formData.new_password !== formData.confirm_new_password)
@@ -229,9 +215,7 @@ const UserProfileSettings = () => {
       },
       onError: (err) => {
         console.error("Failed to update profile:", err);
-        ToastUtils.error(
-          err.message || "Failed to update profile. Please try again."
-        );
+        ToastUtils.error(err.message || "Failed to update profile. Please try again.");
       },
     });
   };
@@ -263,9 +247,7 @@ const UserProfileSettings = () => {
       },
       onError: (err) => {
         console.error("Failed to update password:", err);
-        ToastUtils.error(
-          err.message || "Failed to update password. Please try again."
-        );
+        ToastUtils.error(err.message || "Failed to update password. Please try again.");
       },
     });
   };
@@ -284,9 +266,7 @@ const UserProfileSettings = () => {
   if (!profile) {
     return (
       <div className="w-full min-h-[200px] flex flex-col items-center justify-center font-Outfit text-gray-600 text-lg">
-        <p className="text-red-600 mb-4">
-          User profile not found or an error occurred.
-        </p>
+        <p className="text-red-600 mb-4">User profile not found or an error occurred.</p>
         <button
           onClick={() => window.location.reload()}
           className="px-6 py-2 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors"
@@ -299,16 +279,11 @@ const UserProfileSettings = () => {
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 border border-[#ECEDF0]">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">
-        User Profile Settings
-      </h3>
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">User Profile Settings</h3>
       <form onSubmit={handleSubmitProfile} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label
-              htmlFor="first_name"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
+            <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-2">
               First Name
             </label>
             <input
@@ -321,15 +296,10 @@ const UserProfileSettings = () => {
               }`}
               disabled={isSaving}
             />
-            {errors.first_name && (
-              <p className="text-red-500 text-xs mt-1">{errors.first_name}</p>
-            )}
+            {errors.first_name && <p className="text-red-500 text-xs mt-1">{errors.first_name}</p>}
           </div>
           <div>
-            <label
-              htmlFor="last_name"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
+            <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-2">
               Last Name
             </label>
             <input
@@ -342,15 +312,10 @@ const UserProfileSettings = () => {
               }`}
               disabled={isSaving}
             />
-            {errors.last_name && (
-              <p className="text-red-500 text-xs mt-1">{errors.last_name}</p>
-            )}
+            {errors.last_name && <p className="text-red-500 text-xs mt-1">{errors.last_name}</p>}
           </div>
           <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
               Email Address<span className="text-red-500">*</span>
             </label>
             <input
@@ -363,15 +328,10 @@ const UserProfileSettings = () => {
               }`}
               disabled={isSaving}
             />
-            {errors.email && (
-              <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-            )}
+            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
           </div>
           <div>
-            <label
-              htmlFor="phone"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
               Phone Number
             </label>
             <input
@@ -384,24 +344,17 @@ const UserProfileSettings = () => {
               }`}
               disabled={isSaving}
             />
-            {errors.phone && (
-              <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
-            )}
+            {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
           </div>
 
           <div>
-            <label
-              htmlFor="country_id"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
+            <label htmlFor="country_id" className="block text-sm font-medium text-gray-700 mb-2">
               Country<span className="text-red-500">*</span>
             </label>
             {isCountriesFetching ? (
               <div className="flex items-center input-field py-2">
                 <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
-                <span className="text-gray-500 text-sm">
-                  Loading countries...
-                </span>
+                <span className="text-gray-500 text-sm">Loading countries...</span>
               </div>
             ) : countries && countries.length > 0 ? (
               <select
@@ -425,16 +378,11 @@ const UserProfileSettings = () => {
                 No countries available.
               </div>
             )}
-            {errors.country_id && (
-              <p className="text-red-500 text-xs mt-1">{errors.country_id}</p>
-            )}
+            {errors.country_id && <p className="text-red-500 text-xs mt-1">{errors.country_id}</p>}
           </div>
 
           <div>
-            <label
-              htmlFor="state"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
+            <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">
               State<span className="text-red-500">*</span>
             </label>
             {shouldShowStateInputField ? (
@@ -467,16 +415,11 @@ const UserProfileSettings = () => {
                 ))}
               </select>
             )}
-            {errors.state && (
-              <p className="text-red-500 text-xs mt-1">{errors.state}</p>
-            )}
+            {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state}</p>}
           </div>
 
           <div>
-            <label
-              htmlFor="city"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
+            <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
               City<span className="text-red-500">*</span>
             </label>
             {shouldShowCityInputField ? (
@@ -489,9 +432,7 @@ const UserProfileSettings = () => {
                 className={`w-full input-field ${
                   errors.city ? "border-red-500" : "border-gray-300"
                 }`}
-                disabled={
-                  isSaving || (!formData.state_id && !formData.state.trim())
-                }
+                disabled={isSaving || (!formData.state_id && !formData.state.trim())}
               />
             ) : (
               <select
@@ -511,9 +452,7 @@ const UserProfileSettings = () => {
                 ))}
               </select>
             )}
-            {errors.city && (
-              <p className="text-red-500 text-xs mt-1">{errors.city}</p>
-            )}
+            {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
           </div>
         </div>
 
@@ -537,9 +476,7 @@ const UserProfileSettings = () => {
 
       {/* Password & Security Section */}
       <div className="border-t border-gray-200 pt-6 mt-6">
-        <h3 className="text-base font-semibold text-gray-800 mb-4">
-          Password & Security
-        </h3>
+        <h3 className="text-base font-semibold text-gray-800 mb-4">Password & Security</h3>
         <form onSubmit={handleSubmitPassword} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -560,9 +497,7 @@ const UserProfileSettings = () => {
                 disabled={isSaving}
               />
               {errors.current_password && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.current_password}
-                </p>
+                <p className="text-red-500 text-xs mt-1">{errors.current_password}</p>
               )}
             </div>
             <div>
@@ -583,9 +518,7 @@ const UserProfileSettings = () => {
                 disabled={isSaving}
               />
               {errors.new_password && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.new_password}
-                </p>
+                <p className="text-red-500 text-xs mt-1">{errors.new_password}</p>
               )}
             </div>
             <div className="md:col-span-2">
@@ -601,16 +534,12 @@ const UserProfileSettings = () => {
                 value={formData.confirm_new_password}
                 onChange={handleInputChange}
                 className={`w-full input-field ${
-                  errors.confirm_new_password
-                    ? "border-red-500"
-                    : "border-gray-300"
+                  errors.confirm_new_password ? "border-red-500" : "border-gray-300"
                 }`}
                 disabled={isSaving}
               />
               {errors.confirm_new_password && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.confirm_new_password}
-                </p>
+                <p className="text-red-500 text-xs mt-1">{errors.confirm_new_password}</p>
               )}
             </div>
           </div>

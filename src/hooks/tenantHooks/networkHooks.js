@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import silentApi from "../../index/silent";
-import ToastUtils from "../../utils/toastUtil";
+import tenantSilentApi from "../../index/tenant/silentTenant";
+import tenantApi from "../../index/tenant/tenantApi";
+import ToastUtils from "../../utils/toastUtil.ts";
 
 const buildQueryString = (params) => {
   const searchParams = new URLSearchParams();
@@ -19,7 +20,7 @@ const fetchTenantNetworks = async ({ project_id, region, refresh = false }) => {
     refresh: refresh ? "1" : undefined,
   });
 
-  const response = await silentApi(
+  const response = await tenantSilentApi(
     "GET",
     `/business/networks${queryString ? `?${queryString}` : ""}`
   );
@@ -32,13 +33,13 @@ const fetchTenantNetworks = async ({ project_id, region, refresh = false }) => {
 };
 
 const createTenantNetwork = async (payload) => {
-  const response = await silentApi("POST", "/business/networks", payload);
+  const response = await tenantApi("POST", "/business/networks", payload);
   if (!response) throw new Error("Failed to create network");
   return response;
 };
 
 const deleteTenantNetwork = async (networkId) => {
-  const response = await silentApi("DELETE", `/business/networks/${networkId}`);
+  const response = await tenantApi("DELETE", `/business/networks/${networkId}`);
   if (!response) throw new Error("Failed to delete network");
   return response;
 };
@@ -85,4 +86,3 @@ export const useDeleteTenantNetwork = () => {
 
 export const syncTenantNetworksFromProvider = async ({ project_id, region }) =>
   fetchTenantNetworks({ project_id, region, refresh: true });
-

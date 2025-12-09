@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link2, Link2Off, Plus, RefreshCw, Trash2 } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import {
   useFetchTenantInternetGateways,
   useSyncTenantInternetGateways,
@@ -9,10 +9,10 @@ import {
 import AddIgwModal from "../igwComps/addIGW";
 import AttachIgwModal from "../igwComps/attachIGW";
 import DeleteIgwModal from "../igwComps/deleteIGW";
-import ResourceSection from "../../../adminDashboard/components/ResourceSection";
-import ResourceEmptyState from "../../../adminDashboard/components/ResourceEmptyState";
-import ResourceListCard from "../../../adminDashboard/components/ResourceListCard";
-import ModernButton from "../../../adminDashboard/components/ModernButton";
+import { ResourceSection } from "../../../shared/components/ui";
+import { ResourceEmptyState } from "../../../shared/components/ui";
+import { ResourceListCard } from "../../../shared/components/ui";
+import { ModernButton } from "../../../shared/components/ui";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -24,13 +24,7 @@ const getToneForStatus = (status = "") => {
   return "neutral";
 };
 
-const IGWs = ({
-  projectId = "",
-  region = "",
-  actionRequest,
-  onActionHandled,
-  onStatsUpdate,
-}) => {
+const IGWs = ({ projectId = "", region = "", actionRequest, onActionHandled, onStatsUpdate }) => {
   const { data: igws, isFetching } = useFetchTenantInternetGateways(projectId, region);
   const { mutate: syncInternetGateways, isPending: isSyncing } = useSyncTenantInternetGateways();
   const { mutate: deleteIgw, isPending: isDeleting } = useDeleteTenantInternetGateway();

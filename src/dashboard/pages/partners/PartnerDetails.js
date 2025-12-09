@@ -2,10 +2,10 @@ import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Building2, Loader2, Mail, Phone, ShieldCheck, Users2 } from "lucide-react";
 import TenantPageShell from "../../components/TenantPageShell";
-import ModernCard from "../../../adminDashboard/components/ModernCard";
-import ModernButton from "../../../adminDashboard/components/ModernButton";
-import StatusPill from "../../../adminDashboard/components/StatusPill";
-import ToastUtils from "../../../utils/toastUtil";
+import { ModernCard } from "../../../shared/components/ui";
+import { ModernButton } from "../../../shared/components/ui";
+import { StatusPill } from "../../../shared/components/ui";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import {
   useDeleteTenantPartner,
   useFetchTenantPartnerById,
@@ -14,9 +14,7 @@ import {
 
 const InfoRow = ({ label, value }) => (
   <div className="flex flex-col gap-1">
-    <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-      {label}
-    </span>
+    <span className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</span>
     <span className="text-sm font-semibold text-slate-900">{value ?? "—"}</span>
   </div>
 );
@@ -35,9 +33,7 @@ const SimpleTable = ({ isLoading, data, onRowClick }) => {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
         <Users2 className="h-8 w-8 text-slate-400" />
-        <p className="text-sm text-slate-500">
-          No clients linked to this partner yet.
-        </p>
+        <p className="text-sm text-slate-500">No clients linked to this partner yet.</p>
       </div>
     );
   }
@@ -65,16 +61,10 @@ export default function PartnerDetailsPage() {
   const navigate = useNavigate();
   const { partnerId } = useParams();
 
-  const {
-    data: partner,
-    isFetching: isPartnerFetching,
-  } = useFetchTenantPartnerById(partnerId);
-  const {
-    data: partnerClients = [],
-    isFetching: isClientsFetching,
-  } = useFetchTenantPartnerClients(partnerId);
-  const { mutateAsync: deletePartner, isPending: isDeleting } =
-    useDeleteTenantPartner();
+  const { data: partner, isFetching: isPartnerFetching } = useFetchTenantPartnerById(partnerId);
+  const { data: partnerClients = [], isFetching: isClientsFetching } =
+    useFetchTenantPartnerClients(partnerId);
+  const { mutateAsync: deletePartner, isPending: isDeleting } = useDeleteTenantPartner();
 
   const statistics = useMemo(() => {
     if (!partner) return [];
@@ -97,9 +87,7 @@ export default function PartnerDetailsPage() {
 
   const handleDelete = async () => {
     if (!partnerId) return;
-    const confirm = window.confirm(
-      "Are you sure you want to remove this partner workspace?"
-    );
+    const confirm = window.confirm("Are you sure you want to remove this partner workspace?");
     if (!confirm) return;
 
     try {
@@ -107,9 +95,7 @@ export default function PartnerDetailsPage() {
       ToastUtils.success("Partner removed.");
       navigate("/dashboard/clients");
     } catch (error) {
-      ToastUtils.error(
-        error?.response?.data?.message || "Failed to remove partner."
-      );
+      ToastUtils.error(error?.response?.data?.message || "Failed to remove partner.");
     }
   };
 
@@ -154,7 +140,8 @@ export default function PartnerDetailsPage() {
               {partner.name || "Partner workspace"}
             </h2>
             <p className="text-sm text-slate-500">
-              Manage {partner.name || "this partner"}’s workspace, linked clients, and core contact details.
+              Manage {partner.name || "this partner"}’s workspace, linked clients, and core contact
+              details.
             </p>
           </div>
 
@@ -187,9 +174,7 @@ export default function PartnerDetailsPage() {
                   <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
                     {stat.label}
                   </p>
-                  <p className="mt-1 text-lg font-semibold text-slate-900">
-                    {stat.value}
-                  </p>
+                  <p className="mt-1 text-lg font-semibold text-slate-900">{stat.value}</p>
                 </div>
                 <div className="rounded-full bg-white p-2 text-primary-500 shadow-sm">
                   <stat.icon className="h-5 w-5" />
@@ -201,18 +186,26 @@ export default function PartnerDetailsPage() {
 
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900">
-              Partner clients
-            </h3>
+            <h3 className="text-lg font-semibold text-slate-900">Partner clients</h3>
             <p className="text-sm text-slate-500">
-              These clients belong to the partner workspace. Launching a new client will switch context to the partner automatically.
+              These clients belong to the partner workspace. Launching a new client will switch
+              context to the partner automatically.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <ModernButton variant="outline" onClick={() => navigate(`/dashboard/partners/${partner.identifier}/edit`)}>
+            <ModernButton
+              variant="outline"
+              onClick={() => navigate(`/dashboard/partners/${partner.identifier}/edit`)}
+            >
               Edit partner
             </ModernButton>
-            <ModernButton variant="outline" tone="destructive" onClick={handleDelete} isDisabled={isDeleting} isLoading={isDeleting}>
+            <ModernButton
+              variant="outline"
+              tone="destructive"
+              onClick={handleDelete}
+              isDisabled={isDeleting}
+              isLoading={isDeleting}
+            >
               Remove partner
             </ModernButton>
             <ModernButton variant="primary" onClick={handleCreateClient}>
@@ -225,9 +218,7 @@ export default function PartnerDetailsPage() {
           <SimpleTable
             isLoading={isClientsFetching}
             data={partnerClients}
-            onRowClick={(client) =>
-              navigate(`/dashboard/clients/${client.identifier}`)
-            }
+            onRowClick={(client) => navigate(`/dashboard/clients/${client.identifier}`)}
           />
         </ModernCard>
       </div>

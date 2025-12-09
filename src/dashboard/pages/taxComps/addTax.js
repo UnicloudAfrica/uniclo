@@ -1,15 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { X, Loader2, PlusCircle, Trash2 } from "lucide-react";
-import {
-  useCreateTaxConfiguration,
-  useFetchTaxTypes,
-} from "../../../hooks/taxHooks";
-import ToastUtils from "../../../utils/toastUtil";
+import { useCreateTaxConfiguration, useFetchTaxTypes } from "../../../hooks/taxHooks";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import { useFetchCountries } from "../../../hooks/resource";
 
 const AddTaxTypeModal = ({ isOpen, onClose }) => {
-  const { data: countries, isFetching: isCountriesFetching } =
-    useFetchCountries();
+  const { data: countries, isFetching: isCountriesFetching } = useFetchCountries();
   const { data: taxTypes, isFetching: isTaxTypesFetching } = useFetchTaxTypes();
   const { mutate, isPending } = useCreateTaxConfiguration();
 
@@ -24,10 +20,7 @@ const AddTaxTypeModal = ({ isOpen, onClose }) => {
   }, [isOpen]);
 
   const addRateField = () => {
-    setRates((prevRates) => [
-      ...prevRates,
-      { taxTypeId: "", countryId: "", rate: "" },
-    ]);
+    setRates((prevRates) => [...prevRates, { taxTypeId: "", countryId: "", rate: "" }]);
   };
 
   const removeRateField = (index) => {
@@ -43,9 +36,7 @@ const AddTaxTypeModal = ({ isOpen, onClose }) => {
 
   const updateRateField = (index, field, value) => {
     setRates((prevRates) =>
-      prevRates.map((rate, i) =>
-        i === index ? { ...rate, [field]: value } : rate
-      )
+      prevRates.map((rate, i) => (i === index ? { ...rate, [field]: value } : rate))
     );
     setErrors((prevErrors) => {
       const newErrors = { ...prevErrors };
@@ -114,9 +105,7 @@ const AddTaxTypeModal = ({ isOpen, onClose }) => {
       },
       onError: (err) => {
         console.error("Failed to add Tax Rates:", err);
-        ToastUtils.error(
-          err.message || "Failed to add tax rates. Please try again."
-        );
+        ToastUtils.error(err.message || "Failed to add tax rates. Please try again.");
       },
     });
   };
@@ -128,9 +117,7 @@ const AddTaxTypeModal = ({ isOpen, onClose }) => {
       <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full">
         {/* Header */}
         <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] w-full">
-          <h2 className="text-lg font-semibold text-[#575758]">
-            Add Tax Rates
-          </h2>
+          <h2 className="text-lg font-semibold text-[#575758]">Add Tax Rates</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
@@ -150,9 +137,7 @@ const AddTaxTypeModal = ({ isOpen, onClose }) => {
                   type="button"
                   onClick={addRateField}
                   className="px-3 py-1 bg-[#288DD1] text-white text-sm rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                  disabled={
-                    isPending || isCountriesFetching || isTaxTypesFetching
-                  }
+                  disabled={isPending || isCountriesFetching || isTaxTypesFetching}
                 >
                   <PlusCircle className="w-4 h-4 mr-1" /> Add Rate
                 </button>
@@ -160,13 +145,10 @@ const AddTaxTypeModal = ({ isOpen, onClose }) => {
 
               {rates.length === 0 && (
                 <p className="text-gray-500 text-sm mb-4">
-                  Click "Add Rate" to define tax rates for specific countries
-                  and tax types.
+                  Click "Add Rate" to define tax rates for specific countries and tax types.
                 </p>
               )}
-              {errors.noRates && (
-                <p className="text-red-500 text-xs mt-1">{errors.noRates}</p>
-              )}
+              {errors.noRates && <p className="text-red-500 text-xs mt-1">{errors.noRates}</p>}
 
               <div className="space-y-4">
                 {rates.map((rateEntry, index) => (
@@ -184,29 +166,19 @@ const AddTaxTypeModal = ({ isOpen, onClose }) => {
                       </label>
                       <span
                         className={`w-full input-field block transition-all ${
-                          errors[`rate-${index}-taxType`]
-                            ? "border-red-500 border"
-                            : ""
+                          errors[`rate-${index}-taxType`] ? "border-red-500 border" : ""
                         }`}
                       >
                         {isTaxTypesFetching ? (
                           <div className="flex items-center py-2">
                             <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
-                            <span className="text-gray-500 text-sm">
-                              Loading tax types...
-                            </span>
+                            <span className="text-gray-500 text-sm">Loading tax types...</span>
                           </div>
                         ) : taxTypes && taxTypes.length > 0 ? (
                           <select
                             id={`taxType-${index}`}
                             value={rateEntry.taxTypeId}
-                            onChange={(e) =>
-                              updateRateField(
-                                index,
-                                "taxTypeId",
-                                e.target.value
-                              )
-                            }
+                            onChange={(e) => updateRateField(index, "taxTypeId", e.target.value)}
                             className="w-full bg-transparent outline-none py-2"
                             disabled={isPending}
                           >
@@ -240,29 +212,19 @@ const AddTaxTypeModal = ({ isOpen, onClose }) => {
                         </label>
                         <span
                           className={`w-full input-field block transition-all ${
-                            errors[`rate-${index}-country`]
-                              ? "border-red-500 border"
-                              : ""
+                            errors[`rate-${index}-country`] ? "border-red-500 border" : ""
                           }`}
                         >
                           {isCountriesFetching ? (
                             <div className="flex items-center py-2">
                               <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
-                              <span className="text-gray-500 text-sm">
-                                Loading countries...
-                              </span>
+                              <span className="text-gray-500 text-sm">Loading countries...</span>
                             </div>
                           ) : countries && countries.length > 0 ? (
                             <select
                               id={`country-${index}`}
                               value={rateEntry.countryId}
-                              onChange={(e) =>
-                                updateRateField(
-                                  index,
-                                  "countryId",
-                                  e.target.value
-                                )
-                              }
+                              onChange={(e) => updateRateField(index, "countryId", e.target.value)}
                               className="w-full bg-transparent outline-none py-2"
                               disabled={isPending}
                             >
@@ -297,14 +259,10 @@ const AddTaxTypeModal = ({ isOpen, onClose }) => {
                           type="number"
                           step="0.01"
                           value={rateEntry.rate}
-                          onChange={(e) =>
-                            updateRateField(index, "rate", e.target.value)
-                          }
+                          onChange={(e) => updateRateField(index, "rate", e.target.value)}
                           placeholder="e.g., 7.5"
                           className={`w-full input-field ${
-                            errors[`rate-${index}-rate`]
-                              ? "border-red-500"
-                              : "border-gray-300"
+                            errors[`rate-${index}-rate`] ? "border-red-500" : "border-gray-300"
                           }`}
                           disabled={isPending}
                         />
@@ -350,9 +308,7 @@ const AddTaxTypeModal = ({ isOpen, onClose }) => {
               className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Add Tax Rates
-              {isPending && (
-                <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-              )}
+              {isPending && <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />}
             </button>
           </div>
         </div>

@@ -1,14 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TenantPageShell from "../../components/TenantPageShell";
-import ModernCard from "../../../adminDashboard/components/ModernCard";
-import ModernButton from "../../../adminDashboard/components/ModernButton";
-import ModernInput from "../../../adminDashboard/components/ModernInput";
-import ToastUtils from "../../../utils/toastUtil";
-import {
-  useFetchClientById,
-  useUpdateClient,
-} from "../../../hooks/clientHooks";
+import { ModernCard } from "../../../shared/components/ui";
+import { ModernButton } from "../../../shared/components/ui";
+import { ModernInput } from "../../../shared/components/ui";
+import ToastUtils from "../../../utils/toastUtil.ts";
+import { useFetchClientById, useUpdateClient } from "../../../hooks/clientHooks";
 
 const Field = ({ label, children }) => (
   <div className="space-y-1.5">
@@ -87,9 +84,7 @@ export default function EditClientPage() {
       ToastUtils.success("Client updated.");
       navigate(`/dashboard/clients/${clientId}`);
     } catch (error) {
-      ToastUtils.error(
-        error?.response?.data?.message || "Failed to update client."
-      );
+      ToastUtils.error(error?.response?.data?.message || "Failed to update client.");
     }
   };
 
@@ -107,9 +102,7 @@ export default function EditClientPage() {
     >
       <ModernCard padding="lg">
         {isLoading ? (
-          <div className="py-10 text-center text-sm text-slate-500">
-            Loading client…
-          </div>
+          <div className="py-10 text-center text-sm text-slate-500">Loading client…</div>
         ) : client ? (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2">
@@ -121,54 +114,33 @@ export default function EditClientPage() {
                 />
               </Field>
               <Field label="Last name">
-                <ModernInput
-                  value={form.last_name}
-                  onChange={updateField("last_name")}
-                  required
-                />
+                <ModernInput value={form.last_name} onChange={updateField("last_name")} required />
               </Field>
               <Field label="Email address">
                 <ModernInput value={form.email} disabled />
               </Field>
               <Field label="Phone number">
-                <ModernInput
-                  value={form.phone}
-                  onChange={updateField("phone")}
-                />
+                <ModernInput value={form.phone} onChange={updateField("phone")} />
               </Field>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Country">
-                <ModernInput
-                  value={form.country}
-                  onChange={updateField("country")}
-                />
+                <ModernInput value={form.country} onChange={updateField("country")} />
               </Field>
               <Field label="State">
-                <ModernInput
-                  value={form.state}
-                  onChange={updateField("state")}
-                />
+                <ModernInput value={form.state} onChange={updateField("state")} />
               </Field>
               <Field label="City">
-                <ModernInput
-                  value={form.city}
-                  onChange={updateField("city")}
-                />
+                <ModernInput value={form.city} onChange={updateField("city")} />
               </Field>
               <Field label="Address">
-                <ModernInput
-                  value={form.address}
-                  onChange={updateField("address")}
-                />
+                <ModernInput value={form.address} onChange={updateField("address")} />
               </Field>
             </div>
 
             <div>
-              <p className="text-sm font-medium text-slate-700">
-                Reset password (optional)
-              </p>
+              <p className="text-sm font-medium text-slate-700">Reset password (optional)</p>
               <div className="mt-3 grid gap-4 md:grid-cols-2">
                 <Field label="New password">
                   <ModernInput
@@ -199,9 +171,7 @@ export default function EditClientPage() {
             </div>
           </form>
         ) : (
-          <div className="py-10 text-center text-sm text-slate-500">
-            Client not found.
-          </div>
+          <div className="py-10 text-center text-sm text-slate-500">Client not found.</div>
         )}
       </ModernCard>
     </TenantPageShell>

@@ -2,11 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../index/api";
 import silentApi from "../index/silent";
 
-const fetchTenantCalculatorOptions = async ({
-  tenant_id,
-  region,
-  productable_type,
-}) => {
+const fetchTenantCalculatorOptions = async ({ tenant_id, region, productable_type }) => {
   const params = new URLSearchParams();
   if (tenant_id) {
     params.append("tenant_id", tenant_id);
@@ -19,10 +15,7 @@ const fetchTenantCalculatorOptions = async ({
   }
 
   const queryString = params.toString();
-  const res = await silentApi(
-    "GET",
-    `/calculator-options${queryString ? `?${queryString}` : ""}`
-  );
+  const res = await silentApi("GET", `/calculator-options${queryString ? `?${queryString}` : ""}`);
 
   if (!res.data) {
     throw new Error("Failed to fetch calculator options");
@@ -35,10 +28,7 @@ export const useFetchTenantCalculatorOptions = (
   options = {}
 ) => {
   return useQuery({
-    queryKey: [
-      "tenantCalculatorOptions",
-      { tenantId, region, productable_type },
-    ],
+    queryKey: ["tenantCalculatorOptions", { tenantId, region, productable_type }],
     queryFn: () =>
       fetchTenantCalculatorOptions({
         tenant_id: tenantId,

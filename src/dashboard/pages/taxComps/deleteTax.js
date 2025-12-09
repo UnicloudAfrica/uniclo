@@ -1,11 +1,10 @@
 import React from "react";
 import { X, Loader2 } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import { useDeleteTaxConfiguration } from "../../../hooks/taxHooks";
 
 const DeleteTaxConfigModal = ({ isOpen, onClose, taxConfig }) => {
-  const { mutate: deleteTaxConfiguration, isPending } =
-    useDeleteTaxConfiguration();
+  const { mutate: deleteTaxConfiguration, isPending } = useDeleteTaxConfiguration();
 
   const handleDelete = () => {
     if (taxConfig && taxConfig.id) {
@@ -35,9 +34,7 @@ const DeleteTaxConfigModal = ({ isOpen, onClose, taxConfig }) => {
       <div className="bg-white rounded-[24px] w-full max-w-[450px] mx-4">
         {/* Header */}
         <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] w-full">
-          <h2 className="text-lg font-semibold text-[#575758]">
-            Delete Tax Configuration
-          </h2>
+          <h2 className="text-lg font-semibold text-[#575758]">Delete Tax Configuration</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
@@ -52,12 +49,9 @@ const DeleteTaxConfigModal = ({ isOpen, onClose, taxConfig }) => {
             <p className="text-gray-700 text-base">
               Are you sure you want to delete the tax rate of{" "}
               <span className="font-semibold">
-                {taxConfig.rate
-                  ? `${parseFloat(taxConfig.rate).toFixed(2)}%`
-                  : "N/A"}
+                {taxConfig.rate ? `${parseFloat(taxConfig.rate).toFixed(2)}%` : "N/A"}
               </span>{" "}
-              for{" "}
-              <span className="font-semibold">{taxConfig.name || "N/A"}</span>{" "}
+              for <span className="font-semibold">{taxConfig.name || "N/A"}</span>{" "}
               {/* in{" "}
               <span className="font-semibold">
                 {taxConfig.country || "N/A"}
@@ -65,9 +59,7 @@ const DeleteTaxConfigModal = ({ isOpen, onClose, taxConfig }) => {
               ? This action cannot be undone.
             </p>
           ) : (
-            <p className="text-gray-700 text-base">
-              No tax configuration selected for deletion.
-            </p>
+            <p className="text-gray-700 text-base">No tax configuration selected for deletion.</p>
           )}
         </div>
         {/* Footer */}

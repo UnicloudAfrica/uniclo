@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, Loader2, Upload, CheckCircle } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import { FileInput } from "../../../utils/fileInput";
 import { useAddLeadDocument } from "../../../hooks/tenantHooks/leadsHook";
 
@@ -103,9 +103,7 @@ const AddLeadDocument = ({ isOpen, onClose, lead }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full">
         <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] w-full">
-          <h2 className="text-lg font-semibold text-[#575758]">
-            Add Lead Document
-          </h2>
+          <h2 className="text-lg font-semibold text-[#575758]">Add Lead Document</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
@@ -126,9 +124,7 @@ const AddLeadDocument = ({ isOpen, onClose, lead }) => {
               <select
                 id="documentType"
                 value={formData.document_type}
-                onChange={(e) =>
-                  updateFormData("document_type", e.target.value)
-                }
+                onChange={(e) => updateFormData("document_type", e.target.value)}
                 className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
                   errors.document_type ? "border-red-500" : "border-gray-300"
                 }`}
@@ -143,9 +139,7 @@ const AddLeadDocument = ({ isOpen, onClose, lead }) => {
                 ))}
               </select>
               {errors.document_type && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.document_type}
-                </p>
+                <p className="text-red-500 text-xs mt-1">{errors.document_type}</p>
               )}
             </div>
 
@@ -166,16 +160,11 @@ const AddLeadDocument = ({ isOpen, onClose, lead }) => {
                   errors.name ? "border-red-500" : "border-gray-300"
                 }`}
               />
-              {errors.name && (
-                <p className="text-red-500 text-xs mt-1">{errors.name}</p>
-              )}
+              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
             </div>
 
             <div>
-              <label
-                htmlFor="stageId"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="stageId" className="block text-sm font-medium text-gray-700 mb-2">
                 Link to Stage (optional)
               </label>
               <select
@@ -205,16 +194,10 @@ const AddLeadDocument = ({ isOpen, onClose, lead }) => {
                 id="documentFile"
                 icon={Upload}
                 accept=".pdf,.png,.jpg,.jpeg,.svg,.webp"
-                label={
-                  formData.file
-                    ? `Selected: ${formData.file.name}`
-                    : "Click to upload"
-                }
+                label={formData.file ? `Selected: ${formData.file.name}` : "Click to upload"}
                 onChange={handleFileChange}
               />
-              {errors.file && (
-                <p className="text-red-500 text-xs mt-1">{errors.file}</p>
-              )}
+              {errors.file && <p className="text-red-500 text-xs mt-1">{errors.file}</p>}
               <p className="mt-1 text-xs text-gray-500">
                 Upload PDF, PNG, JPG, SVG, or WEBP files up to 10MB.
               </p>

@@ -1,10 +1,7 @@
 import { Mic, Plus, Send, Smile, X, Loader2 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import ToastUtils from "../../utils/toastUtil"; // Assuming ToastUtils path is correct
-import {
-  useCreateSupportMessage,
-  useFetchSupportMessageById,
-} from "../../hooks/supportHook";
+import ToastUtils from "../../utils/toastUtil.ts"; // Assuming ToastUtils path is correct
+import { useCreateSupportMessage, useFetchSupportMessageById } from "../../hooks/supportHook";
 
 // Utility function to format dates
 const formatDate = (isoString) => {
@@ -30,8 +27,7 @@ const TicketDrawer = ({ isOpen, onClose, ticket }) => {
     refetch: refetchTicket,
   } = useFetchSupportMessageById(ticket?.id, { enabled: !!ticket?.id });
 
-  const { mutate: createSupportReply, isPending: isReplyPending } =
-    useCreateSupportMessage();
+  const { mutate: createSupportReply, isPending: isReplyPending } = useCreateSupportMessage();
 
   useEffect(() => {
     if (isOpen && ticket?.id) {
@@ -84,9 +80,7 @@ const TicketDrawer = ({ isOpen, onClose, ticket }) => {
       >
         <div className="w-full h-full relative flex flex-col">
           <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-[#F2F2F2] rounded-t-[16px]">
-            <h2 className="text-xl font-semibold text-[#575758]">
-              Ticket ID: {ticket.id}
-            </h2>
+            <h2 className="text-xl font-semibold text-[#575758]">Ticket ID: {ticket.id}</h2>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -113,9 +107,7 @@ const TicketDrawer = ({ isOpen, onClose, ticket }) => {
 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-[#575758] font-normal text-base">
-                      Status:
-                    </span>
+                    <span className="text-[#575758] font-normal text-base">Status:</span>
                     <div className="mt-1">
                       <span
                         className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
@@ -130,18 +122,14 @@ const TicketDrawer = ({ isOpen, onClose, ticket }) => {
                   </div>
 
                   <div>
-                    <span className="text-[#575758] font-normal text-base">
-                      Date Created:
-                    </span>
+                    <span className="text-[#575758] font-normal text-base">Date Created:</span>
                     <div className="mt-1 text-[#1c1c1c]">
                       {formatDate(fullTicketData.created_at)}
                     </div>
                   </div>
 
                   <div>
-                    <span className="text-[#575758] font-normal text-base">
-                      Date Updated:
-                    </span>
+                    <span className="text-[#575758] font-normal text-base">Date Updated:</span>
                     <div className="mt-1 text-[#1c1c1c]">
                       {formatDate(fullTicketData.updated_at)}
                     </div>
@@ -151,28 +139,21 @@ const TicketDrawer = ({ isOpen, onClose, ticket }) => {
 
               <div className="flex-1 mt-8 px-5 flex flex-col overflow-hidden">
                 <div className="mb-4">
-                  <h4 className="text-base font-medium text-[#1c1c1c]">
-                    Conversation
-                  </h4>
+                  <h4 className="text-base font-medium text-[#1c1c1c]">Conversation</h4>
                 </div>
 
                 <div className="flex-1 overflow-y-auto w-full pt-4 space-y-4 pb-4">
-                  {fullTicketData.messages &&
-                  fullTicketData.messages.length > 0 ? (
+                  {fullTicketData.messages && fullTicketData.messages.length > 0 ? (
                     fullTicketData.messages.map((msg) => (
                       <div
                         key={msg.id}
                         className={`flex items-start space-x-3 ${
-                          msg.sender_type === "user"
-                            ? ""
-                            : "flex-row-reverse space-x-reverse"
+                          msg.sender_type === "user" ? "" : "flex-row-reverse space-x-reverse"
                         }`}
                       >
                         <div
                           className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                            msg.sender_type === "user"
-                              ? "bg-blue-500"
-                              : "bg-gray-800"
+                            msg.sender_type === "user" ? "bg-blue-500" : "bg-gray-800"
                           }`}
                         >
                           <span className="text-white text-sm font-medium">
@@ -189,17 +170,13 @@ const TicketDrawer = ({ isOpen, onClose, ticket }) => {
                           >
                             <p
                               className={`text-sm ${
-                                msg.sender_type === "user"
-                                  ? "text-[#1c1c1c]"
-                                  : "text-[#288DD1]"
+                                msg.sender_type === "user" ? "text-[#1c1c1c]" : "text-[#288DD1]"
                               }`}
                             >
                               {msg.body}
                             </p>
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {formatDate(msg.created_at)}
-                          </p>
+                          <p className="text-xs text-gray-500 mt-1">{formatDate(msg.created_at)}</p>
                         </div>
                       </div>
                     ))
@@ -212,15 +189,9 @@ const TicketDrawer = ({ isOpen, onClose, ticket }) => {
                 </div>
               </div>
 
-              <form
-                onSubmit={handleSendMessage}
-                className="p-6 border-t border-[#ECEDF0]"
-              >
+              <form onSubmit={handleSendMessage} className="p-6 border-t border-[#ECEDF0]">
                 <div className="flex items-center space-x-3">
-                  <button
-                    type="button"
-                    className="text-gray-400 hover:text-gray-600"
-                  >
+                  <button type="button" className="text-gray-400 hover:text-gray-600">
                     <Plus className="w-5 h-5" />
                   </button>
 
@@ -235,17 +206,11 @@ const TicketDrawer = ({ isOpen, onClose, ticket }) => {
                     />
                   </div>
 
-                  <button
-                    type="button"
-                    className="text-gray-400 hover:text-gray-600"
-                  >
+                  <button type="button" className="text-gray-400 hover:text-gray-600">
                     <Smile className="w-5 h-5" />
                   </button>
 
-                  <button
-                    type="button"
-                    className="text-gray-400 hover:text-gray-600"
-                  >
+                  <button type="button" className="text-gray-400 hover:text-gray-600">
                     <Mic className="w-5 h-5" />
                   </button>
 

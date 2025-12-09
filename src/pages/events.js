@@ -48,16 +48,14 @@ const Events = () => {
                 Events
               </p>
               <p className=" text-center font-normal mt-3 text-xl md:px-[15%] text-[#676767]">
-                Join us for inspiring events and workshops that will help you
-                take your business to the next level.
+                Join us for inspiring events and workshops that will help you take your business to
+                the next level.
               </p>
               <img src={noevent} className=" w-[60%] md:w-[45%] mt-16" alt="" />
-              <p className=" mt-16 text-center text-2xl font-medium">
-                No Upcoming Events
-              </p>
+              <p className=" mt-16 text-center text-2xl font-medium">No Upcoming Events</p>
               <p className=" mt-3 text-[#676767] md:px-[15%] text-base font-normal text-center">
-                We are currently not hosting any upcoming events. Please check
-                back soon for our latest event schedule.
+                We are currently not hosting any upcoming events. Please check back soon for our
+                latest event schedule.
               </p>
 
               <motion.div className=" mt-16 w-full font-Outfit text-[#fff]">
@@ -76,8 +74,7 @@ const Events = () => {
                     Join our webinars and access whitepapers{" "}
                   </p>
                   <p className=" font-normal px-4 md:px-0 text-base md:text-xl">
-                    We offer in-depth knowledge on cloud technologies and
-                    implementation.
+                    We offer in-depth knowledge on cloud technologies and implementation.
                   </p>
                   <div className=" flex flex-col md:flex-row items-center justify-center z-20  mt-5 md:space-x-6 space-y-4 pt-3 md:space-y-0">
                     <input
@@ -101,8 +98,8 @@ const Events = () => {
                     Events
                   </p>
                   <p className=" text-center font-normal mt-3 text-xl md:px-[15%] text-[#676767]">
-                    Join us for inspiring events and workshops that will help
-                    you take your business to the next level.
+                    Join us for inspiring events and workshops that will help you take your business
+                    to the next level.
                   </p>
 
                   <div className=" mt-10 w-full h-[300px] flex flex-col md:flex-row ">
@@ -116,9 +113,9 @@ const Events = () => {
                         Transforming [Client Name] with Cloud Migration
                       </p>
                       <p className=" text-[#FFFFFFCC] text-sm mt-3 md:mt-6 mb-6">
-                        Unlocking the Power of Cloud Computing Unlocking the
-                        Power of Cloud Computing Unlocking the Power of Cloud
-                        Computing Unlocking the Power of Cloud Computing.......
+                        Unlocking the Power of Cloud Computing Unlocking the Power of Cloud
+                        Computing Unlocking the Power of Cloud Computing Unlocking the Power of
+                        Cloud Computing.......
                       </p>
                       <p className=" absolute bottom-3 md:bottom-6 left-6 text-base text-white">
                         September 24th, 2023.
@@ -141,9 +138,7 @@ const Events = () => {
                         <p className="text-left mt-6 text-xl/ md:text-2xl font-medium">
                           {item.title}
                         </p>
-                        <p className="text-left mt-3 text-[#1E1E1E99] text-sm">
-                          {item.desc}
-                        </p>
+                        <p className="text-left mt-3 text-[#1E1E1E99] text-sm">{item.desc}</p>
                         <p className="text-left mt-3 text-[#121212] font-medium text-base">
                           {item.date}
                         </p>
@@ -170,8 +165,7 @@ const Events = () => {
                         Join our webinars and access whitepapers{" "}
                       </p>
                       <p className=" font-normal px-4 md:px-0 text-base md:text-xl">
-                        We offer in-depth knowledge on cloud technologies and
-                        implementation.
+                        We offer in-depth knowledge on cloud technologies and implementation.
                       </p>
                       <div className=" flex flex-col md:flex-row items-center justify-center z-20  mt-4 md:space-x-6 space-y-4 md:space-y-0">
                         <input
@@ -179,11 +173,7 @@ const Events = () => {
                           className=" w-full md:w-auto h-[52px] bg-[#133D4C80] py-2.5 px-4 md:px-7 text-base placeholder:text-white placeholder:font-Outfit font-Outfit placeholder:text-sm  rounded-[30px]"
                           type="text"
                         />
-                        <Link
-                          to="/contact"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
+                        <Link to="/contact" target="_blank" rel="noopener noreferrer">
                           <button className=" w-full md:w-auto px-9 py-4 bg-[#fff] rounded-[30px] text-base text-[#000]">
                             Subscribe
                           </button>

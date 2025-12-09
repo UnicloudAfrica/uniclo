@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { AlertCircle, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
-import ToastUtils from "../../utils/toastUtil";
+import ToastUtils from "../../utils/toastUtil.ts";
 import { useVerifyPartnerRegionQualification } from "../../hooks/onboardingHooks";
 
 const PROVIDER_OPTIONS = [
@@ -96,11 +96,7 @@ const setNestedValue = (object, path, value) => {
   let cursor = object;
 
   keys.slice(0, -1).forEach((key) => {
-    if (
-      cursor[key] === undefined ||
-      cursor[key] === null ||
-      typeof cursor[key] !== "object"
-    ) {
+    if (cursor[key] === undefined || cursor[key] === null || typeof cursor[key] !== "object") {
       cursor[key] = {};
     }
     cursor = cursor[key];
@@ -126,8 +122,9 @@ const PartnerRegionQualificationForm = ({ value, meta, onChange }) => {
       if (path === "region.fulfillment_mode") {
         if (nextValue !== "automated") {
           updated.region.msp_credentials = clone(DEFAULT_PAYLOAD.region.msp_credentials);
-          updated.region.msp_credentials.object_storage =
-            clone(DEFAULT_PAYLOAD.region.msp_credentials.object_storage);
+          updated.region.msp_credentials.object_storage = clone(
+            DEFAULT_PAYLOAD.region.msp_credentials.object_storage
+          );
         }
       }
 
@@ -310,9 +307,7 @@ const PartnerRegionQualificationForm = ({ value, meta, onChange }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                CRM automation
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">CRM automation</label>
               <div className="flex items-center gap-3 text-sm">
                 <label className="inline-flex items-center gap-2">
                   <input
@@ -359,8 +354,8 @@ const PartnerRegionQualificationForm = ({ value, meta, onChange }) => {
           <div className="rounded-lg border border-gray-200 p-5 space-y-4">
             {payload.region.provider !== "zadara" ? (
               <div className="text-sm text-gray-600">
-                Automated provisioning for {payload.region.provider || "this provider"} is coming soon.
-                We will ask for the specific credentials once the integration is live.
+                Automated provisioning for {payload.region.provider || "this provider"} is coming
+                soon. We will ask for the specific credentials once the integration is live.
               </div>
             ) : payload.region.fulfillment_mode === "automated" ? (
               <>
@@ -539,8 +534,8 @@ const PartnerRegionQualificationForm = ({ value, meta, onChange }) => {
               <div className="rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-600">
                 <p className="font-medium text-gray-800">Manual fulfilment selected</p>
                 <p className="mt-1">
-                  You can manage provisioning in your own consoles. Credentials are optional unless you
-                  switch to automated fulfilment later.
+                  You can manage provisioning in your own consoles. Credentials are optional unless
+                  you switch to automated fulfilment later.
                 </p>
               </div>
             )}
@@ -551,14 +546,7 @@ const PartnerRegionQualificationForm = ({ value, meta, onChange }) => {
   );
 };
 
-const Field = ({
-  label,
-  value,
-  onChange,
-  placeholder,
-  required = false,
-  type = "text",
-}) => (
+const Field = ({ label, value, onChange, placeholder, required = false, type = "text" }) => (
   <div>
     <label className="block text-sm font-medium text-gray-700 mb-1">
       {label}
@@ -592,7 +580,9 @@ const VerificationStatus = ({ status, message, updatedAt }) => {
     >
       {icon}
       <div className="text-sm">
-        <p className="font-medium">{status === "verified" ? "Credentials verified" : "Awaiting verification"}</p>
+        <p className="font-medium">
+          {status === "verified" ? "Credentials verified" : "Awaiting verification"}
+        </p>
         <p className="mt-1">{message}</p>
         {updatedAt && (
           <p className="mt-2 text-xs opacity-80">

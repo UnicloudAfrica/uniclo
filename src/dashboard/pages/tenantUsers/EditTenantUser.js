@@ -1,14 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TenantPageShell from "../../components/TenantPageShell";
-import ModernCard from "../../../adminDashboard/components/ModernCard";
-import ModernButton from "../../../adminDashboard/components/ModernButton";
-import ModernInput from "../../../adminDashboard/components/ModernInput";
-import ToastUtils from "../../../utils/toastUtil";
-import {
-  useFetchTenantAdminById,
-  useUpdateTenantAdmin,
-} from "../../../hooks/adminUserHooks";
+import { ModernCard } from "../../../shared/components/ui";
+import { ModernButton } from "../../../shared/components/ui";
+import { ModernInput } from "../../../shared/components/ui";
+import ToastUtils from "../../../utils/toastUtil.ts";
+import { useFetchTenantAdminById, useUpdateTenantAdmin } from "../../../hooks/adminUserHooks";
 
 const Field = ({ label, children }) => (
   <div className="space-y-2">
@@ -32,8 +29,7 @@ export default function EditTenantUserPage() {
   const [isDirty, setIsDirty] = useState(false);
 
   const { data: user, isFetching: isLoading } = useFetchTenantAdminById(userId);
-  const { mutateAsync: updateUser, isPending: isSaving } =
-    useUpdateTenantAdmin();
+  const { mutateAsync: updateUser, isPending: isSaving } = useUpdateTenantAdmin();
 
   useEffect(() => {
     if (user) {
@@ -52,10 +48,7 @@ export default function EditTenantUserPage() {
     setIsDirty(true);
     setForm((prev) => ({
       ...prev,
-      [key]:
-        event.target.type === "checkbox"
-          ? event.target.checked
-          : event.target.value,
+      [key]: event.target.type === "checkbox" ? event.target.checked : event.target.value,
     }));
   };
 
@@ -85,9 +78,7 @@ export default function EditTenantUserPage() {
       ToastUtils.success("Tenant user updated.");
       navigate(`/dashboard/tenant-users/${userId}`);
     } catch (error) {
-      ToastUtils.error(
-        error?.response?.data?.message || "Failed to update tenant user."
-      );
+      ToastUtils.error(error?.response?.data?.message || "Failed to update tenant user.");
     }
   };
 
@@ -105,9 +96,7 @@ export default function EditTenantUserPage() {
     >
       <ModernCard padding="lg">
         {isLoading ? (
-          <div className="py-10 text-center text-sm text-slate-500">
-            Loading tenant user…
-          </div>
+          <div className="py-10 text-center text-sm text-slate-500">Loading tenant user…</div>
         ) : user ? (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2">
@@ -119,20 +108,13 @@ export default function EditTenantUserPage() {
                 />
               </Field>
               <Field label="Last name">
-                <ModernInput
-                  value={form.last_name}
-                  onChange={updateField("last_name")}
-                  required
-                />
+                <ModernInput value={form.last_name} onChange={updateField("last_name")} required />
               </Field>
               <Field label="Email">
                 <ModernInput value={form.email} disabled />
               </Field>
               <Field label="Phone">
-                <ModernInput
-                  value={form.phone}
-                  onChange={updateField("phone")}
-                />
+                <ModernInput value={form.phone} onChange={updateField("phone")} />
               </Field>
             </div>
 
@@ -150,9 +132,7 @@ export default function EditTenantUserPage() {
             </div>
 
             <div>
-              <p className="text-sm font-medium text-slate-700">
-                Reset password (optional)
-              </p>
+              <p className="text-sm font-medium text-slate-700">Reset password (optional)</p>
               <div className="mt-3 grid gap-4 md:grid-cols-2">
                 <Field label="New password">
                   <ModernInput
@@ -183,9 +163,7 @@ export default function EditTenantUserPage() {
             </div>
           </form>
         ) : (
-          <div className="py-10 text-center text-sm text-slate-500">
-            Tenant user not found.
-          </div>
+          <div className="py-10 text-center text-sm text-slate-500">Tenant user not found.</div>
         )}
       </ModernCard>
     </TenantPageShell>

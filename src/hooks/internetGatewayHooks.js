@@ -18,11 +18,7 @@ const fetchInternetGateways = async ({ project_id, region }) => {
 };
 
 const createInternetGateway = async (internetGatewayData) => {
-  const res = await api(
-    "POST",
-    "/business/internet-gateways",
-    internetGatewayData
-  );
+  const res = await api("POST", "/business/internet-gateways", internetGatewayData);
   if (!res.data) throw new Error("Failed to create internet gateway");
   return res.data;
 };
@@ -51,22 +47,14 @@ const deleteInternetGateway = async (arg) => {
 
 const attachInternetGateway = async (attachData) => {
   // Use shared attachment endpoint
-  const res = await api(
-    "POST",
-    "/business/internet-gateway-attachments",
-    attachData
-  );
+  const res = await api("POST", "/business/internet-gateway-attachments", attachData);
   if (!res.data) throw new Error("Failed to attach internet gateway");
   return res.data;
 };
 
 const detachInternetGateway = async (detachData) => {
   // Shared API supports id-less DELETE with body
-  const res = await api(
-    "DELETE",
-    "/business/internet-gateway-attachments",
-    detachData
-  );
+  const res = await api("DELETE", "/business/internet-gateway-attachments", detachData);
   if (!res.data) throw new Error("Failed to detach internet gateway");
   return res.data;
 };
@@ -86,11 +74,7 @@ const syncInternetGateways = async ({ project_id, region }) => {
   return res.data;
 };
 
-export const useFetchTenantInternetGateways = (
-  projectId,
-  region,
-  options = {}
-) => {
+export const useFetchTenantInternetGateways = (projectId, region, options = {}) => {
   return useQuery({
     queryKey: ["internetGateways", { projectId, region }],
     queryFn: () => fetchInternetGateways({ project_id: projectId, region }),

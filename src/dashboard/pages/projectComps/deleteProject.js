@@ -2,18 +2,13 @@ import { X, Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { useDeleteProject } from "../../../hooks/projectHooks";
 import { useNavigate } from "react-router-dom";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 
 const ConfirmDeleteModal = ({ isOpen, onClose, projectId, projectName }) => {
   const navigate = useNavigate(); // Initialize useNavigate hook
 
   // Use the useDeleteProject hook
-  const {
-    mutate: deleteProject,
-    isPending,
-    isError,
-    error,
-  } = useDeleteProject();
+  const { mutate: deleteProject, isPending, isError, error } = useDeleteProject();
 
   const handleDelete = () => {
     if (projectId) {
@@ -38,12 +33,10 @@ const ConfirmDeleteModal = ({ isOpen, onClose, projectId, projectName }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1100] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[400px] mx-4 w-full p-6 text-center">
-        <h2 className="text-lg font-semibold text-red-600 mb-4">
-          Confirm Deletion
-        </h2>
+        <h2 className="text-lg font-semibold text-red-600 mb-4">Confirm Deletion</h2>
         <p className="text-gray-700 mb-6">
-          Are you sure you want to delete the project "
-          <strong>{projectName}</strong>"? This action cannot be undone.
+          Are you sure you want to delete the project "<strong>{projectName}</strong>"? This action
+          cannot be undone.
         </p>
         {/* {isError && (
           <p className="text-red-500 text-sm mb-4">

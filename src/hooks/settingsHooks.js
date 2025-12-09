@@ -5,10 +5,12 @@ import adminApi from "../index/admin/api";
 import silentAdminApi from "../index/admin/silent";
 import adminSettingsApi from "../index/admin/settingsApi";
 import silentAdminSettingsApi from "../index/admin/silentSettingsApi";
+import clientApi from "../index/client/api";
+import tenantApi from "../index/tenant/tenantApi";
 
 /**
  * Settings Management Hooks
- * 
+ *
  * These hooks provide comprehensive settings management functionality including:
  * - Profile Settings (All users)
  * - Admin Settings (Admin only)
@@ -16,6 +18,17 @@ import silentAdminSettingsApi from "../index/admin/silentSettingsApi";
  * - Settings import/export functionality
  * - Settings schema and validation
  */
+
+export const detectApiContext = () => {
+  const path = window.location.pathname;
+  if (path.startsWith("/admin-dashboard") || path.startsWith("/admin")) {
+    return { api: adminSettingsApi, type: "admin" };
+  }
+  if (path.startsWith("/dashboard")) {
+    return { api: tenantApi, type: "tenant" };
+  }
+  return { api: clientApi, type: "client" };
+};
 
 // ================================
 // Profile Settings Operations
@@ -509,5 +522,5 @@ export {
   updateTenantBusinessSettings,
   resetProfileSettings,
   resetUserSettings,
-  resetTenantCategorySettings
+  resetTenantCategorySettings,
 };

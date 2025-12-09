@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, Loader2, Upload } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import { FileInput } from "../../../utils/fileInput";
 import { useUpdateDoc } from "../../../hooks/tenantHooks/leadsHook";
 
@@ -101,9 +101,7 @@ const UpdateLeadDoc = ({ isOpen, onClose, document }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full">
         <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] w-full">
-          <h2 className="text-lg font-semibold text-[#575758]">
-            Update Lead Document
-          </h2>
+          <h2 className="text-lg font-semibold text-[#575758]">Update Lead Document</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
@@ -124,9 +122,7 @@ const UpdateLeadDoc = ({ isOpen, onClose, document }) => {
               <select
                 id="documentTypeUpdate"
                 value={formData.document_type}
-                onChange={(e) =>
-                  updateFormData("document_type", e.target.value)
-                }
+                onChange={(e) => updateFormData("document_type", e.target.value)}
                 className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field ${
                   errors.document_type ? "border-red-500" : "border-gray-300"
                 }`}
@@ -141,9 +137,7 @@ const UpdateLeadDoc = ({ isOpen, onClose, document }) => {
                 ))}
               </select>
               {errors.document_type && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.document_type}
-                </p>
+                <p className="text-red-500 text-xs mt-1">{errors.document_type}</p>
               )}
             </div>
 
@@ -164,9 +158,7 @@ const UpdateLeadDoc = ({ isOpen, onClose, document }) => {
                   errors.name ? "border-red-500" : "border-gray-300"
                 }`}
               />
-              {errors.name && (
-                <p className="text-red-500 text-xs mt-1">{errors.name}</p>
-              )}
+              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
             </div>
 
             <div>
@@ -181,15 +173,11 @@ const UpdateLeadDoc = ({ isOpen, onClose, document }) => {
                 icon={Upload}
                 accept=".pdf,.png,.jpg,.jpeg,.svg,.webp"
                 label={
-                  formData.file
-                    ? `Selected: ${formData.file.name}`
-                    : "Click to upload a new file"
+                  formData.file ? `Selected: ${formData.file.name}` : "Click to upload a new file"
                 }
                 onChange={handleFileChange}
               />
-              <p className="mt-1 text-xs text-gray-500">
-                Leave empty to keep the existing file.
-              </p>
+              <p className="mt-1 text-xs text-gray-500">Leave empty to keep the existing file.</p>
             </div>
           </div>
         </div>

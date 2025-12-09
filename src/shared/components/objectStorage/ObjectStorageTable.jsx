@@ -10,7 +10,7 @@ import {
   Search,
   Trash2,
 } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 
 const STATUS_META = {
   active: {
@@ -90,8 +90,7 @@ const EmptyState = ({ icon: Icon = HardDrive, title, description, actions }) => 
         {title || "No object storage accounts yet"}
       </h3>
       <p className="text-sm text-slate-500">
-        {description ||
-          "Provision a plan to sync storage accounts into this workspace."}
+        {description || "Provision a plan to sync storage accounts into this workspace."}
       </p>
     </div>
     {actions?.length ? (
@@ -151,12 +150,7 @@ const ObjectStorageTable = ({
   const filteredAccounts = useMemo(() => {
     const normalizedQuery = searchTerm.toLowerCase().trim();
     return accounts.filter((account) => {
-      const label = [
-        account.name,
-        account.provider,
-        account.region,
-        account.meta?.tenant_name,
-      ]
+      const label = [account.name, account.provider, account.region, account.meta?.tenant_name]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
@@ -212,9 +206,7 @@ const ObjectStorageTable = ({
     const label = bucket?.name || bucket?.id;
     if (
       typeof window !== "undefined" &&
-      !window.confirm(
-        `Delete bucket "${label}"? This action cannot be undone.`
-      )
+      !window.confirm(`Delete bucket "${label}"? This action cannot be undone.`)
     ) {
       return;
     }
@@ -267,16 +259,10 @@ const ObjectStorageTable = ({
           </div>
         )}
 
-        {isLoading && (
-          <p className="text-sm text-slate-500">Loading buckets…</p>
-        )}
-        {bucketError && !isLoading && (
-          <p className="text-sm text-rose-600">{bucketError}</p>
-        )}
+        {isLoading && <p className="text-sm text-slate-500">Loading buckets…</p>}
+        {bucketError && !isLoading && <p className="text-sm text-rose-600">{bucketError}</p>}
         {!isLoading && !bucketError && buckets.length === 0 && (
-          <p className="text-sm text-slate-500">
-            No buckets available for this account.
-          </p>
+          <p className="text-sm text-slate-500">No buckets available for this account.</p>
         )}
         {!isLoading && !bucketError && buckets.length > 0 && (
           <div className="space-y-3">
@@ -287,9 +273,7 @@ const ObjectStorageTable = ({
               >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="font-semibold text-slate-900">
-                      {bucket.name}
-                    </p>
+                    <p className="font-semibold text-slate-900">{bucket.name}</p>
                     <p className="text-xs uppercase tracking-wide text-slate-500">
                       {bucket.storage_class || "standard"}
                     </p>
@@ -361,9 +345,7 @@ const ObjectStorageTable = ({
             account.meta?.public_url ||
             account.meta?.provisioning?.result?.public_url ||
             "Not available";
-          const quota = account.quota_gb
-            ? `${account.quota_gb} GiB`
-            : "Uncapped";
+          const quota = account.quota_gb ? `${account.quota_gb} GiB` : "Uncapped";
 
           return (
             <React.Fragment key={account.id}>
@@ -390,9 +372,7 @@ const ObjectStorageTable = ({
                       <p className="text-sm font-semibold text-slate-900">
                         {account.name || "Unnamed account"}
                       </p>
-                      <p className="text-xs font-mono text-slate-400">
-                        {account.id}
-                      </p>
+                      <p className="text-xs font-mono text-slate-400">{account.id}</p>
                     </div>
                   </div>
                 </td>
@@ -407,20 +387,14 @@ const ObjectStorageTable = ({
                     Region {account.region?.toUpperCase() || "n/a"}
                   </p>
                 </td>
-                <td className="px-4 py-4 text-sm font-semibold text-slate-900">
-                  {quota}
-                </td>
+                <td className="px-4 py-4 text-sm font-semibold text-slate-900">{quota}</td>
                 <td className="px-4 py-4 text-center text-sm font-semibold text-slate-900">
                   {account.buckets_count ?? 0}
                 </td>
                 <td className="px-4 py-4 text-sm">
-                  <p className="max-w-[220px] truncate text-slate-600">
-                    {endpoint}
-                  </p>
+                  <p className="max-w-[220px] truncate text-slate-600">{endpoint}</p>
                   {account.meta?.tenant_name && (
-                    <p className="text-xs text-slate-400">
-                      Tenant {account.meta.tenant_name}
-                    </p>
+                    <p className="text-xs text-slate-400">Tenant {account.meta.tenant_name}</p>
                   )}
                 </td>
                 <td className="px-4 py-4 text-xs text-slate-500">
@@ -455,15 +429,10 @@ const ObjectStorageTable = ({
   const renderMobileAccountCard = (account) => {
     const isExpanded = !!expandedAccounts[account.id];
     const endpoint =
-      account.meta?.public_url ||
-      account.meta?.provisioning?.result?.public_url ||
-      "Not available";
+      account.meta?.public_url || account.meta?.provisioning?.result?.public_url || "Not available";
     const quota = account.quota_gb ? `${account.quota_gb} GiB` : "Uncapped";
     return (
-      <div
-        key={account.id}
-        className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-      >
+      <div key={account.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-base font-semibold text-slate-900">
@@ -478,29 +447,21 @@ const ObjectStorageTable = ({
         </div>
         <dl className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Quota
-            </dt>
+            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Quota</dt>
             <dd className="text-base font-semibold text-slate-900">{quota}</dd>
           </div>
           <div>
             <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               Buckets
             </dt>
-            <dd className="text-base font-semibold text-slate-900">
-              {account.buckets_count ?? 0}
-            </dd>
+            <dd className="text-base font-semibold text-slate-900">{account.buckets_count ?? 0}</dd>
           </div>
         </dl>
         <div className="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Endpoint
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Endpoint</p>
           <p className="truncate">{endpoint}</p>
           {account.meta?.tenant_name && (
-            <p className="text-xs text-slate-400">
-              Tenant {account.meta.tenant_name}
-            </p>
+            <p className="text-xs text-slate-400">Tenant {account.meta.tenant_name}</p>
           )}
         </div>
         <button
@@ -509,25 +470,16 @@ const ObjectStorageTable = ({
           className="mt-4 inline-flex w-full items-center justify-between rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
         >
           <span>{isExpanded ? "Hide buckets" : "View buckets"}</span>
-          {isExpanded ? (
-            <ChevronDown className="h-4 w-4" />
-          ) : (
-            <ChevronRight className="h-4 w-4" />
-          )}
+          {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </button>
-        {isExpanded && (
-          <div className="mt-3">{renderBucketSection(account)}</div>
-        )}
+        {isExpanded && <div className="mt-3">{renderBucketSection(account)}</div>}
       </div>
     );
   };
 
   const computePagination = () => {
     const currentPage =
-      paginationMeta?.current_page ??
-      paginationMeta?.currentPage ??
-      paginationState?.page ??
-      1;
+      paginationMeta?.current_page ?? paginationMeta?.currentPage ?? paginationState?.page ?? 1;
     const perPage =
       paginationMeta?.per_page ??
       paginationMeta?.perPage ??
@@ -596,9 +548,7 @@ const ObjectStorageTable = ({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() =>
-                onPageChange(Math.max(1, paginationInfo.currentPage - 1))
-              }
+              onClick={() => onPageChange(Math.max(1, paginationInfo.currentPage - 1))}
               disabled={paginationInfo.currentPage <= 1}
               className="inline-flex items-center rounded-xl border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40"
             >
@@ -665,12 +615,8 @@ const ObjectStorageTable = ({
   } else {
     body = (
       <>
-        <div className="hidden overflow-x-auto md:block">
-          {renderTableBody()}
-        </div>
-        <div className="space-y-4 md:hidden">
-          {filteredAccounts.map(renderMobileAccountCard)}
-        </div>
+        <div className="hidden overflow-x-auto md:block">{renderTableBody()}</div>
+        <div className="space-y-4 md:hidden">{filteredAccounts.map(renderMobileAccountCard)}</div>
       </>
     );
   }

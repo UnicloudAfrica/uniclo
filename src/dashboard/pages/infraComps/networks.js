@@ -5,19 +5,18 @@ import {
   useFetchTenantNetworks,
   syncTenantNetworksFromProvider,
 } from "../../../hooks/tenantHooks/networkHooks";
-import ModernButton from "../../../adminDashboard/components/ModernButton";
-import ResourceSection from "../../../adminDashboard/components/ResourceSection";
-import ResourceEmptyState from "../../../adminDashboard/components/ResourceEmptyState";
-import ResourceListCard from "../../../adminDashboard/components/ResourceListCard";
-import StatusPill from "../../../adminDashboard/components/StatusPill";
-import ModernModal from "../../../adminDashboard/components/ModernModal";
+import { ModernButton } from "../../../shared/components/ui";
+import { ResourceSection } from "../../../shared/components/ui";
+import { ResourceEmptyState } from "../../../shared/components/ui";
+import { ResourceListCard } from "../../../shared/components/ui";
+import { StatusPill } from "../../../shared/components/ui";
+import { ModernModal } from "../../../shared/components/ui";
 import { designTokens } from "../../../styles/designTokens";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 
 const ITEMS_PER_PAGE = 6;
 
-const normalize = (value) =>
-  (value ? value.toString().replace(/_/g, " ") : "").toLowerCase();
+const normalize = (value) => (value ? value.toString().replace(/_/g, " ") : "").toLowerCase();
 
 const getToneForStatus = (status) => {
   const normalized = normalize(status);
@@ -133,10 +132,7 @@ const NetworkDetailsModal = ({ network, isOpen, onClose }) => {
           )}
         </>
       ) : (
-        <p
-          className="text-sm"
-          style={{ color: designTokens.colors.neutral[500] }}
-        >
+        <p className="text-sm" style={{ color: designTokens.colors.neutral[500] }}>
           Network details are not available.
         </p>
       )}
@@ -144,16 +140,9 @@ const NetworkDetailsModal = ({ network, isOpen, onClose }) => {
   );
 };
 
-const Networks = ({
-  projectId = "",
-  region = "",
-  onStatsUpdate,
-}) => {
+const Networks = ({ projectId = "", region = "", onStatsUpdate }) => {
   const queryClient = useQueryClient();
-  const { data: networks, isFetching } = useFetchTenantNetworks(
-    projectId,
-    region
-  );
+  const { data: networks, isFetching } = useFetchTenantNetworks(projectId, region);
 
   const [isSyncing, setIsSyncing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -177,9 +166,7 @@ const Networks = ({
   }, [filteredNetworks, currentPage]);
 
   const stats = useMemo(() => {
-    const uniqueVpcs = new Set(
-      filteredNetworks.map((network) => network.vpc_id).filter(Boolean)
-    );
+    const uniqueVpcs = new Set(filteredNetworks.map((network) => network.vpc_id).filter(Boolean));
     const baseStats = [
       {
         label: "Total Networks",
@@ -260,10 +247,7 @@ const Networks = ({
                     { label: "CIDR", value: network.cidr || "—" },
                     {
                       label: "Type",
-                      value:
-                        network.type ||
-                        network?.meta?.network_type ||
-                        "Unknown",
+                      value: network.type || network?.meta?.network_type || "Unknown",
                     },
                   ]}
                   statuses={[
@@ -290,9 +274,7 @@ const Networks = ({
                 <ModernButton
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(1, prev - 1))
-                  }
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                   isDisabled={currentPage === 1}
                 >
                   Previous
@@ -303,9 +285,7 @@ const Networks = ({
                 <ModernButton
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-                  }
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                   isDisabled={currentPage === totalPages}
                 >
                   Next

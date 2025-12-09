@@ -4,7 +4,7 @@ import silentAdminApi from "../index/admin/silent";
 
 /**
  * Admin API Hooks
- * 
+ *
  * These hooks provide comprehensive admin functionality for all endpoints
  * available in admin.php (/admin/v1/*)
  */
@@ -130,7 +130,10 @@ const deleteRegion = async (id) => {
 
 const fetchAdminProductPricing = async (params = {}) => {
   const queryString = new URLSearchParams(params).toString();
-  const res = await silentAdminApi("GET", `/product-pricing${queryString ? `?${queryString}` : ""}`);
+  const res = await silentAdminApi(
+    "GET",
+    `/product-pricing${queryString ? `?${queryString}` : ""}`
+  );
   if (!res.data) throw new Error("Failed to fetch admin product pricing");
   return res;
 };
@@ -329,7 +332,10 @@ const deleteAdminProductOffer = async (id) => {
 
 const fetchAdminTaxConfigurations = async (params = {}) => {
   const queryString = new URLSearchParams(params).toString();
-  const res = await silentAdminApi("GET", `/tax-configurations${queryString ? `?${queryString}` : ""}`);
+  const res = await silentAdminApi(
+    "GET",
+    `/tax-configurations${queryString ? `?${queryString}` : ""}`
+  );
   if (!res.data) throw new Error("Failed to fetch admin tax configurations");
   return res;
 };
@@ -415,7 +421,10 @@ const deleteAdminProduct = async (id) => {
 
 const fetchAdminProductComputeInstances = async (params = {}) => {
   const queryString = new URLSearchParams(params).toString();
-  const res = await silentAdminApi("GET", `/product-compute-instance${queryString ? `?${queryString}` : ""}`);
+  const res = await silentAdminApi(
+    "GET",
+    `/product-compute-instance${queryString ? `?${queryString}` : ""}`
+  );
   if (!res.data) throw new Error("Failed to fetch admin product compute instances");
   return res;
 };
@@ -481,7 +490,8 @@ const fetchZadaraDomainUserPolicies = async () => {
 
 const fetchZadaraDomainTenantHierarchy = async (tenantId) => {
   const res = await silentAdminApi("GET", `/zadara-domains/tenant-hierarchy/${tenantId}`);
-  if (!res.data) throw new Error(`Failed to fetch Zadara domain tenant hierarchy for tenant ${tenantId}`);
+  if (!res.data)
+    throw new Error(`Failed to fetch Zadara domain tenant hierarchy for tenant ${tenantId}`);
   return res.data;
 };
 
@@ -1142,7 +1152,7 @@ export const useDeleteAdminCloudProjectRegion = () => {
 // Hook that provides access to all admin operations
 export const useAdminOperations = () => {
   const queryClient = useQueryClient();
-  
+
   const invalidateAllAdminData = () => {
     queryClient.invalidateQueries({ queryKey: ["tenants"] });
     queryClient.invalidateQueries({ queryKey: ["sub-tenants"] });
@@ -1156,34 +1166,34 @@ export const useAdminOperations = () => {
     createTenant: useCreateTenant(),
     updateTenant: useUpdateTenant(),
     deleteTenant: useDeleteTenant(),
-    
-    // Sub-tenant operations  
+
+    // Sub-tenant operations
     createSubTenant: useCreateSubTenant(),
-    
+
     // Region operations
     createRegion: useCreateRegion(),
     updateRegion: useUpdateRegion(),
     deleteRegion: useDeleteRegion(),
-    
+
     // Product pricing operations
     createAdminProductPricing: useCreateAdminProductPricing(),
     importAdminProductPricing: useImportAdminProductPricing(),
-    
+
     // Provider operations
     createProviderRegionCredential: useCreateProviderRegionCredential(),
     resetProviderRegionCredentialPassword: useResetProviderRegionCredentialPassword(),
-    
+
     // Discovery operations
     importProviderDiscoveryProjects: useImportProviderDiscoveryProjects(),
     syncProviderDiscoveryProjects: useSyncProviderDiscoveryProjects(),
-    
+
     // Zadara operations
     createZadaraDomain: useCreateZadaraDomain(),
     updateZadaraDomain: useUpdateZadaraDomain(),
     deleteZadaraDomain: useDeleteZadaraDomain(),
     syncZadaraDomainPolicies: useSyncZadaraDomainPolicies(),
     assignZadaraDomainUserPolicies: useAssignZadaraDomainUserPolicies(),
-    
+
     // Admin-only Cloud operations
     createAdminCloudProvider: useCreateAdminCloudProvider(),
     updateAdminCloudProvider: useUpdateAdminCloudProvider(),
@@ -1194,7 +1204,7 @@ export const useAdminOperations = () => {
     createAdminCloudProjectRegion: useCreateAdminCloudProjectRegion(),
     updateAdminCloudProjectRegion: useUpdateAdminCloudProjectRegion(),
     deleteAdminCloudProjectRegion: useDeleteAdminCloudProjectRegion(),
-    
+
     // Utility functions
     invalidateAllAdminData,
   };
@@ -1242,5 +1252,5 @@ export {
   fetchAdminCloudProjectRegionById,
   createAdminCloudProjectRegion,
   updateAdminCloudProjectRegion,
-  deleteAdminCloudProjectRegion
+  deleteAdminCloudProjectRegion,
 };

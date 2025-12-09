@@ -14,31 +14,21 @@ const fetchOnboardingStep = async (step) => {
 };
 
 const postOnboardingThread = async ({ step, payload }) => {
-  const response = await api(
-    "POST",
-    `/business/onboarding/${step}/threads`,
-    payload
-  );
+  const response = await api("POST", `/business/onboarding/${step}/threads`, payload);
 
   return response?.data ?? response;
 };
 
 const updateOnboardingStep = async ({ step, payload }) => {
-  const response = await api(
-    "PATCH",
-    `/business/onboarding/${step}`,
-    payload
-  );
+  const response = await api("PATCH", `/business/onboarding/${step}`, payload);
 
   return response?.data ?? response;
 };
 
 const verifyPartnerRegionQualification = async ({ payload }) => {
-  const response = await api(
-    "POST",
-    "/business/onboarding/partner_region_qualification/verify",
-    { payload }
-  );
+  const response = await api("POST", "/business/onboarding/partner_region_qualification/verify", {
+    payload,
+  });
 
   return response?.data ?? response;
 };

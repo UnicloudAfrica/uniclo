@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import TenantPageShell from "../../components/TenantPageShell";
-import ModernButton from "../../../adminDashboard/components/ModernButton";
+import { ModernButton } from "../../../shared/components/ui";
 import TenantAddPartnerWizard from "../../components/partners/TenantAddPartnerWizard";
 
 export default function NewPartnerPage() {
@@ -18,9 +18,7 @@ export default function NewPartnerPage() {
       }
       contentClassName="space-y-8"
     >
-      <TenantAddPartnerWizard
-        onClose={() => navigate("/dashboard/clients?tab=partners")}
-      />
+      <TenantAddPartnerWizard onClose={() => navigate("/dashboard/clients?tab=partners")} />
     </TenantPageShell>
   );
 }

@@ -3,7 +3,7 @@ import config from "../config";
 import useAdminAuthStore from "../stores/adminAuthStore";
 import useTenantAuthStore from "../stores/tenantAuthStore";
 import useClientAuthStore from "../stores/clientAuthStore";
-import ToastUtils from "../utils/toastUtil";
+import ToastUtils from "../utils/toastUtil.ts";
 import silentApi from "../index/silent";
 import silentAdminApi from "../index/admin/silent";
 
@@ -17,15 +17,15 @@ const getAuthConfig = () => {
   if (adminAuth.token) {
     return {
       token: adminAuth.token,
-      baseURL: config.adminURL // Use admin API endpoints
+      baseURL: config.adminURL, // Use admin API endpoints
     };
   }
 
-  // Check if tenant is authenticated  
+  // Check if tenant is authenticated
   if (tenantAuth.token) {
     return {
       token: tenantAuth.token,
-      baseURL: config.tenantURL + '/admin' // Use tenant admin API endpoints
+      baseURL: config.tenantURL + "/admin", // Use tenant admin API endpoints
     };
   }
 
@@ -33,14 +33,14 @@ const getAuthConfig = () => {
   if (clientAuth.token) {
     return {
       token: clientAuth.token,
-      baseURL: config.baseURL // Use public API endpoints
+      baseURL: config.baseURL, // Use public API endpoints
     };
   }
 
   // No authentication - this shouldn't happen for calculator/pricing
   return {
     token: null,
-    baseURL: config.baseURL // Fallback to general API
+    baseURL: config.baseURL, // Fallback to general API
   };
 };
 
@@ -74,10 +74,11 @@ const sharedApiCall = async (method, uri, body = null) => {
 
       try {
         const errorData = await response.json();
-        errorMessage = errorData?.data?.error || errorData?.error || errorData?.message || errorMessage;
+        errorMessage =
+          errorData?.data?.error || errorData?.error || errorData?.message || errorMessage;
       } catch (jsonError) {
         // Response might not be JSON, use status text
-        console.warn('Could not parse error response as JSON:', jsonError);
+        console.warn("Could not parse error response as JSON:", jsonError);
       }
 
       if (response.status === 401) {
@@ -94,14 +95,15 @@ const sharedApiCall = async (method, uri, body = null) => {
       const res = await response.json();
       return res;
     } catch (jsonError) {
-      console.error('Failed to parse successful response as JSON:', jsonError);
-      throw new Error('Server returned invalid JSON response');
+      console.error("Failed to parse successful response as JSON:", jsonError);
+      throw new Error("Server returned invalid JSON response");
     }
-
   } catch (err) {
     // Handle network errors and other fetch failures
-    if (err.name === 'TypeError' && err.message.includes('fetch')) {
-      throw new Error('Network error: Unable to connect to the server. Please check your internet connection.');
+    if (err.name === "TypeError" && err.message.includes("fetch")) {
+      throw new Error(
+        "Network error: Unable to connect to the server. Please check your internet connection."
+      );
     }
     throw err;
   }
@@ -133,10 +135,7 @@ const fetchCalculatorOptions = async ({ tenant_id, region } = {}) => {
   return res.data;
 };
 
-export const useSharedCalculatorOptions = (
-  { tenantId, region } = {},
-  options = {}
-) => {
+export const useSharedCalculatorOptions = ({ tenantId, region } = {}, options = {}) => {
   return useQuery({
     queryKey: ["shared-calculator-options", { tenantId, region }],
     queryFn: () => fetchCalculatorOptions({ tenant_id: tenantId, region }),
@@ -149,23 +148,25 @@ export const useSharedCalculatorOptions = (
 // Calculator Pricing (shared endpoint)
 const calculatePricing = async (pricingData) => {
   try {
-    console.log('Calculating pricing with payload:', pricingData);
+    console.log("Calculating pricing with payload:", pricingData);
     const res = await sharedApiCall("POST", "/calculator/pricing", pricingData);
-    console.log('Pricing calculation response:', res);
+    console.log("Pricing calculation response:", res);
 
     // Handle different response structures
     if (res?.data) {
       return res.data;
-    } else if (res && typeof res === 'object') {
+    } else if (res && typeof res === "object") {
       // Response might be the data itself
       return res;
     } else {
       throw new Error("Invalid pricing calculation response format");
     }
   } catch (error) {
-    console.error('Error in calculatePricing:', error);
+    console.error("Error in calculatePricing:", error);
     // Re-throw with more descriptive error message
-    throw new Error(error.message || "Failed to calculate pricing. Please check your configuration and try again.");
+    throw new Error(
+      error.message || "Failed to calculate pricing. Please check your configuration and try again."
+    );
   }
 };
 
@@ -184,7 +185,7 @@ export const useSharedCalculatorPricing = () => {
   });
 };
 
-// Multi-Quotes (shared endpoint)  
+// Multi-Quotes (shared endpoint)
 const createMultiQuotes = async (quoteData) => {
   const res = await sharedApiCall("POST", "/multi-quotes", quoteData);
   if (!res) {
@@ -235,7 +236,7 @@ const fetchClients = async () => {
   const { token, baseURL } = getAuthConfig();
 
   // Use appropriate endpoint based on user type
-  const endpoint = baseURL.includes('/admin') ? '/clients' : '/clients';
+  const endpoint = baseURL.includes("/admin") ? "/clients" : "/clients";
   const res = await sharedApiCall("GET", endpoint);
 
   if (!res?.data) {
@@ -246,7 +247,7 @@ const fetchClients = async () => {
 
 // Shared Regions Hook
 const fetchRegions = async (mode) => {
-  if (mode === 'admin') {
+  if (mode === "admin") {
     const res = await silentAdminApi("GET", "/regions");
     if (!res?.data) throw new Error("Failed to fetch regions");
     return res.data;
@@ -258,7 +259,7 @@ const fetchRegions = async (mode) => {
   }
 };
 
-export const useSharedFetchRegions = (mode = 'client', options = {}) => {
+export const useSharedFetchRegions = (mode = "client", options = {}) => {
   return useQuery({
     queryKey: ["shared-regions", mode],
     queryFn: () => fetchRegions(mode),
@@ -275,8 +276,8 @@ export const useSharedClients = (tenantId = null, options = {}) => {
     select: (data) => {
       // Filter clients based on tenantId for admin users
       if (tenantId && Array.isArray(data)) {
-        return data.filter(client =>
-          client.tenant_id === parseInt(tenantId) || client.tenant_id === tenantId
+        return data.filter(
+          (client) => client.tenant_id === parseInt(tenantId) || client.tenant_id === tenantId
         );
       }
       return data || [];

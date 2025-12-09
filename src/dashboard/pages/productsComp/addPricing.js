@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useCreatePricing } from "../../../hooks/pricingHooks";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 
 const productTypeMap = {
   "Compute Instance": "ComputeInstance",
@@ -74,11 +74,7 @@ const AddPricing = ({
     if (!formData.productable_id) {
       newErrors.productable_id = "Product is required";
     }
-    if (
-      !formData.price ||
-      isNaN(formData.price) ||
-      parseFloat(formData.price) <= 0
-    ) {
+    if (!formData.price || isNaN(formData.price) || parseFloat(formData.price) <= 0) {
       newErrors.price = "Price must be a positive number";
     }
     setErrors(newErrors);
@@ -152,9 +148,7 @@ const AddPricing = ({
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
           <div className="bg-white rounded-[24px] w-full max-w-[550px] mx-4">
             <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
-              <h2 className="text-lg font-semibold text-[#575758]">
-                Add New Pricing
-              </h2>
+              <h2 className="text-lg font-semibold text-[#575758]">Add New Pricing</h2>
               <button
                 onClick={closeModal}
                 className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
@@ -178,15 +172,12 @@ const AddPricing = ({
                     id="productable_type"
                     value={
                       Object.keys(productTypeMap).find(
-                        (key) =>
-                          productTypeMap[key] === formData.productable_type
+                        (key) => productTypeMap[key] === formData.productable_type
                       ) || ""
                     }
                     onChange={handleProductTypeChange}
                     className={`w-full input-field ${
-                      errors.productable_type
-                        ? "border-red-500"
-                        : "border-gray-300"
+                      errors.productable_type ? "border-red-500" : "border-gray-300"
                     }`}
                     disabled={isPending}
                   >
@@ -198,9 +189,7 @@ const AddPricing = ({
                     ))}
                   </select>
                   {errors.productable_type && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.productable_type}
-                    </p>
+                    <p className="text-red-500 text-xs mt-1">{errors.productable_type}</p>
                   )}
                 </div>
 
@@ -221,27 +210,20 @@ const AddPricing = ({
                           Loading {productLabel.toLowerCase()}s...
                         </span>
                       </div>
-                    ) : Array.isArray(currentProductList) &&
-                      currentProductList.length > 0 ? (
+                    ) : Array.isArray(currentProductList) && currentProductList.length > 0 ? (
                       <select
                         id="productable_id"
                         value={formData.productable_id}
                         onChange={handleInputChange}
                         className={`w-full input-field ${
-                          errors.productable_id
-                            ? "border-red-500"
-                            : "border-gray-300"
+                          errors.productable_id ? "border-red-500" : "border-gray-300"
                         }`}
                         disabled={isPending}
                       >
-                        <option value="">
-                          Select a {productLabel.toLowerCase()}
-                        </option>
+                        <option value="">Select a {productLabel.toLowerCase()}</option>
                         {currentProductList.map((product) => (
                           <option key={product.id} value={product.id}>
-                            {product.name ||
-                              product.description ||
-                              product.identifier}{" "}
+                            {product.name || product.description || product.identifier}{" "}
                             {/* Use appropriate display field */}
                           </option>
                         ))}
@@ -252,19 +234,14 @@ const AddPricing = ({
                       </div>
                     )}
                     {errors.productable_id && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.productable_id}
-                      </p>
+                      <p className="text-red-500 text-xs mt-1">{errors.productable_id}</p>
                     )}
                   </div>
                 )}
 
                 {/* Price Input */}
                 <div>
-                  <label
-                    htmlFor="price"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
+                  <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
                     Price<span className="text-red-500">*</span>
                   </label>
                   <input
@@ -279,9 +256,7 @@ const AddPricing = ({
                     }`}
                     disabled={isPending}
                   />
-                  {errors.price && (
-                    <p className="text-red-500 text-xs mt-1">{errors.price}</p>
-                  )}
+                  {errors.price && <p className="text-red-500 text-xs mt-1">{errors.price}</p>}
                 </div>
               </form>
             </div>

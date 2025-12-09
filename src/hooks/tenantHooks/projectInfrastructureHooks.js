@@ -9,11 +9,13 @@ const convertBackendResponse = (backendData) => {
   const counts = {
     vpcs: infrastructure.vpc?.count ?? infrastructure.vpcs_count ?? null,
     subnets: infrastructure.subnets?.count ?? infrastructure.subnets_count ?? null,
-    security_groups: infrastructure.security_groups?.count ?? infrastructure.security_groups_count ?? null,
+    security_groups:
+      infrastructure.security_groups?.count ?? infrastructure.security_groups_count ?? null,
     keypairs: infrastructure.keypairs?.count ?? infrastructure.keypairs_count ?? null,
     internet_gateways: infrastructure.internet_gateways?.count ?? infrastructure.igws_count ?? null,
     route_tables: infrastructure.route_tables?.count ?? infrastructure.route_tables_count ?? null,
-    network_interfaces: infrastructure.network_interfaces?.count ?? infrastructure.enis_count ?? null,
+    network_interfaces:
+      infrastructure.network_interfaces?.count ?? infrastructure.enis_count ?? null,
     elastic_ips: infrastructure.elastic_ips?.count ?? infrastructure.eips_count ?? null,
   };
 
@@ -90,6 +92,30 @@ const convertBackendResponse = (backendData) => {
         count: infrastructure.subnets?.count ?? null,
         error: null,
       },
+      route_tables: {
+        status: normalizeStatus(infrastructure.route_tables),
+        details: normalizeDetails(infrastructure.route_tables),
+        count: infrastructure.route_tables?.count ?? null,
+        error: null,
+      },
+      internet_gateways: {
+        status: normalizeStatus(infrastructure.internet_gateways),
+        details: normalizeDetails(infrastructure.internet_gateways),
+        count: infrastructure.internet_gateways?.count ?? null,
+        error: null,
+      },
+      network_interfaces: {
+        status: normalizeStatus(infrastructure.network_interfaces),
+        details: normalizeDetails(infrastructure.network_interfaces),
+        count: infrastructure.network_interfaces?.count ?? null,
+        error: null,
+      },
+      elastic_ips: {
+        status: normalizeStatus(infrastructure.elastic_ips),
+        details: normalizeDetails(infrastructure.elastic_ips),
+        count: infrastructure.elastic_ips?.count ?? null,
+        error: null,
+      },
     },
     completion_percentage: backendData.completion_percentage || 0,
     estimated_completion: backendData.estimated_completion_time
@@ -109,7 +135,7 @@ export const useTenantProjectInfrastructureStatus = (projectId, options = {}) =>
 
       const response = await tenantApi(
         "GET",
-        `/admin/project-infrastructure/${projectId}`
+        `/admin/business/project-infrastructure/${projectId}`
       );
       const convertedData = convertBackendResponse(response?.data ?? response);
       return { data: convertedData };

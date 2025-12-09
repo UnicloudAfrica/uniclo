@@ -9,7 +9,7 @@ import api from "../index/api";
 
 /**
  * Shared Resource Hooks
- * 
+ *
  * These hooks are shared across Admin, Tenant, and Client contexts
  * as defined in shared_resources.php. They use different API clients
  * based on the context they're called from.
@@ -22,27 +22,27 @@ import api from "../index/api";
 const fetchCountries = async () => {
   // Countries endpoint should not require authentication
   // Use direct fetch to avoid auth store complications
-  const baseURL = process.env.REACT_APP_API_USER_BASE_URL || '';
+  const baseURL = process.env.REACT_APP_API_USER_BASE_URL || "";
   const url = `${baseURL}/api/v1/countries`;
-  
+
   try {
     const response = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        "Content-Type": "application/json",
+        Accept: "application/json",
       },
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
-    
+
     const res = await response.json();
     if (!res?.data) throw new Error("Failed to fetch countries");
     return res.data;
   } catch (error) {
-    console.error('Error fetching countries:', error);
+    console.error("Error fetching countries:", error);
     throw error;
   }
 };
@@ -98,7 +98,8 @@ const createMultiInstancePreview = async (previewData, apiClient = clientApi) =>
 
 const fetchInstanceLifecycleById = async (identifier, silentApiClient = clientSilentApi) => {
   const res = await silentApiClient("GET", `/instance-lifecycles/${identifier}`);
-  if (!res.data) throw new Error(`Failed to fetch instance lifecycle with identifier ${identifier}`);
+  if (!res.data)
+    throw new Error(`Failed to fetch instance lifecycle with identifier ${identifier}`);
   return res.data;
 };
 
@@ -190,7 +191,8 @@ export const useFetchInstanceLifecycleById = (identifier, options = {}) => {
 export const useCreateInstanceLifecycle = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ identifier, lifecycleData }) => createInstanceLifecycle(identifier, lifecycleData, clientApi),
+    mutationFn: ({ identifier, lifecycleData }) =>
+      createInstanceLifecycle(identifier, lifecycleData, clientApi),
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["instance-lifecycle", variables.identifier] });
     },
@@ -304,9 +306,12 @@ export const useAdminFetchInstanceLifecycleById = (identifier, options = {}) => 
 export const useAdminCreateInstanceLifecycle = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ identifier, lifecycleData }) => createInstanceLifecycle(identifier, lifecycleData, adminApi),
+    mutationFn: ({ identifier, lifecycleData }) =>
+      createInstanceLifecycle(identifier, lifecycleData, adminApi),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["admin-instance-lifecycle", variables.identifier] });
+      queryClient.invalidateQueries({
+        queryKey: ["admin-instance-lifecycle", variables.identifier],
+      });
     },
     onError: (error) => {
       console.error("Error creating instance lifecycle (admin):", error);
@@ -405,9 +410,12 @@ export const useTenantFetchInstanceLifecycleById = (identifier, options = {}) =>
 export const useTenantCreateInstanceLifecycle = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ identifier, lifecycleData }) => createInstanceLifecycle(identifier, lifecycleData, tenantApi),
+    mutationFn: ({ identifier, lifecycleData }) =>
+      createInstanceLifecycle(identifier, lifecycleData, tenantApi),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["tenant-instance-lifecycle", variables.identifier] });
+      queryClient.invalidateQueries({
+        queryKey: ["tenant-instance-lifecycle", variables.identifier],
+      });
     },
     onError: (error) => {
       console.error("Error creating instance lifecycle (tenant):", error);
@@ -447,7 +455,7 @@ export const useTenantFetchInstanceConsoleById = (id, options = {}) => {
 // Business/Client combined operations
 export const useSharedResourceOperations = () => {
   const queryClient = useQueryClient();
-  
+
   const invalidateSharedResources = () => {
     queryClient.invalidateQueries({ queryKey: ["multi-instance-resources"] });
     queryClient.invalidateQueries({ queryKey: ["instance-lifecycle"] });
@@ -460,11 +468,11 @@ export const useSharedResourceOperations = () => {
     previewMultiInstancePricing: usePreviewMultiInstancePricing(),
     validateMultiInstanceConfiguration: useValidateMultiInstanceConfiguration(),
     createMultiInstancePreview: useCreateMultiInstancePreview(),
-    
+
     // Instance lifecycle operations
     createInstanceLifecycle: useCreateInstanceLifecycle(),
     deleteInstanceLifecycle: useDeleteInstanceLifecycle(),
-    
+
     // Utility functions
     invalidateSharedResources,
   };
@@ -473,7 +481,7 @@ export const useSharedResourceOperations = () => {
 // Admin combined operations
 export const useAdminSharedResourceOperations = () => {
   const queryClient = useQueryClient();
-  
+
   const invalidateAdminSharedResources = () => {
     queryClient.invalidateQueries({ queryKey: ["admin-multi-instance-resources"] });
     queryClient.invalidateQueries({ queryKey: ["admin-instance-lifecycle"] });
@@ -486,11 +494,11 @@ export const useAdminSharedResourceOperations = () => {
     previewMultiInstancePricing: useAdminPreviewMultiInstancePricing(),
     validateMultiInstanceConfiguration: useAdminValidateMultiInstanceConfiguration(),
     createMultiInstancePreview: useAdminCreateMultiInstancePreview(),
-    
+
     // Instance lifecycle operations
     createInstanceLifecycle: useAdminCreateInstanceLifecycle(),
     deleteInstanceLifecycle: useAdminDeleteInstanceLifecycle(),
-    
+
     // Utility functions
     invalidateAdminSharedResources,
   };
@@ -499,7 +507,7 @@ export const useAdminSharedResourceOperations = () => {
 // Tenant combined operations
 export const useTenantSharedResourceOperations = () => {
   const queryClient = useQueryClient();
-  
+
   const invalidateTenantSharedResources = () => {
     queryClient.invalidateQueries({ queryKey: ["tenant-multi-instance-resources"] });
     queryClient.invalidateQueries({ queryKey: ["tenant-instance-lifecycle"] });
@@ -512,11 +520,11 @@ export const useTenantSharedResourceOperations = () => {
     previewMultiInstancePricing: useTenantPreviewMultiInstancePricing(),
     validateMultiInstanceConfiguration: useTenantValidateMultiInstanceConfiguration(),
     createMultiInstancePreview: useTenantCreateMultiInstancePreview(),
-    
+
     // Instance lifecycle operations
     createInstanceLifecycle: useTenantCreateInstanceLifecycle(),
     deleteInstanceLifecycle: useTenantDeleteInstanceLifecycle(),
-    
+
     // Utility functions
     invalidateTenantSharedResources,
   };
@@ -532,5 +540,5 @@ export {
   fetchInstanceLifecycleById,
   createInstanceLifecycle,
   deleteInstanceLifecycle,
-  fetchInstanceConsoleById
+  fetchInstanceConsoleById,
 };

@@ -10,8 +10,8 @@
 
 @layer components {
   .dashboard-content-shell {
-    @apply absolute top-[74px] left-0 md:left-20 lg:left-[20%] w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full;
-    background-color: var(--theme-surface-alt, #FAFAFA);
+    @apply absolute top-[74px] left-0 md:left-60 xl:left-[20%] w-full md:w-[calc(100%-15rem)] xl:w-[80%] min-h-full;
+    background-color: var(--theme-surface-alt, #fafafa);
     font-family: "Outfit", "Inter", "SF Pro Display", system-ui, sans-serif;
   }
 
@@ -95,8 +95,8 @@ textarea {
 :root {
   --bar-bg: #121212;
   --unicloud-blue: #288dd1;
-  --theme-color: #1C1C1C;
-  --secondary-color: #14547F;
+  --theme-color: #1c1c1c;
+  --secondary-color: #14547f;
   --theme-color-10: rgba(40, 141, 209, 0.1);
   --theme-color-20: rgba(40, 141, 209, 0.2);
   --theme-border-color: rgba(50, 114, 202, 0.18);
@@ -173,21 +173,21 @@ body {
 }
 
 .menu-icon.active span:first-of-type,
-.menu-icon .menu-icon__cheeckbox:checked+div span:first-of-type {
+.menu-icon .menu-icon__cheeckbox:checked + div span:first-of-type {
   transform: rotate(45deg);
   top: 5px;
 }
 
 .menu-icon.active span:last-of-type,
-.menu-icon .menu-icon__cheeckbox:checked+div span:last-of-type {
+.menu-icon .menu-icon__cheeckbox:checked + div span:last-of-type {
   transform: rotate(-45deg);
   bottom: 5px;
 }
 
 .menu-icon.active:hover span:first-of-type,
 .menu-icon.active:hover span:last-of-type,
-.menu-icon:hover .menu-icon__cheeckbox:checked+div span:first-of-type,
-.menu-icon:hover .menu-icon__cheeckbox:checked+div span:last-of-type {
+.menu-icon:hover .menu-icon__cheeckbox:checked + div span:first-of-type,
+.menu-icon:hover .menu-icon__cheeckbox:checked + div span:last-of-type {
   width: 22px;
 }
 
@@ -343,7 +343,6 @@ select.custom-dropdown {
 }
 
 @media (min-width: 769px) {
-
   /* Apply max-height: 300px for screen sizes greater than 768px */
   .answ {
     max-height: 300px;
@@ -415,12 +414,8 @@ input[type="number"] {
 }
 
 .sub-input {
-  border-top-left-radius: 0.5rem
-    /* 8px */
-  ;
-  border-bottom-left-radius: 0.5rem
-    /* 8px */
-  ;
+  border-top-left-radius: 0.5rem /* 8px */;
+  border-bottom-left-radius: 0.5rem /* 8px */;
   border-bottom-right-radius: 0px;
   border-top-right-radius: 0px;
 }

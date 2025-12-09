@@ -18,8 +18,8 @@ const BlogHero = () => {
         Our Blog Section
       </h2>
       <p className=" text-center font-normal text-base md:text-xl text-[#676767] md:px-[12%]">
-        Whether you want to learn about Improving your business, or getting
-        started on UniCloud Africa, we have the educational resources for you.
+        Whether you want to learn about Improving your business, or getting started on UniCloud
+        Africa, we have the educational resources for you.
       </p>
       <div
         className=" grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-[32px] lg:gap-[20px] w-full mt-8"
@@ -36,9 +36,7 @@ const BlogHero = () => {
                   backgroundPosition: "center",
                 }}
               ></div>
-              <p className=" mt-6 text-lg font-medium md:h-[2.5em]">
-                {item.title}
-              </p>
+              <p className=" mt-6 text-lg font-medium md:h-[2.5em]">{item.title}</p>
               <p className=" mt-3 text-[#12121299] text-sm">
                 {item.drawin.substring(0, 200) + "..."}
               </p>

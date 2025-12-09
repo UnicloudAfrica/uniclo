@@ -1,20 +1,20 @@
 /**
  * Admin Region Approval API Service
- * 
+ *
  * Handles admin approval, rejection, suspension of tenant-owned regions
  */
 
-import config from '../config';
-import useAdminAuthStore from '../stores/adminAuthStore';
-import ToastUtils from '../utils/toastUtil';
+import config from "../config";
+import useAdminAuthStore from "../stores/adminAuthStore";
+import ToastUtils from "../utils/toastUtil.ts";
 
 class AdminRegionApiService {
   getAuthHeaders() {
     const { token } = useAdminAuthStore.getState();
     return {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
     };
   }
 
@@ -24,10 +24,10 @@ class AdminRegionApiService {
   async fetchRegionApprovals(params = {}) {
     try {
       const query = new URLSearchParams();
-      query.set('ownership_type', 'tenant_owned');
+      query.set("ownership_type", "tenant_owned");
 
       Object.entries(params).forEach(([key, value]) => {
-        if (value === undefined || value === null || value === '') {
+        if (value === undefined || value === null || value === "") {
           query.delete(key);
         } else {
           query.set(key, value);
@@ -35,10 +35,10 @@ class AdminRegionApiService {
       });
 
       const queryString = query.toString();
-      const url = `${config.adminURL}/region-approvals${queryString ? `?${queryString}` : ''}`;
-      
+      const url = `${config.adminURL}/region-approvals${queryString ? `?${queryString}` : ""}`;
+
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: this.getAuthHeaders(),
       });
 
@@ -47,13 +47,13 @@ class AdminRegionApiService {
       if (data.success) {
         return {
           success: true,
-          data: data.data || []
+          data: data.data || [],
         };
       } else {
-        throw new Error(data.message || 'Failed to fetch region approvals');
+        throw new Error(data.message || "Failed to fetch region approvals");
       }
     } catch (error) {
-      console.error('Error fetching region approvals:', error);
+      console.error("Error fetching region approvals:", error);
       throw error;
     }
   }
@@ -64,7 +64,7 @@ class AdminRegionApiService {
   async fetchRegionApprovalById(id) {
     try {
       const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
-        method: 'GET',
+        method: "GET",
         headers: this.getAuthHeaders(),
       });
 
@@ -73,10 +73,10 @@ class AdminRegionApiService {
       if (data.success) {
         return {
           success: true,
-          data: data.data
+          data: data.data,
         };
       } else {
-        throw new Error(data.message || 'Failed to fetch region');
+        throw new Error(data.message || "Failed to fetch region");
       }
     } catch (error) {
       console.error(`Error fetching region ${id}:`, error);
@@ -90,24 +90,24 @@ class AdminRegionApiService {
   async approveRegion(id, approvalData = {}) {
     try {
       const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: this.getAuthHeaders(),
         body: JSON.stringify({
-          action: 'approve',
-          ...approvalData
+          action: "approve",
+          ...approvalData,
         }),
       });
 
       const data = await response.json();
 
       if (data.success || response.ok) {
-        ToastUtils.success(data.message || 'Region approved successfully');
+        ToastUtils.success(data.message || "Region approved successfully");
         return {
           success: true,
-          data: data.data
+          data: data.data,
         };
       } else {
-        throw new Error(data.message || 'Failed to approve region');
+        throw new Error(data.message || "Failed to approve region");
       }
     } catch (error) {
       console.error(`Error approving region ${id}:`, error);
@@ -122,24 +122,24 @@ class AdminRegionApiService {
   async rejectRegion(id, reason) {
     try {
       const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: this.getAuthHeaders(),
         body: JSON.stringify({
-          action: 'reject',
-          reason
+          action: "reject",
+          reason,
         }),
       });
 
       const data = await response.json();
 
       if (data.success || response.ok) {
-        ToastUtils.success(data.message || 'Region rejected');
+        ToastUtils.success(data.message || "Region rejected");
         return {
           success: true,
-          data: data.data
+          data: data.data,
         };
       } else {
-        throw new Error(data.message || 'Failed to reject region');
+        throw new Error(data.message || "Failed to reject region");
       }
     } catch (error) {
       console.error(`Error rejecting region ${id}:`, error);
@@ -154,24 +154,24 @@ class AdminRegionApiService {
   async suspendRegion(id, reason) {
     try {
       const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: this.getAuthHeaders(),
         body: JSON.stringify({
-          action: 'suspend',
-          reason
+          action: "suspend",
+          reason,
         }),
       });
 
       const data = await response.json();
 
       if (data.success || response.ok) {
-        ToastUtils.success(data.message || 'Region suspended');
+        ToastUtils.success(data.message || "Region suspended");
         return {
           success: true,
-          data: data.data
+          data: data.data,
         };
       } else {
-        throw new Error(data.message || 'Failed to suspend region');
+        throw new Error(data.message || "Failed to suspend region");
       }
     } catch (error) {
       console.error(`Error suspending region ${id}:`, error);
@@ -186,23 +186,23 @@ class AdminRegionApiService {
   async reactivateRegion(id) {
     try {
       const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: this.getAuthHeaders(),
         body: JSON.stringify({
-          action: 'reactivate'
+          action: "reactivate",
         }),
       });
 
       const data = await response.json();
 
       if (data.success || response.ok) {
-        ToastUtils.success(data.message || 'Region reactivated');
+        ToastUtils.success(data.message || "Region reactivated");
         return {
           success: true,
-          data: data.data
+          data: data.data,
         };
       } else {
-        throw new Error(data.message || 'Failed to reactivate region');
+        throw new Error(data.message || "Failed to reactivate region");
       }
     } catch (error) {
       console.error(`Error reactivating region ${id}:`, error);
@@ -214,19 +214,19 @@ class AdminRegionApiService {
   async updateFastTrackSettings(id, payload) {
     try {
       const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: this.getAuthHeaders(),
         body: JSON.stringify({
-          action: 'update_fast_track',
+          action: "update_fast_track",
           ...payload,
         }),
       });
       const data = await response.json();
       if (data.success || response.ok) {
-        ToastUtils.success(data.message || 'Fast-track settings updated');
+        ToastUtils.success(data.message || "Fast-track settings updated");
         return { success: true, data: data.data };
       }
-      throw new Error(data.message || 'Failed to update fast-track settings');
+      throw new Error(data.message || "Failed to update fast-track settings");
     } catch (error) {
       console.error(`Error updating fast-track ${id}:`, error);
       ToastUtils.error(error.message);
@@ -234,22 +234,19 @@ class AdminRegionApiService {
     }
   }
 
-  async grantFastTrack(id, tenantId, notes = '') {
+  async grantFastTrack(id, tenantId, notes = "") {
     try {
-      const response = await fetch(
-        `${config.adminURL}/region-approvals/${id}/fast-track-grants`,
-        {
-          method: 'POST',
-          headers: this.getAuthHeaders(),
-          body: JSON.stringify({ tenant_id: tenantId, notes }),
-        }
-      );
+      const response = await fetch(`${config.adminURL}/region-approvals/${id}/fast-track-grants`, {
+        method: "POST",
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ tenant_id: tenantId, notes }),
+      });
       const data = await response.json();
       if (data.success || response.ok) {
-        ToastUtils.success('Fast-track access granted.');
+        ToastUtils.success("Fast-track access granted.");
         return { success: true, data: data.data };
       }
-      throw new Error(data.message || 'Failed to grant fast-track');
+      throw new Error(data.message || "Failed to grant fast-track");
     } catch (error) {
       console.error(`Error granting fast track ${id}:`, error);
       ToastUtils.error(error.message);
@@ -262,16 +259,16 @@ class AdminRegionApiService {
       const response = await fetch(
         `${config.adminURL}/region-approvals/${id}/fast-track-grants/${tenantId}`,
         {
-          method: 'DELETE',
+          method: "DELETE",
           headers: this.getAuthHeaders(),
         }
       );
       const data = await response.json();
       if (data.success || response.ok) {
-        ToastUtils.success(data.message || 'Fast-track access revoked.');
+        ToastUtils.success(data.message || "Fast-track access revoked.");
         return { success: true };
       }
-      throw new Error(data.message || 'Failed to revoke fast-track');
+      throw new Error(data.message || "Failed to revoke fast-track");
     } catch (error) {
       console.error(`Error revoking fast track ${id}:`, error);
       ToastUtils.error(error.message);
@@ -285,24 +282,24 @@ class AdminRegionApiService {
   async updatePlatformFee(id, platformFeePercentage) {
     try {
       const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: this.getAuthHeaders(),
         body: JSON.stringify({
-          action: 'update_fee',
-          platform_fee_percentage: platformFeePercentage
+          action: "update_fee",
+          platform_fee_percentage: platformFeePercentage,
         }),
       });
 
       const data = await response.json();
 
       if (data.success || response.ok) {
-        ToastUtils.success(data.message || 'Platform fee updated');
+        ToastUtils.success(data.message || "Platform fee updated");
         return {
           success: true,
-          data: data.data
+          data: data.data,
         };
       } else {
-        throw new Error(data.message || 'Failed to update platform fee');
+        throw new Error(data.message || "Failed to update platform fee");
       }
     } catch (error) {
       console.error(`Error updating platform fee for region ${id}:`, error);
@@ -317,19 +314,19 @@ class AdminRegionApiService {
   async deleteRegion(id) {
     try {
       const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: this.getAuthHeaders(),
       });
 
       const data = await response.json();
 
       if (data.success || response.ok) {
-        ToastUtils.success(data.message || 'Region deleted');
+        ToastUtils.success(data.message || "Region deleted");
         return {
-          success: true
+          success: true,
         };
       } else {
-        throw new Error(data.message || 'Failed to delete region');
+        throw new Error(data.message || "Failed to delete region");
       }
     } catch (error) {
       console.error(`Error deleting region ${id}:`, error);
@@ -344,7 +341,7 @@ class AdminRegionApiService {
   async createPlatformRegion(regionData) {
     try {
       const response = await fetch(`${config.adminURL}/regions`, {
-        method: 'POST',
+        method: "POST",
         headers: this.getAuthHeaders(),
         body: JSON.stringify(regionData),
       });
@@ -352,7 +349,7 @@ class AdminRegionApiService {
       const data = await response.json();
 
       if (data.success || response.ok) {
-        ToastUtils.success(data.message || 'Platform region created successfully');
+        ToastUtils.success(data.message || "Platform region created successfully");
         const regionCode = data?.data?.code || regionData.code;
         // If object storage payload included, verify right away using new endpoint
         if (regionData.object_storage?.enabled && regionCode) {
@@ -367,19 +364,19 @@ class AdminRegionApiService {
               },
             });
           } catch (error) {
-            console.error('Object storage verification after region creation failed:', error);
+            console.error("Object storage verification after region creation failed:", error);
           }
         }
 
         return {
           success: true,
-          data: data.data
+          data: data.data,
         };
       } else {
-        throw new Error(data.message || 'Failed to create platform region');
+        throw new Error(data.message || "Failed to create platform region");
       }
     } catch (error) {
-      console.error('Error creating platform region:', error);
+      console.error("Error creating platform region:", error);
       ToastUtils.error(error.message);
       throw error;
     }
@@ -390,15 +387,15 @@ class AdminRegionApiService {
    * Admin can only verify credentials for regions they create (platform-owned)
    */
   async verifyCredentials(identifier, credentials, options = {}) {
-    const scope = options.scope || 'region';
+    const scope = options.scope || "region";
     const path =
-      scope === 'approval'
+      scope === "approval"
         ? `region-approvals/${identifier}/verify-credentials`
         : `regions/${identifier}/verify-credentials`;
 
     try {
       const response = await fetch(`${config.adminURL}/${path}`, {
-        method: 'POST',
+        method: "POST",
         headers: this.getAuthHeaders(),
         body: JSON.stringify(credentials),
       });
@@ -408,12 +405,12 @@ class AdminRegionApiService {
       if (data.success || response.ok) {
         return {
           success: true,
-          message: data.message || 'Credentials verified successfully',
+          message: data.message || "Credentials verified successfully",
           verified: data.verified ?? true,
-          credentials_updated_at: data.credentials_updated_at
+          credentials_updated_at: data.credentials_updated_at,
         };
       } else {
-        throw new Error(data.message || 'Failed to verify credentials');
+        throw new Error(data.message || "Failed to verify credentials");
       }
     } catch (error) {
       console.error(`Error verifying credentials for region ${identifier}:`, error);
@@ -432,7 +429,7 @@ class AdminRegionApiService {
   async fetchRegionByCode(code) {
     try {
       const response = await fetch(`${config.adminURL}/regions/${code}`, {
-        method: 'GET',
+        method: "GET",
         headers: this.getAuthHeaders(),
       });
 
@@ -446,16 +443,16 @@ class AdminRegionApiService {
       if (data.data) {
         return {
           success: true,
-          data: data.data
+          data: data.data,
         };
       } else if (data.success !== false) {
         // If no nested data but success is not explicitly false, return data as is
         return {
           success: true,
-          data: data
+          data: data,
         };
       } else {
-        throw new Error(data.message || 'Failed to fetch region');
+        throw new Error(data.message || "Failed to fetch region");
       }
     } catch (error) {
       console.error(`Error fetching region ${code}:`, error);
@@ -469,7 +466,7 @@ class AdminRegionApiService {
   async updateRegion(code, regionData) {
     try {
       const response = await fetch(`${config.adminURL}/regions/${code}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: this.getAuthHeaders(),
         body: JSON.stringify(regionData),
       });
@@ -480,11 +477,11 @@ class AdminRegionApiService {
       }
 
       const data = await response.json();
-      
-      ToastUtils.success(data.message || 'Region updated successfully');
+
+      ToastUtils.success(data.message || "Region updated successfully");
       return {
         success: true,
-        data: data.data || data
+        data: data.data || data,
       };
     } catch (error) {
       console.error(`Error updating region ${code}:`, error);
@@ -495,25 +492,28 @@ class AdminRegionApiService {
 
   async verifyObjectStorage(regionCode, payload = null) {
     try {
-      const response = await fetch(`${config.adminURL}/regions/${regionCode}/verify-object-storage`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: payload ? JSON.stringify(payload) : JSON.stringify({}),
-      });
+      const response = await fetch(
+        `${config.adminURL}/regions/${regionCode}/verify-object-storage`,
+        {
+          method: "POST",
+          headers: this.getAuthHeaders(),
+          body: payload ? JSON.stringify(payload) : JSON.stringify({}),
+        }
+      );
 
       const data = await response.json();
 
       if (data.success || response.ok) {
         return {
           success: true,
-          message: data.message || 'Object storage verified successfully',
+          message: data.message || "Object storage verified successfully",
         };
       }
 
-      throw new Error(data.message || 'Failed to verify object storage');
+      throw new Error(data.message || "Failed to verify object storage");
     } catch (error) {
       console.error(`Error verifying object storage for region ${regionCode}:`, error);
-      ToastUtils.error(error.message || 'Failed to verify object storage');
+      ToastUtils.error(error.message || "Failed to verify object storage");
       throw error;
     }
   }

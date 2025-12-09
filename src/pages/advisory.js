@@ -26,23 +26,20 @@ const Advisory = () => {
         </p>
 
         <p className=" text-base font-normal mt-6 text-justify text-[#676767]">
-          In the realm of management, UniCloud Africa stands as a beacon of
-          excellence, propelled by a dynamic team led by visionary leaders. Our
-          management team boasts seasoned executives with decades of hands-on
-          experience, alongside experts in cloud computing, collectively fueled
-          by a fervor for innovation. Guided by industry trailblazers, our
-          leadership brings forth a wealth of expertise in operations, finance,
-          telecommunications, and technology, steering UniCloud Africa towards
-          unprecedented success.
+          In the realm of management, UniCloud Africa stands as a beacon of excellence, propelled by
+          a dynamic team led by visionary leaders. Our management team boasts seasoned executives
+          with decades of hands-on experience, alongside experts in cloud computing, collectively
+          fueled by a fervor for innovation. Guided by industry trailblazers, our leadership brings
+          forth a wealth of expertise in operations, finance, telecommunications, and technology,
+          steering UniCloud Africa towards unprecedented success.
           <br />
           <br />
-          Committed to excellence and client empowerment, our team endeavors to
-          deliver secure, scalable, and reliable cloud solutions, catalyzing
-          digital transformation across Africa. Together, we are not only
-          shaping the future of UniCloud Africa but also spearheading Africa's
-          digital evolution, one innovation at a time. Embark on this
-          transformative journey with us, where the resilience and ingenuity of
-          our team serve as the cornerstone of your triumph in the digital era
+          Committed to excellence and client empowerment, our team endeavors to deliver secure,
+          scalable, and reliable cloud solutions, catalyzing digital transformation across Africa.
+          Together, we are not only shaping the future of UniCloud Africa but also spearheading
+          Africa's digital evolution, one innovation at a time. Embark on this transformative
+          journey with us, where the resilience and ingenuity of our team serve as the cornerstone
+          of your triumph in the digital era
         </p>
 
         <div className="mt-16 w-full">
@@ -67,9 +64,7 @@ const Advisory = () => {
                       }}
                     ></div>
                     <span className="  lg:h-[2em]">
-                      <p className="text-center mt-4 text-lg lg:text-xl font-medium">
-                        {item.name}
-                      </p>
+                      <p className="text-center mt-4 text-lg lg:text-xl font-medium">{item.name}</p>
                       <p className="text-center text-sm text-[#636363] lg:text-base font-medium">
                         {item.position}
                       </p>

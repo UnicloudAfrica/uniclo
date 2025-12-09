@@ -1,45 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, X } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
-import {
-  useFetchTenantSecurityGroups,
-} from "../../../hooks/securityGroupHooks";
-import {
-  useAttachTenantSecurityGroup,
-  useDetachTenantSecurityGroup,
-} from "../../../hooks/eni";
+import ToastUtils from "../../../utils/toastUtil.ts";
+import { useFetchTenantSecurityGroups } from "../../../hooks/securityGroupHooks";
+import { useAttachTenantSecurityGroup, useDetachTenantSecurityGroup } from "../../../hooks/eni";
 
-const ManageEniSecurityGroupsModal = ({
-  isOpen,
-  onClose,
-  projectId,
-  region,
-  eni,
-}) => {
+const ManageEniSecurityGroupsModal = ({ isOpen, onClose, projectId, region, eni }) => {
   const [selectedAttach, setSelectedAttach] = useState("");
-  const { data: securityGroupsRaw, isFetching } = useFetchTenantSecurityGroups(
-    projectId,
-    region,
-    { enabled: isOpen && !!projectId && !!region }
-  );
-  const securityGroups = useMemo(
-    () => securityGroupsRaw || [],
-    [securityGroupsRaw]
-  );
+  const { data: securityGroupsRaw, isFetching } = useFetchTenantSecurityGroups(projectId, region, {
+    enabled: isOpen && !!projectId && !!region,
+  });
+  const securityGroups = useMemo(() => securityGroupsRaw || [], [securityGroupsRaw]);
 
   const attachedIds = useMemo(() => {
     const raw = eni?.security_groups || [];
-    return new Set(
-      raw.map((sg) =>
-        String(sg.provider_resource_id || sg.id || sg.uuid || sg)
-      )
-    );
+    return new Set(raw.map((sg) => String(sg.provider_resource_id || sg.id || sg.uuid || sg)));
   }, [eni]);
 
-  const { mutate: attachSecurityGroup, isPending: isAttaching } =
-    useAttachTenantSecurityGroup();
-  const { mutate: detachSecurityGroup, isPending: isDetaching } =
-    useDetachTenantSecurityGroup();
+  const { mutate: attachSecurityGroup, isPending: isAttaching } = useAttachTenantSecurityGroup();
+  const { mutate: detachSecurityGroup, isPending: isDetaching } = useDetachTenantSecurityGroup();
 
   useEffect(() => {
     if (!isOpen) {
@@ -97,9 +75,7 @@ const ManageEniSecurityGroupsModal = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[560px] w-full mx-4">
         <div className="flex items-center justify-between px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
-          <h2 className="text-lg font-semibold text-[#575758]">
-            Manage Security Groups
-          </h2>
+          <h2 className="text-lg font-semibold text-[#575758]">Manage Security Groups</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-[#1E1E1EB2] transition-colors"
@@ -110,16 +86,12 @@ const ManageEniSecurityGroupsModal = ({
 
         <div className="px-6 py-6 space-y-4">
           <div>
-            <p className="text-sm text-gray-600">
-              ENI: {eni.provider_resource_id || eni.id}
-            </p>
+            <p className="text-sm text-gray-600">ENI: {eni.provider_resource_id || eni.id}</p>
             <p className="text-xs text-gray-500">Region: {region || "N/A"}</p>
           </div>
 
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Attach Security Group
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Attach Security Group</label>
             <div className="flex gap-2">
               <select
                 value={selectedAttach}
@@ -131,13 +103,11 @@ const ManageEniSecurityGroupsModal = ({
                 </option>
                 {securityGroups
                   .filter((sg) => {
-                    const id =
-                      sg.provider_resource_id || sg.id || sg.uuid || sg.name;
+                    const id = sg.provider_resource_id || sg.id || sg.uuid || sg.name;
                     return !attachedIds.has(String(id));
                   })
                   .map((sg) => {
-                    const id =
-                      sg.provider_resource_id || sg.id || sg.uuid || sg.name;
+                    const id = sg.provider_resource_id || sg.id || sg.uuid || sg.name;
                     return (
                       <option key={id} value={id}>
                         {sg.name || id}
@@ -151,22 +121,17 @@ const ManageEniSecurityGroupsModal = ({
                 className="px-4 py-2 rounded-full bg-[#288DD1] text-white text-sm hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               >
                 Attach
-                {isAttaching && (
-                  <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-                )}
+                {isAttaching && <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />}
               </button>
             </div>
           </div>
 
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">
-              Attached Security Groups
-            </p>
+            <p className="text-sm font-medium text-gray-700 mb-2">Attached Security Groups</p>
             <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
               {Array.isArray(eni.security_groups) && eni.security_groups.length > 0 ? (
                 eni.security_groups.map((sg) => {
-                  const id =
-                    sg.provider_resource_id || sg.id || sg.uuid || sg.name;
+                  const id = sg.provider_resource_id || sg.id || sg.uuid || sg.name;
                   return (
                     <div
                       key={id}

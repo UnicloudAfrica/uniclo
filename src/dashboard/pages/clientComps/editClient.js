@@ -7,12 +7,11 @@ import {
   useFetchProfile,
 } from "../../../hooks/resource";
 import { useUpdateClient } from "../../../hooks/adminHooks/clientHooks";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 
 const EditClientModal = ({ isOpen, onClose, clientData }) => {
   const { data: profile, isFetching: isProfileFetching } = useFetchProfile();
-  const { data: countries, isFetching: isCountriesFetching } =
-    useFetchCountries();
+  const { data: countries, isFetching: isCountriesFetching } = useFetchCountries();
 
   const [formData, setFormData] = useState({
     first_name: "",
@@ -32,10 +31,9 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
   });
   const [errors, setErrors] = useState({});
 
-  const { data: states, isFetching: isStatesFetching } = useFetchStatesById(
-    formData.country_id,
-    { enabled: !!formData.country_id }
-  );
+  const { data: states, isFetching: isStatesFetching } = useFetchStatesById(formData.country_id, {
+    enabled: !!formData.country_id,
+  });
 
   // No longer fetching cities by ID, as city will be a direct input
   // const { data: cities, isFetching: isCitiesFetching } = useFetchCitiesById(
@@ -63,8 +61,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
         // address removed
         zip_code: clientData.zip_code || "",
         force_password_reset:
-          clientData.force_password_reset === 1 ||
-          clientData.force_password_reset === true,
+          clientData.force_password_reset === 1 || clientData.force_password_reset === true,
       });
       setErrors({});
     }
@@ -72,12 +69,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
 
   // Effect to set state_id if a matching state is found in the fetched states
   useEffect(() => {
-    if (
-      Array.isArray(states) &&
-      states.length > 0 &&
-      formData.country_id &&
-      clientData?.state
-    ) {
+    if (Array.isArray(states) && states.length > 0 && formData.country_id && clientData?.state) {
       const matchedState = states.find(
         (s) => s.name?.toLowerCase() === clientData.state.toLowerCase()
       );
@@ -101,9 +93,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
   // Update country name in formData when country_id changes and countries data is available
   useEffect(() => {
     if (formData.country_id && countries) {
-      const selectedCountry = countries.find(
-        (c) => c.id === parseInt(formData.country_id)
-      );
+      const selectedCountry = countries.find((c) => c.id === parseInt(formData.country_id));
       if (selectedCountry) {
         setFormData((prev) => ({ ...prev, country: selectedCountry.name }));
       }
@@ -115,9 +105,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
   // Update state name in formData when state_id changes and states data is available
   useEffect(() => {
     if (formData.state_id && states) {
-      const selectedState = states.find(
-        (s) => s.id === parseInt(formData.state_id)
-      );
+      const selectedState = states.find((s) => s.id === parseInt(formData.state_id));
       if (selectedState) {
         setFormData((prev) => ({ ...prev, state: selectedState.name }));
       }
@@ -141,10 +129,8 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.first_name.trim())
-      newErrors.first_name = "First Name is required";
-    if (!formData.last_name.trim())
-      newErrors.last_name = "Last Name is required";
+    if (!formData.first_name.trim()) newErrors.first_name = "First Name is required";
+    if (!formData.last_name.trim()) newErrors.last_name = "Last Name is required";
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
@@ -248,9 +234,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
         },
         onError: (err) => {
           console.error("Failed to update client:", err);
-          ToastUtils.error(
-            err.message || "Failed to update client. Please try again."
-          );
+          ToastUtils.error(err.message || "Failed to update client. Please try again.");
         },
       }
     );
@@ -259,8 +243,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
   if (!isOpen) return null;
 
   const isCountrySelectDisabled = isCountriesFetching || isPending;
-  const isStateSelectDisabled =
-    !formData.country_id || isStatesFetching || isPending;
+  const isStateSelectDisabled = !formData.country_id || isStatesFetching || isPending;
   // isCitySelectDisabled is no longer relevant for a direct input field
 
   // Determine if state input field should be shown instead of select
@@ -268,9 +251,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
     !Array.isArray(states) ||
     states.length === 0 ||
     (clientData?.state &&
-      !states.some(
-        (s) => s.name?.toLowerCase() === clientData.state.toLowerCase()
-      ));
+      !states.some((s) => s.name?.toLowerCase() === clientData.state.toLowerCase()));
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
@@ -308,16 +289,11 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
                   disabled={isPending}
                 />
                 {errors.first_name && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.first_name}
-                  </p>
+                  <p className="text-red-500 text-xs mt-1">{errors.first_name}</p>
                 )}
               </div>
               <div>
-                <label
-                  htmlFor="last_name"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-2">
                   Last Name<span className="text-red-500">*</span>
                 </label>
                 <input
@@ -332,16 +308,11 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
                   disabled={isPending}
                 />
                 {errors.last_name && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.last_name}
-                  </p>
+                  <p className="text-red-500 text-xs mt-1">{errors.last_name}</p>
                 )}
               </div>
               <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                   Email Address<span className="text-red-500">*</span>
                 </label>
                 <input
@@ -355,15 +326,10 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
                   }`}
                   disabled={isPending}
                 />
-                {errors.email && (
-                  <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-                )}
+                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
               </div>
               <div>
-                <label
-                  htmlFor="phone"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
                   Phone Number<span className="text-red-500">*</span>
                 </label>
                 <input
@@ -377,9 +343,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
                   }`}
                   disabled={isPending}
                 />
-                {errors.phone && (
-                  <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
-                )}
+                {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
               </div>
 
               <div>
@@ -392,9 +356,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
                 {isCountriesFetching ? (
                   <div className="flex items-center input-field py-2">
                     <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
-                    <span className="text-gray-500 text-sm">
-                      Loading countries...
-                    </span>
+                    <span className="text-gray-500 text-sm">Loading countries...</span>
                   </div>
                 ) : Array.isArray(countries) && countries.length > 0 ? (
                   <select
@@ -419,29 +381,20 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
                   </div>
                 )}
                 {errors.country_id && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.country_id}
-                  </p>
+                  <p className="text-red-500 text-xs mt-1">{errors.country_id}</p>
                 )}
               </div>
 
               <div>
-                <label
-                  htmlFor="state"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">
                   State<span className="text-red-500">*</span>
                 </label>
                 {isStatesFetching ? (
                   <div className="flex items-center input-field py-2">
                     <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
-                    <span className="text-gray-500 text-sm">
-                      Loading states...
-                    </span>
+                    <span className="text-gray-500 text-sm">Loading states...</span>
                   </div>
-                ) : Array.isArray(states) &&
-                  states.length > 0 &&
-                  !shouldShowStateInputField ? (
+                ) : Array.isArray(states) && states.length > 0 && !shouldShowStateInputField ? (
                   <select
                     id="state_id"
                     value={formData.state_id}
@@ -471,16 +424,11 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
                     disabled={isPending || !formData.country_id}
                   />
                 )}
-                {errors.state && (
-                  <p className="text-red-500 text-xs mt-1">{errors.state}</p>
-                )}
+                {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state}</p>}
               </div>
 
               <div>
-                <label
-                  htmlFor="city"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
                   City<span className="text-red-500">*</span>
                 </label>
                 {/* Always render text input for city */}
@@ -493,13 +441,9 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
                   className={`w-full input-field ${
                     errors.city ? "border-red-500" : "border-gray-300"
                   }`}
-                  disabled={
-                    isPending || (!formData.state_id && !formData.state.trim())
-                  }
+                  disabled={isPending || (!formData.state_id && !formData.state.trim())}
                 />
-                {errors.city && (
-                  <p className="text-red-500 text-xs mt-1">{errors.city}</p>
-                )}
+                {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
               </div>
 
               {/* Removed Address Field */}
@@ -520,10 +464,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
               </div> */}
 
               <div>
-                <label
-                  htmlFor="zip_code"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label htmlFor="zip_code" className="block text-sm font-medium text-gray-700 mb-2">
                   Zip Code<span className="text-red-500">*</span>
                 </label>
                 <input
@@ -537,9 +478,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
                   }`}
                   disabled={isPending}
                 />
-                {errors.zip_code && (
-                  <p className="text-red-500 text-xs mt-1">{errors.zip_code}</p>
-                )}
+                {errors.zip_code && <p className="text-red-500 text-xs mt-1">{errors.zip_code}</p>}
               </div>
 
               <div className="md:col-span-2 flex items-center mt-4">
@@ -551,10 +490,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
                   className="h-4 w-4 text-[#288DD1] border-gray-300 rounded focus:ring-[#288DD1]"
                   disabled={isPending}
                 />
-                <label
-                  htmlFor="verified"
-                  className="ml-2 block text-sm text-gray-900"
-                >
+                <label htmlFor="verified" className="ml-2 block text-sm text-gray-900">
                   Verified Account
                 </label>
               </div>
@@ -567,10 +503,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
                   className="h-4 w-4 text-[#288DD1] border-gray-300 rounded focus:ring-[#288DD1]"
                   disabled={isPending}
                 />
-                <label
-                  htmlFor="force_password_reset"
-                  className="ml-2 block text-sm text-gray-900"
-                >
+                <label htmlFor="force_password_reset" className="ml-2 block text-sm text-gray-900">
                   Force Password Reset on Next Login
                 </label>
               </div>
@@ -593,9 +526,7 @@ const EditClientModal = ({ isOpen, onClose, clientData }) => {
               className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Update Client
-              {isPending && (
-                <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-              )}
+              {isPending && <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />}
             </button>
           </div>
         </div>

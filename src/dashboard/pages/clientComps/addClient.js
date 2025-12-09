@@ -8,16 +8,14 @@ import {
   useFetchProfile,
   useFetchIndustries,
 } from "../../../hooks/resource";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import { useCreateClient } from "../../../hooks/clientHooks";
-import ClientBusinessInputs from "./subComps/clientBusinessInputs";
+import ClientBusinessInputs from "./subComps/ClientBusinessInputs";
 
 const AddClientModal = ({ isOpen, onClose }) => {
   const { data: profile, isFetching: isProfileFetching } = useFetchProfile();
-  const { data: countries, isFetching: isCountriesFetching } =
-    useFetchCountries();
-  const { data: industries, isFetching: isIndustriesFetching } =
-    useFetchIndustries();
+  const { data: countries, isFetching: isCountriesFetching } = useFetchCountries();
+  const { data: industries, isFetching: isIndustriesFetching } = useFetchIndustries();
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -45,18 +43,12 @@ const AddClientModal = ({ isOpen, onClose }) => {
   });
   const [errors, setErrors] = useState({});
 
-  const { data: states, isFetching: isStatesFetching } = useFetchStatesById(
-    formData.country_id,
-    {
-      enabled: !!formData.country_id,
-    }
-  );
-  const { data: cities, isFetching: isCitiesFetching } = useFetchCitiesById(
-    formData.state_id,
-    {
-      enabled: !!formData.state_id,
-    }
-  );
+  const { data: states, isFetching: isStatesFetching } = useFetchStatesById(formData.country_id, {
+    enabled: !!formData.country_id,
+  });
+  const { data: cities, isFetching: isCitiesFetching } = useFetchCitiesById(formData.state_id, {
+    enabled: !!formData.state_id,
+  });
   const { mutate: createClient, isPending } = useCreateClient();
 
   useEffect(() => {
@@ -92,9 +84,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     if (formData.country_id && countries) {
-      const selectedCountry = countries.find(
-        (c) => c.id === parseInt(formData.country_id)
-      );
+      const selectedCountry = countries.find((c) => c.id === parseInt(formData.country_id));
       setFormData((prev) => ({
         ...prev,
         country: selectedCountry?.name || "",
@@ -117,9 +107,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     if (formData.state_id && states) {
-      const selectedState = states.find(
-        (s) => s.id === parseInt(formData.state_id)
-      );
+      const selectedState = states.find((s) => s.id === parseInt(formData.state_id));
       setFormData((prev) => ({
         ...prev,
         state: selectedState?.name || "",
@@ -133,9 +121,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     if (formData.city_id && cities) {
-      const selectedCity = cities.find(
-        (c) => c.id === parseInt(formData.city_id)
-      );
+      const selectedCity = cities.find((c) => c.id === parseInt(formData.city_id));
       setFormData((prev) => ({ ...prev, city: selectedCity?.name || "" }));
     } else if (!formData.city_id) {
       setFormData((prev) => ({ ...prev, city: "" }));
@@ -144,13 +130,10 @@ const AddClientModal = ({ isOpen, onClose }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.first_name.trim())
-      newErrors.first_name = "First Name is required";
-    if (!formData.last_name.trim())
-      newErrors.last_name = "Last Name is required";
+    if (!formData.first_name.trim()) newErrors.first_name = "First Name is required";
+    if (!formData.last_name.trim()) newErrors.last_name = "Last Name is required";
     if (!formData.email.trim()) newErrors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(formData.email))
-      newErrors.email = "Email is invalid";
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email is invalid";
     if (!formData.phone.trim()) newErrors.phone = "Phone Number is required";
     else if (!/^\d+$/.test(formData.phone))
       newErrors.phone = "Phone Number must contain only digits";
@@ -165,10 +148,8 @@ const AddClientModal = ({ isOpen, onClose }) => {
     if (!formData.city.trim()) newErrors.city = "City is required";
     if (!formData.address.trim()) newErrors.address = "Address is required";
     if (!formData.zip_code.trim()) newErrors.zip_code = "Zip Code is required";
-    if (!formData.business_name.trim())
-      newErrors.business_name = "Business Name is required";
-    if (!formData.company_type.trim())
-      newErrors.company_type = "Business Type is required";
+    if (!formData.business_name.trim()) newErrors.business_name = "Business Name is required";
+    if (!formData.company_type.trim()) newErrors.company_type = "Business Type is required";
     if (!formData.industry && !isIndustriesFetching && industries?.length > 0)
       newErrors.industry = "Industry is required";
     if (formData.website.trim() && !/^https?:\/\/\S+/.test(formData.website))
@@ -274,10 +255,8 @@ const AddClientModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   const isCountrySelectDisabled = isCountriesFetching || isPending;
-  const isStateSelectDisabled =
-    !formData.country_id || isStatesFetching || isPending;
-  const isCitySelectDisabled =
-    !formData.state_id || isCitiesFetching || isPending;
+  const isStateSelectDisabled = !formData.country_id || isStatesFetching || isPending;
+  const isCitySelectDisabled = !formData.state_id || isCitiesFetching || isPending;
   const showStateInput = !states || states.length === 0;
   const showCityInput = !cities || cities.length === 0;
 
@@ -316,16 +295,11 @@ const AddClientModal = ({ isOpen, onClose }) => {
                   disabled={isPending}
                 />
                 {errors.first_name && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.first_name}
-                  </p>
+                  <p className="text-red-500 text-xs mt-1">{errors.first_name}</p>
                 )}
               </div>
               <div>
-                <label
-                  htmlFor="last_name"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-2">
                   Last Name<span className="text-red-500">*</span>
                 </label>
                 <input
@@ -340,16 +314,11 @@ const AddClientModal = ({ isOpen, onClose }) => {
                   disabled={isPending}
                 />
                 {errors.last_name && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.last_name}
-                  </p>
+                  <p className="text-red-500 text-xs mt-1">{errors.last_name}</p>
                 )}
               </div>
               <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                   Email Address<span className="text-red-500">*</span>
                 </label>
                 <input
@@ -363,15 +332,10 @@ const AddClientModal = ({ isOpen, onClose }) => {
                   }`}
                   disabled={isPending}
                 />
-                {errors.email && (
-                  <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-                )}
+                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
               </div>
               <div>
-                <label
-                  htmlFor="phone"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
                   Phone Number<span className="text-red-500">*</span>
                 </label>
                 <input
@@ -385,9 +349,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
                   }`}
                   disabled={isPending}
                 />
-                {errors.phone && (
-                  <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
-                )}
+                {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
               </div>
               <div>
                 <label
@@ -404,9 +366,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
                   {isCountriesFetching ? (
                     <div className="flex items-center py-2">
                       <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
-                      <span className="text-gray-500 text-sm">
-                        Loading countries...
-                      </span>
+                      <span className="text-gray-500 text-sm">Loading countries...</span>
                     </div>
                   ) : countries && countries.length > 0 ? (
                     <select
@@ -430,16 +390,11 @@ const AddClientModal = ({ isOpen, onClose }) => {
                   )}
                 </span>
                 {errors.country_id && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.country_id}
-                  </p>
+                  <p className="text-red-500 text-xs mt-1">{errors.country_id}</p>
                 )}
               </div>
               <div>
-                <label
-                  htmlFor="state"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">
                   State<span className="text-red-500">*</span>
                 </label>
                 {showStateInput ? (
@@ -463,9 +418,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
                     {isStatesFetching ? (
                       <div className="flex items-center py-2">
                         <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
-                        <span className="text-gray-500 text-sm">
-                          Loading states...
-                        </span>
+                        <span className="text-gray-500 text-sm">Loading states...</span>
                       </div>
                     ) : states && states.length > 0 ? (
                       <select
@@ -489,19 +442,13 @@ const AddClientModal = ({ isOpen, onClose }) => {
                     )}
                   </span>
                 )}
-                {errors.state && (
-                  <p className="text-red-500 text-xs mt-1">{errors.state}</p>
-                )}
+                {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state}</p>}
               </div>
               <div>
-                <label
-                  htmlFor="city"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
                   City<span className="text-red-500">*</span>
                 </label>
-                {showCityInput ||
-                (cities && cities.length === 0 && !isCitiesFetching) ? (
+                {showCityInput || (cities && cities.length === 0 && !isCitiesFetching) ? (
                   <input
                     id="city"
                     type="text"
@@ -512,10 +459,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
                       errors.city ? "border-red-500" : "border-gray-300"
                     }`}
                     disabled={
-                      isPending ||
-                      (!formData.state_id &&
-                        !formData.state.trim() &&
-                        !showStateInput)
+                      isPending || (!formData.state_id && !formData.state.trim() && !showStateInput)
                     }
                   />
                 ) : (
@@ -527,9 +471,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
                     {isCitiesFetching ? (
                       <div className="flex items-center py-2">
                         <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
-                        <span className="text-gray-500 text-sm">
-                          Loading cities...
-                        </span>
+                        <span className="text-gray-500 text-sm">Loading cities...</span>
                       </div>
                     ) : cities && cities.length > 0 ? (
                       <select
@@ -558,23 +500,16 @@ const AddClientModal = ({ isOpen, onClose }) => {
                         }`}
                         disabled={
                           isPending ||
-                          (!formData.state_id &&
-                            !formData.state.trim() &&
-                            !showStateInput)
+                          (!formData.state_id && !formData.state.trim() && !showStateInput)
                         }
                       />
                     )}
                   </span>
                 )}
-                {errors.city && (
-                  <p className="text-red-500 text-xs mt-1">{errors.city}</p>
-                )}
+                {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
               </div>
               <div>
-                <label
-                  htmlFor="address"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
                   Address<span className="text-red-500">*</span>
                 </label>
                 <input
@@ -588,15 +523,10 @@ const AddClientModal = ({ isOpen, onClose }) => {
                   }`}
                   disabled={isPending}
                 />
-                {errors.address && (
-                  <p className="text-red-500 text-xs mt-1">{errors.address}</p>
-                )}
+                {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
               </div>
               <div>
-                <label
-                  htmlFor="zip_code"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label htmlFor="zip_code" className="block text-sm font-medium text-gray-700 mb-2">
                   Zip Code<span className="text-red-500">*</span>
                 </label>
                 <input
@@ -610,9 +540,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
                   }`}
                   disabled={isPending}
                 />
-                {errors.zip_code && (
-                  <p className="text-red-500 text-xs mt-1">{errors.zip_code}</p>
-                )}
+                {errors.zip_code && <p className="text-red-500 text-xs mt-1">{errors.zip_code}</p>}
               </div>
               <div className="md:col-span-2 flex items-center mt-4">
                 <input
@@ -623,10 +551,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
                   className="h-4 w-4 text-[#288DD1] border-gray-300 rounded focus:ring-[#288DD1]"
                   disabled={isPending}
                 />
-                <label
-                  htmlFor="verified"
-                  className="ml-2 block text-sm text-gray-900"
-                >
+                <label htmlFor="verified" className="ml-2 block text-sm text-gray-900">
                   Verify Account
                 </label>
               </div>
@@ -640,9 +565,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
               target="client"
             />
             <div className="md:col-span-2 border-t border-gray-200 pt-4 mt-4">
-              <h3 className="text-base font-semibold text-gray-800 mb-3">
-                Password & Security
-              </h3>
+              <h3 className="text-base font-semibold text-gray-800 mb-3">Password & Security</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label
@@ -663,9 +586,7 @@ const AddClientModal = ({ isOpen, onClose }) => {
                     disabled={isPending}
                   />
                   {errors.password && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.password}
-                    </p>
+                    <p className="text-red-500 text-xs mt-1">{errors.password}</p>
                   )}
                 </div>
                 <div>
@@ -682,16 +603,12 @@ const AddClientModal = ({ isOpen, onClose }) => {
                     onChange={handleInputChange}
                     placeholder="Confirm password"
                     className={`w-full input-field ${
-                      errors.password_confirmation
-                        ? "border-red-500"
-                        : "border-gray-300"
+                      errors.password_confirmation ? "border-red-500" : "border-gray-300"
                     }`}
                     disabled={isPending}
                   />
                   {errors.password_confirmation && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.password_confirmation}
-                    </p>
+                    <p className="text-red-500 text-xs mt-1">{errors.password_confirmation}</p>
                   )}
                 </div>
                 <div className="md:col-span-2 flex items-center mt-2">
@@ -725,15 +642,11 @@ const AddClientModal = ({ isOpen, onClose }) => {
             </button>
             <button
               onClick={handleSubmit}
-              disabled={
-                isPending || isProfileFetching || !formData.verification_token
-              }
+              disabled={isPending || isProfileFetching || !formData.verification_token}
               className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Submit
-              {isPending && (
-                <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-              )}
+              {isPending && <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />}
             </button>
           </div>
         </div>

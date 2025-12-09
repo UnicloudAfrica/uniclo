@@ -3,14 +3,7 @@ import Navbar from "../components/navbar";
 import { useParams, Link } from "react-router-dom";
 import { useRef, useEffect, useState } from "react";
 import { initializeApp } from "firebase/app";
-import {
-  getFirestore,
-  getDoc,
-  doc,
-  getDocs,
-  collection,
-  query,
-} from "firebase/firestore";
+import { getFirestore, getDoc, doc, getDocs, collection, query } from "firebase/firestore";
 import { motion } from "framer-motion";
 import copy from "./assets/copy.svg";
 import adbg from "./assets/adBG.svg";
@@ -106,9 +99,7 @@ const DetailedResources = () => {
       <Navbar />
       <motion.div>
         <div className="mt-[10em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
-          <p className=" font-medium text-xl md:text-2xl text-center">
-            Resources
-          </p>
+          <p className=" font-medium text-xl md:text-2xl text-center">Resources</p>
           <div
             className=" w-full h-[350px] my-16 bg-[#F5F5F4] rounded-[20px]"
             style={{
@@ -158,9 +149,7 @@ const DetailedResources = () => {
                         backgroundPosition: "center",
                       }}
                     ></div>
-                    <p className="text-left mt-6 text-xl lg:text-3xl font-medium">
-                      {item.title}
-                    </p>
+                    <p className="text-left mt-6 text-xl lg:text-3xl font-medium">{item.title}</p>
                     <p className="text-left mt-3 text-[#1E1E1ECC] text-sm">
                       {item.tagline.substring(0, 200) + "..."}
                     </p>
@@ -182,12 +171,9 @@ const DetailedResources = () => {
                 className="z-10 absolute top-0 h-full w-full object-cover block md:hidden"
                 alt=""
               />
-              <p className=" font-semibold text-xl md:text-3xl">
-                Want product news and updates
-              </p>
+              <p className=" font-semibold text-xl md:text-3xl">Want product news and updates</p>
               <p className=" font-normal px-4 md:px-0 text-lg md:text-xl">
-                Subscribe to UniCloud Africa blog to get update right in your
-                inbox
+                Subscribe to UniCloud Africa blog to get update right in your inbox
               </p>
               <div className=" flex flex-col md:flex-row items-center justify-center z-20  mt-4 md:space-x-6 space-y-4 md:space-y-0">
                 <input

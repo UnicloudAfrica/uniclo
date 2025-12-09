@@ -1,13 +1,13 @@
 /**
  * React Hook for Instance Management Operations
- * 
+ *
  * This hook provides a React-friendly interface for instance management operations
  * after the removal of instance-management endpoints. It uses the instanceApiService
  * and provides state management and loading states.
  */
 
-import { useState, useCallback, useEffect } from 'react';
-import instanceApiService from '../services/instanceApi';
+import { useState, useCallback, useEffect } from "react";
+import instanceApiService from "../services/instanceApi";
 
 export const useInstanceApi = () => {
   const [loading, setLoading] = useState(false);
@@ -22,7 +22,7 @@ export const useInstanceApi = () => {
   const fetchInstances = useCallback(async (params = {}) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const result = await instanceApiService.fetchInstances(params);
       return result;
@@ -38,7 +38,7 @@ export const useInstanceApi = () => {
   const fetchInstanceById = useCallback(async (id) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const result = await instanceApiService.fetchInstanceById(id);
       return result;
@@ -54,7 +54,7 @@ export const useInstanceApi = () => {
   const createInstance = useCallback(async (instanceData) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const result = await instanceApiService.createInstance(instanceData);
       return result;
@@ -70,7 +70,7 @@ export const useInstanceApi = () => {
   const updateInstance = useCallback(async (id, updateData) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const result = await instanceApiService.updateInstance(id, updateData);
       return result;
@@ -86,7 +86,7 @@ export const useInstanceApi = () => {
   const deleteInstance = useCallback(async (id) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const result = await instanceApiService.deleteInstance(id);
       return result;
@@ -102,7 +102,7 @@ export const useInstanceApi = () => {
   const refreshInstanceStatus = useCallback(async (id) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const result = await instanceApiService.refreshInstanceStatus(id);
       return result;
@@ -118,7 +118,7 @@ export const useInstanceApi = () => {
   const createMultipleInstances = useCallback(async (configurations, options = {}) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const result = await instanceApiService.createMultipleInstances(configurations, options);
       return result;
@@ -136,7 +136,7 @@ export const useInstanceApi = () => {
   }, []);
 
   // DEPRECATED: Console access (shows warning)
-  const getConsoleUrl = useCallback(async (instanceId, consoleType = 'novnc') => {
+  const getConsoleUrl = useCallback(async (instanceId, consoleType = "novnc") => {
     return instanceApiService.getConsoleUrl(instanceId, consoleType);
   }, []);
 
@@ -150,7 +150,7 @@ export const useInstanceApi = () => {
     loading,
     error,
     clearError,
-    
+
     // Working methods (use standard endpoints)
     fetchInstances,
     fetchInstanceById,
@@ -159,7 +159,7 @@ export const useInstanceApi = () => {
     deleteInstance,
     refreshInstanceStatus,
     createMultipleInstances,
-    
+
     // Deprecated methods (show warnings)
     executeInstanceAction,
     getConsoleUrl,
@@ -174,72 +174,75 @@ export const useInstanceList = () => {
   const [instances, setInstances] = useState([]);
   const [filteredInstances, setFilteredInstances] = useState([]);
   const [selectedInstances, setSelectedInstances] = useState(new Set());
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  
-  const {
-    loading,
-    error,
-    clearError,
-    fetchInstances,
-    deleteInstance,
-    refreshInstanceStatus
-  } = useInstanceApi();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const { loading, error, clearError, fetchInstances, deleteInstance, refreshInstanceStatus } =
+    useInstanceApi();
 
   // Load instances and update state
-  const loadInstances = useCallback(async (params = {}) => {
-    try {
-      const result = await fetchInstances(params);
-      setInstances(result.data || []);
-      return result;
-    } catch (err) {
-      setInstances([]);
-      throw err;
-    }
-  }, [fetchInstances]);
+  const loadInstances = useCallback(
+    async (params = {}) => {
+      try {
+        const result = await fetchInstances(params);
+        setInstances(result.data || []);
+        return result;
+      } catch (err) {
+        setInstances([]);
+        throw err;
+      }
+    },
+    [fetchInstances]
+  );
 
   // Refresh specific instance in the list
-  const refreshInstance = useCallback(async (instanceId) => {
-    try {
-      const result = await refreshInstanceStatus(instanceId);
-      
-      // Update the instance in the local state
-      setInstances(prev => 
-        prev.map(instance => 
-          instance.id === instanceId || instance.identifier === instanceId 
-            ? { ...instance, ...result.data } 
-            : instance
-        )
-      );
-      
-      return result;
-    } catch (err) {
-      throw err;
-    }
-  }, [refreshInstanceStatus]);
+  const refreshInstance = useCallback(
+    async (instanceId) => {
+      try {
+        const result = await refreshInstanceStatus(instanceId);
+
+        // Update the instance in the local state
+        setInstances((prev) =>
+          prev.map((instance) =>
+            instance.id === instanceId || instance.identifier === instanceId
+              ? { ...instance, ...result.data }
+              : instance
+          )
+        );
+
+        return result;
+      } catch (err) {
+        throw err;
+      }
+    },
+    [refreshInstanceStatus]
+  );
 
   // Remove instance from local state after deletion
-  const removeInstance = useCallback(async (instanceId) => {
-    try {
-      await deleteInstance(instanceId);
-      
-      // Remove from local state
-      setInstances(prev => 
-        prev.filter(instance => 
-          instance.id !== instanceId && instance.identifier !== instanceId
-        )
-      );
-      
-      // Remove from selection if selected
-      setSelectedInstances(prev => {
-        const newSelected = new Set(prev);
-        newSelected.delete(instanceId);
-        return newSelected;
-      });
-    } catch (err) {
-      throw err;
-    }
-  }, [deleteInstance]);
+  const removeInstance = useCallback(
+    async (instanceId) => {
+      try {
+        await deleteInstance(instanceId);
+
+        // Remove from local state
+        setInstances((prev) =>
+          prev.filter(
+            (instance) => instance.id !== instanceId && instance.identifier !== instanceId
+          )
+        );
+
+        // Remove from selection if selected
+        setSelectedInstances((prev) => {
+          const newSelected = new Set(prev);
+          newSelected.delete(instanceId);
+          return newSelected;
+        });
+      } catch (err) {
+        throw err;
+      }
+    },
+    [deleteInstance]
+  );
 
   // Filter instances based on search and status
   const filterInstances = useCallback(() => {
@@ -247,17 +250,20 @@ export const useInstanceList = () => {
 
     // Apply search filter
     if (searchTerm) {
-      filtered = filtered.filter(instance =>
-        (instance.name && instance.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (instance.identifier && instance.identifier.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (instance.floating_ip?.ip_address && instance.floating_ip.ip_address.includes(searchTerm)) ||
-        (instance.private_ip && instance.private_ip.includes(searchTerm))
+      filtered = filtered.filter(
+        (instance) =>
+          (instance.name && instance.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (instance.identifier &&
+            instance.identifier.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (instance.floating_ip?.ip_address &&
+            instance.floating_ip.ip_address.includes(searchTerm)) ||
+          (instance.private_ip && instance.private_ip.includes(searchTerm))
       );
     }
 
     // Apply status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(instance => instance.status === statusFilter);
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((instance) => instance.status === statusFilter);
     }
 
     setFilteredInstances(filtered);
@@ -270,7 +276,7 @@ export const useInstanceList = () => {
 
   // Instance selection handlers
   const selectInstance = useCallback((instanceId) => {
-    setSelectedInstances(prev => {
+    setSelectedInstances((prev) => {
       const newSelected = new Set(prev);
       if (newSelected.has(instanceId)) {
         newSelected.delete(instanceId);
@@ -285,7 +291,7 @@ export const useInstanceList = () => {
     if (selectedInstances.size === filteredInstances.length) {
       setSelectedInstances(new Set());
     } else {
-      setSelectedInstances(new Set(filteredInstances.map(i => i.id || i.identifier)));
+      setSelectedInstances(new Set(filteredInstances.map((i) => i.id || i.identifier)));
     }
   }, [selectedInstances, filteredInstances]);
 
@@ -300,22 +306,22 @@ export const useInstanceList = () => {
     selectedInstances,
     searchTerm,
     statusFilter,
-    
+
     // Loading and error state
     loading,
     error,
     clearError,
-    
+
     // Data operations
     loadInstances,
     refreshInstance,
     removeInstance,
-    
+
     // Filter operations
     setSearchTerm,
     setStatusFilter,
     filterInstances,
-    
+
     // Selection operations
     selectInstance,
     selectAllInstances,

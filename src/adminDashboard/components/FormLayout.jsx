@@ -19,6 +19,31 @@ const hexToRgba = (hex, alpha = 1) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
+/**
+ * @typedef {Object} FormLayoutProps
+ * @property {string} [mode]
+ * @property {string} title
+ * @property {string} [description]
+ * @property {() => void} [onClose]
+ * @property {boolean} [isProcessing]
+ * @property {string} [accentGradient]
+ * @property {string} [accentColor]
+ * @property {any[]} [meta]
+ * @property {string} [kicker]
+ * @property {React.ReactNode} [headerBadge]
+ * @property {React.ReactNode} [headerActions]
+ * @property {React.ReactNode} [aside]
+ * @property {React.ReactNode} children
+ * @property {React.ReactNode} [footer]
+ * @property {string} [maxWidthClass]
+ * @property {string} [contentPaddingClass]
+ * @property {string} [className]
+ * @property {boolean} [showCloseButton]
+ */
+
+/**
+ * @param {FormLayoutProps} props
+ */
 const FormLayout = ({
   mode = "modal",
   title,
@@ -49,9 +74,7 @@ const FormLayout = ({
 
   const cardBaseClasses =
     "relative flex w-full flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-2xl";
-  const cardClasses = isPageMode
-    ? cardBaseClasses
-    : `${cardBaseClasses} max-h-[min(92vh,960px)]`;
+  const cardClasses = isPageMode ? cardBaseClasses : `${cardBaseClasses} max-h-[min(92vh,960px)]`;
 
   const handleClose = () => {
     if (!isProcessing && typeof onClose === "function") {
@@ -108,9 +131,7 @@ const FormLayout = ({
                       <dd className="mt-2 text-lg font-semibold leading-tight text-white">
                         {value ?? "—"}
                       </dd>
-                      {hint && (
-                        <p className="mt-1 text-xs font-medium text-white/70">{hint}</p>
-                      )}
+                      {hint && <p className="mt-1 text-xs font-medium text-white/70">{hint}</p>}
                     </div>
                   ))}
                 </dl>
@@ -135,19 +156,13 @@ const FormLayout = ({
                 aside ? "grid gap-8 lg:grid-cols-[280px,1fr]" : ""
               }`}
             >
-              {aside && (
-                <aside className="order-1 space-y-6 lg:order-none">
-                  {aside}
-                </aside>
-              )}
+              {aside && <aside className="order-1 space-y-6 lg:order-none">{aside}</aside>}
               <div className="order-last space-y-8 lg:order-none">{children}</div>
             </div>
           </div>
 
           {footer && (
-            <div className="border-t border-slate-200 bg-white px-6 py-4 sm:px-8">
-              {footer}
-            </div>
+            <div className="border-t border-slate-200 bg-white px-6 py-4 sm:px-8">{footer}</div>
           )}
         </div>
       </div>

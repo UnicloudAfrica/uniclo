@@ -1,7 +1,7 @@
 import config from "../../config";
 import useTenantAuthStore from "../../stores/tenantAuthStore";
 import { handleAuthRedirect } from "../../utils/authRedirect";
-import ToastUtils from "../../utils/toastUtil";
+import ToastUtils from "../../utils/toastUtil.ts";
 
 const tenantApi = async (method, uri, body = null) => {
   const url = config.tenantURL + uri;
@@ -27,20 +27,13 @@ const tenantApi = async (method, uri, body = null) => {
     const res = await response.json();
 
     if (response.ok || response.status === 201) {
-      const dataPayload =
-        res && typeof res.data === "object" ? res.data : undefined;
+      const dataPayload = res && typeof res.data === "object" ? res.data : undefined;
       const nestedDataPayload =
-        dataPayload && typeof dataPayload.data === "object"
-          ? dataPayload.data
-          : undefined;
+        dataPayload && typeof dataPayload.data === "object" ? dataPayload.data : undefined;
       const messagePayload =
-        dataPayload && typeof dataPayload.message === "object"
-          ? dataPayload.message
-          : undefined;
+        dataPayload && typeof dataPayload.message === "object" ? dataPayload.message : undefined;
       const nestedMessagePayload =
-        messagePayload && typeof messagePayload.data === "object"
-          ? messagePayload.data
-          : undefined;
+        messagePayload && typeof messagePayload.data === "object" ? messagePayload.data : undefined;
 
       const tokenToSet =
         res?.access_token ||
@@ -76,8 +69,7 @@ const tenantApi = async (method, uri, body = null) => {
 
       return res;
     } else {
-      const errorMessage =
-        res?.data?.error || res?.error || res?.message || "An error occurred";
+      const errorMessage = res?.data?.error || res?.error || res?.message || "An error occurred";
 
       const handled = handleAuthRedirect(response, res, "/sign-in");
       if (handled) {

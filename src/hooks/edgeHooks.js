@@ -11,10 +11,7 @@ const fetchProjectEdgeConfigTenant = async (projectId, region, refresh = false) 
     params.append("project_id", projectId);
     params.append("region", region);
     if (refresh) params.append("refresh", "1");
-    const res = await silentApi(
-      "GET",
-      `/business/edge-config?${params.toString()}`
-    );
+    const res = await silentApi("GET", `/business/edge-config?${params.toString()}`);
     return res?.data ?? res;
   } catch (e) {
     return null;

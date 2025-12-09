@@ -39,9 +39,7 @@ export const deriveFastTrackBreakdown = ({
     return null;
   }
 
-  const eligibleRegions = Array.isArray(summary.eligible_regions)
-    ? summary.eligible_regions
-    : [];
+  const eligibleRegions = Array.isArray(summary.eligible_regions) ? summary.eligible_regions : [];
   const ineligibleRegions = Array.isArray(summary.ineligible_regions)
     ? summary.ineligible_regions
     : [];

@@ -19,9 +19,8 @@ const ExtResouce = () => {
             Africa Data Centres and Onix Data Centre announce partnership
           </p>
           <p className="font-medium text-lg md:text-xl mt-3 md:px-[12%] text-center text-[#676767]">
-            Ghana is set to become a key player in the continent's data storage
-            revolution as Africa Data Centres joins forces with Onix Data Centre
-            in a strategic partnership.
+            Ghana is set to become a key player in the continent's data storage revolution as Africa
+            Data Centres joins forces with Onix Data Centre in a strategic partnership.
           </p>
           <button className=" bg-[#3DC8F91A] px-4 py-2 mx-auto rounded-[30px] block mt-6 text-sm md:text-base">
             <p className=" gradient-text">Technology</p>
@@ -40,57 +39,51 @@ const ExtResouce = () => {
             style={{ whiteSpace: "pre-line" }}
             className=" mt-3 text-base text-[#676767]  text-justify font-normal md:px-[15%] whitespace-pre-line"
           >
-            This collaboration marks a significant milestone for Africa Data
-            Centres, as they strive to extend their reach across the continent
-            and offer world-class data solutions.
+            This collaboration marks a significant milestone for Africa Data Centres, as they strive
+            to extend their reach across the continent and offer world-class data solutions.
             <br />
             <br />
-            The deal will primarily focus on Ghana, but also explore mutually
-            beneficial opportunities in other West African markets where Africa
-            Data Centres currently lacks a physical presence. This strategic
-            move allows them to offer customers a wider geographical reach,
-            enhanced expertise, and a seamless experience across multiple
+            The deal will primarily focus on Ghana, but also explore mutually beneficial
+            opportunities in other West African markets where Africa Data Centres currently lacks a
+            physical presence. This strategic move allows them to offer customers a wider
+            geographical reach, enhanced expertise, and a seamless experience across multiple
             locations.
             <br />
             <br />
-            Dr. Krishnan Ranganath, Regional Executive for West Africa at Africa
-            Data Centres, spoke at the signing ceremony in Accra last Friday. He
-            highlighted the partnership's potential to provide clients with
-            exceptional data services, leveraging innovative technologies and
-            sustainable practices to effectively serve the West African market.
+            Dr. Krishnan Ranganath, Regional Executive for West Africa at Africa Data Centres, spoke
+            at the signing ceremony in Accra last Friday. He highlighted the partnership's potential
+            to provide clients with exceptional data services, leveraging innovative technologies
+            and sustainable practices to effectively serve the West African market.
             <br />
             <br />
-            Looking beyond Ghana, Dr. Ranganath also sees this collaboration as
-            a stepping stone towards a more robust African data storage
-            landscape, promoting data sovereignty within the continent.
+            Looking beyond Ghana, Dr. Ranganath also sees this collaboration as a stepping stone
+            towards a more robust African data storage landscape, promoting data sovereignty within
+            the continent.
             <br />
             <br />
-            The benefits extend beyond just data centres. Yen Choi, CEO of Onix
-            Data Centre, emphasised the positive impact for various sectors,
-            including financial institutions, online gamers, travel agencies,
-            and social media influencers. He explained how the Ghanaian data
-            centre will significantly improve the performance of internet-based
+            The benefits extend beyond just data centres. Yen Choi, CEO of Onix Data Centre,
+            emphasised the positive impact for various sectors, including financial institutions,
+            online gamers, travel agencies, and social media influencers. He explained how the
+            Ghanaian data centre will significantly improve the performance of internet-based
             platforms throughout the country.
             <br />
             <br />
-            The world-class nature of the facility was further emphasised by Mr.
-            Choi. He stated that the data centre boasts the same level of
-            quality as those used by tech giants like Facebook and Google.
+            The world-class nature of the facility was further emphasised by Mr. Choi. He stated
+            that the data centre boasts the same level of quality as those used by tech giants like
+            Facebook and Google.
             <br />
             <br />
-            The importance of local data storage for African nations was further
-            underscored by Ladi Okuneye, CEO of UniCloud Africa. He stressed the
-            critical role data plays in today's world, likening it to "the next
-            oil globally." According to Mr. Okuneye, the ability for African
-            countries to store their own data is becoming increasingly vital as
-            its value continues to rise.
+            The importance of local data storage for African nations was further underscored by Ladi
+            Okuneye, CEO of UniCloud Africa. He stressed the critical role data plays in today's
+            world, likening it to "the next oil globally." According to Mr. Okuneye, the ability for
+            African countries to store their own data is becoming increasingly vital as its value
+            continues to rise.
             <br />
             <br />
-            This partnership between Africa Data Centres and Onix Data Centre
-            signifies a significant step forward for Ghana and West Africa in
-            the ever-evolving world of data storage. As Africa's digital
-            landscape continues to flourish, this focus on local solutions is
-            likely to become even more prominent.
+            This partnership between Africa Data Centres and Onix Data Centre signifies a
+            significant step forward for Ghana and West Africa in the ever-evolving world of data
+            storage. As Africa's digital landscape continues to flourish, this focus on local
+            solutions is likely to become even more prominent.
           </p>
         </div>
         <div className=" mt-16 md:px-[15%] w-full">
@@ -113,12 +106,9 @@ const ExtResouce = () => {
               className="z-10 absolute top-0 h-full w-full object-cover block md:hidden"
               alt=""
             />
-            <p className=" font-semibold text-xl md:text-3xl">
-              Want product news and updates
-            </p>
+            <p className=" font-semibold text-xl md:text-3xl">Want product news and updates</p>
             <p className=" font-normal px-4 md:px-0 text-lg md:text-xl">
-              Subscribe to UniCloud Africa blog to get update right in your
-              inbox
+              Subscribe to UniCloud Africa blog to get update right in your inbox
             </p>
             <div className=" flex flex-col md:flex-row items-center justify-center z-20  mt-4 md:space-x-6 space-y-4 md:space-y-0">
               <input

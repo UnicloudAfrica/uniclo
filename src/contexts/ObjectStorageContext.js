@@ -8,7 +8,7 @@ import React, {
   useState,
 } from "react";
 import objectStorageApi from "../services/objectStorageApi";
-import ToastUtils from "../utils/toastUtil";
+import ToastUtils from "../utils/toastUtil.ts";
 import useAdminAuthStore from "../stores/adminAuthStore";
 import useClientAuthStore from "../stores/clientAuthStore";
 import useTenantAuthStore from "../stores/tenantAuthStore";
@@ -29,11 +29,9 @@ const createTimelineEntry = (status, note) => ({
   timestamp: new Date().toISOString(),
 });
 
-const normalizeCurrency = (code) =>
-  (code || "USD").toUpperCase().trim() || "USD";
+const normalizeCurrency = (code) => (code || "USD").toUpperCase().trim() || "USD";
 
-const normalizeCountry = (code) =>
-  (code || "US").toUpperCase().trim() || "US";
+const normalizeCountry = (code) => (code || "US").toUpperCase().trim() || "US";
 
 export const ObjectStorageProvider = ({ children }) => {
   const [orders, setOrders] = useState(() => {
@@ -52,11 +50,7 @@ export const ObjectStorageProvider = ({ children }) => {
   const adminToken = useAdminAuthStore((state) => state.token);
   const clientToken = useClientAuthStore((state) => state.token);
   const userToken = useTenantAuthStore((state) => state.token);
-  const activeToken =
-    adminToken ||
-    clientToken ||
-    userToken ||
-    null;
+  const activeToken = adminToken || clientToken || userToken || null;
   const [accounts, setAccounts] = useState([]);
   const [accountsLoading, setAccountsLoading] = useState(false);
   const [accountsError, setAccountsError] = useState(null);
@@ -99,10 +93,7 @@ export const ObjectStorageProvider = ({ children }) => {
   const syncAccountQuery = useCallback((nextQuery) => {
     accountQueryRef.current = nextQuery;
     setAccountQueryState((prev) => {
-      if (
-        prev.page === nextQuery.page &&
-        prev.per_page === nextQuery.per_page
-      ) {
+      if (prev.page === nextQuery.page && prev.per_page === nextQuery.per_page) {
         return prev;
       }
       return nextQuery;
@@ -164,35 +155,38 @@ export const ObjectStorageProvider = ({ children }) => {
     };
   }, [loadAccounts, activeToken]);
 
-  const loadBuckets = useCallback(async (accountId, { force = false } = {}) => {
-    if (!accountId) {
-      return [];
-    }
+  const loadBuckets = useCallback(
+    async (accountId, { force = false } = {}) => {
+      if (!accountId) {
+        return [];
+      }
 
-    if (!activeToken) {
-      return accountBucketsRef.current[accountId] ?? [];
-    }
+      if (!activeToken) {
+        return accountBucketsRef.current[accountId] ?? [];
+      }
 
-    if (!force && accountBucketsRef.current[accountId]) {
-      return accountBucketsRef.current[accountId];
-    }
+      if (!force && accountBucketsRef.current[accountId]) {
+        return accountBucketsRef.current[accountId];
+      }
 
-    setBucketLoading((prev) => ({ ...prev, [accountId]: true }));
-    setBucketErrors((prev) => ({ ...prev, [accountId]: null }));
+      setBucketLoading((prev) => ({ ...prev, [accountId]: true }));
+      setBucketErrors((prev) => ({ ...prev, [accountId]: null }));
 
-    try {
-      const data = await objectStorageApi.fetchBuckets(accountId);
-      setAccountBuckets((prev) => ({ ...prev, [accountId]: data }));
-      return data;
-    } catch (error) {
-      const message = error?.message || "Unable to load buckets.";
-      setBucketErrors((prev) => ({ ...prev, [accountId]: message }));
-      ToastUtils.error(message);
-      throw error;
-    } finally {
-      setBucketLoading((prev) => ({ ...prev, [accountId]: false }));
-    }
-  }, [activeToken]);
+      try {
+        const data = await objectStorageApi.fetchBuckets(accountId);
+        setAccountBuckets((prev) => ({ ...prev, [accountId]: data }));
+        return data;
+      } catch (error) {
+        const message = error?.message || "Unable to load buckets.";
+        setBucketErrors((prev) => ({ ...prev, [accountId]: message }));
+        ToastUtils.error(message);
+        throw error;
+      } finally {
+        setBucketLoading((prev) => ({ ...prev, [accountId]: false }));
+      }
+    },
+    [activeToken]
+  );
 
   const createBucket = useCallback(
     async (accountId, payload) => {
@@ -248,9 +242,7 @@ export const ObjectStorageProvider = ({ children }) => {
 
       const baseStatus =
         payload.status ||
-        (payload.paymentStatus === "paid"
-          ? "payment_confirmed"
-          : "pending_payment");
+        (payload.paymentStatus === "paid" ? "payment_confirmed" : "pending_payment");
 
       const order = {
         id,
@@ -274,9 +266,7 @@ export const ObjectStorageProvider = ({ children }) => {
         paymentMethod: payload.paymentMethod || "invoice",
         paymentStatus: payload.paymentStatus || "pending",
         status: baseStatus,
-        timeline: [
-          createTimelineEntry(baseStatus, payload.timelineNote || "Order created"),
-        ],
+        timeline: [createTimelineEntry(baseStatus, payload.timelineNote || "Order created")],
         notes: payload.notes || "",
         createdBy: payload.createdBy || "system",
         reviewer: payload.reviewer || null,
@@ -294,8 +284,7 @@ export const ObjectStorageProvider = ({ children }) => {
     setOrders((prev) =>
       prev.map((order) => {
         if (order.id !== id) return order;
-        const updates =
-          typeof updater === "function" ? updater(order) : updater || {};
+        const updates = typeof updater === "function" ? updater(order) : updater || {};
         const nextOrder = {
           ...order,
           ...updates,
@@ -305,10 +294,7 @@ export const ObjectStorageProvider = ({ children }) => {
         if (updates.status && updates.status !== order.status) {
           nextOrder.timeline = [
             ...(order.timeline || []),
-            createTimelineEntry(
-              updates.status,
-              updates.timelineNote || "Status updated"
-            ),
+            createTimelineEntry(updates.status, updates.timelineNote || "Status updated"),
           ];
         }
 
@@ -419,19 +405,13 @@ export const ObjectStorageProvider = ({ children }) => {
     ]
   );
 
-  return (
-    <ObjectStorageContext.Provider value={value}>
-      {children}
-    </ObjectStorageContext.Provider>
-  );
+  return <ObjectStorageContext.Provider value={value}>{children}</ObjectStorageContext.Provider>;
 };
 
 export const useObjectStorage = () => {
   const context = useContext(ObjectStorageContext);
   if (!context) {
-    throw new Error(
-      "useObjectStorage must be used within an ObjectStorageProvider"
-    );
+    throw new Error("useObjectStorage must be used within an ObjectStorageProvider");
   }
   return context;
 };

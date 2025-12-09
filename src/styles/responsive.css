@@ -36,7 +36,7 @@
     --grid-gap: 24px;
     --header-height: 80px;
   }
-  
+
   .container-responsive {
     max-width: 1280px;
   }
@@ -151,7 +151,7 @@
   .modern-table-responsive table {
     min-width: 600px;
   }
-  
+
   .modern-table-responsive .table-actions {
     position: sticky;
     right: 0;
@@ -408,7 +408,7 @@
     flex-direction: row;
     align-items: center;
   }
-  
+
   .form-row-responsive > * {
     flex: 1;
   }

@@ -11,10 +11,7 @@ const fetchSubnets = async ({ project_id, region }) => {
   if (region) params.append("region", region);
 
   const queryString = params.toString();
-  const res = await silentApi(
-    "GET",
-    `/business/subnets${queryString ? `?${queryString}` : ""}`
-  );
+  const res = await silentApi("GET", `/business/subnets${queryString ? `?${queryString}` : ""}`);
   if (!res.data) throw new Error("Failed to fetch subnets");
   return res.data;
 };
@@ -50,10 +47,7 @@ const syncSubnets = async ({ project_id, region }) => {
   params.append("refresh", "1");
 
   const queryString = params.toString();
-  const res = await silentApi(
-    "GET",
-    `/business/subnets${queryString ? `?${queryString}` : ""}`
-  );
+  const res = await silentApi("GET", `/business/subnets${queryString ? `?${queryString}` : ""}`);
   if (!res.data) throw new Error("Failed to sync subnets");
   return res.data;
 };

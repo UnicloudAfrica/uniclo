@@ -4,14 +4,7 @@ import { useParams, Link } from "react-router-dom";
 import { useRef, useEffect, useState } from "react";
 import { initializeApp } from "firebase/app";
 import arrow from "./assets/arrow-down.svg";
-import {
-  getFirestore,
-  getDoc,
-  doc,
-  getDocs,
-  collection,
-  query,
-} from "firebase/firestore";
+import { getFirestore, getDoc, doc, getDocs, collection, query } from "firebase/firestore";
 import { motion } from "framer-motion";
 import time from "./assets/time.svg";
 import dollar from "./assets/dollar.svg";
@@ -161,18 +154,13 @@ const DetailedCareer = () => {
     setSelectedCountry(selectedCode);
 
     // Set the initial part of the phone number based on the selected country's code
-    const countryCode = countryList.find(
-      (country) => country.code === selectedCode
-    );
+    const countryCode = countryList.find((country) => country.code === selectedCode);
     setPhoneNumber(countryCode ? countryCode.code : "");
   };
 
   const handlePhoneNumberChange = (e) => {
     // Extract the part of the phone number after the country code
-    const enteredPhoneNumber = e.target.value.replace(
-      `+${selectedCountry} `,
-      ""
-    );
+    const enteredPhoneNumber = e.target.value.replace(`+${selectedCountry} `, "");
 
     // Update the phone number state with the entered part
     setPhoneNumber(enteredPhoneNumber);
@@ -372,25 +360,19 @@ const DetailedCareer = () => {
                     onClick={handleLinkCopy}
                     className=" flex px-4 py-1 md:px-6 md:py-2 border border-[#EAEBF0] rounded-[30px] justify-center items-center"
                   >
-                    <p className=" text-sm md:text-base font-medium text-[#121212]">
-                      {buttonText}
-                    </p>
+                    <p className=" text-sm md:text-base font-medium text-[#121212]">{buttonText}</p>
                   </button>
                   <button
                     onClick={handleinterest}
                     className=" flex px-4 py-1 md:px-6 md:py-2 bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] rounded-[30px] justify-center items-center"
                   >
-                    <p className="text-sm md:text-base font-medium text-[#fff]">
-                      I am interested
-                    </p>
+                    <p className="text-sm md:text-base font-medium text-[#fff]">I am interested</p>
                   </button>
                 </div>
               </div>
             )}
             <div className=" mt-16">
-              <p className=" text-center font-medium text-xl md:text-2xl">
-                Job Description
-              </p>
+              <p className=" text-center font-medium text-xl md:text-2xl">Job Description</p>
               <p className=" mt-3 text-justify text-[#676767] font-normal text-base">
                 {selectedCareerItem.desc}
               </p>
@@ -432,9 +414,7 @@ const DetailedCareer = () => {
                 onClick={handleinterest}
                 className=" flex px-6 py-2 bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] rounded-[30px] justify-center items-center my-6 "
               >
-                <p className=" text-base font-medium text-[#fff]">
-                  I am interested
-                </p>
+                <p className=" text-base font-medium text-[#fff]">I am interested</p>
               </button>
             )}
           </div>
@@ -482,9 +462,7 @@ const DetailedCareer = () => {
                       }`}
                     />
                   </div>
-                  {lastNameError && (
-                    <p className="text-red-500 text-sm mt-1">{lastNameError}</p>
-                  )}
+                  {lastNameError && <p className="text-red-500 text-sm mt-1">{lastNameError}</p>}
                 </span>
 
                 <span className=" w-full md:w-[48%]">
@@ -506,11 +484,7 @@ const DetailedCareer = () => {
                       firstNameError ? "border border-red-500" : ""
                     }`}
                   />
-                  {firstNameError && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {firstNameError}
-                    </p>
-                  )}
+                  {firstNameError && <p className="text-red-500 text-sm mt-1">{firstNameError}</p>}
                 </span>
               </div>
 
@@ -525,9 +499,7 @@ const DetailedCareer = () => {
                 <select
                   onChange={(e) => {
                     const selectedCountryCode =
-                      countryList.find(
-                        (country) => country.name === e.target.value
-                      )?.code || "";
+                      countryList.find((country) => country.name === e.target.value)?.code || "";
 
                     setCountry(e.target.value);
                     setCode(selectedCountryCode);
@@ -537,10 +509,7 @@ const DetailedCareer = () => {
                     countryError ? "border border-red-500" : ""
                   }`}
                 >
-                  <option
-                    className="text-[#1e1e1e33] placeholder:text-[#1E1E1E33]"
-                    value=""
-                  >
+                  <option className="text-[#1e1e1e33] placeholder:text-[#1E1E1E33]" value="">
                     Select Country
                   </option>
                   {countryList.map((country, index) => (
@@ -550,9 +519,7 @@ const DetailedCareer = () => {
                   ))}
                 </select>
 
-                {countryError && (
-                  <p className="text-red-500 text-sm mt-1">{countryError}</p>
-                )}
+                {countryError && <p className="text-red-500 text-sm mt-1">{countryError}</p>}
               </span>
 
               <span className="w-full block mt-3 ">
@@ -571,10 +538,7 @@ const DetailedCareer = () => {
                     stateError ? "border border-red-500" : ""
                   }`}
                 >
-                  <option
-                    className="text-[#1e1e1e33] placeholder:text-[#1E1E1E33]"
-                    value=""
-                  >
+                  <option className="text-[#1e1e1e33] placeholder:text-[#1E1E1E33]" value="">
                     Select State
                   </option>
                   {stateList.map((state, index) => (
@@ -584,9 +548,7 @@ const DetailedCareer = () => {
                   ))}
                 </select>
 
-                {stateError && (
-                  <p className="text-red-500 text-sm mt-1">{stateError}</p>
-                )}
+                {stateError && <p className="text-red-500 text-sm mt-1">{stateError}</p>}
               </span>
 
               <span className="w-full block mt-3 ">
@@ -608,9 +570,7 @@ const DetailedCareer = () => {
                     emailError ? "border border-red-500" : ""
                   }`}
                 />
-                {emailError && (
-                  <p className="text-red-500 text-sm mt-1">{emailError}</p>
-                )}
+                {emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
               </span>
 
               <span className="w-full block mt-3">
@@ -636,9 +596,7 @@ const DetailedCareer = () => {
                   <input
                     type="tel"
                     value={
-                      selectedCountry !== ""
-                        ? `+${selectedCountry} ${phoneNumber}`
-                        : phoneNumber
+                      selectedCountry !== "" ? `+${selectedCountry} ${phoneNumber}` : phoneNumber
                     }
                     onChange={(e) => handlePhoneNumberChange(e)}
                     placeholder="Enter your phone number"
@@ -648,9 +606,7 @@ const DetailedCareer = () => {
                   />
                 </div>
                 {phoneNumberError && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {phoneNumberError}
-                  </p>
+                  <p className="text-red-500 text-sm mt-1">{phoneNumberError}</p>
                 )}
               </span>
 
@@ -672,9 +628,7 @@ const DetailedCareer = () => {
                   scrollableYearDropdown
                   yearDropdownItemNumber={70}
                 />
-                {dateError && (
-                  <p className="text-red-500 text-sm mt-1">{dateError}</p>
-                )}
+                {dateError && <p className="text-red-500 text-sm mt-1">{dateError}</p>}
               </span>
 
               <span className="w-full block mt-3 ">
@@ -737,9 +691,7 @@ const DetailedCareer = () => {
                     alt=""
                   />
                   {educationLevelError && (
-                    <p className="text-red-500 mb-8 md:mb-0 text-sm mt-1">
-                      {educationLevelError}
-                    </p>
+                    <p className="text-red-500 mb-8 md:mb-0 text-sm mt-1">{educationLevelError}</p>
                   )}
                 </div>
 
@@ -761,9 +713,7 @@ const DetailedCareer = () => {
                       yocError ? "border border-red-500" : ""
                     }`}
                   />
-                  {yocError && (
-                    <p className="text-red-500 text-sm mt-1">{yocError}</p>
-                  )}
+                  {yocError && <p className="text-red-500 text-sm mt-1">{yocError}</p>}
                 </span>
               </div>
 
@@ -786,9 +736,7 @@ const DetailedCareer = () => {
                   }`}
                 />
                 {experienceinYearsError && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {experienceinYearsError}
-                  </p>
+                  <p className="text-red-500 text-sm mt-1">{experienceinYearsError}</p>
                 )}
               </span>
 
@@ -811,9 +759,7 @@ const DetailedCareer = () => {
                     aosError ? "border border-red-500" : ""
                   }`}
                 />
-                {aosError && (
-                  <p className="text-red-500 text-sm mt-1">{aosError}</p>
-                )}
+                {aosError && <p className="text-red-500 text-sm mt-1">{aosError}</p>}
               </span>
 
               <span className="w-full block mt-3 ">
@@ -833,10 +779,7 @@ const DetailedCareer = () => {
                     preferredLocationError ? "border border-red-500" : ""
                   }`}
                 >
-                  <option
-                    className="text-[#1e1e1e33] placeholder:text-[#1E1E1E33]"
-                    value=""
-                  >
+                  <option className="text-[#1e1e1e33] placeholder:text-[#1E1E1E33]" value="">
                     Select
                   </option>
                   <option value="Nigeria">Nigeria</option>
@@ -846,9 +789,7 @@ const DetailedCareer = () => {
                 </select>
 
                 {preferredLocationError && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {preferredLocationError}
-                  </p>
+                  <p className="text-red-500 text-sm mt-1">{preferredLocationError}</p>
                 )}
               </span>
 
@@ -871,9 +812,7 @@ const DetailedCareer = () => {
                     resumeLinkError ? "border border-red-500" : ""
                   }`}
                 />
-                {resumeLinkError && (
-                  <p className="text-red-500 text-sm mt-1">{resumeLinkError}</p>
-                )}
+                {resumeLinkError && <p className="text-red-500 text-sm mt-1">{resumeLinkError}</p>}
               </span>
 
               <button
@@ -881,13 +820,9 @@ const DetailedCareer = () => {
                 className=" w-full flex h-[45px] mt-6 rounded-[30px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] hover:bg-opacity-75 transition-all justify-center items-center"
               >
                 {loading === "No" && (
-                  <p className=" font-Outfit text-base text-white">
-                    Submit Application
-                  </p>
+                  <p className=" font-Outfit text-base text-white">Submit Application</p>
                 )}
-                {loading === "Yes" && (
-                  <img src={load} className=" w-6 h-6" alt="" />
-                )}
+                {loading === "Yes" && <img src={load} className=" w-6 h-6" alt="" />}
               </button>
             </div>
           </div>
@@ -897,9 +832,7 @@ const DetailedCareer = () => {
         <div className=" w-full h-[100vh] fixed top-0 left-0 bg-[#00000057] flex justify-center items-center z-[99999] px-5 md:px-0">
           <div className="w-full md:w-[450px] rounded-[30px] h-[250px] flex flex-col justify-center items-center bg-[#f5f5f4] relative">
             <img src={checked} className=" w-[64px]" alt="" />
-            <p className=" text-2xl font-medium font-Outfit text-[#121212] mt-3">
-              Thank You
-            </p>
+            <p className=" text-2xl font-medium font-Outfit text-[#121212] mt-3">Thank You</p>
             <p className=" text-base font-normal font-Outfit">
               Your Application has been submitted
             </p>
@@ -922,9 +855,7 @@ const DetailedCareer = () => {
             <p className=" text-xl font-medium font-Outfit text-[#121212] mt-3">
               There was an error submitting your application.
             </p>
-            <p className=" text-base font-normal font-Outfit">
-              Please try again later
-            </p>
+            <p className=" text-base font-normal font-Outfit">Please try again later</p>
             <button
               onClick={() => {
                 setErrorMessage(false);

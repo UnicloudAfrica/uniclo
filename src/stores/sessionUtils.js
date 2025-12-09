@@ -2,8 +2,7 @@ import useAdminAuthStore from "./adminAuthStore";
 import useTenantAuthStore from "./tenantAuthStore";
 import useClientAuthStore from "./clientAuthStore";
 
-const normalizeRole = (role) =>
-  typeof role === "string" ? role.toLowerCase() : null;
+const normalizeRole = (role) => (typeof role === "string" ? role.toLowerCase() : null);
 
 /**
  * Clears all persisted auth sessions except the provided role.

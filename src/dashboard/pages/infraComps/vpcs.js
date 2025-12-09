@@ -1,43 +1,30 @@
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  Eye,
-  MapPin,
-  Plus,
-  RefreshCw,
-  Trash2,
-} from "lucide-react";
+import { Eye, MapPin, Plus, RefreshCw, Trash2 } from "lucide-react";
 import {
   useDeleteTenantVpc,
   useFetchTenantVpcs,
   useSyncTenantVpcs,
 } from "../../../hooks/tenantHooks/vpcHooks";
-import ModernButton from "../../../adminDashboard/components/ModernButton";
-import ResourceSection from "../../../adminDashboard/components/ResourceSection";
-import ResourceEmptyState from "../../../adminDashboard/components/ResourceEmptyState";
-import ResourceListCard from "../../../adminDashboard/components/ResourceListCard";
+import { ModernButton } from "../../../shared/components/ui";
+import { ResourceSection } from "../../../shared/components/ui";
+import { ResourceEmptyState } from "../../../shared/components/ui";
+import { ResourceListCard } from "../../../shared/components/ui";
 import TenantAddVpc from "../VpcComps/TenantAddVpcComponent";
 import DeleteVpcModal from "../../../adminDashboard/pages/vpcComps/deleteVpc";
 import ViewVpcModal from "../../../adminDashboard/pages/vpcComps/viewVpc";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 
 const ITEMS_PER_PAGE = 6;
 
-const normalizeStatus = (value) =>
-  value ? value.toString().replace(/_/g, " ").toLowerCase() : "";
+const normalizeStatus = (value) => (value ? value.toString().replace(/_/g, " ").toLowerCase() : "");
 
 const getToneForStatus = (status) => {
   const normalized = normalizeStatus(status);
-  if (
-    ["active", "available", "ready", "associated", "attached"].includes(
-      normalized
-    )
-  ) {
+  if (["active", "available", "ready", "associated", "attached"].includes(normalized)) {
     return "success";
   }
-  if (
-    ["pending", "creating", "syncing", "associating"].includes(normalized)
-  ) {
+  if (["pending", "creating", "syncing", "associating"].includes(normalized)) {
     return "warning";
   }
   if (["failed", "error", "deleting", "detached"].includes(normalized)) {
@@ -67,14 +54,10 @@ const VPCs = ({ projectId = "", region = "" }) => {
   const stats = useMemo(() => {
     const defaults = (vpcs ?? []).filter((item) => item.is_default).length;
     const pending = (vpcs ?? []).filter((item) =>
-      ["pending", "creating", "syncing"].includes(
-        normalizeStatus(item.state || item.status)
-      )
+      ["pending", "creating", "syncing"].includes(normalizeStatus(item.state || item.status))
     ).length;
     const healthy = (vpcs ?? []).filter((item) =>
-      ["available", "active"].includes(
-        normalizeStatus(item.state || item.status)
-      )
+      ["available", "active"].includes(normalizeStatus(item.state || item.status))
     ).length;
 
     const baseStats = [
@@ -208,9 +191,9 @@ const VPCs = ({ projectId = "", region = "" }) => {
                     },
                     vpc.status
                       ? {
-                        label: normalizeStatus(vpc.status) || "unknown",
-                        tone: getToneForStatus(vpc.status),
-                      }
+                          label: normalizeStatus(vpc.status) || "unknown",
+                          tone: getToneForStatus(vpc.status),
+                        }
                       : null,
                   ].filter(Boolean)}
                   actions={[
@@ -239,9 +222,7 @@ const VPCs = ({ projectId = "", region = "" }) => {
                 <ModernButton
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(1, prev - 1))
-                  }
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                   isDisabled={currentPage === 1}
                 >
                   Previous
@@ -252,11 +233,7 @@ const VPCs = ({ projectId = "", region = "" }) => {
                 <ModernButton
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    setCurrentPage((prev) =>
-                      Math.min(totalPages, prev + 1)
-                    )
-                  }
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                   isDisabled={currentPage === totalPages}
                 >
                   Next
@@ -281,11 +258,7 @@ const VPCs = ({ projectId = "", region = "" }) => {
         )}
       </ResourceSection>
 
-      <TenantAddVpc
-        isOpen={isCreateModalOpen}
-        onClose={closeCreateModal}
-        projectId={projectId}
-      />
+      <TenantAddVpc isOpen={isCreateModalOpen} onClose={closeCreateModal} projectId={projectId} />
       <DeleteVpcModal
         isOpen={Boolean(deleteModal)}
         onClose={closeDeleteModal}
@@ -293,11 +266,7 @@ const VPCs = ({ projectId = "", region = "" }) => {
         onConfirm={handleDelete}
         isDeleting={isDeleting}
       />
-      <ViewVpcModal
-        isOpen={Boolean(viewModal)}
-        onClose={closeViewModal}
-        vpc={viewModal}
-      />
+      <ViewVpcModal isOpen={Boolean(viewModal)} onClose={closeViewModal} vpc={viewModal} />
     </>
   );
 };

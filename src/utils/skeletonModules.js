@@ -30,10 +30,7 @@ export const SkeletonModules = () => {
       <div className="w-full">
         {/* Accordion Skeleton */}
         {accordionSkeletonData.map((item) => (
-          <div
-            key={item.id}
-            className="border-b border-gray-200 last:border-b-0"
-          >
+          <div key={item.id} className="border-b border-gray-200 last:border-b-0">
             {/* Header Skeleton */}
             <div className="w-full flex items-center justify-between py-4 px-0 text-left">
               <Skeleton width={200} height={24} />

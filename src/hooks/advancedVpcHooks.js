@@ -4,7 +4,7 @@ import silentApi from "../index/silent";
 
 /**
  * Advanced VPC Hooks
- * 
+ *
  * These hooks provide functionality for advanced VPC features including:
  * - NAT Gateways
  * - Network ACLs
@@ -20,7 +20,10 @@ import silentApi from "../index/silent";
 
 const fetchNatGateways = async (params = {}) => {
   const queryString = new URLSearchParams(params).toString();
-  const res = await silentApi("GET", `/business/nat-gateways${queryString ? `?${queryString}` : ""}`);
+  const res = await silentApi(
+    "GET",
+    `/business/nat-gateways${queryString ? `?${queryString}` : ""}`
+  );
   if (!res.data) throw new Error("Failed to fetch NAT gateways");
   return res;
 };
@@ -67,7 +70,10 @@ const detachNatGateway = async ({ id, detachmentData }) => {
 
 const fetchNetworkAcls = async (params = {}) => {
   const queryString = new URLSearchParams(params).toString();
-  const res = await silentApi("GET", `/business/network-acls${queryString ? `?${queryString}` : ""}`);
+  const res = await silentApi(
+    "GET",
+    `/business/network-acls${queryString ? `?${queryString}` : ""}`
+  );
   if (!res.data) throw new Error("Failed to fetch Network ACLs");
   return res;
 };
@@ -102,7 +108,10 @@ const deleteNetworkAcl = async (id) => {
 
 const fetchVpcSecurityPostures = async (params = {}) => {
   const queryString = new URLSearchParams(params).toString();
-  const res = await silentApi("GET", `/business/vpc-security-postures${queryString ? `?${queryString}` : ""}`);
+  const res = await silentApi(
+    "GET",
+    `/business/vpc-security-postures${queryString ? `?${queryString}` : ""}`
+  );
   if (!res.data) throw new Error("Failed to fetch VPC security postures");
   return res;
 };
@@ -131,7 +140,10 @@ const assessSecurityPosture = async ({ id, assessmentData }) => {
 
 const fetchVpcPeerings = async (params = {}) => {
   const queryString = new URLSearchParams(params).toString();
-  const res = await silentApi("GET", `/business/vpc-peering-connections${queryString ? `?${queryString}` : ""}`);
+  const res = await silentApi(
+    "GET",
+    `/business/vpc-peering-connections${queryString ? `?${queryString}` : ""}`
+  );
   if (!res.data) throw new Error("Failed to fetch VPC peering connections");
   return res;
 };
@@ -166,7 +178,10 @@ const rejectVpcPeering = async ({ id, rejectionData }) => {
 
 const fetchVpcEndpoints = async (params = {}) => {
   const queryString = new URLSearchParams(params).toString();
-  const res = await silentApi("GET", `/business/vpc-endpoints${queryString ? `?${queryString}` : ""}`);
+  const res = await silentApi(
+    "GET",
+    `/business/vpc-endpoints${queryString ? `?${queryString}` : ""}`
+  );
   if (!res.data) throw new Error("Failed to fetch VPC endpoints");
   return res;
 };

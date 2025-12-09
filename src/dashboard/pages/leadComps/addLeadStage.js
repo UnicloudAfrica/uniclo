@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useFetchTenantAdmins } from "../../../hooks/adminUserHooks";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import { useCreateCustomStage } from "../../../hooks/tenantHooks/leadsHook";
 
 const stageOptions = [
@@ -100,9 +100,7 @@ const AddLeadStage = ({ isOpen, onClose }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full">
         <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] w-full">
-          <h2 className="text-lg font-semibold text-[#575758]">
-            Add Lead Stage
-          </h2>
+          <h2 className="text-lg font-semibold text-[#575758]">Add Lead Stage</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
@@ -114,10 +112,7 @@ const AddLeadStage = ({ isOpen, onClose }) => {
         <div className="px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start">
           <div className="space-y-4 w-full">
             <div>
-              <label
-                htmlFor="stageName"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="stageName" className="block text-sm font-medium text-gray-700 mb-2">
                 Stage Name<span className="text-red-500">*</span>
               </label>
               <select
@@ -160,10 +155,7 @@ const AddLeadStage = ({ isOpen, onClose }) => {
             </div>
 
             <div>
-              <label
-                htmlFor="assignedTo"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="assignedTo" className="block text-sm font-medium text-gray-700 mb-2">
                 Assigned To (optional)
               </label>
               <select

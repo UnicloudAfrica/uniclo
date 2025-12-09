@@ -270,12 +270,8 @@ const General = () => {
             onClick={handleUpdate}
             className=" block ml-auto px-6 py-2 mt-3 text-sm md:text-base font-Outfit text-white rounded-xl bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] hover:bg-opacity-75 transition-all"
           >
-            {loading === "No" && (
-              <p className=" font-Outfit text-base text-white">Update</p>
-            )}
-            {loading === "Yes" && (
-              <img src={load} className=" w-6 h-6" alt="" />
-            )}
+            {loading === "No" && <p className=" font-Outfit text-base text-white">Update</p>}
+            {loading === "Yes" && <img src={load} className=" w-6 h-6" alt="" />}
           </button>
         </div>
       </div>
@@ -297,9 +293,7 @@ const General = () => {
           onClick={handleUpdateaddy}
           className=" block ml-auto px-6 py-2 mt-3 text-sm md:text-base font-Outfit text-white rounded-xl bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] hover:bg-opacity-75 transition-all"
         >
-          {loading1 === "No" && (
-            <p className=" font-Outfit text-base text-white">Update</p>
-          )}
+          {loading1 === "No" && <p className=" font-Outfit text-base text-white">Update</p>}
           {loading1 === "Yes" && <img src={load} className=" w-6 h-6" alt="" />}
         </button>
       </div>
@@ -321,9 +315,7 @@ const General = () => {
           onClick={handleUpdateMail}
           className=" block ml-auto px-6 py-2 mt-3 text-sm md:text-base font-Outfit text-white rounded-xl bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] hover:bg-opacity-75 transition-all"
         >
-          {loading2 === "No" && (
-            <p className=" font-Outfit text-base text-white">Update</p>
-          )}
+          {loading2 === "No" && <p className=" font-Outfit text-base text-white">Update</p>}
           {loading2 === "Yes" && <img src={load} className=" w-6 h-6" alt="" />}
         </button>
       </div>
@@ -345,9 +337,7 @@ const General = () => {
           onClick={handleUpdatefb}
           className=" block ml-auto px-6 py-2 mt-3 text-sm md:text-base font-Outfit text-white rounded-xl bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] hover:bg-opacity-75 transition-all"
         >
-          {loading3 === "No" && (
-            <p className=" font-Outfit text-base text-white">Update</p>
-          )}
+          {loading3 === "No" && <p className=" font-Outfit text-base text-white">Update</p>}
           {loading3 === "Yes" && <img src={load} className=" w-6 h-6" alt="" />}
         </button>
       </div>
@@ -369,9 +359,7 @@ const General = () => {
           onClick={handleUpdateig}
           className=" block ml-auto px-6 py-2 mt-3 text-sm md:text-base font-Outfit text-white rounded-xl bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] hover:bg-opacity-75 transition-all"
         >
-          {loading4 === "No" && (
-            <p className=" font-Outfit text-base text-white">Update</p>
-          )}
+          {loading4 === "No" && <p className=" font-Outfit text-base text-white">Update</p>}
           {loading4 === "Yes" && <img src={load} className=" w-6 h-6" alt="" />}
         </button>
       </div>
@@ -393,9 +381,7 @@ const General = () => {
           onClick={handleUpdatewhatsapp}
           className=" block ml-auto px-6 py-2 mt-3 text-sm md:text-base font-Outfit text-white rounded-xl bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] hover:bg-opacity-75 transition-all"
         >
-          {loading5 === "No" && (
-            <p className=" font-Outfit text-base text-white">Update</p>
-          )}
+          {loading5 === "No" && <p className=" font-Outfit text-base text-white">Update</p>}
           {loading5 === "Yes" && <img src={load} className=" w-6 h-6" alt="" />}
         </button>
       </div>
@@ -417,9 +403,7 @@ const General = () => {
           onClick={handleUpdatelinkedin}
           className=" block ml-auto px-6 py-2 mt-3 text-sm md:text-base font-Outfit text-white rounded-xl bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] hover:bg-opacity-75 transition-all"
         >
-          {loading6 === "No" && (
-            <p className=" font-Outfit text-base text-white">Update</p>
-          )}
+          {loading6 === "No" && <p className=" font-Outfit text-base text-white">Update</p>}
           {loading6 === "Yes" && <img src={load} className=" w-6 h-6" alt="" />}
         </button>
       </div>
@@ -441,9 +425,7 @@ const General = () => {
           onClick={handleUpdatetwitter}
           className=" block ml-auto px-6 py-2 mt-3 text-sm md:text-base font-Outfit text-white rounded-xl bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] hover:bg-opacity-75 transition-all"
         >
-          {loading7 === "No" && (
-            <p className=" font-Outfit text-base text-white">Update</p>
-          )}
+          {loading7 === "No" && <p className=" font-Outfit text-base text-white">Update</p>}
           {loading7 === "Yes" && <img src={load} className=" w-6 h-6" alt="" />}
         </button>
       </div>

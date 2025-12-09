@@ -1,0 +1,37 @@
+// @ts-nocheck
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import AdminHeadbar from "../components/adminHeadbar";
+import AdminSidebar from "../components/AdminSidebar";
+import AdminPageShell from "../components/AdminPageShell";
+import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
+import AddClientModal from "./clientComps/AddClient";
+import { ModernButton } from "../../shared/components/ui";
+
+const AdminClientCreate = () => {
+  const navigate = useNavigate();
+
+  const goBack = () => navigate("/admin-dashboard/clients");
+
+  return (
+    <>
+      <AdminHeadbar />
+      <AdminSidebar />
+      <AdminPageShell
+        title="Add Client"
+        description="Create a new client profile and assign the appropriate tenant."
+        actions={
+          <ModernButton variant="outline" onClick={goBack}>
+            Back to Clients
+          </ModernButton>
+        }
+        contentClassName="space-y-6"
+      >
+        <TenantClientsSideMenu />
+        <AddClientModal isOpen mode="page" onClose={goBack} />
+      </AdminPageShell>
+    </>
+  );
+};
+
+export default AdminClientCreate;

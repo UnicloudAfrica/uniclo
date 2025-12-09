@@ -74,11 +74,7 @@ const fetchProductCharge = async () => {
 
 // POST: Create new product charge data
 const createProductCharge = async (productChargeData) => {
-  const res = await tenantApi(
-    "POST",
-    "/admin/product-charge",
-    productChargeData
-  );
+  const res = await tenantApi("POST", "/admin/product-charge", productChargeData);
   if (!res.data) {
     throw new Error("Failed to create product charge data");
   }
@@ -87,11 +83,7 @@ const createProductCharge = async (productChargeData) => {
 
 // PATCH: Update existing product charge data
 const updateProductCharge = async (productChargeData) => {
-  const res = await tenantApi(
-    "PATCH",
-    "/admin/product-charge",
-    productChargeData
-  );
+  const res = await tenantApi("PATCH", "/admin/product-charge", productChargeData);
   if (!res.data) {
     throw new Error("Failed to update product charge data");
   }

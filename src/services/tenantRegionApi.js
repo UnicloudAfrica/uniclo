@@ -1,14 +1,14 @@
 /**
  * Tenant Region Management API Service
- * 
+ *
  * Handles tenant-owned region requests, MSP credential verification,
  * and revenue share tracking for tenant marketplace functionality.
  */
 
-import config from '../config';
-import useAdminAuthStore from '../stores/adminAuthStore';
-import useTenantAuthStore from '../stores/tenantAuthStore';
-import ToastUtils from '../utils/toastUtil';
+import config from "../config";
+import useAdminAuthStore from "../stores/adminAuthStore";
+import useTenantAuthStore from "../stores/tenantAuthStore";
+import ToastUtils from "../utils/toastUtil.ts";
 
 class TenantRegionApiService {
   /**
@@ -19,18 +19,14 @@ class TenantRegionApiService {
     const tenantState = useTenantAuthStore.getState();
     const token = tenantState.token || adminState.token;
     const headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      "Content-Type": "application/json",
+      Accept: "application/json",
     };
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
-    if (
-      adminState &&
-      adminState.isCentralDomain === false &&
-      adminState.currentTenant?.slug
-    ) {
-      headers['X-Tenant-Slug'] = adminState.currentTenant.slug;
+    if (adminState && adminState.isCentralDomain === false && adminState.currentTenant?.slug) {
+      headers["X-Tenant-Slug"] = adminState.currentTenant.slug;
     }
     return headers;
   }
@@ -41,7 +37,7 @@ class TenantRegionApiService {
   async fetchRegionRequests() {
     try {
       const response = await fetch(`${config.tenantURL}/admin/region-requests`, {
-        method: 'GET',
+        method: "GET",
         headers: this.getAuthHeaders(),
       });
 
@@ -50,13 +46,13 @@ class TenantRegionApiService {
       if (data.success) {
         return {
           success: true,
-          data: data.data || []
+          data: data.data || [],
         };
       } else {
-        throw new Error(data.message || 'Failed to fetch region requests');
+        throw new Error(data.message || "Failed to fetch region requests");
       }
     } catch (error) {
-      console.error('Error fetching region requests:', error);
+      console.error("Error fetching region requests:", error);
       throw error;
     }
   }
@@ -67,7 +63,7 @@ class TenantRegionApiService {
   async createRegionRequest(regionData) {
     try {
       const response = await fetch(`${config.tenantURL}/admin/region-requests`, {
-        method: 'POST',
+        method: "POST",
         headers: this.getAuthHeaders(),
         body: JSON.stringify(regionData),
       });
@@ -75,16 +71,16 @@ class TenantRegionApiService {
       const data = await response.json();
 
       if (data.success || response.ok) {
-        ToastUtils.success(data.message || 'Region request submitted successfully');
+        ToastUtils.success(data.message || "Region request submitted successfully");
         return {
           success: true,
-          data: data.data
+          data: data.data,
         };
       } else {
-        throw new Error(data.message || 'Failed to submit region request');
+        throw new Error(data.message || "Failed to submit region request");
       }
     } catch (error) {
-      console.error('Error creating region request:', error);
+      console.error("Error creating region request:", error);
       ToastUtils.error(error.message);
       throw error;
     }
@@ -96,7 +92,7 @@ class TenantRegionApiService {
   async fetchRegionRequestById(id) {
     try {
       const response = await fetch(`${config.tenantURL}/admin/region-requests/${id}`, {
-        method: 'GET',
+        method: "GET",
         headers: this.getAuthHeaders(),
       });
 
@@ -105,10 +101,10 @@ class TenantRegionApiService {
       if (data.success) {
         return {
           success: true,
-          data: data.data
+          data: data.data,
         };
       } else {
-        throw new Error(data.message || 'Failed to fetch region request');
+        throw new Error(data.message || "Failed to fetch region request");
       }
     } catch (error) {
       console.error(`Error fetching region request ${id}:`, error);
@@ -122,7 +118,7 @@ class TenantRegionApiService {
   async updateFulfillmentMode(id, mode) {
     try {
       const response = await fetch(`${config.tenantURL}/admin/region-requests/${id}`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: this.getAuthHeaders(),
         body: JSON.stringify({ fulfillment_mode: mode }),
       });
@@ -130,13 +126,13 @@ class TenantRegionApiService {
       const data = await response.json();
 
       if (data.success || response.ok) {
-        ToastUtils.success(data.message || 'Fulfillment mode updated successfully');
+        ToastUtils.success(data.message || "Fulfillment mode updated successfully");
         return {
           success: true,
-          data: data.data
+          data: data.data,
         };
       } else {
-        throw new Error(data.message || 'Failed to update fulfillment mode');
+        throw new Error(data.message || "Failed to update fulfillment mode");
       }
     } catch (error) {
       console.error(`Error updating fulfillment mode for region ${id}:`, error);
@@ -151,20 +147,20 @@ class TenantRegionApiService {
   async cancelRegionRequest(id) {
     try {
       const response = await fetch(`${config.tenantURL}/admin/region-requests/${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: this.getAuthHeaders(),
       });
 
       const data = await response.json();
 
       if (data.success || response.ok) {
-        ToastUtils.success(data.message || 'Region request cancelled successfully');
+        ToastUtils.success(data.message || "Region request cancelled successfully");
         return {
           success: true,
-          message: data.message
+          message: data.message,
         };
       } else {
-        throw new Error(data.message || 'Failed to cancel region request');
+        throw new Error(data.message || "Failed to cancel region request");
       }
     } catch (error) {
       console.error(`Error cancelling region request ${id}:`, error);
@@ -178,22 +174,25 @@ class TenantRegionApiService {
    */
   async verifyCredentials(regionId, credentials) {
     try {
-      const response = await fetch(`${config.tenantURL}/admin/region-requests/${regionId}/verify-credentials`, {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(credentials),
-      });
+      const response = await fetch(
+        `${config.tenantURL}/admin/region-requests/${regionId}/verify-credentials`,
+        {
+          method: "POST",
+          headers: this.getAuthHeaders(),
+          body: JSON.stringify(credentials),
+        }
+      );
 
       const data = await response.json();
 
       if (data.success || response.ok) {
-        ToastUtils.success(data.message || 'Credentials verified successfully');
+        ToastUtils.success(data.message || "Credentials verified successfully");
         return {
           success: true,
-          verified: data.verified || true
+          verified: data.verified || true,
         };
       } else {
-        throw new Error(data.message || 'Failed to verify credentials');
+        throw new Error(data.message || "Failed to verify credentials");
       }
     } catch (error) {
       console.error(`Error verifying credentials for region ${regionId}:`, error);
@@ -208,10 +207,10 @@ class TenantRegionApiService {
   async fetchRevenueShares(params = {}) {
     try {
       const queryString = new URLSearchParams(params).toString();
-      const url = `${config.tenantURL}/admin/revenue-shares${queryString ? `?${queryString}` : ''}`;
-      
+      const url = `${config.tenantURL}/admin/revenue-shares${queryString ? `?${queryString}` : ""}`;
+
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: this.getAuthHeaders(),
       });
 
@@ -222,13 +221,13 @@ class TenantRegionApiService {
           success: true,
           data: data.data || [],
           stats: data.stats || {},
-          pagination: data.pagination || {}
+          pagination: data.pagination || {},
         };
       } else {
-        throw new Error(data.message || 'Failed to fetch revenue shares');
+        throw new Error(data.message || "Failed to fetch revenue shares");
       }
     } catch (error) {
-      console.error('Error fetching revenue shares:', error);
+      console.error("Error fetching revenue shares:", error);
       throw error;
     }
   }
@@ -239,10 +238,10 @@ class TenantRegionApiService {
   async fetchRevenueStats(params = {}) {
     try {
       const queryString = new URLSearchParams(params).toString();
-      const url = `${config.tenantURL}/admin/revenue-shares-stats${queryString ? `?${queryString}` : ''}`;
-      
+      const url = `${config.tenantURL}/admin/revenue-shares-stats${queryString ? `?${queryString}` : ""}`;
+
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: this.getAuthHeaders(),
       });
 
@@ -251,13 +250,13 @@ class TenantRegionApiService {
       if (data.success) {
         return {
           success: true,
-          data: data.data || {}
+          data: data.data || {},
         };
       } else {
-        throw new Error(data.message || 'Failed to fetch revenue statistics');
+        throw new Error(data.message || "Failed to fetch revenue statistics");
       }
     } catch (error) {
-      console.error('Error fetching revenue stats:', error);
+      console.error("Error fetching revenue stats:", error);
       throw error;
     }
   }
@@ -268,34 +267,34 @@ class TenantRegionApiService {
   async exportRevenueShares(params = {}) {
     try {
       const queryString = new URLSearchParams(params).toString();
-      const url = `${config.tenantURL}/admin/revenue-shares-export${queryString ? `?${queryString}` : ''}`;
-      
+      const url = `${config.tenantURL}/admin/revenue-shares-export${queryString ? `?${queryString}` : ""}`;
+
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${useAdminAuthStore.getState().token}`,
-          'Accept': 'text/csv',
+          Authorization: `Bearer ${useAdminAuthStore.getState().token}`,
+          Accept: "text/csv",
         },
       });
 
       if (response.ok) {
         const blob = await response.blob();
         const downloadUrl = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
+        const link = document.createElement("a");
         link.href = downloadUrl;
-        link.download = `revenue-shares-${new Date().toISOString().split('T')[0]}.csv`;
+        link.download = `revenue-shares-${new Date().toISOString().split("T")[0]}.csv`;
         document.body.appendChild(link);
         link.click();
         link.remove();
         window.URL.revokeObjectURL(downloadUrl);
 
-        ToastUtils.success('Revenue shares exported successfully');
+        ToastUtils.success("Revenue shares exported successfully");
         return { success: true };
       } else {
-        throw new Error('Failed to export revenue shares');
+        throw new Error("Failed to export revenue shares");
       }
     } catch (error) {
-      console.error('Error exporting revenue shares:', error);
+      console.error("Error exporting revenue shares:", error);
       ToastUtils.error(error.message);
       throw error;
     }

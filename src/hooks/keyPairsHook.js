@@ -11,10 +11,7 @@ const fetchKeyPairs = async ({ project_id, region }) => {
   if (region) params.append("region", region);
 
   const queryString = params.toString();
-  const res = await silentApi(
-    "GET",
-    `/business/key-pairs${queryString ? `?${queryString}` : ""}`
-  );
+  const res = await silentApi("GET", `/business/key-pairs${queryString ? `?${queryString}` : ""}`);
   if (!res?.data) throw new Error("Failed to fetch key pairs");
   return res?.data;
 };
@@ -50,10 +47,7 @@ const syncKeyPairs = async ({ project_id, region }) => {
   params.append("refresh", "1");
 
   const queryString = params.toString();
-  const res = await silentApi(
-    "GET",
-    `/business/key-pairs${queryString ? `?${queryString}` : ""}`
-  );
+  const res = await silentApi("GET", `/business/key-pairs${queryString ? `?${queryString}` : ""}`);
   if (!res?.data) throw new Error("Failed to sync key pairs");
   return res.data;
 };

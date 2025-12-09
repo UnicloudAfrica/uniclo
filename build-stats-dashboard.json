@@ -1,0 +1,18 @@
+
+> unicloud@0.1.0 build
+> react-scripts build --profile --json
+
+Creating an optimized production build...
+Failed to compile.
+
+TS2322: Type '{ data: Partner[]; columns: any; title: string; emptyMessage: string; pagination: boolean; searchable: false; }' is not assignable to type 'IntrinsicAttributes & ModernTableProps<Partner>'.
+  Property 'pagination' does not exist on type 'IntrinsicAttributes & ModernTableProps<Partner>'.
+    188 |                         title="Recent Partners"
+    189 |                         emptyMessage="No recent partners found."
+  > 190 |                         pagination={false}
+        |                         ^^^^^^^^^^
+    191 |                         searchable={false}
+    192 |                     />
+    193 |                 </ModernCard>
+
+

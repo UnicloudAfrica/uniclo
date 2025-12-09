@@ -151,8 +151,7 @@ export const useFetchProfile = (options = {}) => {
   const queryClient = useQueryClient();
   const profileQueryState = queryClient.getQueryState(["profile"]);
 
-  const shouldEnable =
-    !profileQueryState || profileQueryState.status !== "error";
+  const shouldEnable = !profileQueryState || profileQueryState.status !== "error";
 
   return useQuery({
     queryKey: ["profile"],
@@ -197,11 +196,7 @@ export const useFetchChargeOptions = (options = {}) => {
   });
 };
 // Hook to fetch computer instances
-export const useFetchComputerInstances = (
-  currency = "USD",
-  region,
-  options = {}
-) => {
+export const useFetchComputerInstances = (currency = "USD", region, options = {}) => {
   return useQuery({
     queryKey: ["computer-instances", currency, region],
     queryFn: () => fetchComputerInstances(currency, region),
@@ -241,11 +236,7 @@ export const useFetchBandwidths = (currency = "USD", region, options = {}) => {
   });
 };
 // Hook to fetch cross connects
-export const useFetchCrossConnect = (
-  currency = "USD",
-  region,
-  options = {}
-) => {
+export const useFetchCrossConnect = (currency = "USD", region, options = {}) => {
   return useQuery({
     queryKey: ["cross-connects", currency, region],
     queryFn: () => fetchCrossConnects(currency, region),
@@ -274,11 +265,7 @@ export const useFetchGeneralRegions = (options = {}) => {
     ...options,
   });
 };
-export const useFetchProductPricing = (
-  region,
-  productable_type,
-  options = {}
-) => {
+export const useFetchProductPricing = (region, productable_type, options = {}) => {
   const { countryCode = "", ...queryOptions } = options;
 
   return useQuery({

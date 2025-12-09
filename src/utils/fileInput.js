@@ -62,10 +62,7 @@ export const FileInput = ({
 
   return (
     <div>
-      <label
-        htmlFor={id}
-        className="block text-sm font-medium text-gray-700 mb-2"
-      >
+      <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-2">
         {label}
       </label>
       <div
@@ -73,8 +70,8 @@ export const FileInput = ({
           isDragging
             ? "border-[#288DD1] bg-[#288DD1] bg-opacity-10"
             : error
-            ? "border-red-500"
-            : "border-[#ECEDF0] hover:border-[#288DD1]"
+              ? "border-red-500"
+              : "border-[#ECEDF0] hover:border-[#288DD1]"
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -87,10 +84,7 @@ export const FileInput = ({
           accept={accept}
           className="hidden"
         />
-        <label
-          htmlFor={id}
-          className="cursor-pointer flex flex-col items-center space-y-2"
-        >
+        <label htmlFor={id} className="cursor-pointer flex flex-col items-center space-y-2">
           <div className="w-12 h-12 bg-[#288DD1] bg-opacity-10 rounded-full flex items-center justify-center">
             <Upload className="w-6 h-6 text-[#288DD1]" />
           </div>
@@ -107,9 +101,7 @@ export const FileInput = ({
           <div className="flex items-center space-x-2">
             <CheckCircle className="w-5 h-5 text-green-500" />
             <p className="text-sm text-gray-700 font-medium">
-              {typeof selectedFile === "string"
-                ? "Uploaded File"
-                : selectedFile.name}
+              {typeof selectedFile === "string" ? "Uploaded File" : selectedFile.name}
             </p>
           </div>
           <button

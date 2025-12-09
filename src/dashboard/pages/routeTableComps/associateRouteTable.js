@@ -1,24 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, X } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import { useAssociateTenantRouteTable } from "../../../hooks/routeTable";
 import { useFetchTenantSubnets } from "../../../hooks/subnetHooks";
 
-const AssociateRouteTableModal = ({
-  isOpen,
-  onClose,
-  projectId,
-  region = "",
-  routeTable,
-}) => {
+const AssociateRouteTableModal = ({ isOpen, onClose, projectId, region = "", routeTable }) => {
   const [selectedSubnet, setSelectedSubnet] = useState("");
-  const { mutate: associateRouteTable, isPending } =
-    useAssociateTenantRouteTable();
-  const { data: subnetRaw, isFetching } = useFetchTenantSubnets(
-    projectId,
-    region,
-    { enabled: isOpen && !!projectId && !!region }
-  );
+  const { mutate: associateRouteTable, isPending } = useAssociateTenantRouteTable();
+  const { data: subnetRaw, isFetching } = useFetchTenantSubnets(projectId, region, {
+    enabled: isOpen && !!projectId && !!region,
+  });
   const subnets = useMemo(() => subnetRaw || [], [subnetRaw]);
 
   useEffect(() => {
@@ -40,8 +31,7 @@ const AssociateRouteTableModal = ({
       {
         project_id: projectId,
         region,
-        route_table_id:
-          routeTable.provider_resource_id || routeTable.id || routeTable.uuid,
+        route_table_id: routeTable.provider_resource_id || routeTable.id || routeTable.uuid,
         subnet_id: selectedSubnet,
       },
       {
@@ -61,9 +51,7 @@ const AssociateRouteTableModal = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[520px] w-full mx-4">
         <div className="flex items-center justify-between px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
-          <h2 className="text-lg font-semibold text-[#575758]">
-            Associate Route Table
-          </h2>
+          <h2 className="text-lg font-semibold text-[#575758]">Associate Route Table</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-[#1E1E1EB2] transition-colors"
@@ -77,14 +65,10 @@ const AssociateRouteTableModal = ({
             <p className="text-sm text-gray-600">
               Route Table:{" "}
               <span className="font-medium text-gray-900">
-                {routeTable.name ||
-                  routeTable.provider_resource_id ||
-                  routeTable.id}
+                {routeTable.name || routeTable.provider_resource_id || routeTable.id}
               </span>
             </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Region: {region || "N/A"}
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Region: {region || "N/A"}</p>
           </div>
 
           <div>
@@ -96,12 +80,9 @@ const AssociateRouteTableModal = ({
               onChange={(e) => setSelectedSubnet(e.target.value)}
               className="w-full rounded-[10px] border px-3 py-2 text-sm input-field"
             >
-              <option value="">
-                {isFetching ? "Loading subnets..." : "Select subnet"}
-              </option>
+              <option value="">{isFetching ? "Loading subnets..." : "Select subnet"}</option>
               {subnets.map((subnet) => {
-                const value =
-                  subnet.provider_resource_id || subnet.id || subnet.uuid || "";
+                const value = subnet.provider_resource_id || subnet.id || subnet.uuid || "";
                 return (
                   <option key={value} value={value}>
                     {subnet.name || value} ({subnet.cidr_block || subnet.cidr})
@@ -127,9 +108,7 @@ const AssociateRouteTableModal = ({
             className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
             Associate
-            {isPending && (
-              <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-            )}
+            {isPending && <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />}
           </button>
         </div>
       </div>

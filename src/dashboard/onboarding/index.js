@@ -7,14 +7,10 @@ import {
   useUpdateOnboardingStep,
 } from "../../hooks/onboardingHooks";
 import { getStepsForTarget } from "./stepConfig";
-import ToastUtils from "../../utils/toastUtil";
+import ToastUtils from "../../utils/toastUtil.ts";
 import PartnerRegionQualificationForm from "./PartnerRegionQualificationForm";
-import BusinessProfileForm, {
-  ensureBusinessProfileDefaults,
-} from "./BusinessProfileForm";
-import BrandingThemeForm, {
-  ensureBrandingThemeDefaults,
-} from "./BrandingThemeForm";
+import BusinessProfileForm, { ensureBusinessProfileDefaults } from "./BusinessProfileForm";
+import BrandingThemeForm, { ensureBrandingThemeDefaults } from "./BrandingThemeForm";
 import FileDropInput from "./FileDropInput";
 
 const statusCopy = {
@@ -43,15 +39,8 @@ const OnboardingDashboard = () => {
   const definitions = useMemo(() => {
     const baseDefinitions = getStepsForTarget(persona);
 
-    if (
-      !hasTenantAssociation &&
-      ["client", "crm", "internal_client_business"].includes(persona)
-    ) {
-      const excludedStepIds = new Set([
-        "billing",
-        "branding",
-        "partner_region_qualification",
-      ]);
+    if (!hasTenantAssociation && ["client", "crm", "internal_client_business"].includes(persona)) {
+      const excludedStepIds = new Set(["billing", "branding", "partner_region_qualification"]);
       return baseDefinitions.filter((step) => !excludedStepIds.has(step.id));
     }
 
@@ -99,17 +88,13 @@ const OnboardingDashboard = () => {
     }
 
     if (definition.custom === "businessProfile") {
-      setFormValues(
-        ensureBusinessProfileDefaults(submission?.payload ?? {})
-      );
+      setFormValues(ensureBusinessProfileDefaults(submission?.payload ?? {}));
       setComment("");
       return;
     }
 
     if (definition.custom === "brandingTheme") {
-      setFormValues(
-        ensureBrandingThemeDefaults(submission?.payload ?? {})
-      );
+      setFormValues(ensureBrandingThemeDefaults(submission?.payload ?? {}));
       setComment("");
       return;
     }
@@ -127,9 +112,7 @@ const OnboardingDashboard = () => {
       const existingValue = payload[field.id];
 
       if (field.type === "collection") {
-        initialValues[field.id] = Array.isArray(existingValue)
-          ? existingValue
-          : [];
+        initialValues[field.id] = Array.isArray(existingValue) ? existingValue : [];
         return;
       }
 
@@ -174,30 +157,20 @@ const OnboardingDashboard = () => {
     ) {
       const missing = validateBusinessProfilePayload(formValues);
       if (missing.length) {
-        ToastUtils.error(
-          `Please complete required fields: ${missing.join(", ")}.`
-        );
+        ToastUtils.error(`Please complete required fields: ${missing.join(", ")}.`);
         return;
       }
     }
 
-    if (
-      (action === "submit" || action === "resubmit") &&
-      definition?.custom === "brandingTheme"
-    ) {
+    if ((action === "submit" || action === "resubmit") && definition?.custom === "brandingTheme") {
       const missing = validateBrandingPayload(formValues);
       if (missing.length) {
-        ToastUtils.error(
-          `Please complete required fields: ${missing.join(", ")}.`
-        );
+        ToastUtils.error(`Please complete required fields: ${missing.join(", ")}.`);
         return;
       }
     }
 
-    if (
-      (action === "submit" || action === "resubmit") &&
-      definition?.custom === "partnerRegion"
-    ) {
+    if ((action === "submit" || action === "resubmit") && definition?.custom === "partnerRegion") {
       const missing = validatePartnerRegionPayload(formValues);
       if (missing.length) {
         ToastUtils.error(`Please complete required fields: ${missing.join(", ")}`);
@@ -224,8 +197,8 @@ const OnboardingDashboard = () => {
 
           const subFields = field.fields ?? [];
           const hasInvalidItem = items.some((item) =>
-            subFields.some((sub) =>
-              sub.required && (!item || !item[sub.id] || `${item[sub.id]}`.trim() === "")
+            subFields.some(
+              (sub) => sub.required && (!item || !item[sub.id] || `${item[sub.id]}`.trim() === "")
             )
           );
 
@@ -284,9 +257,7 @@ const OnboardingDashboard = () => {
       }
 
       ToastUtils.success(
-        action === "submit" || action === "resubmit"
-          ? "Step submitted for review."
-          : "Draft saved."
+        action === "submit" || action === "resubmit" ? "Step submitted for review." : "Draft saved."
       );
     } catch (error) {
       ToastUtils.error(error.message ?? "Unable to update onboarding step.");
@@ -340,7 +311,10 @@ const OnboardingDashboard = () => {
             We’ll unlock the full dashboard once these steps are approved. You can save drafts,
             upload documents, and have a running conversation with the Unicloud review team here.
           </p>
-          <ProgressBar approved={state?.progress?.approved ?? 0} required={state?.progress?.required ?? 0} />
+          <ProgressBar
+            approved={state?.progress?.approved ?? 0}
+            required={state?.progress?.required ?? 0}
+          />
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
@@ -354,10 +328,11 @@ const OnboardingDashboard = () => {
                   key={step.id}
                   type="button"
                   onClick={() => setActiveStep(step.id)}
-                  className={`w-full text-left px-4 py-3 rounded-lg border transition-colors ${activeStep === step.id
+                  className={`w-full text-left px-4 py-3 rounded-lg border transition-colors ${
+                    activeStep === step.id
                       ? "border-[--theme-color] bg-[--theme-color-10]"
                       : "border-transparent hover:border-gray-200"
-                    }`}
+                  }`}
                 >
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium text-gray-800">{step.label}</p>
@@ -398,7 +373,8 @@ const OnboardingDashboard = () => {
                     <form
                       onSubmit={(event) => {
                         event.preventDefault();
-                        const action = submission?.status === "changes_requested" ? "resubmit" : "submit";
+                        const action =
+                          submission?.status === "changes_requested" ? "resubmit" : "submit";
                         handleSubmit(action);
                       }}
                       className="space-y-6"
@@ -410,22 +386,18 @@ const OnboardingDashboard = () => {
                           onChange={setFormValues}
                         />
                       ) : definition.custom === "brandingTheme" ? (
-                        <BrandingThemeForm
-                          value={formValues}
-                          onChange={setFormValues}
-                        />
+                        <BrandingThemeForm value={formValues} onChange={setFormValues} />
                       ) : definition.custom === "businessProfile" ? (
-                        <BusinessProfileForm
-                          value={formValues}
-                          onChange={setFormValues}
-                        />
+                        <BusinessProfileForm value={formValues} onChange={setFormValues} />
                       ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                           {definition.fields?.map((field) => (
                             <FieldInput
                               key={field.id}
                               field={field}
-                              value={formValues?.[field.id] ?? (field.type === "collection" ? [] : "")}
+                              value={
+                                formValues?.[field.id] ?? (field.type === "collection" ? [] : "")
+                              }
                               onChange={(value) => handleFieldChange(field.id, value)}
                               onFileChange={(file) => handleFileChange(field.id, file)}
                             />
@@ -472,7 +444,8 @@ const OnboardingDashboard = () => {
 
                     <div className="border-t border-gray-100 pt-6">
                       <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                        <MessageCircle className="w-5 h-5 text-[--theme-color]" /> Conversation history
+                        <MessageCircle className="w-5 h-5 text-[--theme-color]" /> Conversation
+                        history
                       </h3>
                       <p className="text-sm text-gray-500 mb-4">
                         Keep everything in one place. We will notify you when reviewers respond.
@@ -504,7 +477,9 @@ const OnboardingDashboard = () => {
                             </div>
                           ))
                         ) : (
-                          <div className="text-sm text-gray-500">No messages yet. Submit a note to start.</div>
+                          <div className="text-sm text-gray-500">
+                            No messages yet. Submit a note to start.
+                          </div>
                         )}
                       </div>
 
@@ -560,7 +535,9 @@ const StatusBlurb = ({ submission }) => {
 
   return (
     <div className="mt-4 flex items-center gap-2 text-sm">
-      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${meta.tone}`}>
+      <span
+        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${meta.tone}`}
+      >
         {meta.label}
       </span>
       {submission.status === "changes_requested" && (
@@ -652,7 +629,10 @@ const FieldInput = ({ field, value, onChange, onFileChange }) => {
   if (field.type === "select") {
     const options = field.options ?? [];
     const hasValueOption =
-      value !== undefined && value !== null && value !== "" && options.some((option) => option.value === value);
+      value !== undefined &&
+      value !== null &&
+      value !== "" &&
+      options.some((option) => option.value === value);
     const computedOptions = hasValueOption
       ? options
       : value
@@ -812,9 +792,7 @@ const normalisePartnerRegionFormValues = (payload) => {
 
   return {
     has_datacenter_node:
-      typeof payload.has_datacenter_node === "boolean"
-        ? payload.has_datacenter_node
-        : null,
+      typeof payload.has_datacenter_node === "boolean" ? payload.has_datacenter_node : null,
     region: {
       ...region,
       provider: (region.provider ?? "").toLowerCase(),
@@ -837,7 +815,8 @@ const validateBusinessProfilePayload = (payload) => {
   if (isBlank(data.business_model)) missing.push("Business model");
   if (isBlank(data.date_of_incorporation)) missing.push("Date of incorporation");
   if (isBlank(data.industry)) missing.push("Industry");
-  if (isBlank(data.website) || !isValidUrl(data.website)) missing.push("Company website (valid URL)");
+  if (isBlank(data.website) || !isValidUrl(data.website))
+    missing.push("Company website (valid URL)");
   if (isBlank(data.address)) missing.push("Business address");
   if (isBlank(data.country) || isBlank(data.country_id)) missing.push("Country");
   if (isBlank(data.state) || isBlank(data.state_id)) missing.push("State / Region");
@@ -871,8 +850,7 @@ const validateBusinessProfilePayload = (payload) => {
   return [...new Set(missing)];
 };
 
-const isValidEmail = (value) =>
-  typeof value === "string" && /\S+@\S+\.\S+/.test(value.trim());
+const isValidEmail = (value) => typeof value === "string" && /\S+@\S+\.\S+/.test(value.trim());
 
 const validateBrandingPayload = (payload) => {
   const data = ensureBrandingThemeDefaults(payload);
@@ -941,7 +919,10 @@ const DocumentGallery = ({ documents }) => (
     <h3 className="text-sm font-semibold text-gray-800 mb-3">Uploaded documents</h3>
     <div className="space-y-2">
       {documents.map((document) => (
-        <div key={document.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+        <div
+          key={document.id}
+          className="flex flex-wrap items-center justify-between gap-2 text-sm"
+        >
           <div className="flex items-center gap-2">
             <span className="font-medium text-gray-800">{document.category}</span>
             <span className="text-xs text-gray-500">v{document.version}</span>
@@ -959,7 +940,8 @@ const DocumentGallery = ({ documents }) => (
               </a>
             )}
             <span className="text-xs text-gray-400">
-              Uploaded {document.created_at ? new Date(document.created_at).toLocaleDateString() : ""}
+              Uploaded{" "}
+              {document.created_at ? new Date(document.created_at).toLocaleDateString() : ""}
             </span>
           </div>
         </div>
@@ -986,9 +968,7 @@ const CollectionField = ({ field, value, onChange }) => {
   };
 
   const handleItemChange = (index, key, newValue) => {
-    const next = items.map((item, idx) =>
-      idx === index ? { ...item, [key]: newValue } : item
-    );
+    const next = items.map((item, idx) => (idx === index ? { ...item, [key]: newValue } : item));
 
     onChange(next);
   };
@@ -1047,7 +1027,10 @@ const CollectionField = ({ field, value, onChange }) => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {(field.fields ?? []).map((subField) => (
-                  <div key={subField.id} className={subField.type === "textarea" ? "md:col-span-2" : ""}>
+                  <div
+                    key={subField.id}
+                    className={subField.type === "textarea" ? "md:col-span-2" : ""}
+                  >
                     <label className="block text-xs font-medium text-gray-600 mb-1">
                       {subField.label}
                       {subField.required && <span className="text-red-500"> *</span>}
@@ -1055,14 +1038,18 @@ const CollectionField = ({ field, value, onChange }) => {
                     {subField.type === "textarea" ? (
                       <textarea
                         value={item?.[subField.id] ?? ""}
-                        onChange={(event) => handleItemChange(index, subField.id, event.target.value)}
+                        onChange={(event) =>
+                          handleItemChange(index, subField.id, event.target.value)
+                        }
                         rows={subField.rows ?? 3}
                         className="w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-[--theme-color] focus:outline-none text-sm p-2"
                       />
                     ) : subField.type === "select" ? (
                       <select
                         value={item?.[subField.id] ?? ""}
-                        onChange={(event) => handleItemChange(index, subField.id, event.target.value)}
+                        onChange={(event) =>
+                          handleItemChange(index, subField.id, event.target.value)
+                        }
                         className="w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-[--theme-color] focus:outline-none text-sm h-10 px-3 bg-white"
                       >
                         <option value="" disabled>
@@ -1099,7 +1086,9 @@ const CollectionField = ({ field, value, onChange }) => {
                       <input
                         type={subField.type ?? "text"}
                         value={item?.[subField.id] ?? ""}
-                        onChange={(event) => handleItemChange(index, subField.id, event.target.value)}
+                        onChange={(event) =>
+                          handleItemChange(index, subField.id, event.target.value)
+                        }
                         className="w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-[--theme-color] focus:outline-none text-sm h-10 px-3"
                         placeholder={subField.placeholder}
                       />

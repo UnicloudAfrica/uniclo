@@ -37,21 +37,15 @@ const resendOTP = async (userData) => {
 };
 
 const setupTwoFactor = async (payload = {}) => {
-  return await tryTwoFactorEndpoints([
-    { method: "GET", path: "/2fa-setup" },
-  ]);
+  return await tryTwoFactorEndpoints([{ method: "GET", path: "/2fa-setup" }]);
 };
 
 const enableTwoFactor = async (payload) => {
-  return await tryTwoFactorEndpoints([
-    { method: "POST", path: "/2fa-enable", body: payload },
-  ]);
+  return await tryTwoFactorEndpoints([{ method: "POST", path: "/2fa-enable", body: payload }]);
 };
 
 const disableTwoFactor = async (payload) => {
-  return await tryTwoFactorEndpoints([
-    { method: "POST", path: "/2fa-disable", body: payload },
-  ]);
+  return await tryTwoFactorEndpoints([{ method: "POST", path: "/2fa-disable", body: payload }]);
 };
 
 // Hook to create a new account

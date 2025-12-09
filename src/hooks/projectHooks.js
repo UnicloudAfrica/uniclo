@@ -17,10 +17,7 @@ const buildQueryString = (params = {}) => {
 // GET: Fetch project status (provisioning + infrastructure checklist)
 const fetchProjectStatus = async (id) => {
   const encodedId = encodeURIComponent(id);
-  const res = await silentTenantApi(
-    "GET",
-    `/admin/projects/${encodedId}/status`
-  );
+  const res = await silentTenantApi("GET", `/admin/projects/${encodedId}/status`);
   if (!res?.project && !res?.data) {
     throw new Error(`Failed to fetch project status for ${id}`);
   }

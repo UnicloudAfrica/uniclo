@@ -47,14 +47,10 @@ const Faq = () => {
         <div
           key={index}
           onClick={() => toggleDropDown(index)}
-          className={`border-y py-6 faq border-[#1E1E1E1A]${
-            openIndex === index ? " active" : ""
-          }`}
+          className={`border-y py-6 faq border-[#1E1E1E1A]${openIndex === index ? " active" : ""}`}
         >
           <div className="flex flex-row justify-between w-full items-center">
-            <p className="font-Outfit text-base md:text-lg font-normal">
-              {faq.question}
-            </p>
+            <p className="font-Outfit text-base md:text-lg font-normal">{faq.question}</p>
             <img
               src={arrowDown}
               className={`${

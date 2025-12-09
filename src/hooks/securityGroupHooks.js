@@ -20,8 +20,7 @@ const fetchSecurityGroups = async ({ project_id, region }) => {
 
 const fetchSecurityGroupById = async (id) => {
   const res = await silentApi("GET", `/business/security-groups/${id}`);
-  if (!res.data)
-    throw new Error(`Failed to fetch security group with ID ${id}`);
+  if (!res.data) throw new Error(`Failed to fetch security group with ID ${id}`);
   return res.data;
 };
 
@@ -32,20 +31,14 @@ const createSecurityGroup = async (securityGroupData) => {
 };
 
 const updateSecurityGroup = async ({ id, securityGroupData }) => {
-  const res = await api(
-    "PATCH",
-    `/business/security-groups/${id}`,
-    securityGroupData
-  );
-  if (!res.data)
-    throw new Error(`Failed to update security group with ID ${id}`);
+  const res = await api("PATCH", `/business/security-groups/${id}`, securityGroupData);
+  if (!res.data) throw new Error(`Failed to update security group with ID ${id}`);
   return res.data;
 };
 
 const deleteSecurityGroup = async (id) => {
   const res = await api("DELETE", `/business/security-groups/${id}`);
-  if (!res.data)
-    throw new Error(`Failed to delete security group with ID ${id}`);
+  if (!res.data) throw new Error(`Failed to delete security group with ID ${id}`);
   return res.data;
 };
 
@@ -64,11 +57,7 @@ const syncSecurityGroups = async ({ project_id, region }) => {
   return res.data;
 };
 
-export const useFetchTenantSecurityGroups = (
-  projectId,
-  region,
-  options = {}
-) => {
+export const useFetchTenantSecurityGroups = (projectId, region, options = {}) => {
   return useQuery({
     queryKey: ["securityGroups", { projectId, region }],
     queryFn: () => fetchSecurityGroups({ project_id: projectId, region }),

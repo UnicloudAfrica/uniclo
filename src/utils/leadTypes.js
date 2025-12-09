@@ -103,10 +103,7 @@ const resolveRawLeadTypeList = (payload) => {
   return [];
 };
 
-export const buildLeadTypeOptions = (
-  payload,
-  fallbackValues = FALLBACK_LEAD_TYPES,
-) => {
+export const buildLeadTypeOptions = (payload, fallbackValues = FALLBACK_LEAD_TYPES) => {
   const rawList = resolveRawLeadTypeList(payload);
   const options = new Map();
 
@@ -116,10 +113,7 @@ export const buildLeadTypeOptions = (
       return;
     }
 
-    const label = extractLeadTypeLabel(
-      labelSource ?? entry,
-      value,
-    );
+    const label = extractLeadTypeLabel(labelSource ?? entry, value);
 
     if (!options.has(value)) {
       options.set(value, { value, label });

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
 // Hook for managing element animations and micro-interactions
 export const useAnimations = () => {
@@ -37,7 +37,7 @@ export const useAnimations = () => {
       const timeouts = [];
       items.forEach((item, index) => {
         const timeout = setTimeout(() => {
-          setAnimatedItems(prev => [...prev, item]);
+          setAnimatedItems((prev) => [...prev, item]);
         }, index * delay);
         timeouts.push(timeout);
       });
@@ -72,16 +72,16 @@ export const useAnimations = () => {
 
   // Success/Error flash animation
   const useFlashAnimation = () => {
-    const [flashState, setFlashState] = useState('');
+    const [flashState, setFlashState] = useState("");
 
     const triggerSuccess = () => {
-      setFlashState('success');
-      setTimeout(() => setFlashState(''), 500);
+      setFlashState("success");
+      setTimeout(() => setFlashState(""), 500);
     };
 
     const triggerError = () => {
-      setFlashState('error');
-      setTimeout(() => setFlashState(''), 500);
+      setFlashState("error");
+      setTimeout(() => setFlashState(""), 500);
     };
 
     return { flashState, triggerSuccess, triggerError };
@@ -93,7 +93,7 @@ export const useAnimations = () => {
 
     const hoverProps = {
       onMouseEnter: () => setIsHovered(true),
-      onMouseLeave: () => setIsHovered(false)
+      onMouseLeave: () => setIsHovered(false),
     };
 
     return { isHovered, hoverProps };
@@ -105,7 +105,7 @@ export const useAnimations = () => {
 
     const focusProps = {
       onFocus: () => setIsFocused(true),
-      onBlur: () => setIsFocused(false)
+      onBlur: () => setIsFocused(false),
     };
 
     return { isFocused, focusProps };
@@ -130,7 +130,7 @@ export const useAnimations = () => {
     useFlashAnimation,
     useHoverAnimation,
     useFocusAnimation,
-    usePageTransition
+    usePageTransition,
   };
 };
 
@@ -139,88 +139,88 @@ export const animationUtils = {
   // Get CSS classes based on animation state
   getAnimationClasses: (state) => {
     const classes = [];
-    
+
     switch (state) {
-      case 'fadeIn':
-        classes.push('fade-in');
+      case "fadeIn":
+        classes.push("fade-in");
         break;
-      case 'fadeInUp':
-        classes.push('fade-in-up');
+      case "fadeInUp":
+        classes.push("fade-in-up");
         break;
-      case 'bounceIn':
-        classes.push('bounce-in');
+      case "bounceIn":
+        classes.push("bounce-in");
         break;
-      case 'slideIn':
-        classes.push('page-transition');
+      case "slideIn":
+        classes.push("page-transition");
         break;
-      case 'stagger':
-        classes.push('stagger-item');
+      case "stagger":
+        classes.push("stagger-item");
         break;
       default:
         break;
     }
-    
-    return classes.join(' ');
+
+    return classes.join(" ");
   },
 
   // Get hover classes
-  getHoverClasses: (type = 'lift') => {
-    return type === 'lift' ? 'hover-lift' : 'hover-scale';
+  getHoverClasses: (type = "lift") => {
+    return type === "lift" ? "hover-lift" : "hover-scale";
   },
 
   // Get loading classes
-  getLoadingClasses: (type = 'pulse') => {
-    return type === 'pulse' ? 'pulse' : 'skeleton';
+  getLoadingClasses: (type = "pulse") => {
+    return type === "pulse" ? "pulse" : "skeleton";
   },
 
   // Get button animation classes
   getButtonClasses: () => {
-    return 'modern-button';
+    return "modern-button";
   },
 
   // Get card animation classes
   getCardClasses: (hover = false) => {
-    return hover ? 'modern-card-hover' : '';
+    return hover ? "modern-card-hover" : "";
   },
 
   // Get modal animation classes
   getModalClasses: () => {
     return {
-      backdrop: 'modal-backdrop',
-      content: 'modal-content'
+      backdrop: "modal-backdrop",
+      content: "modal-content",
     };
   },
 
   // Get table row animation classes
   getTableRowClasses: () => {
-    return 'table-row';
+    return "table-row";
   },
 
   // Get form animation classes
   getFormClasses: () => {
     return {
-      input: 'modern-input focus-ring',
-      success: 'success-flash',
-      error: 'error-shake'
+      input: "modern-input focus-ring",
+      success: "success-flash",
+      error: "error-shake",
     };
   },
 
   // Get notification animation classes
   getNotificationClasses: (entering = true) => {
-    return entering ? 'notification-enter' : 'notification-exit';
-  }
+    return entering ? "notification-enter" : "notification-exit";
+  },
 };
 
 // Higher-order component for adding animations
-export const withAnimation = (Component, animationType = 'fadeIn') => {
+export const withAnimation = (Component, animationType = "fadeIn") => {
   return (props) => {
     const [isVisible, setIsVisible] = useState(false);
-    
+
     useEffect(() => {
       setIsVisible(true);
     }, []);
 
-    const className = `${props.className || ''} ${isVisible ? animationUtils.getAnimationClasses(animationType) : ''}`;
+    const className = `${props.className || ""} ${isVisible ? animationUtils.getAnimationClasses(animationType) : ""}`;
 
     return <Component {...props} className={className} />;
   };
@@ -231,13 +231,13 @@ export const useReducedMotion = () => {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     setPrefersReducedMotion(mediaQuery.matches);
 
     const handleChange = () => setPrefersReducedMotion(mediaQuery.matches);
-    mediaQuery.addEventListener('change', handleChange);
+    mediaQuery.addEventListener("change", handleChange);
 
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
   return prefersReducedMotion;

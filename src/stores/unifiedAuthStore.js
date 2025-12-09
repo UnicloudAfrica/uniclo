@@ -20,14 +20,7 @@ const useUnifiedAuthStore = create(
 
       // Authentication Actions
       login: (authData) => {
-        const {
-          token,
-          user,
-          role,
-          tenant,
-          cloudRoles = [],
-          cloudAbilities = [],
-        } = authData;
+        const { token, user, role, tenant, cloudRoles = [], cloudAbilities = [] } = authData;
         set({
           token,
           user,
@@ -66,42 +59,42 @@ const useUnifiedAuthStore = create(
 
       isAdmin: () => {
         const { role } = get();
-        return role === 'admin';
+        return role === "admin";
       },
 
       isTenant: () => {
         const { role } = get();
-        return role === 'tenant';
+        return role === "tenant";
       },
 
       isClient: () => {
         const { role } = get();
-        return role === 'client';
+        return role === "client";
       },
 
       // Permission Checks
       canManageUsers: () => {
         const { role } = get();
-        return ['admin', 'tenant'].includes(role);
+        return ["admin", "tenant"].includes(role);
       },
 
       canCreateTenant: () => {
         const { role } = get();
-        return role === 'admin';
+        return role === "admin";
       },
 
       canCreateClient: () => {
         const { role } = get();
-        return ['admin', 'tenant'].includes(role);
+        return ["admin", "tenant"].includes(role);
       },
 
       canManageProject: (projectId) => {
         const { role, user } = get();
-        if (role === 'admin') return true;
-        if (role === 'tenant') return true; // Can manage all projects in their tenant
-        if (role === 'client') {
+        if (role === "admin") return true;
+        if (role === "tenant") return true; // Can manage all projects in their tenant
+        if (role === "client") {
           // Client can only manage their own projects
-          return user?.projects?.some(p => p.id === projectId);
+          return user?.projects?.some((p) => p.id === projectId);
         }
         return false;
       },
@@ -144,8 +137,7 @@ const useUnifiedAuthStore = create(
       // User Profile Updates
       updateUser: (userData) => {
         set((state) => {
-          const cloudRoles =
-            userData?.cloud_roles ?? userData?.cloudRoles ?? state.cloudRoles;
+          const cloudRoles = userData?.cloud_roles ?? userData?.cloudRoles ?? state.cloudRoles;
           const cloudAbilities =
             userData?.cloud_abilities ?? userData?.cloudAbilities ?? state.cloudAbilities;
 
@@ -170,9 +162,9 @@ const useUnifiedAuthStore = create(
       migrateFromOldStores: () => {
         try {
           // Check for existing auth data from old stores
-          const adminAuth = localStorage.getItem('unicloud_admin_auth');
-          const clientAuth = localStorage.getItem('unicloud_client_auth');
-          const userAuth = localStorage.getItem('unicloud_tenant_auth');
+          const adminAuth = localStorage.getItem("unicloud_admin_auth");
+          const clientAuth = localStorage.getItem("unicloud_client_auth");
+          const userAuth = localStorage.getItem("unicloud_tenant_auth");
 
           if (adminAuth) {
             const data = JSON.parse(adminAuth);
@@ -180,7 +172,7 @@ const useUnifiedAuthStore = create(
               set({
                 token: data.token,
                 user: { email: data.userEmail },
-                role: 'admin',
+                role: "admin",
                 isAuthenticated: true,
               });
               return true;
@@ -193,7 +185,7 @@ const useUnifiedAuthStore = create(
               set({
                 token: data.token,
                 user: { email: data.userEmail },
-                role: 'client',
+                role: "client",
                 isAuthenticated: true,
               });
               return true;
@@ -206,7 +198,7 @@ const useUnifiedAuthStore = create(
               set({
                 token: data.token,
                 user: { email: data.userEmail },
-                role: 'user',
+                role: "user",
                 isAuthenticated: true,
               });
               return true;
@@ -215,7 +207,7 @@ const useUnifiedAuthStore = create(
 
           return false;
         } catch (error) {
-          console.error('Migration from old stores failed:', error);
+          console.error("Migration from old stores failed:", error);
           return false;
         }
       },
@@ -231,7 +223,7 @@ const useUnifiedAuthStore = create(
         if (!token) return false;
 
         try {
-          const payload = JSON.parse(atob(token.split('.')[1]));
+          const payload = JSON.parse(atob(token.split(".")[1]));
           return payload.exp * 1000 < Date.now();
         } catch (error) {
           return false; // If we can't parse, assume it's fine
@@ -278,38 +270,41 @@ const useUnifiedAuthStore = create(
 );
 
 // Export convenience selectors
-export const useAuth = () => useUnifiedAuthStore((state) => ({
-  user: state.user,
-  role: state.role,
-  isAuthenticated: state.isAuthenticated,
-  isLoading: state.isLoading,
-  tenant: state.tenant,
-  cloudRoles: state.cloudRoles,
-  cloudAbilities: state.cloudAbilities,
-}));
+export const useAuth = () =>
+  useUnifiedAuthStore((state) => ({
+    user: state.user,
+    role: state.role,
+    isAuthenticated: state.isAuthenticated,
+    isLoading: state.isLoading,
+    tenant: state.tenant,
+    cloudRoles: state.cloudRoles,
+    cloudAbilities: state.cloudAbilities,
+  }));
 
-export const useAuthActions = () => useUnifiedAuthStore((state) => ({
-  login: state.login,
-  logout: state.logout,
-  setLoading: state.setLoading,
-  updateUser: state.updateUser,
-  setTenant: state.setTenant,
-}));
+export const useAuthActions = () =>
+  useUnifiedAuthStore((state) => ({
+    login: state.login,
+    logout: state.logout,
+    setLoading: state.setLoading,
+    updateUser: state.updateUser,
+    setTenant: state.setTenant,
+  }));
 
-export const usePermissions = () => useUnifiedAuthStore((state) => ({
-  hasRole: state.hasRole,
-  hasAnyRole: state.hasAnyRole,
-  isAdmin: state.isAdmin,
-  isTenant: state.isTenant,
-  isClient: state.isClient,
-  canManageUsers: state.canManageUsers,
-  canCreateTenant: state.canCreateTenant,
-  canCreateClient: state.canCreateClient,
-  canManageProject: state.canManageProject,
-  hasCloudRole: state.hasCloudRole,
-  hasAnyCloudRole: state.hasAnyCloudRole,
-  hasCloudAbility: state.hasCloudAbility,
-  hasAnyCloudAbility: state.hasAnyCloudAbility,
-}));
+export const usePermissions = () =>
+  useUnifiedAuthStore((state) => ({
+    hasRole: state.hasRole,
+    hasAnyRole: state.hasAnyRole,
+    isAdmin: state.isAdmin,
+    isTenant: state.isTenant,
+    isClient: state.isClient,
+    canManageUsers: state.canManageUsers,
+    canCreateTenant: state.canCreateTenant,
+    canCreateClient: state.canCreateClient,
+    canManageProject: state.canManageProject,
+    hasCloudRole: state.hasCloudRole,
+    hasAnyCloudRole: state.hasAnyCloudRole,
+    hasCloudAbility: state.hasCloudAbility,
+    hasAnyCloudAbility: state.hasAnyCloudAbility,
+  }));
 
 export default useUnifiedAuthStore;

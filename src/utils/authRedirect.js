@@ -12,8 +12,7 @@ const LOGIN_PATHS = {
 
 const shouldPreventRedirect = (response, body) => {
   const header = response?.headers?.get?.("X-Prevent-Login-Redirect") || "";
-  const bodyFlag =
-    body?.prevent_redirect === true || body?.data?.prevent_redirect === true;
+  const bodyFlag = body?.prevent_redirect === true || body?.data?.prevent_redirect === true;
   return header.toLowerCase() === "true" || bodyFlag;
 };
 

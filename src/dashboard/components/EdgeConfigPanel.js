@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
 import { useFetchProjectEdgeConfigTenant } from "../../hooks/edgeHooks";
-import ToastUtils from "../../utils/toastUtil";
+import ToastUtils from "../../utils/toastUtil.ts";
 
 const Field = ({ label, value }) => (
   <div className="flex flex-col">
@@ -23,9 +23,7 @@ export default function EdgeConfigPanel({ projectId, region, refreshSignal }) {
   const handleRefresh = async () => {
     const r = await refetch();
     if (r?.error) {
-      ToastUtils.error(
-        r.error.message || "Failed to refresh edge configuration"
-      );
+      ToastUtils.error(r.error.message || "Failed to refresh edge configuration");
     } else {
       ToastUtils.success("Edge configuration refreshed");
     }
@@ -57,17 +55,15 @@ export default function EdgeConfigPanel({ projectId, region, refreshSignal }) {
       {isFetching ? (
         <p className="text-sm text-gray-600">Loading edge configuration...</p>
       ) : error ? (
-        <div className="text-sm text-red-600">
-          Failed to load edge configuration.
-        </div>
+        <div className="text-sm text-red-600">Failed to load edge configuration.</div>
       ) : !edgeConfig || (!edgeConfig.edge_network_id && !edgeConfig.ip_pool_id) ? (
         <div className="flex items-start gap-3 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
           <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5" />
           <div className="text-sm text-yellow-800">
             <p className="font-medium">No edge configuration assigned</p>
             <p>
-              This project does not have an edge network and IP pool assigned yet.
-              You may be unable to create subnets until this is configured.
+              This project does not have an edge network and IP pool assigned yet. You may be unable
+              to create subnets until this is configured.
             </p>
           </div>
         </div>

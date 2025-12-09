@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import { useCreatePricing } from "../../../hooks/pricingHooks";
 
 const EditPricingModal = ({ isOpen, onClose, itemToEdit, refetchPricing }) => {
@@ -46,10 +46,7 @@ const EditPricingModal = ({ isOpen, onClose, itemToEdit, refetchPricing }) => {
     }
 
     // Clean productable_type by removing "App\\Models\\"
-    const cleanedProductableType = itemToEdit.productable_type.replace(
-      "App\\Models\\",
-      ""
-    );
+    const cleanedProductableType = itemToEdit.productable_type.replace("App\\Models\\", "");
 
     const payload = {
       productable_type: cleanedProductableType,
@@ -64,9 +61,7 @@ const EditPricingModal = ({ isOpen, onClose, itemToEdit, refetchPricing }) => {
         refetchPricing();
       },
       onError: (err) => {
-        ToastUtils.error(
-          err.message || "Failed to update pricing. Please try again."
-        );
+        ToastUtils.error(err.message || "Failed to update pricing. Please try again.");
       },
     });
   };
@@ -79,9 +74,7 @@ const EditPricingModal = ({ isOpen, onClose, itemToEdit, refetchPricing }) => {
         <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
           <h2 className="text-lg font-semibold text-[#575758]">
             Edit Pricing for{" "}
-            {itemToEdit?.productable?.name ||
-              itemToEdit?.productable?.identifier ||
-              "N/A"}
+            {itemToEdit?.productable?.name || itemToEdit?.productable?.identifier || "N/A"}
           </h2>
           <button
             onClick={onClose}
@@ -95,10 +88,7 @@ const EditPricingModal = ({ isOpen, onClose, itemToEdit, refetchPricing }) => {
         <form onSubmit={handleSubmit}>
           <div className="px-6 py-6 space-y-4">
             <div>
-              <label
-                htmlFor="local_price"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="local_price" className="block text-sm font-medium text-gray-700 mb-2">
                 Set Price ({itemToEdit?.local_currency || "USD"})
                 <span className="text-red-500">*</span>
               </label>
@@ -115,9 +105,7 @@ const EditPricingModal = ({ isOpen, onClose, itemToEdit, refetchPricing }) => {
                 disabled={isUpdating}
               />
               {errors.local_price && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.local_price}
-                </p>
+                <p className="text-red-500 text-xs mt-1">{errors.local_price}</p>
               )}
             </div>
           </div>
@@ -138,9 +126,7 @@ const EditPricingModal = ({ isOpen, onClose, itemToEdit, refetchPricing }) => {
                 disabled={isUpdating}
               >
                 Save Changes
-                {isUpdating && (
-                  <Loader2 className="w-4 h-4 ml-2 animate-spin" />
-                )}
+                {isUpdating && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
               </button>
             </div>
           </div>

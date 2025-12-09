@@ -29,10 +29,7 @@ const Landing = () => {
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.unicloudafrica.com/" />
-        <meta
-          property="og:title"
-          content="UniCloud Africa: Secure & Scalable Cloud Solutions"
-        />
+        <meta property="og:title" content="UniCloud Africa: Secure & Scalable Cloud Solutions" />
         <meta
           property="og:description"
           content="UniCloud Africa offers secure, scalable, and reliable cloud solutions to transform your business. Shape your digital future with us."

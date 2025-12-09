@@ -9,10 +9,7 @@ const fetchVolumes = async ({ project_id, region }) => {
   if (region) params.append("region", region);
 
   const queryString = params.toString();
-  const res = await silentApi(
-    "GET",
-    `/business/volumes${queryString ? `?${queryString}` : ""}`
-  );
+  const res = await silentApi("GET", `/business/volumes${queryString ? `?${queryString}` : ""}`);
   if (!res.data) throw new Error("Failed to fetch volumes");
   return res.data;
 };

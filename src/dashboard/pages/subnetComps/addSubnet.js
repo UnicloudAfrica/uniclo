@@ -1,14 +1,8 @@
 import { useState, useEffect } from "react";
 import { Loader2, X } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
-import {
-  useCreateTenantSubnet,
-  useFetchTenantSubnets,
-} from "../../../hooks/subnetHooks";
-import {
-  useFetchTenantVpcs,
-  useFetchAvailableCidrs,
-} from "../../../hooks/vpcHooks";
+import ToastUtils from "../../../utils/toastUtil.ts";
+import { useCreateTenantSubnet, useFetchTenantSubnets } from "../../../hooks/subnetHooks";
+import { useFetchTenantVpcs, useFetchAvailableCidrs } from "../../../hooks/vpcHooks";
 import { useFetchGeneralRegions } from "../../../hooks/resource";
 import { useFetchProjectEdgeConfigTenant } from "../../../hooks/edgeHooks";
 
@@ -31,47 +25,36 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) =
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultRegion]);
 
-  const { data: regions, isFetching: isFetchingRegions } =
-    useFetchGeneralRegions();
+  const { data: regions, isFetching: isFetchingRegions } = useFetchGeneralRegions();
   const { data: vpcRaw, isFetching: isFetchingVpcs } = useFetchTenantVpcs(
     projectId,
     formData.region,
     { enabled: !!projectId }
   );
-  const vpcs = Array.isArray(vpcRaw?.data)
-    ? vpcRaw.data
-    : Array.isArray(vpcRaw)
-    ? vpcRaw
-    : [];
+  const vpcs = Array.isArray(vpcRaw?.data) ? vpcRaw.data : Array.isArray(vpcRaw) ? vpcRaw : [];
 
-  const { mutate: createSubnet, isPending: isCreating } =
-    useCreateTenantSubnet();
+  const { mutate: createSubnet, isPending: isCreating } = useCreateTenantSubnet();
 
-  const { data: edgeConfig, isFetching: isFetchingEdgeConfig } =
-    useFetchProjectEdgeConfigTenant(projectId, formData.region, {
-      enabled: !!projectId && !!formData.region,
-    });
-
-  const {
-    data: existingSubnets = [],
-    isFetching: isFetchingSubnets,
-  } = useFetchTenantSubnets(projectId, formData.region, {
-    enabled: !!projectId && !!formData.region,
-  });
-
-  const {
-    data: availableCidrs = [],
-    isFetching: isFetchingAvailableCidrs,
-  } = useFetchAvailableCidrs(
+  const { data: edgeConfig, isFetching: isFetchingEdgeConfig } = useFetchProjectEdgeConfigTenant(
     projectId,
     formData.region,
-    formData.vpc_id,
-    suggestPrefix,
-    8,
     {
-      enabled: !!projectId && !!formData.region && !!formData.vpc_id,
+      enabled: !!projectId && !!formData.region,
     }
   );
+
+  const { data: existingSubnets = [], isFetching: isFetchingSubnets } = useFetchTenantSubnets(
+    projectId,
+    formData.region,
+    {
+      enabled: !!projectId && !!formData.region,
+    }
+  );
+
+  const { data: availableCidrs = [], isFetching: isFetchingAvailableCidrs } =
+    useFetchAvailableCidrs(projectId, formData.region, formData.vpc_id, suggestPrefix, 8, {
+      enabled: !!projectId && !!formData.region && !!formData.vpc_id,
+    });
 
   const validateForm = () => {
     const newErrors = {};
@@ -81,31 +64,23 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) =
     if (!formData.cidr_block.trim()) {
       newErrors.cidr_block = "CIDR Block is required";
     } else if (
-      !/^([0-9]{1,3}\.){3}[0-9]{1,3}\/([0-9]|[1-2][0-9]|3[0-2])$/.test(
-        formData.cidr_block
-      )
+      !/^([0-9]{1,3}\.){3}[0-9]{1,3}\/([0-9]|[1-2][0-9]|3[0-2])$/.test(formData.cidr_block)
     ) {
       newErrors.cidr_block = "Invalid CIDR Block format (e.g., 192.168.1.0/24)";
     }
 
     // Additional validations
     const selectedVpc = vpcs?.find(
-      (v) =>
-        String(v.id ?? v.uuid ?? v.provider_resource_id) ===
-        String(formData.vpc_id)
+      (v) => String(v.id ?? v.uuid ?? v.provider_resource_id) === String(formData.vpc_id)
     );
     if (
       selectedVpc &&
-      (selectedVpc.cidr_block === formData.cidr_block ||
-        selectedVpc.cidr === formData.cidr_block)
+      (selectedVpc.cidr_block === formData.cidr_block || selectedVpc.cidr === formData.cidr_block)
     ) {
-      newErrors.cidr_block =
-        "Subnet CIDR cannot be the same as the selected VPC CIDR";
+      newErrors.cidr_block = "Subnet CIDR cannot be the same as the selected VPC CIDR";
     }
 
-    if (
-      formData.region && (!edgeConfig || (!edgeConfig.edge_network_id || !edgeConfig.ip_pool_id))
-    ) {
+    if (formData.region && (!edgeConfig || !edgeConfig.edge_network_id || !edgeConfig.ip_pool_id)) {
       newErrors.general =
         "Edge configuration is missing. Please contact an admin to assign an edge network and IP pool before creating subnets.";
     }
@@ -120,8 +95,9 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) =
   };
 
   // --- IPv4 helpers ---
-  const ipToInt = (ip) => ip.split(".").reduce((acc, o) => (acc << 8) + (parseInt(o, 10) & 255), 0) >>> 0;
-  const intToIp = (n) => [24, 16, 8, 0].map((s) => ((n >>> s) & 255)).join(".");
+  const ipToInt = (ip) =>
+    ip.split(".").reduce((acc, o) => (acc << 8) + (parseInt(o, 10) & 255), 0) >>> 0;
+  const intToIp = (n) => [24, 16, 8, 0].map((s) => (n >>> s) & 255).join(".");
   const parseCidr = (cidr) => {
     const [ip, prefix] = cidr.split("/");
     const p = parseInt(prefix, 10);
@@ -136,9 +112,7 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) =
     setSuggestions([]);
     try {
       const selectedVpc = vpcs?.find(
-        (v) =>
-          String(v.id ?? v.uuid ?? v.provider_resource_id) ===
-          String(formData.vpc_id)
+        (v) => String(v.id ?? v.uuid ?? v.provider_resource_id) === String(formData.vpc_id)
       );
       const selectedVpcCidr =
         selectedVpc?.cidr_block || selectedVpc?.cidr || selectedVpc?.network_cidr;
@@ -214,7 +188,14 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) =
       setSuggestions([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formData.vpc_id, formData.region, suggestPrefix, isFetchingSubnets, existingSubnets, availableCidrs]);
+  }, [
+    formData.vpc_id,
+    formData.region,
+    suggestPrefix,
+    isFetchingSubnets,
+    existingSubnets,
+    availableCidrs,
+  ]);
 
   if (!isOpen) return null;
 
@@ -222,9 +203,7 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) =
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full">
         <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
-          <h2 className="text-lg font-semibold text-[#575758]">
-            Add New Subnet
-          </h2>
+          <h2 className="text-lg font-semibold text-[#575758]">Add New Subnet</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-[#1E1E1EB2] transition-colors"
@@ -234,17 +213,16 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) =
         </div>
         <div className="px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start">
           {/* Edge config warning */}
-          {formData.region && (!edgeConfig || (!edgeConfig.edge_network_id || !edgeConfig.ip_pool_id)) && (
-            <div className="w-full mb-4 p-3 rounded-lg bg-yellow-50 border border-yellow-200 text-sm text-yellow-800">
-              Edge configuration is missing for this project. Subnet creation is disabled until an edge network and IP pool are assigned.
-            </div>
-          )}
+          {formData.region &&
+            (!edgeConfig || !edgeConfig.edge_network_id || !edgeConfig.ip_pool_id) && (
+              <div className="w-full mb-4 p-3 rounded-lg bg-yellow-50 border border-yellow-200 text-sm text-yellow-800">
+                Edge configuration is missing for this project. Subnet creation is disabled until an
+                edge network and IP pool are assigned.
+              </div>
+            )}
           <div className="space-y-4 w-full">
             <div>
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                 Subnet Name<span className="text-red-500">*</span>
               </label>
               <input
@@ -256,16 +234,11 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) =
                   errors.name ? "border-red-500" : "border-gray-300"
                 }`}
               />
-              {errors.name && (
-                <p className="text-red-500 text-xs mt-1">{errors.name}</p>
-              )}
+              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
             </div>
 
             <div>
-              <label
-                htmlFor="cidr_block"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="cidr_block" className="block text-sm font-medium text-gray-700 mb-2">
                 CIDR Block<span className="text-red-500">*</span>
               </label>
               <div className="flex gap-2 items-center">
@@ -287,7 +260,9 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) =
                     className="border rounded px-2 py-1"
                   >
                     {[20, 21, 22, 23, 24, 25, 26, 27, 28].map((p) => (
-                      <option key={p} value={p}>/{p}</option>
+                      <option key={p} value={p}>
+                        /{p}
+                      </option>
                     ))}
                   </select>
                   <button
@@ -324,10 +299,7 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) =
             </div>
 
             <div>
-              <label
-                htmlFor="vpc_id"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="vpc_id" className="block text-sm font-medium text-gray-700 mb-2">
                 Select VPC<span className="text-red-500">*</span>
               </label>
               <select
@@ -339,13 +311,9 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) =
                 }`}
                 disabled={isFetchingVpcs}
               >
-                <option value="">
-                  {isFetchingVpcs ? "Loading VPCs..." : "Select a VPC"}
-                </option>
+                <option value="">{isFetchingVpcs ? "Loading VPCs..." : "Select a VPC"}</option>
                 {vpcs?.map((vpc) => {
-                  const value = String(
-                    vpc.id ?? vpc.uuid ?? vpc.provider_resource_id
-                  );
+                  const value = String(vpc.id ?? vpc.uuid ?? vpc.provider_resource_id);
                   const labelCidr = vpc.cidr_block || vpc.cidr || "N/A";
                   return (
                     <option key={value} value={value}>
@@ -354,16 +322,11 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) =
                   );
                 })}
               </select>
-              {errors.vpc_id && (
-                <p className="text-red-500 text-xs mt-1">{errors.vpc_id}</p>
-              )}
+              {errors.vpc_id && <p className="text-red-500 text-xs mt-1">{errors.vpc_id}</p>}
             </div>
 
             <div>
-              <label
-                htmlFor="region"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="region" className="block text-sm font-medium text-gray-700 mb-2">
                 Region<span className="text-red-500">*</span>
               </label>
               <select
@@ -384,16 +347,11 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) =
                   </option>
                 ))}
               </select>
-              {errors.region && (
-                <p className="text-red-500 text-xs mt-1">{errors.region}</p>
-              )}
+              {errors.region && <p className="text-red-500 text-xs mt-1">{errors.region}</p>}
             </div>
 
             <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
                 Description (Optional)
               </label>
               <textarea
@@ -428,9 +386,7 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) =
               className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-[30px] hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Create Subnet
-              {isCreating && (
-                <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-              )}
+              {isCreating && <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />}
             </button>
           </div>
         </div>

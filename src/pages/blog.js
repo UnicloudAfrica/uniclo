@@ -26,9 +26,7 @@ const Blog = () => {
   }, [blogArray]);
 
   const filteredBlogs = processedArray.filter((blog) => {
-    const titleMatches = blog.title
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
+    const titleMatches = blog.title.toLowerCase().includes(searchQuery.toLowerCase());
 
     if (selectedTag === "all") {
       return titleMatches; // Show all blogs when 'all' is selected
@@ -46,8 +44,8 @@ const Blog = () => {
             Unicloud in the Press
           </p>
           <p className=" text-center font-normal mt-3 md:px-[15%] text-[#676767] text-lg md:text-xl ">
-            Explore Our Blog for insightful articles on cloud trends, best
-            pratices and success stories.
+            Explore Our Blog for insightful articles on cloud trends, best pratices and success
+            stories.
           </p>
           <div className=" w-full flex justify-between items-center relative mt-8">
             <select
@@ -98,9 +96,7 @@ const Blog = () => {
                   <p className="text-left mt-3 text-[#1E1E1E99] text-sm">
                     {item.drawin.substring(0, 190) + "..."}
                   </p>
-                  <p className="text-left mt-3 text-[#121212] font-medium text-base">
-                    {item.date}
-                  </p>
+                  <p className="text-left mt-3 text-[#121212] font-medium text-base">{item.date}</p>
                 </div>
               </Link>
             ))}
@@ -141,13 +137,12 @@ const Blog = () => {
                   </button>
 
                   <p className="text-left mt-6 text-xl lg:text-2xl font-medium text-black">
-                    Africa Data Centres and Onix Data Centre announce
-                    partnership
+                    Africa Data Centres and Onix Data Centre announce partnership
                   </p>
                   <p className="text-left mt-3 text-[#1E1E1E99] text-sm">
-                    Ghana is set to become a key player in the continent's data
-                    storage revolution as Africa Data Centres joins forces with
-                    Onix Data Centre in a strategic partnership.{" "}
+                    Ghana is set to become a key player in the continent's data storage revolution
+                    as Africa Data Centres joins forces with Onix Data Centre in a strategic
+                    partnership.{" "}
                   </p>
 
                   <p className="text-left mt-3 text-[#121212] font-medium text-base">
@@ -173,14 +168,12 @@ const Blog = () => {
                   </button>
 
                   <p className="text-left mt-6 text-xl lg:text-2xl font-medium text-black">
-                    Benue State to build modern data center and cloud system
-                    with UniCloud Africa
+                    Benue State to build modern data center and cloud system with UniCloud Africa
                   </p>
                   <p className="text-left mt-3 text-[#1E1E1E99] text-sm">
-                    This project is a significant step forward for Benue’s
-                    digital transformation. The in-country cloud solution
-                    offered by UniCloud Africa ensures that the state’s data
-                    remains within Nigeria’s borders.
+                    This project is a significant step forward for Benue’s digital transformation.
+                    The in-country cloud solution offered by UniCloud Africa ensures that the
+                    state’s data remains within Nigeria’s borders.
                   </p>
 
                   <p className="text-left mt-3 text-[#121212] font-medium text-base">
@@ -203,12 +196,9 @@ const Blog = () => {
                 className="z-10 absolute top-0 h-full w-full object-cover block md:hidden"
                 alt=""
               />
-              <p className=" font-semibold text-xl md:text-3xl">
-                Want product news and updates
-              </p>
+              <p className=" font-semibold text-xl md:text-3xl">Want product news and updates</p>
               <p className=" font-normal px-4 md:px-0 text-lg md:text-xl">
-                Subscribe to UniCloud Africa blog to get update right in your
-                inbox
+                Subscribe to UniCloud Africa blog to get update right in your inbox
               </p>
               <div className=" flex flex-col md:flex-row items-center justify-center z-20  mt-4 md:space-x-6 space-y-4 md:space-y-0">
                 <input

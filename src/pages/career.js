@@ -41,9 +41,8 @@ const Career = () => {
             Career
           </p>
           <p className=" text-center font-normal mt-3 text-[#676767] md:px-[10%] text-lg md:text-xl ">
-            Want to work with some of the best global talent and build cloud
-            solutions for African enterprises and Government? Join the team —
-            we’re hiring!
+            Want to work with some of the best global talent and build cloud solutions for African
+            enterprises and Government? Join the team — we’re hiring!
           </p>
 
           {/* <div className=" flex items-center mx-auto mt-8 space-x-4">
@@ -101,9 +100,7 @@ const Career = () => {
                                 </div></Link>
                             ))}
                         </div> */}
-              <p className=" font-medium text-4xl capitalize text-center mb-16">
-                No Job Listings
-              </p>
+              <p className=" font-medium text-4xl capitalize text-center mb-16">No Job Listings</p>
             </div>
           </div>
         </div>

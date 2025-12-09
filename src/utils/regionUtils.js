@@ -1,6 +1,6 @@
 /**
  * Region Display Utilities
- * 
+ *
  * Utility functions to handle region display formatting across the application.
  * These functions ensure consistent region name display by hiding provider-specific
  * information (like "Zadara") from non-admin users while preserving it for admins.
@@ -12,7 +12,7 @@
  */
 export const isAdminUser = () => {
   // Check if admin token exists in localStorage
-  const adminToken = localStorage.getItem('admin_token');
+  const adminToken = localStorage.getItem("admin_token");
   return !!adminToken;
 };
 
@@ -23,30 +23,30 @@ export const isAdminUser = () => {
  * @returns {string} Formatted region name
  */
 export const formatRegionName = (regionName, isAdmin = null) => {
-  if (!regionName) return '';
-  
+  if (!regionName) return "";
+
   // Auto-detect admin status if not provided
   const userIsAdmin = isAdmin !== null ? isAdmin : isAdminUser();
-  
+
   // If user is admin, show full region name
   if (userIsAdmin) {
     return regionName;
   }
-  
+
   // For non-admin users, remove only "Zadara" provider name but keep core region identifiers
   let displayName = regionName;
-  
+
   // Remove "Zadara" (case insensitive) but preserve the rest
   // This keeps region identifiers like "Lagos 1", "Lagos 2", etc.
   displayName = displayName
-    .replace(/zadara\s+/gi, '') // Remove "Zadara " but keep everything else
+    .replace(/zadara\s+/gi, "") // Remove "Zadara " but keep everything else
     .trim();
-  
+
   // If the result is empty or too short, fallback to original name without Zadara
   if (displayName.length < 2) {
-    displayName = regionName.replace(/zadara\s+/gi, '').trim();
+    displayName = regionName.replace(/zadara\s+/gi, "").trim();
   }
-  
+
   return displayName || regionName; // Fallback to original if processing fails
 };
 
@@ -58,14 +58,14 @@ export const formatRegionName = (regionName, isAdmin = null) => {
  */
 export const formatRegionsForDisplay = (regions, isAdmin = null) => {
   if (!Array.isArray(regions)) return [];
-  
+
   const userIsAdmin = isAdmin !== null ? isAdmin : isAdminUser();
-  
-  return regions.map(region => ({
+
+  return regions.map((region) => ({
     ...region,
     displayName: formatRegionName(region.name, userIsAdmin),
     // Keep original name for backend communication
-    originalName: region.name
+    originalName: region.name,
   }));
 };
 
@@ -78,10 +78,10 @@ export const formatRegionsForDisplay = (regions, isAdmin = null) => {
  */
 export const getFormattedRegionNameByCode = (regions, regionCode, isAdmin = null) => {
   if (!Array.isArray(regions) || !regionCode) return regionCode;
-  
-  const region = regions.find(r => r.code === regionCode);
+
+  const region = regions.find((r) => r.code === regionCode);
   if (!region) return regionCode;
-  
+
   return formatRegionName(region.name, isAdmin);
 };
 

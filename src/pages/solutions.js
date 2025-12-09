@@ -27,8 +27,7 @@ const Solutions = () => {
               Solutions
             </p>
             <p className=" text-center font-normal mt-3 text-lg md:text-xl text-[#676767] ">
-              Discover Your Custom Cloud Advantage: Tailored Solutions for Every
-              Industry
+              Discover Your Custom Cloud Advantage: Tailored Solutions for Every Industry
             </p>
             <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-16">
               {solutionsArray
@@ -38,11 +37,7 @@ const Solutions = () => {
                 .sort((a, b) => a.order - b.order)
                 .map((item, index) => (
                   <Link to={`/solutions/${item.id}`}>
-                    <div
-                      key={item.id}
-                      id={item.id}
-                      className="w-full text-center"
-                    >
+                    <div key={item.id} id={item.id} className="w-full text-center">
                       <div
                         className=" w-full h-[290px] bg-[#F5F5F4] rounded-[20px]"
                         style={{
@@ -51,12 +46,8 @@ const Solutions = () => {
                           backgroundPosition: "center",
                         }}
                       ></div>
-                      <p className="text-left mt-3 text-xl md:text-2xl font-medium">
-                        {item.topic}
-                      </p>
-                      <p className="text-left mt-1 text-[#676767] text-sm ">
-                        {item.desc}
-                      </p>
+                      <p className="text-left mt-3 text-xl md:text-2xl font-medium">{item.topic}</p>
+                      <p className="text-left mt-1 text-[#676767] text-sm ">{item.desc}</p>
                       <button className=" flex mt-6 items-center">
                         <p className=" gradient-text text-base">View more</p>
                       </button>
@@ -84,9 +75,7 @@ const Solutions = () => {
                         backgroundPosition: "center",
                       }}
                     ></div>
-                    <p className="text-left mt-6 text-xl lg:text-2xl font-medium">
-                      {item.title}
-                    </p>
+                    <p className="text-left mt-6 text-xl lg:text-2xl font-medium">{item.title}</p>
                     <p className="text-left mt-3 text-[#676767] text-sm">
                       {item.tagline.substring(0, 200) + "..."}
                     </p>
@@ -110,12 +99,9 @@ const Solutions = () => {
                   className="z-10 absolute top-0 h-full w-full object-cover block md:hidden"
                   alt=""
                 />
-                <p className=" font-semibold text-xl md:text-3xl">
-                  Want product news and updates
-                </p>
+                <p className=" font-semibold text-xl md:text-3xl">Want product news and updates</p>
                 <p className=" font-normal px-4 md:px-0 text-lg md:text-xl">
-                  Subscribe to UniCloud Africa blog to get update right in your
-                  inbox
+                  Subscribe to UniCloud Africa blog to get update right in your inbox
                 </p>
                 <div className=" flex flex-col md:flex-row items-center justify-center z-20  mt-4 md:space-x-6 space-y-4 md:space-y-0">
                   <input

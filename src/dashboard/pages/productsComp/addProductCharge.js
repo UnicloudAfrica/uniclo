@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { X, Loader2 } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import { useCreateProductCharge } from "../../../hooks/pricingHooks";
 
 const productTypeMap = {
@@ -104,11 +104,7 @@ const AddProductCharge = ({
     if (!formData.frequency) {
       newErrors.frequency = "Frequency is required";
     }
-    if (
-      !formData.price ||
-      isNaN(formData.price) ||
-      parseFloat(formData.price) <= 0
-    ) {
+    if (!formData.price || isNaN(formData.price) || parseFloat(formData.price) <= 0) {
       newErrors.price = "Price must be a positive number";
     }
     setErrors(newErrors);
@@ -157,13 +153,7 @@ const AddProductCharge = ({
       default:
         return [];
     }
-  }, [
-    formData.productable_type,
-    computerInstances,
-    ebsVolumes,
-    bandwidths,
-    osImages,
-  ]);
+  }, [formData.productable_type, computerInstances, ebsVolumes, bandwidths, osImages]);
 
   const isCurrentProductListFetching = useMemo(() => {
     switch (formData.productable_type) {
@@ -187,8 +177,7 @@ const AddProductCharge = ({
   ]);
 
   const productLabel = useMemo(() => {
-    if (formData.productable_type === "ComputeInstance")
-      return "Compute Instance";
+    if (formData.productable_type === "ComputeInstance") return "Compute Instance";
     if (formData.productable_type === "EbsVolume") return "EBS Volume";
     if (formData.productable_type === "Bandwidth") return "Bandwidth";
     if (formData.productable_type === "OsImage") return "OS Image";
@@ -201,9 +190,7 @@ const AddProductCharge = ({
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
           <div className="bg-white rounded-[24px] w-full max-w-[550px] mx-4">
             <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
-              <h2 className="text-lg font-semibold text-[#575758]">
-                Set Product Charge
-              </h2>
+              <h2 className="text-lg font-semibold text-[#575758]">Set Product Charge</h2>
               <button
                 onClick={closeModal}
                 className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
@@ -225,20 +212,15 @@ const AddProductCharge = ({
                   {isChargeOptionsFetching ? (
                     <div className="flex items-center input-field py-2">
                       <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
-                      <span className="text-gray-500 text-sm">
-                        Loading charge options...
-                      </span>
+                      <span className="text-gray-500 text-sm">Loading charge options...</span>
                     </div>
-                  ) : Array.isArray(chargeOptions) &&
-                    chargeOptions.length > 0 ? (
+                  ) : Array.isArray(chargeOptions) && chargeOptions.length > 0 ? (
                     <select
                       id="product_charge_id"
                       value={formData.product_charge_id}
                       onChange={handleProductChargeIdChange}
                       className={`w-full input-field ${
-                        errors.product_charge_id
-                          ? "border-red-500"
-                          : "border-gray-300"
+                        errors.product_charge_id ? "border-red-500" : "border-gray-300"
                       }`}
                       disabled={isPending}
                     >
@@ -255,9 +237,7 @@ const AddProductCharge = ({
                     </div>
                   )}
                   {errors.product_charge_id && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.product_charge_id}
-                    </p>
+                    <p className="text-red-500 text-xs mt-1">{errors.product_charge_id}</p>
                   )}
                 </div>
 
@@ -273,9 +253,7 @@ const AddProductCharge = ({
                     value={formData.productable_type}
                     onChange={handleProductTypeChange}
                     className={`w-full input-field ${
-                      errors.productable_type
-                        ? "border-red-500"
-                        : "border-gray-300"
+                      errors.productable_type ? "border-red-500" : "border-gray-300"
                     }`}
                     disabled={isPending}
                   >
@@ -287,9 +265,7 @@ const AddProductCharge = ({
                     ))}
                   </select>
                   {errors.productable_type && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.productable_type}
-                    </p>
+                    <p className="text-red-500 text-xs mt-1">{errors.productable_type}</p>
                   )}
                 </div>
 
@@ -309,27 +285,20 @@ const AddProductCharge = ({
                           Loading {productLabel.toLowerCase()}s...
                         </span>
                       </div>
-                    ) : Array.isArray(currentProductList) &&
-                      currentProductList.length > 0 ? (
+                    ) : Array.isArray(currentProductList) && currentProductList.length > 0 ? (
                       <select
                         id="productable_id"
                         value={formData.productable_id}
                         onChange={handleProductableIdChange}
                         className={`w-full input-field ${
-                          errors.productable_id
-                            ? "border-red-500"
-                            : "border-gray-300"
+                          errors.productable_id ? "border-red-500" : "border-gray-300"
                         }`}
                         disabled={isPending}
                       >
-                        <option value="">
-                          Select a {productLabel.toLowerCase()}
-                        </option>
+                        <option value="">Select a {productLabel.toLowerCase()}</option>
                         {currentProductList.map((product) => (
                           <option key={product.id} value={product.id}>
-                            {product.name ||
-                              product.description ||
-                              product.identifier}
+                            {product.name || product.description || product.identifier}
                           </option>
                         ))}
                       </select>
@@ -339,9 +308,7 @@ const AddProductCharge = ({
                       </div>
                     )}
                     {errors.productable_id && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.productable_id}
-                      </p>
+                      <p className="text-red-500 text-xs mt-1">{errors.productable_id}</p>
                     )}
                   </div>
                 )}
@@ -365,23 +332,17 @@ const AddProductCharge = ({
                     <option value="">Select frequency</option>
                     {frequencyOptions.map((option) => (
                       <option key={option} value={option}>
-                        {option.charAt(0).toUpperCase() +
-                          option.slice(1).replace("_", " ")}
+                        {option.charAt(0).toUpperCase() + option.slice(1).replace("_", " ")}
                       </option>
                     ))}
                   </select>
                   {errors.frequency && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.frequency}
-                    </p>
+                    <p className="text-red-500 text-xs mt-1">{errors.frequency}</p>
                   )}
                 </div>
 
                 <div>
-                  <label
-                    htmlFor="price"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
+                  <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
                     Price<span className="text-red-500">*</span>
                   </label>
                   <input
@@ -396,9 +357,7 @@ const AddProductCharge = ({
                     }`}
                     disabled={isPending}
                   />
-                  {errors.price && (
-                    <p className="text-red-500 text-xs mt-1">{errors.price}</p>
-                  )}
+                  {errors.price && <p className="text-red-500 text-xs mt-1">{errors.price}</p>}
                 </div>
               </form>
             </div>

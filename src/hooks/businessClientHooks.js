@@ -3,11 +3,15 @@ import clientApi from "../index/client/api";
 import clientSilentApi from "../index/client/silent";
 import api from "../index/api"; // Keep for public endpoints
 import silentApi from "../index/silent"; // Keep for public endpoints
-import { useSharedCalculatorOptions, useSharedMultiQuotes, useSharedCalculatorPricing } from "./sharedCalculatorHooks";
+import {
+  useSharedCalculatorOptions,
+  useSharedMultiQuotes,
+  useSharedCalculatorPricing,
+} from "./sharedCalculatorHooks";
 
 /**
  * Business/Client API Hooks
- * 
+ *
  * These hooks provide comprehensive business/client API functionality for all endpoints
  * available in api.php (/api/v1/business/*) and public endpoints
  */
@@ -17,11 +21,11 @@ import { useSharedCalculatorOptions, useSharedMultiQuotes, useSharedCalculatorPr
 // ================================
 
 // Calculator Options - Use shared hook instead
-// const fetchCalculatorOptions = async () => {
-//   const res = await silentApi("GET", "/calculator-options");
-//   if (!res.data) throw new Error("Failed to fetch calculator options");
-//   return res;
-// };
+const fetchCalculatorOptions = async () => {
+  const res = await silentApi("GET", "/calculator-options");
+  if (!res.data) throw new Error("Failed to fetch calculator options");
+  return res;
+};
 
 // Product Pricing Catalog
 const fetchProductPricing = async () => {
@@ -32,10 +36,11 @@ const fetchProductPricing = async () => {
 
 // Multi Quotes - Use shared hook instead
 // const createMultiQuote = async (quoteData) => {
-//   const res = await clientApi("POST", "/multi-quotes", quoteData);
-//   if (!res.data) throw new Error("Failed to create multi quote");
-//   return res.data;
-// };
+const createMultiQuote = async (quoteData) => {
+  const res = await clientApi("POST", "/multi-quotes", quoteData);
+  if (!res.data) throw new Error("Failed to create multi quote");
+  return res.data;
+};
 
 // App Settings
 const fetchAppSettings = async () => {
@@ -147,11 +152,11 @@ const createBusinessVerification = async (verificationData) => {
 };
 
 // Calculator Pricing - Use shared hook instead
-// const calculatePricing = async (pricingData) => {
-//   const res = await clientApi("POST", "/calculator/pricing", pricingData);
-//   if (!res.data) throw new Error("Failed to calculate pricing");
-//   return res.data;
-// };
+const calculatePricing = async (pricingData) => {
+  const res = await clientApi("POST", "/calculator/pricing", pricingData);
+  if (!res.data) throw new Error("Failed to calculate pricing");
+  return res.data;
+};
 
 // ================================
 // Business Auth Endpoints
@@ -252,14 +257,16 @@ const deleteProfile = async (id) => {
   return res.data;
 };
 
-
 // ================================
 // Transaction Endpoints
 // ================================
 
 const fetchTransactions = async (params = {}) => {
   const queryString = new URLSearchParams(params).toString();
-  const res = await clientSilentApi("GET", `/business/transaction${queryString ? `?${queryString}` : ""}`);
+  const res = await clientSilentApi(
+    "GET",
+    `/business/transaction${queryString ? `?${queryString}` : ""}`
+  );
   if (!res.data) throw new Error("Failed to fetch transactions");
   return res;
 };
@@ -276,8 +283,6 @@ const createTransactionReverification = async (reverificationData) => {
   if (!res.data) throw new Error("Failed to create transaction reverification");
   return res.data;
 };
-
-
 
 // ================================
 // Quote Endpoints
@@ -634,7 +639,6 @@ export const useDeleteProfile = () => {
   });
 };
 
-
 // ================================
 // HOOKS - Transaction Endpoints
 // ================================
@@ -673,8 +677,6 @@ export const useCreateTransactionReverification = () => {
   });
 };
 
-
-
 // ================================
 // HOOKS - Quote Endpoints
 // ================================
@@ -706,5 +708,5 @@ export {
   businessVerifyEmail,
   fetchTransactions,
   fetchTransactionById,
-  previewQuote
+  previewQuote,
 };

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import sideBg from "./assets/sideBg.svg";
 import logo from "./assets/logo.png";
-import VerificationCodeInput from "../../utils/codeInput";
+import VerificationCodeInput from "../../utils/VerificationCodeInput";
 import useTenantAuthStore from "../../stores/tenantAuthStore";
 import useClientAuthStore from "../../stores/clientAuthStore";
 import useAdminAuthStore from "../../stores/adminAuthStore";
@@ -59,10 +59,7 @@ export default function VerifyMail() {
 
         const userRole = res?.data?.role;
         const accessToken =
-          res?.access_token ||
-          res?.token ||
-          res?.data?.access_token ||
-          res?.data?.token;
+          res?.access_token || res?.token || res?.data?.access_token || res?.data?.token;
         if (accessToken) {
           const domainInfo =
             res?.data?.domain ??
@@ -84,12 +81,8 @@ export default function VerifyMail() {
             domain: domainInfo,
             availableTenants,
             userEmail: res?.data?.email ?? email,
-            cloudRoles:
-              res?.data?.cloud_roles ?? res?.data?.cloudRoles ?? undefined,
-            cloudAbilities:
-              res?.data?.cloud_abilities ??
-              res?.data?.cloudAbilities ??
-              undefined,
+            cloudRoles: res?.data?.cloud_roles ?? res?.data?.cloudRoles ?? undefined,
+            cloudAbilities: res?.data?.cloud_abilities ?? res?.data?.cloudAbilities ?? undefined,
           };
 
           if ((userRole || "").toLowerCase() === "client") {
@@ -138,14 +131,10 @@ export default function VerifyMail() {
 
           {/* Welcome Title */}
           <div className="mb-8 w-full text-center">
-            <h1 className="text-2xl font-semibold text-[#121212] mb-2">
-              Verify Account
-            </h1>
+            <h1 className="text-2xl font-semibold text-[#121212] mb-2">Verify Account</h1>
             <p className="text-[#676767] text-sm">
               An authentication code has been sent to{" "}
-              <span className="underline underline-offset-1">
-                {userEmail || "your email"}
-              </span>
+              <span className="underline underline-offset-1">{userEmail || "your email"}</span>
             </p>
           </div>
 
@@ -160,9 +149,7 @@ export default function VerifyMail() {
             />
 
             {/* Display errors */}
-            {errors.otp && (
-              <p className="text-red-500 text-xs mt-1">{errors.otp}</p>
-            )}
+            {errors.otp && <p className="text-red-500 text-xs mt-1">{errors.otp}</p>}
             {/* {errors.email && (
               <p className="text-red-500 text-xs mt-1">{errors.email}</p>
             )}
@@ -176,11 +163,7 @@ export default function VerifyMail() {
               disabled={isVerifyPending}
               className="w-full bg-[#288DD1] hover:bg-[#6db1df] text-white font-semibold py-3 px-4 rounded-[30px] transition-colors focus:outline-none focus:ring-1 focus:ring-[#288DD1] focus:ring-offset-2 flex items-center justify-center"
             >
-              {isVerifyPending ? (
-                <Loader2 className="w-4 text-white animate-spin" />
-              ) : (
-                "Submit"
-              )}
+              {isVerifyPending ? <Loader2 className="w-4 text-white animate-spin" /> : "Submit"}
             </button>
           </div>
         </div>

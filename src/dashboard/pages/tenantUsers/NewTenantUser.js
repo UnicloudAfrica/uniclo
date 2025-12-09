@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TenantPageShell from "../../components/TenantPageShell";
-import ModernCard from "../../../adminDashboard/components/ModernCard";
-import ModernButton from "../../../adminDashboard/components/ModernButton";
-import ModernInput from "../../../adminDashboard/components/ModernInput";
-import ToastUtils from "../../../utils/toastUtil";
+import { ModernCard } from "../../../shared/components/ui";
+import { ModernButton } from "../../../shared/components/ui";
+import { ModernInput } from "../../../shared/components/ui";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import { useCreateTenantAdmin } from "../../../hooks/adminUserHooks";
 
 const defaultForm = {
@@ -32,10 +32,7 @@ export default function InviteTenantUserPage() {
   const { mutateAsync: inviteUser } = useCreateTenantAdmin();
 
   const updateField = (key) => (event) => {
-    const value =
-      event.target.type === "checkbox"
-        ? event.target.checked
-        : event.target.value;
+    const value = event.target.type === "checkbox" ? event.target.checked : event.target.value;
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -66,9 +63,7 @@ export default function InviteTenantUserPage() {
       navigate("/dashboard/clients");
     } catch (error) {
       ToastUtils.error(
-        error?.response?.data?.message ||
-          error?.message ||
-          "Failed to invite tenant user."
+        error?.response?.data?.message || error?.message || "Failed to invite tenant user."
       );
     } finally {
       setIsSubmitting(false);
@@ -91,18 +86,10 @@ export default function InviteTenantUserPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="First name">
-              <ModernInput
-                value={form.first_name}
-                onChange={updateField("first_name")}
-                required
-              />
+              <ModernInput value={form.first_name} onChange={updateField("first_name")} required />
             </Field>
             <Field label="Last name">
-              <ModernInput
-                value={form.last_name}
-                onChange={updateField("last_name")}
-                required
-              />
+              <ModernInput value={form.last_name} onChange={updateField("last_name")} required />
             </Field>
             <Field label="Email">
               <ModernInput
@@ -113,10 +100,7 @@ export default function InviteTenantUserPage() {
               />
             </Field>
             <Field label="Phone">
-              <ModernInput
-                value={form.phone}
-                onChange={updateField("phone")}
-              />
+              <ModernInput value={form.phone} onChange={updateField("phone")} />
             </Field>
           </div>
 

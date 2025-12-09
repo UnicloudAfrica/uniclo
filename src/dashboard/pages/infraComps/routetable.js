@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link2, Plus, RefreshCw, Trash2 } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import {
   useFetchTenantRouteTables,
   useSyncTenantRouteTables,
@@ -11,10 +11,10 @@ import AddRouteTableModal from "../routeTableComps/addRouteTable";
 import AddRouteModal from "../routeTableComps/addRoute";
 import DeleteRouteTableModal from "../routeTableComps/deleteRouteTable";
 import AssociateRouteTableModal from "../routeTableComps/associateRouteTable";
-import ResourceSection from "../../../adminDashboard/components/ResourceSection";
-import ResourceEmptyState from "../../../adminDashboard/components/ResourceEmptyState";
-import ResourceListCard from "../../../adminDashboard/components/ResourceListCard";
-import ModernButton from "../../../adminDashboard/components/ModernButton";
+import { ResourceSection } from "../../../shared/components/ui";
+import { ResourceEmptyState } from "../../../shared/components/ui";
+import { ResourceListCard } from "../../../shared/components/ui";
+import { ModernButton } from "../../../shared/components/ui";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -77,10 +77,7 @@ const RouteTables = ({
   const stats = useMemo(() => {
     const totalRoutes = items.reduce((sum, rt) => sum + ((rt.routes || []).length ?? 0), 0);
     const mainTablesCount = items.filter(
-      (rt) =>
-        rt.main ||
-        rt.is_main ||
-        (rt.associations || []).some((assoc) => assoc?.main)
+      (rt) => rt.main || rt.is_main || (rt.associations || []).some((assoc) => assoc?.main)
     ).length;
     const summary = [
       {
@@ -283,9 +280,7 @@ const RouteTables = ({
           <div className="space-y-2">
             {routes.map((route, idx) => {
               const destination =
-                route.destination_cidr_block ||
-                route.destination_ipv6_cidr_block ||
-                "—";
+                route.destination_cidr_block || route.destination_ipv6_cidr_block || "—";
               return (
                 <div
                   key={`${rt.id}-route-${idx}`}
@@ -293,9 +288,7 @@ const RouteTables = ({
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-slate-800">{destination}</p>
-                    <p className="text-xs text-slate-500">
-                      {describeRouteTarget(route)}
-                    </p>
+                    <p className="text-xs text-slate-500">{describeRouteTarget(route)}</p>
                   </div>
                   <ModernButton
                     variant="ghost"
@@ -342,9 +335,7 @@ const RouteTables = ({
     const routes = rt.routes || [];
     const associations = rt.associations || [];
     const isMainTable =
-      Boolean(rt.main) ||
-      Boolean(rt.is_main) ||
-      associations.some((assoc) => assoc?.main);
+      Boolean(rt.main) || Boolean(rt.is_main) || associations.some((assoc) => assoc?.main);
     const statusLabel = rt.status || (isMainTable ? "Main Table" : "");
 
     return (
@@ -367,13 +358,13 @@ const RouteTables = ({
                 },
               ]
             : isMainTable
-            ? [
-                {
-                  label: "Main Table",
-                  tone: "primary",
-                },
-              ]
-            : []
+              ? [
+                  {
+                    label: "Main Table",
+                    tone: "primary",
+                  },
+                ]
+              : []
         }
         actions={[
           {

@@ -1,6 +1,6 @@
 /**
  * Enhanced VPC Management Hooks
- * 
+ *
  * Provides comprehensive VPC operations including:
  * - VPC CRUD operations
  * - Available CIDR suggestions
@@ -17,10 +17,7 @@ const fetchVpcs = async ({ project_id, region }) => {
   if (region) params.append("region", region);
 
   const queryString = params.toString();
-  const res = await silentApi(
-    "GET",
-    `/business/vpcs${queryString ? `?${queryString}` : ""}`
-  );
+  const res = await silentApi("GET", `/business/vpcs${queryString ? `?${queryString}` : ""}`);
   if (!res) throw new Error("Failed to fetch VPCs");
   return res;
 };
@@ -56,10 +53,7 @@ const syncVpcs = async ({ project_id, region }) => {
   params.append("refresh", "1");
 
   const queryString = params.toString();
-  const res = await silentApi(
-    "GET",
-    `/business/vpcs${queryString ? `?${queryString}` : ""}`
-  );
+  const res = await silentApi("GET", `/business/vpcs${queryString ? `?${queryString}` : ""}`);
   if (!res) throw new Error("Failed to sync VPCs");
   return res;
 };
@@ -152,10 +146,7 @@ const fetchAvailableCidrs = async ({
   params.append("vpc_id", vpc_id);
   if (prefix_length) params.append("prefix_length", String(prefix_length));
   if (limit) params.append("limit", String(limit));
-  const res = await silentApi(
-    "GET",
-    `/business/vpcs/available-cidrs?${params.toString()}`
-  );
+  const res = await silentApi("GET", `/business/vpcs/available-cidrs?${params.toString()}`);
   const suggestions = res?.data?.suggestions ?? res?.suggestions ?? [];
   return Array.isArray(suggestions) ? suggestions : [];
 };
@@ -169,10 +160,7 @@ export const useFetchAvailableCidrs = (
   options = {}
 ) => {
   return useQuery({
-    queryKey: [
-      "available-cidrs",
-      { projectId, region, vpcId, prefixLength, limit },
-    ],
+    queryKey: ["available-cidrs", { projectId, region, vpcId, prefixLength, limit }],
     queryFn: () =>
       fetchAvailableCidrs({
         project_id: projectId,
@@ -194,7 +182,10 @@ export const useFetchAvailableCidrs = (
 
 const fetchVpcFlowLogs = async (params = {}) => {
   const queryString = new URLSearchParams(params).toString();
-  const res = await silentApi("GET", `/business/vpc-flow-logs${queryString ? `?${queryString}` : ""}`);
+  const res = await silentApi(
+    "GET",
+    `/business/vpc-flow-logs${queryString ? `?${queryString}` : ""}`
+  );
   if (!res.data) throw new Error("Failed to fetch VPC flow logs");
   return res;
 };
@@ -295,7 +286,7 @@ export const useDeleteVpcFlowLog = () => {
 // Hook that provides access to all VPC operations
 export const useVpcOperations = () => {
   const queryClient = useQueryClient();
-  
+
   const invalidateVpcData = (vpcId) => {
     queryClient.invalidateQueries({ queryKey: ["vpcs"] });
     queryClient.invalidateQueries({ queryKey: ["vpc-flow-logs"] });
@@ -309,12 +300,12 @@ export const useVpcOperations = () => {
     createVpc: useCreateTenantVpc(),
     updateVpc: useUpdateTenantVpc(),
     deleteVpc: useDeleteTenantVpc(),
-    
+
     // Flow logs operations
     createFlowLog: useCreateVpcFlowLog(),
     updateFlowLog: useUpdateVpcFlowLog(),
     deleteFlowLog: useDeleteVpcFlowLog(),
-    
+
     // Utility functions
     invalidateVpcData,
   };
@@ -332,5 +323,5 @@ export {
   fetchVpcFlowLogById,
   createVpcFlowLog,
   updateVpcFlowLog,
-  deleteVpcFlowLog
+  deleteVpcFlowLog,
 };

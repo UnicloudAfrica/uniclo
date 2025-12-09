@@ -3,14 +3,7 @@ import Navbar from "../components/navbar";
 import { useParams, Link } from "react-router-dom";
 import { useRef, useEffect, useState } from "react";
 import { initializeApp } from "firebase/app";
-import {
-  getFirestore,
-  getDoc,
-  doc,
-  getDocs,
-  collection,
-  query,
-} from "firebase/firestore";
+import { getFirestore, getDoc, doc, getDocs, collection, query } from "firebase/firestore";
 import { motion } from "framer-motion";
 import adbg from "./assets/adBG.svg";
 import admob from "./assets/adMob.svg";
@@ -141,8 +134,7 @@ const DetailedSolution = ({}) => {
             Explore other solutions
           </p>
           <p className=" text-center font-normal mt-3 text-xl text-[#676767]">
-            Discover Your Custom Cloud Advantage: Tailored Solutions for Every
-            Industry
+            Discover Your Custom Cloud Advantage: Tailored Solutions for Every Industry
           </p>
           <div
             className={`grid grid-cols-1 md:grid-cols-${
@@ -160,12 +152,8 @@ const DetailedSolution = ({}) => {
                       backgroundPosition: "center",
                     }}
                   ></div>
-                  <p className="text-left mt-6 text-xl lg:text-2xl font-medium">
-                    {item.topic}
-                  </p>
-                  <p className="text-left mt-3 text-[#1E1E1ECC] text-sm">
-                    {item.desc}
-                  </p>
+                  <p className="text-left mt-6 text-xl lg:text-2xl font-medium">{item.topic}</p>
+                  <p className="text-left mt-3 text-[#1E1E1ECC] text-sm">{item.desc}</p>
                   <button className=" flex mt-6 items-center">
                     <p className=" gradient-text text-base">View more</p>
                   </button>
@@ -186,12 +174,9 @@ const DetailedSolution = ({}) => {
                 className="z-10 absolute top-0 h-full w-full object-cover block md:hidden"
                 alt=""
               />
-              <p className=" font-semibold text-xl md:text-3xl">
-                Want product news and updates
-              </p>
+              <p className=" font-semibold text-xl md:text-3xl">Want product news and updates</p>
               <p className=" font-normal px-4 md:px-0 text-lg md:text-xl">
-                Subscribe to UniCloud Africa blog to get update right in your
-                inbox
+                Subscribe to UniCloud Africa blog to get update right in your inbox
               </p>
               <div className=" flex flex-col md:flex-row items-center justify-center z-20  mt-4 md:space-x-6 space-y-4 md:space-y-0">
                 <input

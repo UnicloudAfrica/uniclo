@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import TenantPageShell from "../../components/TenantPageShell";
-import ModernCard from "../../../adminDashboard/components/ModernCard";
-import ModernButton from "../../../adminDashboard/components/ModernButton";
-import ModernInput from "../../../adminDashboard/components/ModernInput";
-import ToastUtils from "../../../utils/toastUtil";
+import { ModernCard } from "../../../shared/components/ui";
+import { ModernButton } from "../../../shared/components/ui";
+import { ModernInput } from "../../../shared/components/ui";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import { useCreateClient } from "../../../hooks/clientHooks";
 
 const defaultForm = {
@@ -67,8 +67,7 @@ export default function NewClientPage() {
 
     try {
       const response = await createClient(payload);
-      const identifier =
-        response?.data?.identifier || response?.identifier || null;
+      const identifier = response?.data?.identifier || response?.identifier || null;
 
       ToastUtils.success("Client created.");
       if (identifier) {
@@ -105,18 +104,10 @@ export default function NewClientPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="First name">
-              <ModernInput
-                value={form.first_name}
-                onChange={updateField("first_name")}
-                required
-              />
+              <ModernInput value={form.first_name} onChange={updateField("first_name")} required />
             </Field>
             <Field label="Last name">
-              <ModernInput
-                value={form.last_name}
-                onChange={updateField("last_name")}
-                required
-              />
+              <ModernInput value={form.last_name} onChange={updateField("last_name")} required />
             </Field>
             <Field label="Email address">
               <ModernInput
@@ -127,11 +118,7 @@ export default function NewClientPage() {
               />
             </Field>
             <Field label="Phone number">
-              <ModernInput
-                value={form.phone}
-                onChange={updateField("phone")}
-                required
-              />
+              <ModernInput value={form.phone} onChange={updateField("phone")} required />
             </Field>
           </div>
 

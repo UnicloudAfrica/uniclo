@@ -47,21 +47,13 @@ const buildQueryParams = ({ target, tenantId, userId }) => {
   return params.toString();
 };
 
-export const fetchOnboardingSubmission = async ({
-  target,
-  tenantId,
-  userId,
-  step,
-}) => {
+export const fetchOnboardingSubmission = async ({ target, tenantId, userId, step }) => {
   if (!step) {
     throw new Error("Step is required to fetch onboarding submissions.");
   }
 
   const queryString = buildQueryParams({ target, tenantId, userId });
-  const response = await api(
-    "GET",
-    `/business/onboarding/${step}/review?${queryString}`
-  );
+  const response = await api("GET", `/business/onboarding/${step}/review?${queryString}`);
 
   return {
     submission: response?.data ?? null,
@@ -72,40 +64,28 @@ export const fetchOnboardingSubmission = async ({
 const submissionQueryKey = (target, tenantId, userId, step) => [
   "onboarding-review",
   target,
-  target === "tenant" ? tenantId ?? null : null,
-  target === "tenant" ? null : userId ?? null,
+  target === "tenant" ? (tenantId ?? null) : null,
+  target === "tenant" ? null : (userId ?? null),
   step ?? null,
 ];
 
 export const onboardingSubmissionListKey = (target, tenantId, userId) => [
   "onboarding-review",
   target,
-  target === "tenant" ? tenantId ?? null : null,
-  target === "tenant" ? null : userId ?? null,
+  target === "tenant" ? (tenantId ?? null) : null,
+  target === "tenant" ? null : (userId ?? null),
 ];
 
-export const useOnboardingSubmission = (
-  { target, tenantId, userId, step },
-  options = {}
-) => {
+export const useOnboardingSubmission = ({ target, tenantId, userId, step }, options = {}) => {
   return useQuery({
     queryKey: submissionQueryKey(target, tenantId, userId, step),
-    queryFn: () =>
-      fetchOnboardingSubmission({ target, tenantId, userId, step }),
+    queryFn: () => fetchOnboardingSubmission({ target, tenantId, userId, step }),
     enabled: Boolean(step && target && (tenantId || userId)),
     ...options,
   });
 };
 
-const updateStatus = async ({
-  target,
-  tenantId,
-  userId,
-  step,
-  status,
-  message,
-  meta,
-}) => {
+const updateStatus = async ({ target, tenantId, userId, step, status, message, meta }) => {
   const payload = {
     target,
     status,
@@ -125,11 +105,7 @@ const updateStatus = async ({
     payload.meta = meta;
   }
 
-  const response = await api(
-    "PATCH",
-    `/business/onboarding/${step}/status`,
-    payload
-  );
+  const response = await api("PATCH", `/business/onboarding/${step}/status`, payload);
 
   return response?.data ?? null;
 };
@@ -141,12 +117,7 @@ export const useUpdateOnboardingStatus = () => {
     mutationFn: updateStatus,
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries(
-        submissionQueryKey(
-          variables.target,
-          variables.tenantId,
-          variables.userId,
-          variables.step
-        )
+        submissionQueryKey(variables.target, variables.tenantId, variables.userId, variables.step)
       );
 
       queryClient.invalidateQueries({
@@ -168,10 +139,7 @@ export const useUpdateOnboardingStatus = () => {
 
 export const fetchOnboardingReviewQueue = async (params = {}) => {
   const query = buildQueueQuery(params ?? {});
-  const response = await api(
-    "GET",
-    `/business/onboarding/review-queue${query}`
-  );
+  const response = await api("GET", `/business/onboarding/review-queue${query}`);
 
   return response?.data ?? [];
 };

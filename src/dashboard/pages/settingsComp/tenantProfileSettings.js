@@ -1,15 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
-import {
-  useFetchCountries,
-  useFetchIndustries,
-  useFetchStatesById,
-} from "../../../hooks/resource";
-import {
-  useCreateProfile,
-  useFetchTenantProfile,
-} from "../../../hooks/profileHooks";
+import ToastUtils from "../../../utils/toastUtil.ts";
+import { useFetchCountries, useFetchIndustries, useFetchStatesById } from "../../../hooks/resource";
+import { useCreateProfile, useFetchTenantProfile } from "../../../hooks/profileHooks";
 import AccountSettingsInputs from "./accoutsettingsInput";
 import AccountSettingsColors from "./accountSettingsColor";
 import AccountSettingsImages from "./accountSettingsImage";
@@ -55,16 +48,13 @@ const TenantProfileSettings = () => {
   const [isCustomState, setIsCustomState] = useState(false);
   const [errors, setErrors] = useState({});
 
-  const { data: countries, isFetching: isCountriesFetching } =
-    useFetchCountries();
-  const { data: industries, isFetching: isIndustriesFetching } =
-    useFetchIndustries();
+  const { data: countries, isFetching: isCountriesFetching } = useFetchCountries();
+  const { data: industries, isFetching: isIndustriesFetching } = useFetchIndustries();
 
   const { data: states, isFetching: isStatesFetching } = useFetchStatesById(
     businessData?.country_id,
     {
-      enabled:
-        !!businessData?.country_id && businessData.country_id !== "other",
+      enabled: !!businessData?.country_id && businessData.country_id !== "other",
     }
   );
 
@@ -86,9 +76,7 @@ const TenantProfileSettings = () => {
         phone: tenantProfile.phone || "",
         website: tenantProfile.website || "",
         zip: tenantProfile.zip || "",
-        country_id: tenantProfile.country_id
-          ? String(tenantProfile.country_id)
-          : "",
+        country_id: tenantProfile.country_id ? String(tenantProfile.country_id) : "",
         country: tenantProfile.country || "",
         state: tenantProfile.state || "",
         state_id: "",
@@ -106,9 +94,7 @@ const TenantProfileSettings = () => {
       if (
         tenantProfile.country &&
         Array.isArray(countries) &&
-        !countries.some(
-          (c) => c.name?.toLowerCase() === tenantProfile.country.toLowerCase()
-        )
+        !countries.some((c) => c.name?.toLowerCase() === tenantProfile.country.toLowerCase())
       ) {
         setIsCustomCountry(true);
       }
@@ -157,8 +143,8 @@ const TenantProfileSettings = () => {
         newData.country = selectedCountry
           ? selectedCountry.name
           : value === "other"
-          ? ""
-          : prevData.country;
+            ? ""
+            : prevData.country;
         newData.state_id = "";
         newData.state = "";
         newData.city = "";
@@ -172,8 +158,8 @@ const TenantProfileSettings = () => {
         newData.state = selectedState
           ? selectedState.name
           : value === "other"
-          ? ""
-          : prevData.state;
+            ? ""
+            : prevData.state;
         newData.city = "";
 
         setIsCustomState(newIsCustomState);
@@ -221,19 +207,13 @@ const TenantProfileSettings = () => {
 
     if (!businessData.country_id && !businessData.country.trim()) {
       newErrors.country_id = "Country is required";
-    } else if (
-      businessData.country_id === "other" &&
-      !businessData.country.trim()
-    ) {
+    } else if (businessData.country_id === "other" && !businessData.country.trim()) {
       newErrors.country = "Custom country name is required";
     }
 
     if (!businessData.state_id && !businessData.state.trim()) {
       newErrors.state = "State/Province is required";
-    } else if (
-      businessData.state_id === "other" &&
-      !businessData.state.trim()
-    ) {
+    } else if (businessData.state_id === "other" && !businessData.state.trim()) {
       newErrors.state = "Custom state name is required";
     }
 
@@ -262,9 +242,7 @@ const TenantProfileSettings = () => {
       phone: businessData.phone,
       website: businessData.website,
       zip: businessData.zip,
-      country_id: businessData.country_id
-        ? parseInt(businessData.country_id)
-        : null,
+      country_id: businessData.country_id ? parseInt(businessData.country_id) : null,
       country: businessData.country,
       state: businessData.state,
       city: businessData.city,
@@ -313,9 +291,7 @@ const TenantProfileSettings = () => {
         </div>
       ) : !tenantProfile ? (
         <div className="w-full min-h-[calc(100vh-200px)] flex flex-col items-center justify-center font-Outfit text-gray-600 text-lg">
-          <p className="text-red-600 mb-4">
-            Tenant profile not found or an error occurred.
-          </p>
+          <p className="text-red-600 mb-4">Tenant profile not found or an error occurred.</p>
           <button
             onClick={() => window.location.reload()}
             className="px-6 py-2 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors"
@@ -339,10 +315,7 @@ const TenantProfileSettings = () => {
             isCustomState={isCustomState}
           />
 
-          <AccountSettingsColors
-            businessData={businessData}
-            updateFormData={updateFormData}
-          />
+          <AccountSettingsColors businessData={businessData} updateFormData={updateFormData} />
 
           <AccountSettingsImages
             businessData={businessData}

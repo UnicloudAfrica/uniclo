@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import TenantPageShell from "../components/TenantPageShell";
-import ModernButton from "../../adminDashboard/components/ModernButton";
+import { ModernButton } from "../../shared/components/ui";
 import CreateLead from "./leadComps/createLead";
 
 const DashboardLeadCreate = () => {

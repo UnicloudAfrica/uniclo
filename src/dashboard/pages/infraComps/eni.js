@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RefreshCw, Shield, Trash2 } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import {
   useFetchTenantNetworkInterfaces,
   useSyncTenantNetworkInterfaces,
@@ -9,10 +9,10 @@ import {
 import AddEniModal from "../eniComps/addEni";
 import DeleteEniModal from "../eniComps/deleteEni";
 import ManageEniSecurityGroupsModal from "../eniComps/manageSecurityGroups";
-import ResourceSection from "../../../adminDashboard/components/ResourceSection";
-import ResourceEmptyState from "../../../adminDashboard/components/ResourceEmptyState";
-import ResourceListCard from "../../../adminDashboard/components/ResourceListCard";
-import ModernButton from "../../../adminDashboard/components/ModernButton";
+import { ResourceSection } from "../../../shared/components/ui";
+import { ResourceEmptyState } from "../../../shared/components/ui";
+import { ResourceListCard } from "../../../shared/components/ui";
+import { ModernButton } from "../../../shared/components/ui";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -24,13 +24,7 @@ const getToneForStatus = (status = "") => {
   return "neutral";
 };
 
-const ENIs = ({
-  projectId = "",
-  region = "",
-  actionRequest,
-  onActionHandled,
-  onStatsUpdate,
-}) => {
+const ENIs = ({ projectId = "", region = "", actionRequest, onActionHandled, onStatsUpdate }) => {
   const { data: enis, isFetching } = useFetchTenantNetworkInterfaces(projectId, region);
   const { mutate: syncEnis, isPending: isSyncing } = useSyncTenantNetworkInterfaces();
   const { mutate: deleteEni, isPending: isDeleting } = useDeleteTenantNetworkInterface();
@@ -238,9 +232,7 @@ const ENIs = ({
       <ul className="space-y-1 text-sm text-slate-600">
         {ips.map((ip, index) => {
           const value = typeof ip === "string" ? ip : ip?.private_ip_address;
-          return (
-            <li key={`${eniRecord.id}-ip-${index}`}>{value || "—"}</li>
-          );
+          return <li key={`${eniRecord.id}-ip-${index}`}>{value || "—"}</li>;
         })}
       </ul>
     );
@@ -311,9 +303,7 @@ const ENIs = ({
             </div>
             {Array.isArray(securityGroups) && securityGroups.length > 0 && (
               <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-slate-700">
-                  Attached Security Groups
-                </h4>
+                <h4 className="text-sm font-semibold text-slate-700">Attached Security Groups</h4>
                 <div className="flex flex-wrap gap-2">
                   {securityGroups.map((sg) => {
                     const sgId = sg.id || sg.provider_resource_id;

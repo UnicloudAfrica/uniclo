@@ -1,5 +1,5 @@
 import { X, Copy } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 
 const Badge = ({ text }) => {
   const badgeClasses = {
@@ -13,9 +13,7 @@ const Badge = ({ text }) => {
   const badgeClass = badgeClasses[text?.toLowerCase()] || badgeClasses.default;
 
   return (
-    <span
-      className={`px-2 py-1 text-xs font-medium rounded-full capitalize ${badgeClass}`}
-    >
+    <span className={`px-2 py-1 text-xs font-medium rounded-full capitalize ${badgeClass}`}>
       {text}
     </span>
   );
@@ -31,9 +29,7 @@ const DetailRow = ({ label, value, children, isCopyable = false }) => {
     <div className="py-3 sm:grid sm:grid-cols-3 sm:gap-4">
       <dt className="text-sm font-medium text-gray-600">{label}</dt>
       <dd className="mt-1 flex items-center text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-        <span className="flex-grow break-words">
-          {value || children || "N/A"}
-        </span>
+        <span className="flex-grow break-words">{value || children || "N/A"}</span>
         {isCopyable && value && (
           <button
             onClick={handleCopy}
@@ -54,9 +50,7 @@ const ViewVpcModal = ({ isOpen, onClose, vpc }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full">
         <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
-          <h2 className="text-lg font-semibold text-[#575758]">
-            VPC Details: {vpc.name}
-          </h2>
+          <h2 className="text-lg font-semibold text-[#575758]">VPC Details: {vpc.name}</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-[#1E1E1EB2] transition-colors"
@@ -78,16 +72,13 @@ const ViewVpcModal = ({ isOpen, onClose, vpc }) => {
                   : "N/A"}
               </div>
               <div className="col-span-2">
-                <span className="font-medium text-gray-700">UUID:</span>{" "}
-                {vpc.uuid}
+                <span className="font-medium text-gray-700">UUID:</span> {vpc.uuid}
               </div>
               <div>
-                <span className="font-medium text-gray-700">Region:</span>{" "}
-                {vpc.region}
+                <span className="font-medium text-gray-700">Region:</span> {vpc.region}
               </div>
               <div>
-                <span className="font-medium text-gray-700">CIDR Block:</span>{" "}
-                {vpc.cidr_block}
+                <span className="font-medium text-gray-700">CIDR Block:</span> {vpc.cidr_block}
               </div>
               <div>
                 <span className="font-medium text-gray-700">Default:</span>{" "}
@@ -111,10 +102,7 @@ const ViewVpcModal = ({ isOpen, onClose, vpc }) => {
               </div>
               {vpc.description && (
                 <div className="col-span-2">
-                  <span className="font-medium text-gray-700">
-                    Description:
-                  </span>{" "}
-                  {vpc.description}
+                  <span className="font-medium text-gray-700">Description:</span> {vpc.description}
                 </div>
               )}
             </div>
@@ -122,35 +110,25 @@ const ViewVpcModal = ({ isOpen, onClose, vpc }) => {
             {/* Metadata Section */}
             {vpc.metadata && (
               <div className="border-t pt-4">
-                <h3 className="text-md font-semibold text-gray-800 mb-3">
-                  Metadata
-                </h3>
+                <h3 className="text-md font-semibold text-gray-800 mb-3">Metadata</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
                   <div>
-                    <span className="font-medium text-gray-700">
-                      Enable DNS Support:
-                    </span>{" "}
+                    <span className="font-medium text-gray-700">Enable DNS Support:</span>{" "}
                     {vpc.metadata.enable_dns_support ? "Yes" : "No"}
                   </div>
                   <div>
-                    <span className="font-medium text-gray-700">
-                      Enable DNS Hostnames:
-                    </span>{" "}
+                    <span className="font-medium text-gray-700">Enable DNS Hostnames:</span>{" "}
                     {vpc.metadata.enable_dns_hostnames ? "Yes" : "No"}
                   </div>
                   <div className="col-span-2">
-                    <span className="font-medium text-gray-700">
-                      DHCP Options ID:
-                    </span>{" "}
+                    <span className="font-medium text-gray-700">DHCP Options ID:</span>{" "}
                     {vpc.metadata.dhcp_options_id}
                   </div>
 
                   {/* CIDR Associations */}
                   {vpc.metadata.cidr_assocs_set?.length > 0 && (
                     <div className="col-span-2">
-                      <h4 className="font-medium text-gray-700 mt-2 mb-1">
-                        CIDR Associations:
-                      </h4>
+                      <h4 className="font-medium text-gray-700 mt-2 mb-1">CIDR Associations:</h4>
                       <ul className="list-disc list-inside pl-2 space-y-1">
                         {vpc.metadata.cidr_assocs_set.map((assoc) => (
                           <li key={assoc.cidr_assoc_id}>
@@ -164,14 +142,11 @@ const ViewVpcModal = ({ isOpen, onClose, vpc }) => {
                   {/* Service VMs */}
                   {vpc.metadata.service_vms?.length > 0 && (
                     <div className="col-span-2">
-                      <h4 className="font-medium text-gray-700 mt-2 mb-1">
-                        Service VMs:
-                      </h4>
+                      <h4 className="font-medium text-gray-700 mt-2 mb-1">Service VMs:</h4>
                       <ul className="list-disc list-inside pl-2 space-y-1">
                         {vpc.metadata.service_vms.map((vm) => (
                           <li key={vm.id}>
-                            {vm.vm_type} ({vm.id.substring(0, 8)}...) -{" "}
-                            <Badge text={vm.status} />
+                            {vm.vm_type} ({vm.id.substring(0, 8)}...) - <Badge text={vm.status} />
                           </li>
                         ))}
                       </ul>

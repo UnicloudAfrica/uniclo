@@ -4,7 +4,7 @@ import silentTenantApi from "../index/tenant/silentTenant";
 
 /**
  * Tenant Admin API Hooks
- * 
+ *
  * These hooks provide comprehensive tenant admin functionality for all endpoints
  * available in tenant.php (/tenant/v1/admin/*)
  */
@@ -95,7 +95,10 @@ const deleteTaxConfiguration = async (id) => {
 
 const fetchTenantProductPricing = async (params = {}) => {
   const queryString = new URLSearchParams(params).toString();
-  const res = await silentTenantApi("GET", `/admin/product-pricing${queryString ? `?${queryString}` : ""}`);
+  const res = await silentTenantApi(
+    "GET",
+    `/admin/product-pricing${queryString ? `?${queryString}` : ""}`
+  );
   if (!res.data) throw new Error("Failed to fetch tenant product pricing");
   return res;
 };
@@ -167,6 +170,15 @@ const fetchTenantInstanceTypes = async () => {
   return res;
 };
 
+// ================================
+// Instance Console Endpoints
+// ================================
+
+const fetchTenantInstanceConsoleById = async (id) => {
+  const res = await silentTenantApi("GET", `/instance-consoles/${id}`);
+  if (!res.data) throw new Error(`Failed to fetch tenant instance console with ID ${id}`);
+  return res.data;
+};
 
 // ================================
 // Multi Initiation Previews Endpoints
@@ -539,7 +551,6 @@ export const useFetchTenantInstanceTypes = (options = {}) => {
   });
 };
 
-
 // ================================
 // HOOKS - Multi Initiation Previews
 // ================================
@@ -715,7 +726,7 @@ export const useDeleteTenantDomainSetting = () => {
 // Hook that provides access to all tenant admin operations
 export const useTenantAdminOperations = () => {
   const queryClient = useQueryClient();
-  
+
   const invalidateAllTenantData = () => {
     queryClient.invalidateQueries({ queryKey: ["tax-types"] });
     queryClient.invalidateQueries({ queryKey: ["tax-configurations"] });
@@ -730,30 +741,30 @@ export const useTenantAdminOperations = () => {
     createTaxType: useCreateTaxType(),
     updateTaxType: useUpdateTaxType(),
     deleteTaxType: useDeleteTaxType(),
-    
+
     // Tax configuration operations
     createTaxConfiguration: useCreateTaxConfiguration(),
     updateTaxConfiguration: useUpdateTaxConfiguration(),
     deleteTaxConfiguration: useDeleteTaxConfiguration(),
-    
+
     // Product pricing operations
     createTenantProductPricing: useCreateTenantProductPricing(),
     updateTenantProductPricing: useUpdateTenantProductPricing(),
     deleteTenantProductPricing: useDeleteTenantProductPricing(),
     importTenantProductPricing: useImportTenantProductPricing(),
-    
+
     // Profile operations
     createTenantProfile: useCreateTenantProfile(),
-    
+
     // Workspace operations
     createTenantWorkspace: useCreateTenantWorkspace(),
     deleteTenantWorkspace: useDeleteTenantWorkspace(),
-    
+
     // Domain settings operations
     createTenantDomainSetting: useCreateTenantDomainSetting(),
     updateTenantDomainSetting: useUpdateTenantDomainSetting(),
     deleteTenantDomainSetting: useDeleteTenantDomainSetting(),
-    
+
     // Utility functions
     invalidateAllTenantData,
   };
@@ -793,5 +804,5 @@ export {
   fetchTenantDomainSettings,
   createTenantDomainSetting,
   updateTenantDomainSetting,
-  deleteTenantDomainSetting
+  deleteTenantDomainSetting,
 };

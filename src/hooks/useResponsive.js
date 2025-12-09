@@ -1,56 +1,59 @@
-import { useState, useEffect } from 'react';
-import { designTokens } from '../styles/designTokens';
+import { useState, useEffect } from "react";
+import { designTokens } from "../styles/designTokens";
 
 // Hook for detecting screen size and managing responsive behavior
 export const useResponsive = () => {
   const [screenSize, setScreenSize] = useState({
-    width: typeof window !== 'undefined' ? window.innerWidth : 1024,
-    height: typeof window !== 'undefined' ? window.innerHeight : 768
+    width: typeof window !== "undefined" ? window.innerWidth : 1024,
+    height: typeof window !== "undefined" ? window.innerHeight : 768,
   });
 
-  const [device, setDevice] = useState('desktop');
+  const [device, setDevice] = useState("desktop");
 
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
-      
+
       setScreenSize({ width, height });
-      
+
       // Determine device type based on width
       if (width < parseInt(designTokens.breakpoints.md)) {
-        setDevice('mobile');
+        setDevice("mobile");
       } else if (width < parseInt(designTokens.breakpoints.lg)) {
-        setDevice('tablet');
+        setDevice("tablet");
       } else {
-        setDevice('desktop');
+        setDevice("desktop");
       }
     };
 
     // Initial check
     handleResize();
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // Media query utilities
   const isMobile = screenSize.width < parseInt(designTokens.breakpoints.md);
-  const isTablet = screenSize.width >= parseInt(designTokens.breakpoints.md) && 
-                   screenSize.width < parseInt(designTokens.breakpoints.lg);
+  const isTablet =
+    screenSize.width >= parseInt(designTokens.breakpoints.md) &&
+    screenSize.width < parseInt(designTokens.breakpoints.lg);
   const isDesktop = screenSize.width >= parseInt(designTokens.breakpoints.lg);
 
   // Specific breakpoint checks
   const isSmScreen = screenSize.width < parseInt(designTokens.breakpoints.sm);
-  const isMdScreen = screenSize.width >= parseInt(designTokens.breakpoints.md) && 
-                     screenSize.width < parseInt(designTokens.breakpoints.lg);
-  const isLgScreen = screenSize.width >= parseInt(designTokens.breakpoints.lg) && 
-                     screenSize.width < parseInt(designTokens.breakpoints.xl);
+  const isMdScreen =
+    screenSize.width >= parseInt(designTokens.breakpoints.md) &&
+    screenSize.width < parseInt(designTokens.breakpoints.lg);
+  const isLgScreen =
+    screenSize.width >= parseInt(designTokens.breakpoints.lg) &&
+    screenSize.width < parseInt(designTokens.breakpoints.xl);
   const isXlScreen = screenSize.width >= parseInt(designTokens.breakpoints.xl);
 
   // Utility functions for responsive values
   const getResponsiveValue = (values) => {
-    if (typeof values !== 'object' || values === null) {
+    if (typeof values !== "object" || values === null) {
       return values;
     }
 
@@ -118,21 +121,21 @@ export const useResponsive = () => {
     showOnDesktop,
     hideOnMobile,
     hideOnTablet,
-    hideOnDesktop
+    hideOnDesktop,
   };
 };
 
 // Hook for managing responsive grid layouts
 export const useResponsiveGrid = (baseColumns = 4) => {
   const { device, getColumnsCount } = useResponsive();
-  
+
   const getGridColumns = (customConfig) => {
     const defaultConfig = {
       mobile: 1,
       tablet: Math.min(2, baseColumns),
-      desktop: baseColumns
+      desktop: baseColumns,
     };
-    
+
     const config = customConfig ? { ...defaultConfig, ...customConfig } : defaultConfig;
     return getColumnsCount(config);
   };
@@ -145,14 +148,14 @@ export const useResponsiveGrid = (baseColumns = 4) => {
   return {
     device,
     getGridColumns,
-    getGridClass
+    getGridClass,
   };
 };
 
 // Hook for responsive container management
 export const useResponsiveContainer = () => {
   const { device, isMobile, isTablet, isDesktop } = useResponsive();
-  
+
   const getContainerPadding = () => {
     if (isMobile) return designTokens.spacing[4]; // 16px
     if (isTablet) return designTokens.spacing[6]; // 24px
@@ -160,20 +163,20 @@ export const useResponsiveContainer = () => {
   };
 
   const getContainerMaxWidth = () => {
-    if (isMobile) return '100%';
+    if (isMobile) return "100%";
     if (isTablet) return designTokens.breakpoints.md;
     return designTokens.breakpoints.xl;
   };
 
   const getContainerClass = () => {
-    return `w-full max-w-screen-${device === 'mobile' ? 'sm' : device === 'tablet' ? 'md' : 'xl'} mx-auto px-${device === 'mobile' ? '4' : device === 'tablet' ? '6' : '8'}`;
+    return `w-full max-w-screen-${device === "mobile" ? "sm" : device === "tablet" ? "md" : "xl"} mx-auto px-${device === "mobile" ? "4" : device === "tablet" ? "6" : "8"}`;
   };
 
   return {
     device,
     getContainerPadding,
     getContainerMaxWidth,
-    getContainerClass
+    getContainerClass,
   };
 };
 

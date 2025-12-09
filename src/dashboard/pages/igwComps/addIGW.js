@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import ModernModal from "../../../adminDashboard/components/ModernModal";
-import ModernInput from "../../../adminDashboard/components/ModernInput";
-import ToastUtils from "../../../utils/toastUtil";
+import { ModernModal } from "../../../shared/components/ui";
+import { ModernInput } from "../../../shared/components/ui";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import { useCreateIgw } from "../../../hooks/adminHooks/igwHooks";
 import { designTokens } from "../../../styles/designTokens";
 
@@ -74,12 +74,9 @@ const AddIgw = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) => {
       loading={isPending}
       contentClassName="space-y-5"
     >
-      <p
-        className="text-sm leading-relaxed"
-        style={{ color: designTokens.colors.neutral[600] }}
-      >
-        Internet gateways expose private resources to the public internet. Name
-        the gateway and confirm the region that matches your VPC deployment.
+      <p className="text-sm leading-relaxed" style={{ color: designTokens.colors.neutral[600] }}>
+        Internet gateways expose private resources to the public internet. Name the gateway and
+        confirm the region that matches your VPC deployment.
       </p>
       <ModernInput
         label="Gateway Name"

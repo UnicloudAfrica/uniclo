@@ -43,11 +43,7 @@ const deleteRoute = async (deleteRouteData) => {
 };
 
 const associateRouteTable = async (associationData) => {
-  const res = await api(
-    "POST",
-    "/business/route-table-associations",
-    associationData
-  );
+  const res = await api("POST", "/business/route-table-associations", associationData);
   if (!res.data) throw new Error("Failed to associate route table");
   return res.data;
 };

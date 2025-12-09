@@ -82,10 +82,7 @@ const Sidebar = () => {
           </button>
         ))}
         <div className="md:absolute bottom-24">
-          <button
-            onClick={logOut}
-            className="w-full pl-8 flex py-[10px] space-x-3 items-center"
-          >
+          <button onClick={logOut} className="w-full pl-8 flex py-[10px] space-x-3 items-center">
             <img src={logout} className="w-5 h-5" alt="" />
             <p className="font-Outfit block md:hidden lg:block font-medium text-sm text-[#666666]">
               Logout

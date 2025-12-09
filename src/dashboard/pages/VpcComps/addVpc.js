@@ -1,12 +1,11 @@
 import React, { useState } from "react";
 import { Loader2, X } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import { useCreateTenantVpc } from "../../../hooks/vpcHooks";
 import { useFetchGeneralRegions } from "../../../hooks/resource";
 
 const AddTenantVpc = ({ isOpen, onClose, projectId = "" }) => {
-  const { isFetching: isRegionsFetching, data: regions } =
-    useFetchGeneralRegions();
+  const { isFetching: isRegionsFetching, data: regions } = useFetchGeneralRegions();
   const { mutate, isPending } = useCreateTenantVpc();
   const [formData, setFormData] = useState({
     name: "",
@@ -22,8 +21,7 @@ const AddTenantVpc = ({ isOpen, onClose, projectId = "" }) => {
     if (!formData.cidr_block.trim()) {
       newErrors.cidr_block = "CIDR Block is required";
     } else if (!/^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/.test(formData.cidr_block)) {
-      newErrors.cidr_block =
-        "CIDR Block must be a valid CIDR notation (e.g., 10.0.0.0/16)";
+      newErrors.cidr_block = "CIDR Block must be a valid CIDR notation (e.g., 10.0.0.0/16)";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -74,10 +72,7 @@ const AddTenantVpc = ({ isOpen, onClose, projectId = "" }) => {
         <div className="px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start">
           <div className="space-y-4 w-full">
             <div>
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                 Name<span className="text-red-500">*</span>
               </label>
               <input
@@ -90,15 +85,10 @@ const AddTenantVpc = ({ isOpen, onClose, projectId = "" }) => {
                   errors.name ? "border-red-500" : "border-gray-300"
                 }`}
               />
-              {errors.name && (
-                <p className="text-red-500 text-xs mt-1">{errors.name}</p>
-              )}
+              {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
             </div>
             <div>
-              <label
-                htmlFor="region"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="region" className="block text-sm font-medium text-gray-700 mb-2">
                 Region<span className="text-red-500">*</span>
               </label>
               <select
@@ -119,15 +109,10 @@ const AddTenantVpc = ({ isOpen, onClose, projectId = "" }) => {
                   </option>
                 ))}
               </select>
-              {errors.region && (
-                <p className="text-red-500 text-xs mt-1">{errors.region}</p>
-              )}
+              {errors.region && <p className="text-red-500 text-xs mt-1">{errors.region}</p>}
             </div>
             <div>
-              <label
-                htmlFor="cidr_block"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="cidr_block" className="block text-sm font-medium text-gray-700 mb-2">
                 CIDR Block<span className="text-red-500">*</span>
               </label>
               <input
@@ -161,9 +146,7 @@ const AddTenantVpc = ({ isOpen, onClose, projectId = "" }) => {
               className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Create VPC
-              {isPending && (
-                <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-              )}
+              {isPending && <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />}
             </button>
           </div>
         </div>

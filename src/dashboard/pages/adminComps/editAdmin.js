@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import { useUpdateTenantAdmin } from "../../../hooks/adminUserHooks";
 
 export const EditAdminModal = ({ isOpen, onClose, admin }) => {
@@ -45,10 +45,8 @@ export const EditAdminModal = ({ isOpen, onClose, admin }) => {
 
   const validateForm = () => {
     let newErrors = {};
-    if (!formData.first_name.trim())
-      newErrors.first_name = "First name is required.";
-    if (!formData.last_name.trim())
-      newErrors.last_name = "Last name is required.";
+    if (!formData.first_name.trim()) newErrors.first_name = "First name is required.";
+    if (!formData.last_name.trim()) newErrors.last_name = "Last name is required.";
     if (!formData.phone.trim()) newErrors.phone = "Phone number is required.";
     if (!formData.email.trim()) {
       newErrors.email = "Email is required.";
@@ -139,16 +137,10 @@ export const EditAdminModal = ({ isOpen, onClose, admin }) => {
           </button>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="px-6 py-6 w-full max-h-[400px] overflow-y-auto"
-        >
+        <form onSubmit={handleSubmit} className="px-6 py-6 w-full max-h-[400px] overflow-y-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label
-                htmlFor="first_name"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-1">
                 First Name<span className="text-red-500">*</span>
               </label>
               <input
@@ -157,9 +149,7 @@ export const EditAdminModal = ({ isOpen, onClose, admin }) => {
                 name="first_name"
                 value={formData.first_name}
                 onChange={handleChange}
-                className={`input-field ${
-                  errors.first_name ? "border-red-500" : ""
-                }`}
+                className={`input-field ${errors.first_name ? "border-red-500" : ""}`}
                 disabled={isPending}
               />
               {errors.first_name && (
@@ -167,10 +157,7 @@ export const EditAdminModal = ({ isOpen, onClose, admin }) => {
               )}
             </div>
             <div>
-              <label
-                htmlFor="last_name"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-1">
                 Last Name<span className="text-red-500">*</span>
               </label>
               <input
@@ -179,20 +166,13 @@ export const EditAdminModal = ({ isOpen, onClose, admin }) => {
                 name="last_name"
                 value={formData.last_name}
                 onChange={handleChange}
-                className={`input-field ${
-                  errors.last_name ? "border-red-500" : ""
-                }`}
+                className={`input-field ${errors.last_name ? "border-red-500" : ""}`}
                 disabled={isPending}
               />
-              {errors.last_name && (
-                <p className="text-red-500 text-xs mt-1">{errors.last_name}</p>
-              )}
+              {errors.last_name && <p className="text-red-500 text-xs mt-1">{errors.last_name}</p>}
             </div>
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email<span className="text-red-500">*</span>
               </label>
               <input
@@ -201,20 +181,13 @@ export const EditAdminModal = ({ isOpen, onClose, admin }) => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className={`input-field ${
-                  errors.email ? "border-red-500" : ""
-                }`}
+                className={`input-field ${errors.email ? "border-red-500" : ""}`}
                 disabled={isPending}
               />
-              {errors.email && (
-                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-              )}
+              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
             </div>
             <div>
-              <label
-                htmlFor="phone"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
                 Phone<span className="text-red-500">*</span>
               </label>
               <input
@@ -223,14 +196,10 @@ export const EditAdminModal = ({ isOpen, onClose, admin }) => {
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                className={`input-field ${
-                  errors.phone ? "border-red-500" : ""
-                }`}
+                className={`input-field ${errors.phone ? "border-red-500" : ""}`}
                 disabled={isPending}
               />
-              {errors.phone && (
-                <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
-              )}
+              {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
             </div>
 
             <div>
@@ -245,26 +214,19 @@ export const EditAdminModal = ({ isOpen, onClose, admin }) => {
                 name="workspace_role"
                 value={formData.workspace_role}
                 onChange={handleChange}
-                className={`input-field ${
-                  errors.workspace_role ? "border-red-500" : ""
-                }`}
+                className={`input-field ${errors.workspace_role ? "border-red-500" : ""}`}
                 disabled={isPending}
               >
                 <option value="member">Member</option>
                 <option value="admin">Admin</option>
               </select>
               {errors.workspace_role && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.workspace_role}
-                </p>
+                <p className="text-red-500 text-xs mt-1">{errors.workspace_role}</p>
               )}
             </div>
 
             <div className="md:col-span-2">
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 New Password
               </label>
               <input
@@ -273,15 +235,11 @@ export const EditAdminModal = ({ isOpen, onClose, admin }) => {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className={`input-field ${
-                  errors.password ? "border-red-500" : ""
-                }`}
+                className={`input-field ${errors.password ? "border-red-500" : ""}`}
                 placeholder="Leave blank to keep current password"
                 disabled={isPending}
               />
-              {errors.password && (
-                <p className="text-red-500 text-xs mt-1">{errors.password}</p>
-              )}
+              {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
             </div>
             <div className="md:col-span-2">
               <label
@@ -296,16 +254,12 @@ export const EditAdminModal = ({ isOpen, onClose, admin }) => {
                 name="password_confirmation"
                 value={formData.password_confirmation}
                 onChange={handleChange}
-                className={`input-field ${
-                  errors.password_confirmation ? "border-red-500" : ""
-                }`}
+                className={`input-field ${errors.password_confirmation ? "border-red-500" : ""}`}
                 placeholder="Confirm new password"
                 disabled={isPending}
               />
               {errors.password_confirmation && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.password_confirmation}
-                </p>
+                <p className="text-red-500 text-xs mt-1">{errors.password_confirmation}</p>
               )}
             </div>
           </div>
@@ -334,9 +288,7 @@ export const EditAdminModal = ({ isOpen, onClose, admin }) => {
               className="px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Save Changes
-              {isPending && (
-                <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-              )}
+              {isPending && <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />}
             </button>
           </div>
         </div>

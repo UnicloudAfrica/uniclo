@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import ToastUtils from "../../utils/toastUtil";
+import ToastUtils from "../../utils/toastUtil.ts";
 import FileDropInput from "./FileDropInput";
 
 const DEFAULT_PAYLOAD = {
@@ -24,10 +24,7 @@ export const ensureBrandingThemeDefaults = (value) => {
 };
 
 const BrandingThemeForm = ({ value, onChange }) => {
-  const payload = useMemo(
-    () => ensureBrandingThemeDefaults(value),
-    [value]
-  );
+  const payload = useMemo(() => ensureBrandingThemeDefaults(value), [value]);
 
   const updateValue = (path, nextValue) => {
     onChange((previous) => {
@@ -55,9 +52,7 @@ const BrandingThemeForm = ({ value, onChange }) => {
   return (
     <div className="space-y-8">
       <section className="space-y-4">
-        <h3 className="text-sm font-semibold text-gray-800">
-          Customer-facing URLs
-        </h3>
+        <h3 className="text-sm font-semibold text-gray-800">Customer-facing URLs</h3>
         <p className="text-xs text-gray-500">
           These links power automatic redirects from the CRM and email footers.
         </p>
@@ -65,26 +60,20 @@ const BrandingThemeForm = ({ value, onChange }) => {
           <InputField
             label="Privacy policy URL"
             value={payload.privacy_policy_url}
-            onChange={(event) =>
-              updateValue("privacy_policy_url", event.target.value)
-            }
+            onChange={(event) => updateValue("privacy_policy_url", event.target.value)}
             placeholder="https://example.com/privacy"
             required
           />
           <InputField
             label="Help centre URL"
             value={payload.help_center_url}
-            onChange={(event) =>
-              updateValue("help_center_url", event.target.value)
-            }
+            onChange={(event) => updateValue("help_center_url", event.target.value)}
             placeholder="https://support.example.com"
           />
           <InputField
             label="Email unsubscription URL"
             value={payload.unsubscription_url}
-            onChange={(event) =>
-              updateValue("unsubscription_url", event.target.value)
-            }
+            onChange={(event) => updateValue("unsubscription_url", event.target.value)}
             placeholder="https://example.com/unsubscribe"
           />
           <InputField
@@ -98,14 +87,10 @@ const BrandingThemeForm = ({ value, onChange }) => {
       </section>
 
       <section className="space-y-4">
-        <h3 className="text-sm font-semibold text-gray-800">
-          Brand assets
-        </h3>
+        <h3 className="text-sm font-semibold text-gray-800">Brand assets</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Company logo
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Company logo</label>
             <FileDropInput
               accept=".png,.jpg,.jpeg,.svg"
               value={payload.logo}
@@ -126,32 +111,28 @@ const BrandingThemeForm = ({ value, onChange }) => {
                   <p className="text-xs text-gray-500">Preview</p>
                 </div>
               )}
-            {payload.logo &&
-              typeof payload.logo === "object" &&
-              payload.logo.url && (
-                <a
-                  href={payload.logo.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-[--theme-color] mt-2"
-                >
-                  View current logo
-                </a>
-              )}
+            {payload.logo && typeof payload.logo === "object" && payload.logo.url && (
+              <a
+                href={payload.logo.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-[--theme-color] mt-2"
+              >
+                View current logo
+              </a>
+            )}
           </div>
 
-      <ColorField
-        label="Theme colour"
-        value={payload.theme_color}
-        onChange={(event) => updateValue("theme_color", event.target.value)}
-        placeholder="#0F172A"
+          <ColorField
+            label="Theme colour"
+            value={payload.theme_color}
+            onChange={(event) => updateValue("theme_color", event.target.value)}
+            placeholder="#0F172A"
           />
           <ColorField
             label="Secondary colour"
             value={payload.secondary_color}
-            onChange={(event) =>
-              updateValue("secondary_color", event.target.value)
-            }
+            onChange={(event) => updateValue("secondary_color", event.target.value)}
             placeholder="#2563EB"
             helperText="Optional accent colour."
           />
@@ -164,9 +145,7 @@ const BrandingThemeForm = ({ value, onChange }) => {
           <ColorField
             label="Anchor link colour"
             value={payload.ahref_link_color}
-            onChange={(event) =>
-              updateValue("ahref_link_color", event.target.value)
-            }
+            onChange={(event) => updateValue("ahref_link_color", event.target.value)}
             placeholder="#2563EB"
           />
         </div>
@@ -175,14 +154,7 @@ const BrandingThemeForm = ({ value, onChange }) => {
   );
 };
 
-const InputField = ({
-  label,
-  value,
-  onChange,
-  placeholder,
-  required = false,
-  helperText,
-}) => (
+const InputField = ({ label, value, onChange, placeholder, required = false, helperText }) => (
   <div>
     <label className="block text-sm font-medium text-gray-700 mb-1">
       {label}
@@ -199,21 +171,12 @@ const InputField = ({
   </div>
 );
 
-const ColorField = ({
-  label,
-  value,
-  onChange,
-  placeholder,
-  helperText,
-}) => {
-  const swatchColor =
-    typeof value === "string" && value.trim() !== "" ? value : "#f4f4f5";
+const ColorField = ({ label, value, onChange, placeholder, helperText }) => {
+  const swatchColor = typeof value === "string" && value.trim() !== "" ? value : "#f4f4f5";
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label}
-      </label>
+      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
       <div className="flex items-center gap-3">
         <input
           type="text"

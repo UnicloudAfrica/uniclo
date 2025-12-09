@@ -6,13 +6,13 @@ import {
   useFetchTenantKeyPairs,
   useSyncTenantKeyPairs,
 } from "../../../hooks/keyPairsHook";
-import ModernButton from "../../../adminDashboard/components/ModernButton";
-import ResourceSection from "../../../adminDashboard/components/ResourceSection";
-import ResourceEmptyState from "../../../adminDashboard/components/ResourceEmptyState";
-import ResourceListCard from "../../../adminDashboard/components/ResourceListCard";
+import { ModernButton } from "../../../shared/components/ui";
+import { ResourceSection } from "../../../shared/components/ui";
+import { ResourceEmptyState } from "../../../shared/components/ui";
+import { ResourceListCard } from "../../../shared/components/ui";
 import TenantAddKeyPair from "../keyPairComps/TenantAddKeyPair";
 import DeleteKeyPairModal from "../../../adminDashboard/pages/keyPairComps/deleteKeyPair";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -103,12 +103,7 @@ const KeyPairs = ({ projectId = "", region = "", onStatsUpdate }) => {
     >
       {isSyncing ? "Syncing..." : "Sync Key Pairs"}
     </ModernButton>,
-    <ModernButton
-      key="add"
-      variant="primary"
-      size="sm"
-      onClick={() => setCreateModal(true)}
-    >
+    <ModernButton key="add" variant="primary" size="sm" onClick={() => setCreateModal(true)}>
       Add Key Pair
     </ModernButton>,
   ];
@@ -122,9 +117,9 @@ const KeyPairs = ({ projectId = "", region = "", onStatsUpdate }) => {
         { label: "Region", value: keyPair.region || region || "—" },
         keyPair.created_at
           ? {
-            label: "Created",
-            value: new Date(keyPair.created_at).toLocaleString(),
-          }
+              label: "Created",
+              value: new Date(keyPair.created_at).toLocaleString(),
+            }
           : null,
       ].filter(Boolean)}
       actions={[
@@ -164,9 +159,7 @@ const KeyPairs = ({ projectId = "", region = "", onStatsUpdate }) => {
                 <ModernButton
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(1, prev - 1))
-                  }
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                   isDisabled={currentPage === 1}
                 >
                   Previous
@@ -177,9 +170,7 @@ const KeyPairs = ({ projectId = "", region = "", onStatsUpdate }) => {
                 <ModernButton
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-                  }
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                   isDisabled={currentPage === totalPages}
                 >
                   Next

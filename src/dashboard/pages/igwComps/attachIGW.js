@@ -5,21 +5,13 @@ import {
   useDetachTenantInternetGateway,
 } from "../../../hooks/internetGatewayHooks";
 import { useFetchTenantVpcs } from "../../../hooks/vpcHooks";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 
-const AttachIgwModal = ({
-  isOpen,
-  onClose,
-  projectId,
-  region = "",
-  igw,
-  mode = "attach",
-}) => {
+const AttachIgwModal = ({ isOpen, onClose, projectId, region = "", igw, mode = "attach" }) => {
   const [selectedVpc, setSelectedVpc] = useState("");
   const isAttach = mode === "attach";
   const actionLabel = isAttach ? "Attach" : "Detach";
-  const igwId =
-    igw?.provider_resource_id || igw?.id || igw?.uuid || igw?.name || "";
+  const igwId = igw?.provider_resource_id || igw?.id || igw?.uuid || igw?.name || "";
 
   const { data: vpcRaw, isFetching } = useFetchTenantVpcs(projectId, region, {
     enabled: isOpen && !!projectId && !!region,
@@ -30,10 +22,8 @@ const AttachIgwModal = ({
     return [];
   }, [vpcRaw]);
 
-  const { mutate: attachIgw, isPending: isAttaching } =
-    useAttachTenantInternetGateway();
-  const { mutate: detachIgw, isPending: isDetaching } =
-    useDetachTenantInternetGateway();
+  const { mutate: attachIgw, isPending: isAttaching } = useAttachTenantInternetGateway();
+  const { mutate: detachIgw, isPending: isDetaching } = useDetachTenantInternetGateway();
 
   if (!isOpen) return null;
 
@@ -59,9 +49,7 @@ const AttachIgwModal = ({
     mutate(payload, {
       onSuccess: () => {
         ToastUtils.success(
-          isAttach
-            ? "Internet Gateway attached to VPC."
-            : "Internet Gateway detached."
+          isAttach ? "Internet Gateway attached to VPC." : "Internet Gateway detached."
         );
         onClose();
         setSelectedVpc("");
@@ -79,9 +67,7 @@ const AttachIgwModal = ({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[520px] w-full mx-4">
         <div className="flex items-center justify-between px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
-          <h2 className="text-lg font-semibold text-[#575758]">
-            {actionLabel} Internet Gateway
-          </h2>
+          <h2 className="text-lg font-semibold text-[#575758]">{actionLabel} Internet Gateway</h2>
           <button
             onClick={() => {
               setSelectedVpc("");
@@ -96,14 +82,9 @@ const AttachIgwModal = ({
         <form onSubmit={handleSubmit} className="px-6 py-6 space-y-4">
           <div>
             <p className="text-sm text-gray-600">
-              IGW:{" "}
-              <span className="font-medium text-gray-900">
-                {igw?.name || igwId}
-              </span>
+              IGW: <span className="font-medium text-gray-900">{igw?.name || igwId}</span>
             </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Region: {region || "N/A"}
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Region: {region || "N/A"}</p>
           </div>
 
           {isAttach ? (
@@ -117,13 +98,9 @@ const AttachIgwModal = ({
                 className="w-full rounded-[10px] border px-3 py-2 text-sm input-field"
                 disabled={isFetching}
               >
-                <option value="">
-                  {isFetching ? "Loading VPCs..." : "Select VPC"}
-                </option>
+                <option value="">{isFetching ? "Loading VPCs..." : "Select VPC"}</option>
                 {vpcs.map((vpc) => {
-                  const value = String(
-                    vpc.provider_resource_id || vpc.id || vpc.uuid || ""
-                  );
+                  const value = String(vpc.provider_resource_id || vpc.id || vpc.uuid || "");
                   return (
                     <option key={value} value={value}>
                       {vpc.name || value} ({vpc.region || "unknown"})
@@ -136,9 +113,7 @@ const AttachIgwModal = ({
             <div className="text-sm text-gray-600">
               <p>
                 Current attachment:{" "}
-                <span className="font-medium text-gray-900">
-                  {igw?.attached_vpc_id || "None"}
-                </span>
+                <span className="font-medium text-gray-900">{igw?.attached_vpc_id || "None"}</span>
               </p>
             </div>
           )}

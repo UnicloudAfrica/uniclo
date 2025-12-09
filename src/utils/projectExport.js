@@ -5,55 +5,55 @@
  * @returns {string} CSV string
  */
 export const exportToCSV = (projects, columns = []) => {
-    if (!Array.isArray(projects) || projects.length === 0) {
-        return "";
-    }
+  if (!Array.isArray(projects) || projects.length === 0) {
+    return "";
+  }
 
-    // Default columns if not provided
-    const defaultColumns = [
-        { key: "name", label: "Project Name" },
-        { key: "identifier", label: "Identifier" },
-        { key: "description", label: "Description" },
-        { key: "status", label: "Status" },
-        { key: "region", label: "Region" },
-        { key: "provider", label: "Provider" },
-        { key: "type", label: "Type" },
-        { key: "created_at", label: "Created At" },
-    ];
+  // Default columns if not provided
+  const defaultColumns = [
+    { key: "name", label: "Project Name" },
+    { key: "identifier", label: "Identifier" },
+    { key: "description", label: "Description" },
+    { key: "status", label: "Status" },
+    { key: "region", label: "Region" },
+    { key: "provider", label: "Provider" },
+    { key: "type", label: "Type" },
+    { key: "created_at", label: "Created At" },
+  ];
 
-    const columnsToUse = columns.length > 0 ? columns : defaultColumns;
+  const columnsToUse = columns.length > 0 ? columns : defaultColumns;
 
-    // Create CSV header
-    const header = columnsToUse.map((col) => escapeCSVValue(col.label)).join(",");
+  // Create CSV header
+  const header = columnsToUse.map((col) => escapeCSVValue(col.label)).join(",");
 
-    // Create CSV rows
-    const rows = projects.map((project) => {
-        return columnsToUse
-            .map((col) => {
-                let value = project[col.key];
+  // Create CSV rows
+  const rows = projects.map((project) => {
+    return columnsToUse
+      .map((col) => {
+        let value = project[col.key];
 
-                // Format dates
-                if (col.key.includes("_at") && value) {
-                    value = new Date(value).toLocaleString();
-                }
+        // Format dates
+        if (col.key.includes("_at") && value) {
+          value = new Date(value).toLocaleString();
+        }
 
-                // Handle nested values
-                if (col.key.includes(".")) {
-                    const keys = col.key.split(".");
-                    value = keys.reduce((obj, key) => obj?.[key], project);
-                }
+        // Handle nested values
+        if (col.key.includes(".")) {
+          const keys = col.key.split(".");
+          value = keys.reduce((obj, key) => obj?.[key], project);
+        }
 
-                // Handle null/undefined
-                if (value == null) {
-                    value = "";
-                }
+        // Handle null/undefined
+        if (value == null) {
+          value = "";
+        }
 
-                return escapeCSVValue(String(value));
-            })
-            .join(",");
-    });
+        return escapeCSVValue(String(value));
+      })
+      .join(",");
+  });
 
-    return [header, ...rows].join("\n");
+  return [header, ...rows].join("\n");
 };
 
 /**
@@ -62,16 +62,16 @@ export const exportToCSV = (projects, columns = []) => {
  * @returns {string} Escaped value
  */
 const escapeCSVValue = (value) => {
-    if (value == null) return "";
+  if (value == null) return "";
 
-    const stringValue = String(value);
+  const stringValue = String(value);
 
-    // If value contains comma, newline, or quotes, wrap in quotes and escape quotes
-    if (stringValue.includes(",") || stringValue.includes("\n") || stringValue.includes('"')) {
-        return `"${stringValue.replace(/"/g, '""')}"`;
-    }
+  // If value contains comma, newline, or quotes, wrap in quotes and escape quotes
+  if (stringValue.includes(",") || stringValue.includes("\n") || stringValue.includes('"')) {
+    return `"${stringValue.replace(/"/g, '""')}"`;
+  }
 
-    return stringValue;
+  return stringValue;
 };
 
 /**
@@ -80,19 +80,19 @@ const escapeCSVValue = (value) => {
  * @param {string} filename - Filename
  */
 export const downloadCSV = (csvContent, filename = "projects.csv") => {
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
 
-    if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", filename);
-        link.style.visibility = "hidden";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    }
+  if (link.download !== undefined) {
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", filename);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
 };
 
 /**
@@ -102,72 +102,72 @@ export const downloadCSV = (csvContent, filename = "projects.csv") => {
  * @param {string} filename - Filename
  */
 export const exportToExcel = async (projects, columns = [], filename = "projects.xlsx") => {
-    if (!Array.isArray(projects) || projects.length === 0) {
-        throw new Error("No projects to export");
-    }
+  if (!Array.isArray(projects) || projects.length === 0) {
+    throw new Error("No projects to export");
+  }
 
-    try {
-        // Dynamically import xlsx to avoid bundling if not used
-        const XLSX = await import("xlsx");
+  try {
+    // Dynamically import xlsx to avoid bundling if not used
+    const XLSX = await import("xlsx");
 
-        // Default columns if not provided
-        const defaultColumns = [
-            { key: "name", label: "Project Name" },
-            { key: "identifier", label: "Identifier" },
-            { key: "description", label: "Description" },
-            { key: "status", label: "Status" },
-            { key: "region", label: "Region" },
-            { key: "provider", label: "Provider" },
-            { key: "type", label: "Type" },
-            { key: "created_at", label: "Created At" },
-        ];
+    // Default columns if not provided
+    const defaultColumns = [
+      { key: "name", label: "Project Name" },
+      { key: "identifier", label: "Identifier" },
+      { key: "description", label: "Description" },
+      { key: "status", label: "Status" },
+      { key: "region", label: "Region" },
+      { key: "provider", label: "Provider" },
+      { key: "type", label: "Type" },
+      { key: "created_at", label: "Created At" },
+    ];
 
-        const columnsToUse = columns.length > 0 ? columns : defaultColumns;
+    const columnsToUse = columns.length > 0 ? columns : defaultColumns;
 
-        // Transform data for Excel
-        const data = projects.map((project) => {
-            const row = {};
-            columnsToUse.forEach((col) => {
-                let value = project[col.key];
+    // Transform data for Excel
+    const data = projects.map((project) => {
+      const row = {};
+      columnsToUse.forEach((col) => {
+        let value = project[col.key];
 
-                // Format dates
-                if (col.key.includes("_at") && value) {
-                    value = new Date(value).toLocaleString();
-                }
+        // Format dates
+        if (col.key.includes("_at") && value) {
+          value = new Date(value).toLocaleString();
+        }
 
-                // Handle nested values
-                if (col.key.includes(".")) {
-                    const keys = col.key.split(".");
-                    value = keys.reduce((obj, key) => obj?.[key], project);
-                }
+        // Handle nested values
+        if (col.key.includes(".")) {
+          const keys = col.key.split(".");
+          value = keys.reduce((obj, key) => obj?.[key], project);
+        }
 
-                row[col.label] = value ?? "";
-            });
-            return row;
-        });
+        row[col.label] = value ?? "";
+      });
+      return row;
+    });
 
-        // Create workbook and worksheet
-        const worksheet = XLSX.utils.json_to_sheet(data);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Projects");
+    // Create workbook and worksheet
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Projects");
 
-        // Auto-size columns
-        const maxWidth = 50;
-        const colWidths = columnsToUse.map((col) => {
-            const maxLength = Math.max(
-                col.label.length,
-                ...data.map((row) => String(row[col.label] || "").length)
-            );
-            return { wch: Math.min(maxLength + 2, maxWidth) };
-        });
-        worksheet["!cols"] = colWidths;
+    // Auto-size columns
+    const maxWidth = 50;
+    const colWidths = columnsToUse.map((col) => {
+      const maxLength = Math.max(
+        col.label.length,
+        ...data.map((row) => String(row[col.label] || "").length)
+      );
+      return { wch: Math.min(maxLength + 2, maxWidth) };
+    });
+    worksheet["!cols"] = colWidths;
 
-        // Write file
-        XLSX.writeFile(workbook, filename);
-    } catch (error) {
-        console.error("Failed to export to Excel:", error);
-        throw new Error("Excel export failed. Please try CSV export instead.");
-    }
+    // Write file
+    XLSX.writeFile(workbook, filename);
+  } catch (error) {
+    console.error("Failed to export to Excel:", error);
+    throw new Error("Excel export failed. Please try CSV export instead.");
+  }
 };
 
 /**
@@ -178,28 +178,26 @@ export const exportToExcel = async (projects, columns = [], filename = "projects
  * @param {Array} columns - Column configuration
  */
 export const exportSelectedProjects = async (
-    projects,
-    selectedIds,
-    format = "csv",
-    columns = []
+  projects,
+  selectedIds,
+  format = "csv",
+  columns = []
 ) => {
-    const selectedProjects = projects.filter((project) =>
-        selectedIds.includes(project.identifier)
-    );
+  const selectedProjects = projects.filter((project) => selectedIds.includes(project.identifier));
 
-    if (selectedProjects.length === 0) {
-        throw new Error("No projects selected for export");
-    }
+  if (selectedProjects.length === 0) {
+    throw new Error("No projects selected for export");
+  }
 
-    const timestamp = new Date().toISOString().split("T")[0];
-    const filename = `projects_${timestamp}`;
+  const timestamp = new Date().toISOString().split("T")[0];
+  const filename = `projects_${timestamp}`;
 
-    if (format === "excel") {
-        await exportToExcel(selectedProjects, columns, `${filename}.xlsx`);
-    } else {
-        const csvContent = exportToCSV(selectedProjects, columns);
-        downloadCSV(csvContent, `${filename}.csv`);
-    }
+  if (format === "excel") {
+    await exportToExcel(selectedProjects, columns, `${filename}.xlsx`);
+  } else {
+    const csvContent = exportToCSV(selectedProjects, columns);
+    downloadCSV(csvContent, `${filename}.csv`);
+  }
 };
 
 /**
@@ -207,17 +205,17 @@ export const exportSelectedProjects = async (
  * @returns {Array} Default columns for export
  */
 export const getDefaultExportColumns = () => [
-    { key: "name", label: "Project Name" },
-    { key: "identifier", label: "Identifier" },
-    { key: "description", label: "Description" },
-    { key: "status", label: "Status" },
-    { key: "region", label: "Region" },
-    { key: "provider", label: "Provider" },
-    { key: "type", label: "Type" },
-    { key: "resources_count.instances", label: "Instances" },
-    { key: "resources_count.volumes", label: "Volumes" },
-    { key: "created_at", label: "Created At" },
-    { key: "updated_at", label: "Updated At" },
+  { key: "name", label: "Project Name" },
+  { key: "identifier", label: "Identifier" },
+  { key: "description", label: "Description" },
+  { key: "status", label: "Status" },
+  { key: "region", label: "Region" },
+  { key: "provider", label: "Provider" },
+  { key: "type", label: "Type" },
+  { key: "resources_count.instances", label: "Instances" },
+  { key: "resources_count.volumes", label: "Volumes" },
+  { key: "created_at", label: "Created At" },
+  { key: "updated_at", label: "Updated At" },
 ];
 
 /**
@@ -226,18 +224,14 @@ export const getDefaultExportColumns = () => [
  * @returns {Array} Formatted projects
  */
 export const prepareProjectsForExport = (projects) => {
-    return projects.map((project) => ({
-        ...project,
-        status: (project.status || "").toUpperCase(),
-        region: (project.region || "").toUpperCase(),
-        provider: (project.provider || "").toUpperCase(),
-        created_at: project.created_at
-            ? new Date(project.created_at).toLocaleString()
-            : "",
-        updated_at: project.updated_at
-            ? new Date(project.updated_at).toLocaleString()
-            : "",
-        instances_count: project.resources_count?.instances || 0,
-        volumes_count: project.resources_count?.volumes || 0,
-    }));
+  return projects.map((project) => ({
+    ...project,
+    status: (project.status || "").toUpperCase(),
+    region: (project.region || "").toUpperCase(),
+    provider: (project.provider || "").toUpperCase(),
+    created_at: project.created_at ? new Date(project.created_at).toLocaleString() : "",
+    updated_at: project.updated_at ? new Date(project.updated_at).toLocaleString() : "",
+    instances_count: project.resources_count?.instances || 0,
+    volumes_count: project.resources_count?.volumes || 0,
+  }));
 };

@@ -20,9 +20,8 @@ const Certifications = () => {
         Key Certifications
       </h2>
       <p className=" text-center font-normal text-base md:text-xl text-[#676767] mt-3 md:px-[10%]">
-        UniCloud Africa is a certified cloud service provider, Our
-        certifications demonstrate our commitment to providing our customers
-        with the highest quality of service and support.
+        UniCloud Africa is a certified cloud service provider, Our certifications demonstrate our
+        commitment to providing our customers with the highest quality of service and support.
       </p>
       <div className="mt-16 grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 md:grid-cols-4 lg:gap-x-12">
         <img
@@ -45,11 +44,7 @@ const Certifications = () => {
           className="w-full max-w-[150px] object-contain"
           alt="PCIDSS Certification"
         />
-        <img
-          src={certiOne}
-          className="w-full max-w-[150px] object-contain"
-          alt="NDPR Compliant"
-        />
+        <img src={certiOne} className="w-full max-w-[150px] object-contain" alt="NDPR Compliant" />
         <img
           src={certiSix}
           className="w-full max-w-[150px] object-contain"

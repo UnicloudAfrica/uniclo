@@ -46,9 +46,7 @@ const useClientAuthStore = create(
             tenant: session.tenant ?? state.tenant,
             domain: session.domain ?? state.domain,
             isAuthenticated:
-              session.token !== undefined
-                ? Boolean(session.token)
-                : state.isAuthenticated,
+              session.token !== undefined ? Boolean(session.token) : state.isAuthenticated,
             cloudRoles: session.cloudRoles ?? state.cloudRoles,
             cloudAbilities: session.cloudAbilities ?? state.cloudAbilities,
           })),

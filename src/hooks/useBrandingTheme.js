@@ -21,11 +21,7 @@ const mapBrandingPayload = (payload = {}) => {
   return {
     logo: payload.logo ?? null,
     logoHref:
-      payload.logo_href ??
-      company.logo_href ??
-      company.website ??
-      company.support_url ??
-      null,
+      payload.logo_href ?? company.logo_href ?? company.website ?? company.support_url ?? null,
     company,
     brand,
     palette,
@@ -121,45 +117,21 @@ export const applyBrandingToCss = (theme, { fallbackLogo } = {}) => {
   root.style.setProperty("--secondary-color", primary);
   root.style.setProperty("--theme-color-10", hexToRgba(accent, 0.08));
   root.style.setProperty("--theme-color-20", hexToRgba(accent, 0.18));
-  root.style.setProperty(
-    "--theme-border-color",
-    palette.border ?? hexToRgba(primary, 0.2)
-  );
+  root.style.setProperty("--theme-border-color", palette.border ?? hexToRgba(primary, 0.2));
   root.style.setProperty("--theme-card-bg", palette.card_bg ?? "#FFFFFF");
-  root.style.setProperty(
-    "--theme-surface-alt",
-    palette.surface_alt ?? "#F3F4F6"
-  );
-  root.style.setProperty(
-    "--theme-heading-color",
-    "#111827"
-  );
+  root.style.setProperty("--theme-surface-alt", palette.surface_alt ?? "#F3F4F6");
+  root.style.setProperty("--theme-heading-color", "#111827");
   root.style.setProperty("--theme-text-color", palette.text ?? "#1F2937");
   root.style.setProperty("--theme-muted-color", palette.muted ?? "#6B7280");
   root.style.setProperty(
     "--theme-badge-success-bg",
     palette.badge_success_bg ?? hexToRgba(accent, 0.2)
   );
-  root.style.setProperty(
-    "--theme-badge-success-text",
-    palette.badge_success_text ?? accent
-  );
-  root.style.setProperty(
-    "--theme-badge-pending-bg",
-    palette.badge_pending_bg ?? "#FEF3C7"
-  );
-  root.style.setProperty(
-    "--theme-badge-pending-text",
-    palette.badge_pending_text ?? "#92400E"
-  );
-  root.style.setProperty(
-    "--theme-badge-failed-bg",
-    palette.badge_failed_bg ?? "#FEE2E2"
-  );
-  root.style.setProperty(
-    "--theme-badge-failed-text",
-    palette.badge_failed_text ?? "#B91C1C"
-  );
+  root.style.setProperty("--theme-badge-success-text", palette.badge_success_text ?? accent);
+  root.style.setProperty("--theme-badge-pending-bg", palette.badge_pending_bg ?? "#FEF3C7");
+  root.style.setProperty("--theme-badge-pending-text", palette.badge_pending_text ?? "#92400E");
+  root.style.setProperty("--theme-badge-failed-bg", palette.badge_failed_bg ?? "#FEE2E2");
+  root.style.setProperty("--theme-badge-failed-text", palette.badge_failed_text ?? "#B91C1C");
   root.style.setProperty("--theme-tag-bg", palette.tag_bg ?? hexToRgba(accent, 0.16));
   root.style.setProperty("--theme-tag-text", palette.tag_text ?? accent);
 

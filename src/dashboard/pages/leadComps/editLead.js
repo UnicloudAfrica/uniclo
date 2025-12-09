@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useFetchTenantAdmins } from "../../../hooks/adminUserHooks";
 import { useUpdateLead } from "../../../hooks/tenantHooks/leadsHook";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 
 const leadStatusOptions = [
   "new",
@@ -117,10 +117,7 @@ const EditLead = ({ isOpen, onClose, lead }) => {
         <div className="px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start">
           <div className="space-y-4 w-full">
             <div>
-              <label
-                htmlFor="leadStatus"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="leadStatus" className="block text-sm font-medium text-gray-700 mb-2">
                 Status<span className="text-red-500">*</span>
               </label>
               <select
@@ -140,16 +137,11 @@ const EditLead = ({ isOpen, onClose, lead }) => {
                   </option>
                 ))}
               </select>
-              {errors.status && (
-                <p className="text-red-500 text-xs mt-1">{errors.status}</p>
-              )}
+              {errors.status && <p className="text-red-500 text-xs mt-1">{errors.status}</p>}
             </div>
 
             <div>
-              <label
-                htmlFor="leadNotes"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="leadNotes" className="block text-sm font-medium text-gray-700 mb-2">
                 Notes
               </label>
               <textarea
@@ -162,9 +154,7 @@ const EditLead = ({ isOpen, onClose, lead }) => {
                   errors.notes ? "border-red-500" : "border-gray-300"
                 }`}
               />
-              {errors.notes && (
-                <p className="text-red-500 text-xs mt-1">{errors.notes}</p>
-              )}
+              {errors.notes && <p className="text-red-500 text-xs mt-1">{errors.notes}</p>}
             </div>
 
             <div>
@@ -184,17 +174,12 @@ const EditLead = ({ isOpen, onClose, lead }) => {
                 }`}
               />
               {errors.follow_up_date && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.follow_up_date}
-                </p>
+                <p className="text-red-500 text-xs mt-1">{errors.follow_up_date}</p>
               )}
             </div>
 
             <div>
-              <label
-                htmlFor="assignedTo"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="assignedTo" className="block text-sm font-medium text-gray-700 mb-2">
                 Assigned To (optional)
               </label>
               <select
@@ -218,9 +203,7 @@ const EditLead = ({ isOpen, onClose, lead }) => {
                 )}
               </select>
               {errors.assigned_to && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors.assigned_to}
-                </p>
+                <p className="text-red-500 text-xs mt-1">{errors.assigned_to}</p>
               )}
             </div>
           </div>

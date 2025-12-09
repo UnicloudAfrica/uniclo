@@ -1,16 +1,14 @@
 import { useNavigate, useParams } from "react-router-dom";
 import TenantPageShell from "../../components/TenantPageShell";
-import ModernCard from "../../../adminDashboard/components/ModernCard";
-import ModernButton from "../../../adminDashboard/components/ModernButton";
-import StatusPill from "../../../adminDashboard/components/StatusPill";
-import ToastUtils from "../../../utils/toastUtil";
+import { ModernCard } from "../../../shared/components/ui";
+import { ModernButton } from "../../../shared/components/ui";
+import { StatusPill } from "../../../shared/components/ui";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import { useFetchClientById, useDeleteClient } from "../../../hooks/clientHooks";
 
 const InfoRow = ({ label, value }) => (
   <div className="space-y-1">
-    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-      {label}
-    </p>
+    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
     <p className="text-sm font-semibold text-slate-900">{value ?? "—"}</p>
   </div>
 );
@@ -19,10 +17,7 @@ export default function ClientDetailsPage() {
   const navigate = useNavigate();
   const { clientId } = useParams();
 
-  const {
-    data: client,
-    isFetching: isLoading,
-  } = useFetchClientById(clientId);
+  const { data: client, isFetching: isLoading } = useFetchClientById(clientId);
   const { mutateAsync: deleteClient, isPending: isDeleting } = useDeleteClient();
 
   const handleDelete = async () => {
@@ -37,9 +32,7 @@ export default function ClientDetailsPage() {
       ToastUtils.success("Client removed.");
       navigate("/dashboard/clients");
     } catch (error) {
-      ToastUtils.error(
-        error?.response?.data?.message || "Failed to remove client."
-      );
+      ToastUtils.error(error?.response?.data?.message || "Failed to remove client.");
     }
   };
 
@@ -68,7 +61,9 @@ export default function ClientDetailsPage() {
                 tone={client.verified ? "success" : "warning"}
               />
               <h2 className="text-2xl font-semibold text-slate-900">
-                {client.name || `${client.first_name ?? ""} ${client.last_name ?? ""}`.trim() || "Client"}
+                {client.name ||
+                  `${client.first_name ?? ""} ${client.last_name ?? ""}`.trim() ||
+                  "Client"}
               </h2>
               <p className="text-sm text-slate-500">
                 Manage access and contact details for this customer.
@@ -106,9 +101,7 @@ export default function ClientDetailsPage() {
             </div>
           </>
         ) : (
-          <div className="py-12 text-center text-sm text-slate-500">
-            Client not found.
-          </div>
+          <div className="py-12 text-center text-sm text-slate-500">Client not found.</div>
         )}
       </ModernCard>
     </TenantPageShell>

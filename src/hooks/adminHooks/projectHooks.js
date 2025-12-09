@@ -30,7 +30,7 @@ const fetchProjects = async (params = {}) => {
 // GET: Fetch project status (provisioning + VPC checklist)
 const fetchProjectStatus = async (id) => {
   const encodedId = encodeURIComponent(id);
-  const res = await silentApi('GET', `/projects/${encodedId}/status`);
+  const res = await silentApi("GET", `/projects/${encodedId}/status`);
   if (!res.project) {
     throw new Error(`Failed to fetch project status for ${id}`);
   }
@@ -60,9 +60,7 @@ const fetchProjectMembershipSuggestions = async (params = {}) => {
     query.append("client_id", params.client_id);
   }
 
-  const uri = `/project-memberships/suggestions${
-    query.toString() ? `?${query.toString()}` : ""
-  }`;
+  const uri = `/project-memberships/suggestions${query.toString() ? `?${query.toString()}` : ""}`;
 
   const res = await silentApi("GET", uri);
   if (!res?.data) {
@@ -141,7 +139,7 @@ export const useProjectMembershipSuggestions = (params = {}, options = {}) => {
 // Hook to fetch project status
 export const useProjectStatus = (id, options = {}) => {
   return useQuery({
-    queryKey: ['admin-project-status', id],
+    queryKey: ["admin-project-status", id],
     queryFn: () => fetchProjectStatus(id),
     enabled: !!id,
     staleTime: 1000 * 60 * 2,
@@ -180,7 +178,7 @@ export const useCreateProject = () => {
         client_id: newProject.client_id ?? null,
         assignment_scope: newProject.assignment_scope ?? null,
         member_user_ids: newProject.member_user_ids || [],
-        _isOptimistic: true // Flag to identify optimistic updates
+        _isOptimistic: true, // Flag to identify optimistic updates
       };
 
       // Optimistically update the projects list
@@ -190,8 +188,8 @@ export const useCreateProject = () => {
           data: [optimisticProject, ...old.data], // Add to beginning of list
           meta: {
             ...old.meta,
-            total: old.meta.total + 1
-          }
+            total: old.meta.total + 1,
+          },
         }));
       }
 
@@ -202,14 +200,14 @@ export const useCreateProject = () => {
       // Replace the optimistic project with real data
       queryClient.setQueryData(["admin-projects"], (old) => {
         if (!old?.data) return old;
-        
+
         return {
           ...old,
-          data: old.data.map(project => 
+          data: old.data.map((project) =>
             project._isOptimistic && project.name === variables.name
               ? { ...data, status: data.status || "provisioning" } // Use real project data
               : project
-          )
+          ),
         };
       });
 
@@ -292,10 +290,7 @@ const verifyZadara = async (id) => {
 const enableVpc = async (id) => {
   const encodedId = encodeURIComponent(id);
   const res = await api("POST", `/projects/${encodedId}/enable-vpc`);
-  if (!res.data) {
-    throw new Error(`Failed to enable VPC for project ${id}`);
-  }
-  return res.data;
+  return res;
 };
 
 // POST: Sync project user
@@ -337,9 +332,9 @@ export const useSimulateProvision = () => {
 // Hook to verify Zadara
 export const useVerifyZadara = (id, options = {}) => {
   return useQuery({
-    queryKey: ['admin-project-zadara-verify', id],
+    queryKey: ["admin-project-zadara-verify", id],
     queryFn: () => verifyZadara(id),
-    enabled: !!id && (options.enabled !== false),
+    enabled: !!id && options.enabled !== false,
     staleTime: 1000 * 60 * 1,
     refetchOnWindowFocus: false,
     ...options,

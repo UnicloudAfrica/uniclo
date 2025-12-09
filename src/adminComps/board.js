@@ -2,13 +2,7 @@ import { useState, useContext, useRef } from "react";
 import load from "./assets/load.gif";
 import { initializeApp } from "firebase/app";
 import { Editor } from "@tinymce/tinymce-react";
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  doc,
-  deleteDoc,
-} from "firebase/firestore";
+import { getFirestore, collection, addDoc, doc, deleteDoc } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { PageContext, BoardContext } from "../contexts/contextprovider";
 
@@ -137,10 +131,7 @@ const Board = () => {
           <div className=" w-full p-3 md:p-8 md:border rounded-[8px] border-[#DAE0E6]">
             <div className=" w-full flex flex-col ">
               <span className=" w-full mb-6">
-                <label
-                  className=" font-Outfit text-base font-medium"
-                  for="first-name"
-                >
+                <label className=" font-Outfit text-base font-medium" for="first-name">
                   Name
                 </label>
                 <input
@@ -153,10 +144,7 @@ const Board = () => {
                 />
               </span>
               <span className=" w-full mb-6">
-                <label
-                  className=" font-Outfit text-base font-medium"
-                  for="first-name"
-                >
+                <label className=" font-Outfit text-base font-medium" for="first-name">
                   Position
                 </label>
                 <input
@@ -169,10 +157,7 @@ const Board = () => {
                 />
               </span>
               <span className=" w-full mb-6">
-                <label
-                  className=" font-Outfit text-base font-medium"
-                  for="first-name"
-                >
+                <label className=" font-Outfit text-base font-medium" for="first-name">
                   Image
                 </label>
                 <input
@@ -230,8 +215,7 @@ const Board = () => {
                   "bold italic forecolor | alignleft aligncenter " +
                   "alignright alignjustify | bullist numlist outdent indent | " +
                   "removeformat | help",
-                content_style:
-                  "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
+                content_style: "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
                 setup: (editor) => {
                   editor.on("change", () => {
                     log(editor.getContent());
@@ -244,12 +228,8 @@ const Board = () => {
               onClick={sumbmitImg}
               className=" w-full flex h-[45px] mt-6 rounded-[8px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] hover:bg-opacity-75 transition-all justify-center items-center"
             >
-              {loadValue === "No" && (
-                <p className=" font-Outfit text-base text-white">Add</p>
-              )}
-              {loadValue === "Yes" && (
-                <img src={load} className=" w-6 h-6" alt="" />
-              )}
+              {loadValue === "No" && <p className=" font-Outfit text-base text-white">Add</p>}
+              {loadValue === "Yes" && <img src={load} className=" w-6 h-6" alt="" />}
             </button>
           </div>
         </div>
@@ -263,9 +243,7 @@ const Board = () => {
                 <tr className=" text-[#000] text-sm font-Outfit font-medium">
                   <th className="p-2 border-b border-[#00000049]">Name</th>
                   <th className="p-2 border-b border-[#00000049]">Image</th>
-                  <th className="p-2 border-b border-[#00000049]">
-                    Control Center
-                  </th>
+                  <th className="p-2 border-b border-[#00000049]">Control Center</th>
                 </tr>
               </thead>
               <tbody id="table" className=" overflow-auto">
@@ -276,9 +254,7 @@ const Board = () => {
                       id={doc.id}
                       className="text-[#000] h-[4em] border-b border-[#00000049] overflow-hidden text-sm font-Outfit font-medium"
                     >
-                      <td className="p-2 border-b  border-[#00000049]">
-                        {doc.name}
-                      </td>
+                      <td className="p-2 border-b  border-[#00000049]">{doc.name}</td>
                       <td className=" border-b  border-[#00000049]">
                         <a
                           className=" px-2 py-1 bg-[#939292] text-xs rounded-md"
@@ -320,10 +296,7 @@ const Board = () => {
               >
                 Cancel
               </button>
-              <button
-                onClick={handleDeleteClick}
-                className="w-16 py-1 rounded-md bg-red-700"
-              >
+              <button onClick={handleDeleteClick} className="w-16 py-1 rounded-md bg-red-700">
                 Delete
               </button>
             </span>

@@ -24,9 +24,22 @@ const TONE_STYLES = {
   },
 };
 
+/**
+ * @typedef {Object} IconBadgeProps
+ * @property {string} [iconKey]
+ * @property {any} [icon]
+ * @property {string} [tone]
+ * @property {string} [className]
+ * @property {string} [iconClassName]
+ * @property {string} [size]
+ */
+
+/**
+ * @param {IconBadgeProps} props
+ */
 const IconBadge = ({
-  iconKey,
-  icon: IconProp,
+  iconKey = null,
+  icon: IconProp = null,
   tone = "primary",
   className = "",
   iconClassName = "",
@@ -44,8 +57,8 @@ const IconBadge = ({
     size === "sm"
       ? "h-8 w-8 rounded-lg"
       : size === "lg"
-      ? "h-12 w-12 rounded-xl"
-      : "h-9 w-9 rounded-xl";
+        ? "h-12 w-12 rounded-xl"
+        : "h-9 w-9 rounded-xl";
 
   const wrapperClass = [
     "inline-flex items-center justify-center ring-1 ring-offset-0 transition",
@@ -56,24 +69,13 @@ const IconBadge = ({
     .filter(Boolean)
     .join(" ");
 
-  const iconSizeClass =
-    size === "sm"
-      ? "h-4 w-4"
-      : size === "lg"
-      ? "h-5 w-5"
-      : "h-[18px] w-[18px]";
+  const iconSizeClass = size === "sm" ? "h-4 w-4" : size === "lg" ? "h-5 w-5" : "h-[18px] w-[18px]";
 
-  const iconClasses = [iconSizeClass, toneClass.icon, iconClassName]
-    .filter(Boolean)
-    .join(" ");
+  const iconClasses = [iconSizeClass, toneClass.icon, iconClassName].filter(Boolean).join(" ");
 
   return (
-    <span
-      className={wrapperClass}
-    >
-      <IconComponent
-        className={iconClasses}
-      />
+    <span className={wrapperClass}>
+      <IconComponent className={iconClasses} />
     </span>
   );
 };

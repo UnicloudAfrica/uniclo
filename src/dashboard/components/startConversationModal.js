@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
-import ToastUtils from "../../utils/toastUtil";
+import ToastUtils from "../../utils/toastUtil.ts";
 import { useFetchProfile } from "../../hooks/resource";
 import { useCreateSupportMessage } from "../../hooks/supportHook";
 
@@ -66,9 +66,7 @@ const StartModalConversation = ({ isOpen, onClose }) => {
         setFormData({ email: "", subject: "", body: "" });
       },
       onError: (err) => {
-        ToastUtils.error(
-          err.message || "Failed to send message. Please try again."
-        );
+        ToastUtils.error(err.message || "Failed to send message. Please try again.");
         setErrors((prev) => ({
           ...prev,
           general: err.message || "Failed to send message.",
@@ -85,9 +83,7 @@ const StartModalConversation = ({ isOpen, onClose }) => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1001] p-4 font-Outfit">
           <div className="bg-white rounded-[30px] shadow-xl max-w-md w-full">
             <div className="flex items-center justify-between p-4 bg-[#F2F2F2] border-b rounded-t-[30px] border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">
-                Start new conversation
-              </h3>
+              <h3 className="text-lg font-medium text-gray-900">Start new conversation</h3>
               <button
                 onClick={onClose}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -100,10 +96,7 @@ const StartModalConversation = ({ isOpen, onClose }) => {
             <form onSubmit={handleSubmit}>
               <div className="p-6 space-y-4">
                 <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                     Your Email<span className="text-red-500">*</span>
                   </label>
                   <input
@@ -117,15 +110,10 @@ const StartModalConversation = ({ isOpen, onClose }) => {
                     }`}
                     disabled
                   />
-                  {errors.email && (
-                    <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-                  )}
+                  {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                 </div>
                 <div>
-                  <label
-                    htmlFor="subject"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
+                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
                     Subject<span className="text-red-500">*</span>
                   </label>
                   <input
@@ -139,17 +127,10 @@ const StartModalConversation = ({ isOpen, onClose }) => {
                     }`}
                     disabled={isPending}
                   />
-                  {errors.subject && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.subject}
-                    </p>
-                  )}
+                  {errors.subject && <p className="text-red-500 text-xs mt-1">{errors.subject}</p>}
                 </div>
                 <div>
-                  <label
-                    htmlFor="body"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
+                  <label htmlFor="body" className="block text-sm font-medium text-gray-700 mb-2">
                     Message<span className="text-red-500">*</span>
                   </label>
                   <textarea
@@ -163,14 +144,10 @@ const StartModalConversation = ({ isOpen, onClose }) => {
                     }`}
                     disabled={isPending}
                   ></textarea>
-                  {errors.body && (
-                    <p className="text-red-500 text-xs mt-1">{errors.body}</p>
-                  )}
+                  {errors.body && <p className="text-red-500 text-xs mt-1">{errors.body}</p>}
                 </div>
                 {errors.general && (
-                  <p className="text-red-500 text-xs mt-1 text-center">
-                    {errors.general}
-                  </p>
+                  <p className="text-red-500 text-xs mt-1 text-center">{errors.general}</p>
                 )}
               </div>
 
@@ -189,9 +166,7 @@ const StartModalConversation = ({ isOpen, onClose }) => {
                   disabled={isPending}
                 >
                   Start
-                  {isPending && (
-                    <Loader2 className="w-4 h-4 ml-2 animate-spin" />
-                  )}
+                  {isPending && <Loader2 className="w-4 h-4 ml-2 animate-spin" />}
                 </button>
               </div>
             </form>

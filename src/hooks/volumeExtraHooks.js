@@ -33,30 +33,21 @@ const fetchVolumeAttachments = async ({ project_id, region, volume_id }) => {
 };
 
 const createVolumeAttachment = async (attachmentData) => {
-  const res = await api(
-    "POST",
-    "/business/volume-attachments",
-    attachmentData
-  );
+  const res = await api("POST", "/business/volume-attachments", attachmentData);
   if (!res.data) throw new Error("Failed to create volume attachment");
   return res.data;
 };
 
 const deleteVolumeAttachment = async (id) => {
   const res = await api("DELETE", `/business/volume-attachments/${id}`);
-  if (!res.data)
-    throw new Error(`Failed to delete volume attachment with ID ${id}`);
+  if (!res.data) throw new Error(`Failed to delete volume attachment with ID ${id}`);
   return res.data;
 };
 
 const extendVolume = async ({ id, extendData }) => {
   // Shared API: POST /business/volume-resizes with { volume_id, ...extendData }
   const payload = { volume_id: id, ...(extendData || {}) };
-  const res = await api(
-    "POST",
-    "/business/volume-resizes",
-    payload
-  );
+  const res = await api("POST", "/business/volume-resizes", payload);
   if (!res.data) throw new Error(`Failed to extend volume with ID ${id}`);
   return res.data;
 };
@@ -71,12 +62,7 @@ export const useFetchTenantVolumeTypes = (projectId, region, options = {}) => {
   });
 };
 
-export const useFetchTenantVolumeAttachments = (
-  projectId,
-  region,
-  volumeId,
-  options = {}
-) => {
+export const useFetchTenantVolumeAttachments = (projectId, region, volumeId, options = {}) => {
   return useQuery({
     queryKey: ["volumeAttachments", { projectId, region, volumeId }],
     queryFn: () =>

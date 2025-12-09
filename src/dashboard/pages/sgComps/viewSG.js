@@ -1,5 +1,5 @@
 import { X, Copy } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 
 const DetailRow = ({ label, value, children, isCopyable = false }) => {
   const handleCopy = () => {
@@ -13,9 +13,7 @@ const DetailRow = ({ label, value, children, isCopyable = false }) => {
     <div className="py-3 sm:grid sm:grid-cols-3 sm:gap-4">
       <dt className="text-sm font-medium text-gray-600">{label}</dt>
       <dd className="mt-1 flex items-center text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-        <span className="flex-grow break-words">
-          {value || children || "N/A"}
-        </span>
+        <span className="flex-grow break-words">{value || children || "N/A"}</span>
         {isCopyable && value && (
           <button
             onClick={handleCopy}
@@ -36,9 +34,7 @@ const ViewSGModal = ({ isOpen, onClose, securityGroup }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full">
         <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px]">
-          <h2 className="text-lg font-semibold text-[#575758]">
-            Security Group Details
-          </h2>
+          <h2 className="text-lg font-semibold text-[#575758]">Security Group Details</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-[#1E1E1EB2] transition-colors"
@@ -59,8 +55,7 @@ const ViewSGModal = ({ isOpen, onClose, securityGroup }) => {
             <DetailRow
               label="Provider"
               value={
-                typeof securityGroup.provider === "string" &&
-                securityGroup.provider.trim() !== ""
+                typeof securityGroup.provider === "string" && securityGroup.provider.trim() !== ""
                   ? securityGroup.provider.toUpperCase()
                   : "N/A"
               }

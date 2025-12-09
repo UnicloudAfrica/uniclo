@@ -73,18 +73,13 @@ const Contact = () => {
     setSelectedCountry(selectedCode);
 
     // Set the initial part of the phone number based on the selected country's code
-    const countryCode = countryList.find(
-      (country) => country.code === selectedCode
-    );
+    const countryCode = countryList.find((country) => country.code === selectedCode);
     setPhoneNumber(countryCode ? countryCode.code : "");
   };
 
   const handlePhoneNumberChange = (e) => {
     // Extract the part of the phone number after the country code
-    const enteredPhoneNumber = e.target.value.replace(
-      `+${selectedCountry} `,
-      ""
-    );
+    const enteredPhoneNumber = e.target.value.replace(`+${selectedCountry} `, "");
 
     // Update the phone number state with the entered part
     setPhoneNumber(enteredPhoneNumber);
@@ -212,9 +207,8 @@ const Contact = () => {
             Contact us
           </p>
           <p className=" text-center font-normal mt-3 text-[#000000CC] md:px-[10%] text-lg md:text-xl ">
-            Ready to transform your business in the cloud? Contact UniCloud
-            Africa now for secure, scalable, and reliable solutions. Let's shape
-            your digital future together!
+            Ready to transform your business in the cloud? Contact UniCloud Africa now for secure,
+            scalable, and reliable solutions. Let's shape your digital future together!
           </p>
 
           <motion.div className=" my-8 w-full">
@@ -246,11 +240,7 @@ const Contact = () => {
                       firstNameError ? "border border-red-500" : ""
                     }`}
                   />
-                  {firstNameError && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {firstNameError}
-                    </p>
-                  )}
+                  {firstNameError && <p className="text-red-500 text-sm mt-1">{firstNameError}</p>}
                 </span>
 
                 <span className="w-full md:w-[48%]">
@@ -272,9 +262,7 @@ const Contact = () => {
                       lastNameError ? "border border-red-500" : ""
                     }`}
                   />
-                  {lastNameError && (
-                    <p className="text-red-500 text-sm mt-1">{lastNameError}</p>
-                  )}
+                  {lastNameError && <p className="text-red-500 text-sm mt-1">{lastNameError}</p>}
                 </span>
               </div>
 
@@ -304,9 +292,7 @@ const Contact = () => {
                     <option value="Business">Business</option>
                     <option value="Partnerships">Partnerships</option>
                     <option value="Employment">Employment</option>
-                    <option value="Infrastructure Deployment">
-                      Infrastructure Deployment
-                    </option>
+                    <option value="Infrastructure Deployment">Infrastructure Deployment</option>
                   </select>
                   <img
                     src={arrow}
@@ -346,9 +332,7 @@ const Contact = () => {
                     <input
                       type="tel"
                       value={
-                        selectedCountry !== ""
-                          ? `+${selectedCountry} ${phoneNumber}`
-                          : phoneNumber
+                        selectedCountry !== "" ? `+${selectedCountry} ${phoneNumber}` : phoneNumber
                       }
                       onChange={(e) => handlePhoneNumberChange(e)}
                       placeholder="Enter your phone number"
@@ -358,9 +342,7 @@ const Contact = () => {
                     />
                   </div>
                   {phoneNumberError && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {phoneNumberError}
-                    </p>
+                    <p className="text-red-500 text-sm mt-1">{phoneNumberError}</p>
                   )}
                 </span>
               </div>
@@ -384,9 +366,7 @@ const Contact = () => {
                     emailError ? "border border-red-500" : ""
                   }`}
                 />
-                {emailError && (
-                  <p className="text-red-500 text-sm mt-1">{emailError}</p>
-                )}
+                {emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
               </span>
 
               <div className=" w-full flex mt-3 md:mt-3 flex-col md:flex-row justify-between md:mb-3 space-y-3 md:space-y-0">
@@ -443,9 +423,7 @@ const Contact = () => {
                     messageError ? "border-red-500 border" : ""
                   }`}
                 ></textarea>
-                {messageError && (
-                  <p className="text-red-500 text-sm ">{messageError}</p>
-                )}
+                {messageError && <p className="text-red-500 text-sm ">{messageError}</p>}
               </div>
 
               <label className="flex items-center">
@@ -465,9 +443,7 @@ const Contact = () => {
                 </span>
               </label>
               {privacyPolicyError && (
-                <p className="text-red-500 text-sm mt-1">
-                  {privacyPolicyError}
-                </p>
+                <p className="text-red-500 text-sm mt-1">{privacyPolicyError}</p>
               )}
 
               <button
@@ -475,13 +451,9 @@ const Contact = () => {
                 className=" w-full flex h-[45px] mt-6 rounded-[30px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] hover:bg-opacity-75 transition-all justify-center items-center"
               >
                 {loading === "No" && (
-                  <p className=" font-Outfit text-base text-white">
-                    Send Message
-                  </p>
+                  <p className=" font-Outfit text-base text-white">Send Message</p>
                 )}
-                {loading === "Yes" && (
-                  <img src={load} className=" w-6 h-6" alt="" />
-                )}
+                {loading === "Yes" && <img src={load} className=" w-6 h-6" alt="" />}
               </button>
             </div>
           </motion.div>
@@ -493,16 +465,13 @@ const Contact = () => {
               </button>
               <div className=" space-y-2">
                 <p className=" font-medium text-xl">Nigeria Office</p>
-                <p className=" text-sm lg:pr-10 text-[#676767]">
-                  {generalitem.address}
-                </p>
+                <p className=" text-sm lg:pr-10 text-[#676767]">{generalitem.address}</p>
               </div>
 
               <div className=" space-y-2">
                 <p className=" font-medium text-xl">South Africa Office</p>
                 <p className=" text-sm lg:pr-10 text-[#676767]">
-                  78, Corlett Drive, Melrose Arch North, Johannesburg 2196,
-                  South Africa.
+                  78, Corlett Drive, Melrose Arch North, Johannesburg 2196, South Africa.
                 </p>
               </div>
 
@@ -521,21 +490,15 @@ const Contact = () => {
               <p className=" font-medium text-xl"> Contact us on</p>
               <p className=" text-sm">
                 {" "}
-                <span className=" block gradient-text">
-                  {generalitem.email}
-                </span>
+                <span className=" block gradient-text">{generalitem.email}</span>
               </p>
               <p className=" text-sm">
                 {" "}
-                <span className=" block gradient-text underline">
-                  +2348035350147
-                </span>
+                <span className=" block gradient-text underline">+2348035350147</span>
               </p>
               <p className=" text-sm">
                 {" "}
-                <span className=" block gradient-text underline">
-                  +2348059792644
-                </span>
+                <span className=" block gradient-text underline">+2348059792644</span>
               </p>
             </div>
 
@@ -565,12 +528,8 @@ const Contact = () => {
           <div className=" w-full h-[100vh] fixed top-0 left-0 bg-[#00000057] flex justify-center items-center z-[99999] px-5 md:px-0">
             <div className="w-full md:w-[450px] rounded-[30px] h-[250px] flex flex-col justify-center items-center bg-[#f5f5f4] relative">
               <img src={checked} className=" w-[64px]" alt="" />
-              <p className=" text-2xl font-medium font-Outfit text-[#121212] mt-3">
-                Thank You
-              </p>
-              <p className=" text-base font-normal font-Outfit">
-                Your Message has been submitted
-              </p>
+              <p className=" text-2xl font-medium font-Outfit text-[#121212] mt-3">Thank You</p>
+              <p className=" text-base font-normal font-Outfit">Your Message has been submitted</p>
               <button
                 onClick={() => {
                   setSuccessMessage(false);
@@ -590,9 +549,7 @@ const Contact = () => {
               <p className=" text-xl font-medium font-Outfit text-[#121212] mt-3">
                 There was an error submitting your Message.
               </p>
-              <p className=" text-base font-normal font-Outfit">
-                Please try again
-              </p>
+              <p className=" text-base font-normal font-Outfit">Please try again</p>
               <button
                 onClick={() => {
                   setErrorMessage(false);

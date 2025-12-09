@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Sidebar from "./clientSidebar";
+import Sidebar from "./TenantSidebar";
 import HeaderBar from "./clientHeadbar";
 import BreadcrumbNav from "./clientAciveTab";
 import { useTenantBrandingTheme } from "../../hooks/useBrandingTheme";
@@ -44,9 +44,7 @@ const TenantClientPageShell = ({
         <header className="bg-white border-b border-gray-200 px-6 py-6 md:px-8 space-y-4">
           <BreadcrumbNav />
           <div className="flex flex-col gap-1">
-            {title ? (
-              <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
-            ) : null}
+            {title ? <h1 className="text-2xl font-bold text-gray-900">{title}</h1> : null}
             {description ? (
               typeof description === "string" ? (
                 <p className="text-sm text-gray-500">{description}</p>
@@ -57,10 +55,7 @@ const TenantClientPageShell = ({
           </div>
         </header>
         <main
-          className={[
-            "dashboard-content-shell p-6 md:p-8 space-y-6 flex-1 bg-gray-50",
-            className,
-          ]
+          className={["dashboard-content-shell p-6 md:p-8 space-y-6 flex-1 bg-gray-50", className]
             .filter(Boolean)
             .join(" ")
             .trim()}

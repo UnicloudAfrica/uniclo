@@ -9,11 +9,11 @@ import TenantAddSG from "../sgComps/TenantAddSG";
 import DeleteSGModal from "../../../adminDashboard/pages/sgComps/deleteSG";
 import ViewSGModal from "../../../adminDashboard/pages/sgComps/viewSGModal";
 import { useQueryClient } from "@tanstack/react-query";
-import ToastUtils from "../../../utils/toastUtil";
-import ResourceSection from "../../../adminDashboard/components/ResourceSection";
-import ResourceEmptyState from "../../../adminDashboard/components/ResourceEmptyState";
-import ResourceListCard from "../../../adminDashboard/components/ResourceListCard";
-import ModernButton from "../../../adminDashboard/components/ModernButton";
+import ToastUtils from "../../../utils/toastUtil.ts";
+import { ResourceSection } from "../../../shared/components/ui";
+import { ResourceEmptyState } from "../../../shared/components/ui";
+import { ResourceListCard } from "../../../shared/components/ui";
+import { ModernButton } from "../../../shared/components/ui";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -27,12 +27,9 @@ const getToneForStatus = (status = "") => {
 
 const SecurityGroup = ({ projectId = "", region = "" }) => {
   const queryClient = useQueryClient();
-  const { data: securityGroups, isFetching } =
-    useFetchTenantSecurityGroups(projectId, region);
-  const { mutate: deleteSecurityGroup, isPending: isDeleting } =
-    useDeleteTenantSecurityGroup();
-  const { mutateAsync: syncSecurityGroups, isPending: isSyncing } =
-    useSyncTenantSecurityGroups();
+  const { data: securityGroups, isFetching } = useFetchTenantSecurityGroups(projectId, region);
+  const { mutate: deleteSecurityGroup, isPending: isDeleting } = useDeleteTenantSecurityGroup();
+  const { mutateAsync: syncSecurityGroups, isPending: isSyncing } = useSyncTenantSecurityGroups();
 
   const [isCreateModalOpen, setCreateModal] = useState(false);
   const [deleteModal, setDeleteModal] = useState(null);
@@ -44,10 +41,7 @@ const SecurityGroup = ({ projectId = "", region = "" }) => {
 
   const currentSecurityGroups = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return (securityGroups ?? []).slice(
-      startIndex,
-      startIndex + ITEMS_PER_PAGE
-    );
+    return (securityGroups ?? []).slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [securityGroups, currentPage]);
 
   const handleDelete = () => {
@@ -92,12 +86,7 @@ const SecurityGroup = ({ projectId = "", region = "" }) => {
     >
       {isSyncing ? "Syncing..." : "Sync Security Groups"}
     </ModernButton>,
-    <ModernButton
-      key="add"
-      variant="primary"
-      size="sm"
-      onClick={() => setCreateModal(true)}
-    >
+    <ModernButton key="add" variant="primary" size="sm" onClick={() => setCreateModal(true)}>
       Add Security Group
     </ModernButton>,
   ];
@@ -132,8 +121,7 @@ const SecurityGroup = ({ projectId = "", region = "" }) => {
       securityGroup.outbound_rules?.length ??
       securityGroup.rules?.outbound?.length ??
       0;
-    const status =
-      securityGroup.status || securityGroup.state || "Not specified";
+    const status = securityGroup.status || securityGroup.state || "Not specified";
 
     return (
       <ResourceListCard
@@ -155,9 +143,9 @@ const SecurityGroup = ({ projectId = "", region = "" }) => {
           },
           securityGroup.description
             ? {
-              label: "Description",
-              value: securityGroup.description,
-            }
+                label: "Description",
+                value: securityGroup.description,
+              }
             : null,
         ].filter(Boolean)}
         statuses={[
@@ -210,9 +198,7 @@ const SecurityGroup = ({ projectId = "", region = "" }) => {
                 <ModernButton
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(1, prev - 1))
-                  }
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                   isDisabled={currentPage === 1}
                 >
                   Previous
@@ -223,9 +209,7 @@ const SecurityGroup = ({ projectId = "", region = "" }) => {
                 <ModernButton
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-                  }
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                   isDisabled={currentPage === totalPages}
                 >
                   Next

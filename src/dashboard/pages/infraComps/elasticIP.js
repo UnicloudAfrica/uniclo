@@ -5,15 +5,15 @@ import {
   useFetchTenantElasticIps,
   useSyncTenantElasticIps,
 } from "../../../hooks/elasticIPHooks";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import AddEip from "../eipComponents/addEip";
 import DeleteEipModal from "../eipComponents/deleteEip";
 import AssociateEipModal from "../eipComponents/associateEip";
 import DisassociateEipModal from "../eipComponents/disassociateEip";
-import ResourceSection from "../../../adminDashboard/components/ResourceSection";
-import ResourceEmptyState from "../../../adminDashboard/components/ResourceEmptyState";
-import ResourceListCard from "../../../adminDashboard/components/ResourceListCard";
-import ModernButton from "../../../adminDashboard/components/ModernButton";
+import { ResourceSection } from "../../../shared/components/ui";
+import { ResourceEmptyState } from "../../../shared/components/ui";
+import { ResourceListCard } from "../../../shared/components/ui";
+import { ModernButton } from "../../../shared/components/ui";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -26,13 +26,7 @@ const getToneForStatus = (status = "") => {
   return "neutral";
 };
 
-const EIPs = ({
-  projectId = "",
-  region = "",
-  actionRequest,
-  onActionHandled,
-  onStatsUpdate,
-}) => {
+const EIPs = ({ projectId = "", region = "", actionRequest, onActionHandled, onStatsUpdate }) => {
   const { data: eips, isFetching } = useFetchTenantElasticIps(projectId, region);
   const { mutate: deleteElasticIp, isPending: isDeleting } = useDeleteTenantElasticIp();
   const { mutate: syncElasticIps, isPending: isSyncing } = useSyncTenantElasticIps();

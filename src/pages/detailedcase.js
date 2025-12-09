@@ -6,14 +6,7 @@ import React from "react";
 import { initializeApp } from "firebase/app";
 import adbg from "./assets/adBG.svg";
 import admob from "./assets/adMob.svg";
-import {
-  getFirestore,
-  getDoc,
-  doc,
-  getDocs,
-  collection,
-  query,
-} from "firebase/firestore";
+import { getFirestore, getDoc, doc, getDocs, collection, query } from "firebase/firestore";
 import { motion } from "framer-motion";
 import copy from "./assets/copy.svg";
 
@@ -106,9 +99,7 @@ const DetailedCases = () => {
       <Navbar />
       <motion.div>
         <div className="mt-[10em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
-          <p className=" font-medium text-3xl md:text-4xl text-center">
-            Use Case
-          </p>
+          <p className=" font-medium text-3xl md:text-4xl text-center">Use Case</p>
           <div
             className=" w-full h-[350px] my-16 bg-[#F5F5F4] rounded-[20px]"
             style={{
@@ -139,8 +130,7 @@ const DetailedCases = () => {
             Explore other use case
           </p>
           <p className=" text-center font-normal mt-3 text-xl text-[#676767]">
-            Explore our case studies to see how our solutions have made a real
-            impact.
+            Explore our case studies to see how our solutions have made a real impact.
           </p>
 
           <div
@@ -159,9 +149,7 @@ const DetailedCases = () => {
                       backgroundPosition: "center",
                     }}
                   ></div>
-                  <p className="text-left mt-6 text-xl lg:text-2xl font-medium">
-                    {item.title}
-                  </p>
+                  <p className="text-left mt-6 text-xl lg:text-2xl font-medium">{item.title}</p>
                   <p className="text-left mt-3 text-[#676767] text-sm">
                     {item.tagline.substring(0, 200) + "..."}
                   </p>
@@ -185,12 +173,9 @@ const DetailedCases = () => {
                 className="z-10 absolute top-0 h-full w-full object-cover block md:hidden"
                 alt=""
               />
-              <p className=" font-semibold text-xl md:text-3xl">
-                Want product news and updates
-              </p>
+              <p className=" font-semibold text-xl md:text-3xl">Want product news and updates</p>
               <p className=" font-normal px-4 md:px-0 text-lg md:text-xl">
-                Subscribe to UniCloud Africa blog to get update right in your
-                inbox
+                Subscribe to UniCloud Africa blog to get update right in your inbox
               </p>
               <div className=" flex flex-col md:flex-row items-center justify-center z-20  mt-4 md:space-x-6 space-y-4 md:space-y-0">
                 <input

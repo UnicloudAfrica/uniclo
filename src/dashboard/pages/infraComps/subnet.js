@@ -8,11 +8,11 @@ import {
 import AddSubnet from "../subnetComps/addSubnet";
 import DeleteSubnetModal from "../subnetComps/deleteSubnet";
 import ViewSubnetModal from "../subnetComps/viewSubnet";
-import ToastUtils from "../../../utils/toastUtil";
-import ResourceSection from "../../../adminDashboard/components/ResourceSection";
-import ResourceEmptyState from "../../../adminDashboard/components/ResourceEmptyState";
-import ResourceListCard from "../../../adminDashboard/components/ResourceListCard";
-import ModernButton from "../../../adminDashboard/components/ModernButton";
+import ToastUtils from "../../../utils/toastUtil.ts";
+import { ResourceSection } from "../../../shared/components/ui";
+import { ResourceEmptyState } from "../../../shared/components/ui";
+import { ResourceListCard } from "../../../shared/components/ui";
+import { ModernButton } from "../../../shared/components/ui";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -64,8 +64,7 @@ const Subnets = ({
 
   const openCreateModal = () => setCreateModal(true);
   const closeCreateModal = () => setCreateModal(false);
-  const openDeleteModal = (subnet, subnetName) =>
-    setDeleteModal({ subnet, subnetName });
+  const openDeleteModal = (subnet, subnetName) => setDeleteModal({ subnet, subnetName });
   const closeDeleteModal = () => setDeleteModal(null);
   const openViewModal = (subnet) => setViewModal(subnet);
   const closeViewModal = () => setViewModal(null);
@@ -218,23 +217,16 @@ const Subnets = ({
     <>
       <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
         {currentSubnets.map((subnet) => {
-          const displayName =
-            subnet.name || subnet.cidr_block || `Subnet ${subnet.id}`;
+          const displayName = subnet.name || subnet.cidr_block || `Subnet ${subnet.id}`;
           const cidr = subnet.cidr_block || subnet.cidr || "—";
           const vpcDisplay = subnet.vpc_id || "—";
           const status = subnet.state || subnet.status || "Unknown";
           const availableIps =
-            subnet.available_ip_address_count ??
-            subnet.meta?.available_ip_address_count ??
-            "—";
+            subnet.available_ip_address_count ?? subnet.meta?.available_ip_address_count ?? "—";
           const totalIps =
-            subnet.total_ip_address_count ??
-            subnet.meta?.total_ip_address_count ??
-            "—";
-          const isDefault =
-            subnet.is_default ?? subnet.meta?.is_default ?? false;
-          const zone =
-            subnet.availability_zone || subnet.meta?.availability_zone;
+            subnet.total_ip_address_count ?? subnet.meta?.total_ip_address_count ?? "—";
+          const isDefault = subnet.is_default ?? subnet.meta?.is_default ?? false;
+          const zone = subnet.availability_zone || subnet.meta?.availability_zone;
 
           return (
             <ResourceListCard
@@ -316,11 +308,7 @@ const Subnets = ({
         subnetName={deleteModal?.subnetName}
         isLoading={isDeleting}
       />
-      <ViewSubnetModal
-        subnet={viewModal}
-        isOpen={Boolean(viewModal)}
-        onClose={closeViewModal}
-      />
+      <ViewSubnetModal subnet={viewModal} isOpen={Boolean(viewModal)} onClose={closeViewModal} />
     </ResourceSection>
   );
 };

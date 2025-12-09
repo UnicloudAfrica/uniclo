@@ -1,22 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  CreditCard, 
-  Clock, 
-  CheckCircle, 
-  AlertCircle, 
+import React, { useState, useEffect } from "react";
+import {
+  CreditCard,
+  Clock,
+  CheckCircle,
+  AlertCircle,
   ExternalLink,
   RefreshCw,
   Server,
-  DollarSign
-} from 'lucide-react';
+  DollarSign,
+} from "lucide-react";
 
-const PaymentSummary = ({ 
-  transactionData, 
-  onPaymentComplete, 
-  onClose,
-  className = "" 
-}) => {
-  const [paymentStatus, setPaymentStatus] = useState('pending');
+const PaymentSummary = ({ transactionData, onPaymentComplete, onClose, className = "" }) => {
+  const [paymentStatus, setPaymentStatus] = useState("pending");
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [isPolling, setIsPolling] = useState(false);
 
@@ -38,7 +33,7 @@ const PaymentSummary = ({
           setTimeRemaining({ hours, minutes, seconds });
         } else {
           setTimeRemaining(null);
-          setPaymentStatus('expired');
+          setPaymentStatus("expired");
         }
       };
 
@@ -55,32 +50,35 @@ const PaymentSummary = ({
     setIsPolling(true);
     try {
       // Import config and auth store
-      const config = require('../config').default;
-      const useAdminAuthStore = require('../stores/adminAuthStore').default;
+      const config = require("../config").default;
+      const useAdminAuthStore = require("../stores/adminAuthStore").default;
       const { token } = useAdminAuthStore.getState();
-      
-      const response = await fetch(`${config.baseURL}/business/transactions/${transaction.id}/status`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
+
+      const response = await fetch(
+        `${config.baseURL}/business/transactions/${transaction.id}/status`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        }
+      );
       const data = await response.json();
 
       if (data.success && data.data) {
-        if (data.data.status === 'successful') {
-          setPaymentStatus('completed');
+        if (data.data.status === "successful") {
+          setPaymentStatus("completed");
           if (onPaymentComplete) {
             onPaymentComplete(data.data);
           }
-        } else if (data.data.status === 'failed') {
-          setPaymentStatus('failed');
+        } else if (data.data.status === "failed") {
+          setPaymentStatus("failed");
         }
       }
     } catch (error) {
-      console.error('Failed to poll transaction status:', error);
+      console.error("Failed to poll transaction status:", error);
     } finally {
       setIsPolling(false);
     }
@@ -88,7 +86,7 @@ const PaymentSummary = ({
 
   // Auto-poll every 30 seconds
   useEffect(() => {
-    if (paymentStatus === 'pending' && transaction?.id) {
+    if (paymentStatus === "pending" && transaction?.id) {
       const interval = setInterval(pollTransactionStatus, 30000);
       return () => clearInterval(interval);
     }
@@ -96,16 +94,16 @@ const PaymentSummary = ({
 
   const handlePayNow = () => {
     if (payment?.payment_url) {
-      window.open(payment.payment_url, '_blank');
+      window.open(payment.payment_url, "_blank");
     }
   };
 
   const getStatusIcon = () => {
     switch (paymentStatus) {
-      case 'completed':
+      case "completed":
         return <CheckCircle className="w-6 h-6 text-green-500" />;
-      case 'failed':
-      case 'expired':
+      case "failed":
+      case "expired":
         return <AlertCircle className="w-6 h-6 text-red-500" />;
       default:
         return <Clock className="w-6 h-6 text-yellow-500" />;
@@ -114,14 +112,14 @@ const PaymentSummary = ({
 
   const getStatusMessage = () => {
     switch (paymentStatus) {
-      case 'completed':
-        return 'Payment completed! Your instances are being provisioned.';
-      case 'failed':
-        return 'Payment failed. Please try again or contact support.';
-      case 'expired':
-        return 'Payment link has expired. Please create a new order.';
+      case "completed":
+        return "Payment completed! Your instances are being provisioned.";
+      case "failed":
+        return "Payment failed. Please try again or contact support.";
+      case "expired":
+        return "Payment link has expired. Please create a new order.";
       default:
-        return 'Payment required to proceed with instance provisioning.';
+        return "Payment required to proceed with instance provisioning.";
     }
   };
 
@@ -137,19 +135,14 @@ const PaymentSummary = ({
           <div className="flex items-center space-x-3">
             {getStatusIcon()}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                Payment Summary
-              </h3>
+              <h3 className="text-lg font-semibold text-gray-900">Payment Summary</h3>
               <p className="text-sm text-gray-500">
                 Transaction #{transaction?.identifier || transaction?.id}
               </p>
             </div>
           </div>
           {onClose && (
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
-            >
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
               ×
             </button>
           )}
@@ -160,7 +153,7 @@ const PaymentSummary = ({
       <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-700">{getStatusMessage()}</p>
-          {timeRemaining && paymentStatus === 'pending' && (
+          {timeRemaining && paymentStatus === "pending" && (
             <div className="text-sm text-orange-600 font-medium">
               Expires in {timeRemaining.hours}h {timeRemaining.minutes}m {timeRemaining.seconds}s
             </div>
@@ -177,56 +170,54 @@ const PaymentSummary = ({
               <DollarSign className="w-5 h-5 mr-2" />
               Payment Details
             </h4>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Amount:</span>
-              <span className="font-medium">
-                {transaction?.currency} {transaction?.amount?.toLocaleString()}
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Amount:</span>
+                <span className="font-medium">
+                  {transaction?.currency} {transaction?.amount?.toLocaleString()}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Gateway:</span>
-                <span className="font-medium capitalize">
-                  {payment?.gateway || 'Paystack'}
+                <span className="font-medium capitalize">{payment?.gateway || "Paystack"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Reference:</span>
+                <span className="font-medium text-xs">
+                  {payment?.payment_reference || "Generating..."}
                 </span>
               </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Reference:</span>
-              <span className="font-medium text-xs">
-                {payment?.payment_reference || 'Generating...'}
-              </span>
-            </div>
-            {savedCards.length > 0 && (
-              <div className="pt-2">
-                <div className="flex items-center text-gray-600 text-xs font-semibold uppercase tracking-wide mb-1">
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Saved Cards
-                </div>
-                <div className="space-y-2">
-                  {savedCards.map((card, index) => (
-                    <div
-                      key={card.identifier || card.id || index}
-                      className="flex items-center justify-between rounded border border-gray-100 px-3 py-2 bg-white"
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {(card.card_type || 'Card').toUpperCase()} •••• {card.last4 || '----'}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Expires {card.exp_month}/{card.exp_year}
-                          {card.bank ? ` · ${card.bank}` : ''}
-                        </p>
+              {savedCards.length > 0 && (
+                <div className="pt-2">
+                  <div className="flex items-center text-gray-600 text-xs font-semibold uppercase tracking-wide mb-1">
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Saved Cards
+                  </div>
+                  <div className="space-y-2">
+                    {savedCards.map((card, index) => (
+                      <div
+                        key={card.identifier || card.id || index}
+                        className="flex items-center justify-between rounded border border-gray-100 px-3 py-2 bg-white"
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            {(card.card_type || "Card").toUpperCase()} •••• {card.last4 || "----"}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Expires {card.exp_month}/{card.exp_year}
+                            {card.bank ? ` · ${card.bank}` : ""}
+                          </p>
+                        </div>
+                        <span className="text-xs text-gray-500 uppercase font-semibold">
+                          {card.payment_gateway || "Paystack"}
+                        </span>
                       </div>
-                      <span className="text-xs text-gray-500 uppercase font-semibold">
-                        {card.payment_gateway || 'Paystack'}
-                      </span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
 
           {/* Instance Information */}
           <div className="space-y-4">
@@ -238,16 +229,12 @@ const PaymentSummary = ({
               {instances?.slice(0, 3).map((instance, index) => (
                 <div key={instance.id} className="text-sm bg-gray-50 rounded p-2">
                   <div className="flex justify-between items-center">
-                    <span className="font-medium">
-                      {instance.name || `Instance ${index + 1}`}
-                    </span>
+                    <span className="font-medium">{instance.name || `Instance ${index + 1}`}</span>
                     <span className="text-xs text-gray-500 px-2 py-1 bg-white rounded">
                       {instance.provider} • {instance.region}
                     </span>
                   </div>
-                  <div className="text-gray-600 text-xs mt-1">
-                    Status: {instance.status}
-                  </div>
+                  <div className="text-gray-600 text-xs mt-1">Status: {instance.status}</div>
                 </div>
               ))}
               {instances?.length > 3 && (
@@ -269,13 +256,13 @@ const PaymentSummary = ({
               disabled={isPolling}
               className="flex items-center text-sm text-gray-600 hover:text-gray-800"
             >
-              <RefreshCw className={`w-4 h-4 mr-1 ${isPolling ? 'animate-spin' : ''}`} />
-              {isPolling ? 'Checking...' : 'Check Status'}
+              <RefreshCw className={`w-4 h-4 mr-1 ${isPolling ? "animate-spin" : ""}`} />
+              {isPolling ? "Checking..." : "Check Status"}
             </button>
           </div>
 
           <div className="flex items-center space-x-3">
-            {paymentStatus === 'pending' && payment?.payment_url && (
+            {paymentStatus === "pending" && payment?.payment_url && (
               <button
                 onClick={handlePayNow}
                 className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -286,17 +273,23 @@ const PaymentSummary = ({
               </button>
             )}
 
-            {paymentStatus === 'completed' && (
+            {paymentStatus === "completed" && (
               <button
-            onClick={() => window.location.href = window.location.pathname.includes('object-storage') ? '/admin-dashboard/object-storage' : '/admin-dashboard/instances'}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-          >
-            <CheckCircle className="w-4 h-4 mr-2" />
-            {window.location.pathname.includes('object-storage') ? 'View Storage' : 'View Instances'}
-          </button>
-        )}
+                onClick={() =>
+                  (window.location.href = window.location.pathname.includes("object-storage")
+                    ? "/admin-dashboard/object-storage"
+                    : "/admin-dashboard/instances")
+                }
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                {window.location.pathname.includes("object-storage")
+                  ? "View Storage"
+                  : "View Instances"}
+              </button>
+            )}
 
-            {(paymentStatus === 'failed' || paymentStatus === 'expired') && (
+            {(paymentStatus === "failed" || paymentStatus === "expired") && (
               <button
                 onClick={() => window.location.reload()}
                 className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -309,12 +302,12 @@ const PaymentSummary = ({
       </div>
 
       {/* Additional Information */}
-      {paymentStatus === 'pending' && (
+      {paymentStatus === "pending" && (
         <div className="px-6 py-3 bg-blue-50 border-t border-blue-200 text-sm text-blue-700">
           <p className="flex items-start">
             <AlertCircle className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
-            After completing payment, your instances will be automatically provisioned. 
-            This page will update automatically, or you can click "Check Status" to refresh.
+            After completing payment, your instances will be automatically provisioned. This page
+            will update automatically, or you can click "Check Status" to refresh.
           </p>
         </div>
       )}

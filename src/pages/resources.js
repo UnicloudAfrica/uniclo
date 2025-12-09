@@ -21,8 +21,7 @@ const Resources = () => {
             Resources
           </p>
           <p className=" text-center font-normal mt-1 text-lg md:text-xl text-[#676767] ">
-            Explore our resources for cloud services, cloud computing and web
-            hosting.
+            Explore our resources for cloud services, cloud computing and web hosting.
           </p>
           <div
             className={`grid grid-cols-1 md:grid-cols-${
@@ -40,9 +39,7 @@ const Resources = () => {
                       backgroundPosition: "center",
                     }}
                   ></div>
-                  <p className="text-left mt-3 text-lg md:text-xl font-medium">
-                    {item.title}
-                  </p>
+                  <p className="text-left mt-3 text-lg md:text-xl font-medium">{item.title}</p>
                   <p className="text-left mt-1 text-[#676767] text-sm md:text-base">
                     {item.tagline}
                   </p>
@@ -58,8 +55,7 @@ const Resources = () => {
             Use Cases
           </p>
           <p className=" text-center font-normal mt-3 text-lg md:text-xl ">
-            Explore our case studies to see how our solutions have made a real
-            impact.
+            Explore our case studies to see how our solutions have made a real impact.
           </p>
           <div className=" grid grid-cols-1 md:grid-cols-2 gap-[32px] lg:gap-[4%] w-full mt-8 mb-[6em]">
             {casesArray.map((item, index) => (
@@ -73,9 +69,7 @@ const Resources = () => {
                       backgroundPosition: "center",
                     }}
                   ></div>
-                  <p className="text-left mt-6 text-xl lg:text-2xl font-medium">
-                    {item.title}
-                  </p>
+                  <p className="text-left mt-6 text-xl lg:text-2xl font-medium">{item.title}</p>
                   <p className="text-left mt-3 text-[#1E1E1ECC] text-sm">
                     {item.tagline.substring(0, 200) + "..."}
                   </p>
@@ -103,8 +97,7 @@ const Resources = () => {
                 Join our webinars and access whitepapers{" "}
               </p>
               <p className=" font-normal px-4 md:px-0 text-base md:text-xl md:mt-2">
-                We offer in-depth knowledge on cloud technologies and
-                implementation.
+                We offer in-depth knowledge on cloud technologies and implementation.
               </p>
               <div className=" flex flex-col md:flex-row items-center md:mt-4 justify-center z-20  mt-4 md:space-x-6 space-y-4 md:space-y-0">
                 <input

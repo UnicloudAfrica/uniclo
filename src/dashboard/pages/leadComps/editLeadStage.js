@@ -3,7 +3,7 @@ import { X, Loader2 } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useFetchTenantAdmins } from "../../../hooks/adminUserHooks";
 import { useUpdateLeadStage } from "../../../hooks/tenantHooks/leadsHook";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 
 const leadStatusOptions = ["pending", "in_progress", "completed", "skipped"];
 
@@ -84,9 +84,7 @@ export const EditLeadStage = ({ isOpen, onClose, stage, lead }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
       <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full">
         <div className="flex justify-between items-center px-6 py-4 border-b bg-[#F2F2F2] rounded-t-[24px] w-full">
-          <h2 className="text-lg font-semibold text-[#575758]">
-            Edit Lead Stage
-          </h2>
+          <h2 className="text-lg font-semibold text-[#575758]">Edit Lead Stage</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-[#1E1E1EB2] font-medium transition-colors"
@@ -98,10 +96,7 @@ export const EditLeadStage = ({ isOpen, onClose, stage, lead }) => {
         <div className="px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start">
           <div className="space-y-4 w-full">
             <div>
-              <label
-                htmlFor="leadStatus"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="leadStatus" className="block text-sm font-medium text-gray-700 mb-2">
                 Status<span className="text-red-500">*</span>
               </label>
               <select
@@ -121,16 +116,11 @@ export const EditLeadStage = ({ isOpen, onClose, stage, lead }) => {
                   </option>
                 ))}
               </select>
-              {errors.status && (
-                <p className="text-red-500 text-xs mt-1">{errors.status}</p>
-              )}
+              {errors.status && <p className="text-red-500 text-xs mt-1">{errors.status}</p>}
             </div>
 
             <div>
-              <label
-                htmlFor="leadNotes"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="leadNotes" className="block text-sm font-medium text-gray-700 mb-2">
                 Notes
               </label>
               <textarea
@@ -143,16 +133,11 @@ export const EditLeadStage = ({ isOpen, onClose, stage, lead }) => {
                   errors.notes ? "border-red-500" : "border-gray-300"
                 }`}
               />
-              {errors.notes && (
-                <p className="text-red-500 text-xs mt-1">{errors.notes}</p>
-              )}
+              {errors.notes && <p className="text-red-500 text-xs mt-1">{errors.notes}</p>}
             </div>
 
             <div>
-              <label
-                htmlFor="assignedTo"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="assignedTo" className="block text-sm font-medium text-gray-700 mb-2">
                 Assigned To (optional)
               </label>
               <select

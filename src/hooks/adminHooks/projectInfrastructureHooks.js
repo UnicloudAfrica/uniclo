@@ -1,14 +1,14 @@
-import React from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../../index/admin/api';
+import React from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "../../index/admin/api";
 
 // Convert backend response to frontend format
 const convertBackendResponse = (backendData) => {
   if (!backendData) return null;
-  
+
   // Convert backend format to frontend expected format
   const infrastructure = backendData.infrastructure || {};
-  
+
   const normalizeDetails = (component) => {
     if (!component || !component.details) {
       return null;
@@ -18,7 +18,7 @@ const convertBackendResponse = (backendData) => {
       return component.details;
     }
 
-    if (typeof component.details === 'object') {
+    if (typeof component.details === "object") {
       return [component.details];
     }
 
@@ -26,95 +26,126 @@ const convertBackendResponse = (backendData) => {
   };
 
   const normalizeStatus = (component) => {
-    if (!component) return 'pending';
+    if (!component) return "pending";
     const status = component.status;
-    if (status === 'configured' || status === 'completed') {
-      return 'completed';
+    if (status === "configured" || status === "completed") {
+      return "completed";
     }
-    if (status === 'ready') {
+    if (status === "ready") {
       const details = normalizeDetails(component);
-      if ((details && details.length > 0) || (typeof component.count === 'number' && component.count > 0)) {
-        return 'completed';
+      if (
+        (details && details.length > 0) ||
+        (typeof component.count === "number" && component.count > 0)
+      ) {
+        return "completed";
       }
-      return component.ready_for_setup ? 'pending' : 'pending';
+      return component.ready_for_setup ? "pending" : "pending";
     }
     const details = normalizeDetails(component);
-    if ((details && details.length > 0) || (typeof component.count === 'number' && component.count > 0)) {
-      return 'completed';
+    if (
+      (details && details.length > 0) ||
+      (typeof component.count === "number" && component.count > 0)
+    ) {
+      return "completed";
     }
-    return component.ready_for_setup ? 'pending' : 'pending';
+    return component.ready_for_setup ? "pending" : "pending";
   };
 
   return {
     project_id: backendData.project?.identifier,
-    overall_status: backendData.project?.status || 'pending',
+    overall_status: backendData.project?.status || "pending",
     components: {
       domain: {
-        status: 'completed', // Domain is managed separately
+        status: "completed", // Domain is managed separately
         details: null,
-        error: null
+        error: null,
       },
       keypairs: {
         status: (() => {
           const kp = infrastructure.keypairs;
-          if (!kp) return 'pending';
-          if (kp.status === 'configured' || kp.status === 'completed') return 'completed';
-          if (typeof kp.count === 'number' && kp.count > 0) return 'completed';
+          if (!kp) return "pending";
+          if (kp.status === "configured" || kp.status === "completed") return "completed";
+          if (typeof kp.count === "number" && kp.count > 0) return "completed";
           const details = normalizeDetails(kp);
-          if (details && details.length > 0) return 'completed';
-          return kp.ready_for_setup ? 'pending' : 'pending';
+          if (details && details.length > 0) return "completed";
+          return kp.ready_for_setup ? "pending" : "pending";
         })(),
         details: normalizeDetails(infrastructure.keypairs),
         count: infrastructure.keypairs?.count ?? null,
-        error: null
+        error: null,
       },
       vpc: {
         status: normalizeStatus(infrastructure.vpc),
         details: normalizeDetails(infrastructure.vpc),
         count: infrastructure.vpc?.count ?? null,
-        error: null
+        error: null,
       },
       edge_networks: {
         status: normalizeStatus(infrastructure.edge_networks),
         details: normalizeDetails(infrastructure.edge_networks),
         count: infrastructure.edge_networks?.count ?? null,
-        error: null
+        error: null,
       },
       security_groups: {
         status: normalizeStatus(infrastructure.security_groups),
         details: normalizeDetails(infrastructure.security_groups),
         count: infrastructure.security_groups?.count ?? null,
-        error: null
+        error: null,
       },
       subnets: {
         status: normalizeStatus(infrastructure.subnets),
         details: normalizeDetails(infrastructure.subnets),
         count: infrastructure.subnets?.count ?? null,
-        error: null
-      }
+        error: null,
+      },
+      route_tables: {
+        status: normalizeStatus(infrastructure.route_tables),
+        details: normalizeDetails(infrastructure.route_tables),
+        count: infrastructure.route_tables?.count ?? null,
+        error: null,
+      },
+      internet_gateways: {
+        status: normalizeStatus(infrastructure.internet_gateways),
+        details: normalizeDetails(infrastructure.internet_gateways),
+        count: infrastructure.internet_gateways?.count ?? null,
+        error: null,
+      },
+      network_interfaces: {
+        status: normalizeStatus(infrastructure.network_interfaces),
+        details: normalizeDetails(infrastructure.network_interfaces),
+        count: infrastructure.network_interfaces?.count ?? null,
+        error: null,
+      },
+      elastic_ips: {
+        status: normalizeStatus(infrastructure.elastic_ips),
+        details: normalizeDetails(infrastructure.elastic_ips),
+        count: infrastructure.elastic_ips?.count ?? null,
+        error: null,
+      },
     },
     completion_percentage: backendData.completion_percentage || 0,
-    estimated_completion: backendData.estimated_completion_time ? 
-      new Date(Date.now() + backendData.estimated_completion_time * 1000).toISOString() : null,
+    estimated_completion: backendData.estimated_completion_time
+      ? new Date(Date.now() + backendData.estimated_completion_time * 1000).toISOString()
+      : null,
     last_updated: new Date().toISOString(),
-    next_steps: backendData.next_steps || []
+    next_steps: backendData.next_steps || [],
   };
 };
 
 // Fetch project infrastructure status
 export const useProjectInfrastructureStatus = (projectId, options = {}) => {
   return useQuery({
-    queryKey: ['project-infrastructure-status', projectId],
+    queryKey: ["project-infrastructure-status", projectId],
     queryFn: async () => {
       if (!projectId) {
-        throw new Error('Project ID is required');
+        throw new Error("Project ID is required");
       }
 
-      const response = await api('GET', `/business/project-infrastructure/${projectId}`);
-      
+      const response = await api("GET", `/business/project-infrastructure/${projectId}`);
+
       // Convert backend response format to frontend expected format
       const convertedData = convertBackendResponse(response.data || response);
-      
+
       return { data: convertedData };
     },
     enabled: !!projectId,
@@ -122,12 +153,12 @@ export const useProjectInfrastructureStatus = (projectId, options = {}) => {
     cacheTime: 300000, // Keep in cache for 5 minutes
     retry: (failureCount, error) => {
       // Don't retry for 404 or 403 errors
-      if (error.message.includes('404') || error.message.includes('403')) {
+      if (error.message.includes("404") || error.message.includes("403")) {
         return false;
       }
       return failureCount < 3;
     },
-    ...options
+    ...options,
   });
 };
 
@@ -138,30 +169,30 @@ export const useSetupInfrastructureComponent = () => {
   return useMutation({
     mutationFn: async ({ projectId, componentType }) => {
       if (!projectId || !componentType) {
-        throw new Error('Project ID and component type are required');
+        throw new Error("Project ID and component type are required");
       }
 
-      return await api('POST', '/business/project-infrastructure', {
+      return await api("POST", "/business/project-infrastructure", {
         project_identifier: projectId,
         component: componentType,
         auto_configure: true,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     },
     onSuccess: (data, variables) => {
       // Invalidate and refetch the infrastructure status
       queryClient.invalidateQueries({
-        queryKey: ['project-infrastructure-status', variables.projectId]
+        queryKey: ["project-infrastructure-status", variables.projectId],
       });
 
       // Also invalidate project details to update any related data
       queryClient.invalidateQueries({
-        queryKey: ['project-details', variables.projectId]
+        queryKey: ["project-details", variables.projectId],
       });
     },
     onError: (error, variables) => {
       console.error(`Failed to setup ${variables.componentType}:`, error);
-    }
+    },
   });
 };
 
@@ -171,28 +202,28 @@ export const useProvisionVpc = () => {
   return useMutation({
     mutationFn: async ({ projectId, payload = {} }) => {
       if (!projectId) {
-        throw new Error('Project ID is required');
+        throw new Error("Project ID is required");
       }
 
-      return await api('POST', `/projects/${projectId}/vpc/provision`, payload);
+      return await api("POST", `/projects/${projectId}/vpc/provision`, payload);
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['project-infrastructure-status', variables.projectId]
+        queryKey: ["project-infrastructure-status", variables.projectId],
       });
       queryClient.invalidateQueries({
-        queryKey: ['project-details', variables.projectId]
+        queryKey: ["project-details", variables.projectId],
       });
       queryClient.invalidateQueries({
-        queryKey: ['admin-project', variables.projectId]
+        queryKey: ["admin-project", variables.projectId],
       });
       queryClient.invalidateQueries({
-        queryKey: ['admin-projects']
+        queryKey: ["admin-projects"],
       });
     },
     onError: (error) => {
-      console.error('Failed to provision VPC:', error);
-    }
+      console.error("Failed to provision VPC:", error);
+    },
   });
 };
 
@@ -203,29 +234,29 @@ export const useEnableProjectVpc = () => {
   return useMutation({
     mutationFn: async ({ projectId }) => {
       if (!projectId) {
-        throw new Error('Project ID is required');
+        throw new Error("Project ID is required");
       }
 
-      return await api('POST', `/projects/${projectId}/enable-vpc`);
+      return await api("POST", `/projects/${projectId}/enable-vpc`);
     },
     onSuccess: (data, variables) => {
       // Invalidate all related queries
       queryClient.invalidateQueries({
-        queryKey: ['project-infrastructure-status', variables.projectId]
+        queryKey: ["project-infrastructure-status", variables.projectId],
       });
       queryClient.invalidateQueries({
-        queryKey: ['project-details', variables.projectId]
+        queryKey: ["project-details", variables.projectId],
       });
       queryClient.invalidateQueries({
-        queryKey: ['admin-project', variables.projectId]
+        queryKey: ["admin-project", variables.projectId],
       });
       queryClient.invalidateQueries({
-        queryKey: ['admin-projects']
+        queryKey: ["admin-projects"],
       });
     },
     onError: (error) => {
-      console.error('Failed to enable VPC:', error);
-    }
+      console.error("Failed to enable VPC:", error);
+    },
   });
 };
 
@@ -235,23 +266,23 @@ export const useProjectStatusPolling = (projectId, options = {}) => {
     enabled = true,
     interval = 30000, // 30 seconds
     maxPollingTime = 1800000, // 30 minutes
-    stopOnStatus = ['active', 'failed', 'deleted'],
-    triggerSync = false
+    stopOnStatus = ["active", "failed", "deleted"],
+    triggerSync = false,
   } = options;
 
   const [pollingStartTime] = React.useState(() => Date.now());
   const [shouldStop, setShouldStop] = React.useState(false);
 
   return useQuery({
-    queryKey: ['project-status-polling', projectId],
+    queryKey: ["project-status-polling", projectId],
     queryFn: async () => {
       if (!projectId) {
-        throw new Error('Project ID is required');
+        throw new Error("Project ID is required");
       }
 
-      const syncParam = triggerSync ? '?sync=true' : '';
-      const response = await api('GET', `/projects/${projectId}/status${syncParam}`);
-      
+      const syncParam = triggerSync ? "?sync=true" : "";
+      const response = await api("GET", `/projects/${projectId}/status${syncParam}`);
+
       return response.data || response;
     },
     enabled: enabled && !!projectId && !shouldStop,
@@ -280,13 +311,13 @@ export const useProjectStatusPolling = (projectId, options = {}) => {
     onSuccess: (data) => {
       // Log status changes
       console.log(`Project ${projectId} status:`, data.status);
-      
+
       // If project completed, trigger success callback
       if (options.onStatusChange) {
         options.onStatusChange(data);
       }
     },
-    ...options.queryOptions
+    ...options.queryOptions,
   });
 };
 
@@ -297,18 +328,18 @@ export const useBulkSetupInfrastructure = () => {
   return useMutation({
     mutationFn: async ({ projectId, components }) => {
       if (!projectId || !Array.isArray(components) || components.length === 0) {
-        throw new Error('Project ID and components array are required');
+        throw new Error("Project ID and components array are required");
       }
 
       // For bulk setup, we'll call the endpoint multiple times
       // since the backend currently supports single component setup
       const results = [];
       for (const component of components) {
-        const result = await api('POST', '/business/project-infrastructure', {
+        const result = await api("POST", "/business/project-infrastructure", {
           project_identifier: projectId,
           component,
           auto_configure: true,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
         results.push(result);
       }
@@ -317,17 +348,17 @@ export const useBulkSetupInfrastructure = () => {
     onSuccess: (data, variables) => {
       // Invalidate infrastructure status
       queryClient.invalidateQueries({
-        queryKey: ['project-infrastructure-status', variables.projectId]
+        queryKey: ["project-infrastructure-status", variables.projectId],
       });
-      
+
       // Also invalidate project details
       queryClient.invalidateQueries({
-        queryKey: ['project-details', variables.projectId]
+        queryKey: ["project-details", variables.projectId],
       });
     },
     onError: (error, variables) => {
-      console.error('Failed to setup infrastructure components:', error);
-    }
+      console.error("Failed to setup infrastructure components:", error);
+    },
   });
 };
 
@@ -338,25 +369,25 @@ export const useResetInfrastructureComponent = () => {
   return useMutation({
     mutationFn: async ({ projectId, componentType }) => {
       if (!projectId || !componentType) {
-        throw new Error('Project ID and component type are required');
+        throw new Error("Project ID and component type are required");
       }
 
       // Reset functionality is not yet implemented in backend
       // Using DELETE endpoint when it becomes available
-      return await api('DELETE', `/business/project-infrastructure/${projectId}`, {
+      return await api("DELETE", `/business/project-infrastructure/${projectId}`, {
         component: componentType,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     },
     onSuccess: (data, variables) => {
       // Invalidate and refetch the infrastructure status
       queryClient.invalidateQueries({
-        queryKey: ['project-infrastructure-status', variables.projectId]
+        queryKey: ["project-infrastructure-status", variables.projectId],
       });
     },
     onError: (error, variables) => {
       console.error(`Failed to reset ${variables.componentType}:`, error);
-    }
+    },
   });
 };
 
@@ -371,23 +402,21 @@ export const useInfrastructureProgress = (projectId) => {
         totalSteps: 0,
         percentage: 0,
         currentStep: null,
-        nextStep: null
+        nextStep: null,
       };
     }
 
     const components = infraStatus.components;
-    const stepOrder = ['domain', 'vpc', 'edge_networks', 'security_groups', 'subnets'];
-    
-    const completedSteps = stepOrder.filter(step => 
-      components[step]?.status === 'completed'
+    const stepOrder = ["domain", "vpc", "edge_networks", "security_groups", "subnets"];
+
+    const completedSteps = stepOrder.filter(
+      (step) => components[step]?.status === "completed"
     ).length;
 
-    const currentStep = stepOrder.find(step => 
-      components[step]?.status === 'in_progress'
-    );
+    const currentStep = stepOrder.find((step) => components[step]?.status === "in_progress");
 
-    const nextStep = stepOrder.find(step => 
-      components[step]?.status === 'pending' || !components[step]
+    const nextStep = stepOrder.find(
+      (step) => components[step]?.status === "pending" || !components[step]
     );
 
     return {
@@ -396,7 +425,7 @@ export const useInfrastructureProgress = (projectId) => {
       percentage: (completedSteps / stepOrder.length) * 100,
       currentStep,
       nextStep,
-      isComplete: completedSteps === stepOrder.length
+      isComplete: completedSteps === stepOrder.length,
     };
   }, [infraStatus]);
 
@@ -409,7 +438,7 @@ const projectInfrastructureHooks = {
   useBulkSetupInfrastructure,
   useResetInfrastructureComponent,
   useInfrastructureProgress,
-  useProvisionVpc
+  useProvisionVpc,
 };
 
 export default projectInfrastructureHooks;

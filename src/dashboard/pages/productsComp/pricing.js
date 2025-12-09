@@ -14,7 +14,7 @@ import {
 } from "../../../hooks/pricingHooks";
 import AddPricing from "./addPricing";
 import EditPricingModal from "./editPricing";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 
 const TableRowSkeleton = () => (
   <tr className="animate-pulse">
@@ -59,11 +59,7 @@ const Pricing = ({ activeProductType }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const {
-    data: pricing,
-    isFetching: isPricingFetching,
-    refetch,
-  } = useFetchPricing();
+  const { data: pricing, isFetching: isPricingFetching, refetch } = useFetchPricing();
   const { mutate: deletePricing, isPending: isDeleting } = useDeletePricing();
   const { mutate: syncPricing, isPending: isSyncing } = useSyncPricing();
   const { mutate: resyncPricing, isPending: isResyncing } = useResyncPricing();
@@ -71,10 +67,8 @@ const Pricing = ({ activeProductType }) => {
   const { data: computerInstances, isFetching: isComputerInstancesFetching } =
     useFetchComputerInstances();
   const { data: osImages, isFetching: isOsImagesFetching } = useFetchOsImages();
-  const { data: bandwidths, isFetching: isBandwidthsFetching } =
-    useFetchBandwidths();
-  const { data: ebsVolumes, isFetching: isEbsVolumesFetching } =
-    useFetchEbsVolumes();
+  const { data: bandwidths, isFetching: isBandwidthsFetching } = useFetchBandwidths();
+  const { data: ebsVolumes, isFetching: isEbsVolumesFetching } = useFetchEbsVolumes();
 
   const openAddPricingModal = () => setIsAddPricingModalOpen(true);
   const closeAddPricingModal = () => setIsAddPricingModalOpen(false);
@@ -109,9 +103,7 @@ const Pricing = ({ activeProductType }) => {
         },
         onError: (err) => {
           console.error("Failed to delete pricing:", err);
-          ToastUtils.error(
-            err.message || "Failed to delete pricing. Please try again."
-          );
+          ToastUtils.error(err.message || "Failed to delete pricing. Please try again.");
         },
       });
     }
@@ -155,9 +147,7 @@ const Pricing = ({ activeProductType }) => {
   };
 
   const currentTabItems = useMemo(() => {
-    return pricing && pricing[activeProductType]
-      ? pricing[activeProductType]
-      : [];
+    return pricing && pricing[activeProductType] ? pricing[activeProductType] : [];
   }, [pricing, activeProductType]);
 
   const totalPages = Math.ceil(currentTabItems.length / itemsPerPage);
@@ -184,9 +174,7 @@ const Pricing = ({ activeProductType }) => {
     return (
       <div className="w-full text-center py-12">
         <div className="max-w-md mx-auto">
-          <p className="text-gray-600 text-lg mb-4">
-            No data available at the moment
-          </p>
+          <p className="text-gray-600 text-lg mb-4">No data available at the moment</p>
           <p className="text-gray-500 text-sm mb-6">
             Try syncing your pricing data to refresh the information
           </p>
@@ -270,9 +258,7 @@ const Pricing = ({ activeProductType }) => {
                 currentItems.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
-                      {item.productable.name ||
-                        item.productable.identifier ||
-                        "N/A"}
+                      {item.productable.name || item.productable.identifier || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-[#575758] font-normal">
                       {item.productable_type.split("\\").pop()}
@@ -306,10 +292,7 @@ const Pricing = ({ activeProductType }) => {
                 ))
               ) : (
                 <tr>
-                  <td
-                    colSpan="5"
-                    className="px-6 py-4 text-center text-gray-600"
-                  >
+                  <td colSpan="5" className="px-6 py-4 text-center text-gray-600">
                     No data available at the moment.
                   </td>
                 </tr>
@@ -352,9 +335,7 @@ const Pricing = ({ activeProductType }) => {
                 className="bg-white rounded-lg shadow-sm p-4 border border-gray-200"
               >
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                  {item.productable.name ||
-                    item.productable.identifier ||
-                    "N/A"}
+                  {item.productable.name || item.productable.identifier || "N/A"}
                 </h3>
                 <p className="text-sm text-gray-600 mb-1">
                   <span className="font-medium">Product Type:</span>{" "}
@@ -362,10 +343,7 @@ const Pricing = ({ activeProductType }) => {
                 </p>
                 <p className="text-sm text-gray-600 mb-1">
                   <span className="font-medium">Original Price:</span>{" "}
-                  {formatCurrency(
-                    item.productable.local_price,
-                    item.productable.local_currency
-                  )}
+                  {formatCurrency(item.productable.local_price, item.productable.local_currency)}
                 </p>
                 <p className="text-sm text-gray-600">
                   <span className="font-medium">Set Price:</span>{" "}
@@ -390,9 +368,7 @@ const Pricing = ({ activeProductType }) => {
               </div>
             ))
           ) : (
-            <div className="text-center py-8 text-gray-600">
-              No data available at the moment.
-            </div>
+            <div className="text-center py-8 text-gray-600">No data available at the moment.</div>
           )}
         </div>
 

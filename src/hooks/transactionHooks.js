@@ -4,11 +4,7 @@ import silentApi from "../index/silent";
 
 // **PATCH**: verify Transaction
 const verifyTransaction = async (transactionIdentifier, userData) => {
-  return await api(
-    "PATCH",
-    `/business/transaction/${transactionIdentifier}`,
-    userData
-  );
+  return await api("PATCH", `/business/transaction/${transactionIdentifier}`, userData);
 };
 
 const fetchTransactions = async () => {

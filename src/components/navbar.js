@@ -191,11 +191,7 @@ const Navbar = () => {
       </div>
       <div className=" py-6 z-[99999] px-4 md:px-8 lg:px-16 flex justify-between items-center fixed w-full bg-white top-0 text-[#121212]">
         <span className="">
-          <img
-            src={logo}
-            className=" w-[75px] md:w-[120px]"
-            alt="One cloud one africa"
-          />
+          <img src={logo} className=" w-[75px] md:w-[120px]" alt="One cloud one africa" />
         </span>
         <div onClick={overlay} className="menu-icon md:hidden">
           <input className="menu-icon__cheeckbox" type="checkbox" />
@@ -226,46 +222,31 @@ const Navbar = () => {
             {aboutDropdown && (
               <div className=" text-white bg-[#494E51] absolute w-[198px] top-10 rounded-[15px] py-3 px-6">
                 <Link to="/about">
-                  <span
-                    onClick={closeAboutDropdown}
-                    className=" flex items-center space-x-4"
-                  >
+                  <span onClick={closeAboutDropdown} className=" flex items-center space-x-4">
                     <p>Learn about us</p>
                     <img src={outline} className=" w-3 h-3" alt="" />
                   </span>
                 </Link>
                 <Link to="/advisory-board" className="">
-                  <span
-                    onClick={closeAboutDropdown}
-                    className=" flex items-center mt-3 space-x-4"
-                  >
+                  <span onClick={closeAboutDropdown} className=" flex items-center mt-3 space-x-4">
                     <p>Advisory Board</p>
                     <img src={outline} className=" w-3 h-3" alt="" />
                   </span>
                 </Link>
                 <Link to="/management" className="">
-                  <span
-                    onClick={closeAboutDropdown}
-                    className=" flex items-center mt-3 space-x-4"
-                  >
+                  <span onClick={closeAboutDropdown} className=" flex items-center mt-3 space-x-4">
                     <p>Management</p>
                     <img src={outline} className=" w-3 h-3" alt="" />
                   </span>
                 </Link>
                 <Link to="/career" className="">
-                  <span
-                    onClick={closeAboutDropdown}
-                    className=" flex items-center mt-3 space-x-4"
-                  >
+                  <span onClick={closeAboutDropdown} className=" flex items-center mt-3 space-x-4">
                     <p>Career</p>
                     <img src={outline} className=" w-3 h-3" alt="" />
                   </span>
                 </Link>
                 <Link to="/terms" className="">
-                  <span
-                    onClick={closeAboutDropdown}
-                    className=" flex items-center mt-3 space-x-4"
-                  >
+                  <span onClick={closeAboutDropdown} className=" flex items-center mt-3 space-x-4">
                     <p>Legal</p>
                     <img src={outline} className=" w-3 h-3" alt="" />
                   </span>
@@ -285,10 +266,7 @@ const Navbar = () => {
             {serviceDropdown && (
               <div className=" text-white bg-[#494E51] absolute w-[198px] top-10 rounded-[15px] py-3 px-6">
                 <Link to="/services">
-                  <span
-                    onClick={closeServiceDropdown}
-                    className=" flex items-center space-x-4"
-                  >
+                  <span onClick={closeServiceDropdown} className=" flex items-center space-x-4">
                     <p>Our Services</p>
                     <img src={outline} className=" w-3 h-3" alt="" />
                   </span>
@@ -317,10 +295,7 @@ const Navbar = () => {
             {resourceDropdown && (
               <div className=" text-white bg-[#494E51] absolute w-[198px] top-10 rounded-[15px] py-3 px-6">
                 <Link to="/resources">
-                  <span
-                    onClick={closeResourceDropdown}
-                    className=" flex items-center space-x-4"
-                  >
+                  <span onClick={closeResourceDropdown} className=" flex items-center space-x-4">
                     <p>Our Resources</p>
                     <img src={outline} className=" w-3 h-3" alt="" />
                   </span>
@@ -367,10 +342,7 @@ const Navbar = () => {
             {communityDropdown && (
               <div className=" text-white bg-[#494E51] absolute w-[198px] top-10 rounded-[15px] py-3 px-6">
                 <Link to="/partnership">
-                  <span
-                    onClick={closeCommunityDropdown}
-                    className=" flex items-center space-x-4"
-                  >
+                  <span onClick={closeCommunityDropdown} className=" flex items-center space-x-4">
                     <p>Partners</p>
                     <img src={outline} className=" w-3 h-3" alt="" />
                   </span>

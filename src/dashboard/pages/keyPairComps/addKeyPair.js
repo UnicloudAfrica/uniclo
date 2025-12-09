@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Loader2, X, Clipboard, Download } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import { useFetchGeneralRegions } from "../../../hooks/resource";
 import { useCreateTenantKeyPair } from "../../../hooks/keyPairsHook";
 
 const AddKeyTenantPair = ({ isOpen, onClose, projectId = "" }) => {
   const queryClient = useQueryClient();
-  const { isFetching: isRegionsFetching, data: regions } =
-    useFetchGeneralRegions();
+  const { isFetching: isRegionsFetching, data: regions } = useFetchGeneralRegions();
   const { mutate, isPending } = useCreateTenantKeyPair();
   const [formData, setFormData] = useState({
     name: "",
@@ -55,9 +54,7 @@ const AddKeyTenantPair = ({ isOpen, onClose, projectId = "" }) => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${
-        formData.name.replace(/[^a-zA-Z0-9]/g, "_") || "keypair"
-      }.txt`;
+      a.download = `${formData.name.replace(/[^a-zA-Z0-9]/g, "_") || "keypair"}.txt`;
       a.click();
       URL.revokeObjectURL(url);
       ToastUtils.success("Private key downloaded!");
@@ -126,8 +123,8 @@ const AddKeyTenantPair = ({ isOpen, onClose, projectId = "" }) => {
             {successState.isSuccess ? (
               <>
                 <p className="text-green-600 text-sm mb-4">
-                  Your key pair has been created successfully. Please copy or
-                  download the private key and keep it in a safe place.
+                  Your key pair has been created successfully. Please copy or download the private
+                  key and keep it in a safe place.
                 </p>
                 <div>
                   <label
@@ -163,10 +160,7 @@ const AddKeyTenantPair = ({ isOpen, onClose, projectId = "" }) => {
             ) : (
               <>
                 <div>
-                  <label
-                    htmlFor="name"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                     Name<span className="text-red-500">*</span>
                   </label>
                   <input
@@ -179,15 +173,10 @@ const AddKeyTenantPair = ({ isOpen, onClose, projectId = "" }) => {
                       errors.name ? "border-red-500" : "border-gray-300"
                     }`}
                   />
-                  {errors.name && (
-                    <p className="text-red-500 text-xs mt-1">{errors.name}</p>
-                  )}
+                  {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                 </div>
                 <div>
-                  <label
-                    htmlFor="region"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
+                  <label htmlFor="region" className="block text-sm font-medium text-gray-700 mb-2">
                     Region<span className="text-red-500">*</span>
                   </label>
                   <select
@@ -200,9 +189,7 @@ const AddKeyTenantPair = ({ isOpen, onClose, projectId = "" }) => {
                     disabled={isRegionsFetching}
                   >
                     <option value="" disabled>
-                      {isRegionsFetching
-                        ? "Loading regions..."
-                        : "Select a region"}
+                      {isRegionsFetching ? "Loading regions..." : "Select a region"}
                     </option>
                     {regions?.map((region) => (
                       <option key={region.region} value={region.region}>
@@ -210,9 +197,7 @@ const AddKeyTenantPair = ({ isOpen, onClose, projectId = "" }) => {
                       </option>
                     ))}
                   </select>
-                  {errors.region && (
-                    <p className="text-red-500 text-xs mt-1">{errors.region}</p>
-                  )}
+                  {errors.region && <p className="text-red-500 text-xs mt-1">{errors.region}</p>}
                 </div>
                 <div>
                   <label
@@ -224,18 +209,14 @@ const AddKeyTenantPair = ({ isOpen, onClose, projectId = "" }) => {
                   <textarea
                     id="public_key"
                     value={formData.public_key}
-                    onChange={(e) =>
-                      updateFormData("public_key", e.target.value)
-                    }
+                    onChange={(e) => updateFormData("public_key", e.target.value)}
                     placeholder="e.g., ssh-rsa AAAAB3NzaC1yc2E..."
                     className={`w-full rounded-[10px] border px-3 py-2 text-sm input-field resize-y min-h-[100px] ${
                       errors.public_key ? "border-red-500" : "border-gray-300"
                     }`}
                   />
                   {errors.public_key && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.public_key}
-                    </p>
+                    <p className="text-red-500 text-xs mt-1">{errors.public_key}</p>
                   )}
                 </div>
               </>
@@ -258,9 +239,7 @@ const AddKeyTenantPair = ({ isOpen, onClose, projectId = "" }) => {
               className="ml-3 px-8 py-3 bg-[#288DD1] text-white font-medium rounded-full hover:bg-[#1976D2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Create Key Pair
-              {isPending && (
-                <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-              )}
+              {isPending && <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />}
             </button>
           )}
         </div>

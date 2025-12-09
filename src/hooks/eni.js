@@ -24,11 +24,7 @@ const createNetworkInterface = async (payload) => {
 };
 
 const deleteNetworkInterface = async ({ id, payload }) => {
-  const res = await api(
-    "DELETE",
-    `/business/network-interfaces/${id}`,
-    payload
-  );
+  const res = await api("DELETE", `/business/network-interfaces/${id}`, payload);
   if (!res.data) throw new Error("Failed to delete network interface");
   return res.data;
 };
@@ -36,36 +32,22 @@ const deleteNetworkInterface = async ({ id, payload }) => {
 const attachSecurityGroup = async (params) => {
   // Backward compatibility: support old signature ({ id, securityGroupData })
   let payload = params;
-  if (params && typeof params === 'object' && 'id' in params && 'securityGroupData' in params) {
+  if (params && typeof params === "object" && "id" in params && "securityGroupData" in params) {
     payload = { network_interface_id: params.id, ...(params.securityGroupData || {}) };
   }
-  const res = await api(
-    "POST",
-    "/business/network-interface-security-groups",
-    payload
-  );
-  if (!res.data)
-    throw new Error(
-      `Failed to attach security group to network interface`
-    );
+  const res = await api("POST", "/business/network-interface-security-groups", payload);
+  if (!res.data) throw new Error(`Failed to attach security group to network interface`);
   return res.data;
 };
 
 const detachSecurityGroup = async (params) => {
   // Backward compatibility: support old signature ({ id, securityGroupData })
   let payload = params;
-  if (params && typeof params === 'object' && 'id' in params && 'securityGroupData' in params) {
+  if (params && typeof params === "object" && "id" in params && "securityGroupData" in params) {
     payload = { network_interface_id: params.id, ...(params.securityGroupData || {}) };
   }
-  const res = await api(
-    "DELETE",
-    "/business/network-interface-security-groups",
-    payload
-  );
-  if (!res.data)
-    throw new Error(
-      `Failed to detach security group from network interface`
-    );
+  const res = await api("DELETE", "/business/network-interface-security-groups", payload);
+  if (!res.data) throw new Error(`Failed to detach security group from network interface`);
   return res.data;
 };
 
@@ -84,11 +66,7 @@ const syncNetworkInterfaces = async ({ project_id, region }) => {
   return res.data;
 };
 
-export const useFetchTenantNetworkInterfaces = (
-  projectId,
-  region,
-  options = {}
-) => {
+export const useFetchTenantNetworkInterfaces = (projectId, region, options = {}) => {
   return useQuery({
     queryKey: ["networkInterfaces", { projectId, region }],
     queryFn: () => fetchNetworkInterfaces({ project_id: projectId, region }),

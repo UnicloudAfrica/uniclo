@@ -19,8 +19,7 @@ const Partnership = () => {
             Partnerships
           </p>
           <p className=" text-center font-normal mt-3 text-lg text-[#676767] md:text-xl ">
-            We're proud to collaborate with industry leaders to deliver
-            unmatched cloud solutions
+            We're proud to collaborate with industry leaders to deliver unmatched cloud solutions
           </p>
           <div className=" mt-8 flex flex-wrap justify-around space-y-4 space-x-0 md:space-x-[24px]">
             {/* {partnerArray.map((item, index) => (
@@ -59,9 +58,7 @@ const Partnership = () => {
               className="z-10 absolute top-0 h-full w-full object-cover block md:hidden"
               alt=""
             />
-            <p className=" font-semibold text-3xl md:text-4xl">
-              Partner with us today
-            </p>
+            <p className=" font-semibold text-3xl md:text-4xl">Partner with us today</p>
             <p className=" font-normal px-4 md:px-0 text-xl">
               Partner with us to deliver unmatched cloud solutions.
             </p>

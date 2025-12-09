@@ -9,9 +9,7 @@ const Topbar = () => {
         </span>
         <div>
           <span className=" absolute right-6 top-8 md:static ml-6 flex flex-row space-x-1 items-center">
-            <p className=" font-Outfit  font-light text-sm md:text-xl">
-              Welcome,
-            </p>
+            <p className=" font-Outfit  font-light text-sm md:text-xl">Welcome,</p>
             <p className=" font-Outfit font-normal text-sm md:text-xl">Admin</p>
           </span>
         </div>

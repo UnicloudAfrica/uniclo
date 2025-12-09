@@ -6,16 +6,16 @@ import {
   useFetchStatesById,
   useFetchCitiesById,
 } from "../../../hooks/resource";
-import CreateAccount from "../../../adminDashboard/pages/tenantComps/createAccount";
-import BusinessInfo from "../../../adminDashboard/pages/tenantComps/businessInfo";
-import BusinessAddress from "../../../adminDashboard/pages/tenantComps/businessAddress";
-import UploadFiles from "../../../adminDashboard/pages/tenantComps/uploadFiles";
-import StepNavigation from "../../../adminDashboard/pages/tenantComps/stepNavigation";
+import CreateAccount from "../../../adminDashboard/pages/tenantComps/CreateAccount";
+import BusinessInfo from "../../../adminDashboard/pages/tenantComps/BusinessInfo";
+import BusinessAddress from "../../../adminDashboard/pages/tenantComps/BusinessAddress";
+import UploadFiles from "../../../adminDashboard/pages/tenantComps/UploadFiles";
+import StepNavigation from "../../../adminDashboard/pages/tenantComps/StepNavigation";
 import FormLayout, {
   formAccent,
   getAccentRgba,
 } from "../../../adminDashboard/components/FormLayout";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../../utils/toastUtil.ts";
 import { useCreateTenantPartner } from "../../../hooks/tenantHooks/partnerHooks";
 
 const TenantAddPartnerWizard = ({ onClose }) => {
@@ -60,10 +60,8 @@ const TenantAddPartnerWizard = ({ onClose }) => {
   const [errors, setErrors] = useState({});
 
   const { mutate: createPartner, isPending } = useCreateTenantPartner();
-  const { data: industries, isFetching: isIndustriesFetching } =
-    useFetchIndustries();
-  const { data: countries, isFetching: isCountriesFetching } =
-    useFetchCountries();
+  const { data: industries, isFetching: isIndustriesFetching } = useFetchIndustries();
+  const { data: countries, isFetching: isCountriesFetching } = useFetchCountries();
   const { data: states, isFetching: isStatesFetching } = useFetchStatesById(
     formData.business.country_id,
     { enabled: !!formData.business.country_id }
@@ -111,12 +109,7 @@ const TenantAddPartnerWizard = ({ onClose }) => {
       validate: BusinessAddress.validate,
     },
     {
-      component: (props) => (
-        <UploadFiles
-          {...props}
-          setErrors={setErrors}
-        />
-      ),
+      component: (props) => <UploadFiles {...props} setErrors={setErrors} />,
       label: "Upload Document",
       description: "Attach supporting documentation to complete onboarding.",
       validate: UploadFiles.validate,
@@ -204,24 +197,17 @@ const TenantAddPartnerWizard = ({ onClose }) => {
     "businessLogo",
   ];
 
-  const uploadedDocs = docKeys.filter(
-    (key) => formData.business[key]
-  ).length;
+  const uploadedDocs = docKeys.filter((key) => formData.business[key]).length;
   const progress = Math.round(((currentStep + 1) / steps.length) * 100);
-  const domainPreview = formData.domain
-    ? `${formData.domain}.unicloudafrica.com`
-    : "Not assigned";
-  const contactName = [formData.first_name, formData.last_name]
-    .filter(Boolean)
-    .join(" ")
-    .trim();
+  const domainPreview = formData.domain ? `${formData.domain}.unicloudafrica.com` : "Not assigned";
+  const contactName = [formData.first_name, formData.last_name].filter(Boolean).join(" ").trim();
 
   const toTitle = (value) =>
     value
       ? value
-        .toString()
-        .replace(/[_-]+/g, " ")
-        .replace(/\b\w/g, (char) => char.toUpperCase())
+          .toString()
+          .replace(/[_-]+/g, " ")
+          .replace(/\b\w/g, (char) => char.toUpperCase())
       : "Not provided";
 
   const ActiveStep = steps[currentStep].component;
@@ -302,9 +288,7 @@ const TenantAddPartnerWizard = ({ onClose }) => {
           key={section.title}
           className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
         >
-          <h3 className="text-sm font-semibold text-slate-800">
-            {section.title}
-          </h3>
+          <h3 className="text-sm font-semibold text-slate-800">{section.title}</h3>
           <dl className="mt-3 space-y-3">
             {section.items.map((item) => (
               <div
@@ -341,9 +325,7 @@ const TenantAddPartnerWizard = ({ onClose }) => {
           className="inline-flex w-full items-center justify-center rounded-full bg-[#0F62FE] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0b51d3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0F62FE] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
         >
           Continue
-          {isPending && (
-            <Loader2 className="ml-2 h-4 w-4 animate-spin text-white" />
-          )}
+          {isPending && <Loader2 className="ml-2 h-4 w-4 animate-spin text-white" />}
         </button>
       ) : (
         <button

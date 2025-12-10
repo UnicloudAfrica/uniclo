@@ -192,7 +192,7 @@ const AdminRegion = () => {
         description="Manage cloud infrastructure regions and locations"
         breadcrumbs={[{ label: "Home", href: "/admin-dashboard" }, { label: "Regions" }]}
         actions={
-          <Link to="/admin-dashboard/region-approvals/create">
+          <Link to="/admin-dashboard/regions/create">
             <ModernButton className="flex items-center gap-2">
               <Plus size={18} />
               Add Region

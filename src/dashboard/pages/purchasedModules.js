@@ -1,28 +1,17 @@
 import React from "react";
-import Headbar from "../components/headbar";
-import Sidebar from "../components/sidebar";
-import ActiveTab from "../components/activeTab";
 import { Settings2 } from "lucide-react";
+import TenantPageShell from "../components/TenantPageShell";
 import useAuthRedirect from "../../utils/authRedirect";
 import { useFetchPurchasedInstances } from "../../hooks/instancesHook";
 import { ModernTable } from "../../shared/components";
 
 export default function PurchasedModules() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const { isLoading } = useAuthRedirect();
 
   const { data: fetchedInstances = { data: [], meta: {} }, isFetching: isInstancesFetching } =
     useFetchPurchasedInstances();
 
   const instances = fetchedInstances.data;
-
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-  };
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -88,34 +77,28 @@ export default function PurchasedModules() {
 
   const tableData = instances.map((item) => ({ ...item, id: item.id }));
 
-  return (
-    <>
-      <Headbar onMenuClick={toggleMobileMenu} />
-      <Sidebar isMobileMenuOpen={isMobileMenuOpen} onCloseMobileMenu={closeMobileMenu} />
-      <ActiveTab />
-      <main className="dashboard-content-shell p-6 md:p-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-base font-medium text-[#1C1C1C]">Purchased Instances History</h2>
-          <button className="flex items-center gap-2 px-3 py-2 text-sm bg-[#F2F4F8] rounded-[8px] text-gray-600 hover:text-gray-900 transition-colors">
-            <Settings2 className="w-4 h-4 text-[#555E67]" />
-            Filter
-          </button>
-        </div>
+  const FilterButton = (
+    <button className="flex items-center gap-2 px-3 py-2 text-sm bg-[#F2F4F8] rounded-[8px] text-gray-600 hover:text-gray-900 transition-colors">
+      <Settings2 className="w-4 h-4 text-[#555E67]" />
+      Filter
+    </button>
+  );
 
-        <ModernTable
-          data={tableData}
-          columns={columns}
-          loading={isInstancesFetching}
-          searchable={true}
-          searchPlaceholder="Search instances..."
-          searchKeys={["name", "status"]}
-          paginated={true}
-          pageSize={10}
-          filterable={false}
-          exportable={false}
-          emptyMessage="No purchased instances found."
-        />
-      </main>
-    </>
+  return (
+    <TenantPageShell title="Purchased Instances History" actions={FilterButton}>
+      <ModernTable
+        data={tableData}
+        columns={columns}
+        loading={isInstancesFetching}
+        searchable={true}
+        searchPlaceholder="Search instances..."
+        searchKeys={["name", "status"]}
+        paginated={true}
+        pageSize={10}
+        filterable={false}
+        exportable={false}
+        emptyMessage="No purchased instances found."
+      />
+    </TenantPageShell>
   );
 }

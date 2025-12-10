@@ -47,6 +47,7 @@ import RegionApprovals from "../adminDashboard/pages/RegionApprovals";
 import RegionApprovalDetail from "../adminDashboard/pages/RegionApprovalDetail";
 import RegionApprovalEdit from "../adminDashboard/pages/RegionApprovalEdit";
 import RegionApprovalCreate from "../adminDashboard/pages/RegionApprovalCreate";
+import RegionCreate from "../adminDashboard/pages/RegionCreate";
 import RegionDetail from "../adminDashboard/pages/RegionDetail";
 import RegionEdit from "../adminDashboard/pages/RegionEdit";
 import AdminOnboardingReview from "../adminDashboard/pages/AdminOnboardingReview";
@@ -91,6 +92,7 @@ const AdminRoutes = (): React.JSX.Element => {
       <Route path="/admin-dashboard/leads" element={<AdminLeads />} />
       <Route path="/admin-dashboard/leads/create" element={<AdminLeadCreate />} />
       <Route path="/admin-dashboard/regions" element={<AdminRegion />} />
+      <Route path="/admin-dashboard/regions/create" element={<RegionCreate />} />
       <Route path="/admin-dashboard/regions/:id" element={<RegionDetail />} />
       <Route path="/admin-dashboard/regions/:id/edit" element={<RegionEdit />} />
       <Route path="/admin-dashboard/regions/:id/credentials" element={<RegionCredentials />} />

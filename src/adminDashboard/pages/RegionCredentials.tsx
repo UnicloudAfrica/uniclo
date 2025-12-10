@@ -1,284 +1,393 @@
 // @ts-nocheck
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { AlertCircle, CheckCircle, Loader2, MapPin, RefreshCw, ShieldCheck } from "lucide-react";
+import {
+  Server,
+  Database,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+  RefreshCw,
+  Shield,
+  Settings,
+  ChevronDown,
+  X,
+} from "lucide-react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell.tsx";
-import { ModernCard } from "../../shared/components/ui";
-import { ModernButton } from "../../shared/components/ui";
+import { ModernCard, ModernButton } from "../../shared/components/ui";
 import ModernInput from "../../shared/components/ui/ModernInput";
 import StatusPill from "../../shared/components/ui/StatusPill";
 import adminRegionApi from "../../services/adminRegionApi";
 import ToastUtils from "../../utils/toastUtil";
-import { designTokens } from "../../styles/designTokens";
 
-const statusToneMap = {
-  healthy: "success",
-  degraded: "warning",
-  down: "danger",
+// Service icons mapping
+const SERVICE_ICONS = {
+  compute: Server,
+  object_storage: Database,
 };
-const statusLabelMap = {
-  healthy: "Healthy",
-  degraded: "Degraded",
-  down: "Down",
+
+const SERVICE_LABELS = {
+  compute: "Compute (VMs)",
+  object_storage: "Object Storage",
 };
-const formatSegment = (value: any) => {
-  if (!value) return "";
-  return value
-    .toString()
-    .split(/[_-]/)
-    .filter(Boolean)
-    .map((segment: any) => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(" ");
+
+/**
+ * Dynamic credential form based on backend config
+ */
+const CredentialForm = ({ fields, values, onChange, onSubmit, onTest, submitting, testing }) => {
+  const handleChange = (fieldName) => (e) => {
+    onChange(fieldName, e.target.value);
+  };
+
+  const getInputType = (fieldDef) => {
+    if (fieldDef.type === "password") return "password";
+    if (fieldDef.type === "number") return "number";
+    if (fieldDef.type === "email") return "email";
+    if (fieldDef.type === "url") return "url";
+    return "text";
+  };
+
+  const requiredFields = Object.entries(fields).filter(([_, def]) => def.required);
+  const optionalFields = Object.entries(fields).filter(([_, def]) => !def.required);
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-2">
+        {requiredFields.map(([name, def]) => (
+          <ModernInput
+            key={name}
+            label={def.label}
+            name={name}
+            type={getInputType(def)}
+            value={values[name] || ""}
+            onChange={handleChange(name)}
+            placeholder={def.placeholder || ""}
+            helper={def.help}
+            required
+            disabled={submitting || testing}
+          />
+        ))}
+      </div>
+
+      {optionalFields.length > 0 && (
+        <>
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500 pt-2">Optional</p>
+          <div className="grid gap-4 md:grid-cols-2">
+            {optionalFields.map(([name, def]) => (
+              <ModernInput
+                key={name}
+                label={def.label}
+                name={name}
+                type={getInputType(def)}
+                value={values[name] || ""}
+                onChange={handleChange(name)}
+                placeholder={def.placeholder || ""}
+                helper={def.help}
+                disabled={submitting || testing}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      <div className="flex items-center gap-3 pt-2">
+        <ModernButton
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onTest}
+          isLoading={testing}
+          isDisabled={submitting}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Test Connection
+        </ModernButton>
+        <ModernButton
+          type="submit"
+          variant="primary"
+          size="sm"
+          isLoading={submitting}
+          isDisabled={testing}
+          className="flex items-center gap-2"
+        >
+          <Shield className="h-4 w-4" />
+          Save & Verify
+        </ModernButton>
+      </div>
+    </form>
+  );
 };
-const RegionCredentials = () => {
-  const { id: code } = useParams();
-  const navigate = useNavigate();
-  const [region, setRegion] = useState(null);
-  const [loading, setLoading] = useState(true);
+
+/**
+ * Single service configuration card
+ */
+const ServiceConfigCard = ({
+  serviceType,
+  serviceConfig,
+  regionId,
+  credentialStatus,
+  onUpdate,
+}) => {
+  const [enabled, setEnabled] = useState(credentialStatus?.configured || false);
+  const [fulfillmentMode, setFulfillmentMode] = useState(
+    credentialStatus?.configured ? "automated" : "manual"
+  );
+  const [showCredentials, setShowCredentials] = useState(false);
+  const [formValues, setFormValues] = useState({});
   const [submitting, setSubmitting] = useState(false);
-  const [testingObjectStorage, setTestingObjectStorage] = useState(false);
+  const [testing, setTesting] = useState(false);
 
-  const [formData, setFormData] = useState({
-    username: "",
-    password: "",
-    domain: "",
-    domain_id: "",
-    default_project: "",
-    objectStorageEnabled: false,
-    objectStorageBaseUrl: "",
-    objectStorageAccount: "zios_admin",
-    objectStorageAccessKey: "",
-    objectStorageDefaultQuota: "",
-    objectStorageNotificationEmail: "",
-  });
+  const Icon = SERVICE_ICONS[serviceType] || Server;
+  const label = serviceConfig?.label || SERVICE_LABELS[serviceType] || serviceType;
+  const description = serviceConfig?.description || "";
+  const fields = serviceConfig?.fields || {};
+  const isConfigured = credentialStatus?.configured;
+  const status = credentialStatus?.status;
 
-  const isZadaraRegion = region?.provider?.toLowerCase() === "zadara";
+  const handleToggle = () => {
+    setEnabled(!enabled);
+    if (!enabled) {
+      setFulfillmentMode("manual");
+      setShowCredentials(false);
+    }
+  };
 
-  useEffect(() => {
-    fetchRegion();
-  }, [code]);
+  const handleModeChange = (mode) => {
+    setFulfillmentMode(mode);
+    if (mode === "automated") {
+      setShowCredentials(true);
+    } else {
+      setShowCredentials(false);
+    }
+  };
 
-  const fetchRegion = async () => {
+  const handleFieldChange = (fieldName, value) => {
+    setFormValues((prev) => ({ ...prev, [fieldName]: value }));
+  };
+
+  const handleTest = async () => {
+    setTesting(true);
     try {
-      setLoading(true);
-      const response = await adminRegionApi.fetchRegionByCode(code);
-      const regionData = response.data;
-      setRegion(regionData);
-
-      const summary = regionData?.msp_credential_summary || {};
-      const objectSummary = regionData?.object_storage_summary || {};
-      setFormData((prev) => ({
-        ...prev,
-        domain: summary.domain || "",
-        domain_id: summary.domain_id || "",
-        default_project: summary.default_project || "",
-        objectStorageEnabled: objectSummary.enabled || false,
-        objectStorageBaseUrl: objectSummary.base_url || "",
-        objectStorageAccount: objectSummary.account || "zios_admin",
-        objectStorageAccessKey: "",
-        objectStorageDefaultQuota:
-          objectSummary.default_quota_gb !== null && objectSummary.default_quota_gb !== undefined
-            ? String(objectSummary.default_quota_gb)
-            : "",
-        objectStorageNotificationEmail: objectSummary.notification_email || "",
-      }));
+      const result = await adminRegionApi.verifyServiceCredentials(
+        regionId,
+        serviceType,
+        formValues
+      );
+      if (result.success) {
+        ToastUtils.success("Connection successful!");
+      }
     } catch (error) {
-      console.error("Error fetching region:", error);
-      ToastUtils.error("Failed to load region details");
+      // Error handled by API
     } finally {
-      setLoading(false);
+      setTesting(false);
     }
   };
-  const handleChange = (event: any) => {
-    const { name, value, type, checked } = event.target;
-    if (name === "objectStorageEnabled" && !isZadaraRegion) {
-      return;
-    }
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-  };
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    if (!isZadaraRegion) {
-      ToastUtils.error("Credential management is currently available for Zadara regions only.");
-      return;
-    }
-
-    if (!formData.username || !formData.password || !formData.domain) {
-      ToastUtils.error("Please fill in all required fields");
-      return;
-    }
-
-    if (formData.objectStorageEnabled && !isObjectStorageConfigured) {
-      if (
-        !formData.objectStorageBaseUrl ||
-        !formData.objectStorageAccessKey ||
-        !formData.objectStorageNotificationEmail
-      ) {
-        ToastUtils.error(
-          "Object storage endpoint, access key, and notification email are required when enabling object storage."
-        );
-        return;
-      }
-    }
-
-    if (
-      formData.objectStorageEnabled &&
-      formData.objectStorageDefaultQuota &&
-      Number.isNaN(Number(formData.objectStorageDefaultQuota))
-    ) {
-      ToastUtils.error("Default quota must be a valid number of GiB.");
-      return;
-    }
-
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
     try {
-      setSubmitting(true);
-      const payload = {
-        username: formData.username.trim(),
-        password: formData.password,
-        domain: formData.domain.trim(),
-        domain_id: formData.domain_id ? formData.domain_id.trim() : null,
-        default_project: formData.default_project ? formData.default_project.trim() : null,
-      };
-      let objectStoragePayload = null;
-
-      if (formData.objectStorageEnabled) {
-        if (!isObjectStorageConfigured) {
-          objectStoragePayload = {
-            enabled: true,
-            base_url: formData.objectStorageBaseUrl.trim(),
-            account: formData.objectStorageAccount
-              ? formData.objectStorageAccount.trim()
-              : "zios_admin",
-            access_key: formData.objectStorageAccessKey.trim(),
-            default_quota_gb: formData.objectStorageDefaultQuota
-              ? Number(formData.objectStorageDefaultQuota)
-              : null,
-            notification_email: formData.objectStorageNotificationEmail.trim(),
-          };
-        } else if (formData.objectStorageAccessKey.trim()) {
-          // allow key rotation while keeping other settings the same
-          objectStoragePayload = {
-            enabled: true,
-            base_url: formData.objectStorageBaseUrl.trim(),
-            account: formData.objectStorageAccount
-              ? formData.objectStorageAccount.trim()
-              : objectStorageSummary.account || "zios_admin",
-            access_key: formData.objectStorageAccessKey.trim(),
-            default_quota_gb: formData.objectStorageDefaultQuota
-              ? Number(formData.objectStorageDefaultQuota)
-              : (objectStorageSummary.default_quota_gb ?? null),
-            notification_email:
-              formData.objectStorageNotificationEmail.trim() ||
-              objectStorageSummary.notification_email ||
-              "",
-          };
-        }
-      } else if (isObjectStorageConfigured) {
-        objectStoragePayload = { enabled: false };
-      }
-
-      if (objectStoragePayload) {
-        payload.object_storage = objectStoragePayload;
-      }
-
-      await adminRegionApi.verifyCredentials(code, payload);
-      ToastUtils.success("Credentials verified successfully");
-      navigate(`/admin-dashboard/regions/${code}`);
+      await adminRegionApi.storeServiceCredentials(regionId, serviceType, formValues);
+      setFormValues({});
+      setShowCredentials(false);
+      onUpdate?.();
     } catch (error) {
-      console.error("Error verifying credentials:", error);
+      // Error handled by API
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleTestObjectStorage = async () => {
-    if (!isZadaraRegion) {
-      ToastUtils.error("Object storage automation is only available for Zadara regions.");
-      return;
-    }
-
-    try {
-      setTestingObjectStorage(true);
-      await adminRegionApi.verifyObjectStorage(code);
-      ToastUtils.success("Object storage connectivity verified.");
-    } catch (error) {
-      console.error("Error verifying object storage:", error);
-    } finally {
-      setTestingObjectStorage(false);
-    }
-  };
-  const locationLabel = useMemo(() => {
-    if (!region) return "";
-    return [region.city, region.country_code].filter(Boolean).join(", ");
-  }, [region]);
-
-  const headerMeta = useMemo(() => {
-    if (!region) return null;
-    return (
-      <div className="flex flex-wrap items-center gap-2">
-        {region.status && (
-          <StatusPill
-            label={statusLabelMap[region.status] || formatSegment(region.status)}
-            tone={statusToneMap[region.status] || "info"}
-          />
-        )}
-        <StatusPill
-          label={region.is_active ? "Active" : "Inactive"}
-          tone={region.is_active ? "success" : "warning"}
-        />
-        {region.fulfillment_mode && (
-          <StatusPill label={`${formatSegment(region.fulfillment_mode)} Fulfillment`} tone="info" />
-        )}
+  return (
+    <ModernCard className="overflow-hidden">
+      {/* Service Header */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-100">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+            <Icon className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-gray-900">{label}</h3>
+            <p className="text-xs text-gray-500">{description}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          {isConfigured && (
+            <StatusPill
+              label={status === "verified" ? "Verified" : "Configured"}
+              tone={status === "verified" ? "success" : "info"}
+            />
+          )}
+          <label className="relative inline-flex cursor-pointer items-center">
+            <input
+              type="checkbox"
+              checked={enabled}
+              onChange={handleToggle}
+              className="peer sr-only"
+            />
+            <div className="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-100" />
+          </label>
+        </div>
       </div>
-    );
-  }, [region]);
 
-  const renderLoadingShell = () => (
-    <AdminPageShell
-      title="MSP Credentials"
-      description="Securely manage automation credentials for this region."
-      contentClassName="flex min-h-[60vh] items-center justify-center"
-    >
-      <Loader2
-        className="h-10 w-10 animate-spin"
-        style={{ color: designTokens.colors.primary[500] }}
-      />
-    </AdminPageShell>
+      {/* Expanded content when enabled */}
+      {enabled && (
+        <div className="p-4 bg-gray-50/50 space-y-4">
+          {/* Fulfillment Mode Selection */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-gray-700">Fulfillment Mode</p>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name={`${serviceType}-mode`}
+                  value="manual"
+                  checked={fulfillmentMode === "manual"}
+                  onChange={() => handleModeChange("manual")}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">Manual</span>
+                <span className="text-xs text-gray-500">(No automation)</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name={`${serviceType}-mode`}
+                  value="automated"
+                  checked={fulfillmentMode === "automated"}
+                  onChange={() => handleModeChange("automated")}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">Automated</span>
+                <span className="text-xs text-gray-500">(Requires credentials)</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Current credential status if configured */}
+          {isConfigured && fulfillmentMode === "automated" && !showCredentials && (
+            <div className="flex items-center justify-between rounded-xl border border-green-100 bg-green-50 px-4 py-3">
+              <div className="flex items-center gap-2 text-sm text-green-700">
+                <CheckCircle className="h-4 w-4" />
+                <span>Credentials configured</span>
+                {credentialStatus?.verified_at && (
+                  <span className="text-xs text-green-600">
+                    (verified {new Date(credentialStatus.verified_at).toLocaleDateString()})
+                  </span>
+                )}
+              </div>
+              <ModernButton
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowCredentials(true)}
+                className="text-blue-600"
+              >
+                <Settings className="h-4 w-4 mr-1" />
+                Update
+              </ModernButton>
+            </div>
+          )}
+
+          {/* Credential Form */}
+          {fulfillmentMode === "automated" && showCredentials && Object.keys(fields).length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-gray-700">Credentials</p>
+                {isConfigured && (
+                  <button
+                    type="button"
+                    onClick={() => setShowCredentials(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              <CredentialForm
+                fields={fields}
+                values={formValues}
+                onChange={handleFieldChange}
+                onSubmit={handleSubmit}
+                onTest={handleTest}
+                submitting={submitting}
+                testing={testing}
+              />
+            </div>
+          )}
+
+          {/* Manual mode info */}
+          {fulfillmentMode === "manual" && (
+            <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+              <p>
+                <strong>Manual fulfillment:</strong> Orders for this service will require manual
+                processing. No automation credentials needed.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </ModernCard>
   );
+};
 
-  const renderNotFoundShell = () => (
-    <AdminPageShell
-      title="MSP Credentials"
-      description="Securely manage automation credentials for this region."
-      contentClassName="flex min-h-[60vh] items-center justify-center"
-      actions={
-        <ModernButton variant="outline" onClick={() => navigate("/admin-dashboard/regions")}>
-          Back to Regions
-        </ModernButton>
+/**
+ * Main Region Credentials Page
+ */
+const RegionCredentials = () => {
+  const { id: code } = useParams();
+  const navigate = useNavigate();
+  const [region, setRegion] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [providerServices, setProviderServices] = useState(null);
+  const [credentialStatuses, setCredentialStatuses] = useState({});
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const regionRes = await adminRegionApi.fetchRegionByCode(code);
+      const regionData = regionRes.data;
+      setRegion(regionData);
+
+      if (regionData?.provider) {
+        const [servicesRes, statusRes] = await Promise.all([
+          adminRegionApi.getProviderServices(regionData.provider),
+          adminRegionApi.getCredentialStatus(regionData.id),
+        ]);
+
+        if (servicesRes.success) {
+          setProviderServices(servicesRes.data);
+        }
+        if (statusRes.success && statusRes.data?.credentials) {
+          setCredentialStatuses(statusRes.data.credentials);
+        }
       }
-    >
-      <ModernCard className="max-w-md space-y-3 text-center">
-        <AlertCircle className="mx-auto h-10 w-10 text-red-500" />
-        <p className="text-sm text-gray-600">
-          We could not find this region. It may have been removed.
-        </p>
-      </ModernCard>
-    </AdminPageShell>
-  );
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      ToastUtils.error("Failed to load region data");
+    } finally {
+      setLoading(false);
+    }
+  }, [code]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   if (loading) {
     return (
       <>
         <AdminHeadbar />
         <AdminSidebar />
-        {renderLoadingShell()}
+        <AdminPageShell
+          title="Region Services"
+          description="Configure services and credentials"
+          contentClassName="flex min-h-[60vh] items-center justify-center"
+        >
+          <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
+        </AdminPageShell>
       </>
     );
   }
@@ -288,43 +397,43 @@ const RegionCredentials = () => {
       <>
         <AdminHeadbar />
         <AdminSidebar />
-        {renderNotFoundShell()}
+        <AdminPageShell
+          title="Region Not Found"
+          description="The requested region could not be found"
+          actions={
+            <ModernButton variant="outline" onClick={() => navigate("/admin-dashboard/regions")}>
+              Back to Regions
+            </ModernButton>
+          }
+        >
+          <ModernCard className="max-w-md mx-auto text-center space-y-3">
+            <AlertCircle className="mx-auto h-10 w-10 text-red-500" />
+            <p className="text-sm text-gray-600">Region not found or has been removed.</p>
+          </ModernCard>
+        </AdminPageShell>
       </>
     );
   }
 
-  const credentialSummary = region.msp_credential_summary || {};
-  const objectStorageSummary = region.object_storage_summary || {};
-  const isObjectStorageConfigured = Boolean(region.has_object_storage_credentials);
-  const objectStorageLocked = isObjectStorageConfigured && formData.objectStorageEnabled;
-  const automationDisabled = !isZadaraRegion;
-  const providerLabel = region.provider ? formatSegment(region.provider) : "this provider";
-  const saveButtonLabel = isZadaraRegion
-    ? submitting
-      ? "Verifying…"
-      : "Save Credentials"
-    : "Automation Coming Soon";
+  const services = providerServices?.services || {};
+  const locationLabel = [region.city, region.country_code].filter(Boolean).join(", ");
 
   return (
     <>
       <AdminHeadbar />
       <AdminSidebar />
       <AdminPageShell
-        title={`MSP Credentials • ${region.name || region.code}`}
-        description={
-          locationLabel ? `${locationLabel} • ${region.code}` : `Region Code: ${region.code}`
-        }
-        subHeaderContent={headerMeta}
+        title={`${region.name || region.code} • Services`}
+        description={locationLabel || `Region: ${region.code}`}
         actions={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2">
             <ModernButton
               variant="ghost"
               size="sm"
+              onClick={fetchData}
               className="flex items-center gap-2"
-              onClick={fetchRegion}
-              isDisabled={submitting}
             >
-              <RefreshCw size={16} />
+              <RefreshCw className="h-4 w-4" />
               Refresh
             </ModernButton>
             <ModernButton
@@ -336,394 +445,54 @@ const RegionCredentials = () => {
             </ModernButton>
           </div>
         }
-        contentClassName="space-y-8"
+        contentClassName="space-y-6"
       >
-        <div className="space-y-8">
-          {automationDisabled && (
-            <ModernCard className="border border-amber-200 bg-amber-50/70">
-              <div className="flex items-start gap-3 text-sm text-amber-800">
-                <AlertCircle className="mt-1 h-5 w-5 text-amber-500" />
-                <div className="space-y-1">
-                  <p className="font-semibold">
-                    Automation for {providerLabel} regions is coming soon.
-                  </p>
-                  <p>
-                    MSP credential storage and Zadara object storage automation are currently
-                    limited to Zadara-backed regions. Manual fulfilment settings remain available
-                    from the region overview.
-                  </p>
-                </div>
-              </div>
-            </ModernCard>
-          )}
-
-          <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#0F172A] via-[#1D4ED8] to-[#38BDF8] text-white shadow-2xl">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.12),_transparent_55%)]" />
-            <div className="relative p-6 sm:p-8 lg:p-10">
-              <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                <div className="space-y-3">
-                  <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-white/70">
-                    Credential Update
-                  </div>
-                  <div className="space-y-2">
-                    <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                      {region.name || region.code}
-                    </h2>
-                    <p className="text-sm text-white/80 sm:text-base">
-                      {locationLabel || "Location not specified"} • {region.code}
-                    </p>
-                  </div>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-                  <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
-                    <p className="text-xs font-medium uppercase tracking-wide text-white/70">
-                      Automation Status
-                    </p>
-                    <p className="mt-2 text-lg font-semibold">
-                      {region.msp_credentials_verified_at ? "Verified" : "Not Verified"}
-                    </p>
-                    <p className="text-xs text-white/80">
-                      {region.msp_credentials_verified_at
-                        ? `Last verified ${new Date(
-                            region.msp_credentials_verified_at
-                          ).toLocaleString()}`
-                        : "Automated provisioning requires verified MSP admin credentials."}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
-                    <p className="text-xs font-medium uppercase tracking-wide text-white/70">
-                      Fulfillment Mode
-                    </p>
-                    <p className="mt-2 text-sm font-semibold text-white">
-                      {formatSegment(region.fulfillment_mode) || "—"}
-                    </p>
-                  </div>
-                </div>
-              </div>
+        {/* Region Info Header */}
+        <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-blue-900 to-blue-800 p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-blue-200">
+                {region.provider?.toUpperCase()} REGION
+              </p>
+              <h2 className="text-2xl font-bold mt-1">{region.name || region.code}</h2>
+              <p className="text-sm text-blue-100 mt-1">{locationLabel || region.code}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-blue-200">Fulfillment</p>
+              <p className="text-lg font-semibold capitalize">
+                {region.fulfillment_mode || "Not Set"}
+              </p>
             </div>
           </div>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <ModernCard
-              title="Credential Details"
-              className={`space-y-4 ${automationDisabled ? "opacity-50" : ""}`}
-            >
-              <div className="grid gap-4 md:grid-cols-2">
-                <ModernInput
-                  label="Username"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleChange}
-                  placeholder="MSP admin username"
-                  required
-                  disabled={!isZadaraRegion}
-                />
-                <ModernInput
-                  type="password"
-                  label="Password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="MSP admin password"
-                  required
-                  disabled={!isZadaraRegion}
-                />
-              </div>
+        {/* Services Section */}
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Available Services</h3>
+          <p className="text-sm text-gray-500 mb-4">
+            Enable services and configure their fulfillment mode. Automated fulfillment requires
+            valid credentials.
+          </p>
 
-              <ModernInput
-                label="Domain"
-                name="domain"
-                value={formData.domain}
-                onChange={handleChange}
-                placeholder="cloud_msp"
-                required
-                disabled={!isZadaraRegion}
+          <div className="space-y-4">
+            {Object.entries(services).map(([serviceType, serviceConfig]) => (
+              <ServiceConfigCard
+                key={serviceType}
+                serviceType={serviceType}
+                serviceConfig={serviceConfig}
+                regionId={region.id}
+                credentialStatus={credentialStatuses[serviceType]}
+                onUpdate={fetchData}
               />
+            ))}
+          </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <ModernInput
-                  label="Domain ID (optional)"
-                  name="domain_id"
-                  value={formData.domain_id}
-                  onChange={handleChange}
-                  placeholder="dom-xxxxx"
-                  disabled={!isZadaraRegion}
-                />
-                <ModernInput
-                  label="Default Project (optional)"
-                  name="default_project"
-                  value={formData.default_project}
-                  onChange={handleChange}
-                  placeholder="default"
-                  disabled={!isZadaraRegion}
-                />
-              </div>
-
-              <div className="space-y-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs text-blue-700">
-                <p className="font-medium">
-                  MSP admins authenticate using the default project token. Ensure the account has
-                  the <span className="font-semibold">msp_admin</span> role.
-                </p>
-              </div>
-            </ModernCard>
-
-            <ModernCard
-              title="Object Storage Configuration"
-              className={`space-y-4 ${automationDisabled ? "opacity-50" : ""}`}
-            >
-              {isObjectStorageConfigured && (
-                <div className="flex flex-col gap-2 rounded-2xl border border-green-100 bg-green-50 p-4 text-sm text-green-700 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={18} className="text-green-600" />
-                    <span>Object storage is already configured for this region.</span>
-                  </div>
-                  <ModernButton
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-2"
-                    onClick={handleTestObjectStorage}
-                    isLoading={testingObjectStorage}
-                    isDisabled={testingObjectStorage || automationDisabled}
-                  >
-                    <RefreshCw size={14} />
-                    {testingObjectStorage ? "Testing…" : "Test Connectivity"}
-                  </ModernButton>
-                </div>
-              )}
-
-              <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-gray-50 p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-gray-800">
-                    Does this region support Zadara Object Storage?
-                  </p>
-                  <p className="mt-1 text-xs text-gray-600">
-                    Enable this if tenants in this region should receive S3-style endpoints and
-                    credentials managed by the CRM.
-                  </p>
-                </div>
-                <label className="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="objectStorageEnabled"
-                    checked={formData.objectStorageEnabled}
-                    onChange={handleChange}
-                    className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    disabled={automationDisabled}
-                  />
-                  <span className="text-sm font-medium text-gray-700">Enable Object Storage</span>
-                </label>
-              </div>
-
-              {formData.objectStorageEnabled && (
-                <div className="space-y-4">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <ModernInput
-                      label="Object Storage Base URL"
-                      name="objectStorageBaseUrl"
-                      value={formData.objectStorageBaseUrl}
-                      onChange={handleChange}
-                      placeholder="https://zadara-region.example.com:8443"
-                      disabled={automationDisabled || objectStorageLocked}
-                      required={formData.objectStorageEnabled}
-                    />
-                    <ModernInput
-                      label="Admin Account (usually zios_admin)"
-                      name="objectStorageAccount"
-                      value={formData.objectStorageAccount}
-                      onChange={handleChange}
-                      placeholder="zios_admin"
-                      disabled={automationDisabled || objectStorageLocked}
-                      required={formData.objectStorageEnabled}
-                    />
-                  </div>
-
-                  <ModernInput
-                    type="password"
-                    label="Object Storage Access Key"
-                    name="objectStorageAccessKey"
-                    value={formData.objectStorageAccessKey}
-                    onChange={handleChange}
-                    placeholder={
-                      objectStorageLocked
-                        ? "Stored securely. Disable to replace."
-                        : "Paste the X-Access-Key provided by Zadara"
-                    }
-                    disabled={automationDisabled || objectStorageLocked}
-                    required={formData.objectStorageEnabled}
-                  />
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <ModernInput
-                      type="number"
-                      label="Default Quota (GiB)"
-                      name="objectStorageDefaultQuota"
-                      value={formData.objectStorageDefaultQuota}
-                      onChange={handleChange}
-                      placeholder="1000"
-                      helper="Applied to every new tenant account by default."
-                      min="0"
-                      disabled={automationDisabled || objectStorageLocked}
-                    />
-                    <ModernInput
-                      type="email"
-                      label="Notification Email"
-                      name="objectStorageNotificationEmail"
-                      value={formData.objectStorageNotificationEmail}
-                      onChange={handleChange}
-                      placeholder="object-storage-notify@example.com"
-                      disabled={automationDisabled || objectStorageLocked}
-                      required={formData.objectStorageEnabled}
-                      helper="Must be a monitored inbox for password resets and alerts."
-                    />
-                  </div>
-
-                  <div className="space-y-3 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs text-amber-700">
-                    <p className="font-medium">
-                      Zadara emails password resets and operational alerts to the address you
-                      provide. Use a real mailbox or a shared ops account that your team monitors.
-                    </p>
-                    {objectStorageLocked && (
-                      <p className="text-xs text-amber-600">
-                        To modify endpoint details, disable object storage first. Existing
-                        credentials remain active until you disable the toggle.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </ModernCard>
-
-            <ModernCard title="Review & Save" className="space-y-3">
-              {automationDisabled && (
-                <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                  <AlertCircle className="mt-1 h-4 w-4 text-amber-500" />
-                  <div className="space-y-1">
-                    <p className="font-semibold">
-                      Credential automation is limited to Zadara regions.
-                    </p>
-                    <p>
-                      We’ll enable secure credential storage for {providerLabel} once the
-                      integration is ready. For now, keep fulfilment in manual mode.
-                    </p>
-                  </div>
-                </div>
-              )}
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3 text-sm text-gray-600">
-                  <MapPin className="h-5 w-5 text-blue-500" />
-                  <span>
-                    Credentials are stored securely and used for automated workflow orchestration
-                    within this region.
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <ModernButton
-                    type="button"
-                    variant="ghost"
-                    onClick={() => navigate(`/admin-dashboard/regions/${region.code}`)}
-                    isDisabled={submitting}
-                  >
-                    Cancel
-                  </ModernButton>
-                  <ModernButton
-                    type="submit"
-                    variant="primary"
-                    isLoading={submitting}
-                    isDisabled={submitting || automationDisabled}
-                    className="flex items-center gap-2"
-                  >
-                    <ShieldCheck size={16} />
-                    {saveButtonLabel}
-                  </ModernButton>
-                </div>
-              </div>
-            </ModernCard>
-          </form>
-
-          {Object.keys(credentialSummary).length > 0 && (
-            <ModernCard title="Current Credential Snapshot" className="space-y-3">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-gray-100 px-4 py-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Domain
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-gray-900">
-                    {credentialSummary.domain || "—"}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-gray-100 px-4 py-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Default Project
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-gray-900">
-                    {credentialSummary.default_project || "—"}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-gray-100 px-4 py-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Credentials Stored
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-gray-900">
-                    {region.has_msp_credentials ? "Yes" : "No"}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-gray-100 px-4 py-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Username Preview
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-gray-900">
-                    {credentialSummary.username_preview || "—"}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-gray-100 px-4 py-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Object Storage
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-gray-900">
-                    {region.has_object_storage_credentials ? "Configured" : "Not Configured"}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-gray-100 px-4 py-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Object Storage Endpoint
-                  </p>
-                  <p className="mt-1 break-words text-sm font-semibold text-gray-900">
-                    {objectStorageSummary.base_url || "—"}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-gray-100 px-4 py-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Notification Email
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-gray-900">
-                    {objectStorageSummary.notification_email || "—"}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-gray-100 px-4 py-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Access Key Preview
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-gray-900">
-                    {objectStorageSummary.access_key_preview || "—"}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-gray-100 px-4 py-3">
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Default Quota (GiB)
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-gray-900">
-                    {objectStorageSummary.default_quota_gb ?? "—"}
-                  </p>
-                </div>
-              </div>
-              {region.msp_credentials_verified_at && (
-                <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-                  <CheckCircle size={18} />
-                  Credentials verified on{" "}
-                  {new Date(region.msp_credentials_verified_at).toLocaleString()}
-                </div>
-              )}
+          {Object.keys(services).length === 0 && (
+            <ModernCard className="text-center py-8">
+              <AlertCircle className="mx-auto h-8 w-8 text-amber-500 mb-2" />
+              <p className="text-sm text-gray-600">
+                No services available for provider: {region.provider}
+              </p>
             </ModernCard>
           )}
         </div>
@@ -731,4 +500,5 @@ const RegionCredentials = () => {
     </>
   );
 };
+
 export default RegionCredentials;

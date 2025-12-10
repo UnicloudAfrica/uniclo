@@ -2,7 +2,7 @@ import React from "react";
 import { Route, Navigate } from "react-router-dom";
 import TenantRoute from "./TenantRoute";
 import Dashboard from "../dashboard/pages/dashboard";
-import { Modules } from "../dashboard/pages/modules";
+
 import PurchasedModules from "../dashboard/pages/purchasedModules";
 import PaymentHistory from "../dashboard/pages/paymentHistory";
 import SupportTicket from "../dashboard/pages/supportTicket";
@@ -52,7 +52,7 @@ const TenantRoutes = () => {
       <Route element={<TenantRoute />}>
         {/* Home */}
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/dashboard/modules" element={<Modules />} />
+
         <Route path="/dashboard/purchased-modules" element={<PurchasedModules />} />
 
         {/* Customer Management */}

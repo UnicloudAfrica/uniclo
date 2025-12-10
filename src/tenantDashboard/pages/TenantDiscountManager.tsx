@@ -11,8 +11,7 @@ import {
   Calculator,
   Download,
 } from "lucide-react";
-import TenantHeadbar from "../components/TenantHeadbar";
-import TenantSidebar from "../components/TenantSidebar";
+import TenantPageShell from "../../dashboard/components/TenantPageShell";
 import tenantApi from "../../services/tenantRegionApi";
 
 // Helper
@@ -280,88 +279,80 @@ const TenantDiscountManager = () => {
     window.open(baseUrl + "/admin/settlements/export", "_blank");
   };
 
+  const ExportButton = (
+    <button
+      onClick={handleExport}
+      className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700"
+    >
+      <Download className="w-4 h-4" />
+      Export CSV
+    </button>
+  );
+
   return (
-    <div>
-      <TenantHeadbar />
-      <TenantSidebar />
-      <main className="ml-64 pt-16 min-h-screen bg-gray-50">
-        <div className="p-6 space-y-6">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Discount and Settlement Manager</h1>
-              <p className="text-gray-500">
-                Manage client discounts and track your financial margins
-              </p>
+    <TenantPageShell
+      title="Discount and Settlement Manager"
+      description="Manage client discounts and track your financial margins"
+      actions={ExportButton}
+    >
+      {summary && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-yellow-100 rounded-full">
+                <DollarSign className="w-5 h-5 text-yellow-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Outstanding to Admin</p>
+                <p className="text-xl font-bold text-gray-900">
+                  {formatCurrency(summary.as_payer?.outstanding || 0)}
+                </p>
+              </div>
             </div>
-            <button
-              onClick={handleExport}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700"
-            >
-              <Download className="w-4 h-4" />
-              Export CSV
-            </button>
           </div>
-
-          {summary && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-yellow-100 rounded-full">
-                    <DollarSign className="w-5 h-5 text-yellow-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Outstanding to Admin</p>
-                    <p className="text-xl font-bold text-gray-900">
-                      {formatCurrency(summary.as_payer?.outstanding || 0)}
-                    </p>
-                  </div>
-                </div>
+          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-green-100 rounded-full">
+                <TrendingUp className="w-5 h-5 text-green-600" />
               </div>
-              <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-green-100 rounded-full">
-                    <TrendingUp className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Total Profit</p>
-                    <p className="text-xl font-bold text-green-600">
-                      {formatCurrency(summary.margins?.total_profit || 0)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-red-100 rounded-full">
-                    <TrendingDown className="w-5 h-5 text-red-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Total Loss</p>
-                    <p className="text-xl font-bold text-red-600">
-                      {formatCurrency(summary.margins?.total_loss || 0)}
-                    </p>
-                  </div>
-                </div>
+              <div>
+                <p className="text-sm text-gray-500">Total Received</p>
+                <p className="text-xl font-bold text-gray-900">
+                  {formatCurrency(summary.as_payer?.total_paid || 0)}
+                </p>
               </div>
             </div>
-          )}
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <MarginCalculator />
-
-            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-blue-600" />
-                  Client Discounts
-                </h3>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-blue-100 rounded-full">
+                <TrendingDown className="w-5 h-5 text-blue-600" />
               </div>
-              <ClientDiscountsList />
+              <div>
+                <p className="text-sm text-gray-500">Outstanding from Clients</p>
+                <p className="text-xl font-bold text-gray-900">
+                  {formatCurrency(summary.as_receiver?.outstanding || 0)}
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </main>
-    </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <MarginCalculator />
+
+        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <Users className="w-5 h-5 text-blue-600" />
+              Client Discounts
+            </h3>
+          </div>
+          <ClientDiscountsList />
+        </div>
+      </div>
+    </TenantPageShell>
   );
 };
 

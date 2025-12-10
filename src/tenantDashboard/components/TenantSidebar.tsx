@@ -51,8 +51,7 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({ tenantData, activeTab, se
 
     const currentPath = location.pathname;
     // Simple path matching for active tab
-    if (currentPath.includes("modules")) setActiveTab("modules");
-    else if (currentPath.includes("clients")) setActiveTab("clients");
+    if (currentPath.includes("clients")) setActiveTab("clients");
     else if (currentPath.includes("leads")) setActiveTab("leads");
     else if (currentPath.includes("projects")) setActiveTab("projects");
     else if (currentPath.includes("instances")) setActiveTab("instances");
@@ -80,12 +79,7 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({ tenantData, activeTab, se
       isLucide: true,
       path: "/dashboard",
     },
-    {
-      name: "Modules",
-      icon: Layers,
-      isLucide: true,
-      path: "/dashboard/modules",
-    },
+
     // Customer Management Group
     {
       name: "Customer Management",

@@ -38,9 +38,9 @@ const TenantHeadbar: React.FC<TenantHeadbarProps> = ({ tenantData, onMenuClick }
         avatar: profile.avatar,
       }}
       logo={{
-        src: tenantData?.logo || "/logo.png",
+        src: tenantData?.logo || "/logo.svg",
         alt: `${tenantData?.name || "Tenant"} Logo`,
-        link: "/tenant-dashboard",
+        link: "/dashboard",
         className: "w-[71px] h-[54px]",
       }}
       themeColor={tenantData?.color || "#14547F"}

@@ -517,6 +517,291 @@ class AdminRegionApiService {
       throw error;
     }
   }
+
+  // ========================================
+  // SERVICE-SPECIFIC CREDENTIAL MANAGEMENT
+  // ========================================
+
+  /**
+   * Get available services and their credential field definitions for a provider
+   * @param {string} provider - Provider code (zadara, aws, azure, gcp)
+   */
+  async getProviderServices(provider) {
+    try {
+      const response = await fetch(`${config.adminURL}/providers/${provider}/services`, {
+        method: "GET",
+        headers: this.getAuthHeaders(),
+      });
+
+      const data = await response.json();
+
+      if (data.success || response.ok) {
+        return {
+          success: true,
+          data: data.data || data,
+        };
+      }
+
+      throw new Error(data.message || "Failed to fetch provider services");
+    } catch (error) {
+      console.error(`Error fetching services for provider ${provider}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get credential status for all services in a region
+   * @param {string|number} regionId - Region ID or code
+   */
+  async getCredentialStatus(regionId) {
+    try {
+      const response = await fetch(`${config.adminURL}/regions/${regionId}/credentials`, {
+        method: "GET",
+        headers: this.getAuthHeaders(),
+      });
+
+      const data = await response.json();
+
+      if (data.success || response.ok) {
+        return {
+          success: true,
+          data: data.data || data,
+        };
+      }
+
+      throw new Error(data.message || "Failed to fetch credential status");
+    } catch (error) {
+      console.error(`Error fetching credential status for region ${regionId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Store credentials for a specific service type
+   * @param {string|number} regionId - Region ID or code
+   * @param {string} serviceType - Service type (compute, object_storage, etc.)
+   * @param {object} credentials - Credential data
+   * @param {boolean} skipVerification - If true, store without verifying
+   */
+  async storeServiceCredentials(regionId, serviceType, credentials, skipVerification = false) {
+    try {
+      const payload = { ...credentials };
+      if (skipVerification) {
+        payload.skip_verification = true;
+      }
+
+      const response = await fetch(
+        `${config.adminURL}/regions/${regionId}/credentials/${serviceType}`,
+        {
+          method: "POST",
+          headers: this.getAuthHeaders(),
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success || response.ok) {
+        const label = serviceType.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+        ToastUtils.success(data.message || `${label} credentials saved successfully`);
+        return {
+          success: true,
+          data: data.data || data,
+        };
+      }
+
+      throw new Error(data.message || `Failed to store ${serviceType} credentials`);
+    } catch (error) {
+      console.error(`Error storing ${serviceType} credentials for region ${regionId}:`, error);
+      ToastUtils.error(error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Verify credentials for a service type without storing
+   * @param {string|number} regionId - Region ID or code
+   * @param {string} serviceType - Service type
+   * @param {object} credentials - Credential data to verify
+   */
+  async verifyServiceCredentials(regionId, serviceType, credentials) {
+    try {
+      const response = await fetch(
+        `${config.adminURL}/regions/${regionId}/credentials/${serviceType}/verify`,
+        {
+          method: "POST",
+          headers: this.getAuthHeaders(),
+          body: JSON.stringify(credentials),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success || response.ok) {
+        return {
+          success: true,
+          message: data.message || "Credentials verified successfully",
+          data: data.data || data,
+        };
+      }
+
+      throw new Error(data.message || "Verification failed");
+    } catch (error) {
+      console.error(`Error verifying ${serviceType} credentials for region ${regionId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete credentials for a specific service type
+   * @param {string|number} regionId - Region ID or code
+   * @param {string} serviceType - Service type
+   */
+  async deleteServiceCredentials(regionId, serviceType) {
+    try {
+      const response = await fetch(
+        `${config.adminURL}/regions/${regionId}/credentials/${serviceType}`,
+        {
+          method: "DELETE",
+          headers: this.getAuthHeaders(),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success || response.ok) {
+        const label = serviceType.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+        ToastUtils.success(data.message || `${label} credentials deleted`);
+        return {
+          success: true,
+        };
+      }
+
+      throw new Error(data.message || `Failed to delete ${serviceType} credentials`);
+    } catch (error) {
+      console.error(`Error deleting ${serviceType} credentials for region ${regionId}:`, error);
+      ToastUtils.error(error.message);
+      throw error;
+    }
+  }
+  /**
+   * Verify credentials for a provider service before region creation
+   * @param {string} provider - Provider code
+   * @param {string} serviceType - Service type
+   * @param {object} credentials - Credential data
+   */
+  async verifyProviderServiceCredentials(provider, serviceType, credentials) {
+    try {
+      const response = await fetch(
+        `${config.adminURL}/providers/${provider}/services/${serviceType}/verify`,
+        {
+          method: "POST",
+          headers: this.getAuthHeaders(),
+          body: JSON.stringify(credentials),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success || response.ok) {
+        return {
+          success: true,
+          message: data.message || "Credentials verified successfully",
+          data: data.data || data,
+        };
+      }
+
+      throw new Error(data.message || "Verification failed");
+    } catch (error) {
+      console.error(`Error verifying ${serviceType} credentials for provider ${provider}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update region visibility (public/private)
+   */
+  async updateVisibility(regionId, visibility) {
+    try {
+      const response = await fetch(`${config.adminURL}/regions/${regionId}/visibility`, {
+        method: "PATCH",
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify({ visibility }),
+      });
+
+      const data = await response.json();
+
+      if (data.success || response.ok) {
+        ToastUtils.success(data.message || `Region is now ${visibility}`);
+        return {
+          success: true,
+          data: data.data || data,
+        };
+      }
+
+      throw new Error(data.message || "Failed to update visibility");
+    } catch (error) {
+      console.error(`Error updating visibility for region ${regionId}:`, error);
+      ToastUtils.error(error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Verify/Approve a region
+   */
+  async verifyRegion(regionId) {
+    try {
+      const response = await fetch(`${config.adminURL}/regions/${regionId}/verify`, {
+        method: "POST",
+        headers: this.getAuthHeaders(),
+      });
+
+      const data = await response.json();
+
+      if (data.success || response.ok) {
+        ToastUtils.success(data.message || "Region verified successfully");
+        return {
+          success: true,
+          data: data.data || data,
+        };
+      }
+
+      throw new Error(data.message || "Failed to verify region");
+    } catch (error) {
+      console.error(`Error verifying region ${regionId}:`, error);
+      ToastUtils.error(error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Unverify a region
+   */
+  async unverifyRegion(regionId) {
+    try {
+      const response = await fetch(`${config.adminURL}/regions/${regionId}/unverify`, {
+        method: "POST",
+        headers: this.getAuthHeaders(),
+      });
+
+      const data = await response.json();
+
+      if (data.success || response.ok) {
+        ToastUtils.success(data.message || "Region verification removed");
+        return {
+          success: true,
+          data: data.data || data,
+        };
+      }
+
+      throw new Error(data.message || "Failed to unverify region");
+    } catch (error) {
+      console.error(`Error unverifying region ${regionId}:`, error);
+      ToastUtils.error(error.message);
+      throw error;
+    }
+  }
 }
 
 export default new AdminRegionApiService();

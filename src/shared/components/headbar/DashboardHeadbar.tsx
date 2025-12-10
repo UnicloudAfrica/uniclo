@@ -156,7 +156,7 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
     link: string;
     className?: string;
   } = {
-    src: "/logo.png",
+    src: "/logo.svg",
     alt: `${dashboardType.charAt(0).toUpperCase() + dashboardType.slice(1)} Portal`,
     link: `/${dashboardType}-dashboard`,
   };

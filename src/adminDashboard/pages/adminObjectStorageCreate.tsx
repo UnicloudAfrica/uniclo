@@ -1390,7 +1390,7 @@ const AdminObjectStorageCreate = () => {
       ToastUtils.info("Transaction reference is missing for this payment option.");
       return;
     }
-    const paystackKey = process.env.REACT_APP_PAYSTACK_KEY;
+    const paystackKey = import.meta.env.VITE_PAYSTACK_KEY;
     if (!paystackKey) {
       ToastUtils.info("Paystack public key missing. Contact support.");
       return;

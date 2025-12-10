@@ -1,0 +1,109 @@
+import { createContext, useEffect, useState } from "react";
+import { initializeApp, getApp, getApps } from "firebase/app";
+import { getFirestore, collection, query, onSnapshot } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+
+export const BlogContext = createContext();
+export const PageContext = createContext();
+export const EventsContext = createContext();
+export const ResourcesContext = createContext();
+export const SolutionsContext = createContext();
+export const CasesContext = createContext();
+export const PartnerContext = createContext();
+export const BoardContext = createContext();
+export const ManageContext = createContext();
+export const CareerContext = createContext();
+export const GeneralContext = createContext();
+
+// Custom hook to fetch data from Firestore
+const useFirestoreData = (db, collectionName) => {
+  const [dataArray, setDataArray] = useState([]);
+
+  useEffect(() => {
+    const colRef = collection(db, collectionName);
+    const q = query(colRef);
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = [];
+      snapshot.docs.forEach((doc) => {
+        data.push({ id: doc.id, ...doc.data() });
+      });
+      setDataArray(data);
+    });
+
+    // Cleanup the subscription when the component unmounts
+    return () => unsubscribe();
+  }, [db, collectionName]);
+
+  return dataArray;
+};
+
+const ContextProvider = (props) => {
+  const firebaseConfig = {
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
+  };
+
+  const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const [page, setPage] = useState("General");
+
+  // Define your context values using the custom hook
+  const blogArray = useFirestoreData(db, "blog");
+  const eventArray = useFirestoreData(db, "events");
+  const resourceArray = useFirestoreData(db, "resources");
+  const solutionArray = useFirestoreData(db, "solutions");
+  const caseArray = useFirestoreData(db, "cases");
+  const partnersArray = useFirestoreData(db, "Partner");
+  const boardArray = useFirestoreData(db, "board");
+  const manageArray = useFirestoreData(db, "manage");
+  const careerArray = useFirestoreData(db, "career");
+  const [generalitem, setGeneralItem] = useState([]);
+
+  useEffect(() => {
+    const colRef = collection(db, "general");
+    const q = query(colRef);
+    onSnapshot(q, (snapshot) => {
+      snapshot.docs.forEach((doc) => {
+        setGeneralItem(doc.data());
+      });
+    });
+  }, [auth, db]);
+
+  return (
+    <>
+      <PageContext.Provider value={[page, setPage]}>
+        <EventsContext.Provider value={[eventArray]}>
+          <ResourcesContext.Provider value={[resourceArray]}>
+            <SolutionsContext.Provider value={[solutionArray]}>
+              <CasesContext.Provider value={[caseArray]}>
+                <PartnerContext.Provider value={[partnersArray]}>
+                  <BoardContext.Provider value={[boardArray]}>
+                    <ManageContext.Provider value={[manageArray]}>
+                      <CareerContext.Provider value={[careerArray]}>
+                        <GeneralContext.Provider value={[generalitem, setGeneralItem]}>
+                          <BlogContext.Provider value={[blogArray]}>
+                            {props.children}
+                          </BlogContext.Provider>
+                        </GeneralContext.Provider>
+                      </CareerContext.Provider>
+                    </ManageContext.Provider>
+                  </BoardContext.Provider>
+                </PartnerContext.Provider>
+              </CasesContext.Provider>
+            </SolutionsContext.Provider>
+          </ResourcesContext.Provider>
+        </EventsContext.Provider>
+      </PageContext.Provider>
+    </>
+  );
+};
+
+export default ContextProvider;

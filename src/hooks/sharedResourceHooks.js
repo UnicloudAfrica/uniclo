@@ -22,7 +22,7 @@ import api from "../index/api";
 const fetchCountries = async () => {
   // Countries endpoint should not require authentication
   // Use direct fetch to avoid auth store complications
-  const baseURL = process.env.REACT_APP_API_USER_BASE_URL || "";
+  const baseURL = import.meta.env.VITE_API_USER_BASE_URL || "";
   const url = `${baseURL}/api/v1/countries`;
 
   try {

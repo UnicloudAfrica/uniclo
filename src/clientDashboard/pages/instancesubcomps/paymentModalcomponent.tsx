@@ -10,7 +10,7 @@ const PaymentModal = ({ isOpen, onClose, transaction, onPaymentInitiated }: any)
   const [saveCard, setSaveCard] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
 
-  const paystackKey = process.env.REACT_APP_PAYSTACK_KEY;
+  const paystackKey = import.meta.env.VITE_PAYSTACK_KEY;
   const { data: profile, isFetching: isProfileFetching } = useFetchClientProfile();
   const popup = useMemo(() => {
     try {

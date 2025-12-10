@@ -1,12 +1,12 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 /* Import modern animations and micro-interactions */
 @import "./styles/animations.css";
 
 /* Import responsive utilities */
 @import "./styles/responsive.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer components {
   .dashboard-content-shell {

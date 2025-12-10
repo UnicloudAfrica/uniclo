@@ -154,7 +154,7 @@ const InlinePaymentPanel = ({ transactionData, onPaymentComplete, onModifyOrder 
         return;
       }
 
-      const paystackKey = process.env.REACT_APP_PAYSTACK_KEY;
+      const paystackKey = import.meta.env.VITE_PAYSTACK_KEY;
       if (!paystackKey) {
         ToastUtils.error("Paystack public key missing. Contact support.");
         return;

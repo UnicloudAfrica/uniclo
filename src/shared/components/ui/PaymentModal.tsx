@@ -222,7 +222,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     payment?.transaction_reference ||
     null;
 
-  const paystackPublicKey = propPublicKey || process.env.REACT_APP_PAYSTACK_KEY || "";
+  const paystackPublicKey = propPublicKey || import.meta.env.VITE_PAYSTACK_KEY || "";
 
   const paystackEmail = useMemo(
     () =>

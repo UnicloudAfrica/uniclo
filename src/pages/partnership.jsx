@@ -51,9 +51,6 @@ const PartnerCard = ({ partner }) => {
           className="h-auto w-auto max-h-[150px] max-w-[85%] object-contain"
         />
       </div>
-      <p className="mt-4 text-lg md:text-xl font-medium text-[#121212] text-center">
-        {partner.name}
-      </p>
     </motion.div>
   );
 };

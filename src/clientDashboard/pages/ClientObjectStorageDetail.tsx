@@ -1,8 +1,8 @@
 // @ts-nocheck
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
-import ClientHeadbar from "../components/ClientHeadbar";
-import ClientSidebar from "../components/ClientSidebar";
+import ClientHeadbar from "../components/clientHeadbar";
+import ClientSidebar from "../components/clientSidebar";
 import ClientActiveTab from "../components/clientActiveTab";
 import ClientPageShell from "../components/ClientPageShell";
 import ObjectStorageAccountDetail from "../../shared/components/object-storage/ObjectStorageAccountDetail";

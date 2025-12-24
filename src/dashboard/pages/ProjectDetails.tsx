@@ -24,7 +24,6 @@ import ProjectDetailsHero from "../../shared/components/projects/details/Project
 import ProjectInstancesOverview from "../../shared/components/projects/details/ProjectInstancesOverview";
 import ProjectInfrastructureJourney from "../../shared/components/projects/details/ProjectInfrastructureJourney";
 import ProjectQuickStatus from "../../shared/components/projects/details/ProjectQuickStatus";
-import ProjectProvisioningSnapshot from "../../shared/components/projects/details/ProjectProvisioningSnapshot";
 import TenantAssignEdgeConfigModal from "./projectComps/TenantAssignEdgeConfigModal";
 import KeyPairs from "./infraComps/keyPairs";
 import SecurityGroup from "./infraComps/securityGroup";
@@ -36,6 +35,9 @@ import RouteTables from "./infraComps/routetable";
 import ENIs from "./infraComps/eni";
 import EIPs from "./infraComps/elasticIP";
 import ToastUtils from "../../utils/toastUtil";
+import SetupProgressCard from "../../shared/components/projects/details/SetupProgressCard";
+import api from "../../index/tenant/tenantApi";
+import { ModernCard } from "../../shared/components/ui";
 
 // Interfaces
 interface User {
@@ -147,12 +149,41 @@ const ProjectDetails: React.FC = () => {
   }, [rawProjectId]);
 
   const [isAssignEdgeModalOpen, setAssignEdgeModalOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState("setup");
+  const [activeSection, setActiveSection] = useState("vpcs");
 
   const { data: projectResponse, refetch: refetchProject } = useFetchTenantProjectById(projectId);
   const project = (projectResponse?.data || projectResponse?.project || {}) as Project;
 
-  const { data: statusData } = useTenantProjectStatus(projectId);
+  const {
+    data: statusData,
+    isFetching: isStatusFetching,
+    refetch: refetchStatus,
+  } = useTenantProjectStatus(projectId);
+  const projectStatus = statusData?.project || statusData;
+
+  const handleGenericAction = async ({
+    method,
+    endpoint,
+    label,
+    payload = {},
+  }: {
+    method: string;
+    endpoint: string;
+    label: string;
+    payload?: any;
+  }) => {
+    try {
+      ToastUtils.info(`Executing ${label}...`);
+      const res = await api(method.toUpperCase(), endpoint, payload || {});
+      ToastUtils.success(`${label} completed successfully!`);
+      await Promise.all([refetchStatus(), refetchProject()]);
+      return res;
+    } catch (error: any) {
+      console.error(`Action error [${label}]:`, error);
+      ToastUtils.error(error?.message || `Failed to execute ${label}`);
+      throw error;
+    }
+  };
   const { data: infraStatusData } = useTenantProjectInfrastructureStatus(projectId) as {
     data: any;
   };
@@ -214,7 +245,6 @@ const ProjectDetails: React.FC = () => {
   };
 
   const infrastructureSections = [
-    { key: "setup", label: "Project Setup", icon: <CheckCircle size={16} /> },
     { key: "user-provisioning", label: "Team Access", icon: <Shield size={16} /> },
     { key: "vpcs", label: "Virtual Private Cloud", icon: <Server size={16} /> },
     { key: "networks", label: "Networks", icon: <Wifi size={16} /> },
@@ -332,22 +362,6 @@ const ProjectDetails: React.FC = () => {
 
   const renderSectionContent = () => {
     switch (activeSection) {
-      case "setup":
-        return (
-          <ProjectProvisioningSnapshot
-            infraStatus={infraStatusData?.data}
-            summary={project?.summary}
-            providerLabel={project?.provider}
-            projectRegion={project?.region}
-            hasTenantAdmin={project?.users?.some((u) => u.role === "tenant_admin")}
-            edgeComponent={infraStatusData?.data?.components?.edge_networks}
-            isEdgeSyncing={false}
-            onEdgeSync={() => {}}
-            onManageEdge={() => setAssignEdgeModalOpen(true)}
-            onEnableVpc={handleEnableVpc}
-            isVpcEnabling={isVpcEnabling}
-          />
-        );
       case "user-provisioning":
         return (
           <div className="space-y-6">
@@ -578,6 +592,50 @@ const ProjectDetails: React.FC = () => {
       }
     >
       <div className="space-y-6 animate-in fade-in duration-500">
+        {projectStatus?.summary?.some((i: any) => !i.completed && i.action) && (
+          <ModernCard className="border-l-4 border-l-yellow-400 bg-yellow-50/30">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Activity className="text-yellow-600" size={20} />
+                <h3 className="text-lg font-semibold text-gray-900">Required Actions</h3>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {projectStatus.summary
+                .filter((i: any) => !i.completed && i.action)
+                .map((item: any, idx: number) => (
+                  <div
+                    key={idx}
+                    className="bg-white p-4 rounded-lg border border-yellow-200 shadow-sm flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="text-sm font-medium text-gray-900 mb-1">{item.title}</div>
+                      {item.missing_count && (
+                        <div className="text-xs text-red-500 mb-2">
+                          {item.missing_count} missing
+                        </div>
+                      )}
+                    </div>
+                    <ModernButton
+                      size="sm"
+                      variant="primary"
+                      className="w-full mt-3"
+                      onClick={() =>
+                        handleGenericAction({
+                          method: item.action.method,
+                          endpoint: item.action.endpoint,
+                          label: item.action.label,
+                        })
+                      }
+                    >
+                      {item.action.label}
+                    </ModernButton>
+                  </div>
+                ))}
+            </div>
+          </ModernCard>
+        )}
+
         <ProjectDetailsHero
           project={project}
           projectStatusVariant={projectStatusVariant}
@@ -636,6 +694,20 @@ const ProjectDetails: React.FC = () => {
                 getStatusForSection={getStatusForSection}
               />
             </div>
+
+            <SetupProgressCard
+              steps={
+                Array.isArray(projectStatus?.provisioning_progress)
+                  ? projectStatus.provisioning_progress.map((step: any) => ({
+                      id: step.id || step.label?.toLowerCase()?.replace(/\s+/g, "_") || "step",
+                      label: step.label || "Step",
+                      status: step.status as any,
+                      updated_at: step.updated_at,
+                    }))
+                  : []
+              }
+              isLoading={isStatusFetching}
+            />
           </div>
 
           <div className="space-y-6">{renderSectionContent()}</div>

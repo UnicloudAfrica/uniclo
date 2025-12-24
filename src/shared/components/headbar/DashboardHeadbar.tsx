@@ -79,7 +79,7 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
       projects: "Projects",
       regions: "Regions",
       "tax-configuration": "Tax Configuration",
-      "profile-settings": "Profile Settings",
+      account: "Account Settings",
       instances: "Instances",
       "object-storage": "Object Storage",
     },
@@ -262,15 +262,6 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
               >
                 {profilePath && (
                   <>
-                    <Link
-                      to={profilePath}
-                      className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 transition-colors duration-200"
-                      onClick={() => setIsProfileOpen(false)}
-                    >
-                      <User size={18} />
-                      Profile Settings
-                    </Link>
-
                     <Link
                       to={profilePath}
                       className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 transition-colors duration-200"

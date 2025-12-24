@@ -186,6 +186,9 @@ const AdminObjectStorage = () => {
               error={accountsError}
               onRetry={refreshAccounts}
               onRefresh={refreshAccounts}
+              onRowClick={(account: any) =>
+                navigate(`/admin-dashboard/object-storage/${account.id}`)
+              }
               bucketsByAccount={accountBuckets}
               bucketLoading={bucketLoading}
               bucketErrors={bucketErrors}

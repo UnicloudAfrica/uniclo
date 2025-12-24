@@ -11,6 +11,7 @@ import { useFetchTenants } from "../../../hooks/adminHooks/tenantHooks";
 import { useFetchClients } from "../../../hooks/adminHooks/clientHooks";
 import { DropdownSelect } from "./dropdownSelect"; // Ensure this path is correct
 import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
+import NetworkPresetSelector from "../../../shared/components/network/NetworkPresetSelector";
 const MAX_ATTEMPTS = 10;
 
 const INITIAL_FORM_STATE = {
@@ -21,6 +22,7 @@ const INITIAL_FORM_STATE = {
   client_id: "",
   region: "",
   assignment_scope: "internal",
+  network_preset: "", // Optional: standard, private, multi-tier, database
 };
 
 const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }: any) => {
@@ -322,6 +324,8 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }: any) =>
       region: formData.region,
       assignment_scope: formData.assignment_scope,
       member_user_ids: selectedMembers.map((member: any) => Number(member.id)),
+      // Optional network preset - stored in metadata
+      metadata: formData.network_preset ? { network_preset: formData.network_preset } : undefined,
       // provider omitted; derived server-side
     };
 
@@ -456,6 +460,33 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }: any) =>
         </div>
         {errors.type && <p className="text-red-500 text-xs mt-1">{errors.type}</p>}
       </div>
+
+      {/* Network Preset (Optional) - Only show for VPC type */}
+      {formData.type === "vpc" && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Network Preset <span className="text-gray-400 text-xs">(optional)</span>
+          </label>
+          <p className="text-xs text-gray-500 mb-3">
+            Choose a default network configuration. If not selected, you'll pick one when creating
+            instances.
+          </p>
+          <NetworkPresetSelector
+            value={formData.network_preset || null}
+            onChange={(preset) => updateFormData("network_preset", preset)}
+            showAdvancedOption={false}
+          />
+          {formData.network_preset && (
+            <button
+              type="button"
+              onClick={() => updateFormData("network_preset", "")}
+              className="text-xs text-gray-500 hover:text-gray-700 mt-2"
+            >
+              Clear preset selection
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Default Region */}
       <div>
@@ -696,6 +727,12 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }: any) =>
       {
         label: "Default region",
         value: formData.region ? formData.region.toUpperCase() : "Select region",
+      },
+      {
+        label: "Network preset",
+        value: formData.network_preset
+          ? formData.network_preset.charAt(0).toUpperCase() + formData.network_preset.slice(1)
+          : "Choose during instance creation",
       },
       {
         label: "Assignment scope",

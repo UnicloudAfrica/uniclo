@@ -304,6 +304,12 @@ const ProjectsPageContainer = ({
 
   return (
     <div className="space-y-6">
+      {/* Header Actions - Add Project, Refresh, etc. */}
+      <div className="flex items-center justify-between">
+        <div>{subHeaderContent}</div>
+        {headerActions}
+      </div>
+
       {/* Stats Bar */}
       {showStats && <ProjectsStatsBar stats={stats} isLoading={isLoading} />}
 

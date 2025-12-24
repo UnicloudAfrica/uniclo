@@ -42,7 +42,7 @@ const AdminHeadbar: React.FC = () => {
       }}
       onLogout={handleLogout}
       logoutPath="/admin-signin"
-      profilePath="/admin-dashboard/profile-settings"
+      profilePath="/admin-dashboard/account"
       showNotifications={true}
       showHelp={true}
       helpPath="/admin-dashboard/tickets"

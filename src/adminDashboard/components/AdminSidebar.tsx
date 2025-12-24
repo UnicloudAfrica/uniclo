@@ -222,10 +222,10 @@ const menuItems: MenuEntry[] = [
     path: "/admin-dashboard/inventory",
   },
   {
-    name: "Profile Settings",
+    name: "Account Settings",
     icon: User,
     isLucide: true,
-    path: "/admin-dashboard/profile-settings",
+    path: "/admin-dashboard/account",
   },
 ];
 

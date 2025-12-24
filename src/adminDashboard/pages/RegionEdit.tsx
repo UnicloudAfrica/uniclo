@@ -62,11 +62,13 @@ const ServiceConfigCard = ({
   onTestConnection,
   status = "not_configured",
   testing = false,
+  isExistingConnection = false, // New prop to indicate credentials already exist
 }) => {
   const Icon = SERVICE_ICONS[serviceType] || Server;
   const label = serviceConfig?.label || serviceType;
   const description = serviceConfig?.description || "";
   const fields = serviceConfig?.fields || {};
+  const [showUpdateForm, setShowUpdateForm] = useState(false);
 
   const getInputType = (fieldDef) => {
     if (fieldDef.type === "password") return "password";
@@ -75,6 +77,11 @@ const ServiceConfigCard = ({
     if (fieldDef.type === "url") return "url";
     return "text";
   };
+
+  // Determine if we should show the credential form
+  const hasCredentialsEntered = Object.values(credentials || {}).some((v) => v && v !== "");
+  const shouldShowCredentialsForm =
+    !isExistingConnection || showUpdateForm || hasCredentialsEntered;
 
   return (
     <div
@@ -93,7 +100,16 @@ const ServiceConfigCard = ({
             <Icon className="h-6 w-6" />
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900">{label}</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-gray-900">{label}</h3>
+              {/* Verified indicator - shows even when collapsed */}
+              {(status === "connected" || status === "verified") && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                  <Check className="h-3 w-3" />
+                  Verified
+                </span>
+              )}
+            </div>
             <p className="text-sm text-gray-500">{description}</p>
           </div>
         </div>
@@ -202,39 +218,86 @@ const ServiceConfigCard = ({
           {fulfillmentMode === "automated" && Object.keys(fields).length > 0 && (
             <div className="space-y-3 pt-2">
               <p className="text-sm font-medium text-gray-700">Credentials</p>
-              <div className="grid gap-3 md:grid-cols-2">
-                {Object.entries(fields).map(([fieldName, fieldDef]) => (
-                  <ModernInput
-                    key={fieldName}
-                    label={`${fieldDef.label}${fieldDef.required ? "" : " (optional)"}`}
-                    name={fieldName}
-                    type={getInputType(fieldDef)}
-                    value={credentials[fieldName] || ""}
-                    onChange={(e) => onCredentialChange(fieldName, e.target.value)}
-                    placeholder={fieldDef.placeholder || ""}
-                    helper={fieldDef.help}
-                    required={fieldDef.required}
-                  />
-                ))}
-              </div>
-              <div className="flex items-center gap-3">
-                <ModernButton
-                  type="button"
-                  variant={
-                    status === "connected" || status === "verified" ? "outline" : "secondary"
-                  }
-                  className="w-full md:w-auto"
-                  onClick={onTestConnection}
-                  disabled={testing}
-                >
-                  {testing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  {testing
-                    ? "Testing..."
-                    : status === "connected" || status === "verified"
-                      ? "Re-test Connection"
-                      : "Test Connection"}
-                </ModernButton>
-              </div>
+
+              {/* Show existing connection message when credentials are already saved */}
+              {isExistingConnection && !showUpdateForm && !hasCredentialsEntered && (
+                <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Check className="h-5 w-5 text-blue-600" />
+                      <div>
+                        <p className="text-sm font-medium text-blue-800">
+                          Credentials are configured
+                        </p>
+                        <p className="text-xs text-blue-600">
+                          Your credentials are securely stored. Click update to modify them.
+                        </p>
+                      </div>
+                    </div>
+                    <ModernButton
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowUpdateForm(true)}
+                    >
+                      Update Credentials
+                    </ModernButton>
+                  </div>
+                </div>
+              )}
+
+              {/* Show form when updating or for new connections */}
+              {shouldShowCredentialsForm && (
+                <>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {Object.entries(fields).map(([fieldName, fieldDef]) => (
+                      <ModernInput
+                        key={fieldName}
+                        label={`${fieldDef.label}${fieldDef.required ? "" : " (optional)"}`}
+                        name={fieldName}
+                        type={getInputType(fieldDef)}
+                        value={credentials[fieldName] || ""}
+                        onChange={(e) => onCredentialChange(fieldName, e.target.value)}
+                        placeholder={
+                          isExistingConnection
+                            ? "Enter new value to update..."
+                            : fieldDef.placeholder || ""
+                        }
+                        helper={fieldDef.help}
+                        required={!isExistingConnection && fieldDef.required}
+                      />
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <ModernButton
+                      type="button"
+                      variant={
+                        status === "connected" || status === "verified" ? "outline" : "secondary"
+                      }
+                      className="w-full md:w-auto"
+                      onClick={onTestConnection}
+                      disabled={testing}
+                    >
+                      {testing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      {testing
+                        ? "Testing..."
+                        : status === "connected" || status === "verified"
+                          ? "Re-test Connection"
+                          : "Test Connection"}
+                    </ModernButton>
+                    {isExistingConnection && showUpdateForm && (
+                      <ModernButton
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowUpdateForm(false)}
+                      >
+                        Cancel
+                      </ModernButton>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -252,14 +315,14 @@ const RegionEdit = () => {
   const { data: tenantsData } = useFetchTenants();
   const tenants = tenantsData?.data || [];
   const { data: countries = [] } = useFetchCountries();
-  const [selectedTenantToGrant, setSelectedTenantToGrant] = useState("");
+  const [selectedTenantsToGrant, setSelectedTenantsToGrant] = useState<string[]>([]);
+  const [tenantSearch, setTenantSearch] = useState("");
 
   const [formData, setFormData] = useState({
     name: "",
     code: "",
     country_code: "",
     city: "",
-    base_url: "",
     status: "healthy",
     is_active: true,
     visibility: "public",
@@ -275,7 +338,6 @@ const RegionEdit = () => {
 
   useEffect(() => {
     fetchRegionDetail();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code]);
 
   const fetchRegionDetail = async () => {
@@ -289,7 +351,6 @@ const RegionEdit = () => {
         code: regionData.code || "",
         country_code: regionData.country_code || "",
         city: regionData.city || "",
-        base_url: regionData.base_url || "",
         status: regionData.status || "healthy",
         is_active: regionData.is_active !== undefined ? regionData.is_active : true,
         visibility: regionData.visibility || "public",
@@ -304,19 +365,25 @@ const RegionEdit = () => {
 
         // 2. Get current status/config
         const credsRes = await adminRegionApi.getCredentialStatus(regionData.code);
-        const currentCreds = credsRes.data || {};
+        const currentCreds = credsRes.data?.credentials || {}; // Fix: access credentials nested object
 
         const initialConfigs = {};
         const verifiedSet = new Set();
 
         Object.keys(servicesDef).forEach((serviceType) => {
           const existing = currentCreds[serviceType];
+          // Check if service has credentials configured
+          const isConfigured = existing?.configured === true;
+          // Check if it's verified (status field from backend)
+          const isVerified = existing?.status === "verified";
+
           initialConfigs[serviceType] = {
-            enabled: !!existing,
-            mode: existing?.mode || "manual", // Default to manual if new, or existing mode
-            credentials: existing?.credentials || {},
+            enabled: isConfigured,
+            mode: isConfigured ? "automated" : "manual", // If has credentials, it's automated
+            credentials: {}, // Credentials are not returned for security, user needs to re-enter to change
           };
-          if (existing && existing.verified) {
+
+          if (isVerified) {
             verifiedSet.add(serviceType);
           }
         });
@@ -356,9 +423,6 @@ const RegionEdit = () => {
     const nextErrors = {};
     if (!formData.name.trim()) nextErrors.name = "Region name is required";
     if (!formData.country_code.trim()) nextErrors.country_code = "Country code is required";
-    if (!formData.base_url.trim()) nextErrors.base_url = "Base URL is required";
-    else if (!/^https?:\/\/.+/.test(formData.base_url.trim()))
-      nextErrors.base_url = "Enter a valid URL starting with http or https";
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -410,18 +474,15 @@ const RegionEdit = () => {
 
     setTestingService((prev) => ({ ...prev, [serviceType]: true }));
     try {
-      // If region exists, we can use the explicit verify endpoint or verifyServiceCredentials
-      // Since we are editing an existing region, we should use verifyProviderServiceCredentials
-      // to verify the NEW credentials before saving, OR verifyServiceCredentials if we wanted to verify stored ones.
-      // But here we are editing form state, so we verify raw credentials against provider.
-      // Reuse verifyProviderServiceCredentials for consistency with RegionCreate
-      const res = await adminRegionApi.verifyProviderServiceCredentials(
-        region.provider,
+      // For existing regions, use storeServiceCredentials which verifies AND stores
+      // This ensures credentials persist after page refresh
+      const res = await adminRegionApi.storeServiceCredentials(
+        region.code,
         serviceType,
         config.credentials
       );
       if (res.success) {
-        ToastUtils.success(`${serviceType} verified successfully`);
+        ToastUtils.success(`${serviceType} verified and saved successfully`);
         setConnectedServices((prev) => new Set(prev).add(serviceType));
       }
     } catch (error) {
@@ -446,11 +507,11 @@ const RegionEdit = () => {
 
       // Update basic details
       await adminRegionApi.updateRegion(code, {
-        ...formData,
         name: formData.name.trim(),
         country_code: formData.country_code.trim(),
         city: formData.city.trim(),
-        base_url: formData.base_url.trim(),
+        status: formData.status,
+        is_active: formData.is_active,
       });
 
       // Update Visibility if changed
@@ -519,6 +580,17 @@ const RegionEdit = () => {
       ToastUtils.error(error.message || "Failed to update region");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleRevokeFastTrack = async (tenantId: string) => {
+    try {
+      await adminRegionApi.revokeFastTrack(region.code, tenantId);
+      ToastUtils.success("Fast Track access revoked successfully");
+      fetchRegionDetail();
+    } catch (error) {
+      console.error("Error revoking Fast Track:", error);
+      ToastUtils.error(error.message || "Failed to revoke Fast Track access");
     }
   };
   const locationLabel = useMemo(() => {
@@ -658,7 +730,15 @@ const RegionEdit = () => {
                     </p>
                   </div>
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
+                  <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
+                    <p className="text-xs font-medium uppercase tracking-wide text-white/70">
+                      Provider
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-white capitalize">
+                      {region?.provider || "—not set"}
+                    </p>
+                  </div>
                   <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
                     <p className="text-xs font-medium uppercase tracking-wide text-white/70">
                       Active State
@@ -701,16 +781,6 @@ const RegionEdit = () => {
                   helper="Region codes cannot be changed."
                 />
               </div>
-
-              <ModernInput
-                label="Base URL"
-                name="base_url"
-                value={formData.base_url}
-                onChange={handleChange}
-                placeholder="https://api.example.com"
-                required
-                error={errors.base_url}
-              />
             </ModernCard>
 
             <ModernCard title="Location & Status" className="space-y-6">
@@ -883,7 +953,12 @@ const RegionEdit = () => {
                       onClick={async () => {
                         try {
                           await adminRegionApi.verifyRegion(region.code);
-                          fetchRegionDetail();
+                          // Update local state immediately to reflect the change
+                          setRegion((prev) => ({
+                            ...prev,
+                            is_verified: true,
+                            approval_status: "approved",
+                          }));
                           ToastUtils.success("Region approved successfully");
                         } catch (e) {
                           console.error(e);
@@ -909,10 +984,9 @@ const RegionEdit = () => {
                         ) {
                           try {
                             setSubmitting(true);
-                            const res = await adminRegionApi.revokeRegion(code);
+                            const res = await adminRegionApi.unverifyRegion(code);
                             if (res.success) {
                               ToastUtils.success("Region approval revoked");
-                              refetch();
                               // Update local state
                               setRegion((prev) => ({
                                 ...prev,
@@ -1038,114 +1112,242 @@ const RegionEdit = () => {
                   <div className="pt-4 border-t border-gray-100">
                     <h4 className="text-sm font-semibold text-gray-900 mb-3">Active Grants</h4>
                     <div className="space-y-3">
-                      {/* Simplified Grant Management UI */}
-                      <div className="flex gap-2">
-                        <select
-                          className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                          value={selectedTenantToGrant}
-                          onChange={(e) => setSelectedTenantToGrant(e.target.value)}
-                        >
-                          <option value="">Select a tenant...</option>
-                          {tenants.map((t: any) => (
-                            <option key={t.id} value={t.id}>
-                              {t.name} ({t.email})
-                            </option>
-                          ))}
-                        </select>
+                      {/* Search input */}
+                      <input
+                        type="text"
+                        placeholder="Search tenants..."
+                        value={tenantSearch}
+                        onChange={(e) => setTenantSearch(e.target.value)}
+                        className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                      />
+
+                      {/* Multi-select tenant list */}
+                      <div className="border border-gray-200 rounded-xl max-h-56 overflow-y-auto">
+                        {tenants.length === 0 ? (
+                          <p className="p-3 text-sm text-gray-500">No tenants available</p>
+                        ) : (
+                          (() => {
+                            const searchLower = tenantSearch.toLowerCase();
+                            const filteredTenants = tenants.filter(
+                              (t: any) =>
+                                t.name?.toLowerCase().includes(searchLower) ||
+                                t.email?.toLowerCase().includes(searchLower)
+                            );
+
+                            // Sort: already granted first, then ungranted
+                            const sortedTenants = [...filteredTenants].sort((a: any, b: any) => {
+                              const aGranted = region.fast_track_grants?.some(
+                                (g: any) => g.tenant_id === a.id
+                              );
+                              const bGranted = region.fast_track_grants?.some(
+                                (g: any) => g.tenant_id === b.id
+                              );
+                              if (aGranted && !bGranted) return -1;
+                              if (!aGranted && bGranted) return 1;
+                              return 0;
+                            });
+
+                            if (sortedTenants.length === 0) {
+                              return (
+                                <p className="p-3 text-sm text-gray-500">
+                                  No tenants match your search
+                                </p>
+                              );
+                            }
+
+                            return sortedTenants.map((t: any) => {
+                              const isAlreadyGranted = region.fast_track_grants?.some(
+                                (g: any) => g.tenant_id === t.id
+                              );
+                              const isSelected = selectedTenantsToGrant.includes(t.id);
+
+                              return (
+                                <label
+                                  key={t.id}
+                                  className={`flex items-center gap-3 p-3 border-b border-gray-100 last:border-b-0 cursor-pointer transition-colors ${
+                                    isAlreadyGranted
+                                      ? "bg-green-50"
+                                      : isSelected
+                                        ? "bg-blue-50"
+                                        : "hover:bg-gray-50"
+                                  }`}
+                                >
+                                  {isAlreadyGranted ? (
+                                    <div className="h-4 w-4 rounded border-green-500 bg-green-500 flex items-center justify-center">
+                                      <Check className="h-3 w-3 text-white" />
+                                    </div>
+                                  ) : (
+                                    <input
+                                      type="checkbox"
+                                      checked={isSelected}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setSelectedTenantsToGrant((prev) => [...prev, t.id]);
+                                        } else {
+                                          setSelectedTenantsToGrant((prev) =>
+                                            prev.filter((id) => id !== t.id)
+                                          );
+                                        }
+                                      }}
+                                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                      {t.name}
+                                    </p>
+                                    <p className="text-xs text-gray-500 truncate">{t.email}</p>
+                                  </div>
+                                  {isAlreadyGranted && (
+                                    <span className="text-xs text-green-600 font-medium bg-green-100 px-2 py-0.5 rounded-full">
+                                      Connected
+                                    </span>
+                                  )}
+                                </label>
+                              );
+                            });
+                          })()
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500">
+                          {selectedTenantsToGrant.length} tenant(s) selected
+                        </span>
                         <ModernButton
                           type="button"
                           variant="secondary"
+                          disabled={selectedTenantsToGrant.length === 0}
                           onClick={async () => {
-                            if (!selectedTenantToGrant) return;
+                            if (selectedTenantsToGrant.length === 0) return;
                             try {
-                              await adminRegionApi.grantFastTrack(
-                                region.id,
-                                selectedTenantToGrant,
-                                "Manual Grant via Admin UI"
+                              // Grant access to all selected tenants
+                              for (const tenantId of selectedTenantsToGrant) {
+                                await adminRegionApi.grantFastTrack(
+                                  region.id,
+                                  tenantId,
+                                  "Manual Grant via Admin UI"
+                                );
+                              }
+                              setSelectedTenantsToGrant([]);
+                              fetchRegionDetail(); // Refresh to see new grants
+                              ToastUtils.success(
+                                `Granted access to ${selectedTenantsToGrant.length} tenant(s)`
                               );
-                              setSelectedTenantToGrant("");
-                              fetchRegionDetail(); // Refresh to see new grant
                             } catch (e) {
                               console.error(e);
+                              ToastUtils.error("Failed to grant access");
                             }
                           }}
                         >
                           Grant Access
                         </ModernButton>
                       </div>
-
-                      {region.fast_track_grants && region.fast_track_grants.length > 0 ? (
-                        <div className="bg-gray-50 rounded-lg p-3 space-y-2">
-                          {region.fast_track_grants.map((grant: any) => (
-                            <div
-                              key={grant.id}
-                              className="flex justify-between items-center text-sm p-2 bg-white rounded border border-gray-200 shadow-sm"
-                            >
-                              <div className="flex flex-col">
-                                <span className="font-medium text-gray-900">
-                                  {grant.tenant?.name || grant.tenant_id}
-                                </span>
-                                <span className="text-xs text-gray-500">
-                                  Granted: {new Date(grant.created_at).toLocaleDateString()}
-                                </span>
-                              </div>
-                              <ModernButton
-                                title="Revoke Access"
-                                variant="ghost"
-                                className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto"
-                                onClick={async () => {
-                                  if (
-                                    window.confirm(
-                                      "Are you sure you want to revoke Fast Track access for this tenant?"
-                                    )
-                                  ) {
-                                    handleRevokeFastTrack(grant.tenant_id);
-                                  }
-                                  fetchRegionDetail();
-                                }}
-                              >
-                                Revoke
-                              </ModernButton>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-gray-500 italic">No active grants found.</p>
-                      )}
                     </div>
+
+                    {region.fast_track_grants && region.fast_track_grants.length > 0 ? (
+                      <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                        {region.fast_track_grants.map((grant: any) => (
+                          <div
+                            key={grant.id}
+                            className="flex justify-between items-center text-sm p-2 bg-white rounded border border-gray-200 shadow-sm"
+                          >
+                            <div className="flex flex-col">
+                              <span className="font-medium text-gray-900">
+                                {grant.tenant?.name || grant.tenant_id}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                Granted: {new Date(grant.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <ModernButton
+                              title="Revoke Access"
+                              variant="ghost"
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto"
+                              onClick={async () => {
+                                if (
+                                  window.confirm(
+                                    "Are you sure you want to revoke Fast Track access for this tenant?"
+                                  )
+                                ) {
+                                  handleRevokeFastTrack(grant.tenant_id);
+                                }
+                                fetchRegionDetail();
+                              }}
+                            >
+                              Revoke
+                            </ModernButton>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 italic">No active grants found.</p>
+                    )}
                   </div>
                 )}
               </div>
             </ModernCard>
 
-            <ModernCard title="Service Connections" className="space-y-4">
+            <ModernCard
+              title={`Service Connections${region?.provider ? ` (${region.provider.charAt(0).toUpperCase() + region.provider.slice(1)})` : ""}`}
+              className="space-y-4"
+            >
               <p className="text-sm text-gray-500">Configure services available in this region.</p>
+
+              {!region?.provider && (
+                <div className="p-4 rounded-lg bg-yellow-50 border border-yellow-200">
+                  <p className="text-sm font-medium text-yellow-800">
+                    No cloud provider set for this region.
+                  </p>
+                  <p className="text-xs text-yellow-600 mt-1">
+                    Provider must be configured to manage service connections.
+                  </p>
+                </div>
+              )}
+
+              {region?.provider && !providerServices?.services && (
+                <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
+                  <p className="text-sm font-medium text-gray-600">
+                    Loading service configurations...
+                  </p>
+                </div>
+              )}
+
               {providerServices?.services && (
                 <div className="space-y-4">
-                  {Object.entries(providerServices.services).map(([serviceType, serviceConfig]) => (
-                    <ServiceConfigCard
-                      key={serviceType}
-                      serviceType={serviceType}
-                      serviceConfig={serviceConfig}
-                      enabled={serviceConfigs[serviceType]?.enabled || false}
-                      onToggle={() => handleServiceToggle(serviceType)}
-                      fulfillmentMode={serviceConfigs[serviceType]?.mode || "manual"}
-                      onModeChange={(mode) => handleModeChange(serviceType, mode)}
-                      credentials={serviceConfigs[serviceType]?.credentials || {}}
-                      onCredentialChange={(field, value) =>
-                        handleCredentialChange(serviceType, field, value)
+                  {Object.entries(providerServices.services)
+                    .filter(([serviceType]) => {
+                      // Filter Zadara to only Compute and Object Storage (matching RegionCreate)
+                      if (region?.provider === "zadara") {
+                        return ["compute", "object_storage"].includes(serviceType);
                       }
-                      onTestConnection={() => handleTestConnection(serviceType)}
-                      testing={testingService[serviceType] || false}
-                      status={
-                        connectedServices.has(serviceType)
-                          ? "connected"
-                          : serviceConfigs[serviceType]?.enabled
-                            ? "not_connected"
-                            : "not_configured"
-                      }
-                    />
-                  ))}
+                      return true;
+                    })
+                    .map(([serviceType, serviceConfig]) => (
+                      <ServiceConfigCard
+                        key={serviceType}
+                        serviceType={serviceType}
+                        serviceConfig={serviceConfig}
+                        enabled={serviceConfigs[serviceType]?.enabled || false}
+                        onToggle={() => handleServiceToggle(serviceType)}
+                        fulfillmentMode={serviceConfigs[serviceType]?.mode || "manual"}
+                        onModeChange={(mode) => handleModeChange(serviceType, mode)}
+                        credentials={serviceConfigs[serviceType]?.credentials || {}}
+                        onCredentialChange={(field, value) =>
+                          handleCredentialChange(serviceType, field, value)
+                        }
+                        onTestConnection={() => handleTestConnection(serviceType)}
+                        testing={testingService[serviceType] || false}
+                        status={
+                          connectedServices.has(serviceType)
+                            ? "connected"
+                            : serviceConfigs[serviceType]?.enabled
+                              ? "not_connected"
+                              : "not_configured"
+                        }
+                        isExistingConnection={connectedServices.has(serviceType)}
+                      />
+                    ))}
                 </div>
               )}
             </ModernCard>

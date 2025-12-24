@@ -22,6 +22,7 @@ import TenantQuoteCalculator from "../dashboard/pages/TenantQuoteCalculator";
 import DashboardObjectStorage from "../dashboard/pages/objectStorage";
 import TenantObjectStorageCreate from "../dashboard/pages/objectStorageCreate";
 import TenantObjectStoragePurchase from "../dashboard/pages/objectStoragePurchase";
+import TenantObjectStorageDetail from "../tenantDashboard/pages/TenantObjectStorageDetail";
 import DashboardLeads from "../dashboard/pages/leads";
 import DashboardLeadCreate from "../dashboard/pages/leadCreate";
 import DashboardLeadDetails from "../dashboard/pages/leadDetails";
@@ -86,6 +87,10 @@ const TenantRoutes = () => {
         <Route
           path="/dashboard/object-storage/purchase"
           element={<TenantObjectStoragePurchase />}
+        />
+        <Route
+          path="/dashboard/object-storage/:accountId"
+          element={<TenantObjectStorageDetail />}
         />
         <Route path="/dashboard/requests" element={<Requests />} />
 

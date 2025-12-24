@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import AdminInstanceConfigurationCard from "../../../adminDashboard/components/AdminInstanceConfigurationCard";
 import { Configuration, AdditionalVolume, Option } from "../../../types/InstanceConfiguration";
 import { InstanceResources } from "../../../hooks/useInstanceResources";
+import NetworkPresetSelector from "../network/NetworkPresetSelector";
 
 // Type for custom fetch hook that returns { data, isFetching, ... }
 type FetchHookResult = { data: any; isFetching?: boolean; isLoading?: boolean };
@@ -23,6 +24,12 @@ interface ConfigurationListStepProps {
   onUpdateVolume: (configId: string, volumeId: string, updates: Partial<AdditionalVolume>) => void;
   onBack: () => void;
   onSubmit: () => void;
+
+  // Network preset configuration
+  networkPreset?: string | null;
+  onNetworkPresetChange?: (preset: string) => void;
+  showNetworkPresets?: boolean;
+  projectHasNetwork?: boolean; // If true, project already has VPC/network - hide preset selector
 
   // Optional context-specific hook overrides
   useProjectsHook?: FetchHookFn;
@@ -53,6 +60,12 @@ const ConfigurationListStep: React.FC<ConfigurationListStepProps> = ({
   onBack,
   onSubmit,
 
+  // Network preset props
+  networkPreset,
+  onNetworkPresetChange,
+  showNetworkPresets = true,
+  projectHasNetwork = false,
+
   // Hook overrides
   useProjectsHook,
   useSecurityGroupsHook,
@@ -77,8 +90,38 @@ const ConfigurationListStep: React.FC<ConfigurationListStepProps> = ({
       .filter((item: Option | null): item is Option => Boolean(item));
   }, [resources.bandwidths]);
 
+  // Only show network preset selector if:
+  // 1. showNetworkPresets is true
+  // 2. We have the onChange handler
+  // 3. Project does NOT already have network infrastructure
+  const shouldShowPresetSelector =
+    showNetworkPresets && onNetworkPresetChange && !projectHasNetwork;
+
   return (
     <div className="space-y-6">
+      {/* Network Preset Selector - Only for NEW projects without network */}
+      {shouldShowPresetSelector && (
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <NetworkPresetSelector
+            value={networkPreset ?? null}
+            onChange={onNetworkPresetChange}
+            disabled={isSubmitting}
+            showAdvancedOption={false}
+          />
+        </div>
+      )}
+
+      {/* Info banner if project already has network */}
+      {projectHasNetwork && (
+        <div className="rounded-xl border border-green-200 bg-green-50 p-4">
+          <p className="text-sm text-green-800">
+            ✓ This project already has network infrastructure configured. Your instance will use the
+            existing VPC and subnets.
+          </p>
+        </div>
+      )}
+
+      {/* Configuration Cards */}
       {configurations.map((cfg, index) => (
         <AdminInstanceConfigurationCard
           key={cfg.id}

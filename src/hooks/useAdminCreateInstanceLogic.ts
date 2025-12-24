@@ -45,6 +45,7 @@ export const useAdminCreateInstanceLogic = () => {
 
   const [billingCountry, setBillingCountry] = useState("US");
   const [isCountryLocked, setIsCountryLocked] = useState(false);
+  const [networkPreset, setNetworkPreset] = useState<string>("standard");
   const { resources, isLoadingResources } = useInstanceResources();
   const {
     configurations,
@@ -429,6 +430,10 @@ export const useAdminCreateInstanceLogic = () => {
     backendPricingData,
     effectivePaymentOption,
     billingCountryLabel,
+
+    // Network Preset
+    networkPreset,
+    setNetworkPreset,
 
     // Handlers
     handleModeChange,

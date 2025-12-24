@@ -157,6 +157,9 @@ const ClientObjectStoragePage: React.FC = () => {
             error={accountsError}
             onRetry={refreshAccounts}
             onRefresh={refreshAccounts}
+            onRowClick={(account: any) =>
+              navigate(`/client-dashboard/object-storage/${account.id}`)
+            }
             bucketsByAccount={accountBuckets}
             bucketLoading={bucketLoading}
             bucketErrors={bucketErrors}

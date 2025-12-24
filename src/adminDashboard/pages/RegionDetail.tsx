@@ -7,6 +7,7 @@ import {
   Building2,
   CheckCircle,
   Clock,
+  Database,
   DollarSign,
   Edit,
   KeyRound,
@@ -14,6 +15,7 @@ import {
   Loader2,
   MapPin,
   RefreshCw,
+  Server,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -73,6 +75,7 @@ const RegionDetail = () => {
   const navigate = useNavigate();
   const [region, setRegion] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [credentialStatus, setCredentialStatus] = useState({});
 
   useEffect(() => {
     fetchRegionDetail();
@@ -83,6 +86,16 @@ const RegionDetail = () => {
       setLoading(true);
       const response = await adminRegionApi.fetchRegionByCode(code);
       setRegion(response.data);
+
+      // Fetch credential status for services
+      if (response.data?.code) {
+        try {
+          const credsRes = await adminRegionApi.getCredentialStatus(response.data.code);
+          setCredentialStatus(credsRes.data?.credentials || {});
+        } catch (err) {
+          console.warn("Could not fetch credential status", err);
+        }
+      }
     } catch (error) {
       console.error("Error fetching region:", error);
       ToastUtils.error("Failed to load region details");
@@ -151,19 +164,6 @@ const RegionDetail = () => {
           <RefreshCw size={16} />
           Refresh
         </ModernButton>
-
-        {region.fulfillment_mode === "automated" ? (
-          <ModernButton
-            key="credentials"
-            variant={region.msp_credentials_verified_at ? "outline" : "primary"}
-            size="sm"
-            className="flex items-center gap-2"
-            onClick={() => navigate(`/admin-dashboard/regions/${region.code}/credentials`)}
-          >
-            <ShieldCheck size={16} />
-            {region.msp_credentials_verified_at ? "Update Credentials" : "Verify Credentials"}
-          </ModernButton>
-        ) : null}
 
         <Link to={`/admin-dashboard/regions/${region.code}/edit`}>
           <ModernButton variant="secondary" size="sm" className="flex items-center gap-2">
@@ -341,15 +341,6 @@ const RegionDetail = () => {
 
                   <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
                     <p className="text-xs font-medium uppercase tracking-wide text-white/70">
-                      Base URL
-                    </p>
-                    <p className="mt-2 break-all text-sm font-semibold text-white/90">
-                      {region.base_url || "Not configured"}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur">
-                    <p className="text-xs font-medium uppercase tracking-wide text-white/70">
                       Last Updated
                     </p>
                     <p className="mt-2 text-sm font-semibold text-white">
@@ -377,6 +368,7 @@ const RegionDetail = () => {
           )}
 
           <div className="grid gap-6 xl:grid-cols-[1.7fr,1fr]">
+            {/* Left Column: Core Attributes + Operational Profile */}
             <div className="space-y-6">
               <ModernCard title="Core Attributes" className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -384,11 +376,6 @@ const RegionDetail = () => {
                     label="Region Code"
                     value={<span className="font-mono">{region.code || "—"}</span>}
                     icon={KeyRound}
-                  />
-                  <AttributeTile
-                    label="Base URL"
-                    value={<span className="break-all">{region.base_url || "—"}</span>}
-                    icon={LinkIcon}
                   />
                   <AttributeTile
                     label="Location"
@@ -436,6 +423,7 @@ const RegionDetail = () => {
               </ModernCard>
             </div>
 
+            {/* Right Column: Ownership & Access + Service Connections */}
             <div className="space-y-6">
               <ModernCard title="Ownership & Access" className="space-y-4">
                 <div className="grid gap-4">
@@ -455,66 +443,90 @@ const RegionDetail = () => {
                 </div>
               </ModernCard>
 
-              {shouldShowAutomationCard && (
-                <ModernCard title="Automation & Credentials" className="space-y-4">
+              {/* Service Connections */}
+              <ModernCard title="Service Connections" className="space-y-4">
+                <div className="grid gap-3">
+                  {/* Compute (VMs) */}
                   <div
-                    className={`flex flex-col gap-3 rounded-2xl border px-4 py-3 ${
-                      region.msp_credentials_verified_at
-                        ? "border-green-200 bg-green-50 text-green-800"
-                        : "border-yellow-200 bg-yellow-50 text-yellow-800"
+                    className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${
+                      credentialStatus.compute?.status === "verified"
+                        ? "border-green-200 bg-green-50"
+                        : credentialStatus.compute?.configured
+                          ? "border-yellow-200 bg-yellow-50"
+                          : "border-gray-200 bg-gray-50"
                     }`}
                   >
-                    <div className="flex items-start gap-3">
-                      {region.msp_credentials_verified_at ? (
-                        <CheckCircle size={20} />
-                      ) : (
-                        <AlertCircle size={20} />
-                      )}
-                      <div className="space-y-1">
-                        <p className="text-sm font-semibold">
-                          {region.msp_credentials_verified_at
-                            ? "Credentials Verified"
-                            : "Credentials Not Verified"}
-                        </p>
-                        <p className="text-xs">
-                          {region.msp_credentials_verified_at
-                            ? `Last verified ${formatDateTime(region.msp_credentials_verified_at)}`
-                            : "Automated provisioning requires verified MSP admin credentials."}
-                        </p>
-                      </div>
+                    <div
+                      className={`rounded-lg p-1.5 ${
+                        credentialStatus.compute?.status === "verified"
+                          ? "bg-green-100 text-green-600"
+                          : "bg-gray-100 text-gray-500"
+                      }`}
+                    >
+                      <Server size={18} />
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <ModernButton
-                        variant={region.msp_credentials_verified_at ? "outline" : "primary"}
-                        size="sm"
-                        className="flex items-center gap-2"
-                        onClick={() =>
-                          navigate(`/admin-dashboard/regions/${region.code}/credentials`)
-                        }
-                      >
-                        <ShieldCheck size={16} />
-                        {region.msp_credentials_verified_at
-                          ? "Update Credentials"
-                          : "Verify Credentials"}
-                      </ModernButton>
-                      <ModernButton
-                        variant="ghost"
-                        size="sm"
-                        className="flex items-center gap-2"
-                        onClick={fetchRegionDetail}
-                      >
-                        <RefreshCw size={16} />
-                        Refresh Status
-                      </ModernButton>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900">Compute (VMs)</p>
+                      <p className="text-xs text-gray-500 truncate">Keystone authentication</p>
                     </div>
+                    {credentialStatus.compute?.status === "verified" ? (
+                      <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                        <CheckCircle size={12} />
+                        Verified
+                      </span>
+                    ) : credentialStatus.compute?.configured ? (
+                      <span className="flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
+                        <AlertCircle size={12} />
+                        Pending
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+                        —
+                      </span>
+                    )}
                   </div>
 
-                  <p className="text-xs text-gray-500">
-                    Credentials are stored securely and used to orchestrate workloads in this
-                    region. Contact platform engineering if you need to rotate credentials.
-                  </p>
-                </ModernCard>
-              )}
+                  {/* Object Storage */}
+                  <div
+                    className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${
+                      credentialStatus.object_storage?.status === "verified"
+                        ? "border-green-200 bg-green-50"
+                        : credentialStatus.object_storage?.configured
+                          ? "border-yellow-200 bg-yellow-50"
+                          : "border-gray-200 bg-gray-50"
+                    }`}
+                  >
+                    <div
+                      className={`rounded-lg p-1.5 ${
+                        credentialStatus.object_storage?.status === "verified"
+                          ? "bg-green-100 text-green-600"
+                          : "bg-gray-100 text-gray-500"
+                      }`}
+                    >
+                      <Database size={18} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900">Object Storage</p>
+                      <p className="text-xs text-gray-500 truncate">S3-compatible (ZIOS)</p>
+                    </div>
+                    {credentialStatus.object_storage?.status === "verified" ? (
+                      <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                        <CheckCircle size={12} />
+                        Verified
+                      </span>
+                    ) : credentialStatus.object_storage?.configured ? (
+                      <span className="flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
+                        <AlertCircle size={12} />
+                        Pending
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+                        —
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </ModernCard>
             </div>
           </div>
 

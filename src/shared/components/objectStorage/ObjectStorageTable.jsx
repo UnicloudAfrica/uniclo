@@ -1,16 +1,13 @@
 import React, { useMemo, useState } from "react";
 import {
   AlertCircle,
-  ChevronDown,
-  ChevronRight,
+  ArrowRight,
   Database,
-  FolderPlus,
   HardDrive,
   RefreshCw,
   Search,
-  Trash2,
+  ExternalLink,
 } from "lucide-react";
-import ToastUtils from "../../../utils/toastUtil.ts";
 
 const STATUS_META = {
   active: {
@@ -39,20 +36,10 @@ const STATUS_FILTERS = [
   { value: "failed", label: "Failed" },
 ];
 
-const formatBytes = (bytes) => {
-  if (!Number.isFinite(bytes) || bytes <= 0) return "—";
-  const gib = bytes / 1024 ** 3;
-  if (gib >= 1) {
-    return `${gib.toFixed(2)} GiB`;
-  }
-  const mib = bytes / 1024 ** 2;
-  return `${mib.toFixed(2)} MiB`;
-};
-
 const formatDateTime = (value) => {
   if (!value) return "—";
   try {
-    return new Date(value).toLocaleString();
+    return new Date(value).toLocaleDateString();
   } catch (error) {
     return value;
   }
@@ -121,19 +108,19 @@ const EmptyState = ({ icon: Icon = HardDrive, title, description, actions }) => 
 
 const DEFAULT_PAGE_SIZES = [10, 25, 50];
 
+/**
+ * Simplified ObjectStorageTable
+ *
+ * Displays accounts in a clean table/card layout.
+ * Clicking a row navigates to the detail page instead of expanding inline.
+ */
 const ObjectStorageTable = ({
   accounts = [],
   loading = false,
   error = null,
   onRetry,
   onRefresh,
-  bucketsByAccount = {},
-  bucketLoading = {},
-  bucketErrors = {},
-  onLoadBuckets,
-  onCreateBucket,
-  onDeleteBucket,
-  enableBucketActions = false,
+  onRowClick,
   emptyState,
   paginationMeta = null,
   paginationState = null,
@@ -143,9 +130,6 @@ const ObjectStorageTable = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [expandedAccounts, setExpandedAccounts] = useState({});
-  const [bucketForms, setBucketForms] = useState({});
-  const [bucketActionLoading, setBucketActionLoading] = useState({});
 
   const filteredAccounts = useMemo(() => {
     const normalizedQuery = searchTerm.toLowerCase().trim();
@@ -166,260 +150,64 @@ const ObjectStorageTable = ({
     });
   }, [accounts, searchTerm, statusFilter]);
 
-  const handleToggleExpand = async (accountId) => {
-    const willExpand = !expandedAccounts[accountId];
-    setExpandedAccounts((prev) => ({
-      ...prev,
-      [accountId]: willExpand,
-    }));
-    if (willExpand && onLoadBuckets) {
-      try {
-        await onLoadBuckets(accountId);
-      } catch (loadError) {
-        // surfaced via toast upstream
-      }
-    }
-  };
-
-  const handleCreateBucket = async (accountId) => {
-    if (!enableBucketActions || !onCreateBucket) {
-      return;
-    }
-    const name = (bucketForms[accountId] || "").trim();
-    if (!name) {
-      ToastUtils.error("Provide a bucket name before creating.");
-      return;
-    }
-    setBucketActionLoading((prev) => ({ ...prev, [accountId]: true }));
-    try {
-      await onCreateBucket(accountId, name);
-      setBucketForms((prev) => ({ ...prev, [accountId]: "" }));
-    } finally {
-      setBucketActionLoading((prev) => ({ ...prev, [accountId]: false }));
-    }
-  };
-
-  const handleDeleteBucket = async (accountId, bucket) => {
-    if (!enableBucketActions || !onDeleteBucket) {
-      return;
-    }
-    const label = bucket?.name || bucket?.id;
-    if (
-      typeof window !== "undefined" &&
-      !window.confirm(`Delete bucket "${label}"? This action cannot be undone.`)
-    ) {
-      return;
-    }
-    setBucketActionLoading((prev) => ({ ...prev, [accountId]: true }));
-    try {
-      await onDeleteBucket(accountId, bucket);
-    } finally {
-      setBucketActionLoading((prev) => ({ ...prev, [accountId]: false }));
-    }
-  };
-
-  const renderBucketSection = (account) => {
-    const buckets = bucketsByAccount?.[account.id] || [];
-    const isLoading = bucketLoading?.[account.id];
-    const bucketError = bucketErrors?.[account.id];
-
-    return (
-      <div className="space-y-4 rounded-2xl bg-slate-50 px-4 py-4 sm:px-6">
-        {enableBucketActions && (
-          <div className="rounded-xl border border-slate-200 bg-white p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Create bucket
-            </p>
-            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  value={bucketForms[account.id] || ""}
-                  onChange={(event) =>
-                    setBucketForms((prev) => ({
-                      ...prev,
-                      [account.id]: event.target.value,
-                    }))
-                  }
-                  placeholder="bucket-name"
-                  className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 outline-none transition focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
-                  disabled={bucketActionLoading[account.id]}
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => handleCreateBucket(account.id)}
-                disabled={bucketActionLoading[account.id]}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-primary-500/20 transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <FolderPlus className="h-4 w-4" />
-                Create
-              </button>
-            </div>
-          </div>
-        )}
-
-        {isLoading && <p className="text-sm text-slate-500">Loading buckets…</p>}
-        {bucketError && !isLoading && <p className="text-sm text-rose-600">{bucketError}</p>}
-        {!isLoading && !bucketError && buckets.length === 0 && (
-          <p className="text-sm text-slate-500">No buckets available for this account.</p>
-        )}
-        {!isLoading && !bucketError && buckets.length > 0 && (
-          <div className="space-y-3">
-            {buckets.map((bucket) => (
-              <div
-                key={bucket.id}
-                className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
-              >
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="font-semibold text-slate-900">{bucket.name}</p>
-                    <p className="text-xs uppercase tracking-wide text-slate-500">
-                      {bucket.storage_class || "standard"}
-                    </p>
-                  </div>
-                  {enableBucketActions && (
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteBucket(account.id, bucket)}
-                      disabled={bucketActionLoading[account.id]}
-                      className="inline-flex items-center gap-2 rounded-full border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Delete
-                    </button>
-                  )}
-                </div>
-                <dl className="mt-3 grid gap-3 text-xs text-slate-500 sm:grid-cols-4">
-                  <div>
-                    <dt>Objects</dt>
-                    <dd className="text-sm font-semibold text-slate-900">
-                      {bucket.object_count ?? 0}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Size</dt>
-                    <dd className="text-sm font-semibold text-slate-900">
-                      {formatBytes(bucket.size_bytes)}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Versioning</dt>
-                    <dd className="text-sm font-semibold text-slate-900">
-                      {bucket.versioning_enabled ? "Enabled" : "Disabled"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Encryption</dt>
-                    <dd className="text-sm font-semibold text-slate-900">
-                      {bucket.encryption_enabled ? "Enabled" : "Disabled"}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
   const renderTableBody = () => (
     <table className="min-w-full divide-y divide-slate-200 text-sm">
       <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
         <tr>
-          <th className="w-10 px-4 py-4" />
           <th className="px-4 py-4">Account</th>
           <th className="px-4 py-4">Status</th>
           <th className="px-4 py-4">Provider / Region</th>
           <th className="px-4 py-4">Quota</th>
           <th className="px-4 py-4 text-center">Buckets</th>
-          <th className="px-4 py-4">Endpoint</th>
-          <th className="px-4 py-4">Created / Synced</th>
+          <th className="px-4 py-4">Created</th>
+          <th className="px-4 py-4 w-12"></th>
         </tr>
       </thead>
       <tbody className="divide-y divide-slate-100">
         {filteredAccounts.map((account) => {
-          const isExpanded = !!expandedAccounts[account.id];
-          const endpoint =
-            account.meta?.public_url ||
-            account.meta?.provisioning?.result?.public_url ||
-            "Not available";
           const quota = account.quota_gb ? `${account.quota_gb} GiB` : "Uncapped";
 
           return (
-            <React.Fragment key={account.id}>
-              <tr className="transition hover:bg-slate-50/60">
-                <td className="px-4 py-4 align-top">
-                  <button
-                    type="button"
-                    onClick={() => handleToggleExpand(account.id)}
-                    className="rounded-full border border-slate-200 p-1 text-slate-500 transition hover:border-slate-300 hover:text-primary-600"
-                  >
-                    {isExpanded ? (
-                      <ChevronDown className="h-4 w-4" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4" />
-                    )}
-                  </button>
-                </td>
-                <td className="px-4 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="hidden rounded-xl bg-slate-100 p-3 text-slate-500 md:block">
-                      <Database className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {account.name || "Unnamed account"}
-                      </p>
-                      <p className="text-xs font-mono text-slate-400">{account.id}</p>
-                    </div>
+            <tr
+              key={account.id}
+              onClick={() => onRowClick && onRowClick(account)}
+              className="transition hover:bg-primary-50/50 cursor-pointer group"
+            >
+              <td className="px-4 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="hidden rounded-xl bg-slate-100 p-3 text-slate-500 md:block group-hover:bg-primary-100 group-hover:text-primary-600 transition-colors">
+                    <Database className="h-5 w-5" />
                   </div>
-                </td>
-                <td className="px-4 py-4">
-                  <StatusBadge status={account.status} />
-                </td>
-                <td className="px-4 py-4 text-sm text-slate-700">
-                  <p className="font-medium text-slate-900">
-                    {account.provider?.toUpperCase() || "—"}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Region {account.region?.toUpperCase() || "n/a"}
-                  </p>
-                </td>
-                <td className="px-4 py-4 text-sm font-semibold text-slate-900">{quota}</td>
-                <td className="px-4 py-4 text-center text-sm font-semibold text-slate-900">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900 group-hover:text-primary-700">
+                      {account.name || "Unnamed account"}
+                    </p>
+                    <p className="text-xs text-slate-400">{account.id?.slice(0, 8)}...</p>
+                  </div>
+                </div>
+              </td>
+              <td className="px-4 py-4">
+                <StatusBadge status={account.status} />
+              </td>
+              <td className="px-4 py-4 text-sm text-slate-700">
+                <p className="font-medium text-slate-900">
+                  {account.provider?.toUpperCase() || "—"}
+                </p>
+                <p className="text-xs text-slate-500">{account.region?.toUpperCase() || "n/a"}</p>
+              </td>
+              <td className="px-4 py-4 text-sm font-semibold text-slate-900">{quota}</td>
+              <td className="px-4 py-4 text-center">
+                <span className="inline-flex items-center justify-center min-w-[32px] h-8 rounded-full bg-slate-100 text-sm font-semibold text-slate-700 group-hover:bg-primary-100 group-hover:text-primary-700">
                   {account.buckets_count ?? 0}
-                </td>
-                <td className="px-4 py-4 text-sm">
-                  <p className="max-w-[220px] truncate text-slate-600">{endpoint}</p>
-                  {account.meta?.tenant_name && (
-                    <p className="text-xs text-slate-400">Tenant {account.meta.tenant_name}</p>
-                  )}
-                </td>
-                <td className="px-4 py-4 text-xs text-slate-500">
-                  <p>
-                    Created{" "}
-                    <span className="font-semibold text-slate-900">
-                      {formatDateTime(account.created_at)}
-                    </span>
-                  </p>
-                  <p className="mt-1">
-                    Synced{" "}
-                    <span className="font-semibold text-slate-900">
-                      {formatDateTime(account.synced_at)}
-                    </span>
-                  </p>
-                </td>
-              </tr>
-              {isExpanded && (
-                <tr>
-                  <td colSpan={8} className="px-4 pb-6 pt-2 sm:px-6">
-                    {renderBucketSection(account)}
-                  </td>
-                </tr>
-              )}
-            </React.Fragment>
+                </span>
+              </td>
+              <td className="px-4 py-4 text-sm text-slate-500">
+                {formatDateTime(account.created_at)}
+              </td>
+              <td className="px-4 py-4">
+                <ArrowRight className="h-5 w-5 text-slate-300 group-hover:text-primary-500 transition-colors" />
+              </td>
+            </tr>
           );
         })}
       </tbody>
@@ -427,52 +215,48 @@ const ObjectStorageTable = ({
   );
 
   const renderMobileAccountCard = (account) => {
-    const isExpanded = !!expandedAccounts[account.id];
-    const endpoint =
-      account.meta?.public_url || account.meta?.provisioning?.result?.public_url || "Not available";
     const quota = account.quota_gb ? `${account.quota_gb} GiB` : "Uncapped";
     return (
-      <div key={account.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-base font-semibold text-slate-900">
-              {account.name || "Unnamed account"}
-            </p>
-            <p className="text-sm text-slate-500">
-              {account.provider?.toUpperCase() || "—"} • Region{" "}
-              {account.region?.toUpperCase() || "n/a"}
-            </p>
+      <div
+        key={account.id}
+        onClick={() => onRowClick && onRowClick(account)}
+        className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm cursor-pointer hover:border-primary-300 hover:shadow-md transition-all"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-primary-100 p-3 text-primary-600">
+              <Database className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-base font-semibold text-slate-900">
+                {account.name || "Unnamed account"}
+              </p>
+              <p className="text-sm text-slate-500">
+                {account.provider?.toUpperCase() || "—"} • {account.region?.toUpperCase() || "n/a"}
+              </p>
+            </div>
           </div>
           <StatusBadge status={account.status} />
         </div>
-        <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">Quota</dt>
-            <dd className="text-base font-semibold text-slate-900">{quota}</dd>
+        <div className="mt-4 flex items-center justify-between">
+          <div className="flex gap-6">
+            <div>
+              <p className="text-xs text-slate-500">Quota</p>
+              <p className="text-sm font-semibold text-slate-900">{quota}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500">Buckets</p>
+              <p className="text-sm font-semibold text-slate-900">{account.buckets_count ?? 0}</p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500">Created</p>
+              <p className="text-sm font-semibold text-slate-900">
+                {formatDateTime(account.created_at)}
+              </p>
+            </div>
           </div>
-          <div>
-            <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Buckets
-            </dt>
-            <dd className="text-base font-semibold text-slate-900">{account.buckets_count ?? 0}</dd>
-          </div>
-        </dl>
-        <div className="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Endpoint</p>
-          <p className="truncate">{endpoint}</p>
-          {account.meta?.tenant_name && (
-            <p className="text-xs text-slate-400">Tenant {account.meta.tenant_name}</p>
-          )}
+          <ArrowRight className="h-5 w-5 text-primary-500" />
         </div>
-        <button
-          type="button"
-          onClick={() => handleToggleExpand(account.id)}
-          className="mt-4 inline-flex w-full items-center justify-between rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-        >
-          <span>{isExpanded ? "Hide buckets" : "View buckets"}</span>
-          {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-        </button>
-        {isExpanded && <div className="mt-3">{renderBucketSection(account)}</div>}
       </div>
     );
   };
@@ -616,7 +400,9 @@ const ObjectStorageTable = ({
     body = (
       <>
         <div className="hidden overflow-x-auto md:block">{renderTableBody()}</div>
-        <div className="space-y-4 md:hidden">{filteredAccounts.map(renderMobileAccountCard)}</div>
+        <div className="space-y-4 p-4 md:hidden">
+          {filteredAccounts.map(renderMobileAccountCard)}
+        </div>
       </>
     );
   }

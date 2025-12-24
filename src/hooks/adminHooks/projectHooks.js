@@ -369,3 +369,94 @@ export const useSyncProjectUser = () => {
     },
   });
 };
+
+// ============================================
+// NETWORK EXPANSION HOOKS (Zadara Sync)
+// ============================================
+
+// GET: Fetch network status for a project
+const fetchNetworkStatus = async (projectId) => {
+  const encodedId = encodeURIComponent(projectId);
+  const res = await silentApi("GET", `/projects/${encodedId}/network/status`);
+  return res;
+};
+
+// POST: Enable internet access (creates IGW + assigns edge network)
+const enableInternetAccess = async (projectId) => {
+  const encodedId = encodeURIComponent(projectId);
+  const res = await api("POST", `/projects/${encodedId}/network/enable-internet`);
+  return res;
+};
+
+// POST: Add subnet to project
+const addSubnet = async ({ projectId, data }) => {
+  const encodedId = encodeURIComponent(projectId);
+  const res = await api("POST", `/projects/${encodedId}/network/subnets`, data);
+  return res;
+};
+
+// POST: Add security group to project
+const addSecurityGroup = async ({ projectId, data }) => {
+  const encodedId = encodeURIComponent(projectId);
+  const res = await api("POST", `/projects/${encodedId}/network/security-groups`, data);
+  return res;
+};
+
+// Hook to fetch network status
+export const useProjectNetworkStatus = (projectId, options = {}) => {
+  return useQuery({
+    queryKey: ["admin-project-network-status", projectId],
+    queryFn: () => fetchNetworkStatus(projectId),
+    enabled: !!projectId && options.enabled !== false,
+    staleTime: 0, // Always fetch fresh to avoid stale '0' counts
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+
+// Hook to enable internet access
+export const useEnableInternetAccess = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: enableInternetAccess,
+    onSuccess: (data, projectId) => {
+      // Invalidate network status and project queries
+      queryClient.invalidateQueries(["admin-project-network-status", projectId]);
+      queryClient.invalidateQueries(["admin-project", projectId]);
+      queryClient.invalidateQueries(["admin-project-status", projectId]);
+    },
+    onError: (error) => {
+      console.error("Error enabling internet access:", error);
+    },
+  });
+};
+
+// Hook to add subnet
+export const useAddSubnet = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: addSubnet,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries(["admin-project-network-status", variables.projectId]);
+      queryClient.invalidateQueries(["admin-subnets"]);
+    },
+    onError: (error) => {
+      console.error("Error adding subnet:", error);
+    },
+  });
+};
+
+// Hook to add security group
+export const useAddSecurityGroup = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: addSecurityGroup,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries(["admin-project-network-status", variables.projectId]);
+      queryClient.invalidateQueries(["admin-security-groups"]);
+    },
+    onError: (error) => {
+      console.error("Error adding security group:", error);
+    },
+  });
+};

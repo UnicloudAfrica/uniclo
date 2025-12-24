@@ -39,6 +39,7 @@ import AdminPricingCalculator from "../adminDashboard/pages/AdminPricingCalculat
 import AdminInfrastructureSetup from "../adminDashboard/pages/adminInfrastructureSetup";
 import AdminObjectStorage from "../adminDashboard/pages/adminObjectStorage";
 import AdminObjectStorageCreate from "../adminDashboard/pages/adminObjectStorageCreate";
+import AdminObjectStorageDetail from "../adminDashboard/pages/AdminObjectStorageDetail";
 import AdminCreateInstance from "../adminDashboard/pages/AdminCreateInstance";
 import EnhancedProfileSettings from "../adminDashboard/pages/EnhancedProfileSettings";
 import AdminInstances from "../adminDashboard/pages/AdminInstances";
@@ -51,13 +52,23 @@ import RegionCreate from "../adminDashboard/pages/RegionCreate";
 import RegionDetail from "../adminDashboard/pages/RegionDetail";
 import RegionEdit from "../adminDashboard/pages/RegionEdit";
 import AdminOnboardingReview from "../adminDashboard/pages/AdminOnboardingReview";
-import RegionCredentials from "../adminDashboard/pages/RegionCredentials";
 import AdminSubscriptionPlans from "../adminDashboard/pages/AdminSubscriptionPlans";
 import WalletDashboard from "../adminDashboard/pages/WalletDashboard";
 import SettlementsDashboard from "../adminDashboard/pages/SettlementsDashboard";
 import PayoutsDashboard from "../adminDashboard/pages/PayoutsDashboard";
 import AnalyticsDashboard from "../adminDashboard/pages/AnalyticsDashboard";
 import TicketsDashboard from "../adminDashboard/pages/TicketsDashboard";
+
+// Infrastructure Pages
+import {
+  AdminNatGateways,
+  AdminElasticIps,
+  AdminSecurityGroupRules,
+  AdminSubnets,
+  AdminRouteTables,
+  AdminNetworkAcls,
+  AdminVpcPeering,
+} from "../adminDashboard/pages/infrastructure";
 
 const AdminRoutes = (): React.JSX.Element => {
   return (
@@ -95,7 +106,6 @@ const AdminRoutes = (): React.JSX.Element => {
       <Route path="/admin-dashboard/regions/create" element={<RegionCreate />} />
       <Route path="/admin-dashboard/regions/:id" element={<RegionDetail />} />
       <Route path="/admin-dashboard/regions/:id/edit" element={<RegionEdit />} />
-      <Route path="/admin-dashboard/regions/:id/credentials" element={<RegionCredentials />} />
       <Route path="/admin-dashboard/region-approvals" element={<RegionApprovals />} />
       <Route path="/admin-dashboard/onboarding-review" element={<AdminOnboardingReview />} />
       <Route path="/admin-dashboard/onboarding-settings" element={<AdminOnboardingSettings />} />
@@ -113,11 +123,19 @@ const AdminRoutes = (): React.JSX.Element => {
       <Route path="/admin-dashboard/pricing-calculator" element={<AdminPricingCalculator />} />
       <Route path="/admin-dashboard/create-invoice" element={<CreateInvoice />} />
 
-      <Route path="/admin-dashboard/profile-settings" element={<EnhancedProfileSettings />} />
+      <Route path="/admin-dashboard/account" element={<EnhancedProfileSettings />} />
       <Route path="/admin-dashboard/instances" element={<AdminInstances />} />
       <Route path="/admin-dashboard/instances/details" element={<AdminInstancesDetails />} />
       <Route path="/admin-dashboard/object-storage" element={<AdminObjectStorage />} />
       <Route path="/admin-dashboard/object-storage/create" element={<AdminObjectStorageCreate />} />
+      <Route
+        path="/admin-dashboard/object-storage/:accountId"
+        element={<AdminObjectStorageDetail />}
+      />
+      <Route
+        path="/admin-dashboard/object-storage/:accountId/buckets/:bucketName/*"
+        element={<AdminObjectStorageDetail />}
+      />
       <Route path="/admin-dashboard/tax-configuration" element={<AdminTax />} />
       <Route path="/admin-dashboard/subscription-plans" element={<AdminSubscriptionPlans />} />
       <Route path="/admin-dashboard/wallet" element={<WalletDashboard />} />
@@ -125,6 +143,18 @@ const AdminRoutes = (): React.JSX.Element => {
       <Route path="/admin-dashboard/payouts" element={<PayoutsDashboard />} />
       <Route path="/admin-dashboard/analytics" element={<AnalyticsDashboard />} />
       <Route path="/admin-dashboard/tickets" element={<TicketsDashboard />} />
+
+      {/* Infrastructure Management */}
+      <Route path="/admin-dashboard/infrastructure/nat-gateways" element={<AdminNatGateways />} />
+      <Route path="/admin-dashboard/infrastructure/elastic-ips" element={<AdminElasticIps />} />
+      <Route
+        path="/admin-dashboard/infrastructure/security-group-rules"
+        element={<AdminSecurityGroupRules />}
+      />
+      <Route path="/admin-dashboard/infrastructure/subnets" element={<AdminSubnets />} />
+      <Route path="/admin-dashboard/infrastructure/route-tables" element={<AdminRouteTables />} />
+      <Route path="/admin-dashboard/infrastructure/network-acls" element={<AdminNetworkAcls />} />
+      <Route path="/admin-dashboard/infrastructure/vpc-peering" element={<AdminVpcPeering />} />
     </>
   );
 };

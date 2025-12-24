@@ -14,6 +14,7 @@ import ClientLaunch from "../clientDashboard/pages/ClientLaunch";
 import ObjectStoragePage from "../clientDashboard/pages/ObjectStoragePage";
 import ClientObjectStoragePurchasePage from "../clientDashboard/pages/ObjectStoragePurchasePage";
 import ClientObjectStorageCreate from "../clientDashboard/pages/ObjectStorageCreate";
+import ClientObjectStorageDetail from "../clientDashboard/pages/ClientObjectStorageDetail";
 import ClientPricingCalculator from "../clientDashboard/pages/ClientPricingCalculator";
 import ClientPaymentHistory from "../clientDashboard/pages/ClientTransaction";
 import ClientSettings from "../clientDashboard/pages/ClientAccountSettings";
@@ -46,6 +47,10 @@ const ClientRoutes = () => {
       <Route
         path="/client-dashboard/object-storage/create"
         element={<ClientObjectStorageCreate />}
+      />
+      <Route
+        path="/client-dashboard/object-storage/:accountId"
+        element={<ClientObjectStorageDetail />}
       />
       <Route path="/client-dashboard/pricing-calculator" element={<ClientPricingCalculator />} />
       <Route path="/client-dashboard/orders-payments" element={<ClientPaymentHistory />} />

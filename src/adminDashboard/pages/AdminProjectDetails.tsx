@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
   CheckCircle,
@@ -13,6 +14,7 @@ import {
   XCircle,
   Wifi,
   Route,
+  ArrowLeft,
 } from "lucide-react";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminSidebar from "../components/AdminSidebar";
@@ -29,6 +31,9 @@ import {
   useProjectMembershipSuggestions,
   useUpdateProject,
   useEnableVpc,
+  useProjectNetworkStatus,
+  useEnableInternetAccess,
+  useProvisionProject,
 } from "../../hooks/adminHooks/projectHooks";
 import { useProjectInfrastructureStatus } from "../../hooks/adminHooks/projectInfrastructureHooks";
 import KeyPairs from "./infraComps/keyPairs";
@@ -42,6 +47,7 @@ import { useFetchSubnets } from "../../hooks/adminHooks/subnetHooks";
 import { useFetchIgws } from "../../hooks/adminHooks/igwHooks";
 import { useFetchRouteTables } from "../../hooks/adminHooks/routeTableHooks";
 import { useFetchElasticIps } from "../../hooks/adminHooks/eipHooks";
+import { useFetchVpcs } from "../../hooks/adminHooks/vcpHooks";
 import Subnets from "./infraComps/subNet";
 import IGWs from "./infraComps/igw";
 import RouteTables from "./infraComps/routetable";
@@ -55,6 +61,9 @@ import {
   syncProjectEdgeConfigAdmin,
 } from "../../hooks/adminHooks/edgeHooks";
 import useAdminAuthStore from "../../stores/adminAuthStore";
+import { useProjectBroadcasting } from "../../hooks/useProjectBroadcasting";
+import api, { adminSilentApi as silentApi } from "../../index/admin/api";
+
 import ProjectMemberManagerModal from "../../shared/components/projects/ProjectMemberManagerModal";
 
 // Shared Components
@@ -62,7 +71,7 @@ import ProjectDetailsHero from "../../shared/components/projects/details/Project
 import ProjectInstancesOverview from "../../shared/components/projects/details/ProjectInstancesOverview";
 import ProjectInfrastructureJourney from "../../shared/components/projects/details/ProjectInfrastructureJourney";
 import ProjectQuickStatus from "../../shared/components/projects/details/ProjectQuickStatus";
-import ProjectProvisioningSnapshot from "../../shared/components/projects/details/ProjectProvisioningSnapshot";
+import ProjectUnifiedView from "../../shared/components/projects/details/ProjectUnifiedView";
 
 // Types
 interface User {
@@ -244,9 +253,10 @@ const getProjectStatusVariant = (status: string = "") => {
 export default function AdminProjectDetails() {
   const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const adminToken = useAdminAuthStore((state) => state.token);
 
-  const [activeSection, setActiveSection] = useState("setup");
+  const [activeSection, setActiveSection] = useState("overview");
   const [isAssignEdgeOpen, setIsAssignEdgeOpen] = useState(false);
   const [isEdgeSyncing, setIsEdgeSyncing] = useState(false);
   const [activePaymentPayload, setActivePaymentPayload] = useState<any>(null);
@@ -274,13 +284,24 @@ export default function AdminProjectDetails() {
     data: projectStatusData,
     isFetching: isProjectStatusFetching,
     refetch: refetchProjectStatus,
-  } = useProjectStatus(projectId);
+  } = useProjectStatus(projectId, {
+    refetchInterval: (query) => {
+      const status = query?.state?.data?.project?.status;
+      return status === "provisioning" || status === "pending" ? 3000 : false;
+    },
+  });
 
   const {
     data: projectDetailsResponse,
     isFetching: isProjectDetailsFetching,
     refetch: refetchProjectDetails,
-  } = useFetchProjectById(projectId, { enabled: Boolean(projectId) });
+  } = useFetchProjectById(projectId, {
+    enabled: Boolean(projectId),
+    refetchInterval: (query) => {
+      const status = query?.state?.data?.data?.status;
+      return status === "provisioning" || status === "pending" ? 3000 : false;
+    },
+  });
 
   const { data: infraStatusData } = useProjectInfrastructureStatus(projectId, {
     enabled: Boolean(projectId),
@@ -307,6 +328,7 @@ export default function AdminProjectDetails() {
   }, [inviteSuccessMessage]);
 
   const { mutateAsync: updateProjectMembers, isPending: isMembershipUpdating } = useUpdateProject();
+  const { mutateAsync: runProvisioning, isPending: isProvisioning } = useProvisionProject();
 
   const updateResourceCount = useCallback((resource: string, count: number) => {
     setResourceCounts((prev) => {
@@ -351,6 +373,9 @@ export default function AdminProjectDetails() {
   const { data: elasticIpsData } = useFetchElasticIps(project?.identifier, project?.region, {
     enabled: Boolean(project?.identifier && project?.region),
   });
+  const { data: vpcsData } = useFetchVpcs(project?.identifier, project?.region, {
+    enabled: Boolean(project?.identifier && project?.region),
+  });
 
   useEffect(() => {
     if (Array.isArray(networksData)) {
@@ -359,12 +384,67 @@ export default function AdminProjectDetails() {
   }, [networksData, updateResourceCount]);
 
   useEffect(() => {
+    if (Array.isArray(vpcsData)) {
+      updateResourceCount("vpcs", vpcsData.length);
+    } else if (infraStatusData?.data?.components?.vpc?.count !== undefined) {
+      // Fallback to infrastructure status if VPCs data is not available
+      updateResourceCount("vpcs", infraStatusData.data.components.vpc.count);
+    }
+  }, [vpcsData, infraStatusData, updateResourceCount]);
+
+  useEffect(() => {
     if (Array.isArray(keyPairsData)) {
       updateResourceCount("keyPairs", keyPairsData.length);
+      updateResourceCount("key_pairs", keyPairsData.length);
     }
   }, [keyPairsData, updateResourceCount]);
 
+  useEffect(() => {
+    if (Array.isArray(securityGroupsData) && securityGroupsData.length > 0) {
+      updateResourceCount("security_groups", securityGroupsData.length);
+    } else if (infraStatusData?.data?.components?.security_groups?.count !== undefined) {
+      updateResourceCount("security_groups", infraStatusData.data.components.security_groups.count);
+    }
+  }, [securityGroupsData, infraStatusData, updateResourceCount]);
+
+  useEffect(() => {
+    if (Array.isArray(subnetsData) && subnetsData.length > 0) {
+      updateResourceCount("subnets", subnetsData.length);
+    } else if (infraStatusData?.data?.components?.subnets?.count !== undefined) {
+      updateResourceCount("subnets", infraStatusData.data.components.subnets.count);
+    }
+  }, [subnetsData, infraStatusData, updateResourceCount]);
+
+  useEffect(() => {
+    if (Array.isArray(igwsData)) {
+      updateResourceCount("internet_gateways", igwsData.length);
+    }
+  }, [igwsData, updateResourceCount]);
+
+  useEffect(() => {
+    if (Array.isArray(routeTablesData)) {
+      updateResourceCount("routeTables", routeTablesData.length);
+      updateResourceCount("route_tables", routeTablesData.length);
+    }
+  }, [routeTablesData, updateResourceCount]);
+
+  useEffect(() => {
+    if (Array.isArray(networkInterfacesData)) {
+      updateResourceCount("enis", networkInterfacesData.length);
+      updateResourceCount("network_interfaces", networkInterfacesData.length);
+    }
+  }, [networkInterfacesData, updateResourceCount]);
+
+  useEffect(() => {
+    if (Array.isArray(elasticIpsData)) {
+      updateResourceCount("eips", elasticIpsData.length);
+      updateResourceCount("elastic_ips", elasticIpsData.length);
+    }
+  }, [elasticIpsData, updateResourceCount]);
   const summary = project?.summary ?? [];
+
+  // Initialize Real-time Provisioning Hook
+  useProjectBroadcasting(project?.id);
 
   const normalizeSummaryKey = (value: string = "") => value.toLowerCase().replace(/[^a-z0-9]/g, "");
 
@@ -392,6 +472,79 @@ export default function AdminProjectDetails() {
     return undefined;
   };
   const resolvedProjectId = project?.identifier || projectId;
+
+  // Network expansion hooks (must be after resolvedProjectId is defined)
+  const { data: networkStatusData, refetch: refetchNetworkStatus } = useProjectNetworkStatus(
+    resolvedProjectId,
+    { enabled: Boolean(resolvedProjectId) }
+  );
+
+  // Track previous status to detect provisioning completion
+  const prevProjectStatusRef = useRef<string | undefined>(undefined);
+
+  // Auto-refetch network data when provisioning completes
+  useEffect(() => {
+    const currentStatus = project?.status;
+    const prevStatus = prevProjectStatusRef.current;
+
+    // Detect transition from provisioning/pending to ready/active/completed
+    if (
+      prevStatus &&
+      (prevStatus === "provisioning" || prevStatus === "pending") &&
+      currentStatus &&
+      (currentStatus === "ready" || currentStatus === "active" || currentStatus === "completed")
+    ) {
+      console.log("[AdminProjectDetails] Provisioning completed, refreshing network data...");
+      // Trigger refetch of all network-related data
+      refetchNetworkStatus?.();
+      refetchProjectStatus?.();
+      // Invalidate network queries to get fresh data
+      queryClient.invalidateQueries({ queryKey: ["networks"] });
+      queryClient.invalidateQueries({ queryKey: ["vpcs"] });
+      queryClient.invalidateQueries({ queryKey: ["subnets"] });
+      queryClient.invalidateQueries({ queryKey: ["securityGroups"] });
+      queryClient.invalidateQueries({ queryKey: ["igws"] });
+      queryClient.invalidateQueries({ queryKey: ["internet_gateways"] });
+    }
+
+    prevProjectStatusRef.current = currentStatus;
+  }, [project?.status, refetchNetworkStatus, refetchProjectStatus, queryClient]);
+
+  // Also detect when all provisioning_progress steps complete (for 100% READY state)
+  const prevAllStepsCompletedRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    const progress = project?.provisioning_progress;
+    if (!Array.isArray(progress) || progress.length === 0) return;
+
+    const allCompleted = progress.every((step: any) => step.status === "completed");
+    const wasIncomplete = !prevAllStepsCompletedRef.current;
+
+    // Detect transition to all-completed state
+    if (allCompleted && wasIncomplete) {
+      console.log(
+        "[AdminProjectDetails] All provisioning steps completed, refreshing network data..."
+      );
+      // Short delay to allow backend to finalize
+      setTimeout(() => {
+        refetchNetworkStatus?.();
+        refetchProjectStatus?.();
+        queryClient.invalidateQueries({ queryKey: ["networks"] });
+        queryClient.invalidateQueries({ queryKey: ["vpcs"] });
+        queryClient.invalidateQueries({ queryKey: ["subnets"] });
+        queryClient.invalidateQueries({ queryKey: ["securityGroups"] });
+        queryClient.invalidateQueries({ queryKey: ["igws"] });
+      }, 500);
+    }
+
+    prevAllStepsCompletedRef.current = allCompleted;
+  }, [project?.provisioning_progress, refetchNetworkStatus, refetchProjectStatus, queryClient]);
+
+  // Extract network data from response (handle wrapped or unwrapped structure)
+  const networkData =
+    networkStatusData?.network || networkStatusData?.data?.network || networkStatusData;
+
+  const { mutateAsync: enableInternet, isPending: isEnablingInternet } = useEnableInternetAccess();
 
   const { data: edgeConfig, refetch: refetchEdgeConfig } = useFetchProjectEdgeConfigAdmin(
     resolvedProjectId,
@@ -656,7 +809,6 @@ export default function AdminProjectDetails() {
   const instanceCount = projectInstances.length;
 
   const infrastructureSections = [
-    { key: "setup", label: "Project Setup", icon: <CheckCircle size={16} /> },
     { key: "user-provisioning", label: "Team access", icon: <Shield size={16} /> },
     { key: "vpcs", label: "Virtual Private Cloud", icon: <Server size={16} /> },
     { key: "networks", label: "Networks", icon: <Wifi size={16} /> },
@@ -909,13 +1061,12 @@ export default function AdminProjectDetails() {
         (edgeComponent.status === "completed" ||
           (typeof edgeComponent.count === "number" && edgeComponent.count > 0))
       ),
-      tone: Boolean(
+      tone:
         edgeComponent &&
         (edgeComponent.status === "completed" ||
           (typeof edgeComponent.count === "number" && edgeComponent.count > 0))
-      )
-        ? "success"
-        : "neutral",
+          ? "success"
+          : "neutral",
     },
     {
       label: "Tenant admin present",
@@ -967,7 +1118,7 @@ export default function AdminProjectDetails() {
 
   const handleNavigateAddInstance = () => {
     if (!resolvedProjectId) return;
-    navigate(`/admin-dashboard/instances/create?project=${encodeURIComponent(resolvedProjectId)}`);
+    navigate(`/admin-dashboard/create-instance?project=${encodeURIComponent(resolvedProjectId)}`);
   };
   const handleViewInstanceDetails = (instance: any) => {
     if (!instance?.identifier) return;
@@ -1022,11 +1173,213 @@ export default function AdminProjectDetails() {
       return next;
     });
   };
+
+  const handleGenericAction = async ({ method, endpoint, label, payload = {} }) => {
+    try {
+      ToastUtils.info(`Executing ${label}...`);
+      const res = await api(method.toUpperCase(), endpoint, payload);
+      ToastUtils.success(`${label} completed successfully!`);
+      await Promise.all([refetchProjectStatus(), refetchProjectDetails()]);
+      return res;
+    } catch (error: any) {
+      console.error(`Action error [${label}]:`, error);
+      ToastUtils.error(error?.message || `Failed to execute ${label}`);
+      throw error;
+    }
+  };
+
+  const handleUserAction = async (user: User, actionKey: string) => {
+    const action = user?.actions?.[actionKey];
+    if (!action) return;
+
+    await handleGenericAction({
+      method: action.method || "POST",
+      endpoint: action.endpoint,
+      label: action.label || actionKey,
+      payload: action.payload_defaults || {},
+    });
+  };
   const handleSaveMembers = async () => {
     // Implementation for saving members
   };
   const renderSectionContent = () => {
+    const contextualActions = summary.filter((item) => !item.completed && item.action);
+
     switch (activeSection) {
+      case "overview":
+        return (
+          <div className="space-y-6">
+            {contextualActions.length > 0 && (
+              <ModernCard className="border-l-4 border-l-yellow-400 bg-yellow-50/30">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Activity className="text-yellow-600" size={20} />
+                    <h3 className="text-lg font-semibold text-gray-900">Required Actions</h3>
+                  </div>
+                  <span className="text-xs font-medium text-yellow-700 bg-yellow-100 px-2 py-1 rounded-full">
+                    {contextualActions.length} Pending
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {contextualActions.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-white p-4 rounded-lg border border-yellow-200 shadow-sm flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="text-sm font-medium text-gray-900 mb-1">{item.title}</div>
+                        {item.missing_count && (
+                          <div className="text-xs text-red-500 mb-2">
+                            {item.missing_count} missing
+                          </div>
+                        )}
+                      </div>
+                      <ModernButton
+                        size="sm"
+                        variant="primary"
+                        className="w-full mt-3"
+                        onClick={() =>
+                          handleGenericAction({
+                            method: item.action.method,
+                            endpoint: item.action.endpoint,
+                            label: item.action.label,
+                          })
+                        }
+                      >
+                        {item.action.label}
+                      </ModernButton>
+                    </div>
+                  ))}
+                </div>
+              </ModernCard>
+            )}
+
+            <ProjectUnifiedView
+              project={{
+                id: project?.id || projectId || "",
+                identifier: project?.identifier || resolvedProjectId || "",
+                name: project?.name || "Project",
+                status: project?.status || "unknown",
+                region: project?.region,
+                region_name: project?.region_name,
+                provider: project?.provider,
+                created_at: project?.created_at,
+              }}
+              instanceStats={{
+                total: instanceStats?.total || 0,
+                running: instanceStats?.running || 0,
+                stopped:
+                  (instanceStats?.total || 0) -
+                  (instanceStats?.running || 0) -
+                  (instanceStats?.provisioning || 0),
+                provisioning: instanceStats?.provisioning || 0,
+              }}
+              resourceCounts={{
+                vpcs: resourceCounts.vpcs ?? networkData?.vpc?.count ?? 0,
+                subnets: resourceCounts.subnets ?? networkData?.subnets?.count ?? 0,
+                security_groups:
+                  resourceCounts.security_groups ?? networkData?.security_groups?.count ?? 0,
+                key_pairs: resourceCounts.key_pairs ?? networkData?.key_pairs?.count ?? 0,
+                route_tables: resourceCounts.route_tables ?? networkData?.route_tables?.count ?? 0,
+                elastic_ips: resourceCounts.elastic_ips ?? networkData?.elastic_ips?.count ?? 0,
+                network_interfaces:
+                  resourceCounts.network_interfaces ?? networkData?.network_interfaces?.count ?? 0,
+                internet_gateways:
+                  resourceCounts.internet_gateways ?? networkData?.internet_gateways?.count ?? 0,
+              }}
+              networkStatus={networkData}
+              vpcs={networksData || []}
+              subnets={subnetsData || []}
+              igws={igwsData || []}
+              setupSteps={
+                Array.isArray(project?.provisioning_progress)
+                  ? project.provisioning_progress.map((step: any) => ({
+                      id: step.id || step.label?.toLowerCase()?.replace(/\s+/g, "_") || "step",
+                      label: step.label || "Step",
+                      status: step.status as any,
+                      description: step.status === "completed" ? "Completed" : "Action in progress",
+                      updated_at: step.updated_at,
+                    }))
+                  : project?.status === "provisioning" &&
+                      Array.isArray(project?.provisioning_progress)
+                    ? project.provisioning_progress.map((step: any) => ({
+                        id: step.id || step.label?.toLowerCase()?.replace(/\s+/g, "_") || "step",
+                        label: step.label || "Step",
+                        status: step.status as any,
+                        description:
+                          step.status === "completed" ? "Completed" : "Action in progress",
+                        updated_at: step.updated_at,
+                      }))
+                    : quickStatusItems?.map((item: any) => ({
+                        id: item.label?.toLowerCase()?.replace(/\s+/g, "_") || "step",
+                        label: item.label || "Step",
+                        status: item.active ? ("completed" as const) : ("not_started" as const),
+                        description: item.active ? "Ready" : "Action required",
+                      }))
+              }
+              setupProgressPercent={healthPercent}
+              edgeNetworkConnected={!!edgePayload?.edge_network_id}
+              edgeNetworkName={edgePayload?.edge_network_name}
+              onAddInstance={handleNavigateAddInstance}
+              onEnableInternet={async () => {
+                try {
+                  const result = await enableInternet(resolvedProjectId);
+                  const alreadyEnabled = result?.already_enabled || result?.data?.already_enabled;
+                  if (alreadyEnabled) {
+                    ToastUtils.info("Internet access is already enabled for this project.");
+                  } else {
+                    ToastUtils.success("Internet access enabled successfully!");
+                  }
+                  await refetchNetworkStatus();
+                  await refetchProjectStatus();
+                } catch (error: any) {
+                  console.error("Enable internet error:", error);
+                  ToastUtils.error(error?.message || "Failed to enable internet access");
+                }
+              }}
+              onManageMembers={() => setIsMemberModalOpen(true)}
+              onSyncResources={() => {
+                refetchNetworkStatus();
+                // Invalidate local queries to pick up synced data
+                queryClient.invalidateQueries(["networks"]);
+                queryClient.invalidateQueries(["vpcs"]);
+                queryClient.invalidateQueries(["subnets"]);
+                queryClient.invalidateQueries(["securityGroups"]);
+                queryClient.invalidateQueries(["security_groups"]);
+                queryClient.invalidateQueries(["keyPairs"]);
+                queryClient.invalidateQueries(["key_pairs"]);
+                queryClient.invalidateQueries(["igws"]);
+                queryClient.invalidateQueries(["internet_gateways"]);
+                queryClient.invalidateQueries(["routeTables"]);
+                queryClient.invalidateQueries(["route_tables"]);
+                queryClient.invalidateQueries(["elasticIps"]);
+                queryClient.invalidateQueries(["elastic_ips"]);
+                queryClient.invalidateQueries(["networkInterfaces"]);
+
+                refetchProjectStatus();
+                refetchProjectDetails();
+              }}
+              onViewNetworkDetails={() => handleSectionClick?.("vpcs")}
+              onCompleteSetup={async () => {
+                try {
+                  ToastUtils.info("Restarting infrastructure provisioning...");
+                  await runProvisioning(resolvedProjectId);
+                  ToastUtils.success("Provisioning sequence started!");
+                  refetchProjectStatus();
+                } catch (error: any) {
+                  console.error("Provisioning error:", error);
+                  ToastUtils.error(error?.message || "Failed to restart provisioning");
+                }
+              }}
+              onViewAllResources={() => handleSectionClick?.("vpcs")}
+              isEnablingInternet={isEnablingInternet}
+              isSyncing={isProjectStatusFetching || isProjectDetailsFetching}
+              isProvisioning={isProvisioning}
+              showMemberManagement={true}
+              showSyncButton={true}
+            />
+          </div>
+        );
       case "user-provisioning":
         return (
           <div className="space-y-6">
@@ -1086,12 +1439,74 @@ export default function AdminProjectDetails() {
                         key: "role",
                         header: "ROLE",
                         render: (_, user: User) => (
-                          <span className="text-gray-500">
-                            {Array.isArray(user.roles)
-                              ? user.roles.join(", ")
-                              : user.role || "Member"}
-                          </span>
+                          <div className="flex flex-col">
+                            <span className="text-gray-900 border px-2 py-0.5 rounded-full text-[10px] w-fit font-mono font-bold uppercase mb-1">
+                              {Array.isArray(user.roles)
+                                ? user.roles[0] || "Member"
+                                : user.role || user.status?.role || "Member"}
+                            </span>
+                            <div className="flex gap-1">
+                              {user.status?.provider_account ? (
+                                <span
+                                  className="w-2 h-2 rounded-full bg-green-500"
+                                  title="Provider Account Ready"
+                                />
+                              ) : (
+                                <span
+                                  className="w-2 h-2 rounded-full bg-gray-200"
+                                  title="No Provider Account"
+                                />
+                              )}
+                              {user.status?.aws_policy ? (
+                                <span
+                                  className="w-2 h-2 rounded-full bg-blue-500"
+                                  title="Storage Policy Attached"
+                                />
+                              ) : (
+                                <span
+                                  className="w-2 h-2 rounded-full bg-gray-200"
+                                  title="No Storage Policy"
+                                />
+                              )}
+                              {user.status?.symp_policy ? (
+                                <span
+                                  className="w-2 h-2 rounded-full bg-indigo-500"
+                                  title="Network Policy Attached"
+                                />
+                              ) : (
+                                <span
+                                  className="w-2 h-2 rounded-full bg-gray-200"
+                                  title="No Network Policy"
+                                />
+                              )}
+                            </div>
+                          </div>
                         ),
+                      },
+                      {
+                        key: "actions",
+                        header: "ACTIONS",
+                        render: (_, user: User) => {
+                          const userActions = user.actions || {};
+                          return (
+                            <div className="flex flex-wrap gap-2">
+                              {Object.entries(userActions).map(([key, action]: [string, any]) => {
+                                if (!action.show) return null;
+                                return (
+                                  <ModernButton
+                                    key={key}
+                                    size="xs"
+                                    variant="outline"
+                                    className="h-7 text-[10px] px-2"
+                                    onClick={() => handleUserAction(user, key)}
+                                  >
+                                    {action.label || key}
+                                  </ModernButton>
+                                );
+                              })}
+                            </div>
+                          );
+                        },
                       },
                     ]}
                     searchable={false}
@@ -1161,22 +1576,7 @@ export default function AdminProjectDetails() {
             )}
           </div>
         );
-      case "setup":
-        return (
-          <ProjectProvisioningSnapshot
-            summary={summary}
-            providerLabel={providerLabel}
-            projectRegion={project?.region}
-            hasTenantAdmin={hasTenantAdmin}
-            edgeComponent={edgeComponent}
-            isEdgeSyncing={isEdgeSyncing}
-            onEdgeSync={handleEdgeSync}
-            onManageEdge={() => setIsAssignEdgeOpen(true)}
-            infraStatus={infraStatusData?.data} // Use infraStatusData from the hook
-            onEnableVpc={handleEnableVpc}
-            isVpcEnabling={isVpcEnabling}
-          />
-        );
+
       case "vpcs":
         return <VPCs projectId={resolvedProjectId} region={project?.region} />;
       case "networks":
@@ -1227,49 +1627,21 @@ export default function AdminProjectDetails() {
         actions={headerActions}
         contentClassName="space-y-6"
       >
-        <ProjectDetailsHero
-          project={project}
-          projectStatusVariant={projectStatusVariant}
-          healthPercent={healthPercent}
-          metadataItems={metadataItems}
-          summaryMetrics={summaryMetrics}
-          canCreateInstances={canCreateInstances}
-          missingInstancePrereqs={missingInstancePrereqs}
-          onAddInstance={handleNavigateAddInstance}
-          onManageEdge={() => setIsAssignEdgeOpen(true)}
-          infrastructureStepLabel={infrastructureStepLabel}
-        />
-
-        <ProjectInstancesOverview
-          instanceStats={instanceStats}
-          recentInstances={recentInstances}
-          projectInstances={projectInstances}
-          onViewInstance={handleViewInstanceDetails}
-          onAddInstance={handleNavigateAddInstance}
-          onViewAllInstances={() =>
-            navigate(`/admin-dashboard/instances?project=${encodeURIComponent(resolvedProjectId)}`)
-          }
-          canCreateInstances={canCreateInstances}
-          resolvedProjectId={resolvedProjectId}
-        />
-
-        <div className="grid gap-6 xl:grid-cols-[320px,1fr]">
-          <ModernCard variant="outlined" padding="lg" className="space-y-6">
-            <ProjectQuickStatus quickStatusItems={quickStatusItems} />
-            <ProjectInfrastructureJourney
-              infrastructureSections={infrastructureSections}
-              activeSection={activeSection}
-              onSectionClick={handleSectionClick}
-              getStatusForSection={getStatusForSection}
-            />
-          </ModernCard>
-
-          <div ref={contentRef}>
-            <ModernCard variant="outlined" padding="lg">
-              {renderSectionContent()}
-            </ModernCard>
-          </div>
+        <div className="flex items-center gap-2 mb-4">
+          {activeSection !== "overview" && (
+            <ModernButton
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 text-xs h-8"
+              onClick={() => setActiveSection("overview")}
+            >
+              <ArrowLeft size={14} />
+              Dashboard Overview
+            </ModernButton>
+          )}
         </div>
+
+        {renderSectionContent()}
       </AdminPageShell>
       <ProjectMemberManagerModal
         isOpen={isMemberModalOpen}

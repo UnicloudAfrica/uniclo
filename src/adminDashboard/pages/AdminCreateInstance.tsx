@@ -116,6 +116,8 @@ const AdminCreateInstance = () => {
     backendPricingData,
     effectivePaymentOption,
     billingCountryLabel,
+    networkPreset,
+    setNetworkPreset,
     handleModeChange,
     setActiveStep,
     setContextType,
@@ -269,25 +271,41 @@ const AdminCreateInstance = () => {
                   />
                 )}
 
-                {!isFastTrack && activeStep === 1 && (
-                  <ConfigurationListStep
-                    configurations={configurations}
-                    resources={resources}
-                    generalRegions={generalRegions}
-                    regionOptions={regionSelectOptions}
-                    isLoadingResources={isLoadingResources}
-                    isSubmitting={isSubmitting}
-                    billingCountry={billingCountry}
-                    onAddConfiguration={addConfiguration}
-                    onRemoveConfiguration={removeConfiguration}
-                    onUpdateConfiguration={updateConfiguration}
-                    onAddVolume={addAdditionalVolume}
-                    onRemoveVolume={removeAdditionalVolume}
-                    onUpdateVolume={updateAdditionalVolume}
-                    onBack={() => setActiveStep(0)}
-                    onSubmit={handleCreateOrder}
-                  />
-                )}
+                {!isFastTrack &&
+                  activeStep === 1 &&
+                  (() => {
+                    // Check if selected project already has network infrastructure
+                    const selectedProjectId = configurations[0]?.project_id;
+                    const selectedProject = resources.projects?.find(
+                      (p: any) =>
+                        String(p.id) === String(selectedProjectId) ||
+                        String(p.identifier) === String(selectedProjectId)
+                    );
+                    const projectHasNetwork = Boolean(selectedProject?.vpc_enabled);
+
+                    return (
+                      <ConfigurationListStep
+                        configurations={configurations}
+                        resources={resources}
+                        generalRegions={generalRegions}
+                        regionOptions={regionSelectOptions}
+                        isLoadingResources={isLoadingResources}
+                        isSubmitting={isSubmitting}
+                        billingCountry={billingCountry}
+                        networkPreset={networkPreset}
+                        onNetworkPresetChange={setNetworkPreset}
+                        projectHasNetwork={projectHasNetwork}
+                        onAddConfiguration={addConfiguration}
+                        onRemoveConfiguration={removeConfiguration}
+                        onUpdateConfiguration={updateConfiguration}
+                        onAddVolume={addAdditionalVolume}
+                        onRemoveVolume={removeAdditionalVolume}
+                        onUpdateVolume={updateAdditionalVolume}
+                        onBack={() => setActiveStep(0)}
+                        onSubmit={handleCreateOrder}
+                      />
+                    );
+                  })()}
 
                 {!isFastTrack && activeStep === 2 && (
                   <PaymentStep

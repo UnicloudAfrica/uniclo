@@ -8,6 +8,17 @@ export { ObjectStoragePaymentStep } from "./ObjectStoragePaymentStep";
 export { ObjectStorageReviewStep } from "./ObjectStorageReviewStep";
 export { ObjectStorageCreateContent } from "./ObjectStorageCreateContent";
 
+// New UI components
+export { default as ObjectStorageAccountDetail } from "./ObjectStorageAccountDetail";
+export { default as ObjectStorageSidebar } from "./ObjectStorageSidebar";
+export { default as ObjectStorageFileBrowser } from "./ObjectStorageFileBrowser";
+export { default as ObjectStorageAnalytics } from "./ObjectStorageAnalytics";
+export { default as ObjectStorageSubscription } from "./ObjectStorageSubscription";
+export { default as ObjectStorageTransactions } from "./ObjectStorageTransactions";
+export { default as StorageGauge3D } from "./StorageGauge3D";
+export { default as DropzoneUploader } from "./DropzoneUploader";
+export { default as ExtendStorageModal } from "./ExtendStorageModal";
+
 // Re-export types
 export type { ObjectStorageWizardProps } from "./ObjectStorageWizard";
 export type { ObjectStorageProfileCardProps } from "./ObjectStorageProfileCard";

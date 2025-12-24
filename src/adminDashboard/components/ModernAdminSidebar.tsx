@@ -19,7 +19,6 @@ import {
   Menu,
   ChevronLeft,
   ChevronRight,
-  Building2,
   MapPin,
   BarChart3,
 } from "lucide-react";
@@ -49,7 +48,7 @@ const ModernAdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }: any) => {
     "/admin-dashboard/pricing-calculator": "Calculator",
     "/admin-dashboard/create-invoice": "Generate Invoice",
     "/admin-dashboard/tax-configuration": "Tax Configuration",
-    "/admin-dashboard/enhanced-profile-settings": "Profile Settings",
+    "/admin-dashboard/account": "Account Settings",
   };
 
   // Update activeItem based on the current path
@@ -139,9 +138,9 @@ const ModernAdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }: any) => {
       category: "settings",
     },
     {
-      name: "Profile Settings",
+      name: "Account Settings",
       icon: Settings,
-      path: "/admin-dashboard/enhanced-profile-settings",
+      path: "/admin-dashboard/account",
       category: "settings",
     },
   ];
@@ -458,7 +457,7 @@ const ModernAdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }: any) => {
         </div>
       </div>
 
-      {/* Mobile Menu Toggle Button */}
+      {/* Mobile Menu Toggle Button - controlled by parent */}
       {window.innerWidth < 1024 && !isMobileMenuOpen && (
         <button
           style={{
@@ -474,7 +473,7 @@ const ModernAdminSidebar = ({ isMobileMenuOpen, onCloseMobileMenu }: any) => {
             color: designTokens.colors.neutral[700],
             cursor: "pointer",
           }}
-          onClick={() => setIsMobileMenuOpen(true)}
+          onClick={onCloseMobileMenu}
         >
           <Menu size={20} />
         </button>

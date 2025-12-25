@@ -26,6 +26,14 @@ import {
   Repeat,
   Receipt,
   BarChart3,
+  Network,
+  Key,
+  Route,
+  Shield,
+  GitMerge,
+  Camera,
+  TrendingUp,
+  Zap,
 } from "lucide-react";
 import lapapi from "../../index/admin/lapapi";
 import useAdminAuthStore from "../../stores/adminAuthStore";

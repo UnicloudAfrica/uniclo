@@ -1365,6 +1365,28 @@ const AdminObjectStorageCreate = () => {
         console.warn("Unable to refresh accounts after order creation", refreshError);
       }
 
+      // After successful fast-track, redirect to the new account details page
+      if (submissionFastTrack) {
+        // Try to get account ID from response
+        const accountId =
+          response?.data?.account?.id ||
+          response?.data?.accounts?.[0]?.id ||
+          response?.data?.object_storage_account_id;
+
+        if (accountId) {
+          // Navigate to the new account's details page after a short delay
+          setTimeout(() => {
+            navigate(`/admin-dashboard/object-storage/${accountId}`);
+          }, 1500);
+        } else {
+          // Fallback: navigate to object storage list
+          setTimeout(() => {
+            navigate("/admin-dashboard/object-storage");
+          }, 1500);
+        }
+        return; // Skip form reset since we're navigating away
+      }
+
       if (!options.skipReset) {
         resetForm();
         setMode(submissionFastTrack ? "fast-track" : "standard");

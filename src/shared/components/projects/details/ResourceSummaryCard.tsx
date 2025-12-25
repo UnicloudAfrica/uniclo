@@ -1,16 +1,47 @@
 import React from "react";
-import { Key, Route, Globe, Cable, ChevronRight, ExternalLink, Info, Clock } from "lucide-react";
+import {
+  Key,
+  Route,
+  Globe,
+  Cable,
+  ChevronRight,
+  ExternalLink,
+  Info,
+  Network,
+  Shield,
+  Layers,
+  Globe2,
+  ShieldCheck,
+  GitMerge,
+  Zap,
+} from "lucide-react";
 
 interface ResourceSummaryCardProps {
-  keyPairs: number;
-  routeTables: number;
-  elasticIps: number;
-  networkInterfaces: number;
+  keyPairs?: number;
+  routeTables?: number;
+  elasticIps?: number;
+  networkInterfaces?: number;
+  subnets?: number;
+  securityGroups?: number;
+  vpcs?: number;
+  natGateways?: number;
+  networkAcls?: number;
+  vpcPeering?: number;
+  internetGateways?: number;
+  loadBalancers?: number;
   onViewAll?: () => void;
   onViewKeyPairs?: () => void;
   onViewRouteTables?: () => void;
   onViewElasticIps?: () => void;
   onViewNetworkInterfaces?: () => void;
+  onViewSubnets?: () => void;
+  onViewSecurityGroups?: () => void;
+  onViewVpcs?: () => void;
+  onViewNatGateways?: () => void;
+  onViewNetworkAcls?: () => void;
+  onViewVpcPeering?: () => void;
+  onViewInternetGateways?: () => void;
+  onViewLoadBalancers?: () => void;
 }
 
 const ResourceSummaryCard: React.FC<ResourceSummaryCardProps> = ({
@@ -18,13 +49,56 @@ const ResourceSummaryCard: React.FC<ResourceSummaryCardProps> = ({
   routeTables = 0,
   elasticIps = 0,
   networkInterfaces = 0,
+  subnets = 0,
+  securityGroups = 0,
+  vpcs = 0,
+  natGateways = 0,
+  networkAcls = 0,
+  vpcPeering = 0,
+  internetGateways = 0,
+  loadBalancers = 0,
   onViewAll,
   onViewKeyPairs,
   onViewRouteTables,
   onViewElasticIps,
   onViewNetworkInterfaces,
+  onViewSubnets,
+  onViewSecurityGroups,
+  onViewVpcs,
+  onViewNatGateways,
+  onViewNetworkAcls,
+  onViewVpcPeering,
+  onViewInternetGateways,
+  onViewLoadBalancers,
 }) => {
   const resources = [
+    {
+      icon: Layers,
+      label: "VPCs",
+      count: vpcs,
+      color: "text-indigo-500",
+      bgColor: "bg-indigo-50",
+      onClick: onViewVpcs,
+      description: "Virtual Private Clouds for network isolation",
+    },
+    {
+      icon: Network,
+      label: "Subnets",
+      count: subnets,
+      color: "text-cyan-500",
+      bgColor: "bg-cyan-50",
+      onClick: onViewSubnets,
+      description: "Network segments within VPCs",
+    },
+    {
+      icon: Shield,
+      label: "Security Groups",
+      count: securityGroups,
+      color: "text-red-500",
+      bgColor: "bg-red-50",
+      onClick: onViewSecurityGroups,
+      description: "Firewall rules for instances",
+    },
     {
       icon: Key,
       label: "Key Pairs",
@@ -33,7 +107,6 @@ const ResourceSummaryCard: React.FC<ResourceSummaryCardProps> = ({
       bgColor: "bg-purple-50",
       onClick: onViewKeyPairs,
       description: "SSH keys for secure instance access",
-      implemented: true,
     },
     {
       icon: Route,
@@ -43,7 +116,6 @@ const ResourceSummaryCard: React.FC<ResourceSummaryCardProps> = ({
       bgColor: "bg-blue-50",
       onClick: onViewRouteTables,
       description: "Control traffic routing between subnets",
-      implemented: true,
     },
     {
       icon: Globe,
@@ -53,7 +125,6 @@ const ResourceSummaryCard: React.FC<ResourceSummaryCardProps> = ({
       bgColor: "bg-green-50",
       onClick: onViewElasticIps,
       description: "Static public IPs for your instances",
-      implemented: true,
     },
     {
       icon: Cable,
@@ -63,7 +134,51 @@ const ResourceSummaryCard: React.FC<ResourceSummaryCardProps> = ({
       bgColor: "bg-orange-50",
       onClick: onViewNetworkInterfaces,
       description: "Virtual network cards attached to instances",
-      implemented: true,
+    },
+    {
+      icon: Globe2,
+      label: "NAT Gateways",
+      count: natGateways,
+      color: "text-teal-500",
+      bgColor: "bg-teal-50",
+      onClick: onViewNatGateways,
+      description: "Enable outbound internet for private subnets",
+    },
+    {
+      icon: Globe,
+      label: "Internet Gateways",
+      count: internetGateways,
+      color: "text-sky-500",
+      bgColor: "bg-sky-50",
+      onClick: onViewInternetGateways,
+      description: "Connect VPCs to the internet",
+    },
+    {
+      icon: ShieldCheck,
+      label: "Network ACLs",
+      count: networkAcls,
+      color: "text-amber-500",
+      bgColor: "bg-amber-50",
+      onClick: onViewNetworkAcls,
+      description: "Subnet-level access control lists",
+    },
+    {
+      icon: GitMerge,
+      label: "VPC Peering",
+      count: vpcPeering,
+      color: "text-pink-500",
+      bgColor: "bg-pink-50",
+      onClick: onViewVpcPeering,
+      description: "Connect VPCs to each other",
+    },
+    {
+      icon: Zap,
+      label: "Load Balancers",
+      count: loadBalancers,
+      color: "text-yellow-600",
+      bgColor: "bg-yellow-50",
+      onClick: onViewLoadBalancers,
+      description: "Distribute traffic across instances",
     },
   ];
 
@@ -78,15 +193,15 @@ const ResourceSummaryCard: React.FC<ResourceSummaryCardProps> = ({
         </span>
       </div>
 
-      {/* Resource List */}
-      <div className="space-y-2">
+      {/* Resource List - Scrollable */}
+      <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
         {resources.map((resource) => {
-          const isClickable = resource.implemented && !!resource.onClick;
+          const isClickable = !!resource.onClick;
 
           return (
             <div
               key={resource.label}
-              className={`w-full flex items-center justify-between py-3 px-3 rounded-lg transition-colors ${
+              className={`w-full flex items-center justify-between py-2.5 px-3 rounded-lg transition-colors ${
                 isClickable
                   ? "bg-gray-50 hover:bg-blue-50 hover:border-blue-200 border border-transparent cursor-pointer group"
                   : "bg-gray-50/50 border border-gray-100"
@@ -96,20 +211,11 @@ const ResourceSummaryCard: React.FC<ResourceSummaryCardProps> = ({
               tabIndex={isClickable ? 0 : undefined}
             >
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${resource.bgColor}`}>
+                <div className={`p-1.5 rounded-lg ${resource.bgColor}`}>
                   <resource.icon className={`w-4 h-4 ${resource.color}`} />
                 </div>
                 <div className="text-left">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-700">{resource.label}</span>
-                    {!resource.implemented && (
-                      <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded flex items-center gap-0.5">
-                        <Clock className="w-2.5 h-2.5" />
-                        Soon
-                      </span>
-                    )}
-                  </div>
-                  <span className="text-xs text-gray-400">{resource.description}</span>
+                  <span className="text-sm font-medium text-gray-700">{resource.label}</span>
                 </div>
               </div>
               <div className="flex items-center gap-2">

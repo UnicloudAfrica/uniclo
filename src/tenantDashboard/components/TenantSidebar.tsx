@@ -23,6 +23,15 @@ import {
   Package,
   Wallet,
   TrendingUp,
+  Key,
+  Cable,
+  Network,
+  Shield,
+  Globe,
+  Globe2,
+  Route as RouteIcon,
+  ShieldCheck,
+  GitMerge,
 } from "lucide-react";
 import { clearAllAuthSessions } from "../../stores/sessionUtils";
 import { CollapsibleMenu, MenuEntry } from "../../shared/components/sidebar";

@@ -46,6 +46,28 @@ import TenantBrandingSettings from "../tenantDashboard/pages/TenantBrandingSetti
 import TenantProvisioningWizard from "../tenantDashboard/pages/TenantProvisioningWizard";
 import TenantDiscountManager from "../tenantDashboard/pages/TenantDiscountManager";
 import TenantPayoutsPage from "../tenantDashboard/pages/TenantPayoutsPage";
+import {
+  TenantKeyPairs,
+  TenantNetworkInterfaces,
+  TenantSubnets,
+  TenantSecurityGroups,
+  TenantElasticIps,
+  TenantNatGateways,
+  TenantRouteTables,
+  TenantNetworkAcls,
+  TenantVpcPeering,
+  TenantSecurityGroupRules,
+  TenantNetworkAclRules,
+  TenantLoadBalancers,
+  LoadBalancerWizard,
+  TenantLoadBalancerDetail,
+  TenantDnsManagement,
+  TenantSnapshots,
+  TenantImages,
+  TenantAutoScaling,
+  LaunchConfigurationWizard,
+  AutoScalingGroupWizard,
+} from "../tenantDashboard/pages/infrastructure";
 
 const TenantRoutes = () => {
   return (
@@ -93,6 +115,56 @@ const TenantRoutes = () => {
           element={<TenantObjectStorageDetail />}
         />
         <Route path="/dashboard/requests" element={<Requests />} />
+
+        {/* VPC Infrastructure */}
+        <Route path="/dashboard/infrastructure/key-pairs" element={<TenantKeyPairs />} />
+        <Route
+          path="/dashboard/infrastructure/network-interfaces"
+          element={<TenantNetworkInterfaces />}
+        />
+        <Route path="/dashboard/infrastructure/subnets" element={<TenantSubnets />} />
+        <Route
+          path="/dashboard/infrastructure/security-groups"
+          element={<TenantSecurityGroups />}
+        />
+        <Route
+          path="/dashboard/infrastructure/security-group-rules"
+          element={<TenantSecurityGroupRules />}
+        />
+        <Route path="/dashboard/infrastructure/elastic-ips" element={<TenantElasticIps />} />
+        <Route path="/dashboard/infrastructure/nat-gateways" element={<TenantNatGateways />} />
+        <Route path="/dashboard/infrastructure/route-tables" element={<TenantRouteTables />} />
+        <Route path="/dashboard/infrastructure/network-acls" element={<TenantNetworkAcls />} />
+        <Route
+          path="/dashboard/infrastructure/network-acl-rules"
+          element={<TenantNetworkAclRules />}
+        />
+        <Route path="/dashboard/infrastructure/vpc-peering" element={<TenantVpcPeering />} />
+        <Route path="/dashboard/infrastructure/load-balancers" element={<TenantLoadBalancers />} />
+        <Route
+          path="/dashboard/infrastructure/load-balancers/:lbId"
+          element={<TenantLoadBalancerDetail />}
+        />
+        <Route path="/dashboard/infrastructure/dns" element={<TenantDnsManagement />} />
+        <Route
+          path="/dashboard/infrastructure/load-balancers/create"
+          element={<LoadBalancerWizard />}
+        />
+        <Route
+          path="/dashboard/infrastructure/load-balancers/create"
+          element={<LoadBalancerWizard />}
+        />
+        <Route path="/dashboard/infrastructure/snapshots" element={<TenantSnapshots />} />
+        <Route path="/dashboard/infrastructure/images" element={<TenantImages />} />
+        <Route path="/dashboard/infrastructure/autoscaling" element={<TenantAutoScaling />} />
+        <Route
+          path="/dashboard/infrastructure/autoscaling/create-config"
+          element={<LaunchConfigurationWizard />}
+        />
+        <Route
+          path="/dashboard/infrastructure/autoscaling/create-group"
+          element={<AutoScalingGroupWizard />}
+        />
 
         {/* Regional */}
         <Route path="/dashboard/region-requests" element={<RegionRequests />} />

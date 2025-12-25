@@ -35,6 +35,11 @@ export interface ResourceCounts {
   route_tables?: number;
   elastic_ips?: number;
   network_interfaces?: number;
+  nat_gateways?: number;
+  network_acls?: number;
+  vpc_peering?: number;
+  internet_gateways?: number;
+  load_balancers?: number;
 }
 
 export interface IGWDetails {
@@ -89,6 +94,18 @@ export interface ProjectUnifiedViewProps {
   onViewNetworkDetails?: () => void;
   onCompleteSetup?: () => void;
   onViewAllResources?: () => void;
+  onViewKeyPairs?: () => void;
+  onViewRouteTables?: () => void;
+  onViewElasticIps?: () => void;
+  onViewNetworkInterfaces?: () => void;
+  onViewSubnets?: () => void;
+  onViewSecurityGroups?: () => void;
+  onViewVpcs?: () => void;
+  onViewNatGateways?: () => void;
+  onViewNetworkAcls?: () => void;
+  onViewVpcPeering?: () => void;
+  onViewInternetGateways?: () => void;
+  onViewLoadBalancers?: () => void;
 
   // Loading states ...
   isEnablingInternet?: boolean;
@@ -122,6 +139,18 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
   onViewNetworkDetails,
   onCompleteSetup,
   onViewAllResources,
+  onViewKeyPairs,
+  onViewRouteTables,
+  onViewElasticIps,
+  onViewNetworkInterfaces,
+  onViewSubnets,
+  onViewSecurityGroups,
+  onViewVpcs,
+  onViewNatGateways,
+  onViewNetworkAcls,
+  onViewVpcPeering,
+  onViewInternetGateways,
+  onViewLoadBalancers,
   isEnablingInternet = false,
   isProvisioning = false,
   isSyncing = false,
@@ -180,15 +209,31 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
 
         <div className="lg:col-span-2">
           <ResourceSummaryCard
+            vpcs={resourceCounts.vpcs || 0}
+            subnets={resourceCounts.subnets || 0}
+            securityGroups={resourceCounts.security_groups || 0}
             keyPairs={resourceCounts.key_pairs || 0}
             routeTables={resourceCounts.route_tables || 0}
             elasticIps={resourceCounts.elastic_ips || 0}
             networkInterfaces={resourceCounts.network_interfaces || 0}
+            natGateways={resourceCounts.nat_gateways || 0}
+            networkAcls={resourceCounts.network_acls || 0}
+            vpcPeering={resourceCounts.vpc_peering || 0}
+            internetGateways={resourceCounts.internet_gateways || 0}
+            loadBalancers={resourceCounts.load_balancers || 0}
             onViewAll={onViewAllResources}
-            onViewKeyPairs={onViewNetworkDetails}
-            onViewRouteTables={onViewNetworkDetails}
-            onViewElasticIps={onViewNetworkDetails}
-            onViewNetworkInterfaces={onViewNetworkDetails}
+            onViewVpcs={onViewVpcs}
+            onViewSubnets={onViewSubnets}
+            onViewSecurityGroups={onViewSecurityGroups}
+            onViewKeyPairs={onViewKeyPairs}
+            onViewRouteTables={onViewRouteTables}
+            onViewElasticIps={onViewElasticIps}
+            onViewNetworkInterfaces={onViewNetworkInterfaces}
+            onViewNatGateways={onViewNatGateways}
+            onViewNetworkAcls={onViewNetworkAcls}
+            onViewVpcPeering={onViewVpcPeering}
+            onViewInternetGateways={onViewInternetGateways}
+            onViewLoadBalancers={onViewLoadBalancers}
           />
         </div>
       </div>

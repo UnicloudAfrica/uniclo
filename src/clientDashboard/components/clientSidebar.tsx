@@ -12,6 +12,18 @@ import {
   LifeBuoy,
   Settings,
   HardDrive,
+  Key,
+  Cable,
+  Network,
+  Shield,
+  Globe,
+  Globe2,
+  Route as RouteIcon,
+  ShieldCheck,
+  GitMerge,
+  Camera,
+  Layers,
+  TrendingUp,
 } from "lucide-react";
 
 interface ClientSidebarProps {

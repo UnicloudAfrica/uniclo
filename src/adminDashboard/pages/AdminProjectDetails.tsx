@@ -1371,7 +1371,66 @@ export default function AdminProjectDetails() {
                   ToastUtils.error(error?.message || "Failed to restart provisioning");
                 }
               }}
-              onViewAllResources={() => handleSectionClick?.("vpcs")}
+              onViewKeyPairs={() =>
+                navigate(
+                  `/admin-dashboard/infrastructure/key-pairs?project=${project?.identifier || projectId}&region=${project?.region}`
+                )
+              }
+              onViewRouteTables={() =>
+                navigate(
+                  `/admin-dashboard/infrastructure/route-tables?project=${project?.identifier || projectId}&region=${project?.region}`
+                )
+              }
+              onViewElasticIps={() =>
+                navigate(
+                  `/admin-dashboard/infrastructure/elastic-ips?project=${project?.identifier || projectId}&region=${project?.region}`
+                )
+              }
+              onViewNetworkInterfaces={() =>
+                navigate(
+                  `/admin-dashboard/infrastructure/network-interfaces?project=${project?.identifier || projectId}&region=${project?.region}`
+                )
+              }
+              onViewVpcs={() =>
+                navigate(
+                  `/admin-dashboard/infrastructure/vpcs?project=${project?.identifier || projectId}&region=${project?.region}`
+                )
+              }
+              onViewSubnets={() =>
+                navigate(
+                  `/admin-dashboard/infrastructure/subnets?project=${project?.identifier || projectId}&region=${project?.region}`
+                )
+              }
+              onViewSecurityGroups={() =>
+                navigate(
+                  `/admin-dashboard/infrastructure/security-groups?project=${project?.identifier || projectId}&region=${project?.region}`
+                )
+              }
+              onViewNatGateways={() =>
+                navigate(
+                  `/admin-dashboard/infrastructure/nat-gateways?project=${project?.identifier || projectId}&region=${project?.region}`
+                )
+              }
+              onViewNetworkAcls={() =>
+                navigate(
+                  `/admin-dashboard/infrastructure/network-acls?project=${project?.identifier || projectId}&region=${project?.region}`
+                )
+              }
+              onViewVpcPeering={() =>
+                navigate(
+                  `/admin-dashboard/infrastructure/vpc-peering?project=${project?.identifier || projectId}&region=${project?.region}`
+                )
+              }
+              onViewInternetGateways={() =>
+                navigate(
+                  `/admin-dashboard/infrastructure/internet-gateways?project=${project?.identifier || projectId}&region=${project?.region}`
+                )
+              }
+              onViewLoadBalancers={() =>
+                navigate(
+                  `/admin-dashboard/infrastructure/load-balancers?project=${project?.identifier || projectId}&region=${project?.region}`
+                )
+              }
               isEnablingInternet={isEnablingInternet}
               isSyncing={isProjectStatusFetching || isProjectDetailsFetching}
               isProvisioning={isProvisioning}

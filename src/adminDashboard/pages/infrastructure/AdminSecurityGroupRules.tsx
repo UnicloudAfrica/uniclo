@@ -9,6 +9,9 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
 } from "lucide-react";
+import AdminHeadbar from "../../components/adminHeadbar";
+import AdminSidebar from "../../components/AdminSidebar";
+import AdminPageShell from "../../components/AdminPageShell";
 import ModernButton from "../../../shared/components/ui/ModernButton";
 import ModernCard from "../../../shared/components/ui/ModernCard";
 import {
@@ -205,229 +208,223 @@ const AdminSecurityGroupRules: React.FC = () => {
   );
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-              <Shield className="w-7 h-7 text-purple-600" />
-              Security Group Rules
-            </h1>
-            <p className="text-sm text-gray-500 mt-1">
-              {securityGroupName} <span className="font-mono text-xs">({securityGroupId})</span>
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <ModernButton
-            variant="secondary"
-            size="sm"
-            onClick={() => refetch()}
-            disabled={isLoading}
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-            Refresh
-          </ModernButton>
-          <ModernButton variant="primary" size="sm" onClick={() => setShowAddModal(true)}>
-            <Plus className="w-4 h-4" />
-            Add Rule
-          </ModernButton>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <ModernCard className="p-4">
+    <>
+      <AdminHeadbar />
+      <AdminSidebar />
+      <AdminPageShell
+        title="Security Group Rules"
+        description={`${securityGroupName} (${securityGroupId})`}
+        icon={<Shield className="w-6 h-6 text-purple-600" />}
+        breadcrumbs={[
+          { label: "Home", href: "/admin-dashboard" },
+          { label: "Infrastructure", href: "/admin-dashboard/projects" },
+          { label: "Security Group Rules" },
+        ]}
+        actions={
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <ArrowDownToLine className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-gray-900">{ingressRules.length}</div>
-              <div className="text-sm text-gray-500">Inbound Rules</div>
-            </div>
+            <ModernButton
+              variant="secondary"
+              size="sm"
+              onClick={() => refetch()}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
+              Refresh
+            </ModernButton>
+            <ModernButton variant="primary" size="sm" onClick={() => setShowAddModal(true)}>
+              <Plus className="w-4 h-4" />
+              Add Rule
+            </ModernButton>
           </div>
-        </ModernCard>
-        <ModernCard className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <ArrowUpFromLine className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-gray-900">{egressRules.length}</div>
-              <div className="text-sm text-gray-500">Outbound Rules</div>
-            </div>
-          </div>
-        </ModernCard>
-      </div>
-
-      {/* Rules Tables */}
-      <div className="space-y-6">
-        <RuleTable
-          rules={ingressRules}
-          direction="ingress"
-          title="Inbound Rules"
-          icon={<ArrowDownToLine className="w-5 h-5 text-green-600" />}
-        />
-        <RuleTable
-          rules={egressRules}
-          direction="egress"
-          title="Outbound Rules"
-          icon={<ArrowUpFromLine className="w-5 h-5 text-blue-600" />}
-        />
-      </div>
-
-      {/* Add Rule Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 m-4">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Add Security Group Rule</h2>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Direction</label>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setDirection("ingress")}
-                    className={`flex-1 py-2 px-4 rounded-lg border-2 transition-colors ${
-                      direction === "ingress"
-                        ? "border-green-500 bg-green-50 text-green-700"
-                        : "border-gray-200 text-gray-600 hover:border-gray-300"
-                    }`}
-                  >
-                    <ArrowDownToLine className="w-4 h-4 mx-auto mb-1" />
-                    Inbound
-                  </button>
-                  <button
-                    onClick={() => setDirection("egress")}
-                    className={`flex-1 py-2 px-4 rounded-lg border-2 transition-colors ${
-                      direction === "egress"
-                        ? "border-blue-500 bg-blue-50 text-blue-700"
-                        : "border-gray-200 text-gray-600 hover:border-gray-300"
-                    }`}
-                  >
-                    <ArrowUpFromLine className="w-4 h-4 mx-auto mb-1" />
-                    Outbound
-                  </button>
-                </div>
+        }
+      >
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <ModernCard className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <ArrowDownToLine className="w-5 h-5 text-green-600" />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Protocol</label>
-                <select
-                  value={protocol}
-                  onChange={(e) => setProtocol(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  {COMMON_PROTOCOLS.map((p) => (
-                    <option key={p.value} value={p.value}>
-                      {p.label}
-                    </option>
-                  ))}
-                </select>
+                <div className="text-2xl font-bold text-gray-900">{ingressRules.length}</div>
+                <div className="text-sm text-gray-500">Inbound Rules</div>
               </div>
+            </div>
+          </ModernCard>
+          <ModernCard className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <ArrowUpFromLine className="w-5 h-5 text-blue-600" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-gray-900">{egressRules.length}</div>
+                <div className="text-sm text-gray-500">Outbound Rules</div>
+              </div>
+            </div>
+          </ModernCard>
+        </div>
 
-              {protocol !== "-1" && protocol !== "icmp" && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Quick Select Port
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {COMMON_PORTS.map((p) => (
-                        <button
-                          key={p.port}
-                          onClick={() => handleQuickPort(p.port)}
-                          className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${
-                            portMin === p.port.toString()
-                              ? "bg-blue-100 border-blue-300 text-blue-700"
-                              : "bg-gray-50 border-gray-200 text-gray-600 hover:border-blue-300"
-                          }`}
-                        >
-                          {p.name} ({p.port})
-                        </button>
-                      ))}
-                    </div>
+        {/* Rules Tables */}
+        <div className="space-y-6">
+          <RuleTable
+            rules={ingressRules}
+            direction="ingress"
+            title="Inbound Rules"
+            icon={<ArrowDownToLine className="w-5 h-5 text-green-600" />}
+          />
+          <RuleTable
+            rules={egressRules}
+            direction="egress"
+            title="Outbound Rules"
+            icon={<ArrowUpFromLine className="w-5 h-5 text-blue-600" />}
+          />
+        </div>
+
+        {/* Add Rule Modal */}
+        {showAddModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 m-4">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Add Security Group Rule</h2>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Direction</label>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setDirection("ingress")}
+                      className={`flex-1 py-2 px-4 rounded-lg border-2 transition-colors ${
+                        direction === "ingress"
+                          ? "border-green-500 bg-green-50 text-green-700"
+                          : "border-gray-200 text-gray-600 hover:border-gray-300"
+                      }`}
+                    >
+                      <ArrowDownToLine className="w-4 h-4 mx-auto mb-1" />
+                      Inbound
+                    </button>
+                    <button
+                      onClick={() => setDirection("egress")}
+                      className={`flex-1 py-2 px-4 rounded-lg border-2 transition-colors ${
+                        direction === "egress"
+                          ? "border-blue-500 bg-blue-50 text-blue-700"
+                          : "border-gray-200 text-gray-600 hover:border-gray-300"
+                      }`}
+                    >
+                      <ArrowUpFromLine className="w-4 h-4 mx-auto mb-1" />
+                      Outbound
+                    </button>
                   </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Port From
-                      </label>
-                      <input
-                        type="number"
-                        value={portMin}
-                        onChange={(e) => setPortMin(e.target.value)}
-                        placeholder="22"
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Port To
-                      </label>
-                      <input
-                        type="number"
-                        value={portMax}
-                        onChange={(e) => setPortMax(e.target.value)}
-                        placeholder="22"
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {direction === "ingress" ? "Source CIDR" : "Destination CIDR"}
-                </label>
-                <input
-                  type="text"
-                  value={cidr}
-                  onChange={(e) => setCidr(e.target.value)}
-                  placeholder="0.0.0.0/0"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono"
-                />
-                <div className="text-xs text-gray-400 mt-1">
-                  Use 0.0.0.0/0 for anywhere, or specify a specific IP/range
                 </div>
-              </div>
-            </div>
 
-            <div className="flex justify-end gap-3 mt-6">
-              <ModernButton
-                variant="secondary"
-                onClick={() => {
-                  setShowAddModal(false);
-                  resetForm();
-                }}
-              >
-                Cancel
-              </ModernButton>
-              <ModernButton variant="primary" onClick={handleAddRule} disabled={isAdding}>
-                {isAdding ? (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Protocol</label>
+                  <select
+                    value={protocol}
+                    onChange={(e) => setProtocol(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  >
+                    {COMMON_PROTOCOLS.map((p) => (
+                      <option key={p.value} value={p.value}>
+                        {p.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {protocol !== "-1" && protocol !== "icmp" && (
                   <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    Adding...
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Quick Select Port
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {COMMON_PORTS.map((p) => (
+                          <button
+                            key={p.port}
+                            onClick={() => handleQuickPort(p.port)}
+                            className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${
+                              portMin === p.port.toString()
+                                ? "bg-blue-100 border-blue-300 text-blue-700"
+                                : "bg-gray-50 border-gray-200 text-gray-600 hover:border-blue-300"
+                            }`}
+                          >
+                            {p.name} ({p.port})
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Port From
+                        </label>
+                        <input
+                          type="number"
+                          value={portMin}
+                          onChange={(e) => setPortMin(e.target.value)}
+                          placeholder="22"
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Port To
+                        </label>
+                        <input
+                          type="number"
+                          value={portMax}
+                          onChange={(e) => setPortMax(e.target.value)}
+                          placeholder="22"
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
                   </>
-                ) : (
-                  "Add Rule"
                 )}
-              </ModernButton>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {direction === "ingress" ? "Source CIDR" : "Destination CIDR"}
+                  </label>
+                  <input
+                    type="text"
+                    value={cidr}
+                    onChange={(e) => setCidr(e.target.value)}
+                    placeholder="0.0.0.0/0"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono"
+                  />
+                  <div className="text-xs text-gray-400 mt-1">
+                    Use 0.0.0.0/0 for anywhere, or specify a specific IP/range
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <ModernButton
+                  variant="secondary"
+                  onClick={() => {
+                    setShowAddModal(false);
+                    resetForm();
+                  }}
+                >
+                  Cancel
+                </ModernButton>
+                <ModernButton variant="primary" onClick={handleAddRule} disabled={isAdding}>
+                  {isAdding ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Adding...
+                    </>
+                  ) : (
+                    "Add Rule"
+                  )}
+                </ModernButton>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </AdminPageShell>
+    </>
   );
 };
 

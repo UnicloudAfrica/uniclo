@@ -28,7 +28,6 @@ import AdminLeads from "../adminDashboard/pages/adminLeads";
 import AdminLeadCreate from "../adminDashboard/pages/adminLeadCreate";
 import AdminLeadDetails from "../adminDashboard/pages/adminLeadDetails";
 import AdminRegion from "../adminDashboard/pages/adminRegion";
-import AdminKeyPairs from "../adminDashboard/pages/adminKeyPairs";
 import AdminPricing from "../adminDashboard/pages/adminPricing";
 import AdminProducts from "../adminDashboard/pages/AdminProducts";
 import AdminProductCreate from "../adminDashboard/pages/AdminProductCreate";
@@ -63,11 +62,22 @@ import TicketsDashboard from "../adminDashboard/pages/TicketsDashboard";
 import {
   AdminNatGateways,
   AdminElasticIps,
+  AdminSecurityGroups,
   AdminSecurityGroupRules,
   AdminSubnets,
   AdminRouteTables,
   AdminNetworkAcls,
+  AdminNetworkAclRules,
   AdminVpcPeering,
+  AdminKeyPairs,
+  AdminNetworkInterfaces,
+  AdminVpcs,
+  AdminInternetGateways,
+  AdminLoadBalancers,
+  AdminDnsManagement,
+  AdminSnapshots,
+  AdminImages,
+  AdminAutoScaling,
 } from "../adminDashboard/pages/infrastructure";
 
 const AdminRoutes = (): React.JSX.Element => {
@@ -148,13 +158,39 @@ const AdminRoutes = (): React.JSX.Element => {
       <Route path="/admin-dashboard/infrastructure/nat-gateways" element={<AdminNatGateways />} />
       <Route path="/admin-dashboard/infrastructure/elastic-ips" element={<AdminElasticIps />} />
       <Route
+        path="/admin-dashboard/infrastructure/security-groups"
+        element={<AdminSecurityGroups />}
+      />
+      <Route
         path="/admin-dashboard/infrastructure/security-group-rules"
         element={<AdminSecurityGroupRules />}
       />
       <Route path="/admin-dashboard/infrastructure/subnets" element={<AdminSubnets />} />
       <Route path="/admin-dashboard/infrastructure/route-tables" element={<AdminRouteTables />} />
       <Route path="/admin-dashboard/infrastructure/network-acls" element={<AdminNetworkAcls />} />
+      <Route
+        path="/admin-dashboard/infrastructure/network-acl-rules"
+        element={<AdminNetworkAclRules />}
+      />
       <Route path="/admin-dashboard/infrastructure/vpc-peering" element={<AdminVpcPeering />} />
+      <Route
+        path="/admin-dashboard/infrastructure/load-balancers"
+        element={<AdminLoadBalancers />}
+      />
+      <Route path="/admin-dashboard/infrastructure/key-pairs" element={<AdminKeyPairs />} />
+      <Route
+        path="/admin-dashboard/infrastructure/network-interfaces"
+        element={<AdminNetworkInterfaces />}
+      />
+      <Route path="/admin-dashboard/infrastructure/vpcs" element={<AdminVpcs />} />
+      <Route
+        path="/admin-dashboard/infrastructure/internet-gateways"
+        element={<AdminInternetGateways />}
+      />
+      <Route path="/admin-dashboard/infrastructure/dns" element={<AdminDnsManagement />} />
+      <Route path="/admin-dashboard/infrastructure/snapshots" element={<AdminSnapshots />} />
+      <Route path="/admin-dashboard/infrastructure/images" element={<AdminImages />} />
+      <Route path="/admin-dashboard/infrastructure/autoscaling" element={<AdminAutoScaling />} />
     </>
   );
 };

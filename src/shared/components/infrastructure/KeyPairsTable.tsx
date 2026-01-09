@@ -14,7 +14,7 @@ interface KeyPair {
 interface KeyPairsTableProps {
   keyPairs: KeyPair[];
   isLoading?: boolean;
-  onCreate?: (name: string) => Promise<{ private_key?: string } | void>;
+  onCreate?: (name?: string) => void | Promise<{ private_key?: string } | void>;
   onDelete?: (keyPairId: string, keyPairName: string) => void;
   onRefresh?: () => void;
   isCreating?: boolean;
@@ -27,7 +27,7 @@ interface KeyPairsTableProps {
 const KeyPairsTable: React.FC<KeyPairsTableProps> = ({
   keyPairs = [],
   isLoading = false,
-  onCreate,
+  onCreate, // Now used as a direct click handler (e.g., navigation)
   onDelete,
   onRefresh,
   isCreating = false,
@@ -36,48 +36,6 @@ const KeyPairsTable: React.FC<KeyPairsTableProps> = ({
   title = "Key Pairs",
   description = "SSH key pairs for secure instance access",
 }) => {
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [keyPairName, setKeyPairName] = useState("");
-  const [newPrivateKey, setNewPrivateKey] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
-
-  const handleCreate = async () => {
-    if (!keyPairName.trim() || !onCreate) return;
-    const result = await onCreate(keyPairName);
-    if (result?.private_key) {
-      setNewPrivateKey(result.private_key);
-    } else {
-      closeCreateModal();
-    }
-  };
-
-  const handleCopyPrivateKey = () => {
-    if (newPrivateKey) {
-      navigator.clipboard.writeText(newPrivateKey);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
-  const handleDownloadPrivateKey = () => {
-    if (newPrivateKey) {
-      const blob = new Blob([newPrivateKey], { type: "text/plain" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${keyPairName}.pem`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-  };
-
-  const closeCreateModal = () => {
-    setShowCreateModal(false);
-    setKeyPairName("");
-    setNewPrivateKey(null);
-    setCopied(false);
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -98,7 +56,7 @@ const KeyPairsTable: React.FC<KeyPairsTableProps> = ({
               </ModernButton>
             )}
             {onCreate && (
-              <ModernButton variant="primary" size="sm" onClick={() => setShowCreateModal(true)}>
+              <ModernButton variant="primary" size="sm" onClick={() => onCreate("")}>
                 <Plus className="w-4 h-4" />
                 Create Key Pair
               </ModernButton>
@@ -204,104 +162,6 @@ const KeyPairsTable: React.FC<KeyPairsTableProps> = ({
           </table>
         </div>
       </ModernCard>
-
-      {/* Create Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 m-4">
-            {newPrivateKey ? (
-              <>
-                <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <Check className="w-5 h-5 text-green-500" />
-                  Key Pair Created
-                </h2>
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-                  <p className="text-sm text-yellow-800">
-                    <strong>Important:</strong> Download your private key now. You won't be able to
-                    retrieve it again.
-                  </p>
-                </div>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Private Key
-                  </label>
-                  <textarea
-                    value={newPrivateKey}
-                    readOnly
-                    rows={6}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg font-mono text-xs bg-gray-50"
-                  />
-                </div>
-                <div className="flex gap-3">
-                  <ModernButton
-                    variant="secondary"
-                    onClick={handleCopyPrivateKey}
-                    className="flex-1"
-                  >
-                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    {copied ? "Copied!" : "Copy"}
-                  </ModernButton>
-                  <ModernButton
-                    variant="primary"
-                    onClick={handleDownloadPrivateKey}
-                    className="flex-1"
-                  >
-                    <Download className="w-4 h-4" />
-                    Download .pem
-                  </ModernButton>
-                </div>
-                <ModernButton
-                  variant="secondary"
-                  onClick={closeCreateModal}
-                  className="w-full mt-3"
-                >
-                  Done
-                </ModernButton>
-              </>
-            ) : (
-              <>
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Create Key Pair</h2>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Key Pair Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={keyPairName}
-                      onChange={(e) => setKeyPairName(e.target.value)}
-                      placeholder="my-key-pair"
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    />
-                    <p className="text-xs text-gray-400 mt-1">
-                      Alphanumeric characters, hyphens, and underscores only
-                    </p>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-3 mt-6">
-                  <ModernButton variant="secondary" onClick={closeCreateModal}>
-                    Cancel
-                  </ModernButton>
-                  <ModernButton
-                    variant="primary"
-                    onClick={handleCreate}
-                    disabled={!keyPairName.trim() || isCreating}
-                  >
-                    {isCreating ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                        Creating...
-                      </>
-                    ) : (
-                      "Create Key Pair"
-                    )}
-                  </ModernButton>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

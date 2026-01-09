@@ -27,9 +27,11 @@ class InstanceApiService {
    * Get the authorization headers
    */
   getAuthHeaders() {
-    const { token } = useAdminAuthStore.getState();
+    const adminState = useAdminAuthStore.getState();
+    if (adminState?.getAuthHeaders) {
+      return adminState.getAuthHeaders();
+    }
     return {
-      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
       Accept: "application/json",
     };
@@ -47,6 +49,7 @@ class InstanceApiService {
       const response = await fetch(url, {
         method: "GET",
         headers: this.getAuthHeaders(),
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -74,6 +77,7 @@ class InstanceApiService {
       const response = await fetch(`${config.baseURL}/business/instances/${id}`, {
         method: "GET",
         headers: this.getAuthHeaders(),
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -100,6 +104,7 @@ class InstanceApiService {
       const response = await fetch(`${config.baseURL}/business/instances`, {
         method: "POST",
         headers: this.getAuthHeaders(),
+        credentials: "include",
         body: JSON.stringify(instanceData),
       });
 
@@ -129,6 +134,7 @@ class InstanceApiService {
       const response = await fetch(`${config.baseURL}/business/instances/${id}`, {
         method: "PUT",
         headers: this.getAuthHeaders(),
+        credentials: "include",
         body: JSON.stringify(updateData),
       });
 
@@ -158,6 +164,7 @@ class InstanceApiService {
       const response = await fetch(`${config.baseURL}/business/instances/${id}`, {
         method: "DELETE",
         headers: this.getAuthHeaders(),
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -211,6 +218,7 @@ class InstanceApiService {
       const response = await fetch(`${config.baseURL}/business/instance-consoles/${instanceId}`, {
         method: "GET",
         headers: this.getAuthHeaders(),
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -282,6 +290,7 @@ class InstanceApiService {
           "Idempotency-Key":
             options.idempotencyKey || `multi-${Date.now()}-${Math.random().toString(36).slice(2)}`,
         },
+        credentials: "include",
         body: JSON.stringify(payload),
       });
 

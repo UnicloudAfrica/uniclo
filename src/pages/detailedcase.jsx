@@ -9,6 +9,7 @@ import admob from "./assets/adMob.svg";
 import { getFirestore, getDoc, doc, getDocs, collection, query } from "firebase/firestore";
 import { motion } from "framer-motion";
 import copy from "./assets/copy.svg";
+import DOMPurify from "dompurify";
 
 const DetailedCases = () => {
   const firebaseConfig = {
@@ -114,7 +115,7 @@ const DetailedCases = () => {
           <p
             style={{ whiteSpace: "pre-line" }}
             className=" mt-3 md:px-[15%] text-sm text-justify font-normal whitespace-pre-line"
-            dangerouslySetInnerHTML={{ __html: selectedCaseItem.content }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedCaseItem.content) }}
           />
           <div className=" md:px-[15%] mt-6">
             <button

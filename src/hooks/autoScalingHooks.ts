@@ -17,7 +17,7 @@ const getApiPrefix = (context: string) => {
  * Fetch launch configurations - works at tenant level (no project/region required)
  */
 export const useLaunchConfigurations = (projectId?: string, region?: string) => {
-  const { apiBaseUrl, context, authToken } = useApiContext();
+  const { apiBaseUrl, context, authHeaders, isAuthenticated } = useApiContext();
   const prefix = getApiPrefix(context);
 
   return useQuery({
@@ -29,17 +29,18 @@ export const useLaunchConfigurations = (projectId?: string, region?: string) => 
 
       const { data } = await axios.get(`${apiBaseUrl}${prefix}/launch-configurations`, {
         params,
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers: authHeaders,
+        withCredentials: true,
       });
       return data.data || data;
     },
-    enabled: !!authToken,
+    enabled: isAuthenticated,
   });
 };
 
 export const useCreateLaunchConfiguration = () => {
   const queryClient = useQueryClient();
-  const { apiBaseUrl, context, authToken } = useApiContext();
+  const { apiBaseUrl, context, authHeaders } = useApiContext();
   const prefix = getApiPrefix(context);
 
   return useMutation({
@@ -55,7 +56,8 @@ export const useCreateLaunchConfiguration = () => {
       description?: string;
     }) => {
       const { data } = await axios.post(`${apiBaseUrl}${prefix}/launch-configurations`, payload, {
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers: authHeaders,
+        withCredentials: true,
       });
       return data;
     },
@@ -71,7 +73,7 @@ export const useCreateLaunchConfiguration = () => {
 
 export const useDeleteLaunchConfiguration = () => {
   const queryClient = useQueryClient();
-  const { apiBaseUrl, context, authToken } = useApiContext();
+  const { apiBaseUrl, context, authHeaders } = useApiContext();
   const prefix = getApiPrefix(context);
 
   return useMutation({
@@ -86,7 +88,8 @@ export const useDeleteLaunchConfiguration = () => {
     }) => {
       await axios.delete(`${apiBaseUrl}${prefix}/launch-configurations/${id}`, {
         params: { project_id: projectId, region },
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers: authHeaders,
+        withCredentials: true,
       });
     },
     onSuccess: (_, { projectId }) => {
@@ -105,7 +108,7 @@ export const useDeleteLaunchConfiguration = () => {
  * Fetch auto-scaling groups - works at tenant level (no project/region required)
  */
 export const useAutoScalingGroups = (projectId?: string, region?: string) => {
-  const { apiBaseUrl, context, authToken } = useApiContext();
+  const { apiBaseUrl, context, authHeaders, isAuthenticated } = useApiContext();
   const prefix = getApiPrefix(context);
 
   return useQuery({
@@ -117,16 +120,17 @@ export const useAutoScalingGroups = (projectId?: string, region?: string) => {
 
       const { data } = await axios.get(`${apiBaseUrl}${prefix}/autoscaling-groups`, {
         params,
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers: authHeaders,
+        withCredentials: true,
       });
       return data.data || data;
     },
-    enabled: !!authToken,
+    enabled: isAuthenticated,
   });
 };
 
 export const useAutoScalingGroup = (id: string, projectId: string, region: string) => {
-  const { apiBaseUrl, context, authToken } = useApiContext();
+  const { apiBaseUrl, context, authHeaders, isAuthenticated } = useApiContext();
   const prefix = getApiPrefix(context);
 
   return useQuery({
@@ -134,17 +138,18 @@ export const useAutoScalingGroup = (id: string, projectId: string, region: strin
     queryFn: async () => {
       const { data } = await axios.get(`${apiBaseUrl}${prefix}/autoscaling-groups/${id}`, {
         params: { project_id: projectId, region },
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers: authHeaders,
+        withCredentials: true,
       });
       return data.data || data;
     },
-    enabled: !!id && !!projectId && !!region && !!authToken,
+    enabled: !!id && !!projectId && !!region && isAuthenticated,
   });
 };
 
 export const useCreateAutoScalingGroup = () => {
   const queryClient = useQueryClient();
-  const { apiBaseUrl, context, authToken } = useApiContext();
+  const { apiBaseUrl, context, authHeaders } = useApiContext();
   const prefix = getApiPrefix(context);
 
   return useMutation({
@@ -163,7 +168,8 @@ export const useCreateAutoScalingGroup = () => {
       default_cooldown?: number;
     }) => {
       const { data } = await axios.post(`${apiBaseUrl}${prefix}/autoscaling-groups`, payload, {
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers: authHeaders,
+        withCredentials: true,
       });
       return data;
     },
@@ -179,7 +185,7 @@ export const useCreateAutoScalingGroup = () => {
 
 export const useUpdateAutoScalingGroup = () => {
   const queryClient = useQueryClient();
-  const { apiBaseUrl, context, authToken } = useApiContext();
+  const { apiBaseUrl, context, authHeaders } = useApiContext();
   const prefix = getApiPrefix(context);
 
   return useMutation({
@@ -206,7 +212,8 @@ export const useUpdateAutoScalingGroup = () => {
           ...updates,
         },
         {
-          headers: { Authorization: `Bearer ${authToken}` },
+          headers: authHeaders,
+          withCredentials: true,
         }
       );
       return data;
@@ -224,7 +231,7 @@ export const useUpdateAutoScalingGroup = () => {
 
 export const useDeleteAutoScalingGroup = () => {
   const queryClient = useQueryClient();
-  const { apiBaseUrl, context, authToken } = useApiContext();
+  const { apiBaseUrl, context, authHeaders } = useApiContext();
   const prefix = getApiPrefix(context);
 
   return useMutation({
@@ -239,7 +246,8 @@ export const useDeleteAutoScalingGroup = () => {
     }) => {
       await axios.delete(`${apiBaseUrl}${prefix}/autoscaling-groups/${id}`, {
         params: { project_id: projectId, region },
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers: authHeaders,
+        withCredentials: true,
       });
     },
     onSuccess: (_, { projectId }) => {
@@ -255,7 +263,7 @@ export const useDeleteAutoScalingGroup = () => {
 // ==================== Scaling Policies ====================
 
 export const useScalingPolicies = (projectId: string, region: string, groupId?: string) => {
-  const { apiBaseUrl, context, authToken } = useApiContext();
+  const { apiBaseUrl, context, authHeaders, isAuthenticated } = useApiContext();
   const prefix = getApiPrefix(context);
 
   return useQuery({
@@ -263,17 +271,18 @@ export const useScalingPolicies = (projectId: string, region: string, groupId?: 
     queryFn: async () => {
       const { data } = await axios.get(`${apiBaseUrl}${prefix}/scaling-policies`, {
         params: { project_id: projectId, region, group_id: groupId },
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers: authHeaders,
+        withCredentials: true,
       });
       return data.data || data;
     },
-    enabled: !!projectId && !!region && !!authToken,
+    enabled: !!projectId && !!region && isAuthenticated,
   });
 };
 
 export const useCreateScalingPolicy = () => {
   const queryClient = useQueryClient();
-  const { apiBaseUrl, context, authToken } = useApiContext();
+  const { apiBaseUrl, context, authHeaders } = useApiContext();
   const prefix = getApiPrefix(context);
 
   return useMutation({
@@ -288,7 +297,8 @@ export const useCreateScalingPolicy = () => {
       estimated_warmup?: number;
     }) => {
       const { data } = await axios.post(`${apiBaseUrl}${prefix}/scaling-policies`, payload, {
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers: authHeaders,
+        withCredentials: true,
       });
       return data;
     },
@@ -306,7 +316,7 @@ export const useCreateScalingPolicy = () => {
 
 export const useDeleteScalingPolicy = () => {
   const queryClient = useQueryClient();
-  const { apiBaseUrl, context, authToken } = useApiContext();
+  const { apiBaseUrl, context, authHeaders } = useApiContext();
   const prefix = getApiPrefix(context);
 
   return useMutation({
@@ -321,7 +331,8 @@ export const useDeleteScalingPolicy = () => {
     }) => {
       await axios.delete(`${apiBaseUrl}${prefix}/scaling-policies/${id}`, {
         params: { project_id: projectId, region },
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers: authHeaders,
+        withCredentials: true,
       });
     },
     onSuccess: (_, { projectId, region }) => {

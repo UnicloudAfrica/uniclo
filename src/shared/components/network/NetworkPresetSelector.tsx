@@ -1,5 +1,5 @@
 import React from "react";
-import { Network, Globe, Lock, Layers, Database, Zap, ChevronRight } from "lucide-react";
+import { Network, Globe, Lock, Layers, Database, ChevronRight, Box } from "lucide-react";
 
 export interface NetworkPreset {
   id: string;
@@ -10,14 +10,7 @@ export interface NetworkPreset {
   recommended?: boolean;
 }
 
-const DEFAULT_PRESETS: NetworkPreset[] = [
-  {
-    id: "minimal",
-    name: "Minimal",
-    description: "Quick start - configure network later",
-    icon: <Zap className="w-5 h-5" />,
-    features: ["Private subnet", "No internet gateway", "No security groups"],
-  },
+export const DEFAULT_PRESETS: NetworkPreset[] = [
   {
     id: "standard",
     name: "Standard",
@@ -46,6 +39,19 @@ const DEFAULT_PRESETS: NetworkPreset[] = [
     description: "Optimized for database deployments",
     icon: <Database className="w-5 h-5" />,
     features: ["Private subnet", "MySQL/PostgreSQL/MongoDB/Redis ports", "Internal access only"],
+  },
+  {
+    id: "empty",
+    name: "Empty Project",
+    description:
+      "A clean slate. Creates the project container but provisions NO network resources. Perfect for custom topologies.",
+    icon: <Box className="w-5 h-5" />,
+    features: [
+      "VPC Container Only",
+      "No Subnets",
+      "No Route Tables",
+      "Manual Network Setup Required",
+    ],
   },
 ];
 

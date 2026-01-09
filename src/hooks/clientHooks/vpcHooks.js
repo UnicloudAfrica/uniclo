@@ -4,16 +4,19 @@ import clientSilentApi from "../../index/client/silent";
 import clientApi from "../../index/client/api";
 
 const fetchClientVpcs = async ({ project_id, region, refresh = false }) => {
+  // Validate required parameters before making API call
+  if (!project_id || !region) {
+    console.warn("fetchClientVpcs: project_id and region are required");
+    return [];
+  }
+
   const params = new URLSearchParams();
-  if (project_id) params.append("project_id", project_id);
-  if (region) params.append("region", region);
+  params.append("project_id", project_id);
+  params.append("region", region);
   if (refresh) params.append("refresh", "1");
 
   const queryString = params.toString();
-  const res = await clientSilentApi(
-    "GET",
-    `/business/vpcs${queryString ? `?${queryString}` : ""}`
-  );
+  const res = await clientSilentApi("GET", `/business/vpcs${queryString ? `?${queryString}` : ""}`);
   if (!res.data) throw new Error("Failed to fetch VPCs");
   return res.data;
 };
@@ -46,6 +49,8 @@ export const useFetchClientVpcs = (projectId, region, options = {}) => {
   return useQuery({
     queryKey: ["clientVpcs", { projectId, region }],
     queryFn: () => fetchClientVpcs({ project_id: projectId, region }),
+    // Only enable if both projectId and region are non-empty strings
+    enabled: !!projectId?.trim?.() && !!region?.trim?.(),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
@@ -126,10 +131,7 @@ const fetchAvailableClientCidrs = async ({
   params.append("vpc_id", vpc_id);
   if (prefix_length) params.append("prefix_length", String(prefix_length));
   if (limit) params.append("limit", String(limit));
-  const res = await clientSilentApi(
-    "GET",
-    `/business/vpcs/available-cidrs?${params.toString()}`
-  );
+  const res = await clientSilentApi("GET", `/business/vpcs/available-cidrs?${params.toString()}`);
   const suggestions = res?.data?.suggestions ?? res?.suggestions ?? [];
   return Array.isArray(suggestions) ? suggestions : [];
 };
@@ -143,10 +145,7 @@ export const useFetchAvailableClientCidrs = (
   options = {}
 ) => {
   return useQuery({
-    queryKey: [
-      "clientAvailableCidrs",
-      { projectId, region, vpcId, prefixLength, limit },
-    ],
+    queryKey: ["clientAvailableCidrs", { projectId, region, vpcId, prefixLength, limit }],
     queryFn: () =>
       fetchAvailableClientCidrs({
         project_id: projectId,

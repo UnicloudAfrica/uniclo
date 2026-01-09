@@ -10,10 +10,10 @@ import useAdminAuthStore from "../stores/adminAuthStore";
 export const useProjectBroadcasting = (projectId) => {
   const queryClient = useQueryClient();
   const echoRef = useRef(null);
-  const { token } = useAdminAuthStore();
+  const { isAuthenticated, role } = useAdminAuthStore();
 
   useEffect(() => {
-    if (!projectId || !token) return;
+    if (!projectId || !isAuthenticated || role !== "admin") return;
 
     // Initialize Echo
     const echo = createEchoClient();
@@ -66,7 +66,7 @@ export const useProjectBroadcasting = (projectId) => {
         echoRef.current.leave(`projects.${projectId}`);
       }
     };
-  }, [projectId, token, queryClient]);
+  }, [projectId, isAuthenticated, role, queryClient]);
 
   return null;
 };

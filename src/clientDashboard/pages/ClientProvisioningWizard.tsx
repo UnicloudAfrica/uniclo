@@ -1,14 +1,34 @@
 // @ts-nocheck
-import React, { useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { ShoppingCart } from "lucide-react";
+import React, { useCallback, useMemo, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import ConfigurationListStep from "../../shared/components/instance-wizard/ConfigurationListStep";
 import PaymentStep from "../../shared/components/instance-wizard/PaymentStep";
 import InstanceSummaryCard from "../../shared/components/instance-wizard/InstanceSummaryCard";
 import StepIndicator from "../../shared/components/instance-wizard/StepIndicator";
+import ReviewSubmitStep from "../../shared/components/instance-wizard/ReviewSubmitStep";
 import OrderSuccessStep from "../../shared/components/instance-wizard/OrderSuccessStep";
 import { useClientProvisioningLogic } from "../../hooks/useClientProvisioningLogic";
+import {
+  useCreateClientProject,
+  useFetchClientProjects,
+  useClientProjectStatus,
+} from "../../hooks/clientHooks/projectHooks";
+import { useFetchClientSecurityGroups } from "../../hooks/clientHooks/securityGroupHooks";
+import { useFetchClientKeyPairs } from "../../hooks/clientHooks/keyPairsHook";
+import { useFetchClientSubnets } from "../../hooks/clientHooks/subnetHooks";
+import { useFetchClientNetworks } from "../../hooks/clientHooks/networkHooks";
 import ClientPageShell from "../components/ClientPageShell";
+import ToastUtils from "../../utils/toastUtil";
+import {
+  buildConfigurationFromTemplate,
+  evaluateConfigurationCompleteness,
+  formatComputeLabel,
+  formatOsLabel,
+  formatVolumeLabel,
+  formatKeypairLabel,
+  formatSubnetLabel,
+  hasProjectNetworkFromStatus,
+} from "../../utils/instanceCreationUtils";
 
 // ═══════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
@@ -16,6 +36,7 @@ import ClientPageShell from "../components/ClientPageShell";
 
 const ClientProvisioningWizard: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const logic = useClientProvisioningLogic();
 
   const {
@@ -24,6 +45,8 @@ const ClientProvisioningWizard: React.FC = () => {
     setActiveStep,
     configurations,
     addConfiguration,
+    addConfigurationWithPatch,
+    resetConfigurationWithPatch,
     removeConfiguration,
     updateConfiguration,
     addAdditionalVolume,
@@ -43,7 +66,6 @@ const ClientProvisioningWizard: React.FC = () => {
     handlePaymentCompleted,
     pricingSummary,
     configurationSummaries,
-    authToken,
     apiBaseUrl,
     profile,
   } = logic;
@@ -62,16 +84,219 @@ const ClientProvisioningWizard: React.FC = () => {
     [activeStep, steps, isPaymentSuccessful, setActiveStep]
   );
 
-  // Get client options for payment
+  const { mutateAsync: createClientProject } = useCreateClientProject();
+
+  const handleCreateProject = useCallback(
+    async (configId: string, projectName: string) => {
+      const trimmedName = projectName.trim();
+      if (!trimmedName) {
+        ToastUtils.error("Project name is required.");
+        return;
+      }
+
+      const targetConfig = configurations.find((cfg) => cfg.id === configId);
+      if (!targetConfig) {
+        ToastUtils.error("Configuration not found.");
+        return;
+      }
+
+      if (!targetConfig.region) {
+        ToastUtils.error("Select a region before creating a project.");
+        return;
+      }
+
+      const isTemplateConfig = Boolean(targetConfig.template_locked || targetConfig.template_id);
+
+      const payload: any = {
+        name: trimmedName,
+        description: "Project created via instance provisioning.",
+        type: "vpc",
+        region: targetConfig.region,
+      };
+
+      const selectedPreset = targetConfig.network_preset || "standard";
+      if (selectedPreset && selectedPreset !== "empty") {
+        payload.metadata = { network_preset: selectedPreset };
+      }
+
+      try {
+        const createdProject = await createClientProject(payload);
+        const projectIdentifier =
+          createdProject?.identifier ||
+          createdProject?.data?.identifier ||
+          createdProject?.id ||
+          createdProject?.data?.id;
+
+        if (!projectIdentifier) {
+          ToastUtils.error("Project created, but the identifier was missing.");
+          return;
+        }
+
+        updateConfiguration(configId, {
+          project_id: String(projectIdentifier),
+          project_mode: isTemplateConfig ? "new" : "existing",
+          project_name: isTemplateConfig ? trimmedName : "",
+        });
+        ToastUtils.success("Project created successfully.");
+      } catch (error: any) {
+        ToastUtils.error(error?.message || "Failed to create project.");
+      }
+    },
+    [configurations, createClientProject, updateConfiguration]
+  );
+
+  const applyTemplate = useCallback(
+    (template: any) => {
+      const patch = buildConfigurationFromTemplate(template);
+      const firstConfig = configurations[0];
+      const canOverwrite =
+        configurations.length === 1 &&
+        firstConfig &&
+        !firstConfig.region &&
+        !firstConfig.compute_instance_id &&
+        !firstConfig.os_image_id &&
+        !firstConfig.volume_type_id;
+
+      if (canOverwrite) {
+        updateConfiguration(firstConfig.id, patch);
+      } else {
+        addConfigurationWithPatch(patch);
+      }
+    },
+    [configurations, updateConfiguration, addConfigurationWithPatch]
+  );
+
+  const reviewSummaries = useMemo(() => {
+    const instanceTypes = resources.instance_types || [];
+    const osImages = resources.os_images || [];
+    const volumeTypes = resources.volume_types || [];
+    const keyPairs = resources.keypairs || resources.keyPairs || [];
+
+    return configurations.map((cfg) => {
+      const status = evaluateConfigurationCompleteness(cfg);
+      const computeLabel = formatComputeLabel(cfg.compute_instance_id, instanceTypes);
+      const defaultTitle =
+        cfg.name?.trim() ||
+        (computeLabel && computeLabel !== "Not selected" ? computeLabel : "Instance configuration");
+
+      return {
+        id: cfg.id,
+        title: defaultTitle,
+        regionLabel:
+          regionOptions.find((opt) => opt.value === cfg.region)?.label ||
+          cfg.region ||
+          "No region selected",
+        computeLabel,
+        osLabel: formatOsLabel(cfg.os_image_id, osImages),
+        termLabel: cfg.months
+          ? `${cfg.months} month${Number(cfg.months) === 1 ? "" : "s"}`
+          : "Not selected",
+        storageLabel: formatVolumeLabel(cfg.volume_type_id, cfg.storage_size_gb, volumeTypes),
+        floatingIpLabel: `${Number(cfg.floating_ip_count || 0)} floating IP${
+          Number(cfg.floating_ip_count || 0) === 1 ? "" : "s"
+        }`,
+        keypairLabel: formatKeypairLabel(cfg.keypair_name, keyPairs, cfg.keypair_label),
+        subnetLabel: formatSubnetLabel(cfg),
+        statusLabel: status.isComplete ? "Complete" : "Incomplete",
+        isComplete: status.isComplete,
+      };
+    });
+  }, [configurations, resources, regionOptions]);
+
+  const summaryConfigurationCount = reviewSummaries.length || configurations.length || 0;
+  const summaryPlanLabel = useMemo(() => {
+    if (!reviewSummaries.length) return "Instance profile";
+    if (reviewSummaries.length === 1) return reviewSummaries[0].title || "Instance profile";
+    return `${reviewSummaries.length} compute profiles`;
+  }, [reviewSummaries]);
+  const summaryWorkflowLabel = "Standard Request w/ Payment";
+  const clientDisplayName = useMemo(
+    () =>
+      profile
+        ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || profile.email
+        : "",
+    [profile]
+  );
   const clientOptions = useMemo(() => {
     if (!profile) return [];
-    return [{ value: String(profile.id), label: `${profile.first_name} ${profile.last_name}` }];
-  }, [profile]);
+    return [{ value: String(profile.id), label: clientDisplayName || profile.email }];
+  }, [profile, clientDisplayName]);
+  const assignmentSummary = clientDisplayName || "Self";
+
+  const billingCountryLabel = useMemo(() => {
+    if (!billingCountry) return "Not selected";
+    const match = countryOptions.find((option) => String(option.value) === String(billingCountry));
+    return match ? match.label : billingCountry;
+  }, [billingCountry, countryOptions]);
+
+  const summarySubtotalValue = pricingSummary.subtotal || 0;
+  const summaryTaxValue = pricingSummary.tax || 0;
+  const summaryGatewayFeesValue = pricingSummary.gatewayFees || 0;
+  const summaryGrandTotalValue = pricingSummary.grandTotal || 0;
+  const summaryDisplayCurrency =
+    pricingSummary.currency || (billingCountry === "NG" ? "NGN" : "USD");
+  const taxLabelSuffix =
+    summaryTaxValue > 0 && summarySubtotalValue > 0
+      ? ` (${((summaryTaxValue / summarySubtotalValue) * 100).toFixed(2)}%)`
+      : "";
+
+  const paymentOptionsList =
+    submissionResult?.payment?.payment_gateway_options ||
+    orderReceipt?.payment?.payment_gateway_options ||
+    [];
+  const effectivePaymentOption = paymentOptionsList[0] || null;
+  const backendPricingData = useMemo(() => {
+    if (submissionResult?.pricing_data) return submissionResult.pricing_data;
+    if (orderReceipt?.pricing_data) return orderReceipt.pricing_data;
+    return null;
+  }, [submissionResult, orderReceipt]);
+
+  const configureStepIndex = useMemo(
+    () => steps.findIndex((step) => step.id === "configure"),
+    [steps]
+  );
+  const paymentStepIndex = useMemo(() => steps.findIndex((step) => step.id === "payment"), [steps]);
+  const successStepIndex = useMemo(() => steps.findIndex((step) => step.id === "success"), [steps]);
+  const selectedProjectId = configurations[0]?.project_id;
+  const { data: projectStatus } = useClientProjectStatus(selectedProjectId, {
+    enabled: Boolean(selectedProjectId),
+  });
+  const projectHasNetwork = useMemo(
+    () => hasProjectNetworkFromStatus(projectStatus),
+    [projectStatus]
+  );
+
+  const orderId =
+    orderReceipt?.order?.identifier ||
+    orderReceipt?.order?.id ||
+    orderReceipt?.order_id ||
+    submissionResult?.order?.identifier ||
+    submissionResult?.order?.id ||
+    submissionResult?.data?.id;
+  const transactionId =
+    orderReceipt?.transaction?.identifier ||
+    submissionResult?.transaction?.identifier ||
+    orderReceipt?.transaction?.reference ||
+    submissionResult?.transaction?.reference;
+
+  // Template pre-fill: Auto-populate configuration when template is passed via route state
+  useEffect(() => {
+    const template = location.state?.template;
+    if (!template) return;
+
+    applyTemplate(template);
+    ToastUtils.success(`Loaded template: ${template.name}. New project required.`);
+
+    // Clear location state to prevent re-adding on refresh
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.state, applyTemplate, navigate, location.pathname]);
 
   const currentStep = steps[activeStep];
+  const isReviewStep = currentStep?.id === "review";
+  const isSuccessStep = currentStep?.id === "success";
 
   return (
-    <ClientPageShell title="Create Instance" description="Provision new compute resources">
+    <ClientPageShell title="Create Cube-nstance" description="Provision new cube-nstances">
       <div className="mx-auto max-w-5xl space-y-8 pb-20">
         {/* Step Indicator - Grid variant (matching Admin/Tenant) */}
         <StepIndicator
@@ -81,8 +306,43 @@ const ClientProvisioningWizard: React.FC = () => {
           variant="grid"
         />
 
-        {/* Main Content Grid */}
-        {activeStep < steps.length - 1 ? (
+        {isSuccessStep ? (
+          <OrderSuccessStep
+            orderId={orderId}
+            transactionId={transactionId}
+            isFastTrack={false}
+            configurationSummaries={configurationSummaries}
+            pricingSummary={pricingSummary}
+            instancesPageUrl="/client-dashboard/instances"
+            onCreateAnother={() => setActiveStep(0)}
+            resourceLabel="Cube-nstance"
+          />
+        ) : isReviewStep ? (
+          <ReviewSubmitStep
+            isFastTrack={false}
+            summaryConfigurationCount={summaryConfigurationCount}
+            configurations={configurations}
+            configurationSummaries={reviewSummaries}
+            submissionResult={submissionResult}
+            orderReceipt={orderReceipt}
+            effectivePaymentOption={effectivePaymentOption}
+            summaryPlanLabel={summaryPlanLabel}
+            summaryWorkflowLabel={summaryWorkflowLabel}
+            assignmentSummary={assignmentSummary}
+            billingCountryLabel={billingCountryLabel}
+            summarySubtotalValue={summarySubtotalValue}
+            summaryTaxValue={summaryTaxValue}
+            summaryGatewayFeesValue={summaryGatewayFeesValue}
+            summaryGrandTotalValue={summaryGrandTotalValue}
+            summaryDisplayCurrency={summaryDisplayCurrency}
+            taxLabelSuffix={taxLabelSuffix}
+            backendPricingData={backendPricingData}
+            onBack={() => setActiveStep(paymentStepIndex)}
+            onEditConfiguration={() => setActiveStep(configureStepIndex)}
+            onConfirm={() => setActiveStep(successStepIndex)}
+            resourceLabel="Cube-nstance"
+          />
+        ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
               {/* Step 0: Configure */}
@@ -95,6 +355,10 @@ const ClientProvisioningWizard: React.FC = () => {
                   isLoadingResources={isLoadingResources}
                   isSubmitting={isSubmitting}
                   billingCountry={billingCountry}
+                  showTemplateSelector
+                  onResetConfiguration={resetConfigurationWithPatch}
+                  // Network preset props for new projects
+                  projectHasNetwork={projectHasNetwork}
                   onAddConfiguration={addConfiguration}
                   onRemoveConfiguration={removeConfiguration}
                   onUpdateConfiguration={updateConfiguration}
@@ -103,9 +367,15 @@ const ClientProvisioningWizard: React.FC = () => {
                   onUpdateVolume={updateAdditionalVolume}
                   onBack={() => navigate(-1)}
                   onSubmit={handleCreateOrder}
-                  // Skip admin API calls - client context handles data differently
-                  skipProjectFetch={true}
-                  skipNetworkResourcesFetch={true}
+                  useProjectsHook={useFetchClientProjects}
+                  useSecurityGroupsHook={useFetchClientSecurityGroups}
+                  useKeyPairsHook={useFetchClientKeyPairs}
+                  useSubnetsHook={useFetchClientSubnets}
+                  useNetworksHook={useFetchClientNetworks}
+                  skipProjectFetch={false}
+                  skipNetworkResourcesFetch={false}
+                  onCreateProject={handleCreateProject}
+                  formVariant="cube"
                 />
               )}
 
@@ -121,7 +391,6 @@ const ClientProvisioningWizard: React.FC = () => {
                   selectedUserId={String(profile?.id)}
                   clientOptions={clientOptions}
                   onPaymentComplete={handlePaymentCompleted}
-                  authToken={authToken}
                   apiBaseUrl={apiBaseUrl}
                   paymentTransactionLabel="Instance Order"
                 />
@@ -133,24 +402,17 @@ const ClientProvisioningWizard: React.FC = () => {
               <InstanceSummaryCard
                 configurations={configurations}
                 contextType="client"
-                selectedClientName={profile?.first_name}
+                selectedClientName={clientDisplayName}
                 billingCountry={
                   countryOptions.find((c) => String(c.value) === billingCountry)?.label ||
                   billingCountry
                 }
+                summaryTitle="Cube-nstance summary"
+                summaryDescription="Auto-calculated from the selected cube-nstance configuration."
+                resourceLabel="Cube-nstance"
               />
             </div>
           </div>
-        ) : (
-          /* Review step - full width */
-          <OrderSuccessStep
-            orderId={orderReceipt?.order_id || submissionResult?.data?.id}
-            isFastTrack={false}
-            configurationSummaries={configurationSummaries}
-            pricingSummary={pricingSummary}
-            instancesPageUrl="/client-dashboard/instances"
-            onCreateAnother={() => setActiveStep(0)}
-          />
         )}
       </div>
     </ClientPageShell>

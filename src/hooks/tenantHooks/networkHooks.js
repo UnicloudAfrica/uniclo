@@ -22,7 +22,7 @@ const fetchTenantNetworks = async ({ project_id, region, refresh = false }) => {
 
   const response = await tenantSilentApi(
     "GET",
-    `/business/networks${queryString ? `?${queryString}` : ""}`
+    `/admin/networks${queryString ? `?${queryString}` : ""}`
   );
 
   if (!response?.data) {
@@ -33,13 +33,13 @@ const fetchTenantNetworks = async ({ project_id, region, refresh = false }) => {
 };
 
 const createTenantNetwork = async (payload) => {
-  const response = await tenantApi("POST", "/business/networks", payload);
+  const response = await tenantApi("POST", "/admin/networks", payload);
   if (!response) throw new Error("Failed to create network");
   return response;
 };
 
 const deleteTenantNetwork = async (networkId) => {
-  const response = await tenantApi("DELETE", `/business/networks/${networkId}`);
+  const response = await tenantApi("DELETE", `/admin/networks/${networkId}`);
   if (!response) throw new Error("Failed to delete network");
   return response;
 };

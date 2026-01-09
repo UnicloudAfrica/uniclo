@@ -29,8 +29,8 @@ export const resolveActivePersona = () => {
   const tenant = useTenantAuthStore.getState?.();
   const client = useClientAuthStore.getState?.();
 
-  if (admin?.token) return { key: "admin", snapshot: admin };
-  if (tenant?.token) return { key: "tenant", snapshot: tenant };
-  if (client?.token) return { key: "client", snapshot: client };
+  if (admin?.isAuthenticated) return { key: "admin", snapshot: admin };
+  if (tenant?.isAuthenticated) return { key: "tenant", snapshot: tenant };
+  if (client?.isAuthenticated) return { key: "client", snapshot: client };
   return { key: null, snapshot: null };
 };

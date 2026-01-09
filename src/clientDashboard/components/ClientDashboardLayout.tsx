@@ -9,10 +9,10 @@ import useClientAuthStore from "../../stores/clientAuthStore";
 
 const ClientDashboardLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const token = useClientAuthStore((s) => s.token);
+  const isAuthenticated = useClientAuthStore((s) => s.isAuthenticated);
   const hasHydrated = useClientAuthStore((s) => s.hasHydrated);
   const { data: theme, isFetching } = useClientTheme({
-    enabled: Boolean(token) && hasHydrated,
+    enabled: isAuthenticated && hasHydrated,
   });
 
   useApplyBrandingTheme(theme?.branding, {

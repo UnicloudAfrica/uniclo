@@ -113,6 +113,8 @@ export const evaluateConfigurationCompleteness = (cfg: Configuration) => {
   if (!hasValue(cfg.region)) missing.push("Region");
   if (!Number(cfg.instance_count)) missing.push("Instance count");
   if (!Number(cfg.months)) missing.push("Duration");
+  const requiresProject = cfg.project_mode === "new" || Boolean(cfg.template_locked);
+  if (requiresProject && !hasValue(cfg.project_id)) missing.push("Project");
   if (!hasValue(cfg.compute_instance_id)) missing.push("Instance type");
   if (!hasValue(cfg.os_image_id)) missing.push("OS image");
   if (!hasValue(cfg.volume_type_id)) missing.push("Boot volume type");
@@ -228,4 +230,199 @@ export const formatSubnetLabel = (cfg: Configuration) => {
 export const toNumber = (value: any) => {
   const num = Number(value);
   return Number.isFinite(num) ? num : 0;
+};
+
+const normalizeTemplateIdList = (value: any): string[] => {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => item?.value ?? item?.id ?? item?.identifier ?? item)
+      .map((item) => (item ?? "").toString().trim())
+      .filter(Boolean);
+  }
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  if (typeof value === "number") {
+    return [String(value)];
+  }
+  return [];
+};
+
+const pickDefined = (...values: any[]) =>
+  values.find((value) => value !== undefined && value !== null && value !== "");
+
+const buildTemplateVolume = (volume: any, index: number) => ({
+  id: volume?.id || `tmpl_${index}_${Math.random().toString(36).slice(2, 8)}`,
+  volume_type_id: pickDefined(volume?.volume_type_id, volume?.id, volume?.identifier) || "",
+  storage_size_gb: pickDefined(volume?.storage_size_gb, volume?.size_gb, volume?.size) || 0,
+});
+
+export const buildConfigurationFromTemplate = (template: any): Partial<Configuration> => {
+  const config = template?.configuration || {};
+  const patch: Partial<Configuration> = {};
+
+  const templateId = template?.id || template?.identifier;
+  if (templateId) patch.template_id = String(templateId);
+  if (template?.name) patch.template_name = String(template.name);
+  patch.template_locked = true;
+  patch.project_mode = "new";
+  patch.project_id = "";
+  const uniqueSuffix = Math.random().toString(36).slice(2, 6).toUpperCase();
+  const baseProjectName = pickDefined(config.project_name, template?.name, "Template");
+  const normalizedBase = String(baseProjectName || "Template").trim() || "Template";
+  patch.project_name = normalizedBase.toLowerCase().includes("project")
+    ? `${normalizedBase} ${uniqueSuffix}`
+    : `${normalizedBase} Project ${uniqueSuffix}`;
+
+  const region = pickDefined(config.region, config.region_code, config.location);
+  if (region) patch.region = String(region);
+
+  const instanceCount = pickDefined(
+    config.instance_count,
+    config.number_of_instances,
+    config.quantity
+  );
+  if (instanceCount !== undefined) patch.instance_count = instanceCount;
+
+  const months = pickDefined(config.months, config.term_months, config.billing_months);
+  if (months !== undefined) patch.months = months;
+
+  const computeId = pickDefined(
+    config.compute_instance_id,
+    config.compute?.instance_type_id,
+    config.compute?.id,
+    config.compute?.instance_id
+  );
+  if (computeId) patch.compute_instance_id = String(computeId);
+
+  const osImageId = pickDefined(
+    config.os_image_id,
+    config.os_image?.os_image_id,
+    config.os_image?.id,
+    config.os_image?.identifier
+  );
+  if (osImageId) patch.os_image_id = String(osImageId);
+
+  const rawVolumeEntries = Array.isArray(config.volume_types)
+    ? config.volume_types
+    : Array.isArray(config.volumes)
+      ? config.volumes
+      : [];
+  const primaryVolume = rawVolumeEntries[0] || {};
+
+  const volumeTypeId = pickDefined(
+    config.volume_type_id,
+    primaryVolume.volume_type_id,
+    primaryVolume.id,
+    primaryVolume.identifier
+  );
+  if (volumeTypeId) patch.volume_type_id = String(volumeTypeId);
+
+  const storageSize = pickDefined(
+    config.storage_size_gb,
+    primaryVolume.storage_size_gb,
+    primaryVolume.size_gb,
+    primaryVolume.size
+  );
+  if (storageSize !== undefined) patch.storage_size_gb = storageSize;
+
+  const bandwidthId = pickDefined(
+    config.bandwidth_id,
+    config.networking?.bandwidth_id,
+    config.networking?.bandwidth?.id
+  );
+  if (bandwidthId) patch.bandwidth_id = String(bandwidthId);
+
+  const bandwidthCount = pickDefined(config.bandwidth_count, config.networking?.bandwidth_count);
+  if (bandwidthCount !== undefined) patch.bandwidth_count = bandwidthCount;
+
+  const floatingIpCount = pickDefined(
+    config.floating_ip_count,
+    config.networking?.floating_ip_count
+  );
+  if (floatingIpCount !== undefined) patch.floating_ip_count = floatingIpCount;
+
+  const securityGroups = pickDefined(
+    config.security_group_ids,
+    config.security_groups,
+    config.networking?.security_group_ids,
+    config.networking?.security_groups
+  );
+  const normalizedSecurityGroups = normalizeTemplateIdList(securityGroups);
+  if (normalizedSecurityGroups.length > 0) patch.security_group_ids = normalizedSecurityGroups;
+
+  const keypairName = pickDefined(
+    config.keypair_name,
+    config.keypair?.name,
+    config.auth?.keypair_name
+  );
+  if (keypairName) patch.keypair_name = String(keypairName);
+
+  const networkId = pickDefined(config.network_id, config.networking?.network_id, config.vpc_id);
+  if (networkId) patch.network_id = String(networkId);
+
+  const subnetId = pickDefined(config.subnet_id, config.networking?.subnet_id, config.subnet?.id);
+  if (subnetId) patch.subnet_id = String(subnetId);
+
+  const tags = pickDefined(config.tags, config.tag_list, config.networking?.tags);
+  if (Array.isArray(tags)) {
+    patch.tags = tags.join(",");
+  } else if (tags) {
+    patch.tags = String(tags);
+  }
+
+  const networkPreset = pickDefined(
+    config.network_preset,
+    config.metadata?.network_preset,
+    config.networking?.preset
+  );
+  patch.network_preset = networkPreset ? String(networkPreset) : "standard";
+
+  if (patch.project_mode === "new") {
+    patch.network_id = "";
+    patch.subnet_id = "";
+    patch.security_group_ids = [];
+  }
+
+  const existingAdditionalVolumes = Array.isArray(config.additional_volumes)
+    ? config.additional_volumes.map(buildTemplateVolume)
+    : [];
+  if (existingAdditionalVolumes.length > 0) {
+    patch.additional_volumes = existingAdditionalVolumes;
+  } else if (rawVolumeEntries.length > 1) {
+    patch.additional_volumes = rawVolumeEntries.slice(1).map(buildTemplateVolume);
+  }
+
+  return patch;
+};
+
+export const hasProjectNetworkFromStatus = (status: any, project?: any): boolean => {
+  const projectStatus = status?.project || status?.data?.project || status || {};
+
+  if (projectStatus?.vpc_enabled || project?.vpc_enabled) return true;
+
+  const summary = Array.isArray(projectStatus?.summary) ? projectStatus.summary : [];
+  const summaryHasVpc = summary.some(
+    (item) =>
+      item?.completed && typeof item?.title === "string" && item.title.toLowerCase().includes("vpc")
+  );
+  if (summaryHasVpc) return true;
+
+  const progress = projectStatus?.provisioning_progress;
+  if (progress?.vpc_enabled) return true;
+
+  const progressSteps = Array.isArray(progress?.steps)
+    ? progress.steps
+    : Array.isArray(progress)
+      ? progress
+      : [];
+  return progressSteps.some((step: any) => {
+    const key = String(step?.key || step?.id || step?.label || "").toLowerCase();
+    const statusValue = String(step?.status || "").toLowerCase();
+    return key.includes("vpc") && (step?.completed === true || statusValue === "completed");
+  });
 };

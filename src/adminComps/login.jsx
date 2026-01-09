@@ -1,5 +1,5 @@
 import { GeneralContext } from "../contexts/contextprovider";
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 import load from "./assets/load.gif";
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
@@ -19,62 +19,57 @@ const Login = () => {
     measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
   };
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth();
+  // Guard firebase init
+  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+  const auth = getAuth(app);
 
   const [mail, setMail] = useState("");
   const [password, setPassword] = useState("");
   const [loadValue, setLoadValue] = useState("No");
 
-  const signInBtn = () => {
-    const signIn = document.getElementById("signIn");
-    signIn.addEventListener("click", (e) => {
-      e.preventDefault();
-      setLoadValue("Yes");
+  const handleSignIn = (e) => {
+    e.preventDefault();
+    setLoadValue("Yes");
 
-      signInWithEmailAndPassword(auth, mail, password)
-        .then((userCredential) => {
-          // Signed in
-          const user = userCredential.user;
-          setLoadValue("No");
-        })
-        .catch((error) => {
-          const errorCode = error.code;
-          const errorMessage = error.message;
-          const mess = document.getElementById("logMessage");
-          mess.innerHTML = errorCode;
-          setLoadValue("No");
-        });
-    });
+    signInWithEmailAndPassword(auth, mail, password)
+      .then((userCredential) => {
+        // Signed in
+        const user = userCredential.user;
+        setLoadValue("No");
+      })
+      .catch((error) => {
+        const errorCode = error.code;
+        const mess = document.getElementById("logMessage");
+        if (mess) mess.textContent = errorCode; // Use textContent for safety
+        setLoadValue("No");
+      });
   };
 
   useEffect(() => {
-    onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        const uid = user.uid;
-        // direct to dashboard
         Navigate("/cms-admin");
-      } else {
       }
     });
-  });
+    return () => unsubscribe();
+  }, [auth, Navigate]);
 
   const validateMail = () => {
-    const mail = document.getElementById("mail").value;
+    const mailVal = document.getElementById("mail").value;
     const mailWarn = document.getElementById("mailWarn");
 
-    const checkMail = (mail) => {
+    const checkMail = (m) => {
       const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return re.test(String(mail).toLowerCase());
+      return re.test(String(m).toLowerCase());
     };
-    if (checkMail(mail)) {
+    if (checkMail(mailVal)) {
       mailWarn.classList.replace("hidden", "block");
-      mailWarn.innerHTML = "Valid Mail";
+      mailWarn.textContent = "Valid Mail";
       mailWarn.style.color = "green";
-      setMail(mail);
+      setMail(mailVal);
     } else {
       mailWarn.classList.replace("hidden", "block");
-      mailWarn.innerHTML = "Invalid Mail";
+      mailWarn.textContent = "Invalid Mail";
       mailWarn.style.color = "red";
     }
   };
@@ -93,7 +88,7 @@ const Login = () => {
             Log into your Admin
           </p>
           <div className=" flex justify-center items-center flex-col mt-8">
-            <label className=" font-Outfit text-sm text-left w-full font-normal" for="first-name">
+            <label className=" font-Outfit text-sm text-left w-full font-normal" htmlFor="mail">
               Email
             </label>
             <input
@@ -101,7 +96,7 @@ const Login = () => {
               onInput={validateMail}
               id="mail"
               placeholder="Enter your email"
-              class=" h-[45px] w-[350px] glower mt-2 border border-[#3FE0C8CC] z-50 bg-[#ffffffcc] mb-6 text-blacl font-Outfit font-normal placeholder:font-Outfit text-sm rounded-[20px] block p-2.5"
+              className=" h-[45px] w-[350px] glower mt-2 border border-[#3FE0C8CC] z-50 bg-[#ffffffcc] mb-6 text-blacl font-Outfit font-normal placeholder:font-Outfit text-sm rounded-[20px] block p-2.5"
             />
             <p
               id="mailWarn"
@@ -109,14 +104,15 @@ const Login = () => {
             >
               Please fill in your Email
             </p>
-            <label className=" font-Outfit text-sm text-left w-full font-normal" for="first-name">
+            <label className=" font-Outfit text-sm text-left w-full font-normal" htmlFor="password">
               Password
             </label>
             <input
+              id="password"
               type="password"
               onInput={handlePword}
               placeholder="Enter your Password"
-              class=" h-[45px] w-[350px] mt-2 border border-[#3FE0C8CC] z-50 bg-[#ffffffcc] mb-6 text-blacl font-Outfit font-normal placeholder:font-Outfit text-sm rounded-[20px] block p-2.5"
+              className=" h-[45px] w-[350px] mt-2 border border-[#3FE0C8CC] z-50 bg-[#ffffffcc] mb-6 text-blacl font-Outfit font-normal placeholder:font-Outfit text-sm rounded-[20px] block p-2.5"
             />
             <p
               id="logMessage"
@@ -124,7 +120,7 @@ const Login = () => {
             ></p>
             <button
               id="signIn"
-              onClick={signInBtn}
+              onClick={handleSignIn}
               className=" w-full flex h-[45px] mt-6 rounded-[20px]  bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] hover:bg-opacity-75 transition-all justify-center font-Outfit text-base text-white font-medium items-center"
             >
               {loadValue === "No" && "Sign In"}

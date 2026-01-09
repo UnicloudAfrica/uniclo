@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import { API_BASE, getAdminApi } from "../../index/admin/adminAxios";
 import ToastUtils from "../../utils/toastUtil";
 
-const API_BASE = import.meta.env.VITE_API_ADMIN_URL || "/api/v1/admin";
+const adminApi = getAdminApi();
 
 // ==================== NAT Gateways ====================
 
@@ -10,7 +10,7 @@ export const useNatGateways = (projectId: string) => {
   return useQuery({
     queryKey: ["nat-gateways", projectId],
     queryFn: async () => {
-      const { data } = await axios.get(`${API_BASE}/projects/${projectId}/nat-gateways`);
+      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/nat-gateways`);
       return data.data || [];
     },
     enabled: !!projectId,
@@ -27,7 +27,10 @@ export const useCreateNatGateway = () => {
       projectId: string;
       payload: { subnet_id: string; elastic_ip_id?: string; name?: string };
     }) => {
-      const { data } = await axios.post(`${API_BASE}/projects/${projectId}/nat-gateways`, payload);
+      const { data } = await adminApi.post(
+        `${API_BASE}/projects/${projectId}/nat-gateways`,
+        payload
+      );
       return data;
     },
     onSuccess: (_, { projectId }) => {
@@ -50,7 +53,7 @@ export const useDeleteNatGateway = () => {
       projectId: string;
       natGatewayId: string;
     }) => {
-      await axios.delete(`${API_BASE}/projects/${projectId}/nat-gateways/${natGatewayId}`);
+      await adminApi.delete(`${API_BASE}/projects/${projectId}/nat-gateways/${natGatewayId}`);
     },
     onSuccess: (_, { projectId }) => {
       ToastUtils.success("NAT Gateway deleted successfully");
@@ -68,7 +71,7 @@ export const useElasticIps = (projectId: string) => {
   return useQuery({
     queryKey: ["elastic-ips", projectId],
     queryFn: async () => {
-      const { data } = await axios.get(`${API_BASE}/projects/${projectId}/elastic-ips`);
+      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/elastic-ips`);
       return data.data || [];
     },
     enabled: !!projectId,
@@ -85,7 +88,7 @@ export const useCreateElasticIp = () => {
       projectId: string;
       payload?: { name?: string };
     }) => {
-      const { data } = await axios.post(
+      const { data } = await adminApi.post(
         `${API_BASE}/projects/${projectId}/elastic-ips`,
         payload || {}
       );
@@ -113,7 +116,7 @@ export const useAssociateElasticIp = () => {
       elasticIpId: string;
       payload: { instance_id?: string; network_interface_id?: string };
     }) => {
-      const { data } = await axios.post(
+      const { data } = await adminApi.post(
         `${API_BASE}/projects/${projectId}/elastic-ips/${elasticIpId}/associate`,
         payload
       );
@@ -133,7 +136,7 @@ export const useDisassociateElasticIp = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ projectId, elasticIpId }: { projectId: string; elasticIpId: string }) => {
-      await axios.delete(
+      await adminApi.delete(
         `${API_BASE}/projects/${projectId}/elastic-ips/${elasticIpId}/disassociate`
       );
     },
@@ -151,7 +154,7 @@ export const useDeleteElasticIp = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ projectId, elasticIpId }: { projectId: string; elasticIpId: string }) => {
-      await axios.delete(`${API_BASE}/projects/${projectId}/elastic-ips/${elasticIpId}`);
+      await adminApi.delete(`${API_BASE}/projects/${projectId}/elastic-ips/${elasticIpId}`);
     },
     onSuccess: (_, { projectId }) => {
       ToastUtils.success("Elastic IP released successfully");
@@ -168,7 +171,7 @@ export const useSecurityGroups = (projectId: string) => {
   return useQuery({
     queryKey: ["security-groups", projectId],
     queryFn: async () => {
-      const { data } = await axios.get(`${API_BASE}/projects/${projectId}/security-groups`);
+      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/security-groups`);
       return data.data || [];
     },
     enabled: !!projectId,
@@ -185,7 +188,7 @@ export const useCreateSecurityGroup = () => {
       projectId: string;
       payload: { vpc_id: string; name: string; description?: string };
     }) => {
-      const { data } = await axios.post(
+      const { data } = await adminApi.post(
         `${API_BASE}/projects/${projectId}/security-groups`,
         payload
       );
@@ -211,7 +214,7 @@ export const useDeleteSecurityGroup = () => {
       projectId: string;
       securityGroupId: string;
     }) => {
-      await axios.delete(`${API_BASE}/projects/${projectId}/security-groups/${securityGroupId}`);
+      await adminApi.delete(`${API_BASE}/projects/${projectId}/security-groups/${securityGroupId}`);
     },
     onSuccess: (_, { projectId }) => {
       ToastUtils.success("Security group deleted successfully");
@@ -229,7 +232,7 @@ export const useSecurityGroupRules = (projectId: string, securityGroupId: string
   return useQuery({
     queryKey: ["security-group-rules", projectId, securityGroupId],
     queryFn: async () => {
-      const { data } = await axios.get(
+      const { data } = await adminApi.get(
         `${API_BASE}/projects/${projectId}/security-groups/${securityGroupId}/rules`
       );
       return data.data || { ingress_rules: [], egress_rules: [] };
@@ -256,7 +259,7 @@ export const useAddSecurityGroupRule = () => {
         cidr?: string;
       };
     }) => {
-      const { data } = await axios.post(
+      const { data } = await adminApi.post(
         `${API_BASE}/projects/${projectId}/security-groups/${securityGroupId}/rules`,
         payload
       );
@@ -292,7 +295,7 @@ export const useRemoveSecurityGroupRule = () => {
         cidr?: string;
       };
     }) => {
-      await axios.delete(
+      await adminApi.delete(
         `${API_BASE}/projects/${projectId}/security-groups/${securityGroupId}/rules`,
         { data: payload }
       );
@@ -315,7 +318,7 @@ export const useSubnets = (projectId: string) => {
   return useQuery({
     queryKey: ["subnets", projectId],
     queryFn: async () => {
-      const { data } = await axios.get(`${API_BASE}/projects/${projectId}/subnets`);
+      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/subnets`);
       return data.data || [];
     },
     enabled: !!projectId,
@@ -332,7 +335,7 @@ export const useCreateSubnet = () => {
       projectId: string;
       payload: { name: string; cidr_block: string; vpc_id: string };
     }) => {
-      const { data } = await axios.post(`${API_BASE}/projects/${projectId}/subnets`, payload);
+      const { data } = await adminApi.post(`${API_BASE}/projects/${projectId}/subnets`, payload);
       return data;
     },
     onSuccess: (_, { projectId }) => {
@@ -357,7 +360,7 @@ export const useUpdateSubnet = () => {
       subnetId: string;
       payload: { name?: string };
     }) => {
-      const { data } = await axios.patch(
+      const { data } = await adminApi.patch(
         `${API_BASE}/projects/${projectId}/subnets/${subnetId}`,
         payload
       );
@@ -377,7 +380,7 @@ export const useDeleteSubnet = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ projectId, subnetId }: { projectId: string; subnetId: string }) => {
-      await axios.delete(`${API_BASE}/projects/${projectId}/subnets/${subnetId}`);
+      await adminApi.delete(`${API_BASE}/projects/${projectId}/subnets/${subnetId}`);
     },
     onSuccess: (_, { projectId }) => {
       ToastUtils.success("Subnet deleted successfully");
@@ -395,7 +398,7 @@ export const useRouteTables = (projectId: string) => {
   return useQuery({
     queryKey: ["route-tables", projectId],
     queryFn: async () => {
-      const { data } = await axios.get(`${API_BASE}/projects/${projectId}/route-tables`);
+      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/route-tables`);
       return data.data || [];
     },
     enabled: !!projectId,
@@ -417,7 +420,7 @@ export const useCreateRoute = () => {
         nat_gateway_id?: string;
       };
     }) => {
-      const { data } = await axios.post(`${API_BASE}/projects/${projectId}/routes`, payload);
+      const { data } = await adminApi.post(`${API_BASE}/projects/${projectId}/routes`, payload);
       return data;
     },
     onSuccess: (_, { projectId }) => {
@@ -440,7 +443,7 @@ export const useDeleteRoute = () => {
       projectId: string;
       payload: { route_table_id: string; destination_cidr_block: string };
     }) => {
-      await axios.delete(`${API_BASE}/projects/${projectId}/routes`, { data: payload });
+      await adminApi.delete(`${API_BASE}/projects/${projectId}/routes`, { data: payload });
     },
     onSuccess: (_, { projectId }) => {
       ToastUtils.success("Route deleted successfully");
@@ -464,7 +467,7 @@ export const useAssociateRouteTable = () => {
       routeTableId: string;
       subnetId: string;
     }) => {
-      const { data } = await axios.post(
+      const { data } = await adminApi.post(
         `${API_BASE}/projects/${projectId}/route-tables/${routeTableId}/associate`,
         { subnet_id: subnetId }
       );
@@ -490,7 +493,7 @@ export const useDisassociateRouteTable = () => {
       projectId: string;
       associationId: string;
     }) => {
-      await axios.delete(
+      await adminApi.delete(
         `${API_BASE}/projects/${projectId}/route-table-associations/${associationId}`
       );
     },
@@ -510,7 +513,7 @@ export const useNetworkAcls = (projectId: string) => {
   return useQuery({
     queryKey: ["network-acls", projectId],
     queryFn: async () => {
-      const { data } = await axios.get(`${API_BASE}/projects/${projectId}/network-acls`);
+      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/network-acls`);
       return data.data || [];
     },
     enabled: !!projectId,
@@ -527,7 +530,10 @@ export const useCreateNetworkAcl = () => {
       projectId: string;
       payload: { vpc_id: string; name?: string };
     }) => {
-      const { data } = await axios.post(`${API_BASE}/projects/${projectId}/network-acls`, payload);
+      const { data } = await adminApi.post(
+        `${API_BASE}/projects/${projectId}/network-acls`,
+        payload
+      );
       return data;
     },
     onSuccess: (_, { projectId }) => {
@@ -550,7 +556,7 @@ export const useDeleteNetworkAcl = () => {
       projectId: string;
       networkAclId: string;
     }) => {
-      await axios.delete(`${API_BASE}/projects/${projectId}/network-acls/${networkAclId}`);
+      await adminApi.delete(`${API_BASE}/projects/${projectId}/network-acls/${networkAclId}`);
     },
     onSuccess: (_, { projectId }) => {
       ToastUtils.success("Network ACL deleted successfully");
@@ -566,7 +572,7 @@ export const useNetworkAclRules = (projectId: string, networkAclId: string) => {
   return useQuery({
     queryKey: ["network-acl-rules", projectId, networkAclId],
     queryFn: async () => {
-      const { data } = await axios.get(
+      const { data } = await adminApi.get(
         `${API_BASE}/projects/${projectId}/network-acls/${networkAclId}/rules`
       );
       return data.data || { entries: [] };
@@ -595,7 +601,7 @@ export const useAddNetworkAclRule = () => {
         port_range_max?: number;
       };
     }) => {
-      const { data } = await axios.post(
+      const { data } = await adminApi.post(
         `${API_BASE}/projects/${projectId}/network-acls/${networkAclId}/rules`,
         payload
       );
@@ -626,9 +632,12 @@ export const useRemoveNetworkAclRule = () => {
       networkAclId: string;
       payload: { rule_number: number; egress: boolean };
     }) => {
-      await axios.delete(`${API_BASE}/projects/${projectId}/network-acls/${networkAclId}/rules`, {
-        data: payload,
-      });
+      await adminApi.delete(
+        `${API_BASE}/projects/${projectId}/network-acls/${networkAclId}/rules`,
+        {
+          data: payload,
+        }
+      );
     },
     onSuccess: (_, { projectId, networkAclId }) => {
       ToastUtils.success("Network ACL rule removed successfully");
@@ -649,7 +658,7 @@ export const useVpcPeering = (projectId: string) => {
   return useQuery({
     queryKey: ["vpc-peering", projectId],
     queryFn: async () => {
-      const { data } = await axios.get(`${API_BASE}/projects/${projectId}/vpc-peering`);
+      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/vpc-peering`);
       return data.data || [];
     },
     enabled: !!projectId,
@@ -666,7 +675,10 @@ export const useCreateVpcPeering = () => {
       projectId: string;
       payload: { vpc_id: string; peer_vpc_id: string; name?: string };
     }) => {
-      const { data } = await axios.post(`${API_BASE}/projects/${projectId}/vpc-peering`, payload);
+      const { data } = await adminApi.post(
+        `${API_BASE}/projects/${projectId}/vpc-peering`,
+        payload
+      );
       return data;
     },
     onSuccess: (_, { projectId }) => {
@@ -683,7 +695,7 @@ export const useAcceptVpcPeering = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ projectId, peeringId }: { projectId: string; peeringId: string }) => {
-      await axios.post(`${API_BASE}/projects/${projectId}/vpc-peering/${peeringId}/accept`);
+      await adminApi.post(`${API_BASE}/projects/${projectId}/vpc-peering/${peeringId}/accept`);
     },
     onSuccess: (_, { projectId }) => {
       ToastUtils.success("VPC peering connection accepted");
@@ -699,7 +711,7 @@ export const useRejectVpcPeering = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ projectId, peeringId }: { projectId: string; peeringId: string }) => {
-      await axios.post(`${API_BASE}/projects/${projectId}/vpc-peering/${peeringId}/reject`);
+      await adminApi.post(`${API_BASE}/projects/${projectId}/vpc-peering/${peeringId}/reject`);
     },
     onSuccess: (_, { projectId }) => {
       ToastUtils.success("VPC peering connection rejected");
@@ -715,7 +727,7 @@ export const useDeleteVpcPeering = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ projectId, peeringId }: { projectId: string; peeringId: string }) => {
-      await axios.delete(`${API_BASE}/projects/${projectId}/vpc-peering/${peeringId}`);
+      await adminApi.delete(`${API_BASE}/projects/${projectId}/vpc-peering/${peeringId}`);
     },
     onSuccess: (_, { projectId }) => {
       ToastUtils.success("VPC peering connection deleted successfully");
@@ -733,7 +745,7 @@ export const useSecurityPostures = (projectId: string) => {
   return useQuery({
     queryKey: ["security-postures", projectId],
     queryFn: async () => {
-      const { data } = await axios.get(`${API_BASE}/projects/${projectId}/security-postures`);
+      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/security-postures`);
       return data.data || [];
     },
     enabled: !!projectId,
@@ -746,7 +758,7 @@ export const useVpcPolicies = (projectId: string) => {
   return useQuery({
     queryKey: ["vpc-policies", projectId],
     queryFn: async () => {
-      const { data } = await axios.get(`${API_BASE}/projects/${projectId}/vpc-policies`);
+      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/vpc-policies`);
       return data.data || [];
     },
     enabled: !!projectId,
@@ -759,7 +771,7 @@ export const useVpcs = (projectId: string) => {
   return useQuery({
     queryKey: ["vpcs", projectId],
     queryFn: async () => {
-      const { data } = await axios.get(`${API_BASE}/projects/${projectId}/vpcs`);
+      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/vpcs`);
       return data.data || [];
     },
     enabled: !!projectId,
@@ -776,7 +788,7 @@ export const useCreateVpc = () => {
       projectId: string;
       payload: { name: string; cidr: string; is_default?: boolean };
     }) => {
-      const { data } = await axios.post(`${API_BASE}/projects/${projectId}/vpcs`, payload);
+      const { data } = await adminApi.post(`${API_BASE}/projects/${projectId}/vpcs`, payload);
       return data;
     },
     onSuccess: (_, { projectId }) => {
@@ -793,7 +805,7 @@ export const useDeleteVpc = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ projectId, vpcId }: { projectId: string; vpcId: string }) => {
-      await axios.delete(`${API_BASE}/projects/${projectId}/vpcs/${vpcId}`);
+      await adminApi.delete(`${API_BASE}/projects/${projectId}/vpcs/${vpcId}`);
     },
     onSuccess: (_, { projectId }) => {
       ToastUtils.success("VPC deleted successfully");
@@ -811,7 +823,7 @@ export const useInternetGateways = (projectId: string) => {
   return useQuery({
     queryKey: ["internet-gateways", projectId],
     queryFn: async () => {
-      const { data } = await axios.get(`${API_BASE}/projects/${projectId}/internet-gateways`);
+      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/internet-gateways`);
       return data.data || [];
     },
     enabled: !!projectId,
@@ -828,7 +840,7 @@ export const useCreateInternetGateway = () => {
       projectId: string;
       payload?: { name?: string };
     }) => {
-      const { data } = await axios.post(
+      const { data } = await adminApi.post(
         `${API_BASE}/projects/${projectId}/internet-gateways`,
         payload || {}
       );
@@ -848,7 +860,7 @@ export const useDeleteInternetGateway = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ projectId, igwId }: { projectId: string; igwId: string }) => {
-      await axios.delete(`${API_BASE}/projects/${projectId}/internet-gateways/${igwId}`);
+      await adminApi.delete(`${API_BASE}/projects/${projectId}/internet-gateways/${igwId}`);
     },
     onSuccess: (_, { projectId }) => {
       ToastUtils.success("Internet Gateway deleted successfully");
@@ -872,7 +884,7 @@ export const useAttachInternetGateway = () => {
       igwId: string;
       vpcId: string;
     }) => {
-      await axios.post(`${API_BASE}/projects/${projectId}/internet-gateways/${igwId}/attach`, {
+      await adminApi.post(`${API_BASE}/projects/${projectId}/internet-gateways/${igwId}/attach`, {
         vpc_id: vpcId,
       });
     },
@@ -898,7 +910,7 @@ export const useDetachInternetGateway = () => {
       igwId: string;
       vpcId: string;
     }) => {
-      await axios.post(`${API_BASE}/projects/${projectId}/internet-gateways/${igwId}/detach`, {
+      await adminApi.post(`${API_BASE}/projects/${projectId}/internet-gateways/${igwId}/detach`, {
         vpc_id: vpcId,
       });
     },

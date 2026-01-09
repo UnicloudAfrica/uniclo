@@ -5,11 +5,7 @@ import AdminHeadbar from "../../components/adminHeadbar";
 import AdminSidebar from "../../components/AdminSidebar";
 import AdminPageShell from "../../components/AdminPageShell";
 import { KeyPairsTable } from "../../../shared/components/infrastructure";
-import {
-  useFetchKeyPairs,
-  useCreateKeyPair,
-  useDeleteKeyPair,
-} from "../../../hooks/adminHooks/keyPairHooks";
+import { useFetchKeyPairs, useDeleteKeyPair } from "../../../hooks/adminHooks/keyPairHooks";
 
 const AdminKeyPairs: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -18,13 +14,10 @@ const AdminKeyPairs: React.FC = () => {
   const region = searchParams.get("region") || "";
 
   const { data: keyPairs = [], isLoading, refetch } = useFetchKeyPairs(projectId, region);
-  const { mutateAsync: createKeyPair, isPending: isCreating } = useCreateKeyPair();
   const { mutate: deleteKeyPair, isPending: isDeleting } = useDeleteKeyPair();
 
-  const handleCreate = async (name: string) => {
-    const result = await createKeyPair({ projectId, region, name });
-    refetch();
-    return result?.data || result;
+  const handleCreateClick = () => {
+    navigate("/admin-dashboard/key-pairs/create");
   };
 
   const handleDelete = (keyPairId: string, keyPairName: string) => {
@@ -52,10 +45,9 @@ const AdminKeyPairs: React.FC = () => {
         <KeyPairsTable
           keyPairs={keyPairs}
           isLoading={isLoading}
-          onCreate={handleCreate}
+          onCreate={handleCreateClick}
           onDelete={handleDelete}
           onRefresh={refetch}
-          isCreating={isCreating}
           isDeleting={isDeleting}
         />
       </AdminPageShell>

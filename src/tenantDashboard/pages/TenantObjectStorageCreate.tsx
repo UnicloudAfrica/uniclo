@@ -7,12 +7,11 @@ import { ObjectStorageCreateContent } from "../../shared/components/object-stora
 import useTenantAuthStore from "../../stores/tenantAuthStore";
 
 // Tenant-specific submit function placeholder
-const createTenantSubmitOrder =
-  (tenantToken: string | null, tenantId: string) => async (payload: any) => {
-    // TODO: Implement actual tenant API call
-    console.log("Submitting tenant order:", payload);
-    return { success: true };
-  };
+const createTenantSubmitOrder = (tenantId: string) => async (payload: any) => {
+  // TODO: Implement actual tenant API call
+  console.log("Submitting tenant order:", payload);
+  return { success: true };
+};
 
 interface TenantObjectStorageCreateProps {
   tenantId?: string;
@@ -31,7 +30,6 @@ const TenantObjectStorageCreate: React.FC<TenantObjectStorageCreateProps> = ({
 
   // Get tenant auth
   const tenantAuth = useTenantAuthStore((state) => state);
-  const tenantToken = tenantAuth?.token || null;
   const currentTenantId = propTenantId || tenantAuth?.tenant?.id || "";
   const tenantData = tenantAuth?.tenant || {
     name: "Tenant",
@@ -59,8 +57,7 @@ const TenantObjectStorageCreate: React.FC<TenantObjectStorageCreateProps> = ({
           config={{
             context: "tenant",
             tenantId: currentTenantId,
-            submitOrderFn: createTenantSubmitOrder(tenantToken, currentTenantId),
-            getAuthToken: () => tenantToken,
+            submitOrderFn: createTenantSubmitOrder(currentTenantId),
           }}
           showCustomerContext={false}
           showPriceOverride={false}

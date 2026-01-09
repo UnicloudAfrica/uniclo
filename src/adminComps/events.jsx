@@ -1,7 +1,7 @@
 import { useState, useContext, useRef } from "react";
 import load from "./assets/load.gif";
 import { Editor } from "@tinymce/tinymce-react";
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 import {
   getFirestore,
   collection,
@@ -33,7 +33,7 @@ const EventsAdmin = () => {
     measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
   };
 
-  const app = initializeApp(firebaseConfig);
+  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
   const db = getFirestore(app);
   const storage = getStorage(app);
 

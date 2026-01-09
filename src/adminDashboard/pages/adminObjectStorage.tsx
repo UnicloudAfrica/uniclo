@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   Activity,
   AlertTriangle,
@@ -9,7 +9,7 @@ import {
   RefreshCw,
   Rocket,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import AdminSidebar from "../components/AdminSidebar";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminPageShell from "../components/AdminPageShell.tsx";
@@ -20,6 +20,7 @@ import ObjectStoragePlanActions from "../../shared/components/objectStorage/Obje
 
 const AdminObjectStorage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const adminTenant = useAdminAuthStore((state) => state?.tenant);
   const currentTenant = useAdminAuthStore((state) => state?.currentTenant);
   const {
@@ -43,6 +44,15 @@ const AdminObjectStorage = () => {
     () => [...accounts].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)),
     [accounts]
   );
+
+  // Refresh accounts when navigating back from delete
+  useEffect(() => {
+    if (location.state?.refresh) {
+      refreshAccounts();
+      // Clear the state to prevent refresh on subsequent renders
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, refreshAccounts]);
 
   const statusCounts = useMemo(() => {
     const base = {

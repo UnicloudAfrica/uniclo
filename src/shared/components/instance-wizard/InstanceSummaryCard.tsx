@@ -9,6 +9,9 @@ interface InstanceSummaryCardProps {
   selectedClientName?: string;
   selectedTenantName?: string;
   billingCountry?: string;
+  summaryTitle?: string;
+  summaryDescription?: string;
+  resourceLabel?: string;
 }
 
 const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
@@ -17,7 +20,13 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
   selectedClientName,
   selectedTenantName,
   billingCountry,
+  summaryTitle,
+  summaryDescription,
+  resourceLabel = "Instance",
 }) => {
+  const resourceLabelPlural = resourceLabel.toLowerCase().endsWith("s")
+    ? resourceLabel
+    : `${resourceLabel}s`;
   const totalInstances = configurations.reduce(
     (sum, cfg) => sum + Number(cfg.instance_count || 0),
     0
@@ -30,22 +39,38 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
     <ModernCard variant="outlined" padding="lg" className="sticky top-4" onClick={undefined}>
       <div className="space-y-4">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-1">Order Summary</h3>
-          <p className="text-sm text-slate-600">Auto-calculated from the captured configuration.</p>
+          <h3 className="text-lg font-semibold text-slate-900 mb-1">
+            {summaryTitle || "Order Summary"}
+          </h3>
+          <p className="text-sm text-slate-600">
+            {summaryDescription || "Auto-calculated from the captured configuration."}
+          </p>
         </div>
 
         {/* Customer Context */}
         <div className="space-y-2">
           <h4 className="text-sm font-semibold text-slate-700">Customer Context</h4>
           <div className="text-sm text-slate-600">
-            {contextType === "tenant" && selectedTenantName && (
+            {contextType === "tenant" && (
               <p>
-                Tenant: <span className="font-medium text-slate-900">{selectedTenantName}</span>
+                Tenant:{" "}
+                <span className="font-medium text-slate-900">
+                  {selectedTenantName || "Tenant selected"}
+                </span>
               </p>
             )}
-            {contextType === "user" && selectedClientName && (
+            {contextType === "user" && (
               <p>
-                User: <span className="font-medium text-slate-900">{selectedClientName}</span>
+                User:{" "}
+                <span className="font-medium text-slate-900">
+                  {selectedClientName || "User selected"}
+                </span>
+              </p>
+            )}
+            {contextType === "client" && (
+              <p>
+                Client:{" "}
+                <span className="font-medium text-slate-900">{selectedClientName || "Self"}</span>
               </p>
             )}
             {contextType === "unassigned" && <p className="text-amber-600">⚠ Unassigned</p>}
@@ -61,10 +86,14 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
         )}
 
         <div className="border-t border-slate-200 pt-4">
-          <h4 className="text-sm font-semibold text-slate-700 mb-3">Instance Configurations</h4>
+          <h4 className="text-sm font-semibold text-slate-700 mb-3">
+            {resourceLabel} configurations
+          </h4>
 
           {!hasConfigurations ? (
-            <p className="text-sm text-slate-500 italic">No instances configured yet</p>
+            <p className="text-sm text-slate-500 italic">
+              No {resourceLabelPlural.toLowerCase()} configured yet
+            </p>
           ) : (
             <div className="space-y-3">
               {configurations.map((cfg, idx) => {
@@ -78,7 +107,7 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-semibold text-slate-700">
-                        Configuration #{idx + 1}
+                        {resourceLabel} #{idx + 1}
                       </span>
                       {cfg.name && (
                         <span className="text-xs text-slate-600 truncate max-w-[120px]">
@@ -129,7 +158,9 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
               {totalInstances > 0 && (
                 <div className="pt-3 border-t border-slate-200">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-semibold text-slate-700">Total Instances</span>
+                    <span className="font-semibold text-slate-700">
+                      Total {resourceLabelPlural}
+                    </span>
                     <span className="font-bold text-slate-900">{totalInstances}</span>
                   </div>
                 </div>

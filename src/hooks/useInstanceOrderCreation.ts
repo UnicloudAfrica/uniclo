@@ -28,7 +28,9 @@ export const useInstanceOrderCreation = ({
   setActiveStep,
   navigate,
 }: UseInstanceOrderCreationProps) => {
-  const { apiBaseUrl, authToken } = useApiContext();
+  const paymentStepIndex = isFastTrack ? null : 2;
+  const reviewStepIndex = isFastTrack ? 2 : 3;
+  const { apiBaseUrl, authHeaders } = useApiContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [submissionResult, setSubmissionResult] = useState<any>(null);
@@ -37,17 +39,12 @@ export const useInstanceOrderCreation = ({
 
   const apiCall = useCallback(
     async (method: string, endpoint: string, body?: any) => {
-      const headers: any = {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      };
-      if (authToken) {
-        headers["Authorization"] = `Bearer ${authToken}`;
-      }
+      const headers = authHeaders;
 
       const response = await fetch(`${apiBaseUrl}${endpoint}`, {
         method,
         headers,
+        credentials: "include",
         body: body ? JSON.stringify(body) : undefined,
       });
 
@@ -59,7 +56,7 @@ export const useInstanceOrderCreation = ({
 
       return data; // Usually backend returns { data: ... } or direct object
     },
-    [apiBaseUrl, authToken]
+    [apiBaseUrl, authHeaders]
   );
 
   const buildPayload = useCallback(() => {
@@ -104,7 +101,7 @@ export const useInstanceOrderCreation = ({
         }))
         .filter((vol) => vol.volume_type_id && vol.storage_size_gb > 0);
 
-      const fastTrackLine = isFastTrack || cfg.launch_mode === "fast-track";
+      const fastTrackLine = isFastTrack;
 
       return {
         project_id: cfg.project_id || undefined,
@@ -133,7 +130,7 @@ export const useInstanceOrderCreation = ({
       };
     });
 
-    const anyFastTrack = isFastTrack || pricing_requests.some((req) => req.fast_track);
+    const anyFastTrack = isFastTrack;
 
     const payload: any = {
       fast_track: anyFastTrack,
@@ -143,7 +140,7 @@ export const useInstanceOrderCreation = ({
     if (contextType === "tenant" && selectedTenantId) {
       payload.tenant_id = selectedTenantId;
     } else if (contextType === "user" && selectedUserId) {
-      payload.client_id = selectedUserId;
+      payload.user_id = selectedUserId;
       if (selectedTenantId) {
         payload.tenant_id = selectedTenantId;
       }
@@ -153,9 +150,19 @@ export const useInstanceOrderCreation = ({
   }, [configurations, isFastTrack, billingCountry, contextType, selectedTenantId, selectedUserId]);
 
   const handleCreateOrder = async () => {
-    setIsSubmitting(true);
     setSubmissionResult(null);
     setOrderReceipt(null);
+    const missingProjectIndex = configurations.findIndex((cfg) => {
+      const requiresProject = cfg.project_mode === "new" || Boolean(cfg.template_locked);
+      return requiresProject && !String(cfg.project_id || "").trim();
+    });
+    if (missingProjectIndex !== -1) {
+      ToastUtils.error(
+        `Create a project for Configuration #${missingProjectIndex + 1} before pricing.`
+      );
+      return;
+    }
+    setIsSubmitting(true);
     try {
       const incompleteIndex = configurations.findIndex(
         (cfg) => !evaluateConfigurationCompleteness(cfg).isComplete
@@ -216,14 +223,15 @@ export const useInstanceOrderCreation = ({
             : "Instances initiated.")
       );
 
-      // Determine next step based on fast-track mode and payment requirement
-      if (payload.fast_track || !isPaymentRequired) {
-        // Skip payment step - go directly to review
-        // Assuming steps length is 4 (Workflow, Config, Payment, Review) so index 3
-        setActiveStep(3);
+      if (isPaymentRequired) {
+        if (paymentStepIndex !== null) {
+          setActiveStep(paymentStepIndex);
+        } else {
+          ToastUtils.error("Payment is required. Switch to standard mode to continue.");
+          setActiveStep(reviewStepIndex);
+        }
       } else {
-        // Payment required - go to payment step
-        setActiveStep(2);
+        setActiveStep(reviewStepIndex);
       }
     } catch (error: any) {
       console.error("Failed to create instances", error);
@@ -311,7 +319,7 @@ export const useInstanceOrderCreation = ({
       const successStatuses = ["successful", "completed", "paid", "success"];
       if (successStatuses.includes(normalizedStatus)) {
         ToastUtils.success("Payment verified successfully!");
-        setActiveStep(3);
+        setActiveStep(reviewStepIndex);
       } else {
         ToastUtils.success(`Payment status: ${normalizedStatus}`);
         // Note: logic in original was mixing verifyPayment and paymentCompleted.

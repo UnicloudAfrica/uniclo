@@ -7,6 +7,7 @@ import DeleteClientModal from "../../pages/clientComps/DeleteClient";
 import { ModernButton } from "../../../shared/components/ui";
 import StatusPill from "../../../shared/components/ui/StatusPill";
 import IconBadge from "../IconBadge";
+import SetupProgressCard from "../../../shared/components/projects/details/SetupProgressCard";
 
 const encodeId = (id: string) => encodeURIComponent(btoa(id));
 
@@ -79,6 +80,18 @@ const OverviewClient: React.FC<OverviewClientProps> = ({ client }: any) => {
     },
   ];
 
+  const provisioningSteps = Array.isArray(client?.provisioning_progress)
+    ? client.provisioning_progress.map((step: any) => ({
+        id: step.id,
+        label: step.label,
+        status: step.status,
+        updated_at: step.updated_at,
+        context: step.context,
+      }))
+    : [];
+
+  const showProvisioning = provisioningSteps.length > 0;
+
   const openEditClientModal = (clientData: any) => {
     setSelectedClient(clientData);
     setIsEditClientModalOpen(true);
@@ -110,6 +123,15 @@ const OverviewClient: React.FC<OverviewClientProps> = ({ client }: any) => {
   return (
     <>
       <div className="space-y-6">
+        {showProvisioning && (
+          <div className="grid grid-cols-1 gap-6 mb-6">
+            <SetupProgressCard
+              steps={provisioningSteps}
+              isLoading={client?.onboarding_status === "processing"}
+            />
+          </div>
+        )}
+
         <div className="rounded-3xl border border-[#EAECF0] bg-gradient-to-br from-white via-[#F5F8FB] to-white p-6 shadow-sm">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>

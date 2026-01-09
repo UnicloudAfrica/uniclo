@@ -2,7 +2,6 @@
 import React, { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { Upload, X, CheckCircle2, AlertCircle, FileIcon, Loader2, FolderUp } from "lucide-react";
-import objectStorageApi from "../../../services/objectStorageApi";
 import ToastUtils from "../../../utils/toastUtil";
 
 interface UploadFile {
@@ -64,22 +63,6 @@ const DropzoneUploader: React.FC<DropzoneUploaderProps> = ({
         formData.append("file", file);
         formData.append("key", objectKey);
 
-        // Get auth headers
-        const token =
-          localStorage.getItem("unicloud_admin_auth") ||
-          localStorage.getItem("unicloud_tenant_auth") ||
-          localStorage.getItem("unicloud_client_auth");
-
-        let authToken = "";
-        if (token) {
-          try {
-            const parsed = JSON.parse(token);
-            authToken = parsed?.state?.token || parsed?.token || "";
-          } catch (e) {
-            console.warn("Failed to parse auth token");
-          }
-        }
-
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable) {
             const progress = Math.round((event.loaded / event.total) * 100);
@@ -122,8 +105,8 @@ const DropzoneUploader: React.FC<DropzoneUploaderProps> = ({
         }
 
         xhr.open("POST", `${baseUrl}/accounts/${accountId}/buckets/${bucketName}/upload`);
-        xhr.setRequestHeader("Authorization", `Bearer ${authToken}`);
         xhr.setRequestHeader("Accept", "application/json");
+        xhr.withCredentials = true;
         xhr.send(formData);
       });
     } catch (error: any) {

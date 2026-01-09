@@ -8,7 +8,13 @@ import useAdminAuthStore from "../../stores/adminAuthStore";
 const fetchLeads = async (params = {}) => {
   // Build query string from params
   const queryParams = Object.keys(params)
-    .filter((key) => params[key] !== undefined && params[key] !== null && params[key] !== "" && params[key] !== "all")
+    .filter(
+      (key) =>
+        params[key] !== undefined &&
+        params[key] !== null &&
+        params[key] !== "" &&
+        params[key] !== "all"
+    )
     .map((key) => `${key}=${encodeURIComponent(params[key])}`)
     .join("&");
 
@@ -102,17 +108,16 @@ const downloadDoc = async (id) => {
     throw new Error("Document identifier is required");
   }
 
-  const { token } = useAdminAuthStore.getState();
-  const response = await fetch(
-    `${config.adminURL}/lead-documents/${id}/download`,
-    {
-      method: "GET",
-      headers: {
-        Accept: "application/octet-stream,application/pdf,image/*,*/*",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-    }
-  );
+  const adminState = useAdminAuthStore.getState();
+  const baseHeaders = adminState?.getAuthHeaders ? adminState.getAuthHeaders() : {};
+  const response = await fetch(`${config.adminURL}/lead-documents/${id}/download`, {
+    method: "GET",
+    headers: {
+      ...baseHeaders,
+      Accept: "application/octet-stream,application/pdf,image/*,*/*",
+    },
+    credentials: "include",
+  });
 
   if (!response.ok) {
     let message = "Failed to download document";
@@ -125,11 +130,8 @@ const downloadDoc = async (id) => {
   }
 
   const blob = await response.blob();
-  const contentType =
-    response.headers.get("Content-Type") || "application/octet-stream";
-  const fileName = extractFileNameFromDisposition(
-    response.headers.get("Content-Disposition")
-  );
+  const contentType = response.headers.get("Content-Type") || "application/octet-stream";
+  const fileName = extractFileNameFromDisposition(response.headers.get("Content-Disposition"));
 
   return {
     blob,

@@ -1,7 +1,15 @@
 // @ts-nocheck
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { RefreshCw, ArrowLeft, FolderOpen, BarChart3, CreditCard, Receipt } from "lucide-react";
+import {
+  RefreshCw,
+  ArrowLeft,
+  FolderOpen,
+  BarChart3,
+  CreditCard,
+  Receipt,
+  Trash2,
+} from "lucide-react";
 import AdminSidebar from "../components/AdminSidebar";
 import AdminHeadbar from "../components/adminHeadbar";
 import AdminPageShell from "../components/AdminPageShell";
@@ -11,6 +19,7 @@ import ObjectStorageAnalytics from "../../shared/components/object-storage/Objec
 import ObjectStorageSubscription from "../../shared/components/object-storage/ObjectStorageSubscription";
 import ObjectStorageTransactions from "../../shared/components/object-storage/ObjectStorageTransactions";
 import ExtendStorageModal from "../../shared/components/object-storage/ExtendStorageModal";
+import DeleteStorageAccountModal from "../../shared/components/object-storage/DeleteStorageAccountModal";
 import objectStorageApi from "../../services/objectStorageApi";
 import ToastUtils from "../../utils/toastUtil";
 
@@ -38,6 +47,7 @@ const AdminObjectStorageDetail: React.FC = () => {
     "files" | "analytics" | "subscription" | "transactions"
   >("files");
   const [showExtendModal, setShowExtendModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const fetchAccountDetails = useCallback(async () => {
     if (!accountId) return;
@@ -108,6 +118,17 @@ const AdminObjectStorageDetail: React.FC = () => {
   const handleRefresh = () => {
     fetchAccountDetails();
     fetchBuckets();
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      await objectStorageApi.deleteAccount(accountId!);
+      ToastUtils.success("Storage account deleted successfully");
+      navigate("/admin-dashboard/object-storage", { state: { refresh: true } });
+    } catch (err: any) {
+      ToastUtils.error(err.message || "Failed to delete account");
+      throw err;
+    }
   };
 
   if (!accountId) {
@@ -195,6 +216,13 @@ const AdminObjectStorageDetail: React.FC = () => {
         <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
         Refresh
       </button>
+      <button
+        onClick={() => setShowDeleteModal(true)}
+        className="flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-100"
+      >
+        <Trash2 className="h-4 w-4" />
+        Delete
+      </button>
     </div>
   );
 
@@ -218,14 +246,39 @@ const AdminObjectStorageDetail: React.FC = () => {
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
           </div>
         ) : error || !account ? (
-          <div className="text-center py-12">
-            <p className="text-rose-600 mb-4">{error || "Account not found"}</p>
-            <button
-              onClick={() => navigate("/admin-dashboard/object-storage")}
-              className="text-primary-600 hover:underline"
-            >
-              Back to Object Storage
-            </button>
+          <div className="flex items-center justify-center py-16 px-4">
+            <div className="text-center max-w-md w-full">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 mb-6">
+                <svg
+                  className="h-8 w-8 text-slate-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                Storage Account Not Found
+              </h3>
+              <p className="text-sm text-slate-500 mb-6">
+                This storage account may have been deleted or you don't have permission to view it.
+              </p>
+              <button
+                onClick={() =>
+                  navigate("/admin-dashboard/object-storage", { state: { refresh: true } })
+                }
+                className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Object Storage
+              </button>
+            </div>
           </div>
         ) : (
           <>
@@ -367,6 +420,17 @@ const AdminObjectStorageDetail: React.FC = () => {
           setShowExtendModal(false);
           handleRefresh();
         }}
+      />
+
+      {/* Delete Storage Account Modal */}
+      <DeleteStorageAccountModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteAccount}
+        accountName={account?.name || ""}
+        accountId={accountId}
+        bucketCount={buckets.length}
+        accessKeyCount={account?.accessKeys?.length || account?.access_keys?.length || 0}
       />
     </>
   );

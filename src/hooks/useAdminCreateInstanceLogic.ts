@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useCustomerContext } from "./adminHooks/useCustomerContext";
 import { useFetchGeneralRegions } from "./resource";
-import useAdminAuthStore from "../stores/adminAuthStore";
 import { useInstanceFormState } from "./useInstanceCreation";
 import { useInstanceOrderCreation } from "./useInstanceOrderCreation";
 import { useInstanceResources } from "./useInstanceResources";
@@ -45,11 +44,12 @@ export const useAdminCreateInstanceLogic = () => {
 
   const [billingCountry, setBillingCountry] = useState("US");
   const [isCountryLocked, setIsCountryLocked] = useState(false);
-  const [networkPreset, setNetworkPreset] = useState<string>("standard");
   const { resources, isLoadingResources } = useInstanceResources();
   const {
     configurations,
     addConfiguration,
+    addConfigurationWithPatch,
+    resetConfigurationWithPatch,
     removeConfiguration,
     updateConfiguration,
     addAdditionalVolume,
@@ -58,7 +58,6 @@ export const useAdminCreateInstanceLogic = () => {
   } = useInstanceFormState();
 
   const [hasLockedPaymentStep, setHasLockedPaymentStep] = useState(false);
-  const adminToken = useAdminAuthStore((state) => state.token);
   const { data: countryOptions = [], isFetching: isCountriesLoading } = useFetchCountries();
   const { data: generalRegions = [], isFetching: isGeneralRegionsLoading } =
     useFetchGeneralRegions();
@@ -99,17 +98,22 @@ export const useAdminCreateInstanceLogic = () => {
         {
           id: "workflow",
           title: "Workflow & Assignment",
-          desc: "Choose fast-track mode and assign user/tenant.",
+          desc: "Choose fast-track mode and assign user or tenant.",
         },
         {
           id: "services",
-          title: "Compute profiles",
-          desc: "Select projects, regions, sizes, and volumes.",
+          title: "Cube-nstance setup",
+          desc: "Select region, size, image, storage, and networking.",
         },
         {
           id: "review",
           title: "Review & Provision",
-          desc: "Confirm details and provision instantly.",
+          desc: "Confirm details and provision cube-nstances.",
+        },
+        {
+          id: "success",
+          title: "Success",
+          desc: "Provisioning started.",
         },
       ];
     }
@@ -117,15 +121,20 @@ export const useAdminCreateInstanceLogic = () => {
       {
         id: "workflow",
         title: "Workflow & Assignment",
-        desc: "Choose standard mode and assign user/tenant.",
+        desc: "Choose standard mode and assign user or tenant.",
       },
       {
         id: "services",
-        title: "Compute profiles",
-        desc: "Select projects, regions, sizes, and volumes.",
+        title: "Cube-nstance setup",
+        desc: "Select region, size, image, storage, and networking.",
       },
       { id: "payment", title: "Payment", desc: "Generate payment options and share with finance." },
-      { id: "review", title: "Review & submit", desc: "Validate totals and confirm provisioning." },
+      {
+        id: "review",
+        title: "Review & provision",
+        desc: "Validate totals and confirm provisioning.",
+      },
+      { id: "success", title: "Success", desc: "Provisioning started." },
     ];
   }, [isFastTrack]);
 
@@ -431,10 +440,6 @@ export const useAdminCreateInstanceLogic = () => {
     effectivePaymentOption,
     billingCountryLabel,
 
-    // Network Preset
-    networkPreset,
-    setNetworkPreset,
-
     // Handlers
     handleModeChange,
     setActiveStep,
@@ -447,6 +452,8 @@ export const useAdminCreateInstanceLogic = () => {
 
     // Form Handlers
     addConfiguration,
+    addConfigurationWithPatch,
+    resetConfigurationWithPatch,
     removeConfiguration,
     updateConfiguration,
     addAdditionalVolume,
@@ -458,7 +465,6 @@ export const useAdminCreateInstanceLogic = () => {
     handlePaymentCompleted,
 
     // Misc
-    adminToken,
     apiBaseUrl,
   };
 };

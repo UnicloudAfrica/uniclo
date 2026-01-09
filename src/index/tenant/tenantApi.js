@@ -5,20 +5,17 @@ import ToastUtils from "../../utils/toastUtil.ts";
 
 const tenantApi = async (method, uri, body = null) => {
   const url = config.tenantURL + uri;
-  const { token, setToken } = useTenantAuthStore.getState();
+  const tenantState = useTenantAuthStore.getState();
 
-  const headers = {
+  const headers = tenantState?.getAuthHeaders?.() || {
     "Content-Type": "application/json",
     Accept: "application/json",
   };
 
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
   const options = {
     method,
     headers,
+    credentials: "include",
     body: body ? JSON.stringify(body) : null,
   };
 
@@ -27,30 +24,6 @@ const tenantApi = async (method, uri, body = null) => {
     const res = await response.json();
 
     if (response.ok || response.status === 201) {
-      const dataPayload = res && typeof res.data === "object" ? res.data : undefined;
-      const nestedDataPayload =
-        dataPayload && typeof dataPayload.data === "object" ? dataPayload.data : undefined;
-      const messagePayload =
-        dataPayload && typeof dataPayload.message === "object" ? dataPayload.message : undefined;
-      const nestedMessagePayload =
-        messagePayload && typeof messagePayload.data === "object" ? messagePayload.data : undefined;
-
-      const tokenToSet =
-        res?.access_token ||
-        res?.token ||
-        dataPayload?.access_token ||
-        dataPayload?.token ||
-        nestedDataPayload?.access_token ||
-        nestedDataPayload?.token ||
-        messagePayload?.access_token ||
-        messagePayload?.token ||
-        nestedMessagePayload?.access_token ||
-        nestedMessagePayload?.token;
-
-      if (tokenToSet) {
-        setToken(tokenToSet);
-      }
-
       // Handle success message for Toast
       let successMessage = "";
       if (res.data?.message) {

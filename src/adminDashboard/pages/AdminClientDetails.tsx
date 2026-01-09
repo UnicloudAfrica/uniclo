@@ -21,6 +21,7 @@ import {
 import { useFetchClientById } from "../../hooks/adminHooks/clientHooks";
 import AdminPageShell from "../components/AdminPageShell";
 import OnboardingStatusBoard from "../components/onboarding/OnboardingStatusBoard";
+import { useUserBroadcasting } from "../../hooks/useUserBroadcasting";
 
 const decodeId = (encodedId: string) => {
   try {
@@ -47,6 +48,9 @@ const AdminClientDetails = () => {
       setClientId(decodedId);
     }
   }, [location.search]);
+
+  // Use broadcasting hook for real-time updates
+  useUserBroadcasting(clientId);
 
   const {
     data: clientDetails,

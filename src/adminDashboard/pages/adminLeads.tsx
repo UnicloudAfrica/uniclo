@@ -439,15 +439,15 @@ export default function AdminLeads() {
   const handleBulkExport = async () => {
     try {
       // Use the file API client to handle CSV download
-      const token = useAdminAuthStore.getState().token;
+      const adminState = useAdminAuthStore.getState();
       const response = await fetch(
         `${window.location.origin.replace(":3000", ":8000")}/admin/v1/leads/bulk-export`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+          headers: adminState?.getAuthHeaders
+            ? { ...adminState.getAuthHeaders(), Accept: "text/csv" }
+            : { "Content-Type": "application/json", Accept: "text/csv" },
+          credentials: "include",
           body: JSON.stringify({ lead_ids: selectedLeads }),
         }
       );

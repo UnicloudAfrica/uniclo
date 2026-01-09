@@ -50,20 +50,15 @@ export const createApiClient = ({
 }) => {
   return async (method, uri, body = null) => {
     const url = baseURL + uri;
-    const { token, setToken, clearSession } = authStore.getState();
-
-    const headers = {
+    const authState = authStore?.getState ? authStore.getState() : null;
+    const headers = authState?.getAuthHeaders?.() || {
       "Content-Type": "application/json",
       Accept: "application/json",
     };
-
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
     const options = {
       method,
       headers,
+      credentials: "include", // Ensure cookies are sent (HttpOnly)
       body: body ? JSON.stringify(body) : null,
     };
 
@@ -72,13 +67,6 @@ export const createApiClient = ({
       const res = useSafeJsonParsing ? await parseJsonSafely(response) : await response.json();
 
       if (response.ok || response.status === 201) {
-        // Handle token updates with change detection
-        if (res.access_token && res.access_token !== token) {
-          setToken(res.access_token);
-        } else if (res.data?.message?.token && res.data.message.token !== token) {
-          setToken(res.data.message.token);
-        }
-
         // Handle success message for Toast (if enabled)
         if (showToasts) {
           let successMessage = "";
@@ -100,7 +88,7 @@ export const createApiClient = ({
       } else {
         // Clear session on auth errors
         if (response.status === 401 || response.status === 403) {
-          clearSession();
+          authState?.clearSession?.();
         }
 
         const handled = handleAuthRedirect(response, res, redirectPath);
@@ -136,20 +124,16 @@ export const createMultipartApiClient = ({
 }) => {
   return async (method, uri, formData = null) => {
     const url = baseURL + uri;
-    const { token, setToken, clearSession } = authStore.getState();
-
-    const headers = {
+    const authState = authStore?.getState ? authStore.getState() : null;
+    const headers = authState?.getAuthHeaders?.() || {
       Accept: "application/json",
     };
-
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
+    delete headers["Content-Type"];
     // When using FormData, do not set the 'Content-Type' header
     const options = {
       method,
       headers,
+      credentials: "include",
       body: formData,
     };
 
@@ -158,12 +142,6 @@ export const createMultipartApiClient = ({
       const res = await response.json();
 
       if (response.ok || response.status === 201) {
-        if (res.access_token && res.access_token !== token) {
-          setToken(res.access_token);
-        } else if (res.data?.message?.token && res.data.message.token !== token) {
-          setToken(res.data.message.token);
-        }
-
         if (showToasts) {
           let successMessage = "";
           if (res.data?.message) {
@@ -183,7 +161,7 @@ export const createMultipartApiClient = ({
         return res;
       } else {
         if (response.status === 401 || response.status === 403) {
-          clearSession();
+          authState?.clearSession?.();
         }
 
         const handled = handleAuthRedirect(response, res, redirectPath);
@@ -214,20 +192,14 @@ export const createMultipartApiClient = ({
 export const createFileApiClient = ({ baseURL, authStore, redirectPath = "/sign-in" }) => {
   return async (method, uri, body = null) => {
     const url = baseURL + uri;
-    const { token, setToken, clearSession } = authStore.getState();
-
-    const headers = {
-      "Content-Type": "application/json",
-      Accept: "application/json, image/jpeg, application/pdf, */*",
-    };
-
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
+    const authState = authStore?.getState ? authStore.getState() : null;
     const options = {
       method,
-      headers,
+      headers: authState?.getAuthHeaders?.() || {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      credentials: "include",
       body: body ? JSON.stringify(body) : null,
     };
 
@@ -250,15 +222,6 @@ export const createFileApiClient = ({ baseURL, authStore, redirectPath = "/sign-
           console.warn("Unexpected Content-Type, treating as text:", contentType);
         }
 
-        // Handle token updates for JSON responses
-        if (typeof res === "object" && res !== null) {
-          if (res.access_token && res.access_token !== token) {
-            setToken(res.access_token);
-          } else if (res.data?.message?.token && res.data.message.token !== token) {
-            setToken(res.data.message.token);
-          }
-        }
-
         return res;
       } else {
         const text = await response.text();
@@ -270,7 +233,7 @@ export const createFileApiClient = ({ baseURL, authStore, redirectPath = "/sign-
         }
 
         if (response.status === 401 || response.status === 403) {
-          clearSession();
+          authState?.clearSession?.();
         }
 
         const handled = handleAuthRedirect(response, parsed, redirectPath);

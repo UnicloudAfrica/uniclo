@@ -22,7 +22,7 @@ import { PaystackButton } from "react-paystack";
  * PaymentModal - Shared across Admin, Tenant, and Client dashboards
  *
  * Context-aware payment modal that auto-detects the current dashboard
- * and uses the appropriate API endpoint and auth token.
+ * and uses the appropriate API endpoint and cookie-based auth.
  * Following shared-components.md workflow.
  */
 
@@ -37,20 +37,6 @@ const detectApiContext = (): ApiContext => {
   return "client";
 };
 
-// Get auth token for context
-const getTokenForContext = (context: ApiContext): string | null => {
-  switch (context) {
-    case "admin":
-      return useAdminAuthStore.getState().token;
-    case "tenant":
-      return useTenantAuthStore.getState().token;
-    case "client":
-      return useClientAuthStore.getState().token;
-    default:
-      return null;
-  }
-};
-
 // Get API base URL for context
 const getApiBaseUrlForContext = (context: ApiContext): string => {
   switch (context) {
@@ -61,26 +47,6 @@ const getApiBaseUrlForContext = (context: ApiContext): string => {
     case "client":
     default:
       return config.baseURL;
-  }
-};
-
-// Get user email for context
-const getEmailForContext = (context: ApiContext): string => {
-  switch (context) {
-    case "admin": {
-      const state = useAdminAuthStore.getState();
-      return state.user?.email || state.userEmail || "";
-    }
-    case "tenant": {
-      const state = useTenantAuthStore.getState();
-      return state.user?.email || "";
-    }
-    case "client": {
-      const state = useClientAuthStore.getState();
-      return state.user?.email || "";
-    }
-    default:
-      return "";
   }
 };
 
@@ -98,7 +64,6 @@ interface PaymentModalProps {
   onPaymentComplete?: (payload: any) => void;
   mode?: "modal" | "inline";
   className?: string;
-  authToken?: string;
   onPaymentOptionChange?: (option: any) => void;
   apiBaseUrl?: string;
   amount?: number;
@@ -116,7 +81,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   onPaymentComplete,
   mode = "modal",
   className = "",
-  authToken: propAuthToken,
   onPaymentOptionChange,
   apiBaseUrl: propApiBaseUrl,
   amount: propAmount,
@@ -129,10 +93,41 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   // Auto-detect context from URL
   const context = useMemo(() => detectApiContext(), []);
 
-  // Use provided props or auto-detect based on context
-  const authToken = propAuthToken || getTokenForContext(context) || "";
+  const adminAuth = useAdminAuthStore((state) => ({
+    isAuthenticated: state.isAuthenticated,
+    getAuthHeaders: state.getAuthHeaders,
+    user: state.user,
+    userEmail: state.userEmail,
+  }));
+  const tenantAuth = useTenantAuthStore((state) => ({
+    isAuthenticated: state.isAuthenticated,
+    getAuthHeaders: state.getAuthHeaders,
+    user: state.user,
+  }));
+  const clientAuth = useClientAuthStore((state) => ({
+    isAuthenticated: state.isAuthenticated,
+    getAuthHeaders: state.getAuthHeaders,
+    user: state.user,
+  }));
+
+  const contextAuth =
+    context === "admin" ? adminAuth : context === "tenant" ? tenantAuth : clientAuth;
+  const isAuthenticated = Boolean(contextAuth?.isAuthenticated);
+  const authHeaders =
+    typeof contextAuth?.getAuthHeaders === "function"
+      ? contextAuth.getAuthHeaders()
+      : {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        };
+
   const apiBaseUrl = propApiBaseUrl || getApiBaseUrlForContext(context);
-  const contextEmail = getEmailForContext(context);
+  const contextEmail =
+    context === "admin"
+      ? adminAuth.user?.email || adminAuth.userEmail || ""
+      : context === "tenant"
+        ? tenantAuth.user?.email || ""
+        : clientAuth.user?.email || "";
 
   const isInline = mode === "inline";
   const [paymentStatus, setPaymentStatus] = useState<
@@ -149,16 +144,27 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const [shouldSaveCard, setShouldSaveCard] = useState(false);
   const [paymentMode, setPaymentMode] = useState<string | null>(null);
   const [selectedSavedCard, setSelectedSavedCard] = useState<string | null>(null);
+  const [confirmedAccounts, setConfirmedAccounts] = useState<any[]>([]);
   const hasTriggeredConfirmRef = useRef(false);
-  const confirmTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const confirmAttemptsRef = useRef(0);
 
-  const { transaction, order, instances, payment } = transactionData?.data || {};
-  const storageProfiles = order?.storage_profiles || order?.items || [];
+  const { transaction, order, instances, payment, accounts, order_items } =
+    transactionData?.data || {};
+  const storageProfiles = order?.storage_profiles || order_items || order?.items || [];
   const isStorageOrder =
-    Array.isArray(storageProfiles) &&
-    storageProfiles.length > 0 &&
-    (!instances || instances.length === 0);
+    (Array.isArray(storageProfiles) && storageProfiles.length > 0) ||
+    (Array.isArray(accounts) && accounts.length > 0);
+
+  // Extract first storage account ID for navigation after payment
+  // Check confirmedAccounts first (set after payment completes), then top-level accounts
+  const firstStorageAccountId =
+    confirmedAccounts?.[0]?.id ||
+    accounts?.[0]?.id ||
+    order_items?.[0]?.account?.id ||
+    storageProfiles?.[0]?.account?.id ||
+    storageProfiles?.[0]?.account_id ||
+    null;
 
   const paymentGatewayOptions = propPaymentOptions || payment?.payment_gateway_options || [];
 
@@ -300,7 +306,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const handleRemoveCard = useCallback(
     async (cardIdentifier: string) => {
-      if (!cardIdentifier || !authToken) return;
+      if (!cardIdentifier || !isAuthenticated) return;
       try {
         const cardsUrl =
           apiBaseUrl.includes("/admin") || apiBaseUrl.includes("/tenant")
@@ -309,11 +315,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
         const response = await fetch(cardsUrl, {
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
+          headers: authHeaders,
+          credentials: "include",
         });
         const payload = await response.json().catch(() => ({}));
 
@@ -333,11 +336,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         console.error("Unable to remove card", error);
       }
     },
-    [apiBaseUrl, authToken]
+    [apiBaseUrl, authHeaders, isAuthenticated]
   );
 
   const fetchSavedCards = useCallback(async () => {
-    if (!authToken) return;
+    if (!isAuthenticated) return;
     try {
       const cardsUrl =
         apiBaseUrl.includes("/admin") || apiBaseUrl.includes("/tenant")
@@ -346,11 +349,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
       const response = await fetch(cardsUrl, {
         method: "GET",
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
+        headers: authHeaders,
+        credentials: "include",
       });
 
       const payload = await response.json().catch(() => ({}));
@@ -366,7 +366,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     } catch (error) {
       console.error("Unable to fetch saved cards", error);
     }
-  }, [apiBaseUrl, authToken]);
+  }, [apiBaseUrl, authHeaders, isAuthenticated]);
 
   // Ensure saved card selection stays in sync with payload
   useEffect(() => {
@@ -447,7 +447,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const confirmTransaction = useCallback(
     async (options: any = {}) => {
-      if (!transactionIdentifier || !authToken || isConfirming) {
+      if (!transactionIdentifier || !isAuthenticated || isConfirming) {
         return false;
       }
 
@@ -476,11 +476,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         });
         const response = await fetch(`${apiBaseUrl}/transactions/${transactionIdentifier}`, {
           method: "PUT",
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
+          headers: authHeaders,
+          credentials: "include",
           body: JSON.stringify(payload),
         });
 
@@ -522,12 +519,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     },
     [
       transactionIdentifier,
-      authToken,
       apiBaseUrl,
       resolvePaymentGateway,
       shouldSaveCard,
       paymentMode,
       isConfirming,
+      isAuthenticated,
+      authHeaders,
     ]
   );
 
@@ -631,22 +629,23 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   // Poll transaction status (manual or interval)
   const pollTransactionStatus = useCallback(async () => {
     const identifier = transaction?.identifier || transaction?.reference || transaction?.id;
-    if (!identifier || isPolling || !authToken) return;
+    if (!identifier || isPolling || !isAuthenticated) return;
 
     setIsPolling(true);
     try {
       const response = await fetch(`${apiBaseUrl}/transactions/${identifier}/status`, {
         method: "GET",
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
+        headers: authHeaders,
+        credentials: "include",
       });
       const data = await response.json();
 
       if (data.success && data.data) {
         if (data.data.status === "successful") {
+          // Save accounts from the confirmed transaction
+          if (data.data.accounts && Array.isArray(data.data.accounts)) {
+            setConfirmedAccounts(data.data.accounts);
+          }
           setPaymentStatus("completed");
           handlePaymentCompletion(data.data);
         } else if (data.data.status === "failed") {
@@ -663,19 +662,20 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     transaction?.reference,
     transaction?.id,
     isPolling,
-    authToken,
     apiBaseUrl,
     confirmTransaction,
     handlePaymentCompletion,
+    isAuthenticated,
+    authHeaders,
   ]);
 
   // Auto-poll every 10 seconds when modal is open and payment is pending
   useEffect(() => {
-    if (isActive && paymentStatus === "pending" && transaction?.id && authToken) {
+    if (isActive && paymentStatus === "pending" && transaction?.id && isAuthenticated) {
       const interval = setInterval(pollTransactionStatus, 10000);
       return () => clearInterval(interval);
     }
-  }, [isActive, paymentStatus, transaction?.id, authToken, pollTransactionStatus]);
+  }, [isActive, paymentStatus, transaction?.id, isAuthenticated, pollTransactionStatus]);
 
   useEffect(() => {
     if (
@@ -1313,7 +1313,15 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               onClick={() => {
                 handleModalClose();
                 setTimeout(() => {
-                  window.location.href = "/admin-dashboard/instances";
+                  if (isStorageOrder && firstStorageAccountId) {
+                    // Navigate to specific storage account
+                    window.location.href = `/admin-dashboard/object-storage/${firstStorageAccountId}`;
+                  } else if (isStorageOrder) {
+                    // Fallback to storage list
+                    window.location.href = "/admin-dashboard/object-storage";
+                  } else {
+                    window.location.href = "/admin-dashboard/instances";
+                  }
                 }, 500);
               }}
               className="inline-flex items-center rounded-lg px-6 py-2 text-sm font-medium text-white shadow-sm transition-all hover:shadow-md"
@@ -1323,9 +1331,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               }}
             >
               <CheckCircle className="mr-2 h-4 w-4" />
-              {window.location.pathname.includes("object-storage")
-                ? "View Storage"
-                : "View Instances"}
+              {isStorageOrder ? "View Storage" : "View Instances"}
             </button>
           )}
 

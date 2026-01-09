@@ -16,6 +16,7 @@ const TenantObjectStorageDetail = () => {
         accountId={accountId}
         backUrl="/dashboard/object-storage"
         backLabel="Back to Object Storage"
+        canDelete={true}
       />
     </TenantPageShell>
   );

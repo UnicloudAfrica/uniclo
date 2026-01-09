@@ -10,9 +10,9 @@ export const testInfrastructureApi = {
     try {
       const response = await fetch(url, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("admin_token")}`,
           "Content-Type": "application/json",
         },
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -36,9 +36,9 @@ export const testInfrastructureApi = {
     try {
       const response = await fetch(url, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("admin_token")}`,
           "Content-Type": "application/json",
         },
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -69,9 +69,9 @@ export const testInfrastructureApi = {
       const response = await fetch(url, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("admin_token")}`,
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify(payload),
       });
 
@@ -107,8 +107,8 @@ export const testInfrastructureApi = {
 };
 
 // Make it available globally for console testing
-if (typeof window !== "undefined") {
-  window.testInfraApi = testInfrastructureApi;
-}
+// if (typeof window !== "undefined") {
+//   window.testInfraApi = testInfrastructureApi;
+// }
 
 export default testInfrastructureApi;

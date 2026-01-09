@@ -13,6 +13,12 @@ const buildQueryString = (params = {}) => {
 };
 
 const fetchClientIgws = async ({ project_id, region, refresh = false }) => {
+  // Validate required parameters before making API call
+  if (!project_id || !region) {
+    console.warn("fetchClientIgws: project_id and region are required");
+    return [];
+  }
+
   const queryString = buildQueryString({
     project_id,
     region,
@@ -40,11 +46,7 @@ const createClientIgw = async (payload) => {
 };
 
 const deleteClientIgw = async ({ id, payload }) => {
-  const res = await clientApi(
-    "DELETE",
-    `/business/internet-gateways/${id}`,
-    payload
-  );
+  const res = await clientApi("DELETE", `/business/internet-gateways/${id}`, payload);
   if (!res?.data) {
     throw new Error("Failed to delete internet gateway");
   }
@@ -52,11 +54,7 @@ const deleteClientIgw = async ({ id, payload }) => {
 };
 
 const attachClientIgw = async (payload) => {
-  const res = await clientApi(
-    "POST",
-    "/business/internet-gateway-attachments",
-    payload
-  );
+  const res = await clientApi("POST", "/business/internet-gateway-attachments", payload);
   if (!res?.data) {
     throw new Error("Failed to attach internet gateway");
   }
@@ -64,11 +62,7 @@ const attachClientIgw = async (payload) => {
 };
 
 const detachClientIgw = async (payload) => {
-  const res = await clientApi(
-    "DELETE",
-    "/business/internet-gateway-attachments",
-    payload
-  );
+  const res = await clientApi("DELETE", "/business/internet-gateway-attachments", payload);
   if (!res?.data) {
     throw new Error("Failed to detach internet gateway");
   }
@@ -79,6 +73,8 @@ export const useFetchClientIgws = (projectId, region, options = {}) =>
   useQuery({
     queryKey: ["clientIgws", { projectId, region }],
     queryFn: () => fetchClientIgws({ project_id: projectId, region }),
+    // Only enable if both projectId and region are non-empty strings
+    enabled: !!projectId?.trim?.() && !!region?.trim?.(),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,
@@ -94,10 +90,7 @@ export const useCreateClientIgw = () => {
       });
       if (variables?.region) {
         queryClient.invalidateQueries({
-          queryKey: [
-            "clientIgws",
-            { projectId: variables.project_id, region: variables.region },
-          ],
+          queryKey: ["clientIgws", { projectId: variables.project_id, region: variables.region }],
         });
       }
     },
@@ -113,10 +106,7 @@ export const useDeleteClientIgw = () => {
     mutationFn: deleteClientIgw,
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: [
-          "clientIgws",
-          { projectId: variables.payload.project_id },
-        ],
+        queryKey: ["clientIgws", { projectId: variables.payload.project_id }],
       });
       if (variables?.payload?.region) {
         queryClient.invalidateQueries({
@@ -142,10 +132,7 @@ export const useAttachClientIgw = () => {
     mutationFn: attachClientIgw,
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: [
-          "clientIgws",
-          { projectId: variables.project_id, region: variables.region },
-        ],
+        queryKey: ["clientIgws", { projectId: variables.project_id, region: variables.region }],
       });
     },
     onError: (error) => {
@@ -160,10 +147,7 @@ export const useDetachClientIgw = () => {
     mutationFn: detachClientIgw,
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: [
-          "clientIgws",
-          { projectId: variables.project_id, region: variables.region },
-        ],
+        queryKey: ["clientIgws", { projectId: variables.project_id, region: variables.region }],
       });
     },
     onError: (error) => {

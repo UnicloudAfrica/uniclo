@@ -3,13 +3,22 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import clientSilentApi from "../../index/client/silent";
 import clientApi from "../../index/client/api";
 
-// GET: Fetch all projects
-const fetchClientProjects = async () => {
-  const res = await clientSilentApi("GET", "/business/projects");
+// GET: Fetch all projects (supports pagination/filtering)
+const fetchClientProjects = async (params = {}) => {
+  const queryParams = { ...params };
+
+  const queryString = Object.keys(queryParams)
+    .filter((key) => queryParams[key] !== undefined && queryParams[key] !== null)
+    .map((key) => `${key}=${encodeURIComponent(queryParams[key])}`)
+    .join("&");
+
+  const uri = `/business/projects${queryString ? `?${queryString}` : ""}`;
+
+  const res = await clientSilentApi("GET", uri);
   if (!res.data) {
     throw new Error("Failed to fetch projects");
   }
-  return res.data;
+  return res;
 };
 
 // GET: Fetch project by ID
@@ -82,10 +91,10 @@ const deleteClientProject = async (id) => {
 };
 
 // Hook to fetch all projects
-export const useFetchClientProjects = (options = {}) => {
+export const useFetchClientProjects = (params = {}, options = {}) => {
   return useQuery({
-    queryKey: ["clientProjects"],
-    queryFn: fetchClientProjects,
+    queryKey: ["clientProjects", params],
+    queryFn: () => fetchClientProjects(params),
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     refetchOnWindowFocus: false,
     ...options,
@@ -178,6 +187,32 @@ export const useDeleteClientProject = () => {
     },
     onError: (error) => {
       console.error("Error deleting project:", error);
+    },
+  });
+};
+
+// POST: Setup infrastructure
+const setupInfrastructure = async ({ id, blueprint }) => {
+  const encodedId = encodeURIComponent(id);
+  const res = await clientApi("POST", `/business/projects/${encodedId}/setup`, { blueprint });
+  if (!res.data) {
+    throw new Error(`Failed to setup infrastructure for project ${id}`);
+  }
+  return res.data;
+};
+
+// Hook to setup infrastructure
+export const useSetupInfrastructure = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: setupInfrastructure,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["clientProject", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["clientProjectStatus", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["clientProjects"] });
+    },
+    onError: (error) => {
+      console.error("Error setting up infrastructure:", error);
     },
   });
 };

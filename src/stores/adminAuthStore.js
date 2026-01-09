@@ -25,6 +25,22 @@ const inferTenantContext = () => {
 
 const baseContext = inferTenantContext();
 
+const resolveAuthFlag = (session, state) => {
+  if (typeof session.isAuthenticated === "boolean") {
+    return session.isAuthenticated;
+  }
+  if (session.user !== undefined) {
+    return Boolean(session.user);
+  }
+  if (session.userEmail !== undefined) {
+    return Boolean(session.userEmail);
+  }
+  if (session.role !== undefined) {
+    return Boolean(session.role);
+  }
+  return state.isAuthenticated;
+};
+
 const createInitialState = (context = baseContext) => ({
   token: null,
   userEmail: null,
@@ -71,10 +87,14 @@ const useAdminAuthStore = create(
         ...createInitialState(),
 
         setToken: (newToken) =>
-          set({
-            token: newToken,
-            isAuthenticated: Boolean(newToken),
-          }),
+          set((state) => ({
+            token: null,
+            isAuthenticated:
+              Boolean(newToken) ||
+              state.isAuthenticated ||
+              Boolean(state.user) ||
+              Boolean(state.userEmail),
+          })),
         clearToken: resetState,
         setUserEmail: (newEmail) => set({ userEmail: newEmail }),
         clearUserEmail: () => set({ userEmail: null }),
@@ -91,14 +111,13 @@ const useAdminAuthStore = create(
         setCurrentTenant: (tenant) => set({ currentTenant: tenant }),
         setSession: (session = {}) =>
           set((state) => ({
-            token: session.token ?? state.token,
+            token: null,
             userEmail: session.userEmail ?? state.userEmail,
             user: session.user ?? state.user,
             role: session.role ?? state.role,
             tenant: session.tenant ?? state.tenant,
             domain: session.domain ?? state.domain,
-            isAuthenticated:
-              session.token !== undefined ? Boolean(session.token) : state.isAuthenticated,
+            isAuthenticated: resolveAuthFlag(session, state),
             cloudRoles: session.cloudRoles ?? state.cloudRoles,
             cloudAbilities: session.cloudAbilities ?? state.cloudAbilities,
             currentTenant: session.currentTenant ?? state.currentTenant,
@@ -121,14 +140,12 @@ const useAdminAuthStore = create(
           return true;
         },
         getAuthHeaders: () => {
-          const { token, currentTenant, isCentralDomain } = get();
+          const { currentTenant, isCentralDomain } = get();
           const headers = {
             "Content-Type": "application/json",
             Accept: "application/json",
           };
-          if (token) {
-            headers.Authorization = `Bearer ${token}`;
-          }
+          // Token is handled via HttpOnly cookie
           if (!isCentralDomain && currentTenant?.slug) {
             headers["X-Tenant-Slug"] = currentTenant.slug;
           }
@@ -147,13 +164,13 @@ const useAdminAuthStore = create(
       name: "unicloud_admin_auth", // storage key in localStorage
       getStorage: () => localStorage,
       partialize: (state) => ({
-        token: state.token,
+        // token: state.token, // Don't persist sensitive token
         userEmail: state.userEmail,
         user: state.user,
         role: state.role,
         tenant: state.tenant,
         domain: state.domain,
-        isAuthenticated: state.isAuthenticated,
+        isAuthenticated: state.isAuthenticated, // Persist auth status
         cloudRoles: state.cloudRoles,
         cloudAbilities: state.cloudAbilities,
         currentTenant: state.currentTenant,

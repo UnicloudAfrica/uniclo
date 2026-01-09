@@ -34,6 +34,7 @@ import {
   Camera,
   TrendingUp,
   Zap,
+  LayoutTemplate,
 } from "lucide-react";
 import lapapi from "../../index/admin/lapapi";
 import useAdminAuthStore from "../../stores/adminAuthStore";
@@ -105,6 +106,12 @@ const menuItems: MenuEntry[] = [
         icon: Server,
         isLucide: true,
         path: "/admin-dashboard/instances",
+      },
+      {
+        name: "Templates",
+        icon: LayoutTemplate,
+        isLucide: true,
+        path: "/admin-dashboard/templates",
       },
       {
         name: "Object Storage",

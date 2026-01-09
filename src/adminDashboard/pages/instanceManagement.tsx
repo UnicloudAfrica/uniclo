@@ -141,12 +141,12 @@ export default function InstanceManagement() {
     else setRefreshing(true);
 
     try {
-      const { token } = useAdminAuthStore.getState();
+      const adminState = useAdminAuthStore.getState();
       const response = await fetch(`${config.baseURL}/business/instances`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
+        headers: adminState?.getAuthHeaders
+          ? adminState.getAuthHeaders()
+          : { Accept: "application/json" },
+        credentials: "include",
       });
 
       const data = await response.json();

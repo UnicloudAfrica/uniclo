@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import copy from "./assets/copy.svg";
 import adbg from "./assets/adBG.svg";
 import admob from "./assets/adMob.svg";
+import DOMPurify from "dompurify";
 
 const DetailedResources = () => {
   const firebaseConfig = {
@@ -114,7 +115,7 @@ const DetailedResources = () => {
           <p
             style={{ whiteSpace: "pre-line" }}
             className=" mt-6 text-sm md:px-[15%] font-normal text-justify whitespace-pre-line mb-5"
-            dangerouslySetInnerHTML={{ __html: selectedResourceItem.content }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedResourceItem.content) }}
           />
           <div className=" md:px-[15%]">
             <button

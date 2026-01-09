@@ -432,6 +432,46 @@ export const useInfrastructureProgress = (projectId) => {
   return progress;
 };
 
+// Sync project infrastructure (Force Refresh)
+export const useSyncProjectInfrastructure = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ projectId }) => {
+      if (!projectId) {
+        throw new Error("Project ID is required");
+      }
+      // Force refresh of infrastructure data from provider
+      return await api("GET", `/business/project-infrastructure/${projectId}?refresh=true`);
+    },
+    onSuccess: (data, variables) => {
+      // Invalidate related queries to reload fresh data
+      queryClient.invalidateQueries({
+        queryKey: ["project-infrastructure-status", variables.projectId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["project-details", variables.projectId],
+      });
+      // Invalidate resource-specific lists that might have been updated (or cleaned up)
+      const resourceKeys = [
+        "networks",
+        "vpcs",
+        "subnets",
+        "securityGroups",
+        "keyPairs",
+        "igws",
+        "routeTables",
+        "elasticIps",
+        "networkInterfaces",
+      ];
+      resourceKeys.forEach((key) => queryClient.invalidateQueries({ queryKey: [key] }));
+    },
+    onError: (error) => {
+      console.error("Failed to sync infrastructure:", error);
+    },
+  });
+};
+
 const projectInfrastructureHooks = {
   useProjectInfrastructureStatus,
   useSetupInfrastructureComponent,
@@ -439,6 +479,7 @@ const projectInfrastructureHooks = {
   useResetInfrastructureComponent,
   useInfrastructureProgress,
   useProvisionVpc,
+  useSyncProjectInfrastructure, // Added
 };
 
 export default projectInfrastructureHooks;

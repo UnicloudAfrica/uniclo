@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useMemo, useEffect, useRef } from "react";
+import React, { useMemo, useEffect, useRef, useCallback } from "react";
 import InstanceConfigurationForm from "../../shared/components/instance-wizard/InstanceConfigurationForm";
 import { Configuration, Option, AdditionalVolume } from "../../types/InstanceConfiguration";
 import { useFetchProjects } from "../../hooks/adminHooks/projectHooks";
@@ -8,6 +8,8 @@ import { useFetchSecurityGroups } from "../../hooks/adminHooks/securityGroupHook
 import { useFetchKeyPairs } from "../../hooks/adminHooks/keyPairHooks";
 import { useFetchSubnets } from "../../hooks/adminHooks/subnetHooks";
 import { useFetchNetworks } from "../../hooks/adminHooks/networkHooks";
+import ToastUtils from "../../utils/toastUtil";
+import { buildConfigurationFromTemplate } from "../../utils/instanceCreationUtils";
 
 // Type for custom fetch hook that returns { data, isFetching, ... }
 type FetchHookResult = { data: any; isFetching?: boolean; isLoading?: boolean };
@@ -28,6 +30,7 @@ interface Props {
 
   // Actions
   updateConfiguration: (id: string, patch: Partial<Configuration>) => void;
+  resetConfigurationWithPatch?: (id: string, patch: Partial<Configuration>) => void;
   removeConfiguration: (id: string) => void;
   addAdditionalVolume: (configId: string) => void;
   updateAdditionalVolume: (
@@ -55,6 +58,10 @@ interface Props {
   // Whether to skip fetching projects/networks (for simplified client context)
   skipProjectFetch?: boolean;
   skipNetworkResourcesFetch?: boolean;
+  onSaveTemplate?: (config: Configuration) => void;
+  onCreateProject?: (configId: string, projectName: string) => void;
+  showTemplateSelector?: boolean;
+  formVariant?: "classic" | "cube";
 }
 
 const extractRegionCode = (region: any) => {
@@ -76,6 +83,7 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
   bandwidthOptions,
   isLoadingResources,
   updateConfiguration,
+  resetConfigurationWithPatch,
   removeConfiguration,
   addAdditionalVolume,
   updateAdditionalVolume,
@@ -95,6 +103,10 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
   useNetworksHook,
   skipProjectFetch = false,
   skipNetworkResourcesFetch = false,
+  onSaveTemplate,
+  onCreateProject,
+  showTemplateSelector = false,
+  formVariant = "classic",
 }) => {
   const selectedRegion = cfg.region || "";
   const projectIdentifier = cfg.project_id || "";
@@ -353,6 +365,16 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
 
   const isProjectScoped = Boolean(projectIdentifier && selectedRegion);
 
+  const handleTemplateSelect = useCallback(
+    (template: any) => {
+      if (!resetConfigurationWithPatch) return;
+      const patch = buildConfigurationFromTemplate(template);
+      resetConfigurationWithPatch(cfg.id, patch);
+      ToastUtils.success(`Template applied: ${template.name}. New project required.`);
+    },
+    [cfg.id, resetConfigurationWithPatch]
+  );
+
   return (
     <InstanceConfigurationForm
       cfg={cfg}
@@ -380,6 +402,11 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
       onBackToWorkflow={onBackToWorkflow}
       onSubmitConfigurations={onSubmitConfigurations}
       isSubmitting={isSubmitting}
+      onSaveTemplate={onSaveTemplate}
+      onCreateProject={onCreateProject}
+      showTemplateSelector={showTemplateSelector}
+      onTemplateSelect={showTemplateSelector ? handleTemplateSelect : undefined}
+      variant={formVariant}
     />
   );
 };

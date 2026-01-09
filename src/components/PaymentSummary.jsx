@@ -49,20 +49,30 @@ const PaymentSummary = ({ transactionData, onPaymentComplete, onClose, className
 
     setIsPolling(true);
     try {
-      // Import config and auth store
-      const config = require("../config").default;
-      const useAdminAuthStore = require("../stores/adminAuthStore").default;
-      const { token } = useAdminAuthStore.getState();
+      // Import config and auth store dynamically
+      const [configModule, authStoreModule] = await Promise.all([
+        import("../config"),
+        import("../stores/adminAuthStore"),
+      ]);
+      const config = configModule.default;
+      const useAdminAuthStore = authStoreModule.default;
+      const adminState = useAdminAuthStore.getState();
+
+      if (!adminState?.isAuthenticated) {
+        return;
+      }
 
       const response = await fetch(
         `${config.baseURL}/business/transactions/${transaction.id}/status`,
         {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
+          headers: adminState?.getAuthHeaders
+            ? adminState.getAuthHeaders()
+            : {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+          credentials: "include",
         }
       );
       const data = await response.json();

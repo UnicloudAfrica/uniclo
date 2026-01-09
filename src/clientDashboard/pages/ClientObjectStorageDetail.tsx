@@ -32,6 +32,7 @@ const ClientObjectStorageDetail = () => {
           accountId={accountId}
           backUrl="/client-dashboard/object-storage"
           backLabel="Back to Object Storage"
+          canDelete={true}
         />
       </ClientPageShell>
     </>

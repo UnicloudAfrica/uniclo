@@ -16,6 +16,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import load from "./assets/load.gif";
 import checked from "./assets/checked.png";
 import warning from "./assets/warning.png";
+import DOMPurify from "dompurify";
 
 const DetailedCareer = () => {
   const firebaseConfig = {
@@ -406,7 +407,7 @@ const DetailedCareer = () => {
               <p
                 style={{ whiteSpace: "pre-line" }}
                 className=" px-4 mt-6 text-base text-[#676767] text- font-normal whitespace-pre-line"
-                dangerouslySetInnerHTML={{ __html: selectedCareerItem.details }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedCareerItem.details) }}
               />
             </div>
             {selectedCareerItem.details && (

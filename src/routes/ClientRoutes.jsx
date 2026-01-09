@@ -7,8 +7,9 @@ import ClientProject from "../clientDashboard/pages/ClientProjects";
 import ClientProjectCreate from "../clientDashboard/pages/ClientProjectCreate";
 import ClientProjectDetails from "../clientDashboard/pages/ClientProjectDetails";
 import ClientInstances from "../clientDashboard/pages/ClientInstances";
-import ClientAddInstancePage from "../clientDashboard/pages/ClientAddInstances";
+import ClientInstanceCreate from "../clientDashboard/pages/ClientInstanceCreate";
 import ClientProvisioningWizard from "../clientDashboard/pages/ClientProvisioningWizard";
+import ClientTemplates from "../clientDashboard/pages/ClientTemplates";
 
 import ClientLaunch from "../clientDashboard/pages/ClientLaunch";
 import ObjectStoragePage from "../clientDashboard/pages/ObjectStoragePage";
@@ -49,8 +50,9 @@ const ClientRoutes = () => {
       <Route path="/client-dashboard/projects/create" element={<ClientProjectCreate />} />
       <Route path="/client-dashboard/projects/details" element={<ClientProjectDetails />} />
       <Route path="/client-dashboard/instances" element={<ClientInstances />} />
-      <Route path="/client-dashboard/instances/create" element={<ClientAddInstancePage />} />
-      <Route path="/client-dashboard/create-instance" element={<ClientProvisioningWizard />} />
+      <Route path="/client-dashboard/instances/create" element={<ClientInstanceCreate />} />
+      <Route path="/client-dashboard/instances/provision" element={<ClientProvisioningWizard />} />
+      <Route path="/client-dashboard/templates" element={<ClientTemplates />} />
 
       <Route path="/client-dashboard/launch" element={<ClientLaunch />} />
       <Route path="/client-dashboard/object-storage" element={<ObjectStoragePage />} />

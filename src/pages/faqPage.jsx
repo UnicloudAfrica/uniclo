@@ -6,6 +6,7 @@ import avatar from "./assets/avatar.svg";
 import Footer from "../components/footer";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import DOMPurify from "dompurify";
 
 const FaqPage = () => {
   const faqsData = [
@@ -106,7 +107,7 @@ const FaqPage = () => {
                 className={` text-sm md:text-base text-[#676767] answer${
                   openIndex === index ? " open" : ""
                 }`}
-                dangerouslySetInnerHTML={{ __html: faq.answer }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(faq.answer) }}
               />
             </div>
           ))}

@@ -22,6 +22,7 @@ interface OrderOverviewCardProps {
   summaryConfigurationCount: number;
   taxLabelSuffix: string;
   backendPricingData: any;
+  resourceLabel?: string;
 }
 
 const OrderOverviewCard: React.FC<OrderOverviewCardProps> = ({
@@ -42,6 +43,7 @@ const OrderOverviewCard: React.FC<OrderOverviewCardProps> = ({
   summaryConfigurationCount,
   taxLabelSuffix,
   backendPricingData,
+  resourceLabel = "Instance",
 }) => {
   const overviewStatus = submissionResult
     ? submissionResult.payment?.required
@@ -73,7 +75,8 @@ const OrderOverviewCard: React.FC<OrderOverviewCardProps> = ({
       <div className="space-y-3 text-sm">
         <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
           <p className="text-xs font-semibold text-slate-700">
-            Instance configurations ({configurationSummaries.length || configurations.length || 0})
+            {resourceLabel} configurations (
+            {configurationSummaries.length || configurations.length || 0})
           </p>
           <div className="mt-2 space-y-2">
             {configurationSummaries.length === 0 && (
@@ -89,7 +92,7 @@ const OrderOverviewCard: React.FC<OrderOverviewCardProps> = ({
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-slate-900">
-                      {summary.title || "Instance configuration"}
+                      {summary.title || `${resourceLabel} configuration`}
                     </p>
                     <p className="text-xs text-slate-500">{summary.regionLabel}</p>
                   </div>

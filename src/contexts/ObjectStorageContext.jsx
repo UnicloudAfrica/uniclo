@@ -47,10 +47,10 @@ export const ObjectStorageProvider = ({ children }) => {
   });
 
   const pendingProvisionTimeouts = useRef({});
-  const adminToken = useAdminAuthStore((state) => state.token);
-  const clientToken = useClientAuthStore((state) => state.token);
-  const userToken = useTenantAuthStore((state) => state.token);
-  const activeToken = adminToken || clientToken || userToken || null;
+  const isAdminAuthenticated = useAdminAuthStore((state) => state.isAuthenticated);
+  const isClientAuthenticated = useClientAuthStore((state) => state.isAuthenticated);
+  const isTenantAuthenticated = useTenantAuthStore((state) => state.isAuthenticated);
+  const isAuthenticated = isAdminAuthenticated || isClientAuthenticated || isTenantAuthenticated;
   const [accounts, setAccounts] = useState([]);
   const [accountsLoading, setAccountsLoading] = useState(false);
   const [accountsError, setAccountsError] = useState(null);
@@ -105,7 +105,7 @@ export const ObjectStorageProvider = ({ children }) => {
       if (accountsLoading && !overrides?.force) {
         return;
       }
-      if (!activeToken) {
+      if (!isAuthenticated) {
         setAccounts([]);
         setAccountsMeta(null);
         setAccountsLoading(false);
@@ -133,14 +133,14 @@ export const ObjectStorageProvider = ({ children }) => {
         setAccountsLoading(false);
       }
     },
-    [activeToken, syncAccountQuery]
+    [isAuthenticated, syncAccountQuery]
   );
 
   useEffect(() => {
     let isMounted = true;
     (async () => {
       try {
-        if (activeToken) {
+        if (isAuthenticated) {
           await loadAccounts();
         }
       } catch (error) {
@@ -153,7 +153,7 @@ export const ObjectStorageProvider = ({ children }) => {
     return () => {
       isMounted = false;
     };
-  }, [loadAccounts, activeToken]);
+  }, [loadAccounts, isAuthenticated]);
 
   const loadBuckets = useCallback(
     async (accountId, { force = false } = {}) => {
@@ -161,7 +161,7 @@ export const ObjectStorageProvider = ({ children }) => {
         return [];
       }
 
-      if (!activeToken) {
+      if (!isAuthenticated) {
         return accountBucketsRef.current[accountId] ?? [];
       }
 
@@ -185,7 +185,7 @@ export const ObjectStorageProvider = ({ children }) => {
         setBucketLoading((prev) => ({ ...prev, [accountId]: false }));
       }
     },
-    [activeToken]
+    [isAuthenticated]
   );
 
   const createBucket = useCallback(
@@ -193,8 +193,8 @@ export const ObjectStorageProvider = ({ children }) => {
       if (!accountId) {
         throw new Error("Account ID is required.");
       }
-      if (!activeToken) {
-        throw new Error("Missing authentication token. Please sign in again.");
+      if (!isAuthenticated) {
+        throw new Error("Missing authentication session. Please sign in again.");
       }
       try {
         const response = await objectStorageApi.createBucket(accountId, payload);
@@ -208,7 +208,7 @@ export const ObjectStorageProvider = ({ children }) => {
         throw error;
       }
     },
-    [activeToken, loadAccounts, loadBuckets]
+    [isAuthenticated, loadAccounts, loadBuckets]
   );
 
   const deleteBucket = useCallback(
@@ -216,8 +216,8 @@ export const ObjectStorageProvider = ({ children }) => {
       if (!accountId || !bucketId) {
         throw new Error("Account and bucket identifiers are required.");
       }
-      if (!activeToken) {
-        throw new Error("Missing authentication token. Please sign in again.");
+      if (!isAuthenticated) {
+        throw new Error("Missing authentication session. Please sign in again.");
       }
       try {
         await objectStorageApi.deleteBucket(accountId, bucketId);
@@ -230,7 +230,7 @@ export const ObjectStorageProvider = ({ children }) => {
         throw error;
       }
     },
-    [activeToken, loadAccounts, loadBuckets]
+    [isAuthenticated, loadAccounts, loadBuckets]
   );
 
   const createOrder = useCallback(

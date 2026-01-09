@@ -11,6 +11,12 @@ export interface Configuration {
   instance_count: number | string;
   description: string;
   project_id: string;
+  project_mode?: "existing" | "new";
+  project_name?: string;
+  template_id?: string;
+  template_name?: string;
+  template_locked?: boolean;
+  network_preset?: string;
   region: string;
   months: number | string;
   compute_instance_id: string;

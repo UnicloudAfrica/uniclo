@@ -10,9 +10,11 @@ import ToastUtils from "../utils/toastUtil.ts";
 
 class AdminRegionApiService {
   getAuthHeaders() {
-    const { token } = useAdminAuthStore.getState();
+    const adminState = useAdminAuthStore.getState();
+    if (adminState?.getAuthHeaders) {
+      return adminState.getAuthHeaders();
+    }
     return {
-      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
       Accept: "application/json",
     };
@@ -40,6 +42,7 @@ class AdminRegionApiService {
       const response = await fetch(url, {
         method: "GET",
         headers: this.getAuthHeaders(),
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -66,6 +69,7 @@ class AdminRegionApiService {
       const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
         method: "GET",
         headers: this.getAuthHeaders(),
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -92,6 +96,7 @@ class AdminRegionApiService {
       const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
         method: "PATCH",
         headers: this.getAuthHeaders(),
+        credentials: "include",
         body: JSON.stringify({
           action: "approve",
           ...approvalData,
@@ -124,6 +129,7 @@ class AdminRegionApiService {
       const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
         method: "PATCH",
         headers: this.getAuthHeaders(),
+        credentials: "include",
         body: JSON.stringify({
           action: "reject",
           reason,
@@ -156,6 +162,7 @@ class AdminRegionApiService {
       const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
         method: "PATCH",
         headers: this.getAuthHeaders(),
+        credentials: "include",
         body: JSON.stringify({
           action: "suspend",
           reason,
@@ -188,6 +195,7 @@ class AdminRegionApiService {
       const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
         method: "PATCH",
         headers: this.getAuthHeaders(),
+        credentials: "include",
         body: JSON.stringify({
           action: "reactivate",
         }),
@@ -216,6 +224,7 @@ class AdminRegionApiService {
       const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
         method: "PATCH",
         headers: this.getAuthHeaders(),
+        credentials: "include",
         body: JSON.stringify({
           action: "update_fast_track",
           ...payload,
@@ -239,6 +248,7 @@ class AdminRegionApiService {
       const response = await fetch(`${config.adminURL}/region-approvals/${id}/fast-track-grants`, {
         method: "POST",
         headers: this.getAuthHeaders(),
+        credentials: "include",
         body: JSON.stringify({ tenant_id: tenantId, notes }),
       });
       const data = await response.json();
@@ -261,6 +271,7 @@ class AdminRegionApiService {
         {
           method: "DELETE",
           headers: this.getAuthHeaders(),
+          credentials: "include",
         }
       );
       const data = await response.json();
@@ -284,6 +295,7 @@ class AdminRegionApiService {
       const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
         method: "PATCH",
         headers: this.getAuthHeaders(),
+        credentials: "include",
         body: JSON.stringify({
           action: "update_fee",
           platform_fee_percentage: platformFeePercentage,
@@ -316,6 +328,7 @@ class AdminRegionApiService {
       const response = await fetch(`${config.adminURL}/region-approvals/${id}`, {
         method: "DELETE",
         headers: this.getAuthHeaders(),
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -343,6 +356,7 @@ class AdminRegionApiService {
       const response = await fetch(`${config.adminURL}/regions`, {
         method: "POST",
         headers: this.getAuthHeaders(),
+        credentials: "include",
         body: JSON.stringify(regionData),
       });
 
@@ -397,6 +411,7 @@ class AdminRegionApiService {
       const response = await fetch(`${config.adminURL}/${path}`, {
         method: "POST",
         headers: this.getAuthHeaders(),
+        credentials: "include",
         body: JSON.stringify(credentials),
       });
 
@@ -431,6 +446,7 @@ class AdminRegionApiService {
       const response = await fetch(`${config.adminURL}/regions/${code}`, {
         method: "GET",
         headers: this.getAuthHeaders(),
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -468,6 +484,7 @@ class AdminRegionApiService {
       const response = await fetch(`${config.adminURL}/regions/${code}`, {
         method: "PUT",
         headers: this.getAuthHeaders(),
+        credentials: "include",
         body: JSON.stringify(regionData),
       });
 
@@ -497,6 +514,7 @@ class AdminRegionApiService {
         {
           method: "POST",
           headers: this.getAuthHeaders(),
+          credentials: "include",
           body: payload ? JSON.stringify(payload) : JSON.stringify({}),
         }
       );
@@ -531,6 +549,7 @@ class AdminRegionApiService {
       const response = await fetch(`${config.adminURL}/providers/${provider}/services`, {
         method: "GET",
         headers: this.getAuthHeaders(),
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -558,6 +577,7 @@ class AdminRegionApiService {
       const response = await fetch(`${config.adminURL}/regions/${regionId}/credentials`, {
         method: "GET",
         headers: this.getAuthHeaders(),
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -595,6 +615,7 @@ class AdminRegionApiService {
         {
           method: "POST",
           headers: this.getAuthHeaders(),
+          credentials: "include",
           body: JSON.stringify(payload),
         }
       );
@@ -631,6 +652,7 @@ class AdminRegionApiService {
         {
           method: "POST",
           headers: this.getAuthHeaders(),
+          credentials: "include",
           body: JSON.stringify(credentials),
         }
       );
@@ -664,6 +686,7 @@ class AdminRegionApiService {
         {
           method: "DELETE",
           headers: this.getAuthHeaders(),
+          credentials: "include",
         }
       );
 
@@ -697,6 +720,7 @@ class AdminRegionApiService {
         {
           method: "POST",
           headers: this.getAuthHeaders(),
+          credentials: "include",
           body: JSON.stringify(credentials),
         }
       );
@@ -726,6 +750,7 @@ class AdminRegionApiService {
       const response = await fetch(`${config.adminURL}/regions/${regionId}/visibility`, {
         method: "PATCH",
         headers: this.getAuthHeaders(),
+        credentials: "include",
         body: JSON.stringify({ visibility }),
       });
 
@@ -755,6 +780,7 @@ class AdminRegionApiService {
       const response = await fetch(`${config.adminURL}/regions/${regionId}/verify`, {
         method: "POST",
         headers: this.getAuthHeaders(),
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -783,6 +809,7 @@ class AdminRegionApiService {
       const response = await fetch(`${config.adminURL}/regions/${regionId}/unverify`, {
         method: "POST",
         headers: this.getAuthHeaders(),
+        credentials: "include",
       });
 
       const data = await response.json();

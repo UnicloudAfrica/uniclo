@@ -19,18 +19,9 @@ export const apiClient: AxiosInstance = axios.create({
   withCredentials: true, // Enable cookies for session-based auth
 });
 
-/**
- * Request interceptor to add authentication token
- */
+// Request interceptor (Token injection handled by HttpOnly cookie/middleware now)
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Get token from localStorage
-    const token = localStorage.getItem("sanctum_token");
-
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
     return config;
   },
   (error) => {
@@ -48,7 +39,7 @@ apiClient.interceptors.response.use(
   (error) => {
     // Handle 401 Unauthorized - redirect to login
     if (error.response?.status === 401) {
-      localStorage.removeItem("sanctum_token");
+      // localStorage.removeItem("sanctum_token"); // Token is in cookie now
       window.location.href = "/login";
     }
 
@@ -67,22 +58,18 @@ apiClient.interceptors.response.use(
 );
 
 /**
- * Helper function to set auth token
+ * Helper function to set auth token (No-op for HttpOnly cookies)
  */
 export const setAuthToken = (token: string | null) => {
-  if (token) {
-    localStorage.setItem("sanctum_token", token);
-  } else {
-    localStorage.removeItem("sanctum_token");
-  }
+  // Token is now handled via HttpOnly cookies
 };
 
 /**
  * Helper function to clear auth session
  */
 export const clearAuthSession = () => {
-  localStorage.removeItem("sanctum_token");
-  // Clear any other session data as needed
+  // localStorage.removeItem("sanctum_token");
+  // Cookies should be cleared by calling a logout endpoint
 };
 
 export default apiClient;

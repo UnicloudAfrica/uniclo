@@ -17,18 +17,16 @@ class TenantRegionApiService {
   getAuthHeaders() {
     const adminState = useAdminAuthStore.getState();
     const tenantState = useTenantAuthStore.getState();
-    const token = tenantState.token || adminState.token;
-    const headers = {
+    if (adminState?.getAuthHeaders) {
+      return adminState.getAuthHeaders();
+    }
+    if (tenantState?.getAuthHeaders) {
+      return tenantState.getAuthHeaders();
+    }
+    return {
       "Content-Type": "application/json",
       Accept: "application/json",
     };
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-    if (adminState && adminState.isCentralDomain === false && adminState.currentTenant?.slug) {
-      headers["X-Tenant-Slug"] = adminState.currentTenant.slug;
-    }
-    return headers;
   }
 
   /**
@@ -39,6 +37,7 @@ class TenantRegionApiService {
       const response = await fetch(`${config.tenantURL}/admin/region-requests`, {
         method: "GET",
         headers: this.getAuthHeaders(),
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -65,6 +64,7 @@ class TenantRegionApiService {
       const response = await fetch(`${config.tenantURL}/admin/region-requests`, {
         method: "POST",
         headers: this.getAuthHeaders(),
+        credentials: "include",
         body: JSON.stringify(regionData),
       });
 
@@ -94,6 +94,7 @@ class TenantRegionApiService {
       const response = await fetch(`${config.tenantURL}/admin/region-requests/${id}`, {
         method: "GET",
         headers: this.getAuthHeaders(),
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -120,6 +121,7 @@ class TenantRegionApiService {
       const response = await fetch(`${config.tenantURL}/admin/region-requests/${id}`, {
         method: "PATCH",
         headers: this.getAuthHeaders(),
+        credentials: "include",
         body: JSON.stringify({ fulfillment_mode: mode }),
       });
 
@@ -149,6 +151,7 @@ class TenantRegionApiService {
       const response = await fetch(`${config.tenantURL}/admin/region-requests/${id}`, {
         method: "DELETE",
         headers: this.getAuthHeaders(),
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -179,6 +182,7 @@ class TenantRegionApiService {
         {
           method: "POST",
           headers: this.getAuthHeaders(),
+          credentials: "include",
           body: JSON.stringify(credentials),
         }
       );
@@ -212,6 +216,7 @@ class TenantRegionApiService {
       const response = await fetch(url, {
         method: "GET",
         headers: this.getAuthHeaders(),
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -243,6 +248,7 @@ class TenantRegionApiService {
       const response = await fetch(url, {
         method: "GET",
         headers: this.getAuthHeaders(),
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -272,9 +278,10 @@ class TenantRegionApiService {
       const response = await fetch(url, {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${useAdminAuthStore.getState().token}`,
+          ...this.getAuthHeaders(),
           Accept: "text/csv",
         },
+        credentials: "include",
       });
 
       if (response.ok) {

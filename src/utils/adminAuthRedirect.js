@@ -6,7 +6,7 @@ const AUTH_PAGES = new Set(["/admin-signin", "/admin-signup"]);
 
 const useAuthRedirect = () => {
   const navigate = useNavigate();
-  const token = useAdminAuthStore((state) => state.token);
+  const isAuthenticated = useAdminAuthStore((state) => state.isAuthenticated);
   const hasHydrated = useAdminAuthStore((state) => state.hasHydrated);
 
   useEffect(() => {
@@ -16,15 +16,15 @@ const useAuthRedirect = () => {
     const isAuthPage = AUTH_PAGES.has(path);
     const isDashboard = path.startsWith("/admin-dashboard");
 
-    if (token && isAuthPage) {
+    if (isAuthenticated && isAuthPage) {
       navigate("/admin-dashboard");
       return;
     }
 
-    if (!token && isDashboard) {
+    if (!isAuthenticated && isDashboard) {
       navigate("/admin-signin");
     }
-  }, [token, hasHydrated, navigate]);
+  }, [isAuthenticated, hasHydrated, navigate]);
 
   return { isLoading: !hasHydrated };
 };

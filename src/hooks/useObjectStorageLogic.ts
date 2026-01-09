@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 // Utilities
@@ -29,9 +29,6 @@ import { useFetchCountries, useFetchProductPricing } from "./resource";
 import { useCustomerContext } from "./adminHooks/useCustomerContext";
 import { useFetchRegions } from "./adminHooks/regionHooks";
 
-// Stores
-import useAdminAuthStore from "../stores/adminAuthStore";
-
 // Types
 export type ObjectStorageContext = "admin" | "tenant" | "client";
 
@@ -48,7 +45,6 @@ export interface ObjectStorageLogicConfig {
     options: any
   ) => { data: any[]; isFetching: boolean };
   submitOrderFn?: (payload: any) => Promise<any>;
-  getAuthToken?: () => string | null;
 }
 
 export interface ObjectStorageLogicReturn {
@@ -133,7 +129,6 @@ export interface ObjectStorageLogicReturn {
 
   // Context info
   dashboardContext: ObjectStorageContext;
-  adminToken: string | null;
 }
 
 const BASE_STEPS_FAST_TRACK = [
@@ -188,7 +183,6 @@ export const useObjectStorageLogic = (
     useCountriesHook,
     usePricingHook,
     submitOrderFn,
-    getAuthToken,
   } = config;
 
   const navigate = useNavigate();
@@ -266,11 +260,6 @@ export const useObjectStorageLogic = (
   const defaultCountriesHook = useFetchCountries;
   const countriesHook = useCountriesHook || defaultCountriesHook;
   const { data: sharedCountries = [], isFetching: isCountriesLoading } = countriesHook();
-
-  // Auth token - use provided function or default admin store
-  const defaultGetAuthToken = () => useAdminAuthStore.getState()?.token || null;
-  const authTokenFn = getAuthToken || defaultGetAuthToken;
-  const adminToken = authTokenFn();
 
   // Derived Values
   const selectedCountryCode = useMemo(
@@ -745,6 +734,5 @@ export const useObjectStorageLogic = (
 
     // Context info
     dashboardContext: context,
-    adminToken,
   };
 };

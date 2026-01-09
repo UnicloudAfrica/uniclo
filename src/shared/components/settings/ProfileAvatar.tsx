@@ -8,7 +8,6 @@ interface ProfileAvatarProps {
   email?: string;
   avatarUrl?: string | null;
   onAvatarChange: (url: string | null) => void;
-  token: string;
   uploadEndpoint: string;
   readOnly?: boolean;
 }
@@ -18,7 +17,6 @@ const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
   email,
   avatarUrl,
   onAvatarChange,
-  token,
   uploadEndpoint,
   readOnly = false,
 }) => {
@@ -51,9 +49,7 @@ const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
       formData.append("avatar", file);
       const response = await fetch(uploadEndpoint, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include",
         body: formData,
       });
       const data = await response.json();
@@ -80,9 +76,9 @@ const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
       const response = await fetch(uploadEndpoint, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${token}`,
           Accept: "application/json",
         },
+        credentials: "include",
       });
       const data = await response.json();
       if (!response.ok || !data.success) {

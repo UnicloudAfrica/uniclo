@@ -32,6 +32,7 @@ import {
   Route as RouteIcon,
   ShieldCheck,
   GitMerge,
+  LayoutTemplate,
 } from "lucide-react";
 import { clearAllAuthSessions } from "../../stores/sessionUtils";
 import { CollapsibleMenu, MenuEntry } from "../../shared/components/sidebar";
@@ -73,6 +74,7 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({ tenantData, activeTab, se
     else if (currentPath.includes("payment-history")) setActiveTab("payment-history");
     else if (currentPath.includes("discounts")) setActiveTab("discounts");
     else if (currentPath.includes("payouts")) setActiveTab("payouts");
+    else if (currentPath.includes("billing")) setActiveTab("billing");
     else if (currentPath.includes("products")) setActiveTab("products");
     else if (currentPath.includes("support")) setActiveTab("support");
     else if (currentPath.includes("settings") || currentPath.includes("app-settings"))
@@ -126,6 +128,12 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({ tenantData, activeTab, se
           icon: Server,
           isLucide: true,
           path: "/dashboard/instances",
+        },
+        {
+          name: "Templates",
+          icon: LayoutTemplate,
+          isLucide: true,
+          path: "/dashboard/templates",
         },
         {
           name: "Object Storage",
@@ -196,6 +204,18 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({ tenantData, activeTab, se
           icon: Wallet,
           isLucide: true,
           path: "/dashboard/payouts",
+        },
+        {
+          name: "Billing Settings",
+          icon: Settings,
+          isLucide: true,
+          path: "/dashboard/billing",
+        },
+        {
+          name: "Invoices",
+          icon: FileText,
+          isLucide: true,
+          path: "/dashboard/invoices",
         },
       ],
     },

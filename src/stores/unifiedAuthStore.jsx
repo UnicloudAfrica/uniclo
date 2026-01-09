@@ -20,15 +20,15 @@ const useUnifiedAuthStore = create(
 
       // Authentication Actions
       login: (authData) => {
-        const { token, user, role, tenant, cloudRoles = [], cloudAbilities = [] } = authData;
+        const { user, role, tenant, cloudRoles = [], cloudAbilities = [] } = authData;
         set({
-          token,
+          token: null,
           user,
           role,
           tenant,
           cloudRoles,
           cloudAbilities,
-          isAuthenticated: true,
+          isAuthenticated: Boolean(user || role),
           isLoading: false,
         });
       },
@@ -151,95 +151,33 @@ const useUnifiedAuthStore = create(
 
       // Token Management
       setToken: (newToken) => {
-        set({ token: newToken });
+        if (newToken) {
+          set((state) => ({ token: null, isAuthenticated: state.isAuthenticated }));
+        }
       },
 
       clearToken: () => {
-        set({ token: null, isAuthenticated: false });
+        set((state) => ({ token: null, isAuthenticated: state.isAuthenticated }));
       },
 
       // Migration Helpers (for transitioning from old stores)
       migrateFromOldStores: () => {
-        try {
-          // Check for existing auth data from old stores
-          const adminAuth = localStorage.getItem("unicloud_admin_auth");
-          const clientAuth = localStorage.getItem("unicloud_client_auth");
-          const userAuth = localStorage.getItem("unicloud_tenant_auth");
-
-          if (adminAuth) {
-            const data = JSON.parse(adminAuth);
-            if (data.token) {
-              set({
-                token: data.token,
-                user: { email: data.userEmail },
-                role: "admin",
-                isAuthenticated: true,
-              });
-              return true;
-            }
-          }
-
-          if (clientAuth) {
-            const data = JSON.parse(clientAuth);
-            if (data.token) {
-              set({
-                token: data.token,
-                user: { email: data.userEmail },
-                role: "client",
-                isAuthenticated: true,
-              });
-              return true;
-            }
-          }
-
-          if (userAuth) {
-            const data = JSON.parse(userAuth);
-            if (data.token) {
-              set({
-                token: data.token,
-                user: { email: data.userEmail },
-                role: "user",
-                isAuthenticated: true,
-              });
-              return true;
-            }
-          }
-
-          return false;
-        } catch (error) {
-          console.error("Migration from old stores failed:", error);
-          return false;
-        }
+        return false;
       },
 
       // Utility Functions
       getAuthHeaders: () => {
-        const { token } = get();
-        return token ? { Authorization: `Bearer ${token}` } : {};
+        // const { token } = get();
+        // return token ? { Authorization: `Bearer ${token}` } : {};
+        return {}; // HttpOnly cookies handle auth
       },
 
       isTokenExpired: () => {
-        const { token } = get();
-        if (!token) return false;
-
-        try {
-          const payload = JSON.parse(atob(token.split(".")[1]));
-          return payload.exp * 1000 < Date.now();
-        } catch (error) {
-          return false; // If we can't parse, assume it's fine
-        }
+        return false;
       },
 
       // Auto-logout on token expiration
       checkTokenExpiration: () => {
-        const { token, isTokenExpired, logout } = get();
-        if (!token) {
-          return true;
-        }
-        if (isTokenExpired()) {
-          logout();
-          return false;
-        }
         return true;
       },
     }),
@@ -247,7 +185,7 @@ const useUnifiedAuthStore = create(
       name: "unicloud_unified_auth", // Single storage key
       getStorage: () => localStorage,
       partialize: (state) => ({
-        token: state.token,
+        // token: state.token,
         user: state.user,
         role: state.role,
         tenant: state.tenant,
@@ -257,13 +195,7 @@ const useUnifiedAuthStore = create(
       }),
       // Run migration on store initialization
       onRehydrateStorage: () => (state) => {
-        if (state && !state.isAuthenticated) {
-          state.migrateFromOldStores();
-        }
-        // Check token expiration on app start
-        if (state?.checkTokenExpiration) {
-          state.checkTokenExpiration();
-        }
+        state?.setToken?.(null);
       },
     }
   )

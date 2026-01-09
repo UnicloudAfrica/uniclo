@@ -1,7 +1,4 @@
 import config from "../config";
-import useAdminAuthStore from "../stores/adminAuthStore";
-import useClientAuthStore from "../stores/clientAuthStore";
-import useTenantAuthStore from "../stores/tenantAuthStore";
 import { resolveActivePersona } from "../stores/sessionUtils";
 
 /**
@@ -20,89 +17,29 @@ const roleBasePath = {
   client: BUSINESS_OBJECT_STORAGE_BASE,
 };
 
-const storageFallbackKeys = [
-  { key: "unicloud_admin_auth", role: "admin" },
-  { key: "unicloud_client_auth", role: "client" },
-  { key: "unicloud_tenant_auth", role: "tenant" },
-];
-
-const readPersistedAuth = () => {
-  if (typeof window === "undefined" || !window.localStorage) {
-    return { token: null, role: null };
-  }
-
-  for (const entry of storageFallbackKeys) {
-    try {
-      const raw = window.localStorage.getItem(entry.key);
-      if (!raw) continue;
-      const parsed = JSON.parse(raw);
-      const state = parsed?.state ?? parsed;
-      const token = state?.token;
-      if (!token) continue;
-      const role = entry.role ?? state?.role ?? null;
-      return {
-        token,
-        role,
-        isCentralDomain: state?.isCentralDomain,
-        currentTenant: state?.currentTenant ?? null,
-      };
-    } catch (error) {
-      console.warn(`Unable to parse auth store ${entry.key}`, error);
-    }
-  }
-
-  return { token: null, role: null };
-};
-
-const resolveAuthSnapshot = () => {
-  const { key, snapshot } = resolveActivePersona();
-  if (snapshot?.token) {
-    return {
-      token: snapshot.token,
-      role: snapshot.role ?? key,
-      isCentralDomain: snapshot.isCentralDomain,
-      currentTenant: snapshot.currentTenant ?? snapshot.tenant ?? null,
-      tenant: snapshot.tenant ?? snapshot.currentTenant ?? null,
-      domain: snapshot.domain ?? null,
-    };
-  }
-
-  return readPersistedAuth();
-};
-
-const resolveBasePath = (snapshot) => {
-  const role = (snapshot?.role || "").toLowerCase();
-  if (role === "admin") return roleBasePath.admin;
-  if (role === "tenant") return roleBasePath.tenant;
-  if (role === "client") return roleBasePath.client;
+const resolveBasePath = (role) => {
+  const normalizedRole = (role || "").toLowerCase();
+  if (normalizedRole === "admin") return roleBasePath.admin;
+  if (normalizedRole === "tenant") return roleBasePath.tenant;
+  if (normalizedRole === "client") return roleBasePath.client;
   return roleBasePath.client;
 };
 
 const resolveRequestContext = () => {
-  const snapshot = resolveAuthSnapshot();
-  const { token } = snapshot;
-  if (!token) {
-    throw new Error("Missing authentication token. Please sign in again.");
+  const { key, snapshot } = resolveActivePersona();
+  if (!snapshot?.isAuthenticated) {
+    throw new Error("Missing authentication session. Please sign in again.");
   }
 
-  const basePath = resolveBasePath(snapshot);
-  const headers = {
-    Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json",
-    Accept: "application/json",
-  };
-
-  const tenantSlug =
-    snapshot?.currentTenant?.slug ||
-    snapshot?.tenant?.slug ||
-    snapshot?.domain?.slug ||
-    snapshot?.tenant?.domain?.slug ||
-    snapshot?.domain?.name ||
-    null;
-
-  if (basePath === roleBasePath.tenant && tenantSlug) {
-    headers["X-Tenant-Slug"] = tenantSlug;
-  }
+  const role = snapshot.role ?? key;
+  const basePath = resolveBasePath(role);
+  const headers =
+    typeof snapshot.getAuthHeaders === "function"
+      ? snapshot.getAuthHeaders()
+      : {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        };
 
   return { basePath, headers };
 };
@@ -116,6 +53,7 @@ const objectStorageApi = {
     const response = await fetch(`${basePath}/accounts/${accountId}`, {
       method: "GET",
       headers,
+      credentials: "include",
     });
 
     const data = await response.json().catch(() => ({}));
@@ -134,6 +72,7 @@ const objectStorageApi = {
     const response = await fetch(url, {
       method: "GET",
       headers,
+      credentials: "include",
     });
 
     const data = await response.json().catch(() => ({}));
@@ -209,6 +148,7 @@ const objectStorageApi = {
     const response = await fetch(`${basePath}/orders`, {
       method: "POST",
       headers,
+      credentials: "include",
       body: JSON.stringify(payload),
     });
 
@@ -231,6 +171,7 @@ const objectStorageApi = {
     const response = await fetch(url, {
       method: "GET",
       headers,
+      credentials: "include",
     });
 
     const data = await response.json().catch(() => ({}));
@@ -249,6 +190,7 @@ const objectStorageApi = {
     const response = await fetch(`${basePath}/accounts/${accountId}/buckets`, {
       method: "POST",
       headers,
+      credentials: "include",
       body: JSON.stringify(payload),
     });
 
@@ -269,6 +211,7 @@ const objectStorageApi = {
     const response = await fetch(`${basePath}/accounts/${accountId}/buckets/${bucketId}`, {
       method: "DELETE",
       headers,
+      credentials: "include",
     });
 
     if (!response.ok) {
@@ -291,7 +234,7 @@ const objectStorageApi = {
     const query = params.toString();
     const url = `${basePath}/accounts/${accountId}/buckets/${bucketName}/objects${query ? `?${query}` : ""}`;
 
-    const response = await fetch(url, { method: "GET", headers });
+    const response = await fetch(url, { method: "GET", headers, credentials: "include" });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       const message = data?.message || data?.error || "Failed to list objects.";
@@ -310,6 +253,7 @@ const objectStorageApi = {
     const response = await fetch(url, {
       method: "POST",
       headers,
+      credentials: "include",
       body: JSON.stringify({ key: objectKey }),
     });
     const data = await response.json().catch(() => ({}));
@@ -330,6 +274,7 @@ const objectStorageApi = {
     const response = await fetch(url, {
       method: "DELETE",
       headers,
+      credentials: "include",
       body: JSON.stringify({ key: objectKey }),
     });
     if (!response.ok) {
@@ -350,6 +295,7 @@ const objectStorageApi = {
     const response = await fetch(url, {
       method: "POST",
       headers,
+      credentials: "include",
       body: JSON.stringify({ key: objectKey, content_type: contentType }),
     });
     const data = await response.json().catch(() => ({}));
@@ -382,6 +328,7 @@ const objectStorageApi = {
     const response = await fetch(url, {
       method: "POST",
       headers: uploadHeaders,
+      credentials: "include",
       body: formData,
     });
     const data = await response.json().catch(() => ({}));
@@ -402,7 +349,7 @@ const objectStorageApi = {
     const { basePath, headers } = resolveRequestContext();
     const url = `${basePath}/accounts/${accountId}/keys/${accessKeyId}/secret-status`;
 
-    const response = await fetch(url, { method: "GET", headers });
+    const response = await fetch(url, { method: "GET", headers, credentials: "include" });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       const message = data?.message || data?.error || "Failed to check secret status.";
@@ -424,6 +371,7 @@ const objectStorageApi = {
     const response = await fetch(url, {
       method: "POST",
       headers,
+      credentials: "include",
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -443,7 +391,7 @@ const objectStorageApi = {
     const { basePath, headers } = resolveRequestContext();
     const url = `${basePath}/accounts/${accountId}/analytics`;
 
-    const response = await fetch(url, { method: "GET", headers });
+    const response = await fetch(url, { method: "GET", headers, credentials: "include" });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       const message = data?.message || data?.error || "Failed to get analytics.";
@@ -462,7 +410,7 @@ const objectStorageApi = {
     const { basePath, headers } = resolveRequestContext();
     const url = `${basePath}/accounts/${accountId}/extension-pricing`;
 
-    const response = await fetch(url, { method: "GET", headers });
+    const response = await fetch(url, { method: "GET", headers, credentials: "include" });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       const message = data?.message || data?.error || "Failed to get extension pricing.";
@@ -484,6 +432,7 @@ const objectStorageApi = {
     const response = await fetch(url, {
       method: "POST",
       headers,
+      credentials: "include",
       body: JSON.stringify({
         additional_gb: additionalGb,
         months,
@@ -510,7 +459,7 @@ const objectStorageApi = {
     const { basePath, headers } = resolveRequestContext();
     const url = `${basePath}/accounts/${accountId}/subscription`;
 
-    const response = await fetch(url, { method: "GET", headers });
+    const response = await fetch(url, { method: "GET", headers, credentials: "include" });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       const message = data?.message || data?.error || "Failed to fetch subscription.";
@@ -532,6 +481,7 @@ const objectStorageApi = {
     const response = await fetch(url, {
       method: "PATCH",
       headers,
+      credentials: "include",
       body: JSON.stringify(settings),
     });
     const data = await response.json().catch(() => ({}));
@@ -555,6 +505,7 @@ const objectStorageApi = {
     const response = await fetch(url, {
       method: "POST",
       headers,
+      credentials: "include",
       body: JSON.stringify({ months }),
     });
     const data = await response.json().catch(() => ({}));
@@ -578,6 +529,7 @@ const objectStorageApi = {
     const response = await fetch(url, {
       method: "POST",
       headers,
+      credentials: "include",
       body: JSON.stringify({ reason }),
     });
     const data = await response.json().catch(() => ({}));
@@ -598,7 +550,7 @@ const objectStorageApi = {
     const { basePath, headers } = resolveRequestContext();
     const url = `${basePath}/accounts/${accountId}/reactivate`;
 
-    const response = await fetch(url, { method: "POST", headers });
+    const response = await fetch(url, { method: "POST", headers, credentials: "include" });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       const message = data?.message || data?.error || "Failed to reactivate subscription.";
@@ -617,13 +569,26 @@ const objectStorageApi = {
     const { basePath, headers } = resolveRequestContext();
     const url = `${basePath}/accounts/${accountId}/transactions`;
 
-    const response = await fetch(url, { method: "GET", headers });
+    const response = await fetch(url, { method: "GET", headers, credentials: "include" });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       const message = data?.message || data?.error || "Failed to fetch transactions.";
       throw new Error(message);
     }
     return data?.data || data;
+  },
+
+  // Delete an object storage account (admin only)
+  async deleteAccount(accountId) {
+    const { basePath, headers } = resolveRequestContext();
+    const url = `${basePath}/accounts/${accountId}`;
+    const response = await fetch(url, { method: "DELETE", headers, credentials: "include" });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      const message = data?.message || data?.error || "Failed to delete account.";
+      throw new Error(message);
+    }
+    return true;
   },
 };
 

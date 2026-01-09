@@ -18,11 +18,14 @@ import {
   ShieldCheck,
   Users2,
   ClipboardList,
+  Wallet,
 } from "lucide-react";
 import { useFetchTenantById } from "../../hooks/adminHooks/tenantHooks";
 import PartnerClients from "../components/partnersComponent/PartnerClients";
 import AdminPageShell from "../components/AdminPageShell";
 import OnboardingStatusBoard from "../components/onboarding/OnboardingStatusBoard";
+import TenantBillingTab from "./tenantComps/TenantBillingTab";
+import { useTenantBroadcasting } from "../../hooks/useTenantBroadcasting";
 
 // Function to decode the ID from URL (re-used from other files)
 const decodeId = (encodedId: string) => {
@@ -57,6 +60,9 @@ export default function AdminPartnerDetails() {
       setTenantName(decodeURIComponent(nameFromUrl));
     }
   }, [location.search]);
+
+  // Use broadcasting hook for real-time updates
+  useTenantBroadcasting(tenantId);
 
   // Fetch tenant details using the custom hook
   const {
@@ -157,6 +163,13 @@ export default function AdminPartnerDetails() {
           entityName={tenantName}
         />
       ),
+    },
+    {
+      label: "Billing",
+      value: "billing",
+      description: "Billing model, credit limits, and payment settings",
+      icon: Wallet,
+      component: <TenantBillingTab tenantId={tenantId!} />,
     },
   ];
 

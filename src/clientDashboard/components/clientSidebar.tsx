@@ -24,6 +24,7 @@ import {
   Camera,
   Layers,
   TrendingUp,
+  LayoutTemplate,
 } from "lucide-react";
 
 interface ClientSidebarProps {
@@ -81,6 +82,12 @@ const ClientSidebar: React.FC<ClientSidebarProps> = ({ isMobileMenuOpen, onClose
                 path: "/client-dashboard/instances",
               },
               {
+                name: "Templates",
+                icon: LayoutTemplate,
+                isLucide: true,
+                path: "/client-dashboard/templates",
+              },
+              {
                 name: "Object Storage",
                 icon: HardDrive,
                 isLucide: true,
@@ -95,6 +102,12 @@ const ClientSidebar: React.FC<ClientSidebarProps> = ({ isMobileMenuOpen, onClose
             icon: HardDrive,
             isLucide: true,
             path: "/client-dashboard/object-storage",
+          },
+          {
+            name: "Templates",
+            icon: LayoutTemplate,
+            isLucide: true,
+            path: "/client-dashboard/templates",
           },
         ]),
     {

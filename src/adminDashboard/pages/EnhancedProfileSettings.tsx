@@ -557,7 +557,6 @@ export default function EnhancedProfileSettings() {
                       email={formState["contact.email"]}
                       avatarUrl={formState["profile.profile_picture_url"]}
                       onAvatarChange={handleAvatarChange}
-                      token={useAdminAuthStore.getState().token || ""}
                       uploadEndpoint={`${config.baseURL}/settings/profile/avatar`}
                     />
                   )}

@@ -52,7 +52,7 @@ export const useAdminPartners = () => {
 
 The API client automatically:
 
-- Attaches JWT tokens from `localStorage` to requests
+- Authenticates using **HttpOnly cookies** (secure, no client access)
 - Redirects to login on 401 Unauthorized
 - Handles common error scenarios
 

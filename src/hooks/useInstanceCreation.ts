@@ -10,6 +10,12 @@ const createConfiguration = (): Configuration => ({
   instance_count: 1,
   description: "",
   project_id: "",
+  project_mode: "existing",
+  project_name: "",
+  template_id: "",
+  template_name: "",
+  template_locked: false,
+  network_preset: "standard",
   region: "",
   months: 12,
   compute_instance_id: "",
@@ -34,6 +40,19 @@ export const useInstanceFormState = (initialConfigs: Configuration[] = [createCo
 
   const addConfiguration = useCallback(() => {
     setConfigurations((prev) => [...prev, createConfiguration()]);
+  }, []);
+
+  const addConfigurationWithPatch = useCallback((patch: Partial<Configuration>) => {
+    const base = createConfiguration();
+    const next = { ...base, ...patch, id: base.id };
+    setConfigurations((prev) => [...prev, next]);
+    return next.id;
+  }, []);
+
+  const resetConfigurationWithPatch = useCallback((id: string, patch: Partial<Configuration>) => {
+    const base = createConfiguration();
+    const next = { ...base, ...patch, id };
+    setConfigurations((prev) => prev.map((c) => (c.id === id ? next : c)));
   }, []);
 
   const removeConfiguration = useCallback((id: string) => {
@@ -94,6 +113,8 @@ export const useInstanceFormState = (initialConfigs: Configuration[] = [createCo
     configurations,
     setConfigurations,
     addConfiguration,
+    addConfigurationWithPatch,
+    resetConfigurationWithPatch,
     removeConfiguration,
     updateConfiguration,
     addAdditionalVolume,

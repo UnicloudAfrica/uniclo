@@ -12,7 +12,6 @@ interface PaymentStepProps {
   selectedUserId: string;
   clientOptions: any[];
   onPaymentComplete: (payload?: any) => void;
-  authToken: string | null;
   apiBaseUrl: string;
   paymentTransactionLabel: string;
 }
@@ -27,7 +26,6 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
   selectedUserId,
   clientOptions,
   onPaymentComplete,
-  authToken,
   apiBaseUrl,
   paymentTransactionLabel,
 }) => {
@@ -57,7 +55,6 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
             []
           }
           onPaymentComplete={onPaymentComplete}
-          authToken={authToken || undefined}
           apiBaseUrl={apiBaseUrl}
         />
       )}

@@ -387,7 +387,9 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }: any) =>
     }
 
     const encodedId = encodeURIComponent(btoa(identifier));
-    navigate(`/admin-dashboard/projects/details?id=${encodedId}`);
+    // Add new=true if a network preset was selected (triggering auto-provisioning)
+    const newParam = formData.network_preset ? "&new=true" : "";
+    navigate(`/admin-dashboard/projects/details?id=${encodedId}${newParam}`);
     handleSuccess();
   };
 

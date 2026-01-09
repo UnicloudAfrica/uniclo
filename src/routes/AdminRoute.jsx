@@ -10,7 +10,7 @@ const LoaderScreen = () => (
 );
 
 export default function AdminRoute({ children }) {
-  const token = useAdminAuthStore((s) => s.token);
+  const isAuthenticated = useAdminAuthStore((s) => s.isAuthenticated);
   const role = useAdminAuthStore((s) => s.role);
   const hasHydrated = useAdminAuthStore((s) => s.hasHydrated);
 
@@ -20,7 +20,7 @@ export default function AdminRoute({ children }) {
 
   const isAdmin = role === "admin";
 
-  if (!token || !isAdmin) return <Navigate to="/admin-signin" replace />;
+  if (!isAuthenticated || !isAdmin) return <Navigate to="/admin-signin" replace />;
 
   return children;
 }

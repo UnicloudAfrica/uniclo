@@ -11,7 +11,7 @@ const LoaderScreen = () => (
 );
 
 export default function TenantRoute({ children }) {
-  const token = useTenantAuthStore((s) => s.token);
+  const isAuthenticated = useTenantAuthStore((s) => s.isAuthenticated);
   const role = useTenantAuthStore((s) => s.role);
   const hasHydrated = useTenantAuthStore((s) => s.hasHydrated);
   const location = useLocation();
@@ -23,13 +23,13 @@ export default function TenantRoute({ children }) {
     isLoading,
     isFetching,
     error,
-  } = useOnboardingState({ enabled: Boolean(token) && hasHydrated && isTenant });
+  } = useOnboardingState({ enabled: isAuthenticated && hasHydrated && isTenant });
 
   if (!hasHydrated) {
     return <LoaderScreen />;
   }
 
-  if (!token || !isTenant) return <Navigate to="/sign-in" replace />;
+  if (!isAuthenticated || !isTenant) return <Navigate to="/sign-in" replace />;
 
   const isOnboardingPath = location.pathname.startsWith("/dashboard/onboarding");
 

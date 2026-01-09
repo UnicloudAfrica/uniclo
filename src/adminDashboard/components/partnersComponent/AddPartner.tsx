@@ -13,6 +13,7 @@ import CreateAccount from "../../pages/tenantComps/CreateAccount";
 import BusinessInfo from "../../pages/tenantComps/BusinessInfo";
 import BusinessAddress from "../../pages/tenantComps/BusinessAddress";
 import UploadFiles from "../../pages/tenantComps/UploadFiles";
+import BillingConfigStep from "../../pages/tenantComps/BillingConfigStep";
 import StepNavigation from "../../pages/tenantComps/StepNavigation";
 import ToastUtils from "../../../utils/toastUtil";
 import DiscountFormSection, {
@@ -65,6 +66,15 @@ const AddPartner: React.FC<AddPartnerProps> = ({ isOpen, onClose, mode = "modal"
       businessLogo: null,
       dependant_tenant: false,
       verified: false,
+    },
+    billing: {
+      billing_model: "direct",
+      allowed_billing_models: ["direct", "prepaid_credit"],
+      credit_limit_cents: 0,
+      margin_percent: 0,
+      payment_terms_days: 30,
+      auto_suspend_on_overdue: true,
+      allow_client_gateway: false,
     },
   });
   const [discountFormData, setDiscountFormData] = useState<DiscountFormData>(
@@ -158,6 +168,22 @@ const AddPartner: React.FC<AddPartnerProps> = ({ isOpen, onClose, mode = "modal"
       description: "Set optional default pricing discount for this tenant.",
       validate: () => ({}), // No validation required for discount step
     },
+    {
+      component: (props: any) => (
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <header className="mb-4">
+            <h3 className="text-base font-semibold text-slate-900">Billing Configuration</h3>
+            <p className="text-sm text-slate-500">
+              Configure billing model, credit limits, and payment terms for this partner.
+            </p>
+          </header>
+          <BillingConfigStep {...props} />
+        </div>
+      ),
+      label: "Billing Settings",
+      description: "Set billing model, credit limits, and payment gateway permissions.",
+      validate: BillingConfigStep.validate,
+    },
   ];
 
   const validateStep = () => {
@@ -219,6 +245,17 @@ const AddPartner: React.FC<AddPartnerProps> = ({ isOpen, onClose, mode = "modal"
           dependant_tenant: formData.business.dependant_tenant,
           verified: formData.business.verified,
         },
+        // Billing configuration
+        billing_model: formData.billing?.billing_model || "direct",
+        allowed_billing_models: formData.billing?.allowed_billing_models || [
+          "direct",
+          "prepaid_credit",
+        ],
+        credit_limit_cents: formData.billing?.credit_limit_cents || 0,
+        margin_percent: formData.billing?.margin_percent || 0,
+        payment_terms_days: formData.billing?.payment_terms_days || 30,
+        auto_suspend_on_overdue: formData.billing?.auto_suspend_on_overdue ?? true,
+        allow_client_gateway: formData.billing?.allow_client_gateway ?? false,
       };
 
       createTenant(payload, {
@@ -289,6 +326,15 @@ const AddPartner: React.FC<AddPartnerProps> = ({ isOpen, onClose, mode = "modal"
                 businessLogo: null,
                 dependant_tenant: false,
                 verified: false,
+              },
+              billing: {
+                billing_model: "direct",
+                allowed_billing_models: ["direct", "prepaid_credit"],
+                credit_limit_cents: 0,
+                margin_percent: 0,
+                payment_terms_days: 30,
+                auto_suspend_on_overdue: true,
+                allow_client_gateway: false,
               },
             });
             setDiscountFormData(getDefaultDiscountFormData());

@@ -10,8 +10,9 @@ import admob from "./assets/adMob.svg";
 import copy from "./assets/copy.svg";
 // import {useContext} from 'react'
 // import { CasesContext } from '../contexts/contextprovider';
+import DOMPurify from "dompurify";
 
-const DetailedSolution = ({}) => {
+const DetailedSolution = () => {
   const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
     authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -119,7 +120,7 @@ const DetailedSolution = ({}) => {
           <p
             style={{ whiteSpace: "pre-line" }}
             className=" mt-3 text-sm whitespace-pre-line text-justify text-[#676767] md:px-[15%] font-normal"
-            dangerouslySetInnerHTML={{ __html: selectedSolutionItem.content }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedSolutionItem.content) }}
           />
           <div className=" md:px-[15%] mt-6">
             <button

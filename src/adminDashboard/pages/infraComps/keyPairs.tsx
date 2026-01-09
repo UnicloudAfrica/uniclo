@@ -19,7 +19,9 @@ const ITEMS_PER_PAGE = 6;
 
 const KeyPairs = ({ projectId = "", region = "", onStatsUpdate }: any) => {
   const queryClient = useQueryClient();
-  const { data: keyPairs, isFetching } = useFetchKeyPairs(projectId, region);
+  const { data: keyPairs, isFetching } = useFetchKeyPairs(projectId, region, {
+    enabled: !!projectId,
+  });
   const { mutate: deleteKeyPair, isPending: isDeleting } = useDeleteKeyPair();
 
   const [isCreateModalOpen, setCreateModal] = useState(false);

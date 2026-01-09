@@ -44,8 +44,11 @@ import RevenueDashboard from "../tenantDashboard/pages/RevenueDashboard";
 import OnboardingDashboard from "../dashboard/onboarding";
 import TenantBrandingSettings from "../tenantDashboard/pages/TenantBrandingSettings";
 import TenantProvisioningWizard from "../tenantDashboard/pages/TenantProvisioningWizard";
+import TenantTemplates from "../tenantDashboard/pages/TenantTemplates";
 import TenantDiscountManager from "../tenantDashboard/pages/TenantDiscountManager";
 import TenantPayoutsPage from "../tenantDashboard/pages/TenantPayoutsPage";
+import TenantBillingSettings from "../tenantDashboard/pages/TenantBillingSettings";
+import TenantInvoicesPage from "../tenantDashboard/pages/TenantInvoicesPage";
 import {
   TenantKeyPairs,
   TenantNetworkInterfaces,
@@ -104,6 +107,8 @@ const TenantRoutes = () => {
         <Route path="/dashboard/projects/details" element={<ProjectDetails />} />
         <Route path="/dashboard/instances" element={<DashboardInstances />} />
         <Route path="/dashboard/create-instance" element={<TenantProvisioningWizard />} />
+        <Route path="/dashboard/templates" element={<TenantTemplates />} />
+
         <Route path="/dashboard/object-storage" element={<DashboardObjectStorage />} />
         <Route path="/dashboard/object-storage/create" element={<TenantObjectStorageCreate />} />
         <Route
@@ -181,6 +186,8 @@ const TenantRoutes = () => {
         <Route path="/dashboard/tax-configurations" element={<DashboardTaxConfigurations />} />
         <Route path="/dashboard/discounts" element={<TenantDiscountManager />} />
         <Route path="/dashboard/payouts" element={<TenantPayoutsPage />} />
+        <Route path="/dashboard/billing" element={<TenantBillingSettings />} />
+        <Route path="/dashboard/invoices" element={<TenantInvoicesPage />} />
 
         {/* Standalone */}
         <Route path="/dashboard/products" element={<Products />} />

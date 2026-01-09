@@ -168,9 +168,9 @@ export const useCreateProject = () => {
         description: newProject.description,
         type: newProject.type,
         region: newProject.region,
-        status: "processing", // Show as processing until Zadara confirms
-        provisioning_status: "processing",
-        provisioning_progress: 5,
+        status: "created", // Initial status is now created
+        provisioning_status: "created",
+        provisioning_progress: 0,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         instances: [],
@@ -457,6 +457,40 @@ export const useAddSecurityGroup = () => {
     },
     onError: (error) => {
       console.error("Error adding security group:", error);
+    },
+  });
+};
+
+// POST: Setup infrastructure (Infra Studio)
+const setupInfrastructure = async ({ id, blueprint }) => {
+  const encodedId = encodeURIComponent(id);
+  const res = await api("POST", `/projects/${encodedId}/setup`, { blueprint });
+  /*
+    Expect response:
+    {
+       success: true,
+       data: { blueprint: '...', status: 'provisioning' }
+    }
+  */
+  if (!res.data) {
+    throw new Error(`Failed to setup infrastructure for project ${id}`);
+  }
+  return res.data;
+};
+
+// Hook to setup infrastructure
+export const useSetupInfrastructure = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: setupInfrastructure,
+    onSuccess: (data, variables) => {
+      // Invalidate project to reflect 'provisioning' status
+      queryClient.invalidateQueries(["admin-project", variables.id]);
+      queryClient.invalidateQueries(["admin-project-status", variables.id]);
+      queryClient.invalidateQueries(["admin-projects"]);
+    },
+    onError: (error) => {
+      console.error("Error setting up infrastructure:", error);
     },
   });
 };

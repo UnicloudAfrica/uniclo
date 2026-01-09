@@ -220,3 +220,29 @@ export const useEnableTenantVpc = () => {
     },
   });
 };
+
+// POST: Setup infrastructure
+const setupInfrastructure = async ({ id, blueprint }) => {
+  const encodedId = encodeURIComponent(id);
+  const res = await tenantApi("POST", `/admin/projects/${encodedId}/setup`, { blueprint });
+  if (!res.data) {
+    throw new Error(`Failed to setup infrastructure for project ${id}`);
+  }
+  return res.data;
+};
+
+// Hook to setup infrastructure
+export const useSetupInfrastructure = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: setupInfrastructure,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries(["tenant-project", variables.id]);
+      queryClient.invalidateQueries(["tenant-project-status", variables.id]);
+      queryClient.invalidateQueries(["tenant-projects"]);
+    },
+    onError: (error) => {
+      console.error("Error setting up infrastructure:", error);
+    },
+  });
+};

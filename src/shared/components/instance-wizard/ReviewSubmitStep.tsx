@@ -27,6 +27,10 @@ interface ReviewSubmitStepProps {
   backendPricingData: any;
   onBack: () => void;
   onEditConfiguration: () => void;
+  onConfirm?: () => void;
+  confirmLabel?: string;
+  fastTrackSummary?: { fastTrackCount: number; paidCount: number };
+  resourceLabel?: string;
 }
 
 const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({
@@ -50,8 +54,25 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({
   backendPricingData,
   onBack,
   onEditConfiguration,
+  onConfirm,
+  confirmLabel,
+  fastTrackSummary,
+  resourceLabel = "Instance",
 }) => {
   const navigate = useNavigate();
+  const resolvedFastTrackSummary = fastTrackSummary || {
+    fastTrackCount: isFastTrack ? summaryConfigurationCount : 0,
+    paidCount: isFastTrack ? 0 : summaryConfigurationCount,
+  };
+
+  const handleConfirm = () => {
+    if (onConfirm) {
+      onConfirm();
+      return;
+    }
+    ToastUtils.success("Provisioning started!");
+    navigate("/admin/projects");
+  };
 
   return (
     <div className="space-y-6">
@@ -61,12 +82,34 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({
         </div>
         <h2 className="text-2xl font-bold text-slate-900">Ready to Provision</h2>
         <p className="mx-auto mt-2 max-w-md text-slate-600">
-          You are about to provision {summaryConfigurationCount} instance configuration
+          You are about to provision {summaryConfigurationCount} {resourceLabel.toLowerCase()}{" "}
+          configuration
           {summaryConfigurationCount === 1 ? "" : "s"}.
           {isFastTrack
             ? " This is a fast-track request (no payment required)."
             : " Payment has been verified."}
         </p>
+        <div className="mt-6 grid gap-3 text-left sm:grid-cols-3">
+          <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+            <p className="text-xs font-semibold text-slate-600">Assignment</p>
+            <p className="text-sm font-semibold text-slate-900">
+              {assignmentSummary || "Unassigned"}
+            </p>
+          </div>
+          <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+            <p className="text-xs font-semibold text-slate-600">Billing country</p>
+            <p className="text-sm font-semibold text-slate-900">
+              {billingCountryLabel || "Not selected"}
+            </p>
+          </div>
+          <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+            <p className="text-xs font-semibold text-slate-600">Fast-track summary</p>
+            <p className="text-sm font-semibold text-slate-900">
+              {resolvedFastTrackSummary.fastTrackCount} fast-track •{" "}
+              {resolvedFastTrackSummary.paidCount} paid
+            </p>
+          </div>
+        </div>
         <div className="mt-8 flex justify-center gap-4">
           <ModernButton variant="outline" onClick={onBack} leftIcon={<ArrowLeft size={18} />}>
             Back
@@ -74,13 +117,8 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({
           <ModernButton variant="outline" onClick={onEditConfiguration}>
             Edit Configuration
           </ModernButton>
-          <ModernButton
-            onClick={() => {
-              ToastUtils.success("Provisioning started!");
-              navigate("/admin/projects");
-            }}
-          >
-            Confirm & Provision
+          <ModernButton onClick={handleConfirm}>
+            {confirmLabel || "Confirm & Provision"}
           </ModernButton>
         </div>
       </div>
@@ -102,6 +140,7 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({
         summaryConfigurationCount={summaryConfigurationCount}
         taxLabelSuffix={taxLabelSuffix}
         backendPricingData={backendPricingData}
+        resourceLabel={resourceLabel}
       />
     </div>
   );

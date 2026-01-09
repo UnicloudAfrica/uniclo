@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import copy from "./assets/copy.svg";
 import adbg from "./assets/adBG.svg";
 import admob from "./assets/adMob.svg";
+import DOMPurify from "dompurify";
 
 const DetailedBoard = () => {
   const firebaseConfig = {
@@ -97,7 +98,7 @@ const DetailedBoard = () => {
         <p
           style={{ whiteSpace: "pre-line" }}
           className=" mt-3 text-base text-[#676767] md:px-[15%] font-normal text-justify whitespace-pre-line mb-5"
-          dangerouslySetInnerHTML={{ __html: selectedBoardItem.about }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedBoardItem.about) }}
         />
       </div>
 

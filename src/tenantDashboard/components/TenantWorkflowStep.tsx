@@ -2,32 +2,53 @@
 import React from "react";
 import { CreditCard, Gauge, AlertCircle, CheckCircle2, MapPin } from "lucide-react";
 import { ModernCard, ModernButton, ModernSelect } from "../../shared/components/ui";
+import CustomerContextSelector from "../../shared/components/common/CustomerContextSelector";
 import { Option } from "../../types/InstanceConfiguration";
 
 interface TenantWorkflowStepProps {
   mode: string;
+  contextType: string;
+  selectedTenantId: string;
+  selectedUserId: string;
   billingCountry: string;
   isCountryLocked: boolean;
   isCountriesLoading: boolean;
+  tenants: any[];
+  isTenantsFetching: boolean;
+  userPool: any[];
+  isUsersFetching: boolean;
   countryOptions: Option[];
   hasFastTrackAccess: boolean;
   fastTrackRegions: string[];
   allRegionOptions: Option[];
   onModeChange: (mode: string) => void;
+  onContextTypeChange: (type: string) => void;
+  onTenantChange: (id: string) => void;
+  onUserChange: (id: string) => void;
   onCountryChange: (country: string) => void;
   onContinue: () => void;
 }
 
 const TenantWorkflowStep: React.FC<TenantWorkflowStepProps> = ({
   mode,
+  contextType,
+  selectedTenantId,
+  selectedUserId,
   billingCountry,
   isCountryLocked,
   isCountriesLoading,
+  tenants,
+  isTenantsFetching,
+  userPool,
+  isUsersFetching,
   countryOptions,
   hasFastTrackAccess,
   fastTrackRegions,
   allRegionOptions,
   onModeChange,
+  onContextTypeChange,
+  onTenantChange,
+  onUserChange,
   onCountryChange,
   onContinue,
 }) => {
@@ -154,20 +175,30 @@ const TenantWorkflowStep: React.FC<TenantWorkflowStepProps> = ({
             </div>
           )}
 
-          {/* Mixed Order Info for Standard Mode */}
-          {hasFastTrackAccess && mode === "standard" && (
+          {mode === "standard" && (
             <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
               <CheckCircle2 className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-blue-800">Mixed orders supported</p>
+                <p className="text-sm font-medium text-blue-800">Standard billing</p>
                 <p className="text-xs text-blue-700 mt-1">
-                  You can add instances in both fast-track and regular regions. Fast-track regions (
-                  {eligibleRegionNames.join(", ") || "none"}) will be provisioned free, while other
-                  regions will require payment.
+                  Standard mode requires payment before provisioning in any region.
                 </p>
               </div>
             </div>
           )}
+
+          <CustomerContextSelector
+            contextType={contextType}
+            setContextType={onContextTypeChange}
+            selectedTenantId={selectedTenantId}
+            setSelectedTenantId={onTenantChange}
+            selectedUserId={selectedUserId}
+            setSelectedUserId={onUserChange}
+            tenants={tenants}
+            isTenantsFetching={isTenantsFetching}
+            userPool={userPool}
+            isUsersFetching={isUsersFetching}
+          />
 
           {/* Billing Country */}
           <div>
@@ -193,7 +224,15 @@ const TenantWorkflowStep: React.FC<TenantWorkflowStepProps> = ({
       </ModernCard>
 
       <div className="flex justify-end">
-        <ModernButton onClick={onContinue}>Continue to Configuration</ModernButton>
+        <ModernButton
+          onClick={onContinue}
+          isDisabled={
+            (contextType === "tenant" && !selectedTenantId) ||
+            (contextType === "user" && !selectedUserId)
+          }
+        >
+          Continue to Configuration
+        </ModernButton>
       </div>
     </div>
   );

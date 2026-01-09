@@ -87,16 +87,21 @@ const InlinePaymentPanel = ({ transactionData, onPaymentComplete, onModifyOrder 
 
     setIsPolling(true);
     try {
-      const { token } = useClientAuthStore.getState();
+      const clientState = useClientAuthStore.getState();
+      if (!clientState?.isAuthenticated) {
+        return;
+      }
       const response = await fetch(
         `${config.baseURL}/business/transactions/${transaction.id}/status`,
         {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
+          headers: clientState?.getAuthHeaders
+            ? clientState.getAuthHeaders()
+            : {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+          credentials: "include",
         }
       );
       const data = await response.json();

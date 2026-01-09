@@ -527,6 +527,76 @@ const RegionDetail = () => {
                   </div>
                 </div>
               </ModernCard>
+
+              {/* MSP Credentials - Shows the admin stored in regions table */}
+              <ModernCard title="MSP Admin Credentials" className="space-y-4">
+                <div className="grid gap-3">
+                  <AttributeTile
+                    label="MSP Username"
+                    value={
+                      region.msp_credential_summary?.username ||
+                      region.msp_credential_summary?.username_preview ||
+                      "Not configured"
+                    }
+                    icon={KeyRound}
+                    hint="The service account used for provisioning operations"
+                  />
+                  <AttributeTile
+                    label="Domain"
+                    value={region.msp_credential_summary?.domain || "—"}
+                    icon={Building2}
+                  />
+                  <AttributeTile
+                    label="Default Project"
+                    value={region.msp_credential_summary?.default_project || "—"}
+                    icon={Server}
+                  />
+                  <div
+                    className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${
+                      region.msp_credentials_verified_at
+                        ? "border-green-200 bg-green-50"
+                        : region.has_msp_credentials
+                          ? "border-yellow-200 bg-yellow-50"
+                          : "border-gray-200 bg-gray-50"
+                    }`}
+                  >
+                    <div
+                      className={`rounded-lg p-1.5 ${
+                        region.msp_credentials_verified_at
+                          ? "bg-green-100 text-green-600"
+                          : "bg-gray-100 text-gray-500"
+                      }`}
+                    >
+                      <ShieldCheck size={18} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900">Verification Status</p>
+                      <p className="text-xs text-gray-500 truncate">
+                        {region.msp_credentials_verified_at
+                          ? `Verified on ${formatDateTime(region.msp_credentials_verified_at)}`
+                          : region.has_msp_credentials
+                            ? "Credentials saved but not verified"
+                            : "No credentials configured"}
+                      </p>
+                    </div>
+                    {region.msp_credentials_verified_at ? (
+                      <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                        <CheckCircle size={12} />
+                        Verified
+                      </span>
+                    ) : region.has_msp_credentials ? (
+                      <span className="flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
+                        <AlertCircle size={12} />
+                        Pending
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+                        —
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </ModernCard>
             </div>
           </div>
 

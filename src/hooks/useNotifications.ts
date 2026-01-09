@@ -38,20 +38,19 @@ export type ApiContext = "admin" | "tenant" | "client";
 // Silent tenant API (no toast notifications)
 const silentTenantApi = async (method: string, uri: string, body: any = null) => {
   const url = config.tenantURL + uri;
-  const { token } = useTenantAuthStore.getState();
+  const tenantState = useTenantAuthStore.getState();
 
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-  };
+  const headers: Record<string, string> = tenantState?.getAuthHeaders
+    ? tenantState.getAuthHeaders()
+    : {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      };
 
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  const options: RequestInit = {
+  const options: globalThis.RequestInit = {
     method,
     headers,
+    credentials: "include",
     body: body ? JSON.stringify(body) : null,
   };
 
@@ -298,7 +297,7 @@ export function useUpdateNotificationPreferences() {
         key,
         value,
       }));
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line
       return await (apiClient as any)("PUT", "/settings/profile/batch", {
         settings: settingsArray,
       });

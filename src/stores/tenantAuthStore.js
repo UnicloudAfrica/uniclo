@@ -27,6 +27,22 @@ const inferTenantContext = () => {
 
 const baseContext = inferTenantContext();
 
+const resolveAuthFlag = (session, state) => {
+  if (typeof session.isAuthenticated === "boolean") {
+    return session.isAuthenticated;
+  }
+  if (session.user !== undefined) {
+    return Boolean(session.user);
+  }
+  if (session.userEmail !== undefined) {
+    return Boolean(session.userEmail);
+  }
+  if (session.role !== undefined) {
+    return Boolean(session.role);
+  }
+  return state.isAuthenticated;
+};
+
 const createInitialState = (context = baseContext) => ({
   token: null,
   userEmail: null,
@@ -45,7 +61,7 @@ const createInitialState = (context = baseContext) => ({
 
 const useTenantAuthStore = create(
   persist(
-    (set) => {
+    (set, get) => {
       const setHasHydrated = (value) => set({ hasHydrated: value });
       setTenantHasHydrated = setHasHydrated;
 
@@ -62,10 +78,14 @@ const useTenantAuthStore = create(
 
         // Setters
         setToken: (newToken) =>
-          set({
-            token: newToken,
-            isAuthenticated: Boolean(newToken),
-          }),
+          set((state) => ({
+            token: null,
+            isAuthenticated:
+              Boolean(newToken) ||
+              state.isAuthenticated ||
+              Boolean(state.user) ||
+              Boolean(state.userEmail),
+          })),
         clearToken: resetState,
         setUserEmail: (newEmail) => set({ userEmail: newEmail }),
         clearUserEmail: () => set({ userEmail: null }),
@@ -80,14 +100,13 @@ const useTenantAuthStore = create(
         setCloudAbilities: (abilities) => set({ cloudAbilities: abilities ?? [] }),
         setSession: (session = {}) =>
           set((state) => ({
-            token: session.token ?? state.token,
+            token: null,
             userEmail: session.userEmail ?? state.userEmail,
             user: session.user ?? state.user,
             role: session.role ?? state.role,
             tenant: session.tenant ?? state.tenant,
             domain: session.domain ?? state.domain,
-            isAuthenticated:
-              session.token !== undefined ? Boolean(session.token) : state.isAuthenticated,
+            isAuthenticated: resolveAuthFlag(session, state),
             cloudRoles: session.cloudRoles ?? state.cloudRoles,
             cloudAbilities: session.cloudAbilities ?? state.cloudAbilities,
             currentTenant: session.currentTenant ?? state.currentTenant,
@@ -95,6 +114,17 @@ const useTenantAuthStore = create(
             currentDomain: session.currentDomain ?? state.currentDomain,
           })),
         clearSession: resetState,
+        getAuthHeaders: () => {
+          const { currentTenant, isCentralDomain } = get();
+          const headers = {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          };
+          if (!isCentralDomain && currentTenant?.slug) {
+            headers["X-Tenant-Slug"] = currentTenant.slug;
+          }
+          return headers;
+        },
         setHasHydrated,
       };
     },
@@ -102,7 +132,7 @@ const useTenantAuthStore = create(
       name: "unicloud_tenant_auth", // storage key in localStorage
       getStorage: () => localStorage,
       partialize: (state) => ({
-        token: state.token,
+        // token: state.token,
         userEmail: state.userEmail,
         user: state.user,
         role: state.role,

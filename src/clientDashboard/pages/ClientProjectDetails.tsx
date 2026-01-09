@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useMemo, useState, useRef } from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Activity,
@@ -37,9 +37,14 @@ import InternetGateways from "./infraComps/InternetGateways";
 import ENIs from "./infraComps/ENIs";
 import ElasticIPs from "./infraComps/ElasticIPs";
 import SetupProgressCard from "../../shared/components/projects/details/SetupProgressCard";
+import ProvisioningFullScreen from "../../shared/components/provisioning/ProvisioningFullScreen";
 import ToastUtils from "../../utils/toastUtil";
 import api from "../../index/client/api";
-import { useClientProjectStatus } from "../../hooks/clientHooks/projectHooks";
+import {
+  useClientProjectStatus,
+  useSetupInfrastructure,
+} from "../../hooks/clientHooks/projectHooks";
+import InfrastructureSetupWizard from "../../adminDashboard/components/provisioning/InfrastructureSetupWizard";
 
 interface StatusVariant {
   label: string;
@@ -212,6 +217,7 @@ const ClientProjectDetails: React.FC = () => {
       : undefined;
 
   const [activeSection, setActiveSection] = useState("vpcs");
+  const [isInProvisioningMode, setIsInProvisioningMode] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -647,6 +653,75 @@ const ClientProjectDetails: React.FC = () => {
       >
         <div className="p-8 text-center text-red-500">
           The requested project could not be found or you do not have permission to view it.
+        </div>
+      </ClientPageShell>
+    );
+  }
+
+  // Compute setupSteps for provisioning screen
+  const setupSteps = useMemo(() => {
+    if (Array.isArray(projectStatus?.provisioning_progress)) {
+      return projectStatus.provisioning_progress.map((step: any) => ({
+        id: step.id || step.label?.toLowerCase()?.replace(/\s+/g, "_") || "step",
+        label: step.label || "Step",
+        status: step.status as any,
+        description: step.status === "completed" ? "Completed" : "Action in progress",
+        updated_at: step.updated_at,
+      }));
+    }
+    return [];
+  }, [projectStatus?.provisioning_progress]);
+
+  // Sticky provisioning mode
+  const allStepsComplete =
+    setupSteps.length > 0 && setupSteps.every((s: any) => s.status === "completed");
+
+  useEffect(() => {
+    if (project?.status === "provisioning" && !isInProvisioningMode) {
+      setIsInProvisioningMode(true);
+    }
+    if (isInProvisioningMode && (project?.status === "active" || allStepsComplete)) {
+      const timer = setTimeout(() => {
+        setIsInProvisioningMode(false);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [project?.status, allStepsComplete, isInProvisioningMode]);
+
+  // Phase 8: Dedicated Provisioning Screen
+  if (isInProvisioningMode || project?.status === "provisioning") {
+    return (
+      <ProvisioningFullScreen
+        project={project}
+        setupSteps={setupSteps}
+        onRefresh={() => refetchStatus()}
+      />
+    );
+  }
+
+  // Infra Studio: Project created but not provisioned
+  const setupMutation = useSetupInfrastructure();
+
+  if (project?.status === "created" || project?.provisioning_status === "created") {
+    return (
+      <ClientPageShell
+        title={project?.name || "Infrastructure Setup"}
+        description={`Initialize infrastructure for ${project?.name || projectId}`}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <ModernButton
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2"
+              onClick={() => navigate("/client-dashboard/projects")}
+            >
+              Projects
+            </ModernButton>
+          </div>
+        }
+      >
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 min-h-[600px]">
+          <InfrastructureSetupWizard project={project} setupMutation={setupMutation} />
         </div>
       </ClientPageShell>
     );

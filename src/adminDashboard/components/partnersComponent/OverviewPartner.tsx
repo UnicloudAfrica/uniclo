@@ -6,6 +6,7 @@ import DeletePartnerModal from "../../pages/tenantComps/DeleteTenant";
 import { ModernButton } from "../../../shared/components/ui";
 import StatusPill from "../../../shared/components/ui/StatusPill";
 import IconBadge from "../IconBadge";
+import SetupProgressCard from "../../../shared/components/projects/details/SetupProgressCard";
 
 interface OverviewPartnerProps {
   partnerDetails: any;
@@ -140,6 +141,18 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails }) => 
     { label: "Last updated", value: formatDate(partnerDetails?.updated_at) },
   ];
 
+  const provisioningSteps = Array.isArray(partnerDetails?.provisioning_progress)
+    ? partnerDetails.provisioning_progress.map((step: any) => ({
+        id: step.id,
+        label: step.label,
+        status: step.status,
+        updated_at: step.updated_at,
+        context: step.context,
+      }))
+    : [];
+
+  const showProvisioning = provisioningSteps.length > 0;
+
   if (!partnerDetails) {
     return (
       <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50/70 p-10 text-center text-sm text-slate-500">
@@ -151,6 +164,15 @@ const OverviewPartner: React.FC<OverviewPartnerProps> = ({ partnerDetails }) => 
   return (
     <>
       <div className="space-y-6">
+        {showProvisioning && (
+          <div className="grid grid-cols-1 gap-6 mb-6">
+            <SetupProgressCard
+              steps={provisioningSteps}
+              isLoading={partnerDetails?.onboarding_status === "processing"}
+            />
+          </div>
+        )}
+
         <div className="rounded-3xl border border-[#EAECF0] bg-gradient-to-br from-white via-[#F4F7FB] to-white p-6 shadow-sm">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>

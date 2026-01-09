@@ -12,7 +12,7 @@ import Cases from "../adminComps/cases";
 import General from "../adminComps/general";
 import Board from "../adminComps/board";
 import Career from "../adminComps/career";
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 import { onAuthStateChanged, getAuth } from "firebase/auth";
 
 const Cms = () => {
@@ -30,18 +30,21 @@ const Cms = () => {
   };
 
   // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth();
+  // Initialize Firebase
+  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+  const auth = getAuth(app);
 
   useEffect(() => {
-    onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         const uid = user.uid;
       } else {
         Navigate("/cms-login");
       }
     });
-  });
+
+    return () => unsubscribe();
+  }, [auth, Navigate]);
 
   useEffect(() => {
     const menuBtn = document.getElementById("menu");

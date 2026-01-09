@@ -4,10 +4,12 @@ import { ModernButton } from "../ui";
 
 interface ConfigurationSummary {
   id: string;
-  name: string;
-  region: string;
-  count: number | string;
-  months: number | string;
+  name?: string;
+  title?: string;
+  region?: string;
+  regionLabel?: string;
+  count?: number | string;
+  months?: number | string;
   canFastTrack?: boolean;
 }
 
@@ -18,11 +20,13 @@ interface PricingSummary {
 
 interface OrderSuccessStepProps {
   orderId?: string;
+  transactionId?: string;
   isFastTrack?: boolean;
   configurationSummaries: ConfigurationSummary[];
-  pricingSummary: PricingSummary;
+  pricingSummary?: PricingSummary;
   instancesPageUrl: string;
   onCreateAnother: () => void;
+  resourceLabel?: string;
 }
 
 /**
@@ -31,12 +35,24 @@ interface OrderSuccessStepProps {
  */
 const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
   orderId,
+  transactionId,
   isFastTrack = false,
   configurationSummaries,
   pricingSummary,
   instancesPageUrl,
   onCreateAnother,
+  resourceLabel = "Instance",
 }) => {
+  const resourceLabelPlural = resourceLabel.toLowerCase().endsWith("s")
+    ? resourceLabel
+    : `${resourceLabel}s`;
+  const resolvedCurrency = pricingSummary?.currency || "USD";
+  const resolvedTotal = pricingSummary?.grandTotal ?? 0;
+  const totalInstances = configurationSummaries.reduce((total, cfg) => {
+    const countValue = Number(cfg.count ?? 1);
+    return total + (Number.isFinite(countValue) ? countValue : 1);
+  }, 0);
+
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
@@ -47,12 +63,12 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
           </div>
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
-              {isFastTrack ? "Instances Provisioning!" : "Order Confirmed!"}
+              {isFastTrack ? `${resourceLabelPlural} Provisioning!` : "Order Confirmed!"}
             </h2>
             <p className="text-gray-500">
               {isFastTrack
-                ? "Your instances are being deployed immediately"
-                : "Your instances are being provisioned"}
+                ? `Your ${resourceLabelPlural.toLowerCase()} are being deployed immediately`
+                : `Your ${resourceLabelPlural.toLowerCase()} are being provisioned`}
             </p>
           </div>
         </div>
@@ -62,6 +78,11 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
           <p className="text-sm text-green-800">
             <strong>Order ID:</strong> {orderId || "—"}
           </p>
+          {transactionId && (
+            <p className="text-sm text-green-800 mt-1">
+              <strong>Transaction:</strong> {transactionId}
+            </p>
+          )}
           <p className="text-sm text-green-700 mt-1">
             You will receive an email confirmation shortly.
           </p>
@@ -71,21 +92,35 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
         <div className="border-t border-gray-100 pt-4">
           <h3 className="font-semibold text-gray-800 mb-3">Order Summary</h3>
           <div className="space-y-2 text-sm">
-            {configurationSummaries.map((cfg) => (
-              <div key={cfg.id} className="flex justify-between items-center">
-                <span className="text-gray-600">
-                  {cfg.name} × {cfg.count} ({cfg.months} months)
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-800 font-medium">{cfg.region}</span>
-                  {cfg.canFastTrack && (
-                    <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700">
-                      Fast-track
-                    </span>
-                  )}
+            {configurationSummaries.map((cfg) => {
+              const displayName = cfg.name || cfg.title || resourceLabel;
+              const displayRegion = cfg.region || cfg.regionLabel || "—";
+              const countValue = Number(cfg.count ?? 1);
+              const monthsValue = Number(cfg.months ?? 1);
+              const countLabel = Number.isFinite(countValue) ? countValue : cfg.count || 1;
+              const monthsLabel = Number.isFinite(monthsValue) ? monthsValue : cfg.months || 1;
+
+              return (
+                <div key={cfg.id} className="flex justify-between items-center">
+                  <span className="text-gray-600">
+                    {displayName} × {countLabel} ({monthsLabel} months)
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-800 font-medium">{displayRegion}</span>
+                    {cfg.canFastTrack && (
+                      <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700">
+                        Fast-track
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
+
+            <div className="flex justify-between text-gray-600">
+              <span>Total {resourceLabelPlural.toLowerCase()}</span>
+              <span className="font-medium text-gray-800">{totalInstances || 0}</span>
+            </div>
 
             {/* Total */}
             <div className="border-t pt-2 mt-2 flex justify-between font-semibold">
@@ -93,7 +128,7 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
               <span className="text-green-600">
                 {isFastTrack
                   ? "Free (Fast-track)"
-                  : `${pricingSummary.currency} ${pricingSummary.grandTotal.toLocaleString()}`}
+                  : `${resolvedCurrency} ${resolvedTotal.toLocaleString()}`}
               </span>
             </div>
           </div>

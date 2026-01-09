@@ -7,13 +7,18 @@
  */
 
 /**
- * Determines if the current user is an admin based on token presence
+ * Determines if the current user is an admin based on session state
+ * @returns {boolean} True if user is admin, false otherwise
+ */
+import useAdminAuthStore from "../stores/adminAuthStore";
+
+/**
+ * Determines if the current user is an admin based on store state
  * @returns {boolean} True if user is admin, false otherwise
  */
 export const isAdminUser = () => {
-  // Check if admin token exists in localStorage
-  const adminToken = localStorage.getItem("admin_token");
-  return !!adminToken;
+  const { isAuthenticated, role } = useAdminAuthStore.getState();
+  return isAuthenticated && role === "admin";
 };
 
 /**

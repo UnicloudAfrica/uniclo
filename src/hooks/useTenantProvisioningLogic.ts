@@ -8,6 +8,11 @@ import config from "../config";
 import tenantApi from "../index/tenant/tenantApi";
 import silentTenantApi from "../index/tenant/silentTenant";
 import ToastUtils from "../utils/toastUtil";
+import {
+  evaluateConfigurationCompleteness,
+  normalizePaymentOptions,
+} from "../utils/instanceCreationUtils";
+import { useTenantCustomerContext } from "./tenantHooks/useTenantCustomerContext";
 
 // ═══════════════════════════════════════════════════════════════════
 // TENANT INSTANCE CREATION LOGIC HOOK
@@ -19,9 +24,22 @@ export const useTenantProvisioningLogic = () => {
   // ─────────────────────────────────────────────────────────────────
   // Auth & Config
   // ─────────────────────────────────────────────────────────────────
-  const authToken = useTenantAuthStore((state: any) => state.token);
+  const isAuthenticated = useTenantAuthStore((state: any) => state.isAuthenticated);
   const profile = useTenantAuthStore((state: any) => state.profile);
-  const apiBaseUrl = config.baseURL;
+  const {
+    contextType,
+    setContextType,
+    selectedTenantId,
+    setSelectedTenantId,
+    selectedUserId,
+    setSelectedUserId,
+    tenants,
+    isTenantsFetching,
+    userPool,
+    isUsersFetching,
+    selfTenant,
+  } = useTenantCustomerContext();
+  const apiBaseUrl = config.tenantURL;
 
   // ─────────────────────────────────────────────────────────────────
   // Mode Selection (fast-track vs standard)
@@ -37,15 +55,17 @@ export const useTenantProvisioningLogic = () => {
     if (isFastTrack) {
       return [
         { id: "workflow", title: "Workflow", desc: "Select provisioning mode" },
-        { id: "configure", title: "Configure", desc: "Select resources" },
-        { id: "review", title: "Review", desc: "Confirm order" },
+        { id: "configure", title: "Cube-nstance setup", desc: "Select region, size, and image" },
+        { id: "review", title: "Review & provision", desc: "Confirm order" },
+        { id: "success", title: "Success", desc: "Provisioning started" },
       ];
     }
     return [
       { id: "workflow", title: "Workflow", desc: "Select provisioning mode" },
-      { id: "configure", title: "Configure", desc: "Select resources" },
+      { id: "configure", title: "Cube-nstance setup", desc: "Select region, size, and image" },
       { id: "payment", title: "Payment", desc: "Complete payment" },
-      { id: "review", title: "Review", desc: "Confirm order" },
+      { id: "review", title: "Review & provision", desc: "Confirm order" },
+      { id: "success", title: "Success", desc: "Provisioning started" },
     ];
   }, [isFastTrack]);
 
@@ -63,6 +83,8 @@ export const useTenantProvisioningLogic = () => {
     configurations,
     setConfigurations,
     addConfiguration,
+    addConfigurationWithPatch,
+    resetConfigurationWithPatch,
     removeConfiguration,
     updateConfiguration,
     addAdditionalVolume,
@@ -78,11 +100,13 @@ export const useTenantProvisioningLogic = () => {
 
   // Auto-set billing country from profile
   useEffect(() => {
-    if (profile?.country_code && !billingCountry) {
-      setBillingCountry(profile.country_code);
+    const candidate =
+      profile?.country_code || selfTenant?.country_code || selfTenant?.business?.country || "";
+    if (candidate && !billingCountry) {
+      setBillingCountry(candidate);
       setIsCountryLocked(true);
     }
-  }, [profile?.country_code, billingCountry]);
+  }, [profile?.country_code, selfTenant, billingCountry]);
 
   // ─────────────────────────────────────────────────────────────────
   // Data Fetching
@@ -95,7 +119,7 @@ export const useTenantProvisioningLogic = () => {
 
   useEffect(() => {
     const fetchPricing = async () => {
-      if (!authToken || !billingCountry) return;
+      if (!isAuthenticated || !billingCountry) return;
       setIsPricingLoading(true);
       try {
         const params = new URLSearchParams();
@@ -115,7 +139,7 @@ export const useTenantProvisioningLogic = () => {
       }
     };
     fetchPricing();
-  }, [authToken, billingCountry]);
+  }, [isAuthenticated, billingCountry]);
 
   // Fetch regions using tenant API
   const [generalRegions, setGeneralRegions] = useState<any[]>([]);
@@ -123,7 +147,7 @@ export const useTenantProvisioningLogic = () => {
 
   useEffect(() => {
     const fetchRegions = async () => {
-      if (!authToken) return;
+      if (!isAuthenticated) return;
       setIsRegionsLoading(true);
       try {
         const response = (await silentTenantApi("GET", "/admin/cloud-regions")) as any;
@@ -136,7 +160,7 @@ export const useTenantProvisioningLogic = () => {
       }
     };
     fetchRegions();
-  }, [authToken]);
+  }, [isAuthenticated]);
 
   // ─────────────────────────────────────────────────────────────────
   // Fast-Track Region Eligibility
@@ -147,7 +171,7 @@ export const useTenantProvisioningLogic = () => {
   // Fetch regions with fast-track eligibility when hook initializes
   useEffect(() => {
     const fetchFastTrackRegions = async () => {
-      if (!authToken) return;
+      if (!isAuthenticated) return;
       setIsLoadingFastTrackRegions(true);
       try {
         const response = (await silentTenantApi("GET", "/admin/cloud-regions")) as any;
@@ -164,7 +188,7 @@ export const useTenantProvisioningLogic = () => {
       }
     };
     fetchFastTrackRegions();
-  }, [authToken]);
+  }, [isAuthenticated]);
 
   const hasFastTrackAccess = fastTrackRegions.length > 0;
 
@@ -254,6 +278,8 @@ export const useTenantProvisioningLogic = () => {
   const [submissionResult, setSubmissionResult] = useState<any>(null);
   const [orderReceipt, setOrderReceipt] = useState<any>(null);
   const [isPaymentSuccessful, setIsPaymentSuccessful] = useState(false);
+  const paymentStepIndex = useMemo(() => steps.findIndex((step) => step.id === "payment"), [steps]);
+  const reviewStepIndex = useMemo(() => steps.findIndex((step) => step.id === "review"), [steps]);
 
   const handleCreateOrder = useCallback(async () => {
     if (configurations.length === 0) {
@@ -272,80 +298,172 @@ export const useTenantProvisioningLogic = () => {
       }
     }
 
+    const missingProjectIndex = configurations.findIndex((cfg) => {
+      const requiresProject = cfg.project_mode === "new" || Boolean(cfg.template_locked);
+      return requiresProject && !String(cfg.project_id || "").trim();
+    });
+    if (missingProjectIndex !== -1) {
+      ToastUtils.error(
+        `Create a project for Configuration #${missingProjectIndex + 1} before pricing.`
+      );
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      // For each configuration, determine if it qualifies for fast-track
-      // This enables split orders: fast-track regions are free, others require payment
-      const items = configurations.map((cfg) => {
-        const regionIsFastTrack = fastTrackRegions.includes(cfg.region || "");
-        const itemFastTrack = isFastTrack || regionIsFastTrack;
+      const incompleteIndex = configurations.findIndex(
+        (cfg) => !evaluateConfigurationCompleteness(cfg).isComplete
+      );
+      if (incompleteIndex !== -1) {
+        throw new Error(`Complete Configuration #${incompleteIndex + 1} before pricing.`);
+      }
+
+      const pricing_requests = configurations.map((cfg, index) => {
+        const parsedBandwidthCount = Number(cfg.bandwidth_count) || 1;
+        const parsedFloatingIpCount = Number(cfg.floating_ip_count) || 0;
+        const parsedMonths = Number(cfg.months) || 1;
+        const parsedInstances = Number(cfg.instance_count) || 1;
+        const parsedStorage = Number(cfg.storage_size_gb) || 50;
+        const instanceName = (cfg.name || "").trim() || null;
+        const networkId = cfg.network_id || null;
+        const subnetId = cfg.subnet_id || null;
+
+        const sanitizedSgIds = (
+          Array.isArray(cfg.security_group_ids)
+            ? cfg.security_group_ids
+            : ((cfg.security_group_ids as any) || "").split(",")
+        )
+          .map((v: any) => (v && v.value ? v.value : v))
+          .map((v: any) => (v || "").toString().trim())
+          .filter(Boolean);
+
+        const extraVolumes = (cfg.additional_volumes || [])
+          .map((vol: AdditionalVolume) => ({
+            volume_type_id: vol.volume_type_id,
+            storage_size_gb: Number(vol.storage_size_gb) || 0,
+          }))
+          .filter((vol) => vol.volume_type_id && vol.storage_size_gb > 0);
 
         return {
-          launch_mode: cfg.launch_mode,
-          name: cfg.name || `instance-${Date.now()}`,
-          instance_count: cfg.instance_count || 1,
-          project_id: cfg.project_id,
-          region: cfg.region,
-          months: cfg.months || 12,
+          project_id: cfg.project_id || undefined,
+          region: cfg.region || undefined,
           compute_instance_id: cfg.compute_instance_id,
           os_image_id: cfg.os_image_id,
-          volume_type_id: cfg.volume_type_id,
-          storage_size_gb: cfg.storage_size_gb,
-          bandwidth_id: cfg.bandwidth_id,
-          bandwidth_count: cfg.bandwidth_count || 1,
-          floating_ip_count: cfg.floating_ip_count || 0,
-          security_group_ids: cfg.security_group_ids,
-          keypair_name: cfg.keypair_name,
-          network_id: cfg.network_id,
-          subnet_id: cfg.subnet_id,
-          additional_volumes: cfg.additional_volumes,
-          fast_track: itemFastTrack,
+          months: parsedMonths,
+          number_of_instances: parsedInstances,
+          volume_types: [
+            {
+              volume_type_id: cfg.volume_type_id,
+              storage_size_gb: parsedStorage,
+            },
+            ...extraVolumes,
+          ],
+          bandwidth_id: cfg.bandwidth_id || null,
+          bandwidth_count: parsedBandwidthCount,
+          floating_ip_count: parsedFloatingIpCount,
+          security_group_ids: sanitizedSgIds,
+          keypair_name: cfg.keypair_name || null,
+          network_id: networkId,
+          subnet_id: subnetId,
+          name: instanceName,
+          fast_track: isFastTrack,
         };
       });
 
-      // Determine if entire order is fast-track or has paid items
-      const allFastTrack = items.every((item) => item.fast_track);
-      const hasPaidItems = items.some((item) => !item.fast_track);
-
       const payload = {
-        billing_country: billingCountry,
-        fast_track: allFastTrack, // Overall order flag
-        items,
-      };
+        country_iso: billingCountry,
+        fast_track: isFastTrack,
+        pricing_requests,
+      } as any;
+      if (contextType === "tenant" && selectedTenantId) {
+        payload.tenant_id = selectedTenantId;
+      } else if (contextType === "user" && selectedUserId) {
+        payload.user_id = selectedUserId;
+        if (selectedTenantId) {
+          payload.tenant_id = selectedTenantId;
+        }
+      }
 
       const response = await tenantApi("POST", "/admin/instances/create", payload as any);
-      setSubmissionResult(response);
-      setOrderReceipt((response as any)?.data);
+      const data = response?.data || response;
 
-      if (allFastTrack) {
-        // All items are fast-track, skip payment
-        setIsPaymentSuccessful(true);
-        setActiveStep(2); // Go directly to review
-        ToastUtils.success("Fast-track order submitted! Instances are being provisioned.");
-      } else if (hasPaidItems) {
-        // Mixed order or all paid - go to payment
-        setActiveStep(2); // Move to payment step
-        const fastTrackCount = items.filter((i) => i.fast_track).length;
-        if (fastTrackCount > 0) {
-          ToastUtils.success(
-            `Order created! ${fastTrackCount} instance(s) will be fast-tracked. Complete payment for the remaining.`
-          );
-        } else {
+      const normalizedGatewayOptions = normalizePaymentOptions(
+        data?.payment?.payment_gateway_options || data?.payment?.options || data?.payment_options
+      );
+      const pricingBreakdownPayload =
+        data?.pricing_breakdown ||
+        data?.transaction?.metadata?.pricing_breakdown ||
+        data?.order?.pricing_breakdown ||
+        null;
+
+      const mergedTransaction = data?.transaction
+        ? {
+            ...data.transaction,
+            metadata: {
+              ...(data.transaction.metadata || {}),
+              ...(pricingBreakdownPayload ? { pricing_breakdown: pricingBreakdownPayload } : {}),
+            },
+          }
+        : null;
+
+      const mergedResult = {
+        ...data,
+        transaction: mergedTransaction,
+        payment: data?.payment
+          ? { ...data.payment, payment_gateway_options: normalizedGatewayOptions }
+          : normalizedGatewayOptions.length
+            ? { payment_gateway_options: normalizedGatewayOptions }
+            : data?.payment,
+        pricing_breakdown: pricingBreakdownPayload || data?.pricing_breakdown || null,
+      };
+
+      setSubmissionResult(mergedResult);
+      setOrderReceipt({
+        transaction: mergedResult?.transaction || null,
+        order: mergedResult?.order || null,
+        payment: mergedResult?.payment || null,
+        pricing_breakdown: mergedResult?.pricing_breakdown || null,
+      });
+
+      const isPaymentRequired = mergedResult?.payment?.required;
+      if (isPaymentRequired) {
+        if (paymentStepIndex >= 0) {
+          setActiveStep(paymentStepIndex);
           ToastUtils.success("Order created! Please complete payment.");
+        } else {
+          ToastUtils.error("Payment is required. Switch to standard mode to continue.");
+          setActiveStep(reviewStepIndex);
         }
+      } else {
+        setIsPaymentSuccessful(true);
+        setActiveStep(reviewStepIndex);
+        ToastUtils.success("Fast-track order submitted! Instances are being provisioned.");
       }
     } catch (error: any) {
       ToastUtils.error(error.message || "Failed to create order");
     } finally {
       setIsSubmitting(false);
     }
-  }, [configurations, billingCountry, isFastTrack, fastTrackRegions]);
+  }, [
+    configurations,
+    billingCountry,
+    isFastTrack,
+    fastTrackRegions,
+    contextType,
+    selectedTenantId,
+    selectedUserId,
+    paymentStepIndex,
+    reviewStepIndex,
+  ]);
 
-  const handlePaymentCompleted = useCallback((paymentResult: any) => {
-    setIsPaymentSuccessful(true);
-    setActiveStep(3); // Move to review step
-    ToastUtils.success("Payment successful! Order confirmed.");
-  }, []);
+  const handlePaymentCompleted = useCallback(
+    (paymentResult: any) => {
+      setIsPaymentSuccessful(true);
+      setActiveStep(reviewStepIndex); // Move to review step
+      ToastUtils.success("Payment successful! Order confirmed.");
+    },
+    [reviewStepIndex]
+  );
 
   // ─────────────────────────────────────────────────────────────────
   // Pricing Calculations
@@ -360,13 +478,30 @@ export const useTenantProvisioningLogic = () => {
         currency: billingCountry === "NG" ? "NGN" : "USD",
       };
     }
-    const receipt = orderReceipt?.pricing || {};
+    const breakdown = Array.isArray(orderReceipt?.pricing_breakdown)
+      ? orderReceipt?.pricing_breakdown
+      : [];
+    const totals = breakdown.reduce(
+      (acc: any, item: any) => {
+        acc.subtotal += Number(item?.subtotal || 0);
+        acc.tax += Number(item?.tax || 0);
+        acc.total += Number(item?.total || 0);
+        acc.currency = acc.currency || item?.currency;
+        return acc;
+      },
+      { subtotal: 0, tax: 0, total: 0, currency: "" }
+    );
+    const receiptTotal =
+      Number(orderReceipt?.transaction?.amount || orderReceipt?.order?.total || 0) || 0;
     return {
-      subtotal: receipt.subtotal || 0,
-      tax: receipt.tax || 0,
-      gatewayFees: receipt.gateway_fees || 0,
-      grandTotal: receipt.grand_total || receipt.subtotal || 0,
-      currency: receipt.currency || (billingCountry === "NG" ? "NGN" : "USD"),
+      subtotal: totals.subtotal || receiptTotal,
+      tax: totals.tax || 0,
+      gatewayFees: 0,
+      grandTotal: totals.total || receiptTotal,
+      currency:
+        totals.currency ||
+        orderReceipt?.transaction?.currency ||
+        (billingCountry === "NG" ? "NGN" : "USD"),
     };
   }, [orderReceipt, billingCountry, isFastTrack]);
 
@@ -387,6 +522,38 @@ export const useTenantProvisioningLogic = () => {
     [configurations, allRegionOptions, fastTrackRegions]
   );
 
+  const selectedTenantLabel = useMemo(() => {
+    if (!selectedTenantId) return "";
+    const match = tenants.find((tenant: any) => String(tenant.id) === String(selectedTenantId));
+    return match?.name || match?.company_name || match?.identifier || "";
+  }, [tenants, selectedTenantId]);
+
+  const selectedUserLabel = useMemo(() => {
+    if (!selectedUserId) return "";
+    const match = userPool.find((user: any) => String(user.id) === String(selectedUserId));
+    if (!match) return "";
+    return (
+      match.full_name ||
+      `${match.first_name || ""} ${match.last_name || ""}`.trim() ||
+      match.email ||
+      ""
+    );
+  }, [userPool, selectedUserId]);
+
+  const clientOptions = useMemo(
+    () =>
+      userPool.map((user: any) => ({
+        value: String(user.id),
+        label:
+          user.full_name ||
+          `${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+          user.email ||
+          `User ${user.id}`,
+        raw: user,
+      })),
+    [userPool]
+  );
+
   return {
     // Mode
     mode,
@@ -403,6 +570,8 @@ export const useTenantProvisioningLogic = () => {
     // Configurations
     configurations,
     addConfiguration,
+    addConfigurationWithPatch,
+    resetConfigurationWithPatch,
     removeConfiguration,
     updateConfiguration,
     addAdditionalVolume,
@@ -415,6 +584,21 @@ export const useTenantProvisioningLogic = () => {
     isCountryLocked,
     countryOptions,
     isCountriesLoading,
+
+    // Customer context (tenant)
+    contextType,
+    setContextType,
+    selectedTenantId,
+    setSelectedTenantId,
+    selectedUserId,
+    setSelectedUserId,
+    tenants,
+    isTenantsFetching,
+    userPool,
+    isUsersFetching,
+    selectedTenantLabel,
+    selectedUserLabel,
+    clientOptions,
 
     // Resources
     resources,
@@ -436,7 +620,7 @@ export const useTenantProvisioningLogic = () => {
     configurationSummaries,
 
     // Auth
-    authToken,
+    isAuthenticated,
     apiBaseUrl,
     profile,
   };

@@ -2,7 +2,7 @@ import Footer from "../components/footer";
 import Navbar from "../components/navbar";
 import { useParams, Link } from "react-router-dom";
 import { useRef, useEffect, useState } from "react";
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 import adbg from "./assets/adBG.svg";
 import admob from "./assets/adMob.svg";
 import { getFirestore, getDoc, doc, getDocs, collection, query, where } from "firebase/firestore";
@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 import copy from "./assets/copy.svg";
 import { useContext } from "react";
 import { BlogContext } from "../contexts/contextprovider";
+import DOMPurify from "dompurify";
 
 const DetailedBlog = () => {
   const firebaseConfig = {
@@ -22,7 +23,7 @@ const DetailedBlog = () => {
     measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
   };
 
-  const app = initializeApp(firebaseConfig);
+  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
   const db = getFirestore(app);
 
   const [blogArray] = useContext(BlogContext);
@@ -142,7 +143,7 @@ const DetailedBlog = () => {
           <p
             style={{ whiteSpace: "pre-line" }}
             className=" mt-3 text-base text-[#676767] text-justify font-normal md:px-[15%] whitespace-pre-line"
-            dangerouslySetInnerHTML={{ __html: selectedBlogItem.content }}
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedBlogItem.content) }}
           />
           <div className=" md:px-[15%] mt-6">
             <button

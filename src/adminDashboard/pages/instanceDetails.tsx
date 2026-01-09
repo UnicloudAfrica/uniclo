@@ -243,9 +243,9 @@ export default function InstanceDetails() {
     setError(null);
 
     try {
-      const { token } = useAdminAuthStore.getState() || {};
+      const { isAuthenticated } = useAdminAuthStore.getState() || {};
 
-      if (!token) {
+      if (!isAuthenticated) {
         throw new Error("Your admin session has expired. Please sign in again.");
       }
 
@@ -330,7 +330,7 @@ export default function InstanceDetails() {
     setActionLoading((prev) => ({ ...prev, [action]: true }));
 
     try {
-      const { token } = useAdminAuthStore.getState();
+      const adminState = useAdminAuthStore.getState();
       // Note: Instance actions endpoint has been removed
       // Basic instance operations should be handled through standard CRUD endpoints
       ToastUtils.warning(
@@ -348,9 +348,11 @@ export default function InstanceDetails() {
             {
               method: "DELETE",
               headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: "application/json",
+                ...(adminState?.getAuthHeaders
+                  ? adminState.getAuthHeaders()
+                  : { Accept: "application/json" }),
               },
+              credentials: "include",
             }
           );
 

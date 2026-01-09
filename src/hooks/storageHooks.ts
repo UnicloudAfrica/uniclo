@@ -14,7 +14,7 @@ const getApiPrefix = (context: string) => {
 // ==================== Snapshots (Volumes) ====================
 
 export const useSnapshots = (projectId: string, region: string, volumeId?: string) => {
-  const { apiBaseUrl, context, authToken } = useApiContext();
+  const { apiBaseUrl, context, authHeaders, isAuthenticated } = useApiContext();
   const prefix = getApiPrefix(context);
 
   return useQuery({
@@ -22,17 +22,18 @@ export const useSnapshots = (projectId: string, region: string, volumeId?: strin
     queryFn: async () => {
       const { data } = await axios.get(`${apiBaseUrl}${prefix}/snapshots`, {
         params: { project_id: projectId, region, volume_id: volumeId },
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers: authHeaders,
+        withCredentials: true,
       });
       return data.data || data;
     },
-    enabled: !!projectId && !!region && !!authToken,
+    enabled: !!projectId && !!region && isAuthenticated,
   });
 };
 
 export const useCreateSnapshot = () => {
   const queryClient = useQueryClient();
-  const { apiBaseUrl, context, authToken } = useApiContext();
+  const { apiBaseUrl, context, authHeaders } = useApiContext();
   const prefix = getApiPrefix(context);
 
   return useMutation({
@@ -44,7 +45,8 @@ export const useCreateSnapshot = () => {
       description?: string;
     }) => {
       const { data } = await axios.post(`${apiBaseUrl}${prefix}/snapshots`, payload, {
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers: authHeaders,
+        withCredentials: true,
       });
       return data;
     },
@@ -60,7 +62,7 @@ export const useCreateSnapshot = () => {
 
 export const useDeleteSnapshot = () => {
   const queryClient = useQueryClient();
-  const { apiBaseUrl, context, authToken } = useApiContext();
+  const { apiBaseUrl, context, authHeaders } = useApiContext();
   const prefix = getApiPrefix(context);
 
   return useMutation({
@@ -75,7 +77,8 @@ export const useDeleteSnapshot = () => {
     }) => {
       await axios.delete(`${apiBaseUrl}${prefix}/snapshots/${id}`, {
         params: { project_id: projectId, region },
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers: authHeaders,
+        withCredentials: true,
       });
     },
     onSuccess: (_, { projectId }) => {
@@ -94,7 +97,7 @@ export const useDeleteSnapshot = () => {
  * Fetch images - works at tenant level (no project/region required)
  */
 export const useImages = (projectId?: string, region?: string) => {
-  const { apiBaseUrl, context, authToken } = useApiContext();
+  const { apiBaseUrl, context, authHeaders, isAuthenticated } = useApiContext();
   const prefix = getApiPrefix(context);
 
   return useQuery({
@@ -106,17 +109,18 @@ export const useImages = (projectId?: string, region?: string) => {
 
       const { data } = await axios.get(`${apiBaseUrl}${prefix}/images`, {
         params,
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers: authHeaders,
+        withCredentials: true,
       });
       return data.data || data;
     },
-    enabled: !!authToken,
+    enabled: isAuthenticated,
   });
 };
 
 export const useDeleteImage = () => {
   const queryClient = useQueryClient();
-  const { apiBaseUrl, context, authToken } = useApiContext();
+  const { apiBaseUrl, context, authHeaders } = useApiContext();
   const prefix = getApiPrefix(context);
 
   return useMutation({
@@ -135,7 +139,8 @@ export const useDeleteImage = () => {
 
       await axios.delete(`${apiBaseUrl}${prefix}/images/${id}`, {
         params,
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers: authHeaders,
+        withCredentials: true,
       });
     },
     onSuccess: () => {
@@ -152,7 +157,7 @@ export const useDeleteImage = () => {
 
 export const useCreateInstanceSnapshot = () => {
   const queryClient = useQueryClient();
-  const { apiBaseUrl, context, authToken } = useApiContext();
+  const { apiBaseUrl, context, authHeaders } = useApiContext();
   const prefix = getApiPrefix(context);
 
   return useMutation({
@@ -172,7 +177,8 @@ export const useCreateInstanceSnapshot = () => {
           params: { name, description },
         },
         {
-          headers: { Authorization: `Bearer ${authToken}` },
+          headers: authHeaders,
+          withCredentials: true,
         }
       );
       return data;
@@ -190,7 +196,7 @@ export const useCreateInstanceSnapshot = () => {
 
 export const useCreateInstanceImage = () => {
   const queryClient = useQueryClient();
-  const { apiBaseUrl, context, authToken } = useApiContext();
+  const { apiBaseUrl, context, authHeaders } = useApiContext();
   const prefix = getApiPrefix(context);
 
   return useMutation({
@@ -210,7 +216,8 @@ export const useCreateInstanceImage = () => {
           params: { name, metadata },
         },
         {
-          headers: { Authorization: `Bearer ${authToken}` },
+          headers: authHeaders,
+          withCredentials: true,
         }
       );
       return data;

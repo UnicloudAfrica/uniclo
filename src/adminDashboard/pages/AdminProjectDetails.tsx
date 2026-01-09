@@ -35,11 +35,15 @@ import {
   useEnableInternetAccess,
   useProvisionProject,
 } from "../../hooks/adminHooks/projectHooks";
-import { useProjectInfrastructureStatus } from "../../hooks/adminHooks/projectInfrastructureHooks";
+import {
+  useProjectInfrastructureStatus,
+  useSyncProjectInfrastructure,
+} from "../../hooks/adminHooks/projectInfrastructureHooks";
 import KeyPairs from "./infraComps/keyPairs";
 import SecurityGroup from "./infraComps/securityGroup";
 import VPCs from "./infraComps/vpcs";
 import Networks from "./infraComps/networks";
+import InfrastructureSetupWizard from "../components/provisioning/InfrastructureSetupWizard";
 import { useFetchNetworks, useFetchNetworkInterfaces } from "../../hooks/adminHooks/networkHooks";
 import { useFetchKeyPairs } from "../../hooks/adminHooks/keyPairHooks";
 import { useFetchSecurityGroups } from "../../hooks/adminHooks/securityGroupHooks";
@@ -60,7 +64,6 @@ import {
   useFetchProjectEdgeConfigAdmin,
   syncProjectEdgeConfigAdmin,
 } from "../../hooks/adminHooks/edgeHooks";
-import useAdminAuthStore from "../../stores/adminAuthStore";
 import { useProjectBroadcasting } from "../../hooks/useProjectBroadcasting";
 import api, { adminSilentApi as silentApi } from "../../index/admin/api";
 
@@ -72,6 +75,7 @@ import ProjectInstancesOverview from "../../shared/components/projects/details/P
 import ProjectInfrastructureJourney from "../../shared/components/projects/details/ProjectInfrastructureJourney";
 import ProjectQuickStatus from "../../shared/components/projects/details/ProjectQuickStatus";
 import ProjectUnifiedView from "../../shared/components/projects/details/ProjectUnifiedView";
+import ProvisioningFullScreen from "../../shared/components/provisioning/ProvisioningFullScreen";
 
 // Types
 interface User {
@@ -254,7 +258,6 @@ export default function AdminProjectDetails() {
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const adminToken = useAdminAuthStore((state) => state.token);
 
   const [activeSection, setActiveSection] = useState("overview");
   const [isAssignEdgeOpen, setIsAssignEdgeOpen] = useState(false);
@@ -269,16 +272,26 @@ export default function AdminProjectDetails() {
   const [isInviteSubmitting, setIsInviteSubmitting] = useState(false);
   const [inviteSuccessMessage, setInviteSuccessMessage] = useState("");
   const [resourceCounts, setResourceCounts] = useState<Record<string, number>>({});
+  const [isInProvisioningMode, setIsInProvisioningMode] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const queryParams = new URLSearchParams(location.search);
   const identifierParam = queryParams.get("identifier");
   const encodedProjectId = queryParams.get("id");
+  // Check if this is a newly created project (navigated from create form)
+  const isNewProject = queryParams.get("new") === "true";
   const projectId = identifierParam
     ? identifierParam
     : encodedProjectId
       ? decodeId(encodedProjectId)
       : null;
+
+  // Initialize provisioning mode if navigating from project creation
+  useEffect(() => {
+    if (isNewProject && !isInProvisioningMode) {
+      setIsInProvisioningMode(true);
+    }
+  }, [isNewProject]);
 
   const {
     data: projectStatusData,
@@ -327,8 +340,14 @@ export default function AdminProjectDetails() {
     return () => clearTimeout(timer);
   }, [inviteSuccessMessage]);
 
+  useEffect(() => {
+    setResourceCounts({});
+  }, [projectId]);
+
   const { mutateAsync: updateProjectMembers, isPending: isMembershipUpdating } = useUpdateProject();
   const { mutateAsync: runProvisioning, isPending: isProvisioning } = useProvisionProject();
+  const { mutateAsync: syncInfrastructure, isPending: isSyncingInfrastructure } =
+    useSyncProjectInfrastructure();
 
   const updateResourceCount = useCallback((resource: string, count: number) => {
     setResourceCounts((prev) => {
@@ -344,13 +363,58 @@ export default function AdminProjectDetails() {
 
   const project = projectStatusData?.project;
 
+  // Compute setupSteps early for use in provisioning screen
+  const setupSteps = useMemo(() => {
+    if (Array.isArray(project?.provisioning_progress)) {
+      return project.provisioning_progress.map((step: any) => ({
+        id: step.id || step.label?.toLowerCase()?.replace(/\s+/g, "_") || "step",
+        label: step.label || "Step",
+        status: step.status as any,
+        description: step.status === "completed" ? "Completed" : "Action in progress",
+        updated_at: step.updated_at,
+      }));
+    }
+    return [];
+  }, [project?.provisioning_progress]);
+
+  // Sticky provisioning mode: once we enter provisioning, stay until all steps are complete
+  const allStepsComplete =
+    setupSteps.length > 0 && setupSteps.every((s) => s.status === "completed");
+
+  useEffect(() => {
+    // Enter provisioning mode when status becomes 'provisioning' OR when we have new=true param
+    if ((project?.status === "provisioning" || isNewProject) && !isInProvisioningMode) {
+      setIsInProvisioningMode(true);
+    }
+    // Exit provisioning mode when:
+    // 1. Status becomes 'active', OR
+    // 2. All steps are complete (with a small delay for UX)
+    if (isInProvisioningMode && (project?.status === "active" || allStepsComplete)) {
+      // Add a small delay for the user to see 100% before transitioning
+      const timer = setTimeout(() => {
+        setIsInProvisioningMode(false);
+        // Remove the 'new' param from URL to prevent re-entering provisioning mode on refresh
+        if (isNewProject) {
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.delete("new");
+          window.history.replaceState({}, "", newUrl.toString());
+        }
+      }, 2000); // 2 second delay to show completion
+      return () => clearTimeout(timer);
+    }
+  }, [project?.status, allStepsComplete, isInProvisioningMode, isNewProject]);
+
   const { data: networksData } = useFetchNetworks(project?.identifier, project?.region, {
     enabled: Boolean(project?.identifier && project?.region),
   });
 
-  const { data: keyPairsData } = useFetchKeyPairs(project?.identifier, project?.region, {
-    enabled: Boolean(project?.identifier && project?.region),
-  });
+  const { data: keyPairsData } = useFetchKeyPairs(
+    project?.identifier || project?.id,
+    project?.region,
+    {
+      enabled: Boolean((project?.identifier || project?.id) && project?.region),
+    }
+  );
   const { data: securityGroupsData } = useFetchSecurityGroups(
     project?.identifier,
     project?.region,
@@ -1021,10 +1085,13 @@ export default function AdminProjectDetails() {
         variant="outline"
         size="sm"
         className="flex items-center gap-2"
-        onClick={() => refetchProjectStatus()}
-        disabled={isProjectStatusFetching}
+        onClick={() => syncInfrastructure({ projectId: resolvedProjectId })}
+        disabled={isProjectStatusFetching || isSyncingInfrastructure}
       >
-        <RefreshCw size={14} className={isProjectStatusFetching ? "animate-spin" : ""} />
+        <RefreshCw
+          size={14}
+          className={isProjectStatusFetching || isSyncingInfrastructure ? "animate-spin" : ""}
+        />
         Refresh
       </ModernButton>
       <ModernButton
@@ -1275,17 +1342,50 @@ export default function AdminProjectDetails() {
                 provisioning: instanceStats?.provisioning || 0,
               }}
               resourceCounts={{
-                vpcs: resourceCounts.vpcs ?? networkData?.vpc?.count ?? 0,
-                subnets: resourceCounts.subnets ?? networkData?.subnets?.count ?? 0,
+                vpcs:
+                  infraStatusData?.data?.components?.vpc?.count ??
+                  resourceCounts.vpcs ??
+                  networkData?.vpc?.count ??
+                  0,
+                subnets:
+                  infraStatusData?.data?.components?.subnets?.count ??
+                  resourceCounts.subnets ??
+                  networkData?.subnets?.count ??
+                  0,
                 security_groups:
-                  resourceCounts.security_groups ?? networkData?.security_groups?.count ?? 0,
-                key_pairs: resourceCounts.key_pairs ?? networkData?.key_pairs?.count ?? 0,
-                route_tables: resourceCounts.route_tables ?? networkData?.route_tables?.count ?? 0,
-                elastic_ips: resourceCounts.elastic_ips ?? networkData?.elastic_ips?.count ?? 0,
+                  infraStatusData?.data?.components?.security_groups?.count ??
+                  resourceCounts.security_groups ??
+                  networkData?.security_groups?.count ??
+                  0,
+                key_pairs:
+                  infraStatusData?.data?.components?.keypairs?.count ??
+                  resourceCounts.key_pairs ??
+                  networkData?.key_pairs?.count ??
+                  0,
+                route_tables:
+                  infraStatusData?.data?.components?.route_tables?.count ??
+                  resourceCounts.route_tables ??
+                  networkData?.route_tables?.count ??
+                  0,
+                elastic_ips:
+                  infraStatusData?.data?.components?.elastic_ips?.count ??
+                  resourceCounts.elastic_ips ??
+                  networkData?.elastic_ips?.count ??
+                  0,
                 network_interfaces:
-                  resourceCounts.network_interfaces ?? networkData?.network_interfaces?.count ?? 0,
+                  infraStatusData?.data?.components?.network_interfaces?.count ??
+                  resourceCounts.network_interfaces ??
+                  networkData?.network_interfaces?.count ??
+                  0,
                 internet_gateways:
-                  resourceCounts.internet_gateways ?? networkData?.internet_gateways?.count ?? 0,
+                  infraStatusData?.data?.components?.internet_gateways?.count ??
+                  resourceCounts.internet_gateways ??
+                  networkData?.internet_gateways?.count ??
+                  0,
+                load_balancers:
+                  infraStatusData?.data?.components?.load_balancers?.count ??
+                  resourceCounts.load_balancers ??
+                  0,
               }}
               networkStatus={networkData}
               vpcs={networksData || []}
@@ -1339,25 +1439,7 @@ export default function AdminProjectDetails() {
               }}
               onManageMembers={() => setIsMemberModalOpen(true)}
               onSyncResources={() => {
-                refetchNetworkStatus();
-                // Invalidate local queries to pick up synced data
-                queryClient.invalidateQueries(["networks"]);
-                queryClient.invalidateQueries(["vpcs"]);
-                queryClient.invalidateQueries(["subnets"]);
-                queryClient.invalidateQueries(["securityGroups"]);
-                queryClient.invalidateQueries(["security_groups"]);
-                queryClient.invalidateQueries(["keyPairs"]);
-                queryClient.invalidateQueries(["key_pairs"]);
-                queryClient.invalidateQueries(["igws"]);
-                queryClient.invalidateQueries(["internet_gateways"]);
-                queryClient.invalidateQueries(["routeTables"]);
-                queryClient.invalidateQueries(["route_tables"]);
-                queryClient.invalidateQueries(["elasticIps"]);
-                queryClient.invalidateQueries(["elastic_ips"]);
-                queryClient.invalidateQueries(["networkInterfaces"]);
-
-                refetchProjectStatus();
-                refetchProjectDetails();
+                syncInfrastructure({ projectId: resolvedProjectId });
               }}
               onViewNetworkDetails={() => handleSectionClick?.("vpcs")}
               onCompleteSetup={async () => {
@@ -1373,7 +1455,7 @@ export default function AdminProjectDetails() {
               }}
               onViewKeyPairs={() =>
                 navigate(
-                  `/admin-dashboard/infrastructure/key-pairs?project=${project?.identifier || projectId}&region=${project?.region}`
+                  `/admin-dashboard/key-pairs?project=${project?.identifier || projectId}&region=${project?.region}`
                 )
               }
               onViewRouteTables={() =>
@@ -1671,6 +1753,35 @@ export default function AdminProjectDetails() {
     }
   };
 
+  // Phase 8: Dedicated Provisioning Screen
+  // Use sticky mode: once provisioning starts, stay on this screen until complete
+  if (isInProvisioningMode || project?.status === "provisioning") {
+    return (
+      <ProvisioningFullScreen
+        project={project}
+        setupSteps={setupSteps || []}
+        onRefresh={() => syncInfrastructure.mutate()}
+      />
+    );
+  }
+
+  // Infra Studio: Project created but not provisioned
+  if (project?.status === "created" || project?.provisioning_status === "created") {
+    return (
+      <>
+        <AdminHeadbar />
+        <AdminSidebar />
+        <AdminActiveTab />
+        <AdminPageShell
+          title="Infrastructure Setup"
+          description={`Initialize infrastructure for ${project?.name || projectId}`}
+        >
+          <InfrastructureSetupWizard project={project} />
+        </AdminPageShell>
+      </>
+    );
+  }
+
   return (
     <>
       <AdminHeadbar />
@@ -1721,7 +1832,6 @@ export default function AdminProjectDetails() {
           onClose={closePaymentModal}
           transactionData={activePaymentPayload}
           onPaymentComplete={handlePaymentComplete}
-          authToken={adminToken}
           apiBaseUrl={config.adminURL}
         />
       )}

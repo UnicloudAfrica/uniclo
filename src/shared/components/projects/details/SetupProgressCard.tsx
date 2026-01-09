@@ -46,21 +46,40 @@ const SetupProgressCard: React.FC<SetupProgressCardProps> = ({
     })
     .slice(0, 3);
 
+  // Detect if this is a cleanup operation to change colors
+  const isCleanup = steps.some(
+    (s) =>
+      s.label?.toLowerCase().includes("cleanup") ||
+      s.label?.toLowerCase().includes("removing") ||
+      s.label?.toLowerCase().includes("delete")
+  );
+
+  const themeColor = isCleanup ? "amber" : "blue";
+  const themeBg = isCleanup ? "bg-amber-50" : "bg-blue-50";
+  const themeText = isCleanup ? "text-amber-600" : "text-blue-600";
+  const themeBar = isCleanup ? "bg-amber-500" : "bg-blue-600";
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm h-full flex flex-col overflow-hidden">
       <div className="p-6 pb-2 border-b border-gray-50">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Infrastructure Pipeline</h3>
-          <span className="text-xs font-mono font-bold px-2 py-1 bg-blue-50 text-blue-600 rounded">
-            {calculatedPercent}% READY
+          <h3 className="text-lg font-semibold text-gray-900">
+            {isCleanup ? "Resource Termination Pipeline" : "Infrastructure Pipeline"}
+          </h3>
+          <span className={`text-xs font-mono font-bold px-2 py-1 ${themeBg} ${themeText} rounded`}>
+            {isCleanup
+              ? allComplete
+                ? "TERMINATED"
+                : "CLEANING UP"
+              : `${calculatedPercent}% READY`}
           </span>
         </div>
 
         {/* Progress Bar */}
         <div className="w-full bg-gray-100 rounded-full h-1.5 mb-2">
           <div
-            className="bg-blue-600 h-1.5 rounded-full transition-all duration-700 ease-in-out"
+            className={`${themeBar} h-1.5 rounded-full transition-all duration-700 ease-in-out`}
             style={{ width: `${calculatedPercent}%` }}
           />
         </div>
@@ -140,7 +159,7 @@ const SetupProgressCard: React.FC<SetupProgressCardProps> = ({
                         e.stopPropagation();
                         toggleStep(step.id);
                       }}
-                      className="text-gray-400 hover:text-gray-600"
+                      className={`text-${themeColor}-400 hover:text-${themeColor}-600`}
                     >
                       Close
                     </button>
@@ -178,7 +197,13 @@ const SetupProgressCard: React.FC<SetupProgressCardProps> = ({
                 </span>
                 <span className={idx === 0 ? "text-white" : "text-gray-500"}>
                   {idx === 0 && "> "} {log.label}{" "}
-                  {log.status === "completed" ? "successful" : "executing..."}
+                  {log.status === "completed"
+                    ? isCleanup
+                      ? "removed"
+                      : "successful"
+                    : isCleanup
+                      ? "deleting..."
+                      : "executing..."}
                 </span>
               </div>
             ))}

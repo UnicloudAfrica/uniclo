@@ -10,25 +10,17 @@ import { ObjectStoragePaymentStep } from "../../shared/components/object-storage
 import { ObjectStorageReviewStep } from "../../shared/components/object-storage/ObjectStorageReviewStep";
 import { ObjectStorageOrderSummary } from "../../shared/components/object-storage/ObjectStorageOrderSummary";
 import objectStorageApi from "../../services/objectStorageApi";
-import useAdminAuthStore from "../../stores/adminAuthStore";
-import config from "../../config";
 
 // Admin-specific submit function
-const createAdminSubmitOrder = (adminToken: string | null) => async (payload: any) => {
-  const response = await objectStorageApi.createOrder({
-    ...payload,
-    token: adminToken,
-  });
+const createAdminSubmitOrder = async (payload: any) => {
+  const response = await objectStorageApi.createOrder(payload);
   return response;
 };
 
 const AdminObjectStorageCreateNew: React.FC = () => {
-  const adminToken = useAdminAuthStore((state) => state.token);
-
   const logic = useObjectStorageLogic({
     context: "admin",
-    submitOrderFn: createAdminSubmitOrder(adminToken),
-    getAuthToken: () => adminToken,
+    submitOrderFn: createAdminSubmitOrder,
   });
 
   const {

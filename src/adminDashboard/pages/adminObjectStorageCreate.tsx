@@ -457,7 +457,6 @@ const AdminObjectStorageCreate = () => {
     transactionStatus === "completed" ||
     transactionStatus === "paid";
   const isPaymentFailed = transactionStatus === "failed";
-  const adminToken = useAdminAuthStore.getState()?.token || null;
 
   // Load Paystack when payment options are available
   useEffect(() => {
@@ -2062,7 +2061,6 @@ const AdminObjectStorageCreate = () => {
                       onPaymentComplete={() => {
                         ToastUtils.success("Payment completed.");
                       }}
-                      authToken={adminToken}
                       className="border border-slate-200"
                       apiBaseUrl={config.adminURL}
                       onPaymentOptionChange={setSelectedPaymentOption}

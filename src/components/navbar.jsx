@@ -105,12 +105,22 @@ const Navbar = () => {
       >
         <div className="w-full mt-[2em] flex flex-col justify-center items-center space-y-5">
           <div className="w-full flex flex-row justify-between md:hidden text-lg">
-            <button className="border border-[#EAEBF0] py-3 w-[48%] text-[#121212] text-center font-Outfit font-normal rounded-[30px]">
+            <a
+              href="https://calendly.com/unicloud-africa/30min?back=1"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="border border-[#EAEBF0] py-3 w-[48%] text-[#121212] text-center font-Outfit font-normal rounded-[30px]"
+            >
               Login
-            </button>
-            <button className="bg-gradient-to-r from-[#288DD1] via-[#3fd0e0] to-[#3FE0C8] py-3 w-[48%] text-[#fff] text-center font-Outfit font-normal rounded-[30px]">
+            </a>
+            <a
+              href="https://calendly.com/unicloud-africa/30min?back=1"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-gradient-to-r from-[#288DD1] via-[#3fd0e0] to-[#3FE0C8] py-3 w-[48%] text-[#fff] text-center font-Outfit font-normal rounded-[30px]"
+            >
               Register
-            </button>
+            </a>
           </div>
           <div className="w-full text-left font-Outfit">
             <Link to="/">
@@ -367,10 +377,22 @@ const Navbar = () => {
           </Link>
         </span>
         <span className="hidden md:flex items-center space-x-6 font-Outfit text-sm">
-          <p>Login</p>
-          <button className=" text-white px-9 py-3 rounded-[30px] bg-gradient-to-r from-[#288DD1] via-[#3fd0e0] to-[#3FE0C8]">
+          <a
+            href="https://calendly.com/unicloud-africa/30min?back=1"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-[#288DD1] transition-colors"
+          >
+            Login
+          </a>
+          <a
+            href="https://calendly.com/unicloud-africa/30min?back=1"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white px-9 py-3 rounded-[30px] bg-gradient-to-r from-[#288DD1] via-[#3fd0e0] to-[#3FE0C8] hover:opacity-90 transition-opacity"
+          >
             Register
-          </button>
+          </a>
           <div onClick={overlay} className="menu-icon md:flex lg:hidden hidden">
             <input className="menu-icon__cheeckbox" type="checkbox" />
             <div className=" lg:hidden">

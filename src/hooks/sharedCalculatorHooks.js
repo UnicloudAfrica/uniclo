@@ -1,66 +1,63 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import config from "../config";
-import useAdminAuthStore from "../stores/adminAuthStore";
-import useTenantAuthStore from "../stores/tenantAuthStore";
-import useClientAuthStore from "../stores/clientAuthStore";
+import { resolveActivePersona } from "../stores/sessionUtils";
 import ToastUtils from "../utils/toastUtil.ts";
 import silentApi from "../index/silent";
 import silentAdminApi from "../index/admin/silent";
 
-// Determine if user is admin or tenant and get appropriate token and base URL
+// Determine user context for base URL and headers (cookie auth)
 const getAuthConfig = () => {
-  const adminAuth = useAdminAuthStore.getState();
-  const tenantAuth = useTenantAuthStore.getState();
-  const clientAuth = useClientAuthStore.getState();
+  const { key, snapshot } = resolveActivePersona();
+  const role = (snapshot?.role || key || "").toLowerCase();
 
-  // Check if admin is authenticated
-  if (adminAuth.token) {
+  if (role === "admin") {
     return {
-      token: adminAuth.token,
-      baseURL: config.adminURL, // Use admin API endpoints
+      baseURL: config.adminURL,
+      headers: snapshot?.getAuthHeaders?.() || {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
     };
   }
 
-  // Check if tenant is authenticated
-  if (tenantAuth.token) {
+  if (role === "tenant") {
     return {
-      token: tenantAuth.token,
-      baseURL: config.tenantURL + "/admin", // Use tenant admin API endpoints
+      baseURL: `${config.tenantURL}/admin`,
+      headers: snapshot?.getAuthHeaders?.() || {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
     };
   }
 
-  // Check if client is authenticated
-  if (clientAuth.token) {
+  if (role === "client") {
     return {
-      token: clientAuth.token,
-      baseURL: config.baseURL, // Use public API endpoints
+      baseURL: config.baseURL,
+      headers: snapshot?.getAuthHeaders?.() || {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
     };
   }
 
-  // No authentication - this shouldn't happen for calculator/pricing
   return {
-    token: null,
-    baseURL: config.baseURL, // Fallback to general API
+    baseURL: config.baseURL,
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
   };
 };
 
 // Shared API call function
 const sharedApiCall = async (method, uri, body = null) => {
-  const { token, baseURL } = getAuthConfig();
+  const { baseURL, headers } = getAuthConfig();
   const url = baseURL + uri;
-
-  const headers = {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-  };
-
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
 
   const options = {
     method,
     headers,
+    credentials: "include",
     body: body ? JSON.stringify(body) : null,
   };
 
@@ -233,7 +230,7 @@ export const useSharedMultiQuotePreviews = () => {
 
 // Shared Client Fetching Hook
 const fetchClients = async () => {
-  const { token, baseURL } = getAuthConfig();
+  const { baseURL } = getAuthConfig();
 
   // Use appropriate endpoint based on user type
   const endpoint = baseURL.includes("/admin") ? "/clients" : "/clients";

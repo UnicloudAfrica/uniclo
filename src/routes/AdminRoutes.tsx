@@ -31,6 +31,7 @@ import AdminRegion from "../adminDashboard/pages/adminRegion";
 import AdminPricing from "../adminDashboard/pages/adminPricing";
 import AdminProducts from "../adminDashboard/pages/AdminProducts";
 import AdminProductCreate from "../adminDashboard/pages/AdminProductCreate";
+import AdminTemplates from "../adminDashboard/pages/AdminTemplates";
 import AdminMultiQuote from "../adminDashboard/pages/adminMultiQuote";
 import CreateInvoice from "../adminDashboard/pages/CreateInvoice";
 import AdminAdvancedCalculator from "../adminDashboard/pages/adminAdvancedCalculator";
@@ -79,6 +80,7 @@ import {
   AdminImages,
   AdminAutoScaling,
 } from "../adminDashboard/pages/infrastructure";
+import AdminKeyPairCreate from "../adminDashboard/pages/infrastructure/AdminKeyPairCreate";
 
 const AdminRoutes = (): React.JSX.Element => {
   return (
@@ -103,6 +105,7 @@ const AdminRoutes = (): React.JSX.Element => {
       <Route path="/admin-dashboard/payment/:transactionId" element={<AdminPaymentDetails />} />
       <Route path="/admin-dashboard/products" element={<AdminProducts />} />
       <Route path="/admin-dashboard/products/add" element={<AdminProductCreate />} />
+      <Route path="/admin-dashboard/templates" element={<AdminTemplates />} />
       <Route
         path="/admin-dashboard/colocation"
         element={<AdminPricing initialTab="colocation" />}
@@ -136,6 +139,7 @@ const AdminRoutes = (): React.JSX.Element => {
       <Route path="/admin-dashboard/account" element={<EnhancedProfileSettings />} />
       <Route path="/admin-dashboard/instances" element={<AdminInstances />} />
       <Route path="/admin-dashboard/instances/details" element={<AdminInstancesDetails />} />
+
       <Route path="/admin-dashboard/object-storage" element={<AdminObjectStorage />} />
       <Route path="/admin-dashboard/object-storage/create" element={<AdminObjectStorageCreate />} />
       <Route
@@ -177,6 +181,8 @@ const AdminRoutes = (): React.JSX.Element => {
         path="/admin-dashboard/infrastructure/load-balancers"
         element={<AdminLoadBalancers />}
       />
+      <Route path="/admin-dashboard/key-pairs" element={<AdminKeyPairs />} />
+      <Route path="/admin-dashboard/key-pairs/create" element={<AdminKeyPairCreate />} />
       <Route path="/admin-dashboard/infrastructure/key-pairs" element={<AdminKeyPairs />} />
       <Route
         path="/admin-dashboard/infrastructure/network-interfaces"

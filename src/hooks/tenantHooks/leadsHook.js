@@ -73,17 +73,16 @@ const downloadDoc = async (id) => {
     throw new Error("Document identifier is required");
   }
 
-  const { token } = useTenantAuthStore.getState();
-  const response = await fetch(
-    `${config.tenantURL}/lead-documents/${id}/download`,
-    {
-      method: "GET",
-      headers: {
-        Accept: "application/octet-stream,application/pdf,image/*,*/*",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-    }
-  );
+  const tenantState = useTenantAuthStore.getState();
+  const baseHeaders = tenantState?.getAuthHeaders ? tenantState.getAuthHeaders() : {};
+  const response = await fetch(`${config.tenantURL}/lead-documents/${id}/download`, {
+    method: "GET",
+    headers: {
+      ...baseHeaders,
+      Accept: "application/octet-stream,application/pdf,image/*,*/*",
+    },
+    credentials: "include",
+  });
 
   if (!response.ok) {
     let message = "Failed to download document";
@@ -96,11 +95,8 @@ const downloadDoc = async (id) => {
   }
 
   const blob = await response.blob();
-  const contentType =
-    response.headers.get("Content-Type") || "application/octet-stream";
-  const fileName = extractFileNameFromDisposition(
-    response.headers.get("Content-Disposition")
-  );
+  const contentType = response.headers.get("Content-Type") || "application/octet-stream";
+  const fileName = extractFileNameFromDisposition(response.headers.get("Content-Disposition"));
 
   return {
     blob,

@@ -2,7 +2,6 @@ import React, { useMemo } from "react";
 import AdminInstanceConfigurationCard from "../../../adminDashboard/components/AdminInstanceConfigurationCard";
 import { Configuration, AdditionalVolume, Option } from "../../../types/InstanceConfiguration";
 import { InstanceResources } from "../../../hooks/useInstanceResources";
-import NetworkPresetSelector from "../network/NetworkPresetSelector";
 
 // Type for custom fetch hook that returns { data, isFetching, ... }
 type FetchHookResult = { data: any; isFetching?: boolean; isLoading?: boolean };
@@ -19,17 +18,16 @@ interface ConfigurationListStepProps {
   onAddConfiguration: () => void;
   onRemoveConfiguration: (id: string) => void;
   onUpdateConfiguration: (id: string, updates: Partial<Configuration>) => void;
+  onResetConfiguration?: (id: string, updates: Partial<Configuration>) => void;
   onAddVolume: (configId: string) => void;
   onRemoveVolume: (configId: string, volumeId: string) => void;
   onUpdateVolume: (configId: string, volumeId: string, updates: Partial<AdditionalVolume>) => void;
   onBack: () => void;
   onSubmit: () => void;
+  projectHasNetwork?: boolean; // If true, project already has VPC/network - show banner
 
-  // Network preset configuration
-  networkPreset?: string | null;
-  onNetworkPresetChange?: (preset: string) => void;
-  showNetworkPresets?: boolean;
-  projectHasNetwork?: boolean; // If true, project already has VPC/network - hide preset selector
+  // Template selection
+  showTemplateSelector?: boolean;
 
   // Optional context-specific hook overrides
   useProjectsHook?: FetchHookFn;
@@ -41,6 +39,9 @@ interface ConfigurationListStepProps {
   // Skip flags for simplified contexts (e.g., client without project scoping)
   skipProjectFetch?: boolean;
   skipNetworkResourcesFetch?: boolean;
+  onSaveTemplate?: (config: Configuration) => void;
+  onCreateProject?: (configId: string, projectName: string) => void;
+  formVariant?: "classic" | "cube";
 }
 
 const ConfigurationListStep: React.FC<ConfigurationListStepProps> = ({
@@ -54,17 +55,14 @@ const ConfigurationListStep: React.FC<ConfigurationListStepProps> = ({
   onAddConfiguration,
   onRemoveConfiguration,
   onUpdateConfiguration,
+  onResetConfiguration,
   onAddVolume,
   onRemoveVolume,
   onUpdateVolume,
   onBack,
   onSubmit,
-
-  // Network preset props
-  networkPreset,
-  onNetworkPresetChange,
-  showNetworkPresets = true,
   projectHasNetwork = false,
+  showTemplateSelector = false,
 
   // Hook overrides
   useProjectsHook,
@@ -74,6 +72,9 @@ const ConfigurationListStep: React.FC<ConfigurationListStepProps> = ({
   useNetworksHook,
   skipProjectFetch = false,
   skipNetworkResourcesFetch = false,
+  onSaveTemplate,
+  onCreateProject,
+  formVariant = "classic",
 }) => {
   const bandwidthOptions = useMemo(() => {
     return (resources.bandwidths || [])
@@ -90,29 +91,13 @@ const ConfigurationListStep: React.FC<ConfigurationListStepProps> = ({
       .filter((item: Option | null): item is Option => Boolean(item));
   }, [resources.bandwidths]);
 
-  // Only show network preset selector if:
-  // 1. showNetworkPresets is true
-  // 2. We have the onChange handler
-  // 3. Project does NOT already have network infrastructure
-  const shouldShowPresetSelector =
-    showNetworkPresets && onNetworkPresetChange && !projectHasNetwork;
+  const hasSelectedProject = configurations.some((cfg) => Boolean(cfg.project_id));
+  const shouldShowNetworkBanner = hasSelectedProject && projectHasNetwork;
 
   return (
     <div className="space-y-6">
-      {/* Network Preset Selector - Only for NEW projects without network */}
-      {shouldShowPresetSelector && (
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <NetworkPresetSelector
-            value={networkPreset ?? null}
-            onChange={onNetworkPresetChange}
-            disabled={isSubmitting}
-            showAdvancedOption={false}
-          />
-        </div>
-      )}
-
       {/* Info banner if project already has network */}
-      {projectHasNetwork && (
+      {shouldShowNetworkBanner && (
         <div className="rounded-xl border border-green-200 bg-green-50 p-4">
           <p className="text-sm text-green-800">
             ✓ This project already has network infrastructure configured. Your instance will use the
@@ -129,6 +114,7 @@ const ConfigurationListStep: React.FC<ConfigurationListStepProps> = ({
           index={index}
           totalConfigurations={configurations.length}
           updateConfiguration={onUpdateConfiguration}
+          resetConfigurationWithPatch={onResetConfiguration}
           removeConfiguration={onRemoveConfiguration}
           addAdditionalVolume={onAddVolume}
           updateAdditionalVolume={onUpdateVolume}
@@ -146,6 +132,7 @@ const ConfigurationListStep: React.FC<ConfigurationListStepProps> = ({
           onBackToWorkflow={onBack}
           onSubmitConfigurations={onSubmit}
           isSubmitting={isSubmitting}
+          showTemplateSelector={showTemplateSelector}
           // Pass through context-specific options
           useProjectsHook={useProjectsHook}
           useSecurityGroupsHook={useSecurityGroupsHook}
@@ -154,6 +141,9 @@ const ConfigurationListStep: React.FC<ConfigurationListStepProps> = ({
           useNetworksHook={useNetworksHook}
           skipProjectFetch={skipProjectFetch}
           skipNetworkResourcesFetch={skipNetworkResourcesFetch}
+          onSaveTemplate={onSaveTemplate}
+          onCreateProject={onCreateProject}
+          formVariant={formVariant}
         />
       ))}
     </div>

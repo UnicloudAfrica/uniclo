@@ -57,46 +57,44 @@ export default function VerifyMail() {
       onSuccess: (res) => {
         clearUserEmail();
 
-        const userRole = res?.data?.role;
-        const accessToken =
-          res?.access_token || res?.token || res?.data?.access_token || res?.data?.token;
-        if (accessToken) {
-          const domainInfo =
-            res?.data?.domain ??
-            res?.data?.tenant?.domain ??
-            res?.data?.domain_account?.account_domain ??
-            null;
+        const userRole = res?.data?.role ?? res?.role;
+        const domainInfo =
+          res?.data?.domain ??
+          res?.data?.tenant?.domain ??
+          res?.data?.domain_account?.account_domain ??
+          null;
 
-          const availableTenants =
-            res?.data?.available_tenants ??
-            res?.data?.availableTenants ??
-            res?.data?.tenants ??
-            undefined;
+        const availableTenants =
+          res?.data?.available_tenants ??
+          res?.data?.availableTenants ??
+          res?.data?.tenants ??
+          undefined;
 
-          const sessionPayload = {
-            token: accessToken,
-            user: res?.data ?? null,
-            role: userRole ?? undefined,
-            tenant: res?.data?.tenant ?? null,
-            domain: domainInfo,
-            availableTenants,
-            userEmail: res?.data?.email ?? email,
-            cloudRoles: res?.data?.cloud_roles ?? res?.data?.cloudRoles ?? undefined,
-            cloudAbilities: res?.data?.cloud_abilities ?? res?.data?.cloudAbilities ?? undefined,
-          };
+        const sessionPayload = {
+          user: res?.data ?? null,
+          role: userRole ?? undefined,
+          tenant: res?.data?.tenant ?? null,
+          domain: domainInfo,
+          availableTenants,
+          userEmail: res?.data?.email ?? email,
+          cloudRoles: res?.data?.cloud_roles ?? res?.data?.cloudRoles ?? undefined,
+          cloudAbilities: res?.data?.cloud_abilities ?? res?.data?.cloudAbilities ?? undefined,
+          isAuthenticated: true,
+        };
 
-          if ((userRole || "").toLowerCase() === "client") {
-            clientAuth.setSession(sessionPayload);
-          } else if ((userRole || "").toLowerCase() === "admin") {
-            adminAuth.setSession(sessionPayload);
-          } else {
-            tenantAuth.setSession(sessionPayload);
-          }
+        const normalizedRole = (userRole || "tenant").toLowerCase();
 
-          clearAuthSessionsExcept((userRole || "tenant").toLowerCase());
+        if (normalizedRole === "client") {
+          clientAuth.setSession(sessionPayload);
+        } else if (normalizedRole === "admin") {
+          adminAuth.setSession(sessionPayload);
+        } else {
+          tenantAuth.setSession(sessionPayload);
         }
 
-        switch (userRole) {
+        clearAuthSessionsExcept(normalizedRole);
+
+        switch (normalizedRole) {
           case "tenant":
             navigate("/dashboard/onboarding");
             break;

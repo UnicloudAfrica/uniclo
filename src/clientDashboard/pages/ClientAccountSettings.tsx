@@ -421,7 +421,6 @@ export default function ClientAccountSettings() {
                   name={`${profile?.first_name} ${profile?.last_name}`}
                   email={profile?.email}
                   avatarUrl={profile?.profile_picture_url} // Check if this field exists
-                  token={useClientAuthStore.getState().token || ""}
                   readOnly={true}
                   onAvatarChange={() => {}}
                   uploadEndpoint=""

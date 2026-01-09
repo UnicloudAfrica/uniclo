@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import { API_BASE, getAdminApi } from "../../index/admin/adminAxios";
 import ToastUtils from "../../utils/toastUtil";
 
-const API_BASE = import.meta.env.VITE_API_ADMIN_URL || "/api/v1/admin";
+const adminApi = getAdminApi();
 
 // ==================== Load Balancers ====================
 
@@ -10,7 +10,7 @@ export const useLoadBalancers = (projectId: string) => {
   return useQuery({
     queryKey: ["load-balancers", projectId],
     queryFn: async () => {
-      const { data } = await axios.get(`${API_BASE}/projects/${projectId}/load-balancers`);
+      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/load-balancers`);
       return data.data || [];
     },
     enabled: !!projectId,
@@ -21,7 +21,9 @@ export const useLoadBalancer = (projectId: string, lbId: string) => {
   return useQuery({
     queryKey: ["load-balancer", projectId, lbId],
     queryFn: async () => {
-      const { data } = await axios.get(`${API_BASE}/projects/${projectId}/load-balancers/${lbId}`);
+      const { data } = await adminApi.get(
+        `${API_BASE}/projects/${projectId}/load-balancers/${lbId}`
+      );
       return data.data;
     },
     enabled: !!projectId && !!lbId,
@@ -32,7 +34,7 @@ export const useCreateLoadBalancer = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ projectId, payload }: { projectId: string; payload: any }) => {
-      const { data } = await axios.post(
+      const { data } = await adminApi.post(
         `${API_BASE}/projects/${projectId}/load-balancers`,
         payload
       );
@@ -52,7 +54,7 @@ export const useDeleteLoadBalancer = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ projectId, lbId }: { projectId: string; lbId: string }) => {
-      await axios.delete(`${API_BASE}/projects/${projectId}/load-balancers/${lbId}`);
+      await adminApi.delete(`${API_BASE}/projects/${projectId}/load-balancers/${lbId}`);
     },
     onSuccess: (_, { projectId }) => {
       ToastUtils.success("Load Balancer deleted successfully");
@@ -71,7 +73,9 @@ export const useListeners = (projectId: string, lbId?: string) => {
     queryKey: ["listeners", projectId, lbId],
     queryFn: async () => {
       const params = lbId ? { load_balancer_id: lbId } : {};
-      const { data } = await axios.get(`${API_BASE}/projects/${projectId}/listeners`, { params });
+      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/listeners`, {
+        params,
+      });
       return data.data || [];
     },
     enabled: !!projectId,
@@ -82,7 +86,7 @@ export const useCreateListener = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ projectId, payload }: { projectId: string; payload: any }) => {
-      const { data } = await axios.post(`${API_BASE}/projects/${projectId}/listeners`, payload);
+      const { data } = await adminApi.post(`${API_BASE}/projects/${projectId}/listeners`, payload);
       return data;
     },
     onSuccess: (_, { projectId }) => {
@@ -99,7 +103,7 @@ export const useDeleteListener = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ projectId, listenerId }: { projectId: string; listenerId: string }) => {
-      await axios.delete(`${API_BASE}/projects/${projectId}/listeners/${listenerId}`);
+      await adminApi.delete(`${API_BASE}/projects/${projectId}/listeners/${listenerId}`);
     },
     onSuccess: (_, { projectId }) => {
       ToastUtils.success("Listener deleted successfully");
@@ -117,7 +121,7 @@ export const useTargetGroups = (projectId: string) => {
   return useQuery({
     queryKey: ["target-groups", projectId],
     queryFn: async () => {
-      const { data } = await axios.get(`${API_BASE}/projects/${projectId}/target-groups`);
+      const { data } = await adminApi.get(`${API_BASE}/projects/${projectId}/target-groups`);
       return data.data || [];
     },
     enabled: !!projectId,
@@ -128,7 +132,10 @@ export const useCreateTargetGroup = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ projectId, payload }: { projectId: string; payload: any }) => {
-      const { data } = await axios.post(`${API_BASE}/projects/${projectId}/target-groups`, payload);
+      const { data } = await adminApi.post(
+        `${API_BASE}/projects/${projectId}/target-groups`,
+        payload
+      );
       return data;
     },
     onSuccess: (_, { projectId }) => {
@@ -145,7 +152,7 @@ export const useDeleteTargetGroup = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ projectId, tgId }: { projectId: string; tgId: string }) => {
-      await axios.delete(`${API_BASE}/projects/${projectId}/target-groups/${tgId}`);
+      await adminApi.delete(`${API_BASE}/projects/${projectId}/target-groups/${tgId}`);
     },
     onSuccess: (_, { projectId }) => {
       ToastUtils.success("Target Group deleted successfully");
@@ -169,7 +176,7 @@ export const useRegisterTargets = () => {
       tgId: string;
       targets: any[];
     }) => {
-      const { data } = await axios.post(
+      const { data } = await adminApi.post(
         `${API_BASE}/projects/${projectId}/target-groups/${tgId}/register`,
         { targets }
       );

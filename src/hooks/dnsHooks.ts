@@ -18,7 +18,7 @@ const getApiPrefix = (context: string) => {
  * Fetch DNS zones - works at tenant level (no project/region required)
  */
 export const useDnsZones = (projectId?: string, region?: string) => {
-  const { apiBaseUrl, context, authToken } = useApiContext();
+  const { apiBaseUrl, context, authHeaders, isAuthenticated } = useApiContext();
   const prefix = getApiPrefix(context);
 
   return useQuery({
@@ -30,24 +30,26 @@ export const useDnsZones = (projectId?: string, region?: string) => {
 
       const { data } = await axios.get(`${apiBaseUrl}${prefix}/dns-zones`, {
         params,
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers: authHeaders,
+        withCredentials: true,
       });
       // Zadara API usually returns the list directly or wrapped in 'data'
       return data.data || data;
     },
-    enabled: !!authToken,
+    enabled: isAuthenticated,
   });
 };
 
 export const useCreateDnsZone = () => {
   const queryClient = useQueryClient();
-  const { apiBaseUrl, context, authToken } = useApiContext();
+  const { apiBaseUrl, context, authHeaders } = useApiContext();
   const prefix = getApiPrefix(context);
 
   return useMutation({
     mutationFn: async (payload: any) => {
       const { data } = await axios.post(`${apiBaseUrl}${prefix}/dns-zones`, payload, {
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers: authHeaders,
+        withCredentials: true,
       });
       return data;
     },
@@ -63,7 +65,7 @@ export const useCreateDnsZone = () => {
 
 export const useDeleteDnsZone = () => {
   const queryClient = useQueryClient();
-  const { apiBaseUrl, context, authToken } = useApiContext();
+  const { apiBaseUrl, context, authHeaders } = useApiContext();
   const prefix = getApiPrefix(context);
 
   return useMutation({
@@ -82,7 +84,8 @@ export const useDeleteDnsZone = () => {
 
       await axios.delete(`${apiBaseUrl}${prefix}/dns-zones/${zoneId}`, {
         params,
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers: authHeaders,
+        withCredentials: true,
       });
     },
     onSuccess: () => {
@@ -98,7 +101,7 @@ export const useDeleteDnsZone = () => {
 // ==================== DNS Records ====================
 
 export const useDnsRecords = (zoneId: string, projectId?: string, region?: string) => {
-  const { apiBaseUrl, context, authToken } = useApiContext();
+  const { apiBaseUrl, context, authHeaders, isAuthenticated } = useApiContext();
   const prefix = getApiPrefix(context);
 
   return useQuery({
@@ -110,17 +113,18 @@ export const useDnsRecords = (zoneId: string, projectId?: string, region?: strin
 
       const { data } = await axios.get(`${apiBaseUrl}${prefix}/dns-zones/${zoneId}/records`, {
         params,
-        headers: { Authorization: `Bearer ${authToken}` },
+        headers: authHeaders,
+        withCredentials: true,
       });
       return data.data || data;
     },
-    enabled: !!zoneId && !!authToken,
+    enabled: !!zoneId && isAuthenticated,
   });
 };
 
 export const useChangeDnsRecords = () => {
   const queryClient = useQueryClient();
-  const { apiBaseUrl, context, authToken } = useApiContext();
+  const { apiBaseUrl, context, authHeaders } = useApiContext();
   const prefix = getApiPrefix(context);
 
   return useMutation({
@@ -143,7 +147,8 @@ export const useChangeDnsRecords = () => {
         `${apiBaseUrl}${prefix}/dns-zones/${zoneId}/records`,
         payload,
         {
-          headers: { Authorization: `Bearer ${authToken}` },
+          headers: authHeaders,
+          withCredentials: true,
         }
       );
       return data;

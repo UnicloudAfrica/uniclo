@@ -1,6 +1,4 @@
 import config from "../config";
-import useClientAuthStore from "../stores/clientAuthStore";
-import useTenantAuthStore from "../stores/tenantAuthStore";
 import useAdminAuthStore from "../stores/adminAuthStore";
 import { handleAuthRedirect } from "../utils/authRedirect";
 import ToastUtils from "../utils/toastUtil.ts";
@@ -18,19 +16,10 @@ const api = async (method, uri, body = null) => {
     ? { ...baseHeaders, ...adminState.getAuthHeaders() }
     : { ...baseHeaders };
 
-  // Fallback to tenant/client tokens if no admin token is present
-  if (!headers.Authorization) {
-    const partnerToken = useTenantAuthStore.getState().token;
-    const clientToken = useClientAuthStore.getState().token;
-    const token = partnerToken || clientToken;
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-  }
-
   const options = {
     method,
     headers,
+    credentials: "include",
     body: body ? JSON.stringify(body) : null,
   };
 
@@ -39,45 +28,6 @@ const api = async (method, uri, body = null) => {
     const res = await response.json();
 
     if (response.ok || response.status === 201) {
-      const dataPayload = res && typeof res.data === "object" ? res.data : undefined;
-      const nestedDataPayload =
-        dataPayload && typeof dataPayload.data === "object" ? dataPayload.data : undefined;
-      const messagePayload =
-        dataPayload && typeof dataPayload.message === "object" ? dataPayload.message : undefined;
-      const nestedMessagePayload =
-        messagePayload && typeof messagePayload.data === "object" ? messagePayload.data : undefined;
-
-      const tokenToSet =
-        res?.access_token ||
-        res?.token ||
-        dataPayload?.access_token ||
-        dataPayload?.token ||
-        nestedDataPayload?.access_token ||
-        nestedDataPayload?.token ||
-        messagePayload?.access_token ||
-        messagePayload?.token ||
-        nestedMessagePayload?.access_token ||
-        nestedMessagePayload?.token;
-
-      if (tokenToSet) {
-        const rawRole =
-          dataPayload?.role ||
-          nestedDataPayload?.role ||
-          messagePayload?.role ||
-          nestedMessagePayload?.role;
-        const normalizedRole = typeof rawRole === "string" ? rawRole.toLowerCase() : undefined;
-
-        if (normalizedRole === "client") {
-          const { setToken: setClientToken } = useClientAuthStore.getState();
-          setClientToken(tokenToSet);
-        } else if (normalizedRole === "admin") {
-          useAdminAuthStore.getState().setToken(tokenToSet);
-        } else {
-          const { setToken: setPartnerToken } = useTenantAuthStore.getState();
-          setPartnerToken(tokenToSet);
-        }
-      }
-
       // Handle success message for Toast
       let successMessage = "";
       if (res.data?.message) {

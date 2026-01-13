@@ -43,7 +43,7 @@
   "scripts": {
     "dev": "vite",
     "start": "vite",
-    "build": "vite build",
+    "build": "NODE_OPTIONS='--max-old-space-size=4096' vite build",
     "preview": "vite preview",
     "lint": "eslint src/**/*.{js,jsx,ts,tsx}",
     "format": "prettier --write src/**/*.{js,jsx,ts,tsx,css,md}",

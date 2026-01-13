@@ -61,6 +61,11 @@ export const useInstanceOrderCreation = ({
 
   const buildPayload = useCallback(() => {
     const pricing_requests = configurations.map((cfg, index) => {
+      const isNewProject = cfg.project_mode === "new" || Boolean(cfg.template_locked);
+      const assignmentScopePayload = cfg.assignment_scope || undefined;
+      const sanitizedMemberIds = Array.isArray(cfg.member_user_ids)
+        ? cfg.member_user_ids.map((id) => Number(id)).filter(Boolean)
+        : [];
       const requiredFields = [
         { key: "region", label: `Region (config ${index + 1})` },
         { key: "compute_instance_id", label: `Instance type (config ${index + 1})` },
@@ -74,15 +79,15 @@ export const useInstanceOrderCreation = ({
         throw new Error(`Select: ${missing.map((f) => f.label).join(", ")} before submitting.`);
       }
 
-      const parsedBandwidthCount = Number(cfg.bandwidth_count) || 1;
+      const parsedBandwidthCount = cfg.bandwidth_id ? 1 : 0;
       const parsedFloatingIpCount = Number(cfg.floating_ip_count) || 0;
       const parsedMonths = Number(cfg.months) || 1;
       const parsedInstances = Number(cfg.instance_count) || 1;
       const parsedStorage = Number(cfg.storage_size_gb) || 50;
       const instanceName = (cfg.name || "").trim() || null;
       // const instanceDescription = (cfg.description || "").trim() || null; // Unused in payload
-      const networkId = cfg.network_id || null;
-      const subnetId = cfg.subnet_id || null;
+      const networkId = isNewProject ? undefined : cfg.network_id || undefined;
+      const subnetId = isNewProject ? undefined : cfg.subnet_id || undefined;
       // const tags = (cfg.tags || "").split(",").map((t: string) => t.trim()).filter(Boolean); // Unused in payload
 
       const sanitizedSgIds = (
@@ -103,8 +108,21 @@ export const useInstanceOrderCreation = ({
 
       const fastTrackLine = isFastTrack;
 
+      const securityGroupPayload =
+        !isNewProject && sanitizedSgIds.length > 0 ? sanitizedSgIds : undefined;
+      const keypairPublicKeyPayload =
+        isNewProject && cfg.keypair_name && cfg.keypair_public_key
+          ? cfg.keypair_public_key
+          : undefined;
+
       return {
-        project_id: cfg.project_id || undefined,
+        project_id: isNewProject ? undefined : cfg.project_id || undefined,
+        project_name: isNewProject ? (cfg.project_name || undefined) : undefined,
+        network_preset: isNewProject
+          ? cfg.network_preset === "empty"
+            ? "standard"
+            : cfg.network_preset || "standard"
+          : undefined,
         region: cfg.region || undefined,
         compute_instance_id: cfg.compute_instance_id,
         os_image_id: cfg.os_image_id,
@@ -121,12 +139,15 @@ export const useInstanceOrderCreation = ({
         bandwidth_count: parsedBandwidthCount,
         floating_ip_count: parsedFloatingIpCount,
         cross_connect_id: undefined,
-        security_group_ids: sanitizedSgIds,
-        keypair_name: cfg.keypair_name || null,
+        security_group_ids: securityGroupPayload,
+        keypair_name: cfg.keypair_name || undefined,
+        keypair_public_key: keypairPublicKeyPayload,
         network_id: networkId,
         subnet_id: subnetId,
         name: instanceName,
         fast_track: fastTrackLine,
+        ...(isNewProject && assignmentScopePayload ? { assignment_scope: assignmentScopePayload } : {}),
+        ...(isNewProject && sanitizedMemberIds.length ? { member_user_ids: sanitizedMemberIds } : {}),
       };
     });
 
@@ -152,16 +173,6 @@ export const useInstanceOrderCreation = ({
   const handleCreateOrder = async () => {
     setSubmissionResult(null);
     setOrderReceipt(null);
-    const missingProjectIndex = configurations.findIndex((cfg) => {
-      const requiresProject = cfg.project_mode === "new" || Boolean(cfg.template_locked);
-      return requiresProject && !String(cfg.project_id || "").trim();
-    });
-    if (missingProjectIndex !== -1) {
-      ToastUtils.error(
-        `Create a project for Configuration #${missingProjectIndex + 1} before pricing.`
-      );
-      return;
-    }
     setIsSubmitting(true);
     try {
       const incompleteIndex = configurations.findIndex(
@@ -243,11 +254,14 @@ export const useInstanceOrderCreation = ({
 
   const handlePaymentCompleted = async (payload?: any) => {
     const identifier =
+      selectedPaymentOption?.transaction_reference ||
+      submissionResult?.payment?.payment_gateway_options?.[0]?.transaction_reference ||
+      orderReceipt?.payment?.payment_gateway_options?.[0]?.transaction_reference ||
       submissionResult?.transaction?.identifier ||
       submissionResult?.transaction?.reference ||
-      submissionResult?.transaction?.id ||
       orderReceipt?.transaction?.identifier ||
-      orderReceipt?.transaction?.id;
+      orderReceipt?.transaction?.reference ||
+      null;
 
     if (!identifier) {
       ToastUtils.error("No transaction reference available to verify.");
@@ -291,11 +305,17 @@ export const useInstanceOrderCreation = ({
         responseData?.transaction?.status ||
         "pending"
       ).toLowerCase();
+      const keypairMaterials =
+        responseData?.keypair_materials ||
+        responseData?.metadata?.keypair_materials ||
+        responseData?.transaction?.metadata?.keypair_materials ||
+        null;
 
       const updateState = (prev: any) => {
         if (!prev) return prev;
         return {
           ...prev,
+          ...(keypairMaterials ? { keypair_materials: keypairMaterials } : {}),
           transaction: {
             ...prev.transaction,
             status: normalizedStatus,

@@ -38,6 +38,7 @@ import UploadPricingFileModal from "./productPricingComps/uploadPricingFile";
 import ResourceHero from "../../shared/components/ui/ResourceHero";
 import ResourceDataExplorer from "../components/ResourceDataExplorer";
 import { ModernCard } from "../../shared/components/ui";
+import { matchesProductType } from "../../utils/productTypeUtils";
 
 const formatCurrency = (value: any) =>
   typeof value === "number" || value ? `$${Number(value || 0).toFixed(2)}` : "—";
@@ -413,27 +414,13 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
     }));
   }, [pricingData, isColocationTab]);
 
-  const matchesProductType = useCallback((value, productType) => {
-    if (!productType) return true;
-    if (!value) return false;
-    const normalized = String(value).toLowerCase();
-    const target = productType.toLowerCase();
-    return (
-      normalized === target ||
-      normalized.endsWith(target) ||
-      normalized.includes(`${target}_`) ||
-      normalized.includes(`\\${target}`) ||
-      normalized.includes(`/${target}`)
-    );
-  }, []);
-
   const filteredRows = useMemo(() => {
     if (isColocationTab) return [];
     if (!activeConfig?.productType) return pricingRows;
     return pricingRows.filter((row: any) =>
       matchesProductType(row.productable_type, activeConfig.productType)
     );
-  }, [pricingRows, activeConfig, matchesProductType, isColocationTab]);
+  }, [pricingRows, activeConfig, isColocationTab]);
 
   const meta = !isColocationTab ? (pricingData?.meta ?? null) : null;
   const total = !isColocationTab ? filteredRows.length : 0;

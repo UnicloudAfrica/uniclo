@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import adminSilentApiforUser from "../../index/admin/silentadminforuser";
-import apiAdminforUser from "../../index/admin/apiAdminforUser";
+import adminApi, { adminSilentApi } from "../../index/admin/api";
 
 const fetchKeyPairs = async ({ project_id, region, refresh = false }) => {
   const params = new URLSearchParams();
@@ -9,9 +8,9 @@ const fetchKeyPairs = async ({ project_id, region, refresh = false }) => {
   if (refresh) params.append("refresh", "1");
 
   const queryString = params.toString();
-  const res = await adminSilentApiforUser(
+  const res = await adminSilentApi(
     "GET",
-    `/business/key-pairs${queryString ? `?${queryString}` : ""}`
+    `/key-pairs${queryString ? `?${queryString}` : ""}`
   );
   if (!res.data) throw new Error("Failed to fetch key pairs");
   return res.data;
@@ -22,29 +21,25 @@ export const syncKeyPairsFromProvider = async ({ project_id, region }) => {
 };
 
 const fetchKeyPairById = async (id) => {
-  const res = await adminSilentApiforUser("GET", `/business/key-pairs/${id}`);
+  const res = await adminSilentApi("GET", `/key-pairs/${id}`);
   if (!res.data) throw new Error(`Failed to fetch key pair with ID ${id}`);
   return res.data;
 };
 
 const createKeyPair = async (keyPairData) => {
-  const res = await apiAdminforUser("POST", "/business/key-pairs", keyPairData);
+  const res = await adminApi("POST", "/key-pairs", keyPairData);
   if (!res) throw new Error("Failed to create key pair");
   return res;
 };
 
 const updateKeyPair = async ({ id, keyPairData }) => {
-  const res = await apiAdminforUser(
-    "PATCH",
-    `/business/key-pairs/${id}`,
-    keyPairData
-  );
+  const res = await adminApi("PATCH", `/key-pairs/${id}`, keyPairData);
   if (!res.data) throw new Error(`Failed to update key pair with ID ${id}`);
   return res.data;
 };
 
 const deleteKeyPair = async (id) => {
-  const res = await apiAdminforUser("DELETE", `/business/key-pairs/${id}`);
+  const res = await adminApi("DELETE", `/key-pairs/${id}`);
   if (!res.data) throw new Error(`Failed to delete key pair with ID ${id}`);
   return res.data;
 };

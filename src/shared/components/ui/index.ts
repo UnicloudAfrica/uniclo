@@ -20,6 +20,7 @@ export { ResourceSection } from "./ResourceSection";
 export { ResourceEmptyState } from "./ResourceEmptyState";
 export { ResourceListCard } from "./ResourceListCard";
 export { default as ModernSelect } from "./ModernSelect";
+export { default as SearchableSelect } from "./SearchableSelect";
 export { default as ModernModal } from "./ModernModal";
 export { default as ModernTextarea } from "./ModernTextarea";
 export { default as SelectableInput } from "./SelectableInput";

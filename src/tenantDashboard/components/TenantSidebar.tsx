@@ -263,7 +263,7 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({ tenantData, activeTab, se
     <>
       {/* Desktop Sidebar */}
       <aside
-        className="hidden md:flex flex-col fixed left-0 top-[74px] h-[calc(100vh-74px)] w-20 lg:w-[20%] bg-white border-r border-gray-200 z-40"
+        className="hidden md:flex flex-col fixed left-0 top-[74px] h-[calc(100vh-74px)] w-20 lg:w-[20%] bg-white border-r border-gray-200 z-[1000]"
         style={{ borderColor: "rgb(229, 231, 235)" }}
       >
         {/* Sidebar Header */}
@@ -297,9 +297,8 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({ tenantData, activeTab, se
 
       {/* Mobile Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-full w-[280px] bg-white z-50 transform transition-transform duration-300 md:hidden ${
-          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed left-0 top-0 h-full w-[280px] bg-white z-50 transform transition-transform duration-300 md:hidden ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         {/* Mobile Header */}
         <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">

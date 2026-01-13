@@ -34,8 +34,11 @@ const TemplateSelector: React.FC<Props> = ({
   }
 
   return (
-    <div className="mb-8">
-      <div className="flex items-center gap-2 mb-4">
+    <div className="space-y-4">
+      <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+        Templates always create a new project.
+      </div>
+      <div className="flex items-center gap-2">
         <LayoutTemplate className="w-5 h-5 text-primary-600" />
         <h3 className="text-lg font-semibold text-slate-900">Quick Start from Template</h3>
       </div>

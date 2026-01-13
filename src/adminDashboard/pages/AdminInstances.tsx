@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React, { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Loader2,
   Plus,
@@ -130,6 +131,7 @@ const StatusBadge = ({ status, size = "sm" }: { status: string; size?: "xs" | "s
 };
 
 export default function AdminInstances() {
+  const navigate = useNavigate();
   const {
     isFetching: isInstancesFetching,
     data: instancesResponse,
@@ -156,9 +158,9 @@ export default function AdminInstances() {
 
   // Navigate to instance details
   const navigateToInstanceDetails = (instanceId: string) => {
-    window.location.href = `/admin-dashboard/instances/details?identifier=${encodeURIComponent(
-      instanceId
-    )}`;
+    navigate(
+      `/admin-dashboard/instances/details?identifier=${encodeURIComponent(instanceId)}`
+    );
   };
 
   // Handle console access
@@ -231,7 +233,7 @@ export default function AdminInstances() {
       <ModernButton
         variant="primary"
         size="sm"
-        onClick={() => (window.location.href = "/admin-dashboard/create-instance")}
+        onClick={() => navigate("/admin-dashboard/create-instance")}
         leftIcon={<Plus className="h-4 w-4" />}
       >
         New Instance

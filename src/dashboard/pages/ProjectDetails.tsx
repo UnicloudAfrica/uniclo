@@ -716,7 +716,13 @@ const ProjectDetails: React.FC = () => {
           recentInstances={recentInstances}
           projectInstances={projectInstances}
           onViewInstance={(instance) => console.log("View instance", instance)}
-          onAddInstance={() => navigate("/dashboard/multi-instance-creation")}
+          onAddInstance={() =>
+            navigate(
+              `/dashboard/create-instance?project=${encodeURIComponent(
+                project?.identifier || projectId || ""
+              )}`
+            )
+          }
           onViewAllInstances={() => navigate("/dashboard/instances")}
           canCreateInstances={false}
           resolvedProjectId={projectId}

@@ -812,7 +812,13 @@ const ClientProjectDetails: React.FC = () => {
           projectInstances={projectInstances as any}
           resolvedProjectId={projectId}
           onViewAllInstances={() => navigate("/client-dashboard/instances")}
-          onAddInstance={() => navigate("/client-dashboard/instances/create")} // Or appropriate path
+          onAddInstance={() =>
+            navigate(
+              `/client-dashboard/instances/provision?project=${encodeURIComponent(
+                project?.identifier || projectId || ""
+              )}`
+            )
+          }
           onViewInstance={(instance: any) =>
             navigate(`/client-dashboard/instances/details?id=${instance.identifier}`)
           }

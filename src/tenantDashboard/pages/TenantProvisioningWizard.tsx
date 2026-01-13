@@ -7,18 +7,13 @@ import StepIndicator from "../../shared/components/instance-wizard/StepIndicator
 import ReviewSubmitStep from "../../shared/components/instance-wizard/ReviewSubmitStep";
 import OrderSuccessStep from "../../shared/components/instance-wizard/OrderSuccessStep";
 import { useTenantProvisioningLogic } from "../../hooks/useTenantProvisioningLogic";
-import {
-  useCreateTenantProject,
-  useFetchTenantProjects,
-  useTenantProjectStatus,
-} from "../../hooks/tenantHooks/projectHooks";
+import { useFetchTenantProjects, useTenantProjectStatus } from "../../hooks/tenantHooks/projectHooks";
 import { useFetchTenantSecurityGroups } from "../../hooks/tenantHooks/securityGroupHooks";
 import { useFetchTenantKeyPairs } from "../../hooks/tenantHooks/keyPairsHook";
 import { useFetchTenantSubnets } from "../../hooks/tenantHooks/subnetHooks";
 import { useFetchTenantNetworks } from "../../hooks/tenantHooks/networkHooks";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
 import TenantWorkflowStep from "../components/TenantWorkflowStep";
-import ToastUtils from "../../utils/toastUtil";
 import {
   evaluateConfigurationCompleteness,
   formatComputeLabel,
@@ -151,83 +146,6 @@ const TenantProvisioningWizard: React.FC = () => {
     () => hasProjectNetworkFromStatus(projectStatus),
     [projectStatus]
   );
-  const { mutateAsync: createTenantProject } = useCreateTenantProject();
-
-  const handleCreateProject = useCallback(
-    async (configId: string, projectName: string) => {
-      const trimmedName = projectName.trim();
-      if (!trimmedName) {
-        ToastUtils.error("Project name is required.");
-        return;
-      }
-
-      const targetConfig = configurations.find((cfg) => cfg.id === configId);
-      if (!targetConfig) {
-        ToastUtils.error("Configuration not found.");
-        return;
-      }
-
-      if (!targetConfig.region) {
-        ToastUtils.error("Select a region before creating a project.");
-        return;
-      }
-
-      const isTemplateConfig = Boolean(targetConfig.template_locked || targetConfig.template_id);
-
-      const payload: any = {
-        name: trimmedName,
-        description: "Project created via instance provisioning.",
-        type: "vpc",
-        region: targetConfig.region,
-      };
-
-      const selectedPreset = targetConfig.network_preset || "standard";
-      if (selectedPreset && selectedPreset !== "empty") {
-        payload.metadata = { network_preset: selectedPreset };
-      }
-
-      if (contextType === "tenant" && selectedTenantId) {
-        payload.tenant_id = selectedTenantId;
-      } else if (contextType === "user" && selectedUserId) {
-        payload.user_id = selectedUserId;
-        if (selectedTenantId) {
-          payload.tenant_id = selectedTenantId;
-        }
-      }
-
-      try {
-        const createdProject = await createTenantProject(payload);
-        const projectIdentifier =
-          createdProject?.identifier ||
-          createdProject?.data?.identifier ||
-          createdProject?.id ||
-          createdProject?.data?.id;
-
-        if (!projectIdentifier) {
-          ToastUtils.error("Project created, but the identifier was missing.");
-          return;
-        }
-
-        updateConfiguration(configId, {
-          project_id: String(projectIdentifier),
-          project_mode: isTemplateConfig ? "new" : "existing",
-          project_name: isTemplateConfig ? trimmedName : "",
-        });
-        ToastUtils.success("Project created successfully.");
-      } catch (error: any) {
-        ToastUtils.error(error?.message || "Failed to create project.");
-      }
-    },
-    [
-      configurations,
-      contextType,
-      createTenantProject,
-      selectedTenantId,
-      selectedUserId,
-      updateConfiguration,
-    ]
-  );
-
   const reviewSummaries = useMemo(() => {
     const instanceTypes = resources.instance_types || [];
     const osImages = resources.os_images || [];
@@ -236,24 +154,34 @@ const TenantProvisioningWizard: React.FC = () => {
 
     return configurations.map((cfg) => {
       const status = evaluateConfigurationCompleteness(cfg);
-      const computeLabel = formatComputeLabel(cfg.compute_instance_id, instanceTypes);
+      const computeLabel =
+        cfg.compute_label || formatComputeLabel(cfg.compute_instance_id, instanceTypes);
+      const resolvedComputeLabel =
+        computeLabel && !["Not selected", "Instance selected"].includes(computeLabel)
+          ? computeLabel
+          : "";
       const defaultTitle =
         cfg.name?.trim() ||
-        (computeLabel && computeLabel !== "Not selected" ? computeLabel : "Instance configuration");
+        (resolvedComputeLabel ? resolvedComputeLabel : "Instance configuration");
+      const osLabel = cfg.os_image_label || formatOsLabel(cfg.os_image_id, osImages);
+      const storageLabel = cfg.volume_type_label
+        ? `${cfg.volume_type_label}${cfg.storage_size_gb ? ` • ${cfg.storage_size_gb} GB` : ""}`
+        : formatVolumeLabel(cfg.volume_type_id, cfg.storage_size_gb, volumeTypes);
 
       return {
         id: cfg.id,
         title: defaultTitle,
         regionLabel:
+          cfg.region_label ||
           allRegionOptions.find((opt) => opt.value === cfg.region)?.label ||
           cfg.region ||
           "No region selected",
         computeLabel,
-        osLabel: formatOsLabel(cfg.os_image_id, osImages),
+        osLabel,
         termLabel: cfg.months
           ? `${cfg.months} month${Number(cfg.months) === 1 ? "" : "s"}`
           : "Not selected",
-        storageLabel: formatVolumeLabel(cfg.volume_type_id, cfg.storage_size_gb, volumeTypes),
+        storageLabel,
         floatingIpLabel: `${Number(cfg.floating_ip_count || 0)} floating IP${
           Number(cfg.floating_ip_count || 0) === 1 ? "" : "s"
         }`,
@@ -327,12 +255,20 @@ const TenantProvisioningWizard: React.FC = () => {
     submissionResult?.transaction?.identifier ||
     orderReceipt?.transaction?.reference ||
     submissionResult?.transaction?.reference;
+  const successInstances =
+    submissionResult?.instances || orderReceipt?.instances || submissionResult?.data?.instances || [];
+  const keypairDownloads =
+    submissionResult?.keypair_materials ||
+    submissionResult?.transaction?.keypair_materials ||
+    orderReceipt?.keypair_materials ||
+    orderReceipt?.transaction?.keypair_materials ||
+    [];
 
   const isReviewStep = currentStep?.id === "review";
   const isSuccessStep = currentStep?.id === "success";
 
   return (
-    <TenantPageShell title="Create Cube-nstance" description="Provision new cube-nstances">
+    <TenantPageShell title="Create Cube-Instance" description="Provision new cube-instances">
       <div className="mx-auto max-w-5xl space-y-8 pb-20">
         {/* Step Indicator - Grid variant */}
         <StepIndicator
@@ -349,9 +285,11 @@ const TenantProvisioningWizard: React.FC = () => {
             isFastTrack={isFastTrack}
             configurationSummaries={configurationSummaries}
             pricingSummary={pricingSummary}
+            keypairDownloads={keypairDownloads}
+            instances={successInstances}
             instancesPageUrl="/dashboard/instances"
             onCreateAnother={() => window.location.reload()}
-            resourceLabel="Cube-nstance"
+            resourceLabel="Cube-Instance"
           />
         ) : isReviewStep ? (
           <ReviewSubmitStep
@@ -376,7 +314,7 @@ const TenantProvisioningWizard: React.FC = () => {
             onBack={() => setActiveStep(isFastTrack ? configureStepIndex : paymentStepIndex)}
             onEditConfiguration={() => setActiveStep(configureStepIndex)}
             onConfirm={() => setActiveStep(successStepIndex)}
-            resourceLabel="Cube-nstance"
+            resourceLabel="Cube-Instance"
           />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -437,7 +375,6 @@ const TenantProvisioningWizard: React.FC = () => {
                   useNetworksHook={useFetchTenantNetworks}
                   skipProjectFetch={false}
                   skipNetworkResourcesFetch={false}
-                  onCreateProject={handleCreateProject}
                   formVariant="cube"
                 />
               )}
@@ -448,8 +385,11 @@ const TenantProvisioningWizard: React.FC = () => {
                   submissionResult={submissionResult}
                   orderReceipt={orderReceipt}
                   isPaymentSuccessful={isPaymentSuccessful}
-                  summaryGrandTotalValue={pricingSummary.grandTotal}
-                  summaryDisplayCurrency={pricingSummary.currency}
+                  summarySubtotalValue={summarySubtotalValue}
+                  summaryTaxValue={summaryTaxValue}
+                  summaryGatewayFeesValue={summaryGatewayFeesValue}
+                  summaryGrandTotalValue={summaryGrandTotalValue}
+                  summaryDisplayCurrency={summaryDisplayCurrency}
                   contextType={contextType}
                   selectedUserId={String(selectedUserId)}
                   clientOptions={clientOptions}
@@ -464,6 +404,7 @@ const TenantProvisioningWizard: React.FC = () => {
             <div className="lg:col-span-1">
               <InstanceSummaryCard
                 configurations={configurations}
+                configurationSummaries={reviewSummaries}
                 contextType={contextType}
                 selectedTenantName={summaryTenantName}
                 selectedClientName={summaryUserName}
@@ -471,9 +412,14 @@ const TenantProvisioningWizard: React.FC = () => {
                   countryOptions.find((c) => String(c.value) === billingCountry)?.label ||
                   billingCountry
                 }
-                summaryTitle="Cube-nstance summary"
-                summaryDescription="Auto-calculated from the selected cube-nstance configuration."
-                resourceLabel="Cube-nstance"
+                summaryTitle="Cube-Instance summary"
+                summaryDescription="Auto-calculated from the selected cube-instance configuration."
+                resourceLabel="Cube-Instance"
+                summarySubtotalValue={summarySubtotalValue}
+                summaryTaxValue={summaryTaxValue}
+                summaryGatewayFeesValue={summaryGatewayFeesValue}
+                summaryGrandTotalValue={summaryGrandTotalValue}
+                summaryDisplayCurrency={summaryDisplayCurrency}
               />
 
               {/* Fast-track split info */}

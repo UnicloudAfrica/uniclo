@@ -28,6 +28,8 @@ import PricingSideMenu from "../components/pricingSideMenu";
 import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
 import { useFetchCountries } from "../../hooks/resource";
 import { useFetchProducts } from "../../hooks/adminHooks/adminProductHooks";
+import { useFetchProductPricing } from "../../hooks/adminHooks/adminproductPricingHook";
+import { matchesProductType, normalizeProductType } from "../../utils/productTypeUtils";
 // @ts-ignore
 import EditProduct from "./productComps/editProduct";
 // @ts-ignore
@@ -41,20 +43,6 @@ const formatCurrency = (value: any) => {
     return "—";
   }
   return `$${Number(value).toFixed(2)}`;
-};
-
-const matchesProductType = (rawType: string, productType: string) => {
-  if (!productType) return true;
-  if (!rawType) return false;
-  const normalized = String(rawType).toLowerCase();
-  const target = productType.toLowerCase();
-  return (
-    normalized === target ||
-    normalized.endsWith(target) ||
-    normalized.includes(`${target}_`) ||
-    normalized.includes(`\\${target}`) ||
-    normalized.includes(`/${target}`)
-  );
 };
 
 const deriveProductStats = (rows: any[]) => {
@@ -374,6 +362,17 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
     enabled: Boolean(!isRegionsFetching && !isCountriesFetching),
     productType: activeConfig.productType,
   });
+  const { isFetching: isPricingFetching, data: pricingData } = useFetchProductPricing(
+    {
+      region: selectedRegion,
+      countryCode: selectedCountryCode,
+      productType: activeConfig.productType,
+    },
+    {
+      enabled: Boolean(!isRegionsFetching && !isCountriesFetching),
+      keepPreviousData: true,
+    }
+  );
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -393,6 +392,39 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
   }, [activeConfig]);
 
   const normalizedProducts = useMemo(() => (Array.isArray(products) ? products : []), [products]);
+
+  const pricingRows = useMemo(() => {
+    const rows = pricingData?.data ?? [];
+    if (!Array.isArray(rows)) return [];
+    if (!activeConfig?.productType) return rows;
+    return rows.filter((row: any) =>
+      matchesProductType(row.productable_type, activeConfig.productType)
+    );
+  }, [pricingData, activeConfig]);
+
+  const pricingLookup = useMemo(() => {
+    const map = new Map<string, any>();
+    pricingRows.forEach((row: any) => {
+      const type = normalizeProductType(row.productable_type);
+      const idValue = row.productable_id ?? row.productableId;
+      if (!type || idValue === undefined || idValue === null) return;
+      const id = String(idValue);
+      const region = row.region || "";
+      const provider = row.provider || "";
+      const key = `${type}|${id}|${region}|${provider}`;
+      map.set(key, row);
+      if (!map.has(`${type}|${id}|${region}|`)) {
+        map.set(`${type}|${id}|${region}|`, row);
+      }
+      if (!map.has(`${type}|${id}||${provider}`)) {
+        map.set(`${type}|${id}||${provider}`, row);
+      }
+      if (!map.has(`${type}|${id}||`)) {
+        map.set(`${type}|${id}||`, row);
+      }
+    });
+    return map;
+  }, [pricingRows]);
 
   const filteredByType = useMemo(
     () =>
@@ -423,7 +455,41 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
     });
   }, [filteredByRegion, searchQuery]);
 
-  const productStats = useMemo(() => deriveProductStats(searchedRows), [searchedRows]);
+  const rowsWithPricing = useMemo(() => {
+    if (!pricingLookup.size) return searchedRows;
+    return searchedRows.map((row: any) => {
+      const type = normalizeProductType(row.productable_type);
+      const idValue = row.productable_id ?? row.productableId;
+      if (!type || idValue === undefined || idValue === null) {
+        return row;
+      }
+      const id = String(idValue);
+      const region = row.region || "";
+      const provider = row.provider || "";
+      const keyCandidates = [
+        `${type}|${id}|${region}|${provider}`,
+        `${type}|${id}|${region}|`,
+        `${type}|${id}||${provider}`,
+        `${type}|${id}||`,
+      ];
+      let pricingMatch = null;
+      for (const key of keyCandidates) {
+        if (pricingLookup.has(key)) {
+          pricingMatch = pricingLookup.get(key);
+          break;
+        }
+      }
+      if (!pricingMatch) return row;
+      const price =
+        pricingMatch.price_usd ?? pricingMatch.price_local ?? row.price;
+      return {
+        ...row,
+        price,
+      };
+    });
+  }, [searchedRows, pricingLookup]);
+
+  const productStats = useMemo(() => deriveProductStats(rowsWithPricing), [rowsWithPricing]);
 
   useEffect(() => {
     const metrics =
@@ -434,7 +500,7 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
     }));
   }, [activeConfig, productStats]);
 
-  const total = searchedRows.length;
+  const total = rowsWithPricing.length;
 
   useEffect(() => {
     const lastPage = Math.max(1, Math.ceil(total / perPage) || 1);
@@ -445,8 +511,8 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
 
   const paginatedRows = useMemo(() => {
     const start = (page - 1) * perPage;
-    return searchedRows.slice(start, start + perPage);
-  }, [searchedRows, page, perPage]);
+    return rowsWithPricing.slice(start, start + perPage);
+  }, [rowsWithPricing, page, perPage]);
 
   const handleSearch = useCallback((value: string) => {
     setSearchQuery(value);
@@ -674,7 +740,8 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
     );
   }
 
-  const isLoadingData = isRegionsFetching || isCountriesFetching || isProductsFetching;
+  const isLoadingData =
+    isRegionsFetching || isCountriesFetching || isProductsFetching || isPricingFetching;
 
   return (
     <>

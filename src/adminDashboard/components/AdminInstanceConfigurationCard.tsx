@@ -22,11 +22,8 @@ interface Props {
   billingCountry: string;
   regionOptions: Option[];
   baseProjectOptions: Option[];
-  fallbackComputeInstances: any[];
-  fallbackOsImages: any[];
-  fallbackVolumeTypes: any[];
-  bandwidthOptions: Option[];
   isLoadingResources: boolean;
+  pricingTenantId?: string;
 
   // Actions
   updateConfiguration: (id: string, patch: Partial<Configuration>) => void;
@@ -59,15 +56,38 @@ interface Props {
   skipProjectFetch?: boolean;
   skipNetworkResourcesFetch?: boolean;
   onSaveTemplate?: (config: Configuration) => void;
-  onCreateProject?: (configId: string, projectName: string) => void;
   showTemplateSelector?: boolean;
   formVariant?: "classic" | "cube";
+  showProjectMembership?: boolean;
+  membershipTenantId?: string;
+  membershipUserId?: string;
+  lockAssignmentScope?: boolean;
 }
 
 const extractRegionCode = (region: any) => {
   if (!region) return "";
   if (typeof region === "string") return region;
   return region.code || region.region || region.slug || region.id || region.identifier || "";
+};
+
+const hasEffectivePricing = (item: any) => {
+  const raw = item?.pricing?.effective?.price_usd;
+  if (raw === null || raw === undefined) return false;
+  const priceUsd = Number(raw);
+  return Number.isFinite(priceUsd) && priceUsd >= 0;
+};
+
+const formatPriceSuffix = (item: any) => {
+  const effective = item?.pricing?.effective || {};
+  const amount = effective.price_local ?? effective.price_usd;
+  const currency = effective.currency || "USD";
+  const numeric = Number(amount);
+  if (!Number.isFinite(numeric)) return "";
+  const formatted = numeric.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return `${String(currency).toUpperCase()} ${formatted}`;
 };
 
 const AdminInstanceConfigurationCard: React.FC<Props> = ({
@@ -77,11 +97,8 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
   billingCountry,
   regionOptions,
   baseProjectOptions,
-  fallbackComputeInstances,
-  fallbackOsImages,
-  fallbackVolumeTypes,
-  bandwidthOptions,
   isLoadingResources,
+  pricingTenantId,
   updateConfiguration,
   resetConfigurationWithPatch,
   removeConfiguration,
@@ -104,9 +121,12 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
   skipProjectFetch = false,
   skipNetworkResourcesFetch = false,
   onSaveTemplate,
-  onCreateProject,
   showTemplateSelector = false,
   formVariant = "classic",
+  showProjectMembership = false,
+  membershipTenantId,
+  membershipUserId,
+  lockAssignmentScope = false,
 }) => {
   const selectedRegion = cfg.region || "";
   const projectIdentifier = cfg.project_id || "";
@@ -133,28 +153,34 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
 
     // Re-implementing logic
     const seen = new Set();
-    return combined
-      .map((project: any): Option | null => {
-        // If it's already an option
-        if (project.value && project.label) return project as Option;
+    return combined.reduce((acc: Option[], project: any) => {
+      const candidate =
+        project?.value && project?.label
+          ? ({ ...project, raw: project.raw ?? project } as Option)
+          : (() => {
+              const identifier =
+                project?.identifier || project?.id || project?.project_id || project?.code || "";
+              if (!identifier) return null;
+              const projectRegion =
+                extractRegionCode(project?.region) || project?.region_code || project?.region || "";
+              if (selectedRegion && projectRegion && String(projectRegion) !== String(selectedRegion)) {
+                return null;
+              }
+              const value = String(identifier);
+              return {
+                value,
+                label: String(project?.name || project?.identifier || project?.slug || value),
+                raw: project,
+              };
+            })();
 
-        const identifier =
-          project?.identifier || project?.id || project?.project_id || project?.code || "";
-        if (!identifier) return null;
-        const projectRegion =
-          extractRegionCode(project?.region) || project?.region_code || project?.region || "";
-        if (selectedRegion && projectRegion && String(projectRegion) !== String(selectedRegion)) {
-          return null;
-        }
-        const value = String(identifier);
-        if (seen.has(value)) return null;
-        seen.add(value);
-        return {
-          value,
-          label: String(project?.name || project?.identifier || project?.slug || value),
-        };
-      })
-      .filter((item: Option | null): item is Option => Boolean(item));
+      if (!candidate) return acc;
+      const key = String(candidate.value);
+      if (seen.has(key)) return acc;
+      seen.add(key);
+      acc.push(candidate);
+      return acc;
+    }, []);
   }, [projectsResp?.data, baseProjectOptions, selectedRegion]);
 
   // 2. Fetch Pricing
@@ -162,6 +188,7 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
     enabled: Boolean(selectedRegion),
     keepPreviousData: true,
     countryCode: billingCountry || "US",
+    tenantId: pricingTenantId || "",
   };
   const { data: computeInstancesByRegion } = useFetchProductPricing(
     selectedRegion,
@@ -178,10 +205,17 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
     "volume_type",
     sharedPricingOptions
   );
+  const { data: bandwidthsByRegion } = useFetchProductPricing(
+    selectedRegion,
+    "bandwidth",
+    sharedPricingOptions
+  );
 
   // 3. Transform Pricing Options
   const computeOptions = useMemo(() => {
-    const rows = Array.isArray(computeInstancesByRegion) ? computeInstancesByRegion : [];
+    const rows = Array.isArray(computeInstancesByRegion)
+      ? computeInstancesByRegion.filter(hasEffectivePricing)
+      : [];
     if (rows.length) {
       return rows
         .map((item: any, idx: number): Option | null => {
@@ -198,70 +232,79 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
           const memoryGb = memoryMb ? Math.round(Number(memoryMb) / 1024) : product?.memory_gb;
           const baseLabel = product?.name || item?.name || `Instance ${idx + 1}`;
           const labelParts = [baseLabel];
-          if (vcpus || memoryGb) {
-            const meta = [];
-            if (vcpus) meta.push(`${vcpus} vCPU`);
-            if (memoryGb) meta.push(`${memoryGb} GB RAM`);
-            if (meta.length) {
-              labelParts.push(`• ${meta.join(" • ")}`);
-            }
-          }
-          return { value: String(value), label: labelParts.join(" ") };
+          if (vcpus) labelParts.push(`${vcpus} vCPU`);
+          if (memoryGb) labelParts.push(`${memoryGb} GB RAM`);
+          const priceSuffix = formatPriceSuffix(item);
+          if (priceSuffix) labelParts.push(priceSuffix);
+          return { value: String(value), label: labelParts.join(" • ") };
         })
         .filter((item: Option | null): item is Option => Boolean(item));
     }
-    return (fallbackComputeInstances || []).map((it: any) => {
-      const memoryGb = it.memory_mb ? Math.round(Number(it.memory_mb) / 1024) : it.memory_gb;
-      const meta = [];
-      if (it.vcpus) meta.push(`${it.vcpus} vCPU`);
-      if (memoryGb) meta.push(`${memoryGb} GB RAM`);
-      const label = meta.length
-        ? `${it.name || `Instance ${it.id}`} • ${meta.join(" • ")}`
-        : it.name || `Instance ${it.id}`;
-      return {
-        value: String(it.id),
-        label,
-      };
-    });
-  }, [computeInstancesByRegion, fallbackComputeInstances]);
+    return [];
+  }, [computeInstancesByRegion]);
 
   const osImageOptions = useMemo(() => {
-    const rows = Array.isArray(osImagesByRegion) ? osImagesByRegion : [];
+    const rows = Array.isArray(osImagesByRegion)
+      ? osImagesByRegion.filter(hasEffectivePricing)
+      : [];
     if (rows.length) {
       return rows
         .map((item: any, idx: number): Option | null => {
           const product = item?.product || item;
           const value = product?.productable_id || product?.id || item?.product_id || item?.id;
           if (!value) return null;
-          const label = product?.name || item?.name || `OS Image ${idx + 1}`;
+          const labelParts = [product?.name || item?.name || `OS Image ${idx + 1}`];
+          const priceSuffix = formatPriceSuffix(item);
+          if (priceSuffix) labelParts.push(priceSuffix);
+          const label = labelParts.join(" • ");
           return { value: String(value), label: String(label) };
         })
         .filter((item: Option | null): item is Option => Boolean(item));
     }
-    return (fallbackOsImages || []).map((img: any) => ({
-      value: String(img.id),
-      label: img.name || img.description || `Image ${img.id}`,
-    }));
-  }, [osImagesByRegion, fallbackOsImages]);
+    return [];
+  }, [osImagesByRegion]);
 
   const volumeTypeOptions = useMemo(() => {
-    const rows = Array.isArray(volumeTypesByRegion) ? volumeTypesByRegion : [];
+    const rows = Array.isArray(volumeTypesByRegion)
+      ? volumeTypesByRegion.filter(hasEffectivePricing)
+      : [];
     if (rows.length) {
       return rows
         .map((item: any, idx: number): Option | null => {
           const product = item?.product || item;
           const value = product?.productable_id || product?.id || item?.product_id || item?.id;
           if (!value) return null;
-          const label = product?.name || item?.name || `Volume ${idx + 1}`;
+          const labelParts = [product?.name || item?.name || `Volume ${idx + 1}`];
+          const priceSuffix = formatPriceSuffix(item);
+          if (priceSuffix) labelParts.push(priceSuffix);
+          const label = labelParts.join(" • ");
           return { value: String(value), label: String(label) };
         })
         .filter((item: Option | null): item is Option => Boolean(item));
     }
-    return (fallbackVolumeTypes || []).map((v: any) => ({
-      value: String(v.id),
-      label: v.name || `Volume ${v.id}`,
-    }));
-  }, [volumeTypesByRegion, fallbackVolumeTypes]);
+    return [];
+  }, [volumeTypesByRegion]);
+
+  const bandwidthOptions = useMemo(() => {
+    const rows = Array.isArray(bandwidthsByRegion)
+      ? bandwidthsByRegion.filter(hasEffectivePricing)
+      : [];
+    if (rows.length) {
+      return rows
+        .map((item: any, idx: number): Option | null => {
+          const product = item?.product || item;
+          const value = product?.productable_id || product?.id || item?.product_id || item?.id;
+          if (!value) return null;
+          const labelParts = [product?.name || item?.name || `Bandwidth ${idx + 1}`];
+          const priceSuffix = formatPriceSuffix(item);
+          if (priceSuffix) labelParts.push(priceSuffix);
+          const label = labelParts.join(" • ");
+          return { value: String(value), label: String(label) };
+        })
+        .filter((item: Option | null): item is Option => Boolean(item));
+    }
+    return [];
+  }, [bandwidthsByRegion]);
 
   // 4. Fetch Network Resources - uses hook overrides if provided
   const securityGroupsHook = useSecurityGroupsHook || useFetchSecurityGroups;
@@ -337,13 +380,18 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
       updateConfiguration(cfg.id, {
         project_id: "",
         compute_instance_id: "",
+        compute_label: "",
         os_image_id: "",
+        os_image_label: "",
         volume_type_id: "",
+        volume_type_label: "",
         additional_volumes: [],
         network_id: "",
         subnet_id: "",
+        subnet_label: "",
         security_group_ids: [],
         keypair_name: "",
+        keypair_label: "",
       });
     }
     prevRegionRef.current = selectedRegion;
@@ -356,8 +404,10 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
         // Keep region, validation resets dependent fields
         network_id: "",
         subnet_id: "",
+        subnet_label: "",
         security_group_ids: [],
         keypair_name: "",
+        keypair_label: "",
       });
     }
     prevProjectRef.current = projectIdentifier;
@@ -403,10 +453,13 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
       onSubmitConfigurations={onSubmitConfigurations}
       isSubmitting={isSubmitting}
       onSaveTemplate={onSaveTemplate}
-      onCreateProject={onCreateProject}
       showTemplateSelector={showTemplateSelector}
       onTemplateSelect={showTemplateSelector ? handleTemplateSelect : undefined}
       variant={formVariant}
+      showProjectMembership={showProjectMembership}
+      membershipTenantId={membershipTenantId}
+      membershipUserId={membershipUserId}
+      lockAssignmentScope={lockAssignmentScope}
     />
   );
 };

@@ -114,7 +114,14 @@ export const evaluateConfigurationCompleteness = (cfg: Configuration) => {
   if (!Number(cfg.instance_count)) missing.push("Instance count");
   if (!Number(cfg.months)) missing.push("Duration");
   const requiresProject = cfg.project_mode === "new" || Boolean(cfg.template_locked);
-  if (requiresProject && !hasValue(cfg.project_id)) missing.push("Project");
+  if (requiresProject) {
+    if (!hasValue(cfg.project_name)) missing.push("Project name");
+    if (!hasValue(cfg.network_preset) || cfg.network_preset === "empty") {
+      missing.push("Network preset");
+    }
+  } else if (!hasValue(cfg.project_id)) {
+    missing.push("Project");
+  }
   if (!hasValue(cfg.compute_instance_id)) missing.push("Instance type");
   if (!hasValue(cfg.os_image_id)) missing.push("OS image");
   if (!hasValue(cfg.volume_type_id)) missing.push("Boot volume type");
@@ -167,24 +174,58 @@ export const formatCurrencyValue = (amount: any) => {
  */
 export const findLabel = (collection: any[], id: string, fallbackPrefix?: string) => {
   if (!id) return "Not selected";
-  const match = collection.find(
-    (item) => String(item.id || item.identifier || item.name) === String(id)
+  const match = collection.find((item) => {
+    const candidates = [
+      item.id,
+      item.identifier,
+      item.name,
+      item.code,
+      item.slug,
+      item.productable_id,
+      item.productable?.id,
+      item.productable?.identifier,
+      item.productable?.name,
+    ]
+      .map((value) => (value ?? "").toString())
+      .filter(Boolean);
+    return candidates.some((candidate) => candidate === String(id));
+  });
+  if (!match) return fallbackPrefix ? `${fallbackPrefix} selected` : "Selected";
+  return (
+    match.name ||
+    match.label ||
+    match.productable?.name ||
+    (fallbackPrefix ? `${fallbackPrefix} selected` : "Selected")
   );
-  if (!match) return fallbackPrefix ? `${fallbackPrefix} ${id}` : String(id);
-  return match.name || match.label || `${fallbackPrefix || "Item"} ${id}`;
 };
 
 /**
  * Formats compute instance label with specs
  */
 export const formatComputeLabel = (id: string, instanceTypes: any[]) => {
-  const match = instanceTypes.find((item) => String(item.id) === String(id));
-  if (!match) return id ? `Instance ${id}` : "Not selected";
+  const match = instanceTypes.find((item) => {
+    const candidates = [
+      item.id,
+      item.identifier,
+      item.name,
+      item.code,
+      item.slug,
+      item.productable_id,
+      item.productable?.id,
+      item.productable?.identifier,
+      item.productable?.name,
+    ]
+      .map((value) => (value ?? "").toString())
+      .filter(Boolean);
+    return candidates.some((candidate) => candidate === String(id));
+  });
+  if (!match) return id ? "Instance selected" : "Not selected";
   const memoryGb = match.memory_mb ? Math.round(Number(match.memory_mb) / 1024) : match.memory_gb;
   const meta = [];
   if (match.vcpus) meta.push(`${match.vcpus} vCPU`);
   if (memoryGb) meta.push(`${memoryGb} GB RAM`);
-  return meta.length ? `${match.name} • ${meta.join(" • ")}` : match.name;
+  const baseName = match.name || match.productable?.name || "Instance selected";
+  return meta.length ? `${baseName} • ${meta.join(" • ")}` : baseName;
 };
 
 /**
@@ -197,8 +238,23 @@ export const formatOsLabel = (id: string, osImages: any[]) => findLabel(osImages
  */
 export const formatVolumeLabel = (id: string, size: number | string, volumeTypes: any[]) => {
   if (!id) return "Volume not selected";
-  const match = volumeTypes.find((item) => String(item.id) === String(id));
-  const label = match?.name || `Volume ${id}`;
+  const match = volumeTypes.find((item) => {
+    const candidates = [
+      item.id,
+      item.identifier,
+      item.name,
+      item.code,
+      item.slug,
+      item.productable_id,
+      item.productable?.id,
+      item.productable?.identifier,
+      item.productable?.name,
+    ]
+      .map((value) => (value ?? "").toString())
+      .filter(Boolean);
+    return candidates.some((candidate) => candidate === String(id));
+  });
+  const label = match?.name || match?.productable?.name || "Volume selected";
   return size ? `${label} • ${size} GB` : label;
 };
 
@@ -380,7 +436,8 @@ export const buildConfigurationFromTemplate = (template: any): Partial<Configura
     config.metadata?.network_preset,
     config.networking?.preset
   );
-  patch.network_preset = networkPreset ? String(networkPreset) : "standard";
+  const normalizedPreset = networkPreset ? String(networkPreset) : "standard";
+  patch.network_preset = normalizedPreset === "empty" ? "standard" : normalizedPreset;
 
   if (patch.project_mode === "new") {
     patch.network_id = "";

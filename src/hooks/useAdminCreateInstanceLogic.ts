@@ -102,13 +102,13 @@ export const useAdminCreateInstanceLogic = () => {
         },
         {
           id: "services",
-          title: "Cube-nstance setup",
+          title: "Cube-Instance setup",
           desc: "Select region, size, image, storage, and networking.",
         },
         {
           id: "review",
           title: "Review & Provision",
-          desc: "Confirm details and provision cube-nstances.",
+          desc: "Confirm details and provision cube-instances.",
         },
         {
           id: "success",
@@ -125,7 +125,7 @@ export const useAdminCreateInstanceLogic = () => {
       },
       {
         id: "services",
-        title: "Cube-nstance setup",
+        title: "Cube-Instance setup",
         desc: "Select region, size, image, storage, and networking.",
       },
       { id: "payment", title: "Payment", desc: "Generate payment options and share with finance." },
@@ -241,23 +241,32 @@ export const useAdminCreateInstanceLogic = () => {
 
     return configurations.map((cfg) => {
       const status = evaluateConfigurationCompleteness(cfg);
-      const computeLabel = formatComputeLabel(cfg.compute_instance_id, instanceTypes);
+      const computeLabel = cfg.compute_label || formatComputeLabel(cfg.compute_instance_id, instanceTypes);
+      const resolvedComputeLabel =
+        computeLabel && !["Not selected", "Instance selected"].includes(computeLabel)
+          ? computeLabel
+          : "";
       const defaultTitle =
         cfg.name?.trim() ||
-        (computeLabel && computeLabel !== "Not selected" ? computeLabel : "Instance configuration");
+        (resolvedComputeLabel ? resolvedComputeLabel : "Instance configuration");
+      const osLabel = cfg.os_image_label || formatOsLabel(cfg.os_image_id, osImages);
+      const storageLabel = cfg.volume_type_label
+        ? `${cfg.volume_type_label}${cfg.storage_size_gb ? ` • ${cfg.storage_size_gb} GB` : ""}`
+        : formatVolumeLabel(cfg.volume_type_id, cfg.storage_size_gb, volumeTypes);
       return {
         id: cfg.id,
         title: defaultTitle,
         regionLabel:
+          cfg.region_label ||
           regionSelectOptions.find((opt) => opt.value === cfg.region)?.label ||
           cfg.region ||
           "No region selected",
         computeLabel,
-        osLabel: formatOsLabel(cfg.os_image_id, osImages),
+        osLabel,
         termLabel: cfg.months
           ? `${cfg.months} month${Number(cfg.months) === 1 ? "" : "s"}`
           : "Not selected",
-        storageLabel: formatVolumeLabel(cfg.volume_type_id, cfg.storage_size_gb, volumeTypes),
+        storageLabel,
         floatingIpLabel: `${Number(cfg.floating_ip_count || 0)} floating IP${Number(cfg.floating_ip_count || 0) === 1 ? "" : "s"}`,
         keypairLabel: formatKeypairLabel(cfg.keypair_name, keyPairs, cfg.keypair_label),
         subnetLabel: formatSubnetLabel(cfg),
@@ -289,6 +298,25 @@ export const useAdminCreateInstanceLogic = () => {
     }
     return "Unassigned";
   }, [contextType, selectedTenantLabel, selectedUserId, selectedUserLabel]);
+
+  const assignmentScopeForContext = useMemo(() => {
+    if (contextType === "tenant") return "tenant";
+    if (contextType === "user") return "client";
+    return "internal";
+  }, [contextType]);
+
+  useEffect(() => {
+    if (!Array.isArray(configurations) || configurations.length === 0) return;
+    configurations.forEach((cfg) => {
+      const currentScope = cfg.assignment_scope || "internal";
+      if (currentScope !== assignmentScopeForContext) {
+        updateConfiguration(cfg.id, {
+          assignment_scope: assignmentScopeForContext,
+          member_user_ids: [],
+        });
+      }
+    });
+  }, [assignmentScopeForContext, configurations, updateConfiguration]);
 
   // Country/Context Logic
   // (Simplifying: we return handlers and state, logic stays in component? No, move handlers here)

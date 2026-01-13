@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import AdminInstanceConfigurationCard from "../../../adminDashboard/components/AdminInstanceConfigurationCard";
 import { Configuration, AdditionalVolume, Option } from "../../../types/InstanceConfiguration";
 import { InstanceResources } from "../../../hooks/useInstanceResources";
@@ -40,8 +40,13 @@ interface ConfigurationListStepProps {
   skipProjectFetch?: boolean;
   skipNetworkResourcesFetch?: boolean;
   onSaveTemplate?: (config: Configuration) => void;
-  onCreateProject?: (configId: string, projectName: string) => void;
   formVariant?: "classic" | "cube";
+
+  showProjectMembership?: boolean;
+  membershipTenantId?: string;
+  membershipUserId?: string;
+  lockAssignmentScope?: boolean;
+  pricingTenantId?: string;
 }
 
 const ConfigurationListStep: React.FC<ConfigurationListStepProps> = ({
@@ -73,24 +78,13 @@ const ConfigurationListStep: React.FC<ConfigurationListStepProps> = ({
   skipProjectFetch = false,
   skipNetworkResourcesFetch = false,
   onSaveTemplate,
-  onCreateProject,
   formVariant = "classic",
+  showProjectMembership = false,
+  membershipTenantId,
+  membershipUserId,
+  lockAssignmentScope = false,
+  pricingTenantId,
 }) => {
-  const bandwidthOptions = useMemo(() => {
-    return (resources.bandwidths || [])
-      .map((bw: any): Option | null => {
-        const value = bw.id || bw.identifier;
-        if (!value) return null;
-        const label =
-          bw.name ||
-          bw.label ||
-          `${bw.capacity || ""} ${bw.unit || ""}`.trim() ||
-          `Bandwidth ${value}`;
-        return { value: String(value), label };
-      })
-      .filter((item: Option | null): item is Option => Boolean(item));
-  }, [resources.bandwidths]);
-
   const hasSelectedProject = configurations.some((cfg) => Boolean(cfg.project_id));
   const shouldShowNetworkBanner = hasSelectedProject && projectHasNetwork;
 
@@ -121,10 +115,6 @@ const ConfigurationListStep: React.FC<ConfigurationListStepProps> = ({
           removeAdditionalVolume={onRemoveVolume}
           regionOptions={regionOptions}
           baseProjectOptions={resources.projects}
-          fallbackComputeInstances={resources.instance_types}
-          fallbackOsImages={resources.os_images}
-          fallbackVolumeTypes={resources.volume_types}
-          bandwidthOptions={bandwidthOptions}
           billingCountry={billingCountry}
           isLoadingResources={isLoadingResources}
           showActionRow={index === configurations.length - 1}
@@ -142,8 +132,12 @@ const ConfigurationListStep: React.FC<ConfigurationListStepProps> = ({
           skipProjectFetch={skipProjectFetch}
           skipNetworkResourcesFetch={skipNetworkResourcesFetch}
           onSaveTemplate={onSaveTemplate}
-          onCreateProject={onCreateProject}
           formVariant={formVariant}
+          showProjectMembership={showProjectMembership}
+          membershipTenantId={membershipTenantId}
+          membershipUserId={membershipUserId}
+          lockAssignmentScope={lockAssignmentScope}
+          pricingTenantId={pricingTenantId}
         />
       ))}
     </div>

@@ -17,6 +17,7 @@ import useAdminAuthStore from "../../../stores/adminAuthStore";
 import useTenantAuthStore from "../../../stores/tenantAuthStore";
 import useClientAuthStore from "../../../stores/clientAuthStore";
 import { PaystackButton } from "react-paystack";
+import { formatCurrencyValue, toNumber } from "../../../utils/instanceCreationUtils";
 
 /**
  * PaymentModal - Shared across Admin, Tenant, and Client dashboards
@@ -27,6 +28,17 @@ import { PaystackButton } from "react-paystack";
  */
 
 type ApiContext = "admin" | "tenant" | "client";
+
+const normalizeReference = (value: any) => {
+  if (value === null || value === undefined) return null;
+  const trimmed = String(value).trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const isNumericReference = (value: string | null) => {
+  if (!value) return false;
+  return /^\d+$/.test(value);
+};
 
 // Detect API context from URL
 const detectApiContext = (): ApiContext => {
@@ -57,6 +69,14 @@ const resolveCardIdentifier = (card: any, fallback = "") => {
   return fallback;
 };
 
+interface PricingSummaryData {
+  subtotal?: number;
+  tax?: number;
+  gatewayFees?: number;
+  grandTotal?: number;
+  currency?: string;
+}
+
 interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -72,6 +92,7 @@ interface PaymentModalProps {
   transactionReference?: string;
   paymentOptions?: any[];
   publicKey?: string;
+  pricingSummary?: PricingSummaryData;
 }
 
 const PaymentModal: React.FC<PaymentModalProps> = ({
@@ -89,45 +110,54 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   transactionReference: propTransactionReference,
   paymentOptions: propPaymentOptions,
   publicKey: propPublicKey,
+  pricingSummary: propPricingSummary,
 }) => {
   // Auto-detect context from URL
   const context = useMemo(() => detectApiContext(), []);
 
-  const adminAuth = useAdminAuthStore((state) => ({
-    isAuthenticated: state.isAuthenticated,
-    getAuthHeaders: state.getAuthHeaders,
-    user: state.user,
-    userEmail: state.userEmail,
-  }));
-  const tenantAuth = useTenantAuthStore((state) => ({
-    isAuthenticated: state.isAuthenticated,
-    getAuthHeaders: state.getAuthHeaders,
-    user: state.user,
-  }));
-  const clientAuth = useClientAuthStore((state) => ({
-    isAuthenticated: state.isAuthenticated,
-    getAuthHeaders: state.getAuthHeaders,
-    user: state.user,
-  }));
+  const adminIsAuthenticated = useAdminAuthStore((state) => state.isAuthenticated);
+  const adminGetAuthHeaders = useAdminAuthStore((state) => state.getAuthHeaders);
+  const adminUser = useAdminAuthStore((state) => state.user);
+  const adminUserEmail = useAdminAuthStore((state) => state.userEmail);
 
-  const contextAuth =
-    context === "admin" ? adminAuth : context === "tenant" ? tenantAuth : clientAuth;
-  const isAuthenticated = Boolean(contextAuth?.isAuthenticated);
-  const authHeaders =
-    typeof contextAuth?.getAuthHeaders === "function"
-      ? contextAuth.getAuthHeaders()
-      : {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        };
+  const tenantIsAuthenticated = useTenantAuthStore((state) => state.isAuthenticated);
+  const tenantGetAuthHeaders = useTenantAuthStore((state) => state.getAuthHeaders);
+  const tenantUser = useTenantAuthStore((state) => state.user);
+
+  const clientIsAuthenticated = useClientAuthStore((state) => state.isAuthenticated);
+  const clientGetAuthHeaders = useClientAuthStore((state) => state.getAuthHeaders);
+  const clientUser = useClientAuthStore((state) => state.user);
+
+  const isAuthenticated =
+    context === "admin"
+      ? Boolean(adminIsAuthenticated)
+      : context === "tenant"
+        ? Boolean(tenantIsAuthenticated)
+        : Boolean(clientIsAuthenticated);
+  const getAuthHeaders =
+    context === "admin"
+      ? adminGetAuthHeaders
+      : context === "tenant"
+        ? tenantGetAuthHeaders
+        : clientGetAuthHeaders;
+  const authHeaders = useMemo(
+    () =>
+      typeof getAuthHeaders === "function"
+        ? getAuthHeaders()
+        : {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+    [getAuthHeaders]
+  );
 
   const apiBaseUrl = propApiBaseUrl || getApiBaseUrlForContext(context);
   const contextEmail =
     context === "admin"
-      ? adminAuth.user?.email || adminAuth.userEmail || ""
+      ? adminUser?.email || adminUserEmail || ""
       : context === "tenant"
-        ? tenantAuth.user?.email || ""
-        : clientAuth.user?.email || "";
+        ? tenantUser?.email || ""
+        : clientUser?.email || "";
 
   const isInline = mode === "inline";
   const [paymentStatus, setPaymentStatus] = useState<
@@ -218,17 +248,23 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const isActive = isInline ? !!transactionData || !!propAmount : isOpen;
   const shouldRender = isActive && (transactionData || propAmount);
 
-  const transactionIdentifier =
-    propTransactionReference ||
+  const optionReference = normalizeReference(selectedPaymentOption?.transaction_reference);
+  const transactionReference = normalizeReference(
     transaction?.identifier ||
-    transaction?.reference ||
-    selectedPaymentOption?.transaction_reference ||
-    transaction?.id ||
-    payment?.reference ||
-    payment?.transaction_reference ||
-    null;
+      transaction?.reference ||
+      payment?.reference ||
+      payment?.transaction_reference
+  );
+  const propReference = normalizeReference(propTransactionReference);
 
-  const paystackPublicKey = propPublicKey || import.meta.env.VITE_PAYSTACK_KEY || "";
+  const transactionIdentifier =
+    optionReference ||
+    transactionReference ||
+    (propReference && !isNumericReference(propReference) ? propReference : null);
+  const statusLookupIdentifier =
+    transaction?.id || transactionIdentifier || propReference || null;
+  const displayReference =
+    transactionIdentifier || propReference || (transaction?.id != null ? String(transaction?.id) : null);
 
   const paystackEmail = useMemo(
     () =>
@@ -239,6 +275,17 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       "",
     [propEmail, transaction?.user?.email, payment?.customer_context?.email, contextEmail]
   );
+  const paystackPublicKey = useMemo(
+    () =>
+      propPublicKey ||
+      selectedPaymentOption?.public_key ||
+      selectedPaymentOption?.publicKey ||
+      payment?.public_key ||
+      import.meta.env.VITE_PAYSTACK_KEY ||
+      "",
+    [propPublicKey, selectedPaymentOption, payment?.public_key]
+  );
+  const isPaystackReady = Boolean(paystackPublicKey && paystackEmail && transactionIdentifier);
 
   useEffect(() => {
     setSavedCards(Array.isArray(payment?.saved_cards) ? payment.saved_cards : []);
@@ -628,7 +675,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   // Poll transaction status (manual or interval)
   const pollTransactionStatus = useCallback(async () => {
-    const identifier = transaction?.identifier || transaction?.reference || transaction?.id;
+    const identifier = statusLookupIdentifier;
     if (!identifier || isPolling || !isAuthenticated) return;
 
     setIsPolling(true);
@@ -658,9 +705,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       setIsPolling(false);
     }
   }, [
-    transaction?.identifier,
-    transaction?.reference,
-    transaction?.id,
+    statusLookupIdentifier,
     isPolling,
     apiBaseUrl,
     confirmTransaction,
@@ -671,11 +716,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   // Auto-poll every 10 seconds when modal is open and payment is pending
   useEffect(() => {
-    if (isActive && paymentStatus === "pending" && transaction?.id && isAuthenticated) {
+    if (isActive && paymentStatus === "pending" && statusLookupIdentifier && isAuthenticated) {
       const interval = setInterval(pollTransactionStatus, 10000);
       return () => clearInterval(interval);
     }
-  }, [isActive, paymentStatus, transaction?.id, isAuthenticated, pollTransactionStatus]);
+  }, [isActive, paymentStatus, statusLookupIdentifier, isAuthenticated, pollTransactionStatus]);
 
   useEffect(() => {
     if (
@@ -707,10 +752,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     }
   }, [isPaystackCardOption, shouldSaveCard]);
 
-  const paystackReference = useMemo(() => {
-    return transactionIdentifier || `uc-${Date.now()}`;
-  }, [transactionIdentifier]);
-
   const activeOptionForAmounts =
     selectedPaymentOption ||
     cardPaymentOptions[0] ||
@@ -718,16 +759,82 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     paymentGatewayOptions[0] ||
     null;
 
-  const paystackAmount = useMemo(() => {
-    const total = Number(
-      propAmount ??
-        activeOptionForAmounts?.total ??
+  const pricingSummary = propPricingSummary || {};
+
+  const amountDetails = useMemo(() => {
+    const resolvedSubtotal = toNumber(
+      pricingSummary.subtotal ??
+        activeOptionForAmounts?.charge_breakdown?.base_amount ??
+        activeOptionForAmounts?.subtotal ??
+        0
+    );
+    const resolvedTax = toNumber(
+      pricingSummary.tax ??
+        activeOptionForAmounts?.charge_breakdown?.tax ??
+        activeOptionForAmounts?.tax ??
+        0
+    );
+    const resolvedGatewayFees = toNumber(
+      pricingSummary.gatewayFees ??
+        activeOptionForAmounts?.charge_breakdown?.total_fees ??
+        activeOptionForAmounts?.fees ??
+        transaction?.third_party_fee ??
+        transaction?.transaction_fee ??
+        0
+    );
+    const resolvedGrandTotal = toNumber(
+      pricingSummary.grandTotal ??
+        propAmount ??
         activeOptionForAmounts?.charge_breakdown?.grand_total ??
+        activeOptionForAmounts?.total ??
         transaction?.amount ??
         0
     );
+    const estimatedTotal = resolvedSubtotal + resolvedTax;
+    const estimatedTotalResolved = estimatedTotal > 0 ? estimatedTotal : resolvedGrandTotal;
+    const gatewayTotal = toNumber(
+      activeOptionForAmounts?.charge_breakdown?.grand_total ?? activeOptionForAmounts?.total ?? 0
+    );
+    const payableTotal =
+      gatewayTotal > 0 ? gatewayTotal : estimatedTotalResolved + (resolvedGatewayFees || 0);
+    const adjustment =
+      estimatedTotalResolved > 0 ? payableTotal - estimatedTotalResolved : 0;
+    const displayCurrency =
+      pricingSummary.currency ||
+      propCurrency ||
+      activeOptionForAmounts?.currency ||
+      transaction?.currency ||
+      "USD";
+
+    return {
+      resolvedSubtotal,
+      resolvedTax,
+      resolvedGatewayFees,
+      resolvedGrandTotal,
+      estimatedTotalResolved,
+      gatewayTotal,
+      payableTotal,
+      adjustment,
+      displayCurrency,
+    };
+  }, [
+    propPricingSummary,
+    propAmount,
+    propCurrency,
+    activeOptionForAmounts,
+    transaction?.amount,
+    transaction?.currency,
+    transaction?.third_party_fee,
+    transaction?.transaction_fee,
+  ]);
+  const displayPayableTotal =
+    amountDetails.payableTotal > 0 ? amountDetails.payableTotal : amountDetails.resolvedGrandTotal;
+  const hasAdjustment = Math.abs(amountDetails.adjustment) > 0.01;
+
+  const paystackAmount = useMemo(() => {
+    const total = Number(displayPayableTotal ?? 0);
     return Math.max(0, Math.round(total * 100));
-  }, [activeOptionForAmounts, transaction?.amount, propAmount]);
+  }, [displayPayableTotal]);
 
   const handleModalClose = () => {
     onClose?.();
@@ -802,7 +909,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             {paymentStatus === "completed" ? "Payment Successful!" : "Complete Payment"}
           </h3>
           <p className="text-sm" style={{ color: designTokens.colors.neutral[500] }}>
-            Transaction #{transactionIdentifier}
+            Transaction #{displayReference || "—"}
           </p>
         </div>
       </div>
@@ -861,18 +968,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     </div>
   );
 
-  const amountValue = Number(
-    propAmount ?? activeOptionForAmounts?.charge_breakdown?.base_amount ?? transaction?.amount ?? 0
-  );
-  const gatewayFee = Number(
-    activeOptionForAmounts?.charge_breakdown?.total_fees ??
-      activeOptionForAmounts?.total_fees ??
-      activeOptionForAmounts?.fees ??
-      transaction?.third_party_fee ??
-      transaction?.transaction_fee ??
-      0
-  );
-  const totalPayable = amountValue + gatewayFee;
   const summaryGatewayLabel =
     paymentMode === "saved_card"
       ? "Paystack"
@@ -889,6 +984,14 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       : selectedPaymentOption?.transaction_reference ||
         activeOptionForAmounts?.transaction_reference ||
         "Generating...";
+  const hasPricingSummary = Boolean(
+    pricingSummary.subtotal ||
+      pricingSummary.tax ||
+      pricingSummary.gatewayFees ||
+      pricingSummary.grandTotal ||
+      activeOptionForAmounts?.charge_breakdown
+  );
+  const showPricingBreakdown = hasPricingSummary && amountDetails.payableTotal > 0;
   const currentSelectableOptions =
     paymentMode === "card"
       ? cardPaymentOptions
@@ -948,14 +1051,102 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           </h4>
           <div className="space-y-3 text-sm">
             <div className="flex items-center justify-between">
-              <span style={{ color: designTokens.colors.neutral[600] }}>Amount:</span>
+              <span style={{ color: designTokens.colors.neutral[600] }}>Total payable:</span>
               <span
                 className="text-lg font-semibold"
                 style={{ color: designTokens.colors.neutral[900] }}
               >
-                {propCurrency || transaction?.currency} {totalPayable.toLocaleString()}
+                {amountDetails.displayCurrency} {formatCurrencyValue(displayPayableTotal)}
               </span>
             </div>
+            {showPricingBreakdown && (
+              <div
+                className="space-y-2 rounded-lg border px-3 py-2 text-xs"
+                style={{
+                  borderColor: designTokens.colors.neutral[200],
+                  backgroundColor: designTokens.colors.neutral[50],
+                }}
+              >
+                {amountDetails.resolvedSubtotal > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span style={{ color: designTokens.colors.neutral[600] }}>Subtotal</span>
+                    <span style={{ color: designTokens.colors.neutral[900] }}>
+                      {amountDetails.displayCurrency}{" "}
+                      {formatCurrencyValue(amountDetails.resolvedSubtotal)}
+                    </span>
+                  </div>
+                )}
+                {amountDetails.resolvedTax > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span style={{ color: designTokens.colors.neutral[600] }}>Estimated tax</span>
+                    <span style={{ color: designTokens.colors.neutral[900] }}>
+                      {amountDetails.displayCurrency} {formatCurrencyValue(amountDetails.resolvedTax)}
+                    </span>
+                  </div>
+                )}
+                {amountDetails.estimatedTotalResolved > 0 &&
+                  (amountDetails.resolvedSubtotal > 0 || amountDetails.resolvedTax > 0) && (
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span style={{ color: designTokens.colors.neutral[500] }}>
+                        Estimated total
+                      </span>
+                      <span style={{ color: designTokens.colors.neutral[600] }}>
+                        {amountDetails.displayCurrency}{" "}
+                        {formatCurrencyValue(amountDetails.estimatedTotalResolved)}
+                      </span>
+                    </div>
+                  )}
+                {amountDetails.resolvedGatewayFees > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span style={{ color: designTokens.colors.neutral[600] }}>Gateway fees</span>
+                    <span style={{ color: designTokens.colors.neutral[900] }}>
+                      {amountDetails.displayCurrency}{" "}
+                      {formatCurrencyValue(amountDetails.resolvedGatewayFees)}
+                    </span>
+                  </div>
+                )}
+                {hasAdjustment && (
+                  <div className="flex items-center justify-between">
+                    <span style={{ color: designTokens.colors.neutral[600] }}>
+                      Gateway adjustment
+                    </span>
+                    <span
+                      style={{
+                        color:
+                          amountDetails.adjustment > 0
+                            ? designTokens.colors.warning[700]
+                            : designTokens.colors.success[700],
+                      }}
+                    >
+                      {amountDetails.displayCurrency}{" "}
+                      {formatCurrencyValue(amountDetails.adjustment)}
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between border-t pt-2">
+                  <span
+                    className="font-semibold"
+                    style={{ color: designTokens.colors.neutral[700] }}
+                  >
+                    Total payable
+                  </span>
+                  <span
+                    className="font-semibold"
+                    style={{ color: designTokens.colors.neutral[900] }}
+                  >
+                    {amountDetails.displayCurrency} {formatCurrencyValue(displayPayableTotal)}
+                  </span>
+                </div>
+              </div>
+            )}
+            {showPricingBreakdown && hasAdjustment && (
+              <p className="text-[11px]" style={{ color: designTokens.colors.neutral[500] }}>
+                Gateway total is{" "}
+                {amountDetails.adjustment > 0 ? "higher" : "lower"} than the estimate by{" "}
+                {amountDetails.displayCurrency}{" "}
+                {formatCurrencyValue(Math.abs(amountDetails.adjustment))}.
+              </p>
+            )}
             <div className="flex items-center justify-between">
               <span style={{ color: designTokens.colors.neutral[600] }}>Gateway:</span>
               <span
@@ -1231,49 +1422,58 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
         <div className="flex items-center space-x-3">
           {paymentMode === "card" && selectedPaymentOption && paymentStatus !== "completed" && (
-            <PaystackButton
-              email={paystackEmail}
-              amount={paystackAmount}
-              reference={transactionIdentifier}
-              publicKey={paystackPublicKey}
-              text={paymentStatus === "processing" ? "Processing…" : "Pay with Card"}
-              className="w-full inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-70 bg-[#2563eb] border border-[#2563eb] min-h-[48px]"
-              onSuccess={async (response: any) => {
-                console.info("[Paystack][Admin] PaystackButton success", response);
-                setPaymentStatus("processing");
-                const confirmed = await confirmTransaction({
-                  gatewayOverride: "Paystack",
-                  includeSaveCardDetails: true,
-                });
-                if (confirmed) {
-                  await fetchSavedCards();
-                  handlePaymentCompletion({ ...response, status: "successful" });
-                  setPaymentStatus("completed");
-                } else {
-                  setPaymentStatus("pending");
-                }
-              }}
-              onClose={async () => {
-                console.info("[Paystack][Admin] PaystackButton closed");
-                if ((paymentStatus as string) === "completed") return;
-                setPaymentStatus("processing");
-                const confirmed = await confirmTransaction({
-                  gatewayOverride: "Paystack",
-                  includeSaveCardDetails: true,
-                });
-                if (confirmed) {
-                  await fetchSavedCards();
-                  handlePaymentCompletion({
-                    channel: "card",
-                    reference: transactionIdentifier,
-                    status: "successful",
+            <div className="flex flex-col items-end gap-2">
+              {!isPaystackReady && (
+                <p className="text-xs text-amber-600">
+                  Paystack public key, customer email, or transaction reference is missing. Check
+                  your payment gateway settings.
+                </p>
+              )}
+              <PaystackButton
+                email={paystackEmail}
+                amount={paystackAmount}
+                reference={transactionIdentifier || undefined}
+                publicKey={paystackPublicKey}
+                text={paymentStatus === "processing" ? "Processing…" : "Pay with Card"}
+                className="w-full inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-70 bg-[#2563eb] border border-[#2563eb] min-h-[48px]"
+                disabled={!isPaystackReady}
+                onSuccess={async (response: any) => {
+                  console.info("[Paystack][Admin] PaystackButton success", response);
+                  setPaymentStatus("processing");
+                  const confirmed = await confirmTransaction({
+                    gatewayOverride: "Paystack",
+                    includeSaveCardDetails: true,
                   });
-                  setPaymentStatus("completed");
-                } else {
-                  setPaymentStatus("pending");
-                }
-              }}
-            />
+                  if (confirmed) {
+                    await fetchSavedCards();
+                    handlePaymentCompletion({ ...response, status: "successful" });
+                    setPaymentStatus("completed");
+                  } else {
+                    setPaymentStatus("pending");
+                  }
+                }}
+                onClose={async () => {
+                  console.info("[Paystack][Admin] PaystackButton closed");
+                  if ((paymentStatus as string) === "completed") return;
+                  setPaymentStatus("processing");
+                  const confirmed = await confirmTransaction({
+                    gatewayOverride: "Paystack",
+                    includeSaveCardDetails: true,
+                  });
+                  if (confirmed) {
+                    await fetchSavedCards();
+                    handlePaymentCompletion({
+                      channel: "card",
+                      reference: transactionIdentifier,
+                      status: "successful",
+                    });
+                    setPaymentStatus("completed");
+                  } else {
+                    setPaymentStatus("pending");
+                  }
+                }}
+              />
+            </div>
           )}
 
           {paymentStatus !== "completed" &&

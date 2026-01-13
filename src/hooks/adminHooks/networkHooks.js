@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import adminSilentApiforUser from "../../index/admin/silentadminforuser";
-import apiAdminforUser from "../../index/admin/apiAdminforUser";
+import adminApi, { adminSilentApi } from "../../index/admin/api";
 
 const fetchNetworkInterfgace = async ({ project_id, region, refresh = false }) => {
   const params = new URLSearchParams();
@@ -9,40 +8,28 @@ const fetchNetworkInterfgace = async ({ project_id, region, refresh = false }) =
   if (refresh) params.append("refresh", "1");
 
   const queryString = params.toString();
-  const res = await adminSilentApiforUser(
+  const res = await adminSilentApi(
     "GET",
-    `/business/network-interfaces${queryString ? `?${queryString}` : ""}`
+    `/network-interfaces${queryString ? `?${queryString}` : ""}`
   );
   if (!res.data) throw new Error("Failed to fetch network interfaces");
   return res.data;
 };
 
 const createNetworkInterface = async (payload) => {
-  const res = await apiAdminforUser(
-    "POST",
-    "/business/network-interfaces",
-    payload
-  );
+  const res = await adminApi("POST", "/network-interfaces", payload);
   if (!res) throw new Error("Failed to create network interface");
   return res;
 };
 
 const attachNetworkInterfaceSecurityGroup = async (payload) => {
-  const res = await apiAdminforUser(
-    "POST",
-    "/business/network-interface-security-groups",
-    payload
-  );
+  const res = await adminApi("POST", "/network-interface-security-groups", payload);
   if (!res) throw new Error("Failed to attach security group");
   return res;
 };
 
 const detachNetworkInterfaceSecurityGroup = async (payload) => {
-  const res = await apiAdminforUser(
-    "DELETE",
-    "/business/network-interface-security-groups",
-    payload
-  );
+  const res = await adminApi("DELETE", "/network-interface-security-groups", payload);
   if (!res) throw new Error("Failed to detach security group");
   return res;
 };
@@ -108,10 +95,7 @@ const fetchNetworks = async ({ project_id, region, refresh = false }) => {
   if (refresh) params.append("refresh", "1");
 
   const queryString = params.toString();
-  const res = await adminSilentApiforUser(
-    "GET",
-    `/business/networks${queryString ? `?${queryString}` : ""}`
-  );
+  const res = await adminSilentApi("GET", `/networks${queryString ? `?${queryString}` : ""}`);
   if (!res.data) throw new Error("Failed to fetch networks");
   return res.data;
 };

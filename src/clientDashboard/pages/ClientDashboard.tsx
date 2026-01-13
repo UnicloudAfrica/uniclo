@@ -131,7 +131,7 @@ const QUICK_ACTIONS: QuickAction[] = [
   {
     title: "Launch Compute",
     description: "Deploy a new virtual machine or container workload.",
-    to: "/client-dashboard/instances/create",
+    to: "/client-dashboard/instances/provision",
     Icon: Rocket,
   },
   {

@@ -7,7 +7,7 @@ import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell";
 import { ModernButton } from "../../shared/components/ui";
 import ToastUtils from "../../utils/toastUtil";
-import { useCreateProject, useProjectStatus } from "../../hooks/adminHooks/projectHooks";
+import { useProjectStatus } from "../../hooks/adminHooks/projectHooks";
 import { Configuration, Option } from "../../types/InstanceConfiguration";
 import { useInstanceTemplates } from "../../hooks/useInstanceTemplates";
 import InstanceSummaryCard from "../../shared/components/instance-wizard/InstanceSummaryCard";
@@ -88,7 +88,6 @@ const AdminCreateInstance = () => {
   } = logic;
 
   const { createTemplate } = useInstanceTemplates();
-  const { mutateAsync: createAdminProject } = useCreateProject();
 
   const resolveProviderForRegion = (regionCode: string) => {
     const candidate = (Array.isArray(resources.regions) ? resources.regions : []).find(
@@ -185,6 +184,14 @@ const AdminCreateInstance = () => {
     submissionResult?.transaction?.identifier ||
     orderReceipt?.transaction?.reference ||
     submissionResult?.transaction?.reference;
+  const successInstances =
+    submissionResult?.instances || orderReceipt?.instances || submissionResult?.data?.instances || [];
+  const keypairDownloads =
+    submissionResult?.keypair_materials ||
+    submissionResult?.transaction?.keypair_materials ||
+    orderReceipt?.keypair_materials ||
+    orderReceipt?.transaction?.keypair_materials ||
+    [];
   const successPricingSummary = useMemo(
     () => ({
       currency: summaryDisplayCurrency || "USD",
@@ -212,78 +219,6 @@ const AdminCreateInstance = () => {
     ? resolvedServicesStepIndex
     : resolvedPaymentStepIndex;
 
-  const handleCreateProject = useCallback(
-    async (configId: string, projectName: string) => {
-      const trimmedName = projectName.trim();
-      if (!trimmedName) {
-        ToastUtils.error("Project name is required.");
-        return;
-      }
-
-      const targetConfig = configurations.find((cfg) => cfg.id === configId);
-      if (!targetConfig) {
-        ToastUtils.error("Configuration not found.");
-        return;
-      }
-
-      if (!targetConfig.region) {
-        ToastUtils.error("Select a region before creating a project.");
-        return;
-      }
-
-      const isTemplateConfig = Boolean(targetConfig.template_locked || targetConfig.template_id);
-
-      const payload: any = {
-        name: trimmedName,
-        description: "Project created via instance provisioning.",
-        type: "vpc",
-        region: targetConfig.region,
-      };
-
-      const selectedPreset = targetConfig.network_preset || "standard";
-      if (selectedPreset && selectedPreset !== "empty") {
-        payload.metadata = { network_preset: selectedPreset };
-      }
-
-      if (contextType === "tenant" && selectedTenantId) {
-        payload.tenant_id = selectedTenantId;
-      } else if (contextType === "user" && selectedUserId) {
-        payload.user_id = selectedUserId;
-      }
-
-      try {
-        const createdProject = await createAdminProject(payload);
-        const projectIdentifier =
-          createdProject?.identifier ||
-          createdProject?.data?.identifier ||
-          createdProject?.id ||
-          createdProject?.data?.id;
-
-        if (!projectIdentifier) {
-          ToastUtils.error("Project created, but the identifier was missing.");
-          return;
-        }
-
-        updateConfiguration(configId, {
-          project_id: String(projectIdentifier),
-          project_mode: isTemplateConfig ? "new" : "existing",
-          project_name: isTemplateConfig ? trimmedName : "",
-        });
-        ToastUtils.success("Project created successfully.");
-      } catch (error: any) {
-        ToastUtils.error(error?.message || "Failed to create project.");
-      }
-    },
-    [
-      configurations,
-      contextType,
-      createAdminProject,
-      selectedTenantId,
-      selectedUserId,
-      updateConfiguration,
-    ]
-  );
-
   const handleStepChange = useCallback(
     (targetIndex: number) => {
       if (targetIndex === currentStepIndex) return;
@@ -308,8 +243,8 @@ const AdminCreateInstance = () => {
       <AdminHeadbar />
       <AdminSidebar />
       <AdminPageShell
-        title="Create Cube-nstance"
-        description="Provision Zadara-backed cube-nstances for a tenant or user."
+        title="Create Cube-Instance"
+        description="Provision Zadara-backed cube-instances for a tenant or user."
         actions={
           <div className="flex items-center gap-3">
             <ModernButton
@@ -382,9 +317,11 @@ const AdminCreateInstance = () => {
               isFastTrack={isFastTrack}
               configurationSummaries={successSummaries}
               pricingSummary={successPricingSummary}
+              keypairDownloads={keypairDownloads}
+              instances={successInstances}
               instancesPageUrl="/admin-dashboard/instances"
               onCreateAnother={() => window.location.reload()}
-              resourceLabel="Cube-nstance"
+              resourceLabel="Cube-Instance"
             />
           ) : isReviewStep ? (
             <div className="space-y-6">
@@ -410,7 +347,7 @@ const AdminCreateInstance = () => {
                 onBack={() => setActiveStep(resolvedReviewBackIndex)}
                 onEditConfiguration={() => setActiveStep(resolvedServicesStepIndex)}
                 onConfirm={() => setActiveStep(resolvedSuccessStepIndex)}
-                resourceLabel="Cube-nstance"
+                resourceLabel="Cube-Instance"
               />
             </div>
           ) : (
@@ -462,8 +399,14 @@ const AdminCreateInstance = () => {
                     onBack={() => setActiveStep(resolvedWorkflowStepIndex)}
                     onSubmit={handleCreateOrder}
                     onSaveTemplate={handleSaveTemplate}
-                    onCreateProject={handleCreateProject}
                     formVariant="cube"
+                    showProjectMembership
+                    lockAssignmentScope
+                    membershipTenantId={selectedTenantId}
+                    membershipUserId={selectedUserId}
+                    pricingTenantId={
+                      contextType === "tenant" || contextType === "user" ? selectedTenantId : ""
+                    }
                   />
                 )}
 
@@ -472,6 +415,9 @@ const AdminCreateInstance = () => {
                     submissionResult={submissionResult}
                     orderReceipt={orderReceipt}
                     isPaymentSuccessful={isPaymentSuccessful}
+                    summarySubtotalValue={summarySubtotalValue}
+                    summaryTaxValue={summaryTaxValue}
+                    summaryGatewayFeesValue={summaryGatewayFeesValue}
                     summaryGrandTotalValue={summaryGrandTotalValue}
                     summaryDisplayCurrency={summaryDisplayCurrency}
                     contextType={contextType}
@@ -487,6 +433,7 @@ const AdminCreateInstance = () => {
               <div className="lg:col-span-1">
                 <InstanceSummaryCard
                   configurations={configurations}
+                  configurationSummaries={configurationSummaries}
                   contextType={contextType}
                   selectedClientName={
                     clientOptions.find((c) => c.value === String(selectedUserId))?.label
@@ -498,9 +445,16 @@ const AdminCreateInstance = () => {
                     countryOptions.find((c: Option) => c.value === billingCountry)?.label ||
                     billingCountry
                   }
-                  summaryTitle="Cube-nstance summary"
-                  summaryDescription="Auto-calculated from the selected cube-nstance configuration."
-                  resourceLabel="Cube-nstance"
+                  summaryTitle="Cube-Instance summary"
+                  summaryDescription="Auto-calculated from the selected cube-instance configuration."
+                  resourceLabel="Cube-Instance"
+                  summarySubtotalValue={summarySubtotalValue}
+                  summaryTaxValue={summaryTaxValue}
+                  summaryGatewayFeesValue={summaryGatewayFeesValue}
+                  summaryGrandTotalValue={summaryGrandTotalValue}
+                  summaryDisplayCurrency={summaryDisplayCurrency}
+                  effectivePaymentOption={effectivePaymentOption}
+                  backendPricingData={backendPricingData}
                 />
               </div>
             </div>

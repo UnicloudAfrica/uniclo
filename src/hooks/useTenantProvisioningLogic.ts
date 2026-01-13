@@ -55,14 +55,14 @@ export const useTenantProvisioningLogic = () => {
     if (isFastTrack) {
       return [
         { id: "workflow", title: "Workflow", desc: "Select provisioning mode" },
-        { id: "configure", title: "Cube-nstance setup", desc: "Select region, size, and image" },
+        { id: "configure", title: "Cube-Instance setup", desc: "Select region, size, and image" },
         { id: "review", title: "Review & provision", desc: "Confirm order" },
         { id: "success", title: "Success", desc: "Provisioning started" },
       ];
     }
     return [
       { id: "workflow", title: "Workflow", desc: "Select provisioning mode" },
-      { id: "configure", title: "Cube-nstance setup", desc: "Select region, size, and image" },
+      { id: "configure", title: "Cube-Instance setup", desc: "Select region, size, and image" },
       { id: "payment", title: "Payment", desc: "Complete payment" },
       { id: "review", title: "Review & provision", desc: "Confirm order" },
       { id: "success", title: "Success", desc: "Provisioning started" },
@@ -298,17 +298,6 @@ export const useTenantProvisioningLogic = () => {
       }
     }
 
-    const missingProjectIndex = configurations.findIndex((cfg) => {
-      const requiresProject = cfg.project_mode === "new" || Boolean(cfg.template_locked);
-      return requiresProject && !String(cfg.project_id || "").trim();
-    });
-    if (missingProjectIndex !== -1) {
-      ToastUtils.error(
-        `Create a project for Configuration #${missingProjectIndex + 1} before pricing.`
-      );
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       const incompleteIndex = configurations.findIndex(
@@ -319,14 +308,15 @@ export const useTenantProvisioningLogic = () => {
       }
 
       const pricing_requests = configurations.map((cfg, index) => {
-        const parsedBandwidthCount = Number(cfg.bandwidth_count) || 1;
+        const isNewProject = cfg.project_mode === "new" || Boolean(cfg.template_locked);
+        const parsedBandwidthCount = cfg.bandwidth_id ? 1 : 0;
         const parsedFloatingIpCount = Number(cfg.floating_ip_count) || 0;
         const parsedMonths = Number(cfg.months) || 1;
         const parsedInstances = Number(cfg.instance_count) || 1;
         const parsedStorage = Number(cfg.storage_size_gb) || 50;
         const instanceName = (cfg.name || "").trim() || null;
-        const networkId = cfg.network_id || null;
-        const subnetId = cfg.subnet_id || null;
+        const networkId = isNewProject ? undefined : cfg.network_id || undefined;
+        const subnetId = isNewProject ? undefined : cfg.subnet_id || undefined;
 
         const sanitizedSgIds = (
           Array.isArray(cfg.security_group_ids)
@@ -344,8 +334,17 @@ export const useTenantProvisioningLogic = () => {
           }))
           .filter((vol) => vol.volume_type_id && vol.storage_size_gb > 0);
 
+        const securityGroupPayload =
+          !isNewProject && sanitizedSgIds.length > 0 ? sanitizedSgIds : undefined;
+
         return {
-          project_id: cfg.project_id || undefined,
+          project_id: isNewProject ? undefined : cfg.project_id || undefined,
+          project_name: isNewProject ? (cfg.project_name || undefined) : undefined,
+          network_preset: isNewProject
+            ? cfg.network_preset === "empty"
+              ? "standard"
+              : cfg.network_preset || "standard"
+            : undefined,
           region: cfg.region || undefined,
           compute_instance_id: cfg.compute_instance_id,
           os_image_id: cfg.os_image_id,
@@ -361,8 +360,8 @@ export const useTenantProvisioningLogic = () => {
           bandwidth_id: cfg.bandwidth_id || null,
           bandwidth_count: parsedBandwidthCount,
           floating_ip_count: parsedFloatingIpCount,
-          security_group_ids: sanitizedSgIds,
-          keypair_name: cfg.keypair_name || null,
+          security_group_ids: securityGroupPayload,
+          keypair_name: cfg.keypair_name || undefined,
           network_id: networkId,
           subnet_id: subnetId,
           name: instanceName,
@@ -512,8 +511,11 @@ export const useTenantProvisioningLogic = () => {
     () =>
       configurations.map((cfg) => ({
         id: cfg.id,
-        name: cfg.name || "Unnamed Instance",
-        region: allRegionOptions.find((r) => r.value === cfg.region)?.label || cfg.region,
+        name: cfg.name || cfg.compute_label || "Unnamed Instance",
+        region:
+          cfg.region_label ||
+          allRegionOptions.find((r) => r.value === cfg.region)?.label ||
+          cfg.region,
         project: "Default Project",
         count: cfg.instance_count || 1,
         months: cfg.months || 12,

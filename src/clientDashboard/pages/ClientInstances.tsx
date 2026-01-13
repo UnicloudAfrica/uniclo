@@ -182,7 +182,7 @@ const ClientInstances: React.FC = () => {
       <ModernButton
         variant="primary"
         size="sm"
-        onClick={() => (window.location.href = "/client-dashboard/create-instance")}
+        onClick={() => (window.location.href = "/client-dashboard/instances/provision")}
         leftIcon={<Plus className="h-4 w-4" />}
       >
         New Instance
@@ -270,7 +270,7 @@ const ClientInstances: React.FC = () => {
                   variant="outline"
                   size="sm"
                   className="mt-4"
-                  onClick={() => (window.location.href = "/client-dashboard/create-instance")}
+                  onClick={() => (window.location.href = "/client-dashboard/instances/provision")}
                 >
                   Launch Instance
                 </ModernButton>

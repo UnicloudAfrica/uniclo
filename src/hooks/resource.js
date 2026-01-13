@@ -51,7 +51,7 @@ const fetchGeneralRegions = async () => {
   const res = await silentApi("GET", "/business/cloud-regions");
   return res.data;
 };
-const fetchProductPricing = async (region, productable_type, countryCode = "") => {
+const fetchProductPricing = async (region, productable_type, countryCode = "", tenantId = "") => {
   const params = new URLSearchParams();
   params.append("region", region || "");
   if (productable_type) {
@@ -59,6 +59,9 @@ const fetchProductPricing = async (region, productable_type, countryCode = "") =
   }
   if (countryCode) {
     params.append("country_code", countryCode.toUpperCase());
+  }
+  if (tenantId) {
+    params.append("tenant_id", tenantId);
   }
   const res = await silentApi("GET", `/product-pricing?${params.toString()}`);
   return res.data;
@@ -266,7 +269,7 @@ export const useFetchGeneralRegions = (options = {}) => {
   });
 };
 export const useFetchProductPricing = (region, productable_type, options = {}) => {
-  const { countryCode = "", ...queryOptions } = options;
+  const { countryCode = "", tenantId = "", ...queryOptions } = options;
 
   return useQuery({
     queryKey: [
@@ -274,8 +277,9 @@ export const useFetchProductPricing = (region, productable_type, options = {}) =
       region,
       productable_type,
       countryCode ? countryCode.toUpperCase() : "",
+      tenantId || "",
     ],
-    queryFn: () => fetchProductPricing(region, productable_type, countryCode),
+    queryFn: () => fetchProductPricing(region, productable_type, countryCode, tenantId),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...queryOptions,

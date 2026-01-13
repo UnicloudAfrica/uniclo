@@ -6,6 +6,9 @@ interface PaymentStepProps {
   submissionResult: any;
   orderReceipt: any;
   isPaymentSuccessful: boolean;
+  summarySubtotalValue?: number;
+  summaryTaxValue?: number;
+  summaryGatewayFeesValue?: number;
   summaryGrandTotalValue: number;
   summaryDisplayCurrency: string;
   contextType: string;
@@ -20,6 +23,9 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
   submissionResult,
   orderReceipt,
   isPaymentSuccessful,
+  summarySubtotalValue = 0,
+  summaryTaxValue = 0,
+  summaryGatewayFeesValue = 0,
   summaryGrandTotalValue,
   summaryDisplayCurrency,
   contextType,
@@ -38,6 +44,13 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
           onClose={() => {}}
           amount={summaryGrandTotalValue}
           currency={summaryDisplayCurrency}
+          pricingSummary={{
+            subtotal: summarySubtotalValue,
+            tax: summaryTaxValue,
+            gatewayFees: summaryGatewayFeesValue,
+            grandTotal: summaryGrandTotalValue,
+            currency: summaryDisplayCurrency,
+          }}
           email={
             contextType === "user"
               ? clientOptions.find((c) => c.value === String(selectedUserId))?.raw?.email || ""

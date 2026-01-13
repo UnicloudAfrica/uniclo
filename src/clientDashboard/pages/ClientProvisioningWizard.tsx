@@ -8,11 +8,7 @@ import StepIndicator from "../../shared/components/instance-wizard/StepIndicator
 import ReviewSubmitStep from "../../shared/components/instance-wizard/ReviewSubmitStep";
 import OrderSuccessStep from "../../shared/components/instance-wizard/OrderSuccessStep";
 import { useClientProvisioningLogic } from "../../hooks/useClientProvisioningLogic";
-import {
-  useCreateClientProject,
-  useFetchClientProjects,
-  useClientProjectStatus,
-} from "../../hooks/clientHooks/projectHooks";
+import { useFetchClientProjects, useClientProjectStatus } from "../../hooks/clientHooks/projectHooks";
 import { useFetchClientSecurityGroups } from "../../hooks/clientHooks/securityGroupHooks";
 import { useFetchClientKeyPairs } from "../../hooks/clientHooks/keyPairsHook";
 import { useFetchClientSubnets } from "../../hooks/clientHooks/subnetHooks";
@@ -84,67 +80,6 @@ const ClientProvisioningWizard: React.FC = () => {
     [activeStep, steps, isPaymentSuccessful, setActiveStep]
   );
 
-  const { mutateAsync: createClientProject } = useCreateClientProject();
-
-  const handleCreateProject = useCallback(
-    async (configId: string, projectName: string) => {
-      const trimmedName = projectName.trim();
-      if (!trimmedName) {
-        ToastUtils.error("Project name is required.");
-        return;
-      }
-
-      const targetConfig = configurations.find((cfg) => cfg.id === configId);
-      if (!targetConfig) {
-        ToastUtils.error("Configuration not found.");
-        return;
-      }
-
-      if (!targetConfig.region) {
-        ToastUtils.error("Select a region before creating a project.");
-        return;
-      }
-
-      const isTemplateConfig = Boolean(targetConfig.template_locked || targetConfig.template_id);
-
-      const payload: any = {
-        name: trimmedName,
-        description: "Project created via instance provisioning.",
-        type: "vpc",
-        region: targetConfig.region,
-      };
-
-      const selectedPreset = targetConfig.network_preset || "standard";
-      if (selectedPreset && selectedPreset !== "empty") {
-        payload.metadata = { network_preset: selectedPreset };
-      }
-
-      try {
-        const createdProject = await createClientProject(payload);
-        const projectIdentifier =
-          createdProject?.identifier ||
-          createdProject?.data?.identifier ||
-          createdProject?.id ||
-          createdProject?.data?.id;
-
-        if (!projectIdentifier) {
-          ToastUtils.error("Project created, but the identifier was missing.");
-          return;
-        }
-
-        updateConfiguration(configId, {
-          project_id: String(projectIdentifier),
-          project_mode: isTemplateConfig ? "new" : "existing",
-          project_name: isTemplateConfig ? trimmedName : "",
-        });
-        ToastUtils.success("Project created successfully.");
-      } catch (error: any) {
-        ToastUtils.error(error?.message || "Failed to create project.");
-      }
-    },
-    [configurations, createClientProject, updateConfiguration]
-  );
-
   const applyTemplate = useCallback(
     (template: any) => {
       const patch = buildConfigurationFromTemplate(template);
@@ -174,24 +109,34 @@ const ClientProvisioningWizard: React.FC = () => {
 
     return configurations.map((cfg) => {
       const status = evaluateConfigurationCompleteness(cfg);
-      const computeLabel = formatComputeLabel(cfg.compute_instance_id, instanceTypes);
+      const computeLabel =
+        cfg.compute_label || formatComputeLabel(cfg.compute_instance_id, instanceTypes);
+      const resolvedComputeLabel =
+        computeLabel && !["Not selected", "Instance selected"].includes(computeLabel)
+          ? computeLabel
+          : "";
       const defaultTitle =
         cfg.name?.trim() ||
-        (computeLabel && computeLabel !== "Not selected" ? computeLabel : "Instance configuration");
+        (resolvedComputeLabel ? resolvedComputeLabel : "Instance configuration");
+      const osLabel = cfg.os_image_label || formatOsLabel(cfg.os_image_id, osImages);
+      const storageLabel = cfg.volume_type_label
+        ? `${cfg.volume_type_label}${cfg.storage_size_gb ? ` • ${cfg.storage_size_gb} GB` : ""}`
+        : formatVolumeLabel(cfg.volume_type_id, cfg.storage_size_gb, volumeTypes);
 
       return {
         id: cfg.id,
         title: defaultTitle,
         regionLabel:
+          cfg.region_label ||
           regionOptions.find((opt) => opt.value === cfg.region)?.label ||
           cfg.region ||
           "No region selected",
         computeLabel,
-        osLabel: formatOsLabel(cfg.os_image_id, osImages),
+        osLabel,
         termLabel: cfg.months
           ? `${cfg.months} month${Number(cfg.months) === 1 ? "" : "s"}`
           : "Not selected",
-        storageLabel: formatVolumeLabel(cfg.volume_type_id, cfg.storage_size_gb, volumeTypes),
+        storageLabel,
         floatingIpLabel: `${Number(cfg.floating_ip_count || 0)} floating IP${
           Number(cfg.floating_ip_count || 0) === 1 ? "" : "s"
         }`,
@@ -278,6 +223,14 @@ const ClientProvisioningWizard: React.FC = () => {
     submissionResult?.transaction?.identifier ||
     orderReceipt?.transaction?.reference ||
     submissionResult?.transaction?.reference;
+  const successInstances =
+    submissionResult?.instances || orderReceipt?.instances || submissionResult?.data?.instances || [];
+  const keypairDownloads =
+    submissionResult?.keypair_materials ||
+    submissionResult?.transaction?.keypair_materials ||
+    orderReceipt?.keypair_materials ||
+    orderReceipt?.transaction?.keypair_materials ||
+    [];
 
   // Template pre-fill: Auto-populate configuration when template is passed via route state
   useEffect(() => {
@@ -296,7 +249,7 @@ const ClientProvisioningWizard: React.FC = () => {
   const isSuccessStep = currentStep?.id === "success";
 
   return (
-    <ClientPageShell title="Create Cube-nstance" description="Provision new cube-nstances">
+    <ClientPageShell title="Create Cube-Instance" description="Provision new cube-instances">
       <div className="mx-auto max-w-5xl space-y-8 pb-20">
         {/* Step Indicator - Grid variant (matching Admin/Tenant) */}
         <StepIndicator
@@ -313,9 +266,11 @@ const ClientProvisioningWizard: React.FC = () => {
             isFastTrack={false}
             configurationSummaries={configurationSummaries}
             pricingSummary={pricingSummary}
+            keypairDownloads={keypairDownloads}
+            instances={successInstances}
             instancesPageUrl="/client-dashboard/instances"
             onCreateAnother={() => setActiveStep(0)}
-            resourceLabel="Cube-nstance"
+            resourceLabel="Cube-Instance"
           />
         ) : isReviewStep ? (
           <ReviewSubmitStep
@@ -340,7 +295,7 @@ const ClientProvisioningWizard: React.FC = () => {
             onBack={() => setActiveStep(paymentStepIndex)}
             onEditConfiguration={() => setActiveStep(configureStepIndex)}
             onConfirm={() => setActiveStep(successStepIndex)}
-            resourceLabel="Cube-nstance"
+            resourceLabel="Cube-Instance"
           />
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -374,7 +329,6 @@ const ClientProvisioningWizard: React.FC = () => {
                   useNetworksHook={useFetchClientNetworks}
                   skipProjectFetch={false}
                   skipNetworkResourcesFetch={false}
-                  onCreateProject={handleCreateProject}
                   formVariant="cube"
                 />
               )}
@@ -385,8 +339,11 @@ const ClientProvisioningWizard: React.FC = () => {
                   submissionResult={submissionResult}
                   orderReceipt={orderReceipt}
                   isPaymentSuccessful={isPaymentSuccessful}
-                  summaryGrandTotalValue={pricingSummary.grandTotal}
-                  summaryDisplayCurrency={pricingSummary.currency}
+                  summarySubtotalValue={summarySubtotalValue}
+                  summaryTaxValue={summaryTaxValue}
+                  summaryGatewayFeesValue={summaryGatewayFeesValue}
+                  summaryGrandTotalValue={summaryGrandTotalValue}
+                  summaryDisplayCurrency={summaryDisplayCurrency}
                   contextType="client"
                   selectedUserId={String(profile?.id)}
                   clientOptions={clientOptions}
@@ -401,15 +358,21 @@ const ClientProvisioningWizard: React.FC = () => {
             <div className="lg:col-span-1">
               <InstanceSummaryCard
                 configurations={configurations}
+                configurationSummaries={reviewSummaries}
                 contextType="client"
                 selectedClientName={clientDisplayName}
                 billingCountry={
                   countryOptions.find((c) => String(c.value) === billingCountry)?.label ||
                   billingCountry
                 }
-                summaryTitle="Cube-nstance summary"
-                summaryDescription="Auto-calculated from the selected cube-nstance configuration."
-                resourceLabel="Cube-nstance"
+                summaryTitle="Cube-Instance summary"
+                summaryDescription="Auto-calculated from the selected cube-instance configuration."
+                resourceLabel="Cube-Instance"
+                summarySubtotalValue={summarySubtotalValue}
+                summaryTaxValue={summaryTaxValue}
+                summaryGatewayFeesValue={summaryGatewayFeesValue}
+                summaryGrandTotalValue={summaryGrandTotalValue}
+                summaryDisplayCurrency={summaryDisplayCurrency}
               />
             </div>
           </div>

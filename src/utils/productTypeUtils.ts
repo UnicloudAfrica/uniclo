@@ -27,7 +27,7 @@ const toSnakeCase = (value: string): string =>
   value
     .replace(/([A-Z]+)([A-Z][a-z0-9]+)/g, "$1_$2")
     .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
-    .replace(/[-\s.\/\\]+/g, "_")
+    .replace(/[-\s./\\]+/g, "_")
     .toLowerCase()
     .replace(/_+/g, "_")
     .replace(/^_+|_+$/g, "");
@@ -45,14 +45,9 @@ export const normalizeProductType = (value?: string | null): string => {
   const baseSnake = toSnakeCase(base);
   const rawSnake = toSnakeCase(trimmed);
 
-  const candidates = [
-    lowerNormalized,
-    lowerNoDots,
-    baseSnake,
-    baseLower,
-    rawSnake,
-    lower,
-  ].filter(Boolean);
+  const candidates = [lowerNormalized, lowerNoDots, baseSnake, baseLower, rawSnake, lower].filter(
+    Boolean
+  );
 
   for (const candidate of candidates) {
     const canonical = ALIAS_TO_CANONICAL[candidate];

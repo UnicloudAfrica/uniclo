@@ -222,7 +222,7 @@ const CalculatorConfigStep = ({
       tier_id: parseInt(storageItem.tier_id, 10),
       quantity: parseInt(storageItem.quantity, 10),
       months: parseInt(storageItem.months, 10),
-      product_name: tier?.product?.name || tier?.product_name || "Object Storage Tier",
+      product_name: tier?.product?.name || tier?.product_name || "Silo Storage Tier",
       total_price:
         (tier?.pricing?.effective?.price_local || 0) *
         (storageItem.quantity || 0) *
@@ -351,7 +351,7 @@ const CalculatorConfigStep = ({
             </ModernButton>
           </div>
 
-          {/* Object Storage Card */}
+          {/* Silo Storage Card */}
           <ModernCard padding="lg" className="space-y-6">
             <div className="space-y-1">
               <h3 className="text-lg font-semibold text-slate-900">Object storage commitments</h3>

@@ -1,18 +1,20 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Configuration, AdditionalVolume, Option } from "../types/InstanceConfiguration";
+import { AdditionalVolume, Option } from "../types/InstanceConfiguration";
 import { useInstanceFormState } from "./useInstanceCreation";
 import { useFetchCountries } from "./resource";
 import useTenantAuthStore from "../stores/tenantAuthStore";
 import config from "../config";
 import tenantApi from "../index/tenant/tenantApi";
 import silentTenantApi from "../index/tenant/silentTenant";
+import silentApi from "../index/silent";
 import ToastUtils from "../utils/toastUtil";
 import {
   evaluateConfigurationCompleteness,
   normalizePaymentOptions,
 } from "../utils/instanceCreationUtils";
 import { useTenantCustomerContext } from "./tenantHooks/useTenantCustomerContext";
+import { buildProvisioningSteps } from "../shared/components/instance-wizard/provisioningSteps";
 
 // ═══════════════════════════════════════════════════════════════════
 // TENANT INSTANCE CREATION LOGIC HOOK
@@ -51,23 +53,10 @@ export const useTenantProvisioningLogic = () => {
   // ─────────────────────────────────────────────────────────────────
   // Steps Configuration (varies by mode)
   // ─────────────────────────────────────────────────────────────────
-  const steps = useMemo(() => {
-    if (isFastTrack) {
-      return [
-        { id: "workflow", title: "Workflow", desc: "Select provisioning mode" },
-        { id: "configure", title: "Cube-Instance setup", desc: "Select region, size, and image" },
-        { id: "review", title: "Review & provision", desc: "Confirm order" },
-        { id: "success", title: "Success", desc: "Provisioning started" },
-      ];
-    }
-    return [
-      { id: "workflow", title: "Workflow", desc: "Select provisioning mode" },
-      { id: "configure", title: "Cube-Instance setup", desc: "Select region, size, and image" },
-      { id: "payment", title: "Payment", desc: "Complete payment" },
-      { id: "review", title: "Review & provision", desc: "Confirm order" },
-      { id: "success", title: "Success", desc: "Provisioning started" },
-    ];
-  }, [isFastTrack]);
+  const steps = useMemo(
+    () => buildProvisioningSteps(isFastTrack ? "fast-track" : "standard"),
+    [isFastTrack]
+  );
 
   const [activeStep, setActiveStep] = useState(0);
 
@@ -113,7 +102,7 @@ export const useTenantProvisioningLogic = () => {
   // ─────────────────────────────────────────────────────────────────
   const { data: countriesData = [], isLoading: isCountriesLoading } = useFetchCountries();
 
-  // Fetch pricing using tenant API (not generic API)
+  // Fetch pricing using public catalog (tenant-specific filter when available)
   const [pricingData, setPricingData] = useState<any>(null);
   const [isPricingLoading, setIsPricingLoading] = useState(false);
 
@@ -123,13 +112,15 @@ export const useTenantProvisioningLogic = () => {
       setIsPricingLoading(true);
       try {
         const params = new URLSearchParams();
-        if (billingCountry) {
-          params.append("country_code", billingCountry.toUpperCase());
+        const normalizedCountry = String(billingCountry || "").trim();
+        if (normalizedCountry) {
+          params.append("country_code", normalizedCountry.toUpperCase());
         }
-        const response = (await silentTenantApi(
-          "GET",
-          `/admin/product-pricing?${params.toString()}`
-        )) as any;
+        const pricingTenantId = contextType === "tenant" ? selectedTenantId : selfTenant?.id;
+        if (pricingTenantId) {
+          params.append("tenant_id", String(pricingTenantId));
+        }
+        const response = (await silentApi("GET", `/product-pricing?${params.toString()}`)) as any;
         setPricingData(response?.data || response || []);
       } catch (error) {
         console.error("Failed to fetch pricing:", error);
@@ -139,7 +130,7 @@ export const useTenantProvisioningLogic = () => {
       }
     };
     fetchPricing();
-  }, [isAuthenticated, billingCountry]);
+  }, [isAuthenticated, billingCountry, contextType, selectedTenantId, selfTenant?.id]);
 
   // Fetch regions using tenant API
   const [generalRegions, setGeneralRegions] = useState<any[]>([]);
@@ -196,7 +187,7 @@ export const useTenantProvisioningLogic = () => {
   // Build Options
   // ─────────────────────────────────────────────────────────────────
   const countryOptions: Option[] = useMemo(
-    () => countriesData.map((c: any) => ({ value: c.code || c.id, label: c.name })),
+    () => countriesData.map((c: any) => ({ value: c.iso2 || c.code || c.id, label: c.name })),
     [countriesData]
   );
 
@@ -339,7 +330,7 @@ export const useTenantProvisioningLogic = () => {
 
         return {
           project_id: isNewProject ? undefined : cfg.project_id || undefined,
-          project_name: isNewProject ? (cfg.project_name || undefined) : undefined,
+          project_name: isNewProject ? cfg.project_name || undefined : undefined,
           network_preset: isNewProject
             ? cfg.network_preset === "empty"
               ? "standard"

@@ -4,13 +4,14 @@ import { Zap, ArrowLeft, ArrowRight, Check, Globe, Layers, Shield, Network } fro
 import TenantPageShell from "../../components/TenantPageShell";
 import ModernCard from "../../../shared/components/ui/ModernCard";
 import ModernButton from "../../../shared/components/ui/ModernButton";
-import { useVpcs, useSubnets, useSecurityGroups } from "../../../hooks/adminHooks/vpcInfraHooks";
+import { useVpcs, useSubnets, useSecurityGroups } from "../../../shared/hooks/vpcInfraHooks";
 import { useCreateLoadBalancer } from "../../../hooks/adminHooks/loadBalancerHooks";
 
 const LoadBalancerWizard: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get("project") || "";
+  const region = searchParams.get("region") || "";
 
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -23,9 +24,9 @@ const LoadBalancerWizard: React.FC = () => {
     security_groups_ids: [] as string[],
   });
 
-  const { data: vpcs = [] } = useVpcs(projectId);
-  const { data: subnets = [] } = useSubnets(projectId);
-  const { data: sgs = [] } = useSecurityGroups(projectId);
+  const { data: vpcs = [] } = useVpcs(projectId, region);
+  const { data: subnets = [] } = useSubnets(projectId, region);
+  const { data: sgs = [] } = useSecurityGroups(projectId, region);
   const createMutation = useCreateLoadBalancer();
 
   const filteredSubnets = subnets.filter(

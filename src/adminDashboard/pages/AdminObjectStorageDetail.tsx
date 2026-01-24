@@ -10,8 +10,6 @@ import {
   Receipt,
   Trash2,
 } from "lucide-react";
-import AdminSidebar from "../components/AdminSidebar";
-import AdminHeadbar from "../components/adminHeadbar";
 import AdminPageShell from "../components/AdminPageShell";
 import ObjectStorageSidebar from "../../shared/components/object-storage/ObjectStorageSidebar";
 import ObjectStorageFileBrowser from "../../shared/components/object-storage/ObjectStorageFileBrowser";
@@ -24,7 +22,7 @@ import objectStorageApi from "../../services/objectStorageApi";
 import ToastUtils from "../../utils/toastUtil";
 
 /**
- * Admin Object Storage Detail Page
+ * Admin Silo Storage Detail Page
  *
  * Uses AdminPageShell for consistent header/breadcrumb structure,
  * with a 1/4-3/4 split layout for sidebar and file browser.
@@ -48,6 +46,8 @@ const AdminObjectStorageDetail: React.FC = () => {
   >("files");
   const [showExtendModal, setShowExtendModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  // Mobile sidebar state
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
 
   const fetchAccountDetails = useCallback(async () => {
     if (!accountId) return;
@@ -71,7 +71,7 @@ const AdminObjectStorageDetail: React.FC = () => {
       const data = await objectStorageApi.fetchBuckets(accountId);
       setBuckets(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Failed to load buckets:", err);
+      console.error("Failed to load silos:", err);
     } finally {
       setBucketsLoading(false);
     }
@@ -88,10 +88,10 @@ const AdminObjectStorageDetail: React.FC = () => {
     try {
       setCreatingBucket(true);
       await objectStorageApi.createBucket(accountId!, { name });
-      ToastUtils.success("Bucket created successfully");
+      ToastUtils.success("Silo created successfully");
       fetchBuckets();
     } catch (err: any) {
-      ToastUtils.error(err.message || "Failed to create bucket");
+      ToastUtils.error(err.message || "Failed to create silo");
       throw err;
     } finally {
       setCreatingBucket(false);
@@ -99,17 +99,17 @@ const AdminObjectStorageDetail: React.FC = () => {
   };
 
   const handleDeleteBucket = async (bucket: any) => {
-    if (!window.confirm(`Delete bucket "${bucket.name}"? This cannot be undone.`)) return;
+    if (!window.confirm(`Delete silo "${bucket.name}"? This cannot be undone.`)) return;
     try {
       setDeletingBucketId(bucket.id);
       await objectStorageApi.deleteBucket(accountId!, bucket.id);
-      ToastUtils.success("Bucket deleted");
+      ToastUtils.success("Silo deleted");
       if (selectedBucket === bucket.name) {
         setSelectedBucket(null);
       }
       fetchBuckets();
     } catch (err: any) {
-      ToastUtils.error(err.message || "Failed to delete bucket");
+      ToastUtils.error(err.message || "Failed to delete silo");
     } finally {
       setDeletingBucketId(null);
     }
@@ -134,9 +134,7 @@ const AdminObjectStorageDetail: React.FC = () => {
   if (!accountId) {
     return (
       <>
-        <AdminHeadbar />
-        <AdminSidebar />
-        <AdminPageShell title="Object Storage">
+        <AdminPageShell title="Silo Storage">
           <div className="p-8 text-center text-rose-600">Account ID is required</div>
         </AdminPageShell>
       </>
@@ -146,7 +144,7 @@ const AdminObjectStorageDetail: React.FC = () => {
   // Custom breadcrumbs for this detail page
   const breadcrumbs = [
     { label: "Home", href: "/admin-dashboard" },
-    { label: "Object Storage", href: "/admin-dashboard/object-storage" },
+    { label: "Silo Storage", href: "/admin-dashboard/object-storage" },
     { label: account?.name || "Access" },
   ];
 
@@ -226,16 +224,11 @@ const AdminObjectStorageDetail: React.FC = () => {
     </div>
   );
 
-  // Mobile sidebar state
-  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
-
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title={account?.name || "Access"}
-        description="View account details, manage buckets, and browse files"
+        description="View account details, manage silos, and browse files"
         breadcrumbs={breadcrumbs}
         actions={headerActions}
         disableContentPadding
@@ -276,7 +269,7 @@ const AdminObjectStorageDetail: React.FC = () => {
                 className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 transition-colors"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Back to Object Storage
+                Back to Silo Storage
               </button>
             </div>
           </div>
@@ -294,13 +287,13 @@ const AdminObjectStorageDetail: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <span>Show Storage & Buckets</span>
+                    <span>Show Storage & Silos</span>
                   </>
                 )}
               </button>
               {selectedBucket && (
                 <span className="text-sm text-slate-500">
-                  Bucket: <span className="font-medium text-slate-700">{selectedBucket}</span>
+                  Silo: <span className="font-medium text-slate-700">{selectedBucket}</span>
                 </span>
               )}
             </div>

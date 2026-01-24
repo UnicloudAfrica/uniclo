@@ -215,11 +215,15 @@ class InstanceApiService {
    */
   async getConsoleUrl(instanceId, consoleType = "novnc") {
     try {
-      const response = await fetch(`${config.baseURL}/business/instance-consoles/${instanceId}`, {
-        method: "GET",
-        headers: this.getAuthHeaders(),
-        credentials: "include",
-      });
+      const typeParam = consoleType ? `?type=${encodeURIComponent(consoleType)}` : "";
+      const response = await fetch(
+        `${config.baseURL}/business/instance-consoles/${instanceId}${typeParam}`,
+        {
+          method: "GET",
+          headers: this.getAuthHeaders(),
+          credentials: "include",
+        }
+      );
 
       const data = await response.json();
 

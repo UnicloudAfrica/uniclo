@@ -18,7 +18,7 @@ const OBJECT_STORAGE_TYPE = "object_storage_configuration";
 const DEFAULT_OBJECT_STORAGE_PRICE_PER_GB = 0.16;
 
 const objectStorageNameForQuota = (quota: any) =>
-  quota === 1 ? "Object Storage (per GiB)" : `Object Storage ${quota} GiB`;
+  quota === 1 ? "Silo Storage (per GiB)" : `Silo Storage ${quota} GiB`;
 
 const AddProduct = ({ isOpen, onClose }: any) => {
   const [formData, setFormData] = useState({
@@ -94,7 +94,7 @@ const AddProduct = ({ isOpen, onClose }: any) => {
     { value: "os_image", label: "OS Image" },
     { value: "bandwidth", label: "Bandwidth" },
     { value: "ip", label: "IP" },
-    { value: OBJECT_STORAGE_TYPE, label: "Object Storage" },
+    { value: OBJECT_STORAGE_TYPE, label: "Silo Storage" },
     { value: "volume_type", label: "Volume Type" },
   ];
 
@@ -128,7 +128,7 @@ const AddProduct = ({ isOpen, onClose }: any) => {
         mutated = true;
       }
       if (
-        (!prev.name?.trim() || prev.name.startsWith("Object Storage")) &&
+        (!prev.name?.trim() || prev.name.startsWith("Silo Storage")) &&
         prev.name !== defaultName
       ) {
         next.name = defaultName;
@@ -174,7 +174,7 @@ const AddProduct = ({ isOpen, onClose }: any) => {
         if (value === OBJECT_STORAGE_TYPE) {
           const quota = Math.max(1, Number(objectStorageQuota) || 1);
           const defaultName = objectStorageNameForQuota(quota);
-          if (!prev.name?.trim() || prev.name.startsWith("Object Storage")) {
+          if (!prev.name?.trim() || prev.name.startsWith("Silo Storage")) {
             next.name = defaultName;
           }
         }

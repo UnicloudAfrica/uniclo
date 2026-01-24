@@ -72,8 +72,8 @@ const ClientInstances: React.FC = () => {
     window.location.href = `/client-dashboard/instances/details?id=${encodedId}&name=${instanceName}`;
   };
 
-  const handleConsoleAccess = (instanceId: string | number) => {
-    openConsole(instanceId);
+  const handleConsoleAccess = (instanceIdentifier: string | number) => {
+    openConsole(instanceIdentifier);
   };
 
   const columns: Column<Instance>[] = useMemo(
@@ -136,13 +136,13 @@ const ClientInstances: React.FC = () => {
         header: "Actions",
         render: (_, row) => (
           <div className="flex items-center gap-2">
-            {row.status === "active" && (
+            {["active", "running"].includes((row.status || "").toLowerCase()) && (
               <ModernButton
                 variant="ghost"
                 size="xs"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleConsoleAccess(row.id);
+                  handleConsoleAccess(row.identifier || row.id);
                 }}
                 title="Open Console"
               >

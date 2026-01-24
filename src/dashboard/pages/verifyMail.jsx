@@ -9,6 +9,12 @@ import useAdminAuthStore from "../../stores/adminAuthStore";
 import { clearAuthSessionsExcept } from "../../stores/sessionUtils";
 import { useVerifyMail } from "../../hooks/authHooks";
 import { useNavigate } from "react-router-dom";
+import {
+  resolveBrandLogo,
+  useApplyBrandingTheme,
+  usePublicBrandingTheme,
+} from "../../hooks/useBrandingTheme";
+import { getSubdomain } from "../../utils/getSubdomain";
 
 export default function VerifyMail() {
   const [code, setCode] = useState(Array(6).fill("")); // Six-digit OTP input
@@ -20,6 +26,15 @@ export default function VerifyMail() {
   const [errors, setErrors] = useState({});
   const { mutate: verifyEmail, isPending: isVerifyPending } = useVerifyMail();
   const navigate = useNavigate();
+  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+  const subdomain = typeof window !== "undefined" ? getSubdomain() : null;
+  const { data: branding } = usePublicBrandingTheme({
+    domain: hostname,
+    subdomain,
+  });
+  useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
+  const logoSrc = resolveBrandLogo(branding, logo);
+  const logoAlt = branding?.company?.name ? `${branding.company.name} Logo` : "Logo";
 
   // Handle OTP code changes from VerificationCodeInput
   const handleCodeChange = (updatedCode) => {
@@ -70,31 +85,38 @@ export default function VerifyMail() {
           res?.data?.tenants ??
           undefined;
 
+        const userData = res?.data ?? null;
+        const hasTenantContext = Boolean(userData?.tenant_id || userData?.tenant?.id);
+        const normalizedRole = (userRole || "").toLowerCase();
+        const resolvedRole = ["admin", "tenant", "client"].includes(normalizedRole)
+          ? normalizedRole
+          : hasTenantContext
+            ? "tenant"
+            : "client";
+
         const sessionPayload = {
-          user: res?.data ?? null,
-          role: userRole ?? undefined,
-          tenant: res?.data?.tenant ?? null,
+          user: userData,
+          role: resolvedRole,
+          tenant: userData?.tenant ?? null,
           domain: domainInfo,
           availableTenants,
-          userEmail: res?.data?.email ?? email,
-          cloudRoles: res?.data?.cloud_roles ?? res?.data?.cloudRoles ?? undefined,
-          cloudAbilities: res?.data?.cloud_abilities ?? res?.data?.cloudAbilities ?? undefined,
+          userEmail: userData?.email ?? email,
+          cloudRoles: userData?.cloud_roles ?? userData?.cloudRoles ?? undefined,
+          cloudAbilities: userData?.cloud_abilities ?? userData?.cloudAbilities ?? undefined,
           isAuthenticated: true,
         };
 
-        const normalizedRole = (userRole || "tenant").toLowerCase();
-
-        if (normalizedRole === "client") {
+        if (resolvedRole === "client") {
           clientAuth.setSession(sessionPayload);
-        } else if (normalizedRole === "admin") {
+        } else if (resolvedRole === "admin") {
           adminAuth.setSession(sessionPayload);
         } else {
           tenantAuth.setSession(sessionPayload);
         }
 
-        clearAuthSessionsExcept(normalizedRole);
+        clearAuthSessionsExcept(resolvedRole);
 
-        switch (normalizedRole) {
+        switch (resolvedRole) {
           case "tenant":
             navigate("/dashboard/onboarding");
             break;
@@ -123,7 +145,7 @@ export default function VerifyMail() {
           {/* Logo */}
           <div className="mb-8">
             <div className="flex items-center justify-center">
-              <img src={logo} className="w-[100px]" alt="Logo" />
+              <img src={logoSrc} className="w-[100px]" alt={logoAlt} />
             </div>
           </div>
 

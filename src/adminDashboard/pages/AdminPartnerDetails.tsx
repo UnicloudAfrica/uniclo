@@ -1,8 +1,6 @@
 // @ts-nocheck
 import { useState, useEffect } from "react";
 import AdminActiveTab from "../components/adminActiveTab";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import OverviewPartner from "../components/partnersComponent/OverviewPartner";
 import PartnerModules from "../components/partnersComponent/PartnerModules";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -15,6 +13,7 @@ import {
   LayoutDashboard,
   Loader2,
   Mail,
+  Cloud,
   ShieldCheck,
   Users2,
   ClipboardList,
@@ -25,6 +24,7 @@ import PartnerClients from "../components/partnersComponent/PartnerClients";
 import AdminPageShell from "../components/AdminPageShell";
 import OnboardingStatusBoard from "../components/onboarding/OnboardingStatusBoard";
 import TenantBillingTab from "./tenantComps/TenantBillingTab";
+import TenantNetworkPolicyTab from "./tenantComps/TenantNetworkPolicyTab";
 import { useTenantBroadcasting } from "../../hooks/useTenantBroadcasting";
 
 // Function to decode the ID from URL (re-used from other files)
@@ -171,14 +171,19 @@ export default function AdminPartnerDetails() {
       icon: Wallet,
       component: <TenantBillingTab tenantId={tenantId!} />,
     },
+    {
+      label: "Network Policy",
+      value: "network-policy",
+      description: "Elastic IP enforcement and preset safeguards",
+      icon: Cloud,
+      component: <TenantNetworkPolicyTab tenantId={tenantId!} />,
+    },
   ];
 
   // Handle loading state
   if (isPartnerFetching) {
     return (
       <>
-        <AdminHeadbar />
-        <AdminSidebar />
         <AdminActiveTab />
         <AdminPageShell contentClassName="p-6 md:p-8 flex items-center justify-center flex-col">
           <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
@@ -192,8 +197,6 @@ export default function AdminPartnerDetails() {
   if (isPartnerError || !partnerDetails) {
     return (
       <>
-        <AdminHeadbar />
-        <AdminSidebar />
         <AdminActiveTab />
         <AdminPageShell contentClassName="p-6 md:p-8 flex flex-col items-center justify-center text-center">
           <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
@@ -214,8 +217,6 @@ export default function AdminPartnerDetails() {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminActiveTab />
       <AdminPageShell
         title={`${tenantName} Details`}

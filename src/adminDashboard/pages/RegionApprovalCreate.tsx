@@ -13,8 +13,6 @@ import {
 } from "lucide-react";
 import adminRegionApi from "../../services/adminRegionApi";
 import ToastUtils from "../../utils/toastUtil";
-import AdminSidebar from "../components/AdminSidebar";
-import AdminHeadbar from "../components/adminHeadbar";
 import AdminPageShell from "../components/AdminPageShell.tsx";
 import { ModernCard } from "../../shared/components/ui";
 import { ModernButton } from "../../shared/components/ui";
@@ -439,11 +437,11 @@ const RegionApprovalCreate = () => {
   );
 
   const renderObjectStorageSection = () => (
-    <ModernCard title="Object Storage (Optional)" className="space-y-4">
+    <ModernCard title="Silo Storage (Optional)" className="space-y-4">
       <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-semibold text-gray-800">
-            Enable Zadara Object Storage for this region?
+            Enable Zadara Silo Storage for this region?
           </p>
           <p className="mt-1 text-xs text-gray-600">
             Turning this on lets tenants in this region receive S3 credentials managed by the CRM.
@@ -461,7 +459,7 @@ const RegionApprovalCreate = () => {
             className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             disabled={!providerIsZadara}
           />
-          <span className="text-sm font-medium text-gray-700">Enable Object Storage</span>
+          <span className="text-sm font-medium text-gray-700">Enable Silo Storage</span>
         </label>
       </div>
 
@@ -475,7 +473,7 @@ const RegionApprovalCreate = () => {
         <div className="space-y-4">
           {renderInput(
             "object_storage_base_url",
-            "Object Storage Base URL",
+            "Silo Storage Base URL",
             "https://zadara-region.example.com:8443",
             Globe,
             {
@@ -499,7 +497,7 @@ const RegionApprovalCreate = () => {
             )}
             {renderInput(
               "object_storage_access_key",
-              "Object Storage Access Key",
+              "Silo Storage Access Key",
               "Paste X-Access-Key",
               KeyRound,
               {
@@ -542,8 +540,6 @@ const RegionApprovalCreate = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title="Create Platform Region"
         description="Add a new platform-owned region that becomes available to clients immediately."

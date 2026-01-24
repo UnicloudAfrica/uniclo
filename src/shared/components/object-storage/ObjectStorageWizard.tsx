@@ -2,7 +2,7 @@ import React from "react";
 import { Option } from "../../../hooks/objectStorageUtils";
 import { ResolvedProfile, SummaryTotals } from "../../../hooks/useObjectStoragePricing";
 
-// Common types for Object Storage components
+// Common types for Silo Storage components
 export interface Step {
   id: string;
   label: string;

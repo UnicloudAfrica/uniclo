@@ -54,7 +54,7 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }) => {
     bandwidth_count: 0,
     floating_ip_id: null,
     floating_ip_count: 0,
-    // Object Storage fields
+    // Silo Storage fields
     object_storage_region: "",
     object_storage_product_id: null,
     object_storage_quantity: 1000,
@@ -167,7 +167,7 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }) => {
     } else if (step === 1) {
       if (pricingRequests.length === 0 && objectStorageRequests.length === 0) {
         newErrors.general =
-          "Please add at least one item (compute or object storage) to the invoice.";
+          "Please add at least one item (compute or Silo Storage) to the invoice.";
       }
     } else if (step === 3) {
       if (formData.create_lead) {
@@ -265,7 +265,7 @@ const SharedCreateInvoice = ({ mode = "admin", onExit }) => {
       const productName =
         objectStorageProducts?.find(
           (p) => p.product.productable_id === parseInt(formData.object_storage_product_id)
-        )?.product.name || "Object Storage";
+        )?.product.name || "Silo Storage";
 
       const newRequest = {
         region: formData.object_storage_region,

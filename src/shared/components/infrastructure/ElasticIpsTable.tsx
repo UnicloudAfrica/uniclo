@@ -1,15 +1,7 @@
 import React from "react";
 import { Globe2 } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
-
-interface ElasticIp {
-  id: string;
-  public_ip?: string;
-  instance_id?: string;
-  network_interface_id?: string;
-  association_id?: string;
-  domain?: string;
-}
+import type { ElasticIp } from "./types";
 
 interface ElasticIpsTableProps {
   elasticIps: ElasticIp[];

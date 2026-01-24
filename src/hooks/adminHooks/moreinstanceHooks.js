@@ -1,23 +1,38 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import silentApi from "../../index/admin/silent";
-import api from "../../index/admin/api";
+import { useQuery } from "@tanstack/react-query";
+import config from "../../config";
+import useAdminAuthStore from "../../stores/adminAuthStore";
 
 // GET: Fetch all instance consoles
 const fetchInstanceConsoles = async () => {
-  const res = await silentApi("GET", `/instance-consoles`);
-  if (!res.data) {
-    throw new Error(`Failed to fetch instance consoles`);
-  }
-  return res.data;
+  throw new Error("Listing instance consoles is not supported. Fetch by identifier instead.");
 };
 
 // GET: Fetch instance request by ID
-const fetchInstanceConsoleById = async (id) => {
-  const res = await silentApi("GET", `/instance-consoles/${id}`);
-  if (!res.data) {
-    throw new Error(`Failed to fetch instance console with ID ${id}`);
+const fetchInstanceConsoleById = async (id, consoleType = "novnc") => {
+  const typeParam = consoleType ? `?type=${encodeURIComponent(consoleType)}` : "";
+  const authState = useAdminAuthStore?.getState?.();
+  const headers = authState?.getAuthHeaders?.() || {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+
+  const response = await fetch(
+    `${config.adminURL}/instance-management/${encodeURIComponent(id)}/console${typeParam}`,
+    {
+      method: "GET",
+      headers,
+      credentials: "include",
+    }
+  );
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok || payload?.success === false) {
+    throw new Error(
+      payload?.error || payload?.message || `Failed to fetch instance console with ID ${id}`
+    );
   }
-  return res.data;
+
+  return payload?.data || payload;
 };
 
 // Hook to fetch all instance consoles
@@ -33,12 +48,13 @@ export const useFetchInstanceConsoles = (options = {}) => {
 
 // Hook to fetch instance console by ID
 export const useFetchInstanceConsoleById = (id, options = {}) => {
+  const { consoleType, ...queryOptions } = options;
   return useQuery({
-    queryKey: ["instance-console", id],
-    queryFn: () => fetchInstanceConsoleById(id),
+    queryKey: ["instance-console", id, consoleType],
+    queryFn: () => fetchInstanceConsoleById(id, consoleType),
     enabled: !!id,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
-    ...options,
+    ...queryOptions,
   });
 };

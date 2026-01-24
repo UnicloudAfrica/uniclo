@@ -2,8 +2,6 @@
 import React, { useState, useMemo } from "react";
 import { Loader2, Plus, Users, Building2, Phone, Search, Filter } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import { ModernButton } from "../../shared/components/ui";
 import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
 import { TableActionButtons } from "../../shared/components/tables";
@@ -292,8 +290,6 @@ const AdminPartners = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title="Partners"
         description="Manage partner organizations and their details"

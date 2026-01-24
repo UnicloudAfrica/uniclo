@@ -141,7 +141,7 @@ const QUICK_ACTIONS: QuickAction[] = [
     Icon: Server,
   },
   {
-    title: "Object Storage",
+    title: "Silo Storage",
     description: "Store and retrieve assets securely with high durability.",
     to: "/client-dashboard/object-storage",
     Icon: HardDrive,

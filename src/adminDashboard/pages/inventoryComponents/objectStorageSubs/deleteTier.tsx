@@ -28,10 +28,9 @@ const DeleteObjectStorageTierModal = ({ isOpen, onClose, tier, onDeleted }: any)
         onClose?.();
       },
       onError: (error) => {
-        console.error("Failed to delete object storage product", error);
+        console.error("Failed to delete Silo Storage product", error);
         ToastUtils.error(
-          error?.response?.data?.message ||
-            "Failed to delete object storage tier. Please try again."
+          error?.response?.data?.message || "Failed to delete Silo Storage tier. Please try again."
         );
       },
     });

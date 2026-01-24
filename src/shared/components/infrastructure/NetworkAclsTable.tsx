@@ -1,20 +1,15 @@
 import React from "react";
 import { ShieldCheck } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
-
-interface NetworkAcl {
-  id: string;
-  name?: string;
-  vpc_id?: string;
-  is_default?: boolean;
-  entries?: Array<any>;
-}
+import type { NetworkAcl } from "./types";
 
 interface NetworkAclsTableProps {
   networkAcls: NetworkAcl[];
   isLoading?: boolean;
   emptyMessage?: string;
   onDelete?: (acl: NetworkAcl) => void;
+  onManageRules?: (acl: NetworkAcl) => void;
+  manageLabel?: string;
   showActions?: boolean;
 }
 
@@ -23,6 +18,8 @@ const NetworkAclsTable: React.FC<NetworkAclsTableProps> = ({
   isLoading = false,
   emptyMessage = "No network ACLs found",
   onDelete,
+  onManageRules,
+  manageLabel = "Manage Rules",
   showActions = false,
 }) => {
   if (isLoading) {
@@ -88,14 +85,24 @@ const NetworkAclsTable: React.FC<NetworkAclsTableProps> = ({
                   {acl.entries?.length ?? 0} rules
                 </span>
               </td>
-              {showActions && !acl.is_default && onDelete && (
-                <td className="py-3 px-4 text-right">
-                  <button
-                    onClick={() => onDelete(acl)}
-                    className="text-xs text-red-600 hover:text-red-800"
-                  >
-                    Delete
-                  </button>
+              {showActions && (
+                <td className="py-3 px-4 text-right space-x-2">
+                  {onManageRules && (
+                    <button
+                      onClick={() => onManageRules(acl)}
+                      className="text-xs text-blue-600 hover:text-blue-800"
+                    >
+                      {manageLabel}
+                    </button>
+                  )}
+                  {!acl.is_default && onDelete && (
+                    <button
+                      onClick={() => onDelete(acl)}
+                      className="text-xs text-red-600 hover:text-red-800"
+                    >
+                      Delete
+                    </button>
+                  )}
                 </td>
               )}
             </tr>

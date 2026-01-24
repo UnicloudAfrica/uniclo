@@ -1,14 +1,7 @@
 import React from "react";
 import { Globe } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
-
-interface NatGateway {
-  id: string;
-  name?: string;
-  subnet_id?: string;
-  public_ip?: string;
-  state?: string;
-}
+import type { NatGateway } from "./types";
 
 interface NatGatewaysTableProps {
   natGateways: NatGateway[];

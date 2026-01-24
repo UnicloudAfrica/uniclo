@@ -4,6 +4,7 @@ import {
   SummaryTotals,
   BackendPricingLine,
 } from "../../../hooks/useObjectStoragePricing";
+import { ModernCard } from "../ui";
 
 export interface ObjectStorageOrderSummaryProps {
   profiles: ResolvedProfile[];
@@ -51,70 +52,89 @@ export const ObjectStorageOrderSummary: React.FC<ObjectStorageOrderSummaryProps>
     profiles.map((p) => ({
       id: p.id,
       region: p.region,
-      name: p.tierName || p.name || "Object Storage Tier",
+      name: p.tierName || p.name || "Silo Storage Tier",
       months: p.months,
       subtotal: p.subtotal,
       unitPrice: p.unitPrice,
+      storageGb: p.storageGb,
       currency: p.currency,
     }));
 
   const finalTotal = grandTotalWithFees ?? totals.total + gatewayFees;
 
   return (
-    <div className="order-summary">
-      <div className="summary-header">
-        <h3 className="summary-title">Order Summary</h3>
-        <p className="summary-subtitle">Auto-calculated from the captured configuration.</p>
+    <ModernCard variant="outlined" padding="lg" className="space-y-4">
+      <div>
+        <h3 className="text-lg font-semibold text-slate-900">Order Summary</h3>
+        <p className="text-sm text-slate-600">Auto-calculated from the captured configuration.</p>
       </div>
 
-      {/* Context Info */}
-      <div className="summary-context">
-        <div className="context-row">
-          <span className="context-label">Customer Context</span>
-          <span className="context-value">{assignmentLabel}</span>
+      <div className="space-y-2 text-sm">
+        <div className="flex items-start justify-between gap-4">
+          <span className="text-slate-500">Customer Context</span>
+          <span className="text-right font-medium text-slate-900">
+            {assignmentLabel || "Unassigned"}
+          </span>
         </div>
-        <div className="context-row">
-          <span className="context-label">Billing Country</span>
-          <span className="context-value">{countryLabel}</span>
+        <div className="flex items-start justify-between gap-4">
+          <span className="text-slate-500">Billing Country</span>
+          <span className="text-right font-medium text-slate-900">
+            {countryLabel || "Not selected"}
+          </span>
         </div>
-        <div className="context-row">
-          <span className="context-label">Workflow</span>
-          <span className="context-value">{workflowLabel}</span>
+        <div className="flex items-start justify-between gap-4">
+          <span className="text-slate-500">Workflow</span>
+          <span className="text-right font-medium text-slate-900">{workflowLabel}</span>
         </div>
         {transactionId && (
-          <div className="context-row">
-            <span className="context-label">Transaction</span>
-            <span className="context-value mono">{transactionId}</span>
+          <div className="flex items-start justify-between gap-4">
+            <span className="text-slate-500">Transaction</span>
+            <span className="text-right font-mono text-xs font-semibold text-slate-700">
+              {transactionId}
+            </span>
           </div>
         )}
       </div>
 
-      {/* Payment Status */}
       {(isPaymentComplete || isPaymentFailed) && (
-        <div className={`payment-status ${isPaymentComplete ? "success" : "failed"}`}>
-          {isPaymentComplete ? "✓ Payment Successful" : "✕ Payment Failed"}
+        <div
+          className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${
+            isPaymentComplete
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border-rose-200 bg-rose-50 text-rose-700"
+          }`}
+        >
+          {isPaymentComplete ? "Payment successful" : "Payment failed"}
         </div>
       )}
 
-      {/* Profile Lines */}
-      <div className="summary-profiles">
-        <h4 className="section-title">Service Profiles</h4>
+      <div className="border-t border-slate-200 pt-4 space-y-3">
+        <h4 className="text-sm font-semibold text-slate-700">Service Profiles</h4>
         {displayLines.length === 0 ? (
-          <p className="no-profiles">No profiles configured yet</p>
+          <p className="text-sm text-slate-500 italic">No profiles configured yet.</p>
         ) : (
-          <div className="profile-list">
+          <div className="space-y-2">
             {displayLines.map((line) => (
-              <div key={line.id} className="profile-line">
-                <div className="profile-info">
-                  <span className="profile-name">{line.name}</span>
-                  {line.region && <span className="profile-region">{line.region}</span>}
-                  {showDetailedBreakdown && line.months && (
-                    <span className="profile-term">
-                      {line.months} month{line.months !== 1 ? "s" : ""}
-                    </span>
-                  )}
+              <div
+                key={line.id}
+                className="flex items-start justify-between gap-3 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">{line.name}</p>
+                  <div className="mt-1 flex flex-wrap gap-2 text-xs text-slate-500">
+                    {line.region && <span>{line.region}</span>}
+                    {line.storageGb && <span>{line.storageGb} GB</span>}
+                    {showDetailedBreakdown && line.months && (
+                      <span>
+                        {line.months} month{line.months !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                    {showDetailedBreakdown && line.unitPrice > 0 && (
+                      <span>{formatCurrency(line.unitPrice, line.currency)} / GB / mo</span>
+                    )}
+                  </div>
                 </div>
-                <span className="profile-subtotal">
+                <span className="text-sm font-semibold text-slate-900">
                   {formatCurrency(line.subtotal, line.currency)}
                 </span>
               </div>
@@ -123,35 +143,43 @@ export const ObjectStorageOrderSummary: React.FC<ObjectStorageOrderSummaryProps>
         )}
       </div>
 
-      {/* Totals */}
-      <div className="summary-totals">
-        <div className="total-row">
-          <span>Subtotal</span>
-          <span>{formatCurrency(totals.subtotal, totals.currency)}</span>
+      <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-slate-600">Subtotal</span>
+          <span className="font-medium text-slate-900">
+            {formatCurrency(totals.subtotal, totals.currency)}
+          </span>
         </div>
 
         {totals.tax > 0 && (
-          <div className="total-row">
-            <span>Tax {totals.taxRate > 0 ? `(${totals.taxRate}%)` : ""}</span>
-            <span>{formatCurrency(totals.tax, totals.currency)}</span>
+          <div className="flex items-center justify-between">
+            <span className="text-slate-600">
+              Tax {totals.taxRate > 0 ? `(${totals.taxRate}%)` : ""}
+            </span>
+            <span className="font-medium text-slate-900">
+              {formatCurrency(totals.tax, totals.currency)}
+            </span>
           </div>
         )}
 
         {gatewayFees > 0 && (
-          <div className="total-row">
-            <span>Gateway Fees</span>
-            <span>{formatCurrency(gatewayFees, totals.currency)}</span>
+          <div className="flex items-center justify-between">
+            <span className="text-slate-600">Gateway Fees</span>
+            <span className="font-medium text-slate-900">
+              {formatCurrency(gatewayFees, totals.currency)}
+            </span>
           </div>
         )}
 
-        <div className="total-row grand-total">
+        <div className="mt-2 flex items-center justify-between border-t border-slate-200 pt-2 text-base font-semibold text-primary-600">
           <span>Grand Total</span>
           <span>{formatCurrency(finalTotal, totals.currency)}</span>
         </div>
       </div>
 
-      {/* Note */}
-      <p className="summary-note">Taxes are estimated and may change after finance review.</p>
-    </div>
+      <p className="text-xs text-slate-500">
+        Taxes are estimated and may change after finance review.
+      </p>
+    </ModernCard>
   );
 };

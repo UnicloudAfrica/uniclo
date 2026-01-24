@@ -3,8 +3,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Calculator, Check, Settings, FileText, UserPlus } from "lucide-react";
-import AdminSidebar from "../components/AdminSidebar";
-import AdminHeadbar from "../components/adminHeadbar";
 import CalculatorConfigStep from "./calculatorComps/calculatorConfigStep";
 import CalculatorSummaryStep from "./calculatorComps/calculatorSummaryStep";
 import ToastUtils from "../../utils/toastUtil";
@@ -125,7 +123,7 @@ const AdminAdvancedCalculatorRedesigned = () => {
       calculatorData.pricing_requests.length === 0 &&
       (calculatorData.object_storage_items?.length || 0) === 0
     ) {
-      newErrors.general = "Add at least one compute or object storage entry before calculating.";
+      newErrors.general = "Add at least one compute or Silo Storage entry before calculating.";
     }
 
     if (calculatorData.apply_total_discount) {
@@ -289,9 +287,7 @@ const AdminAdvancedCalculatorRedesigned = () => {
 
   return (
     <div className="flex h-screen bg-slate-100">
-      <AdminSidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <AdminHeadbar />
         <main className="flex-1 overflow-y-auto bg-slate-100">
           <AdminPageShell
             title="Advanced Pricing Calculator"

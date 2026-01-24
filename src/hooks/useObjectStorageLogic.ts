@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 
 // Utilities
 import {
@@ -9,8 +9,7 @@ import {
   getRegionCode,
   makeTierKey,
   buildTierLabel,
-  resolveTierUnitPrice,
-  resolveTierCurrency,
+  resolveTierQuota,
   formatCountryOptions,
   formatRegionOptions,
   resolveCountryCodeFromEntity,
@@ -21,6 +20,7 @@ import {
 // Form state and pricing hooks
 import { useObjectStorageFormState } from "./useObjectStorageFormState";
 import { useObjectStoragePricing, ResolvedProfile, SummaryTotals } from "./useObjectStoragePricing";
+import { normalizePaymentOptions } from "../utils/instanceCreationUtils";
 
 // Shared hooks
 import { useFetchCountries, useFetchProductPricing } from "./resource";
@@ -36,6 +36,7 @@ export interface ObjectStorageLogicConfig {
   context?: ObjectStorageContext;
   tenantId?: string;
   userId?: string;
+  allowFastTrack?: boolean;
   // API overrides - allow passing custom hooks/functions for different contexts
   useRegionsHook?: () => { data: any[]; isFetching: boolean };
   useCountriesHook?: () => { data: any[]; isFetching: boolean };
@@ -65,6 +66,7 @@ export interface ObjectStorageLogicReturn {
   handleRegionChange: (id: string, region: string) => void;
   handleTierChange: (id: string, tierKey: string) => void;
   handleMonthsChange: (id: string, months: string) => void;
+  handleStorageGbChange: (id: string, storageGb: string) => void;
   handleNameChange: (id: string, name: string) => void;
   handleUnitPriceChange: (id: string, unitPrice: string) => void;
 
@@ -101,6 +103,11 @@ export interface ObjectStorageLogicReturn {
 
   // Order State
   lastOrderSummary: any;
+  orderId?: string | null;
+  transactionId?: string | null;
+  accountIds: string[];
+  paymentRequired: boolean | null;
+  paymentTransactionData: any;
   paymentOptions: any[];
   selectedPaymentOption: any;
   setSelectedPaymentOption: (option: any) => void;
@@ -124,7 +131,10 @@ export interface ObjectStorageLogicReturn {
   handlePreviousStep: () => void;
   validateWorkflowStep: () => boolean;
   validateServiceStep: () => boolean;
-  submitOrder: (event?: any, fastTrackOverride?: boolean, options?: any) => Promise<void>;
+  createOrder: (options?: { fastTrackOverride?: boolean }) => Promise<any | null>;
+  handlePaymentCompleted: (payload?: any) => void;
+  resetOrderState: () => void;
+  submitOrder: (event?: any, fastTrackOverride?: boolean, options?: any) => Promise<any | null>;
   resetForm: () => void;
 
   // Context info
@@ -144,8 +154,13 @@ const BASE_STEPS_FAST_TRACK = [
   },
   {
     id: "review",
-    label: "Review & submit",
+    label: "Review & provision",
     description: "Validate totals and confirm provisioning.",
+  },
+  {
+    id: "success",
+    label: "Success",
+    description: "Provisioning has started.",
   },
 ];
 
@@ -167,8 +182,13 @@ const BASE_STEPS_STANDARD = [
   },
   {
     id: "review",
-    label: "Review & submit",
+    label: "Review & provision",
     description: "Validate totals and confirm provisioning.",
+  },
+  {
+    id: "success",
+    label: "Success",
+    description: "Provisioning has started.",
   },
 ];
 
@@ -179,19 +199,21 @@ export const useObjectStorageLogic = (
     context = "admin",
     tenantId: configTenantId,
     userId: configUserId,
+    allowFastTrack = true,
     useRegionsHook,
     useCountriesHook,
     usePricingHook,
     submitOrderFn,
   } = config;
 
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Mode and Steps
-  const initialMode = searchParams.get("mode") === "fast-track" ? "fast-track" : "standard";
+  const canFastTrack = allowFastTrack !== false;
+  const initialMode =
+    searchParams.get("mode") === "fast-track" && canFastTrack ? "fast-track" : "standard";
   const [mode, setMode] = useState(initialMode);
-  const isFastTrack = mode === "fast-track";
+  const isFastTrack = canFastTrack && mode === "fast-track";
   const [activeStep, setActiveStep] = useState(0);
 
   const steps = useMemo(
@@ -202,6 +224,16 @@ export const useObjectStorageLogic = (
   useEffect(() => {
     setActiveStep((prev) => Math.min(prev, steps.length - 1));
   }, [steps.length]);
+
+  useEffect(() => {
+    if (canFastTrack || mode !== "fast-track") return;
+    setMode("standard");
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      params.delete("mode");
+      return params;
+    });
+  }, [canFastTrack, mode, setSearchParams]);
 
   const isFirstStep = activeStep === 0;
   const isLastStep = activeStep === steps.length - 1;
@@ -218,31 +250,57 @@ export const useObjectStorageLogic = (
     removeProfile,
     updateProfile,
     handleRegionChange,
-    handleTierChange,
     handleMonthsChange,
+    handleStorageGbChange,
     handleNameChange,
     handleUnitPriceChange,
     resetProfiles,
   } = formState;
 
-  // Customer Context - use provided context or default admin hook
-  const customerContext = useCustomerContext();
-  const {
-    contextType,
-    setContextType,
-    selectedTenantId: hookTenantId,
-    setSelectedTenantId,
-    selectedUserId: hookUserId,
-    setSelectedUserId,
-    tenants,
-    isTenantsFetching,
-    userPool,
-    isUsersFetching,
-  } = customerContext;
+  // Customer Context - admin uses shared hook, tenant/client use local state
+  const isAdminContext = context === "admin";
+  const adminContext = useCustomerContext({ enabled: isAdminContext });
 
-  // Use config overrides for tenant/user if provided
-  const selectedTenantId = configTenantId || hookTenantId;
-  const selectedUserId = configUserId || hookUserId;
+  const defaultContextType =
+    context === "tenant" ? "tenant" : context === "client" ? "user" : "unassigned";
+
+  const [localContextType, setLocalContextType] = useState(defaultContextType);
+  const [localTenantId, setLocalTenantId] = useState(configTenantId || "");
+  const [localUserId, setLocalUserId] = useState(configUserId || "");
+
+  useEffect(() => {
+    if (!isAdminContext) {
+      setLocalContextType(defaultContextType);
+    }
+  }, [defaultContextType, isAdminContext]);
+
+  useEffect(() => {
+    if (!isAdminContext) {
+      setLocalTenantId(configTenantId || "");
+    }
+  }, [configTenantId, isAdminContext]);
+
+  useEffect(() => {
+    if (!isAdminContext) {
+      setLocalUserId(configUserId || "");
+    }
+  }, [configUserId, isAdminContext]);
+
+  const contextType = isAdminContext ? adminContext.contextType : localContextType;
+  const setContextType = isAdminContext ? adminContext.setContextType : setLocalContextType;
+
+  const selectedTenantId = isAdminContext
+    ? configTenantId || adminContext.selectedTenantId
+    : localTenantId;
+  const setSelectedTenantId = isAdminContext ? adminContext.setSelectedTenantId : setLocalTenantId;
+
+  const selectedUserId = isAdminContext ? configUserId || adminContext.selectedUserId : localUserId;
+  const setSelectedUserId = isAdminContext ? adminContext.setSelectedUserId : setLocalUserId;
+
+  const tenants = isAdminContext ? adminContext.tenants : [];
+  const isTenantsFetching = isAdminContext ? adminContext.isTenantsFetching : false;
+  const userPool = isAdminContext ? adminContext.userPool : [];
+  const isUsersFetching = isAdminContext ? adminContext.isUsersFetching : false;
 
   // Order State
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -373,6 +431,26 @@ export const useObjectStorageLogic = (
     return catalog;
   }, [tierPricingPayload, selectedCurrency]);
 
+  const handleTierChange = useCallback(
+    (profileId: string, tierKey: string) => {
+      const profile = serviceProfiles.find((item) => item.id === profileId);
+      const regionKey = (profile?.region || "").trim().toLowerCase();
+      const regionBucket = regionKey ? tierCatalog.get(regionKey) : null;
+      const fallbackBucket = tierCatalog.get(GLOBAL_TIER_KEY);
+      const catalogEntry = regionBucket || fallbackBucket;
+      const tierRow = catalogEntry?.map?.get(tierKey.trim()) || null;
+      const tierQuota = resolveTierQuota(tierRow);
+      const storageGbValue = Number(profile?.storageGb);
+      const hasStorageGb = Number.isFinite(storageGbValue) && storageGbValue > 0;
+      const updates: Partial<ServiceProfile> = { tierKey };
+      if (!hasStorageGb && tierQuota > 0) {
+        updates.storageGb = String(tierQuota);
+      }
+      updateProfile(profileId, updates);
+    },
+    [serviceProfiles, tierCatalog, updateProfile]
+  );
+
   // Pricing calculations
   const pricing = useObjectStoragePricing(
     serviceProfiles,
@@ -458,19 +536,115 @@ export const useObjectStorageLogic = (
     return "Internal order";
   }, [contextType, selectedTenantId, selectedUserId, tenantOptions, clientOptions]);
 
-  // Payment Status
-  const paymentOptions =
-    lastOrderSummary?.payment?.payment_gateway_options ||
-    lastOrderSummary?.transaction?.payment_gateway_options ||
-    lastOrderSummary?.paymentOptions?.payment_gateway_options ||
-    [];
+  const orderId = useMemo(() => {
+    return (
+      lastOrderSummary?.order?.identifier ||
+      lastOrderSummary?.order?.id ||
+      lastOrderSummary?.order_id ||
+      null
+    );
+  }, [lastOrderSummary]);
 
-  const transactionStatus = (lastOrderSummary?.transaction?.status || "").toLowerCase();
+  const transactionId = useMemo(() => {
+    return (
+      lastOrderSummary?.transaction?.identifier ||
+      lastOrderSummary?.transaction?.reference ||
+      lastOrderSummary?.transaction?.id ||
+      null
+    );
+  }, [lastOrderSummary]);
+
+  const accountIds = useMemo(() => {
+    const ids = new Set<string>();
+    const add = (value: any) => {
+      if (value === null || value === undefined || value === "") return;
+      ids.add(String(value));
+    };
+
+    add(lastOrderSummary?.account?.id);
+    add(lastOrderSummary?.object_storage_account_id);
+    if (Array.isArray(lastOrderSummary?.accounts)) {
+      lastOrderSummary.accounts.forEach((account: any) => add(account?.id));
+    }
+    const orderItems = lastOrderSummary?.order_items || lastOrderSummary?.order?.items || [];
+    if (Array.isArray(orderItems)) {
+      orderItems.forEach((item: any) => add(item?.account_id || item?.account?.id));
+    }
+
+    return Array.from(ids);
+  }, [lastOrderSummary]);
+
+  // Payment Status
+  const paymentOptions = useMemo(() => {
+    const raw =
+      lastOrderSummary?.payment?.payment_gateway_options ||
+      lastOrderSummary?.transaction?.payment_gateway_options ||
+      lastOrderSummary?.paymentOptions ||
+      [];
+    return normalizePaymentOptions(raw);
+  }, [lastOrderSummary]);
+
+  const paymentRequired =
+    typeof lastOrderSummary?.payment?.required === "boolean"
+      ? lastOrderSummary.payment.required
+      : null;
+
+  const transactionStatus = (
+    lastOrderSummary?.transaction?.status ||
+    lastOrderSummary?.payment?.status ||
+    ""
+  ).toLowerCase();
+
   const isPaymentComplete =
-    transactionStatus === "successful" ||
-    transactionStatus === "completed" ||
-    transactionStatus === "paid";
-  const isPaymentFailed = transactionStatus === "failed";
+    Boolean(lastOrderSummary) &&
+    (paymentRequired === false ||
+      transactionStatus === "successful" ||
+      transactionStatus === "completed" ||
+      transactionStatus === "paid" ||
+      transactionStatus === "success" ||
+      transactionStatus === "approved");
+  const isPaymentFailed = Boolean(lastOrderSummary) && transactionStatus === "failed";
+
+  const paymentTransactionData = useMemo(() => {
+    if (!lastOrderSummary?.transaction && !lastOrderSummary?.payment) return null;
+    return {
+      data: {
+        transaction: lastOrderSummary?.transaction || null,
+        order: {
+          ...(lastOrderSummary?.order || {}),
+          type: "object_storage",
+          items: lastOrderSummary?.order_items || lastOrderSummary?.order?.items || [],
+          storage_profiles: lastOrderSummary?.serviceProfiles || [],
+        },
+        instances: [],
+        accounts: lastOrderSummary?.accounts || [],
+        order_items: lastOrderSummary?.order_items || [],
+        payment: lastOrderSummary?.payment || null,
+      },
+    };
+  }, [lastOrderSummary]);
+
+  useEffect(() => {
+    if (!paymentOptions.length) {
+      if (selectedPaymentOption) {
+        setSelectedPaymentOption(null);
+      }
+      return;
+    }
+
+    if (
+      selectedPaymentOption &&
+      paymentOptions.some(
+        (option: any) =>
+          option?.transaction_reference === selectedPaymentOption?.transaction_reference ||
+          option?.reference === selectedPaymentOption?.reference
+      )
+    ) {
+      return;
+    }
+
+    setSelectedPaymentOption(paymentOptions[0] || null);
+  }, [paymentOptions, selectedPaymentOption]);
 
   // Country auto-lock based on tenant/user selection
   useEffect(() => {
@@ -511,9 +685,17 @@ export const useObjectStorageLogic = (
   ]);
 
   // Handlers
+  const resetOrderState = useCallback(() => {
+    setLastOrderSummary(null);
+    setSelectedPaymentOption(null);
+    setIsGeneratingPayment(false);
+  }, []);
+
   const handleModeChange = useCallback(
     (nextMode: string) => {
+      if (!canFastTrack && nextMode === "fast-track") return;
       if (nextMode === mode) return;
+      resetOrderState();
       setMode(nextMode);
       setSearchParams((prev) => {
         const params = new URLSearchParams(prev);
@@ -525,7 +707,7 @@ export const useObjectStorageLogic = (
         return params;
       });
     },
-    [mode, setSearchParams]
+    [mode, resetOrderState, setSearchParams]
   );
 
   const goToStep = useCallback(
@@ -569,6 +751,13 @@ export const useObjectStorageLogic = (
         profileError.months = "Please enter valid months";
         hasErrors = true;
       }
+      if (!profile.storageGb || Number(profile.storageGb) < 1) {
+        profileError.storageGb = "Please enter storage size (GB)";
+        hasErrors = true;
+      } else if (Number(profile.storageGb) > 100000) {
+        profileError.storageGb = "Storage size cannot exceed 100000 GB";
+        hasErrors = true;
+      }
       if (Object.keys(profileError).length > 0) {
         newProfileErrors[profile.id] = profileError;
       }
@@ -592,43 +781,130 @@ export const useObjectStorageLogic = (
     }
   }, [activeStep]);
 
+  const normalizeOrderSummary = useCallback(
+    (payload: any, fastTrackFlag?: boolean) => {
+      if (!payload) return null;
+      const data = payload?.data || payload;
+      const transaction = data?.transaction || null;
+      const order = data?.order || null;
+      const payment = data?.payment || null;
+      const normalizedPaymentOptions = normalizePaymentOptions(
+        payment?.payment_gateway_options ||
+          transaction?.payment_gateway_options ||
+          data?.payment_options ||
+          data?.paymentOptions
+      );
+      const paymentState = payment
+        ? { ...payment, payment_gateway_options: normalizedPaymentOptions }
+        : normalizedPaymentOptions.length
+          ? { payment_gateway_options: normalizedPaymentOptions }
+          : null;
+
+      return {
+        transaction,
+        order,
+        payment: paymentState,
+        paymentOptions: normalizedPaymentOptions,
+        fastTrack:
+          typeof fastTrackFlag === "boolean"
+            ? fastTrackFlag
+            : (data?.fast_track ?? data?.fastTrack ?? isFastTrack),
+        serviceProfiles: resolvedProfiles,
+        order_items: data?.order_items || order?.items || [],
+        accounts: data?.accounts || (data?.account ? [data.account] : []),
+        account: data?.account || null,
+        object_storage_account_id: data?.object_storage_account_id,
+      };
+    },
+    [isFastTrack, resolvedProfiles]
+  );
+
   // Submit Order (placeholder - actual implementation depends on API)
   const submitOrder = useCallback(
-    async (event?: any, fastTrackOverride?: boolean, options: any = {}) => {
+    async (event?: any, fastTrackOverride?: boolean, _options: any = {}) => {
       event?.preventDefault();
       setIsSubmitting(true);
 
       try {
-        // Build payload
-        const payload = {
-          country_code: effectiveCountryCode,
-          currency: selectedCurrency,
-          is_fast_track: fastTrackOverride ?? isFastTrack,
-          context_type: contextType,
-          tenant_id: selectedTenantId || null,
-          user_id: selectedUserId || null,
-          profiles: resolvedProfiles.map((profile) => ({
-            name: profile.name || profile.tierName,
+        const fastTrackFlag =
+          typeof fastTrackOverride === "boolean" ? fastTrackOverride : isFastTrack;
+        const objectStorageItems = resolvedProfiles.map((profile, index) => {
+          const tierRow = profile.tierRow || profile.tierData;
+          const rawProductableId =
+            tierRow?.productable_id ??
+            tierRow?.product_id ??
+            tierRow?.id ??
+            tierRow?.product?.productable_id ??
+            tierRow?.product?.id ??
+            profile.tierKey?.split("::")[1];
+          const parsedProductableId = Number.parseInt(String(rawProductableId ?? ""), 10);
+          if (!Number.isFinite(parsedProductableId)) {
+            throw new Error(
+              "Unable to resolve the selected Silo Storage tier. Please refresh pricing and try again."
+            );
+          }
+          const baseName = (profile.name || profile.tierName || "").trim();
+          const name =
+            baseName.length >= 3 ? baseName : `Silo Storage ${profile.region || "region"}`.trim();
+
+          return {
             region: profile.region,
-            tier_key: profile.tierKey,
-            months: profile.months,
-            unit_price: profile.unitPrice,
-            quantity: profile.quantity,
-          })),
+            productable_id: parsedProductableId,
+            storage_gb: Number(profile.storageGb) || 0,
+            quantity: Number(profile.quantity) || 1,
+            months: Number(profile.months) || 1,
+            name,
+            metadata: {
+              ui_profile_id: profile.id,
+              tier_key: profile.tierKey,
+              tier_name: profile.tierName,
+              currency: profile.currency,
+              unit_price: profile.unitPrice,
+              subtotal: profile.subtotal,
+              storage_gb: profile.storageGb,
+              line_index: index,
+            },
+          };
+        });
+
+        if (!objectStorageItems.length) {
+          throw new Error("Add at least one eligible service profile before submitting.");
+        }
+
+        const payload: Record<string, any> = {
+          object_storage_items: objectStorageItems,
+          fast_track: fastTrackFlag,
         };
+
+        const countryIso = effectiveCountryCode?.toUpperCase();
+        if (countryIso) {
+          payload.country_iso = countryIso;
+        }
+        if (selectedTenantId) {
+          payload.tenant_id = selectedTenantId;
+        }
+        if (selectedUserId) {
+          payload.user_id = selectedUserId;
+        }
 
         // Use provided submit function or throw error
         if (submitOrderFn) {
           const result = await submitOrderFn(payload);
-          setLastOrderSummary(result);
+          const normalized = normalizeOrderSummary(result, fastTrackOverride);
+          if (normalized) {
+            setLastOrderSummary(normalized);
+          }
+          return normalized;
         } else {
           console.warn("No submitOrderFn provided - order not submitted");
         }
       } catch (error) {
         console.error("Order submission failed:", error);
+        return null;
       } finally {
         setIsSubmitting(false);
       }
+      return null;
     },
     [
       effectiveCountryCode,
@@ -639,18 +915,52 @@ export const useObjectStorageLogic = (
       selectedUserId,
       resolvedProfiles,
       submitOrderFn,
+      normalizeOrderSummary,
     ]
   );
+
+  const createOrder = useCallback(
+    async (options: { fastTrackOverride?: boolean } = {}) => {
+      setIsGeneratingPayment(true);
+      try {
+        return await submitOrder(undefined, options.fastTrackOverride, { skipReset: true });
+      } finally {
+        setIsGeneratingPayment(false);
+      }
+    },
+    [submitOrder]
+  );
+
+  const handlePaymentCompleted = useCallback((payload: any = {}) => {
+    const rawStatus = payload?.status || payload?.transaction_status || "successful";
+    const normalizedStatus = String(rawStatus).toLowerCase();
+    setLastOrderSummary((prev: any) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        transaction: {
+          ...(prev.transaction || {}),
+          status: normalizedStatus,
+          payment_reference: payload?.reference || prev.transaction?.payment_reference,
+        },
+        payment: {
+          ...(prev.payment || {}),
+          status: normalizedStatus,
+          required: prev.payment?.required ?? false,
+          gateway: payload?.gateway || prev.payment?.gateway,
+        },
+      };
+    });
+  }, []);
 
   const resetForm = useCallback(() => {
     setFormData({ countryCode: "US" });
     resetProfiles();
     setActiveStep(0);
-    setLastOrderSummary(null);
-    setSelectedPaymentOption(null);
+    resetOrderState();
     setErrors({});
     setProfileErrors({});
-  }, [resetProfiles]);
+  }, [resetOrderState, resetProfiles]);
 
   return {
     // Mode & Steps
@@ -670,6 +980,7 @@ export const useObjectStorageLogic = (
     handleRegionChange,
     handleTierChange,
     handleMonthsChange,
+    handleStorageGbChange,
     handleNameChange,
     handleUnitPriceChange,
 
@@ -706,6 +1017,11 @@ export const useObjectStorageLogic = (
 
     // Order State
     lastOrderSummary,
+    orderId,
+    transactionId,
+    accountIds,
+    paymentRequired,
+    paymentTransactionData,
     paymentOptions,
     selectedPaymentOption,
     setSelectedPaymentOption,
@@ -729,6 +1045,9 @@ export const useObjectStorageLogic = (
     handlePreviousStep,
     validateWorkflowStep,
     validateServiceStep,
+    createOrder,
+    handlePaymentCompleted,
+    resetOrderState,
     submitOrder,
     resetForm,
 

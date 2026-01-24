@@ -1,8 +1,6 @@
 import React, { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import AdminPageShell from "../../components/AdminPageShell";
-import AdminHeadbar from "../../components/adminHeadbar";
-import AdminSidebar from "../../components/AdminSidebar";
 import { AutoScalingManagementContainer } from "../../../shared/components/infrastructure/autoscaling";
 
 const AdminAutoScaling: React.FC = () => {
@@ -27,8 +25,6 @@ const AdminAutoScaling: React.FC = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title="Auto-scaling"
         description="Manage auto-scaling groups and launch configurations"

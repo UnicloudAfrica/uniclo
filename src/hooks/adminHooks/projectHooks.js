@@ -304,6 +304,38 @@ const syncProjectUser = async ({ projectId, userId, data = {} }) => {
   return res.data;
 };
 
+// DELETE: Revoke a specific policy from a user
+const revokeProjectUserPolicy = async ({ projectId, userId, policyId }) => {
+  const encodedProjectId = encodeURIComponent(projectId);
+  const encodedUserId = encodeURIComponent(userId);
+  const encodedPolicyId = encodeURIComponent(policyId);
+  const res = await silentApi(
+    "DELETE",
+    `/projects/${encodedProjectId}/users/${encodedUserId}/policies/${encodedPolicyId}`
+  );
+  if (!res.data) {
+    throw new Error(`Failed to revoke policy ${policyId} for user ${userId}`);
+  }
+  return res;
+};
+
+// POST: Assign a specific policy to a user
+const assignProjectUserPolicy = async ({ projectId, userId, policyId }) => {
+  const encodedProjectId = encodeURIComponent(projectId);
+  const encodedUserId = encodeURIComponent(userId);
+  const res = await silentApi(
+    "POST",
+    `/projects/${encodedProjectId}/users/${encodedUserId}/policies`,
+    {
+      policy_id: policyId,
+    }
+  );
+  if (!res.data) {
+    throw new Error(`Failed to assign policy ${policyId} for user ${userId}`);
+  }
+  return res;
+};
+
 // Hook to provision project
 export const useProvisionProject = () => {
   const queryClient = useQueryClient();
@@ -366,6 +398,36 @@ export const useSyncProjectUser = () => {
     },
     onError: (error) => {
       console.error("Error syncing project user:", error);
+    },
+  });
+};
+
+// Hook to revoke project user policy
+export const useRevokeProjectUserPolicy = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: revokeProjectUserPolicy,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries(["admin-project", variables.projectId]);
+      queryClient.invalidateQueries(["admin-project-status", variables.projectId]);
+    },
+    onError: (error) => {
+      console.error("Error revoking project user policy:", error);
+    },
+  });
+};
+
+// Hook to assign a specific policy to a user
+export const useAssignProjectUserPolicy = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: assignProjectUserPolicy,
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries(["admin-project", variables.projectId]);
+      queryClient.invalidateQueries(["admin-project-status", variables.projectId]);
+    },
+    onError: (error) => {
+      console.error("Error assigning project user policy:", error);
     },
   });
 };
@@ -491,6 +553,53 @@ export const useSetupInfrastructure = () => {
     },
     onError: (error) => {
       console.error("Error setting up infrastructure:", error);
+    },
+  });
+};
+
+// ============================================
+// PROJECT STATUS SYNC HOOKS
+// ============================================
+
+// POST: Sync project status based on provisioning progress
+const syncProjectStatus = async (id) => {
+  const encodedId = encodeURIComponent(id);
+  const res = await api("POST", `/projects/${encodedId}/sync-status`);
+  return res;
+};
+
+// POST: Bulk sync project statuses
+const bulkSyncProjectStatus = async (identifiers = []) => {
+  const res = await api("POST", `/projects/bulk-sync-status`, { identifiers });
+  return res;
+};
+
+// Hook to sync individual project status
+export const useSyncProjectStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: syncProjectStatus,
+    onSuccess: (data, projectId) => {
+      queryClient.invalidateQueries(["admin-projects"]);
+      queryClient.invalidateQueries(["admin-project", projectId]);
+      queryClient.invalidateQueries(["admin-project-status", projectId]);
+    },
+    onError: (error) => {
+      console.error("Error syncing project status:", error);
+    },
+  });
+};
+
+// Hook to bulk sync project statuses
+export const useBulkSyncProjectStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: bulkSyncProjectStatus,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["admin-projects"]);
+    },
+    onError: (error) => {
+      console.error("Error bulk syncing project statuses:", error);
     },
   });
 };

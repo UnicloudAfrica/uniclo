@@ -7,9 +7,15 @@ import sideBg from "./assets/sideBg.svg";
 import Header from "./signup/header";
 import { Loader2, ShieldCheck, AlertCircle } from "lucide-react";
 import { useFetchCountries } from "../../hooks/resource";
+import {
+  resolveBrandLogo,
+  useApplyBrandingTheme,
+  usePublicBrandingTheme,
+} from "../../hooks/useBrandingTheme";
+import { getSubdomain } from "../../utils/getSubdomain";
 
 const ROLE_TABS = [
-  { id: "tenant", label: "Partner / Tenant" },
+  { id: "tenant", label: "Tenant" },
   { id: "client", label: "Client" },
 ];
 
@@ -32,10 +38,18 @@ export default function DashboardSignUpV2() {
   const navigate = useNavigate();
   const setUserEmail = useTenantAuthStore((state) => state.setUserEmail);
   const { mutate, isPending } = useCreateAccount();
-  const { mutate: verifyBusiness, isPending: isVerifying } =
-    useVerifyBusiness();
-  const { data: countries = [], isFetching: isCountriesFetching } =
-    useFetchCountries();
+  const { mutate: verifyBusiness, isPending: isVerifying } = useVerifyBusiness();
+  const { data: countries = [], isFetching: isCountriesFetching } = useFetchCountries();
+  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+  const subdomain = typeof window !== "undefined" ? getSubdomain() : null;
+  const { data: branding } = usePublicBrandingTheme({
+    domain: hostname,
+    subdomain,
+  });
+  useApplyBrandingTheme(branding, { updateFavicon: true });
+  const headerLogo = resolveBrandLogo(branding, null);
+  const logoAlt = branding?.company?.name ? `${branding.company.name} Logo` : "Logo";
+  const companyName = branding?.company?.name || "Unicloud Africa";
 
   const [activeRole, setActiveRole] = useState("tenant");
   const [formData, setFormData] = useState(INITIAL_FORM);
@@ -44,26 +58,19 @@ export default function DashboardSignUpV2() {
   const [verificationResult, setVerificationResult] = useState(null);
   const [verificationError, setVerificationError] = useState(null);
 
-
   const updateField = (field, value) => {
-    const requiresReverification = [
-      "companyName",
-      "companyType",
-      "registrationNumber",
-    ].includes(field);
+    const requiresReverification = ["companyName", "companyType", "registrationNumber"].includes(
+      field
+    );
 
     setFormData((prev) => {
       const next = { ...prev, [field]: value };
 
       if (field === "countryId") {
-        const selectedCountry = countries.find(
-          (country) => String(country.id) === value
-        );
+        const selectedCountry = countries.find((country) => String(country.id) === value);
         next.countryName = selectedCountry?.name || "";
         next.countryCode =
-          selectedCountry?.iso2?.toUpperCase() ||
-          selectedCountry?.iso3?.toUpperCase() ||
-          "";
+          selectedCountry?.iso2?.toUpperCase() || selectedCountry?.iso3?.toUpperCase() || "";
       }
 
       if (requiresReverification) {
@@ -121,8 +128,7 @@ export default function DashboardSignUpV2() {
       validationErrors.registrationNumber = "Incorporation number is required";
     }
     if (!formData.verificationToken) {
-      validationErrors.verificationToken =
-        "Verify your business before signing up.";
+      validationErrors.verificationToken = "Verify your business before signing up.";
     }
     if (!formData.countryId) {
       validationErrors.countryId = "Select a country";
@@ -136,13 +142,9 @@ export default function DashboardSignUpV2() {
     if (!validate()) return;
 
     const selectedCountry =
-      countries.find((country) => String(country.id) === formData.countryId) ||
-      null;
-    const normalizedCountryId = selectedCountry
-      ? String(selectedCountry.id)
-      : "";
-    const normalizedCountryName =
-      formData.countryName || selectedCountry?.name || "";
+      countries.find((country) => String(country.id) === formData.countryId) || null;
+    const normalizedCountryId = selectedCountry ? String(selectedCountry.id) : "";
+    const normalizedCountryName = formData.countryName || selectedCountry?.name || "";
     const normalizedCountryCode =
       formData.countryCode ||
       selectedCountry?.iso2?.toUpperCase() ||
@@ -182,9 +184,7 @@ export default function DashboardSignUpV2() {
       },
       onError: (err) => {
         const message =
-          err?.response?.data?.message ||
-          err?.message ||
-          "Sign up failed. Please try again.";
+          err?.response?.data?.message || err?.message || "Sign up failed. Please try again.";
         setErrors((prev) => ({ ...prev, general: message }));
       },
     });
@@ -200,12 +200,8 @@ export default function DashboardSignUpV2() {
     ) {
       setErrors((prev) => ({
         ...prev,
-        companyName: !formData.companyName.trim()
-          ? "Business name is required"
-          : prev.companyName,
-        companyType: !formData.companyType
-          ? "Business type is required"
-          : prev.companyType,
+        companyName: !formData.companyName.trim() ? "Business name is required" : prev.companyName,
+        companyType: !formData.companyType ? "Business type is required" : prev.companyType,
         registrationNumber: !formData.registrationNumber.trim()
           ? "Incorporation number is required"
           : prev.registrationNumber,
@@ -240,18 +236,14 @@ export default function DashboardSignUpV2() {
           }
 
           setVerificationResult(data);
-          setVerificationError(
-            token ? null : "Verification succeeded but no token was returned."
-          );
+          setVerificationError(token ? null : "Verification succeeded but no token was returned.");
         },
         onError: (error) => {
           setIsBusinessVerified(false);
           setVerificationResult(null);
           setFormData((prev) => ({ ...prev, verificationToken: "" }));
           setVerificationError(
-            error?.response?.data?.message ||
-              error?.message ||
-              "Unable to verify business."
+            error?.response?.data?.message || error?.message || "Unable to verify business."
           );
         },
       }
@@ -321,7 +313,7 @@ export default function DashboardSignUpV2() {
     <div className="min-h-screen flex p-8 font-Outfit">
       <div className="flex-1 flex flex-col justify-center bg-white">
         <div className="max-w-md mx-auto w-full">
-          <Header />
+          <Header logoSrc={headerLogo} logoAlt={logoAlt} companyName={companyName} />
 
           <div className="flex bg-[#F5F6F8] rounded-[12px] p-1 mb-8">
             {ROLE_TABS.map((tab) => (
@@ -330,9 +322,7 @@ export default function DashboardSignUpV2() {
                 type="button"
                 onClick={() => handleRoleChange(tab.id)}
                 className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-[10px] transition-all ${
-                  activeRole === tab.id
-                    ? "bg-white shadow text-[#121212]"
-                    : "text-[#6B7280]"
+                  activeRole === tab.id ? "bg-white shadow text-[#121212]" : "text-[#6B7280]"
                 }`}
               >
                 {tab.label}
@@ -375,9 +365,7 @@ export default function DashboardSignUpV2() {
                 label="Incorporation Number"
                 value={formData.registrationNumber}
                 error={errors.registrationNumber}
-                onChange={(value) =>
-                  updateField("registrationNumber", value)
-                }
+                onChange={(value) => updateField("registrationNumber", value)}
                 disabled={isBusinessVerified || isVerifying}
                 placeholder="e.g., RC123456"
               />
@@ -386,9 +374,7 @@ export default function DashboardSignUpV2() {
             <div className="space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-gray-800">
-                    Verify your business
-                  </p>
+                  <p className="text-sm font-semibold text-gray-800">Verify your business</p>
                   <p className="text-xs text-gray-500">
                     Confirm your CAC record before creating the account.
                   </p>
@@ -489,13 +475,9 @@ export default function DashboardSignUpV2() {
             />
 
             {errors.verificationToken && (
-              <p className="text-red-500 text-sm">
-                {errors.verificationToken}
-              </p>
+              <p className="text-red-500 text-sm">{errors.verificationToken}</p>
             )}
-            {errors.general && (
-              <p className="text-red-500 text-sm">{errors.general}</p>
-            )}
+            {errors.general && <p className="text-red-500 text-sm">{errors.general}</p>}
 
             <button
               type="submit"
@@ -507,10 +489,7 @@ export default function DashboardSignUpV2() {
 
             <p className="text-center text-sm text-[#6B7280]">
               Already have an account?{" "}
-              <a
-                href="/sign-in"
-                className="text-[#288DD1] hover:text-[#6db1df] font-medium"
-              >
+              <a href="/sign-in" className="text-[#288DD1] hover:text-[#6db1df] font-medium">
                 Log in
               </a>
             </p>
@@ -529,14 +508,7 @@ export default function DashboardSignUpV2() {
   );
 }
 
-function SelectField({
-  label,
-  value,
-  onChange,
-  error,
-  options,
-  disabled = false,
-}) {
+function SelectField({ label, value, onChange, error, options, disabled = false }) {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -559,15 +531,7 @@ function SelectField({
   );
 }
 
-function Field({
-  label,
-  value,
-  onChange,
-  error,
-  type = "text",
-  disabled = false,
-  placeholder,
-}) {
+function Field({ label, value, onChange, error, type = "text", disabled = false, placeholder }) {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -599,9 +563,7 @@ function PasswordField({ label, value, onChange, error }) {
           type={visible ? "text" : "password"}
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className={`input-field ${
-            error ? "border-red-500" : "border-gray-300"
-          }`}
+          className={`input-field ${error ? "border-red-500" : "border-gray-300"}`}
           placeholder={`Enter ${label.toLowerCase()}`}
         />
         <button

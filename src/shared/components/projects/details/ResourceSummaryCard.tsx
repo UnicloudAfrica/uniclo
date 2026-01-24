@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   GitMerge,
   Zap,
+  Users,
 } from "lucide-react";
 
 interface ResourceSummaryCardProps {
@@ -29,6 +30,7 @@ interface ResourceSummaryCardProps {
   vpcPeering?: number;
   internetGateways?: number;
   loadBalancers?: number;
+  users?: number;
   onViewAll?: () => void;
   onViewKeyPairs?: () => void;
   onViewRouteTables?: () => void;
@@ -42,6 +44,7 @@ interface ResourceSummaryCardProps {
   onViewVpcPeering?: () => void;
   onViewInternetGateways?: () => void;
   onViewLoadBalancers?: () => void;
+  onViewUsers?: () => void;
 }
 
 const ResourceSummaryCard: React.FC<ResourceSummaryCardProps> = ({
@@ -57,6 +60,7 @@ const ResourceSummaryCard: React.FC<ResourceSummaryCardProps> = ({
   vpcPeering = 0,
   internetGateways = 0,
   loadBalancers = 0,
+  users = 0,
   onViewAll,
   onViewKeyPairs,
   onViewRouteTables,
@@ -70,6 +74,7 @@ const ResourceSummaryCard: React.FC<ResourceSummaryCardProps> = ({
   onViewVpcPeering,
   onViewInternetGateways,
   onViewLoadBalancers,
+  onViewUsers,
 }) => {
   const resources = [
     {
@@ -179,6 +184,15 @@ const ResourceSummaryCard: React.FC<ResourceSummaryCardProps> = ({
       bgColor: "bg-yellow-50",
       onClick: onViewLoadBalancers,
       description: "Distribute traffic across instances",
+    },
+    {
+      icon: Users,
+      label: "Members",
+      count: users,
+      color: "text-indigo-600",
+      bgColor: "bg-indigo-50",
+      onClick: onViewUsers,
+      description: "Manage project team and policies",
     },
   ];
 

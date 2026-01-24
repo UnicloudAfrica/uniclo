@@ -6,8 +6,6 @@ import adminRegionApi from "../../services/adminRegionApi";
 import { useFetchTenants } from "../../hooks/adminHooks";
 import { useFetchCountries } from "../../hooks/resource";
 import ToastUtils from "../../utils/toastUtil";
-import AdminSidebar from "../components/AdminSidebar";
-import AdminHeadbar from "../components/adminHeadbar";
 import AdminPageShell from "../components/AdminPageShell.tsx";
 import { ModernCard } from "../../shared/components/ui";
 import { ModernButton } from "../../shared/components/ui";
@@ -680,29 +678,15 @@ const RegionEdit = () => {
   );
 
   if (loading) {
-    return (
-      <>
-        <AdminHeadbar />
-        <AdminSidebar />
-        {renderLoadingShell()}
-      </>
-    );
+    return <>{renderLoadingShell()}</>;
   }
 
   if (!region) {
-    return (
-      <>
-        <AdminHeadbar />
-        <AdminSidebar />
-        {renderNotFoundShell()}
-      </>
-    );
+    return <>{renderNotFoundShell()}</>;
   }
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title={`Edit ${region.name || region.code}`}
         description={

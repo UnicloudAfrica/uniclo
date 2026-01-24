@@ -19,10 +19,8 @@ import useAuthRedirect from "../../utils/authRedirect";
 
 export default function DashboardSignUp() {
   const Navigate = useNavigate();
-  const { data: countries, isFetching: isCountriesFetching } =
-    useFetchCountries();
-  const { data: industries, isFetching: isIndustriesFetching } =
-    useFetchIndustries();
+  const { data: countries, isFetching: isCountriesFetching } = useFetchCountries();
+  const { data: industries, isFetching: isIndustriesFetching } = useFetchIndustries();
 
   const { userEmail, setUserEmail } = useTenantAuthStore.getState();
   const { mutate, isPending } = useCreateAccount();
@@ -61,32 +59,21 @@ export default function DashboardSignUp() {
     businessWebsite: "",
   });
   const { isLoading } = useAuthRedirect();
-  const { data: states, isFetching: isStatesFetching } = useFetchStatesById(
-    formData?.countryId
-  );
-  const { data: cities, isFetching: isCitiesFetching } = useFetchCitiesById(
-    formData?.state_id
-  );
+  const { data: states, isFetching: isStatesFetching } = useFetchStatesById(formData?.countryId);
+  const { data: cities, isFetching: isCitiesFetching } = useFetchCitiesById(formData?.state_id);
 
-  const steps = [
-    "Create Account",
-    "Business Info",
-    "Business Address",
-    "Upload Document",
-  ];
+  const steps = ["Create Account", "Business Info", "Business Address", "Upload Document"];
 
   const validateStep = () => {
     const newErrors = {};
     switch (currentStep) {
       case 0:
         if (!formData.email) newErrors.email = "Email is required";
-        else if (!/\S+@\S+\.\S+/.test(formData.email))
-          newErrors.email = "Invalid email format";
+        else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Invalid email format";
         if (!formData.password) newErrors.password = "Password is required";
         else if (formData.password.length < 6)
           newErrors.password = "Password must be at least 6 characters";
-        if (!formData.confirmPassword)
-          newErrors.confirmPassword = "Confirm password is required";
+        if (!formData.confirmPassword) newErrors.confirmPassword = "Confirm password is required";
         else if (formData.password !== formData.confirmPassword)
           newErrors.confirmPassword = "Passwords do not match";
         break;
@@ -95,59 +82,42 @@ export default function DashboardSignUp() {
           newErrors.contactPersonFirstName = "First name is required";
         if (!formData.contactPersonLastName)
           newErrors.contactPersonLastName = "Last name is required";
-        if (!formData.contactPhone)
-          newErrors.contactPhone = "Phone number is required";
+        if (!formData.contactPhone) newErrors.contactPhone = "Phone number is required";
         else if (!/^\+?\d{10,15}$/.test(formData.contactPhone))
           newErrors.contactPhone = "Invalid phone number";
-        if (!formData.businessName)
-          newErrors.businessName = "Business name is required";
+        if (!formData.businessName) newErrors.businessName = "Business name is required";
         if (!formData.registrationNumber)
           newErrors.registrationNumber = "Registration number is required";
         if (!formData.tinNumber) newErrors.tinNumber = "TIN number is required";
         if (!formData.industry) newErrors.industry = "Industry is required";
-        if (!formData.businessType)
-          newErrors.businessType = "Business type is required";
-        if (!formData.businessEmail)
-          newErrors.businessEmail = "Business email is required";
+        if (!formData.businessType) newErrors.businessType = "Business type is required";
+        if (!formData.businessEmail) newErrors.businessEmail = "Business email is required";
         else if (!/\S+@\S+\.\S+/.test(formData.businessEmail))
           newErrors.businessEmail = "Invalid email format";
-        if (!formData.businessPhone)
-          newErrors.businessPhone = "Business phone is required";
+        if (!formData.businessPhone) newErrors.businessPhone = "Business phone is required";
         else if (!/^\+?\d{10,15}$/.test(formData.businessPhone))
           newErrors.businessPhone = "Invalid phone number";
-        if (!formData.businessWebsite)
-          newErrors.businessWebsite = "Business website is required";
+        if (!formData.businessWebsite) newErrors.businessWebsite = "Business website is required";
         else if (
-          !/^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[\w-./?%&=]*)?$/.test(
-            formData.businessWebsite
-          )
+          !/^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[\w-./?%&=]*)?$/.test(formData.businessWebsite)
         ) {
           newErrors.businessWebsite = "Invalid website URL";
         }
         break;
       case 2:
-        if (!formData.countryId)
-          newErrors.countryId = "Country is required";
-        if (!formData.state_id && !formData.state)
-          newErrors.state = "State is required";
-        if (!formData.city_id && !formData.city)
-          newErrors.city = "City is required";
+        if (!formData.countryId) newErrors.countryId = "Country is required";
+        if (!formData.state_id && !formData.state) newErrors.state = "State is required";
+        if (!formData.city_id && !formData.city) newErrors.city = "City is required";
         if (!formData.address) newErrors.address = "Address is required";
-        if (!formData.postalCode)
-          newErrors.postalCode = "Postal code is required";
+        if (!formData.postalCode) newErrors.postalCode = "Postal code is required";
         break;
       case 3:
         if (!formData.certificateOfIncorporation)
-          newErrors.certificateOfIncorporation =
-            "Certificate of Incorporation is required";
-        if (!formData.utilityBill)
-          newErrors.utilityBill = "Utility Bill is required";
-        if (!formData.tinCertificate)
-          newErrors.tinCertificate = "TIN Certificate is required";
-        if (!formData.nationalIdDocument)
-          newErrors.nationalIdDocument = "National ID is required";
-        if (!formData.businessLogo)
-          newErrors.businessLogo = "Business logo is required";
+          newErrors.certificateOfIncorporation = "Certificate of Incorporation is required";
+        if (!formData.utilityBill) newErrors.utilityBill = "Utility Bill is required";
+        if (!formData.tinCertificate) newErrors.tinCertificate = "TIN Certificate is required";
+        if (!formData.nationalIdDocument) newErrors.nationalIdDocument = "National ID is required";
+        if (!formData.businessLogo) newErrors.businessLogo = "Business logo is required";
         break;
       default:
         break;
@@ -160,15 +130,10 @@ export default function DashboardSignUp() {
     setFormData((prev) => {
       const newFormData = { ...prev, [field]: value };
       if (field === "countryId") {
-        newFormData.countryName =
-          countries?.find((c) => String(c.id) === value)?.name || "";
+        newFormData.countryName = countries?.find((c) => String(c.id) === value)?.name || "";
         newFormData.countryCode =
-          countries
-            ?.find((c) => String(c.id) === value)
-            ?.iso2?.toUpperCase() ||
-          countries
-            ?.find((c) => String(c.id) === value)
-            ?.iso3?.toUpperCase() ||
+          countries?.find((c) => String(c.id) === value)?.iso2?.toUpperCase() ||
+          countries?.find((c) => String(c.id) === value)?.iso3?.toUpperCase() ||
           "";
         newFormData.state_id = "";
         newFormData.state = "";
@@ -176,16 +141,12 @@ export default function DashboardSignUp() {
         newFormData.city = "";
       } else if (field === "state_id") {
         newFormData.state =
-          value === "other"
-            ? ""
-            : states?.find((s) => s.id === parseInt(value))?.name || "";
+          value === "other" ? "" : states?.find((s) => s.id === parseInt(value))?.name || "";
         newFormData.city_id = "";
         newFormData.city = "";
       } else if (field === "city_id") {
         newFormData.city =
-          value === "other"
-            ? ""
-            : cities?.find((c) => c.id === parseInt(value))?.name || "";
+          value === "other" ? "" : cities?.find((c) => c.id === parseInt(value))?.name || "";
       }
       return newFormData;
     });
@@ -211,26 +172,18 @@ export default function DashboardSignUp() {
 
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
-    const selectedCountry =
-      countries?.find((c) => String(c.id) === formData.countryId) || null;
-    const normalizedCountryId = selectedCountry
-      ? String(selectedCountry.id)
-      : "";
-    const normalizedCountryName =
-      formData.countryName || selectedCountry?.name || "";
+    const selectedCountry = countries?.find((c) => String(c.id) === formData.countryId) || null;
+    const normalizedCountryId = selectedCountry ? String(selectedCountry.id) : "";
+    const normalizedCountryName = formData.countryName || selectedCountry?.name || "";
     const normalizedCountryCode =
       formData.countryCode ||
       selectedCountry?.iso2?.toUpperCase() ||
       selectedCountry?.iso3?.toUpperCase() ||
       "";
     const normalizedState =
-      formData.state ||
-      states?.find((s) => s.id === parseInt(formData.state_id))?.name ||
-      "";
+      formData.state || states?.find((s) => s.id === parseInt(formData.state_id))?.name || "";
     const normalizedCity =
-      formData.city ||
-      cities?.find((c) => c.id === parseInt(formData.city_id))?.name ||
-      "";
+      formData.city || cities?.find((c) => c.id === parseInt(formData.city_id))?.name || "";
 
     const userData = {
       first_name: formData.contactPersonFirstName,
@@ -321,11 +274,7 @@ export default function DashboardSignUp() {
         );
       case 3:
         return (
-          <UploadDocumentStep
-            formData={formData}
-            updateFormData={updateFormData}
-            errors={errors}
-          />
+          <UploadDocumentStep formData={formData} updateFormData={updateFormData} errors={errors} />
         );
       default:
         return null;
@@ -339,9 +288,7 @@ export default function DashboardSignUp() {
           <div className="flex flex-col items-center text-center">
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                index <= currentStep
-                  ? "bg-[#288DD1] text-white"
-                  : "bg-gray-200 text-gray-500"
+                index <= currentStep ? "bg-[#288DD1] text-white" : "bg-gray-200 text-gray-500"
               }`}
             >
               {index + 1}
@@ -384,11 +331,9 @@ export default function DashboardSignUp() {
             </div>
           </div>
           <div className="mb-8 w-full text-center">
-            <h1 className="text-2xl font-semibold text-[#121212] mb-2">
-              Create an Account
-            </h1>
+            <h1 className="text-2xl font-semibold text-[#121212] mb-2">Create an Account</h1>
             <p className="text-[#676767] text-sm">
-              Create an account on Unicloud Africa.
+              Join Unicloud Africa and launch your cloud in minutes.
             </p>
           </div>
           <StepProgress currentStep={currentStep} steps={steps} />
@@ -408,18 +353,12 @@ export default function DashboardSignUp() {
               disabled={isPending}
               className="flex-1 bg-[#288DD1] hover:bg-[#6db1df] text-white font-semibold py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-1 focus:ring-[#288DD1] focus:ring-offset-2 flex items-center justify-center"
             >
-              {currentStep === steps.length - 1
-                ? "Complete Registration"
-                : "Next"}
-              {isPending && (
-                <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />
-              )}
+              {currentStep === steps.length - 1 ? "Complete Registration" : "Next"}
+              {isPending && <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />}
             </button>
           </div>
           <div className="text-center mt-6">
-            <span className="text-sm text-[#1E1E1E99]">
-              Already have an account?{" "}
-            </span>
+            <span className="text-sm text-[#1E1E1E99]">Already have an account? </span>
             <Link
               to="/sign-in"
               type="button"

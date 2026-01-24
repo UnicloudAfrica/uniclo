@@ -1,21 +1,15 @@
 import React from "react";
 import { Shield } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
-
-interface SecurityGroup {
-  id: string;
-  name?: string;
-  description?: string;
-  vpc_id?: string;
-  inbound_rules_count?: number;
-  outbound_rules_count?: number;
-}
+import type { SecurityGroup } from "./types";
 
 interface SecurityGroupsTableProps {
   securityGroups: SecurityGroup[];
   isLoading?: boolean;
   emptyMessage?: string;
   onViewRules?: (sg: SecurityGroup) => void;
+  onDelete?: (sg: SecurityGroup) => void;
+  deleteLabel?: string;
   showActions?: boolean;
 }
 
@@ -24,6 +18,8 @@ const SecurityGroupsTable: React.FC<SecurityGroupsTableProps> = ({
   isLoading = false,
   emptyMessage = "No security groups found",
   onViewRules,
+  onDelete,
+  deleteLabel = "Delete",
   showActions = false,
 }) => {
   if (isLoading) {
@@ -85,14 +81,24 @@ const SecurityGroupsTable: React.FC<SecurityGroupsTableProps> = ({
                   {sg.outbound_rules_count ?? 0} rules
                 </span>
               </td>
-              {showActions && onViewRules && (
-                <td className="py-3 px-4 text-right">
-                  <button
-                    onClick={() => onViewRules(sg)}
-                    className="text-xs text-blue-600 hover:text-blue-800"
-                  >
-                    View Rules
-                  </button>
+              {showActions && (
+                <td className="py-3 px-4 text-right space-x-2">
+                  {onViewRules && (
+                    <button
+                      onClick={() => onViewRules(sg)}
+                      className="text-xs text-blue-600 hover:text-blue-800"
+                    >
+                      View Rules
+                    </button>
+                  )}
+                  {onDelete && (
+                    <button
+                      onClick={() => onDelete(sg)}
+                      className="text-xs text-red-600 hover:text-red-800"
+                    >
+                      {deleteLabel}
+                    </button>
+                  )}
                 </td>
               )}
             </tr>

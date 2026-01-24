@@ -117,7 +117,7 @@ export const useInstanceOrderCreation = ({
 
       return {
         project_id: isNewProject ? undefined : cfg.project_id || undefined,
-        project_name: isNewProject ? (cfg.project_name || undefined) : undefined,
+        project_name: isNewProject ? cfg.project_name || undefined : undefined,
         network_preset: isNewProject
           ? cfg.network_preset === "empty"
             ? "standard"
@@ -146,8 +146,12 @@ export const useInstanceOrderCreation = ({
         subnet_id: subnetId,
         name: instanceName,
         fast_track: fastTrackLine,
-        ...(isNewProject && assignmentScopePayload ? { assignment_scope: assignmentScopePayload } : {}),
-        ...(isNewProject && sanitizedMemberIds.length ? { member_user_ids: sanitizedMemberIds } : {}),
+        ...(isNewProject && assignmentScopePayload
+          ? { assignment_scope: assignmentScopePayload }
+          : {}),
+        ...(isNewProject && sanitizedMemberIds.length
+          ? { member_user_ids: sanitizedMemberIds }
+          : {}),
       };
     });
 

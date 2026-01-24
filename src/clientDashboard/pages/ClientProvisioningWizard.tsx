@@ -4,11 +4,17 @@ import { useNavigate, useLocation } from "react-router-dom";
 import ConfigurationListStep from "../../shared/components/instance-wizard/ConfigurationListStep";
 import PaymentStep from "../../shared/components/instance-wizard/PaymentStep";
 import InstanceSummaryCard from "../../shared/components/instance-wizard/InstanceSummaryCard";
-import StepIndicator from "../../shared/components/instance-wizard/StepIndicator";
 import ReviewSubmitStep from "../../shared/components/instance-wizard/ReviewSubmitStep";
 import OrderSuccessStep from "../../shared/components/instance-wizard/OrderSuccessStep";
+import {
+  ProvisioningWizardLayout,
+  WorkflowSelectionStep,
+} from "../../shared/components/instance-wizard";
 import { useClientProvisioningLogic } from "../../hooks/useClientProvisioningLogic";
-import { useFetchClientProjects, useClientProjectStatus } from "../../hooks/clientHooks/projectHooks";
+import {
+  useFetchClientProjects,
+  useClientProjectStatus,
+} from "../../hooks/clientHooks/projectHooks";
 import { useFetchClientSecurityGroups } from "../../hooks/clientHooks/securityGroupHooks";
 import { useFetchClientKeyPairs } from "../../hooks/clientHooks/keyPairsHook";
 import { useFetchClientSubnets } from "../../hooks/clientHooks/subnetHooks";
@@ -49,7 +55,10 @@ const ClientProvisioningWizard: React.FC = () => {
     updateAdditionalVolume,
     removeAdditionalVolume,
     billingCountry,
+    setBillingCountry,
+    isCountryLocked,
     countryOptions,
+    isCountriesLoading,
     resources,
     generalRegions,
     regionOptions,
@@ -196,8 +205,12 @@ const ClientProvisioningWizard: React.FC = () => {
     return null;
   }, [submissionResult, orderReceipt]);
 
-  const configureStepIndex = useMemo(
-    () => steps.findIndex((step) => step.id === "configure"),
+  const workflowStepIndex = useMemo(
+    () => steps.findIndex((step) => step.id === "workflow"),
+    [steps]
+  );
+  const servicesStepIndex = useMemo(
+    () => steps.findIndex((step) => step.id === "services"),
     [steps]
   );
   const paymentStepIndex = useMemo(() => steps.findIndex((step) => step.id === "payment"), [steps]);
@@ -224,7 +237,10 @@ const ClientProvisioningWizard: React.FC = () => {
     orderReceipt?.transaction?.reference ||
     submissionResult?.transaction?.reference;
   const successInstances =
-    submissionResult?.instances || orderReceipt?.instances || submissionResult?.data?.instances || [];
+    submissionResult?.instances ||
+    orderReceipt?.instances ||
+    submissionResult?.data?.instances ||
+    [];
   const keypairDownloads =
     submissionResult?.keypair_materials ||
     submissionResult?.transaction?.keypair_materials ||
@@ -245,139 +261,164 @@ const ClientProvisioningWizard: React.FC = () => {
   }, [location.state, applyTemplate, navigate, location.pathname]);
 
   const currentStep = steps[activeStep];
+  const isWorkflowStep = currentStep?.id === "workflow";
   const isReviewStep = currentStep?.id === "review";
   const isSuccessStep = currentStep?.id === "success";
+  const clientWorkflowMode = "standard";
 
   return (
     <ClientPageShell title="Create Cube-Instance" description="Provision new cube-instances">
-      <div className="mx-auto max-w-5xl space-y-8 pb-20">
-        {/* Step Indicator - Grid variant (matching Admin/Tenant) */}
-        <StepIndicator
-          steps={steps}
-          activeStep={activeStep}
-          onStepClick={handleStepClick}
-          variant="grid"
-        />
-
-        {isSuccessStep ? (
-          <OrderSuccessStep
-            orderId={orderId}
-            transactionId={transactionId}
-            isFastTrack={false}
-            configurationSummaries={configurationSummaries}
-            pricingSummary={pricingSummary}
-            keypairDownloads={keypairDownloads}
-            instances={successInstances}
-            instancesPageUrl="/client-dashboard/instances"
-            onCreateAnother={() => setActiveStep(0)}
-            resourceLabel="Cube-Instance"
-          />
-        ) : isReviewStep ? (
-          <ReviewSubmitStep
-            isFastTrack={false}
-            summaryConfigurationCount={summaryConfigurationCount}
-            configurations={configurations}
-            configurationSummaries={reviewSummaries}
-            submissionResult={submissionResult}
-            orderReceipt={orderReceipt}
-            effectivePaymentOption={effectivePaymentOption}
-            summaryPlanLabel={summaryPlanLabel}
-            summaryWorkflowLabel={summaryWorkflowLabel}
-            assignmentSummary={assignmentSummary}
-            billingCountryLabel={billingCountryLabel}
-            summarySubtotalValue={summarySubtotalValue}
-            summaryTaxValue={summaryTaxValue}
-            summaryGatewayFeesValue={summaryGatewayFeesValue}
-            summaryGrandTotalValue={summaryGrandTotalValue}
-            summaryDisplayCurrency={summaryDisplayCurrency}
-            taxLabelSuffix={taxLabelSuffix}
-            backendPricingData={backendPricingData}
-            onBack={() => setActiveStep(paymentStepIndex)}
-            onEditConfiguration={() => setActiveStep(configureStepIndex)}
-            onConfirm={() => setActiveStep(successStepIndex)}
-            resourceLabel="Cube-Instance"
-          />
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              {/* Step 0: Configure */}
-              {currentStep?.id === "configure" && (
-                <ConfigurationListStep
-                  configurations={configurations}
-                  resources={resources as any}
-                  generalRegions={generalRegions}
-                  regionOptions={regionOptions}
-                  isLoadingResources={isLoadingResources}
-                  isSubmitting={isSubmitting}
-                  billingCountry={billingCountry}
-                  showTemplateSelector
-                  onResetConfiguration={resetConfigurationWithPatch}
-                  // Network preset props for new projects
-                  projectHasNetwork={projectHasNetwork}
-                  onAddConfiguration={addConfiguration}
-                  onRemoveConfiguration={removeConfiguration}
-                  onUpdateConfiguration={updateConfiguration}
-                  onAddVolume={addAdditionalVolume}
-                  onRemoveVolume={removeAdditionalVolume}
-                  onUpdateVolume={updateAdditionalVolume}
-                  onBack={() => navigate(-1)}
-                  onSubmit={handleCreateOrder}
-                  useProjectsHook={useFetchClientProjects}
-                  useSecurityGroupsHook={useFetchClientSecurityGroups}
-                  useKeyPairsHook={useFetchClientKeyPairs}
-                  useSubnetsHook={useFetchClientSubnets}
-                  useNetworksHook={useFetchClientNetworks}
-                  skipProjectFetch={false}
-                  skipNetworkResourcesFetch={false}
-                  formVariant="cube"
-                />
-              )}
-
-              {/* Step 1: Payment */}
-              {currentStep?.id === "payment" && (
-                <PaymentStep
-                  submissionResult={submissionResult}
-                  orderReceipt={orderReceipt}
-                  isPaymentSuccessful={isPaymentSuccessful}
-                  summarySubtotalValue={summarySubtotalValue}
-                  summaryTaxValue={summaryTaxValue}
-                  summaryGatewayFeesValue={summaryGatewayFeesValue}
-                  summaryGrandTotalValue={summaryGrandTotalValue}
-                  summaryDisplayCurrency={summaryDisplayCurrency}
-                  contextType="client"
-                  selectedUserId={String(profile?.id)}
-                  clientOptions={clientOptions}
-                  onPaymentComplete={handlePaymentCompleted}
-                  apiBaseUrl={apiBaseUrl}
-                  paymentTransactionLabel="Instance Order"
-                />
-              )}
-            </div>
-
-            {/* Sidebar Summary */}
-            <div className="lg:col-span-1">
-              <InstanceSummaryCard
-                configurations={configurations}
-                configurationSummaries={reviewSummaries}
-                contextType="client"
-                selectedClientName={clientDisplayName}
-                billingCountry={
-                  countryOptions.find((c) => String(c.value) === billingCountry)?.label ||
-                  billingCountry
+      <ProvisioningWizardLayout
+        steps={steps}
+        activeStep={activeStep}
+        onStepChange={handleStepClick}
+        currentStepId={currentStep?.id}
+        successContent={
+          isSuccessStep ? (
+            <OrderSuccessStep
+              orderId={orderId}
+              transactionId={transactionId}
+              isFastTrack={false}
+              configurationSummaries={configurationSummaries}
+              pricingSummary={pricingSummary}
+              keypairDownloads={keypairDownloads}
+              instances={successInstances}
+              instancesPageUrl="/client-dashboard/instances"
+              onCreateAnother={() => setActiveStep(0)}
+              resourceLabel="Cube-Instance"
+            />
+          ) : null
+        }
+        reviewContent={
+          isReviewStep ? (
+            <ReviewSubmitStep
+              isFastTrack={false}
+              summaryConfigurationCount={summaryConfigurationCount}
+              configurations={configurations}
+              configurationSummaries={reviewSummaries}
+              submissionResult={submissionResult}
+              orderReceipt={orderReceipt}
+              effectivePaymentOption={effectivePaymentOption}
+              summaryPlanLabel={summaryPlanLabel}
+              summaryWorkflowLabel={summaryWorkflowLabel}
+              assignmentSummary={assignmentSummary}
+              billingCountryLabel={billingCountryLabel}
+              summarySubtotalValue={summarySubtotalValue}
+              summaryTaxValue={summaryTaxValue}
+              summaryGatewayFeesValue={summaryGatewayFeesValue}
+              summaryGrandTotalValue={summaryGrandTotalValue}
+              summaryDisplayCurrency={summaryDisplayCurrency}
+              taxLabelSuffix={taxLabelSuffix}
+              backendPricingData={backendPricingData}
+              onBack={() => setActiveStep(paymentStepIndex)}
+              onEditConfiguration={() => setActiveStep(servicesStepIndex)}
+              onConfirm={() => setActiveStep(successStepIndex)}
+              resourceLabel="Cube-Instance"
+            />
+          ) : null
+        }
+        mainContent={
+          <>
+            {isWorkflowStep && (
+              <WorkflowSelectionStep
+                mode={clientWorkflowMode}
+                modeOptions={["standard"]}
+                showContextSelector={false}
+                subtitle="Confirm provisioning workflow and billing preferences."
+                contextType="unassigned"
+                selectedTenantId=""
+                selectedUserId=""
+                billingCountry={billingCountry}
+                isCountryLocked={isCountryLocked}
+                isCountriesLoading={isCountriesLoading}
+                tenants={[]}
+                isTenantsFetching={false}
+                userPool={[]}
+                isUsersFetching={false}
+                countryOptions={countryOptions}
+                onModeChange={() => {}}
+                onContextTypeChange={() => {}}
+                onTenantChange={() => {}}
+                onUserChange={() => {}}
+                onCountryChange={setBillingCountry}
+                onContinue={() =>
+                  setActiveStep(servicesStepIndex >= 0 ? servicesStepIndex : activeStep + 1)
                 }
-                summaryTitle="Cube-Instance summary"
-                summaryDescription="Auto-calculated from the selected cube-instance configuration."
-                resourceLabel="Cube-Instance"
+              />
+            )}
+
+            {currentStep?.id === "services" && (
+              <ConfigurationListStep
+                configurations={configurations}
+                resources={resources as any}
+                generalRegions={generalRegions}
+                regionOptions={regionOptions}
+                isLoadingResources={isLoadingResources}
+                isSubmitting={isSubmitting}
+                billingCountry={billingCountry}
+                showTemplateSelector
+                onResetConfiguration={resetConfigurationWithPatch}
+                projectHasNetwork={projectHasNetwork}
+                onAddConfiguration={addConfiguration}
+                onRemoveConfiguration={removeConfiguration}
+                onUpdateConfiguration={updateConfiguration}
+                onAddVolume={addAdditionalVolume}
+                onRemoveVolume={removeAdditionalVolume}
+                onUpdateVolume={updateAdditionalVolume}
+                onBack={() => setActiveStep(workflowStepIndex >= 0 ? workflowStepIndex : 0)}
+                onSubmit={handleCreateOrder}
+                useProjectsHook={useFetchClientProjects}
+                useSecurityGroupsHook={useFetchClientSecurityGroups}
+                useKeyPairsHook={useFetchClientKeyPairs}
+                useSubnetsHook={useFetchClientSubnets}
+                useNetworksHook={useFetchClientNetworks}
+                skipProjectFetch={false}
+                skipNetworkResourcesFetch={false}
+                formVariant="cube"
+              />
+            )}
+
+            {currentStep?.id === "payment" && (
+              <PaymentStep
+                submissionResult={submissionResult}
+                orderReceipt={orderReceipt}
+                isPaymentSuccessful={isPaymentSuccessful}
                 summarySubtotalValue={summarySubtotalValue}
                 summaryTaxValue={summaryTaxValue}
                 summaryGatewayFeesValue={summaryGatewayFeesValue}
                 summaryGrandTotalValue={summaryGrandTotalValue}
                 summaryDisplayCurrency={summaryDisplayCurrency}
+                contextType="client"
+                selectedUserId={String(profile?.id)}
+                clientOptions={clientOptions}
+                onPaymentComplete={handlePaymentCompleted}
+                apiBaseUrl={apiBaseUrl}
+                paymentTransactionLabel="Instance Order"
               />
-            </div>
-          </div>
-        )}
-      </div>
+            )}
+          </>
+        }
+        sidebarContent={
+          <InstanceSummaryCard
+            configurations={configurations}
+            configurationSummaries={reviewSummaries}
+            contextType="client"
+            selectedClientName={clientDisplayName}
+            billingCountry={
+              countryOptions.find((c) => String(c.value) === billingCountry)?.label ||
+              billingCountry
+            }
+            summaryTitle="Cube-Instance summary"
+            summaryDescription="Auto-calculated from the selected cube-instance configuration."
+            resourceLabel="Cube-Instance"
+            summarySubtotalValue={summarySubtotalValue}
+            summaryTaxValue={summaryTaxValue}
+            summaryGatewayFeesValue={summaryGatewayFeesValue}
+            summaryGrandTotalValue={summaryGrandTotalValue}
+            summaryDisplayCurrency={summaryDisplayCurrency}
+          />
+        }
+      />
     </ClientPageShell>
   );
 };

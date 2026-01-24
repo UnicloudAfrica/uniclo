@@ -5,6 +5,12 @@ import logo from "./assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useLoginAccount } from "../../hooks/authHooks";
 import useTenantAuthStore from "../../stores/tenantAuthStore";
+import {
+  resolveBrandLogo,
+  useApplyBrandingTheme,
+  usePublicBrandingTheme,
+} from "../../hooks/useBrandingTheme";
+import { getSubdomain } from "../../utils/getSubdomain";
 // import useAuthRedirect from "../../utils/authRedirect";
 
 export default function DashboardLoginV2() {
@@ -15,6 +21,15 @@ export default function DashboardLoginV2() {
   const { mutate, isPending } = useLoginAccount();
   const navigate = useNavigate();
   const { userEmail, setUserEmail } = useTenantAuthStore.getState();
+  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+  const subdomain = typeof window !== "undefined" ? getSubdomain() : null;
+  const { data: branding } = usePublicBrandingTheme({
+    domain: hostname,
+    subdomain,
+  });
+  useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
+  const logoSrc = resolveBrandLogo(branding, logo);
+  const logoAlt = branding?.company?.name ? `${branding.company.name} Logo` : "Logo";
   //   const { isLoading } = useAuthRedirect();
 
   // Validation function
@@ -76,33 +91,25 @@ export default function DashboardLoginV2() {
           {/* Logo */}
           <div className="mb-8">
             <div className="flex items-center justify-center">
-              <img src={logo} className="w-[100px]" alt="Logo" />
+              <img src={logoSrc} className="w-[100px]" alt={logoAlt} />
             </div>
           </div>
 
           {/* Welcome Title */}
           <div className="mb-8 w-full text-center">
-            <h1 className="text-2xl font-semibold text-[#121212] mb-2">
-              Welcome Back
-            </h1>
+            <h1 className="text-2xl font-semibold text-[#121212] mb-2">Welcome Back</h1>
             <p className="text-[#676767] text-sm">
-              Welcome back to Unicloud Africa. Enter your details to access your
-              account
+              Welcome back to Unicloud Africa. Enter your details to access your account
             </p>
           </div>
 
-          <p className="mb-6 text-center text-sm text-[#676767]">
-            Log in to your workspace.
-          </p>
+          <p className="mb-6 text-center text-sm text-[#676767]">Log in to your workspace.</p>
 
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email Field */}
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email <span className="text-red-500">*</span>
               </label>
               <input
@@ -115,17 +122,12 @@ export default function DashboardLoginV2() {
                   errors.email ? "border-red-500" : "border-gray-300"
                 }`}
               />
-              {errors.email && (
-                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-              )}
+              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
             </div>
 
             {/* Password Field */}
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password <span className="text-red-500">*</span>
               </label>
               <div className="relative">
@@ -147,10 +149,8 @@ export default function DashboardLoginV2() {
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
-            {errors.password && (
-              <p className="text-red-500 text-xs mt-1">{errors.password}</p>
-            )}
-          </div>
+              {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+            </div>
 
             {/* Forgot Password */}
             <div className="text-right">
@@ -168,22 +168,16 @@ export default function DashboardLoginV2() {
               disabled={isPending}
               className="w-full bg-[#288DD1] hover:bg-[#6db1df] text-white font-semibold py-3 px-4 rounded-[30px] transition-colors focus:outline-none focus:ring-1 focus:ring-[#288DD1] focus:ring-offset-2 flex items-center justify-center"
             >
-              {isPending ? (
-                <Loader2 className="w-4 h-4 text-white animate-spin" />
-              ) : (
-                "Login"
-            )}
+              {isPending ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : "Login"}
+            </button>
 
             {errors.general && (
-              <p className="text-red-500 text-xs text-center">{errors.general}</p>
+              <p className="text-red-500 text-xs text-center mt-2">{errors.general}</p>
             )}
-            </button>
 
             {/* Sign Up Link */}
             <div className="text-center">
-              <span className="text-sm text-[#1E1E1E99]">
-                Don't have an account?{" "}
-              </span>
+              <span className="text-sm text-[#1E1E1E99]">Don't have an account? </span>
               <Link
                 to="/sign-up"
                 type="button"

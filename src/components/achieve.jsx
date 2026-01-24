@@ -12,8 +12,8 @@ const Acheive = () => {
         id="achieve-heading"
         className=" font-Outfit font-medium text-center text-2xl md:px-[10%] md:text-[40px] md:leading-[50px]"
       >
-        We are building a network that will expand local cloud infrastructure to
-        every part of Africa
+        We are building a network that will expand local cloud infrastructure to every part of
+        Africa
       </h2>
       <div className=" flex flex-col md:flex-row items-center justify-center md:justify-between w-full font-Outfit font-medium mt-16">
         <div className=" w-full md:w-[15%] flex md:flex-col justify-between md:justify-start relative items-start">

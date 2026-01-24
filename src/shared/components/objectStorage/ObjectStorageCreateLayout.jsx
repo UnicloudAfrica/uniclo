@@ -2,7 +2,7 @@ import React from "react";
 import ObjectStoragePlanSelector from "./ObjectStoragePlanSelector";
 
 /**
- * Lightweight, reusable layout for Object Storage plan selection.
+ * Lightweight, reusable layout for Silo Storage plan selection.
  * Wrap this inside the persona-specific shell (AdminPageShell, TenantPageShell, ClientPageShell, etc.).
  */
 const ObjectStorageCreateLayout = ({
@@ -35,8 +35,8 @@ const ObjectStorageCreateLayout = ({
         enableFastTrack={enableFastTrack}
         onStandardPlan={onStandardPlan}
         onFastTrack={onFastTrack}
-        standardDescription="Proceed with the standard provisioning flow."
-        fastTrackDescription="Skip to provisioning for approved exceptions."
+        standardDescription="Proceed with the standard Silo Storage provisioning flow."
+        fastTrackDescription="Skip to provisioning for approved Silo Storage exceptions."
       />
 
       {children}

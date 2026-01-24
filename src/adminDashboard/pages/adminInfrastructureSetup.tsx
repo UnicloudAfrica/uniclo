@@ -2,8 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import InfrastructureSetupFlow from "./infraComps/InfrastructureSetupFlow";
 import { useFetchProjectById } from "../../hooks/adminHooks/projectHooks";
@@ -53,8 +51,6 @@ const AdminInfrastructureSetup = () => {
   if (isProjectFetching) {
     return (
       <>
-        <AdminHeadbar />
-        <AdminSidebar />
         <AdminActiveTab />
         <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center flex-col">
           <div className="animate-pulse">
@@ -70,8 +66,6 @@ const AdminInfrastructureSetup = () => {
   if (!projectDetails || projectError) {
     return (
       <>
-        <AdminHeadbar />
-        <AdminSidebar />
         <AdminActiveTab />
         <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 flex items-center justify-center flex-col text-center">
           <div className="max-w-md">
@@ -102,8 +96,6 @@ const AdminInfrastructureSetup = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminActiveTab />
       <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8">
         {/* Header Section */}

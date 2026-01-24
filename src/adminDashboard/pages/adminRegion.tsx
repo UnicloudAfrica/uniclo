@@ -18,8 +18,6 @@ import ModernTable from "../../shared/components/ui/ModernTable";
 import { ModernCard } from "../../shared/components/ui";
 import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
 import { ModernButton } from "../../shared/components/ui";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell.tsx";
 import { designTokens } from "../../styles/designTokens";
 import DeleteRegionModal from "./regionComps/deleteRegion";
@@ -185,8 +183,6 @@ const AdminRegion = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title="Region Management"
         description="Manage cloud infrastructure regions and locations"

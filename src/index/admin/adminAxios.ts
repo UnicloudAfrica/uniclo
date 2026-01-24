@@ -1,8 +1,18 @@
 import axios from "axios";
 import type { AxiosInstance } from "axios";
+import config from "../../config";
 import useAdminAuthStore from "../../stores/adminAuthStore";
 
-export const API_BASE = import.meta.env.VITE_API_ADMIN_URL || "/api/v1/admin";
+const resolveAdminBase = () => {
+  const envAdminUrl = import.meta.env.VITE_API_ADMIN_URL;
+  if (envAdminUrl) return envAdminUrl;
+  if (config.adminURL && !config.adminURL.includes("undefined")) {
+    return config.adminURL;
+  }
+  return "/admin/v1";
+};
+
+export const API_BASE = resolveAdminBase();
 
 let adminApi: AxiosInstance | null = null;
 

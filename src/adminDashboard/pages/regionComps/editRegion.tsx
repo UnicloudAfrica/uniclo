@@ -26,6 +26,7 @@ const createFormState = (region: any) => ({
   city: region?.city || "",
   base_url: region?.base_url || "",
   is_active: region?.is_active ?? true,
+  is_verified: region?.is_verified ?? false,
   provider_label: region?.meta?.provider_label || "",
   features: buildFeatureState(region?.features || {}),
 });
@@ -87,7 +88,7 @@ const EditRegionModal = ({ isOpen, onClose, region }: any) => {
     if (!normalizedKey) return;
 
     setFormData((prev) => {
-      if (prev.features?.hasOwnProperty(normalizedKey)) {
+      if (Object.prototype.hasOwnProperty.call(prev.features || {}, normalizedKey)) {
         return prev;
       }
 
@@ -154,6 +155,7 @@ const EditRegionModal = ({ isOpen, onClose, region }: any) => {
         city: trimmedCity || null,
         base_url: trimmedBaseUrl || null,
         is_active: formData.is_active,
+        is_verified: formData.is_verified,
         features: normalizedFeatures,
       },
     };
@@ -287,7 +289,7 @@ const EditRegionModal = ({ isOpen, onClose, region }: any) => {
               />
               {errors.base_url && <p className="text-red-500 text-xs mt-1">{errors.base_url}</p>}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label htmlFor="is_active" className="block text-sm font-medium text-gray-700 mb-2">
                   Active
@@ -298,6 +300,22 @@ const EditRegionModal = ({ isOpen, onClose, region }: any) => {
                   checked={formData.is_active}
                   onChange={(e) => updateFormData("is_active", e.target.checked)}
                   className="h-4 w-4 text-[#288DD1] focus:ring-[#288DD1] border-gray-300 rounded"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="is_verified"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Verified
+                  <span className="text-xs text-gray-500 ml-1">(visible to tenants)</span>
+                </label>
+                <input
+                  id="is_verified"
+                  type="checkbox"
+                  checked={formData.is_verified}
+                  onChange={(e) => updateFormData("is_verified", e.target.checked)}
+                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                 />
               </div>
               <div>

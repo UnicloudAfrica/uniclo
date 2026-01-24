@@ -1,8 +1,6 @@
 // @ts-nocheck
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell.tsx";
 import { ModernButton } from "../../shared/components/ui";
 import { AdminCreateProjectForm } from "./projectComps/addProject";
@@ -14,8 +12,6 @@ const AdminProjectCreate = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title="Create Project"
         description="Spin up a new workspace, assign a scope, and invite the right operators."

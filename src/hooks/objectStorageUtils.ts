@@ -14,6 +14,7 @@ export interface ServiceProfile {
   name: string;
   region: string;
   tierKey: string;
+  storageGb: string;
   months: string;
   unitPriceOverride: string;
 }
@@ -65,6 +66,7 @@ export const createServiceProfile = (): ServiceProfile => ({
   name: "",
   region: "",
   tierKey: "",
+  storageGb: "",
   months: "12",
   unitPriceOverride: "",
 });
@@ -187,6 +189,42 @@ export const resolveTierUnitPrice = (tier: any): number => {
 };
 
 /**
+ * Resolve quota (GiB) from tier data
+ */
+export const resolveTierQuota = (tier: any): number => {
+  if (!tier) return 0;
+  const candidates = [
+    tier.product?.object_storage?.quota_gb,
+    tier.product?.productable?.quota_gb,
+    tier.product?.quota_gb,
+    tier.product?.quota,
+    tier.object_storage?.quota_gb,
+    tier.quota_gb,
+    tier.quota,
+  ];
+  for (const value of candidates) {
+    const numeric = Number(value);
+    if (!Number.isNaN(numeric) && numeric > 0) {
+      return Math.floor(numeric);
+    }
+  }
+  return 0;
+};
+
+/**
+ * Resolve per-GB unit price from tier data
+ */
+export const resolveTierUnitPricePerGb = (tier: any): number => {
+  const total = resolveTierUnitPrice(tier);
+  if (!total) return 0;
+  const quota = resolveTierQuota(tier);
+  if (quota > 0) {
+    return total / quota;
+  }
+  return total;
+};
+
+/**
  * Resolve currency from tier data
  */
 export const resolveTierCurrency = (tier: any, fallback: string = "USD"): string => {
@@ -237,21 +275,16 @@ export const buildTierLabel = (
     pricing.product?.product_name ||
     pricing.provider_resource_id ||
     `Tier ${pricing.productable_id ?? pricing.id ?? ""}`.trim();
-  const quota =
-    pricing.product?.object_storage?.quota_gb ??
-    pricing.product?.productable?.quota_gb ??
-    pricing.quota_gb ??
-    pricing.quota ??
-    null;
-  const price = resolveTierUnitPrice(pricing);
+  const quota = resolveTierQuota(pricing) || null;
+  const perGbPrice = resolveTierUnitPricePerGb(pricing);
   const tierCurrency = resolveTierCurrency(pricing);
   const currency = currencyOverride || tierCurrency;
   const parts = [name];
   if (quota) {
     parts.push(`${quota} GiB`);
   }
-  if (price) {
-    const mainLabel = `${currency} ${price.toFixed(2)}`;
+  if (perGbPrice) {
+    const mainLabel = `${currency} ${perGbPrice.toFixed(2)} / GB / mo`;
     if (selectedCurrency && currency && selectedCurrency !== currency) {
       parts.push(`${selectedCurrency} (${mainLabel})`);
     } else {

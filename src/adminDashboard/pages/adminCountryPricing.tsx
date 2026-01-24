@@ -1,7 +1,5 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import { useFetchCountryPricings } from "../../hooks/adminHooks/countryPricingHooks";
 import AdminPageShell from "../components/AdminPageShell.tsx";
@@ -11,8 +9,6 @@ export default function AdminCountryPricing() {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminActiveTab />
       <AdminPageShell
         title="Country Pricing"

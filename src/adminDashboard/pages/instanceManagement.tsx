@@ -25,8 +25,6 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import EmbeddedConsole, { useConsoleManager } from "../../components/Console/EmbeddedConsole";
 import ToastUtils from "../../utils/toastUtil";
@@ -247,8 +245,8 @@ export default function InstanceManagement() {
   };
 
   // Handle console access
-  const handleConsoleAccess = (instanceId: any) => {
-    openConsole(instanceId);
+  const handleConsoleAccess = (instanceIdentifier: any) => {
+    openConsole(instanceIdentifier);
   };
 
   const uniqueStatuses = [...new Set(instances.map((i) => i.status))].filter(Boolean);
@@ -383,7 +381,7 @@ export default function InstanceManagement() {
             label: "Console",
             icon: Terminal,
             color: "text-indigo-600",
-            condition: true,
+            condition: ["active", "running"].includes((instance.status || "").toLowerCase()),
           },
         ];
         const availableActions = quickActions.filter((action) => action.condition);
@@ -396,7 +394,7 @@ export default function InstanceManagement() {
                 onClick={(e) => {
                   e.stopPropagation();
                   if (action.key === "console") {
-                    handleConsoleAccess(instance.id);
+                    handleConsoleAccess(instance.identifier || instance.id);
                   } else {
                     executeInstanceAction(instance.id, action.key);
                   }
@@ -509,8 +507,6 @@ export default function InstanceManagement() {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminActiveTab />
 
       <AdminPageShell

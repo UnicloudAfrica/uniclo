@@ -3,17 +3,22 @@ import React, { useCallback, useMemo } from "react";
 import ConfigurationListStep from "../../shared/components/instance-wizard/ConfigurationListStep";
 import PaymentStep from "../../shared/components/instance-wizard/PaymentStep";
 import InstanceSummaryCard from "../../shared/components/instance-wizard/InstanceSummaryCard";
-import StepIndicator from "../../shared/components/instance-wizard/StepIndicator";
 import ReviewSubmitStep from "../../shared/components/instance-wizard/ReviewSubmitStep";
 import OrderSuccessStep from "../../shared/components/instance-wizard/OrderSuccessStep";
 import { useTenantProvisioningLogic } from "../../hooks/useTenantProvisioningLogic";
-import { useFetchTenantProjects, useTenantProjectStatus } from "../../hooks/tenantHooks/projectHooks";
+import {
+  useFetchTenantProjects,
+  useTenantProjectStatus,
+} from "../../hooks/tenantHooks/projectHooks";
 import { useFetchTenantSecurityGroups } from "../../hooks/tenantHooks/securityGroupHooks";
 import { useFetchTenantKeyPairs } from "../../hooks/tenantHooks/keyPairsHook";
 import { useFetchTenantSubnets } from "../../hooks/tenantHooks/subnetHooks";
 import { useFetchTenantNetworks } from "../../hooks/tenantHooks/networkHooks";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
-import TenantWorkflowStep from "../components/TenantWorkflowStep";
+import {
+  ProvisioningWizardLayout,
+  WorkflowSelectionStep,
+} from "../../shared/components/instance-wizard";
 import {
   evaluateConfigurationCompleteness,
   formatComputeLabel,
@@ -132,8 +137,8 @@ const TenantProvisioningWizard: React.FC = () => {
   );
 
   const currentStep = steps[activeStep];
-  const configureStepIndex = useMemo(
-    () => steps.findIndex((step) => step.id === "configure"),
+  const servicesStepIndex = useMemo(
+    () => steps.findIndex((step) => step.id === "services"),
     [steps]
   );
   const paymentStepIndex = useMemo(() => steps.findIndex((step) => step.id === "payment"), [steps]);
@@ -256,7 +261,10 @@ const TenantProvisioningWizard: React.FC = () => {
     orderReceipt?.transaction?.reference ||
     submissionResult?.transaction?.reference;
   const successInstances =
-    submissionResult?.instances || orderReceipt?.instances || submissionResult?.data?.instances || [];
+    submissionResult?.instances ||
+    orderReceipt?.instances ||
+    submissionResult?.data?.instances ||
+    [];
   const keypairDownloads =
     submissionResult?.keypair_materials ||
     submissionResult?.transaction?.keypair_materials ||
@@ -269,185 +277,181 @@ const TenantProvisioningWizard: React.FC = () => {
 
   return (
     <TenantPageShell title="Create Cube-Instance" description="Provision new cube-instances">
-      <div className="mx-auto max-w-5xl space-y-8 pb-20">
-        {/* Step Indicator - Grid variant */}
-        <StepIndicator
-          steps={steps}
-          activeStep={activeStep}
-          onStepClick={handleStepClick}
-          variant="grid"
-        />
-
-        {isSuccessStep ? (
-          <OrderSuccessStep
-            orderId={orderId}
-            transactionId={transactionId}
-            isFastTrack={isFastTrack}
-            configurationSummaries={configurationSummaries}
-            pricingSummary={pricingSummary}
-            keypairDownloads={keypairDownloads}
-            instances={successInstances}
-            instancesPageUrl="/dashboard/instances"
-            onCreateAnother={() => window.location.reload()}
-            resourceLabel="Cube-Instance"
-          />
-        ) : isReviewStep ? (
-          <ReviewSubmitStep
-            isFastTrack={isFastTrack}
-            summaryConfigurationCount={summaryConfigurationCount}
-            configurations={configurations}
-            configurationSummaries={reviewSummaries}
-            submissionResult={submissionResult}
-            orderReceipt={orderReceipt}
-            effectivePaymentOption={effectivePaymentOption}
-            summaryPlanLabel={summaryPlanLabel}
-            summaryWorkflowLabel={summaryWorkflowLabel}
-            assignmentSummary={assignmentSummary}
-            billingCountryLabel={billingCountryLabel}
-            summarySubtotalValue={summarySubtotalValue}
-            summaryTaxValue={summaryTaxValue}
-            summaryGatewayFeesValue={summaryGatewayFeesValue}
-            summaryGrandTotalValue={summaryGrandTotalValue}
-            summaryDisplayCurrency={summaryDisplayCurrency}
-            taxLabelSuffix={taxLabelSuffix}
-            backendPricingData={backendPricingData}
-            onBack={() => setActiveStep(isFastTrack ? configureStepIndex : paymentStepIndex)}
-            onEditConfiguration={() => setActiveStep(configureStepIndex)}
-            onConfirm={() => setActiveStep(successStepIndex)}
-            resourceLabel="Cube-Instance"
-          />
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              {/* Step 0: Workflow Selection */}
-              {currentStep?.id === "workflow" && (
-                <TenantWorkflowStep
-                  mode={mode}
-                  contextType={contextType}
-                  selectedTenantId={selectedTenantId}
-                  selectedUserId={selectedUserId}
-                  billingCountry={billingCountry}
-                  isCountryLocked={isCountryLocked}
-                  isCountriesLoading={isCountriesLoading}
-                  tenants={tenants}
-                  isTenantsFetching={isTenantsFetching}
-                  userPool={userPool}
-                  isUsersFetching={isUsersFetching}
-                  countryOptions={countryOptions}
-                  hasFastTrackAccess={hasFastTrackAccess}
-                  fastTrackRegions={fastTrackRegions}
-                  allRegionOptions={allRegionOptions}
-                  onModeChange={handleModeChange}
-                  onContextTypeChange={setContextType}
-                  onTenantChange={setSelectedTenantId}
-                  onUserChange={setSelectedUserId}
-                  onCountryChange={setBillingCountry}
-                  onContinue={() => setActiveStep(configureStepIndex >= 0 ? configureStepIndex : 1)}
-                />
-              )}
-
-              {/* Step 1: Configure */}
-              {currentStep?.id === "configure" && (
-                <ConfigurationListStep
-                  configurations={configurations}
-                  resources={resources as any}
-                  generalRegions={generalRegions}
-                  regionOptions={regionOptions}
-                  isLoadingResources={isLoadingResources}
-                  isSubmitting={isSubmitting}
-                  billingCountry={billingCountry}
-                  showTemplateSelector
-                  onResetConfiguration={resetConfigurationWithPatch}
-                  // Network preset props for new projects
-                  projectHasNetwork={projectHasNetwork}
-                  onAddConfiguration={addConfiguration}
-                  onRemoveConfiguration={removeConfiguration}
-                  onUpdateConfiguration={updateConfiguration}
-                  onAddVolume={addAdditionalVolume}
-                  onRemoveVolume={removeAdditionalVolume}
-                  onUpdateVolume={updateAdditionalVolume}
-                  onBack={() => setActiveStep(0)}
-                  onSubmit={handleCreateOrder}
-                  useProjectsHook={useFetchTenantProjects}
-                  useSecurityGroupsHook={useFetchTenantSecurityGroups}
-                  useKeyPairsHook={useFetchTenantKeyPairs}
-                  useSubnetsHook={useFetchTenantSubnets}
-                  useNetworksHook={useFetchTenantNetworks}
-                  skipProjectFetch={false}
-                  skipNetworkResourcesFetch={false}
-                  formVariant="cube"
-                />
-              )}
-
-              {/* Step 2: Payment (only for standard mode) */}
-              {currentStep?.id === "payment" && (
-                <PaymentStep
-                  submissionResult={submissionResult}
-                  orderReceipt={orderReceipt}
-                  isPaymentSuccessful={isPaymentSuccessful}
-                  summarySubtotalValue={summarySubtotalValue}
-                  summaryTaxValue={summaryTaxValue}
-                  summaryGatewayFeesValue={summaryGatewayFeesValue}
-                  summaryGrandTotalValue={summaryGrandTotalValue}
-                  summaryDisplayCurrency={summaryDisplayCurrency}
-                  contextType={contextType}
-                  selectedUserId={String(selectedUserId)}
-                  clientOptions={clientOptions}
-                  onPaymentComplete={handlePaymentCompleted}
-                  apiBaseUrl={apiBaseUrl}
-                  paymentTransactionLabel="Instance Order"
-                />
-              )}
-            </div>
-
-            {/* Sidebar Summary */}
-            <div className="lg:col-span-1">
-              <InstanceSummaryCard
-                configurations={configurations}
-                configurationSummaries={reviewSummaries}
+      <ProvisioningWizardLayout
+        steps={steps}
+        activeStep={activeStep}
+        onStepChange={handleStepClick}
+        currentStepId={currentStep?.id}
+        successContent={
+          isSuccessStep ? (
+            <OrderSuccessStep
+              orderId={orderId}
+              transactionId={transactionId}
+              isFastTrack={isFastTrack}
+              configurationSummaries={configurationSummaries}
+              pricingSummary={pricingSummary}
+              keypairDownloads={keypairDownloads}
+              instances={successInstances}
+              instancesPageUrl="/dashboard/instances"
+              onCreateAnother={() => window.location.reload()}
+              resourceLabel="Cube-Instance"
+            />
+          ) : null
+        }
+        reviewContent={
+          isReviewStep ? (
+            <ReviewSubmitStep
+              isFastTrack={isFastTrack}
+              summaryConfigurationCount={summaryConfigurationCount}
+              configurations={configurations}
+              configurationSummaries={reviewSummaries}
+              submissionResult={submissionResult}
+              orderReceipt={orderReceipt}
+              effectivePaymentOption={effectivePaymentOption}
+              summaryPlanLabel={summaryPlanLabel}
+              summaryWorkflowLabel={summaryWorkflowLabel}
+              assignmentSummary={assignmentSummary}
+              billingCountryLabel={billingCountryLabel}
+              summarySubtotalValue={summarySubtotalValue}
+              summaryTaxValue={summaryTaxValue}
+              summaryGatewayFeesValue={summaryGatewayFeesValue}
+              summaryGrandTotalValue={summaryGrandTotalValue}
+              summaryDisplayCurrency={summaryDisplayCurrency}
+              taxLabelSuffix={taxLabelSuffix}
+              backendPricingData={backendPricingData}
+              onBack={() => setActiveStep(isFastTrack ? servicesStepIndex : paymentStepIndex)}
+              onEditConfiguration={() => setActiveStep(servicesStepIndex)}
+              onConfirm={() => setActiveStep(successStepIndex)}
+              resourceLabel="Cube-Instance"
+            />
+          ) : null
+        }
+        mainContent={
+          <>
+            {currentStep?.id === "workflow" && (
+              <WorkflowSelectionStep
+                mode={mode}
                 contextType={contextType}
-                selectedTenantName={summaryTenantName}
-                selectedClientName={summaryUserName}
-                billingCountry={
-                  countryOptions.find((c) => String(c.value) === billingCountry)?.label ||
-                  billingCountry
-                }
-                summaryTitle="Cube-Instance summary"
-                summaryDescription="Auto-calculated from the selected cube-instance configuration."
-                resourceLabel="Cube-Instance"
+                selectedTenantId={selectedTenantId}
+                selectedUserId={selectedUserId}
+                billingCountry={billingCountry}
+                isCountryLocked={isCountryLocked}
+                isCountriesLoading={isCountriesLoading}
+                tenants={tenants}
+                isTenantsFetching={isTenantsFetching}
+                userPool={userPool}
+                isUsersFetching={isUsersFetching}
+                countryOptions={countryOptions}
+                showFastTrackInfo
+                hasFastTrackAccess={hasFastTrackAccess}
+                fastTrackRegions={fastTrackRegions}
+                allRegionOptions={allRegionOptions}
+                onModeChange={handleModeChange}
+                onContextTypeChange={setContextType}
+                onTenantChange={setSelectedTenantId}
+                onUserChange={setSelectedUserId}
+                onCountryChange={setBillingCountry}
+                onContinue={() => setActiveStep(servicesStepIndex >= 0 ? servicesStepIndex : 1)}
+              />
+            )}
+
+            {currentStep?.id === "services" && (
+              <ConfigurationListStep
+                configurations={configurations}
+                resources={resources as any}
+                generalRegions={generalRegions}
+                regionOptions={regionOptions}
+                isLoadingResources={isLoadingResources}
+                isSubmitting={isSubmitting}
+                billingCountry={billingCountry}
+                showTemplateSelector
+                onResetConfiguration={resetConfigurationWithPatch}
+                projectHasNetwork={projectHasNetwork}
+                onAddConfiguration={addConfiguration}
+                onRemoveConfiguration={removeConfiguration}
+                onUpdateConfiguration={updateConfiguration}
+                onAddVolume={addAdditionalVolume}
+                onRemoveVolume={removeAdditionalVolume}
+                onUpdateVolume={updateAdditionalVolume}
+                onBack={() => setActiveStep(0)}
+                onSubmit={handleCreateOrder}
+                useProjectsHook={useFetchTenantProjects}
+                useSecurityGroupsHook={useFetchTenantSecurityGroups}
+                useKeyPairsHook={useFetchTenantKeyPairs}
+                useSubnetsHook={useFetchTenantSubnets}
+                useNetworksHook={useFetchTenantNetworks}
+                skipProjectFetch={false}
+                skipNetworkResourcesFetch={false}
+                formVariant="cube"
+              />
+            )}
+
+            {currentStep?.id === "payment" && (
+              <PaymentStep
+                submissionResult={submissionResult}
+                orderReceipt={orderReceipt}
+                isPaymentSuccessful={isPaymentSuccessful}
                 summarySubtotalValue={summarySubtotalValue}
                 summaryTaxValue={summaryTaxValue}
                 summaryGatewayFeesValue={summaryGatewayFeesValue}
                 summaryGrandTotalValue={summaryGrandTotalValue}
                 summaryDisplayCurrency={summaryDisplayCurrency}
+                contextType={contextType}
+                selectedUserId={String(selectedUserId)}
+                clientOptions={clientOptions}
+                onPaymentComplete={handlePaymentCompleted}
+                apiBaseUrl={apiBaseUrl}
+                paymentTransactionLabel="Instance Order"
               />
+            )}
+          </>
+        }
+        sidebarContent={
+          <>
+            <InstanceSummaryCard
+              configurations={configurations}
+              configurationSummaries={reviewSummaries}
+              contextType={contextType}
+              selectedTenantName={summaryTenantName}
+              selectedClientName={summaryUserName}
+              billingCountry={
+                countryOptions.find((c) => String(c.value) === billingCountry)?.label ||
+                billingCountry
+              }
+              summaryTitle="Cube-Instance summary"
+              summaryDescription="Auto-calculated from the selected cube-instance configuration."
+              resourceLabel="Cube-Instance"
+              summarySubtotalValue={summarySubtotalValue}
+              summaryTaxValue={summaryTaxValue}
+              summaryGatewayFeesValue={summaryGatewayFeesValue}
+              summaryGrandTotalValue={summaryGrandTotalValue}
+              summaryDisplayCurrency={summaryDisplayCurrency}
+            />
 
-              {/* Fast-track split info */}
-              {hasFastTrackAccess && configurations.length > 0 && (
-                <div className="mt-4 bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
-                  <h4 className="text-sm font-semibold text-gray-800 mb-3">Order Breakdown</h4>
-                  {fastTrackConfigs.length > 0 && (
-                    <div className="flex items-center justify-between text-sm mb-2">
-                      <span className="text-green-700">Fast-track (free)</span>
-                      <span className="font-medium text-green-700">
-                        {fastTrackConfigs.length} instance(s)
-                      </span>
-                    </div>
-                  )}
-                  {paidConfigs.length > 0 && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Requires payment</span>
-                      <span className="font-medium text-gray-800">
-                        {paidConfigs.length} instance(s)
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+            {hasFastTrackAccess && configurations.length > 0 && (
+              <div className="mt-4 bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+                <h4 className="text-sm font-semibold text-gray-800 mb-3">Order Breakdown</h4>
+                {fastTrackConfigs.length > 0 && (
+                  <div className="flex items-center justify-between text-sm mb-2">
+                    <span className="text-green-700">Fast-track (free)</span>
+                    <span className="font-medium text-green-700">
+                      {fastTrackConfigs.length} instance(s)
+                    </span>
+                  </div>
+                )}
+                {paidConfigs.length > 0 && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Requires payment</span>
+                    <span className="font-medium text-gray-800">
+                      {paidConfigs.length} instance(s)
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        }
+      />
     </TenantPageShell>
   );
 };

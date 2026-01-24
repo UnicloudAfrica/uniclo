@@ -8,7 +8,7 @@ import {
   useSecurityGroupRules,
   useAddSecurityGroupRule,
   useRemoveSecurityGroupRule,
-} from "../../../hooks/adminHooks/vpcInfraHooks";
+} from "../../../shared/hooks/vpcInfraHooks";
 
 interface SecurityRule {
   protocol?: string;
@@ -21,10 +21,11 @@ interface SecurityRule {
 const TenantSecurityGroupRules: React.FC = () => {
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get("project") || "";
+  const region = searchParams.get("region") || "";
   const sgId = searchParams.get("sg") || "";
   const sgName = searchParams.get("name") || "Security Group";
 
-  const { data: rules, isLoading } = useSecurityGroupRules(projectId, sgId);
+  const { data: rules, isLoading } = useSecurityGroupRules(projectId, sgId, region);
   const addRuleMutation = useAddSecurityGroupRule();
   const removeRuleMutation = useRemoveSecurityGroupRule();
 
@@ -40,6 +41,7 @@ const TenantSecurityGroupRules: React.FC = () => {
   const handleAddRule = async () => {
     await addRuleMutation.mutateAsync({
       projectId,
+      region,
       securityGroupId: sgId,
       payload: newRule,
     });
@@ -56,6 +58,7 @@ const TenantSecurityGroupRules: React.FC = () => {
   const handleRemoveRule = async (rule: SecurityRule) => {
     await removeRuleMutation.mutateAsync({
       projectId,
+      region,
       securityGroupId: sgId,
       payload: {
         direction: rule.direction as "ingress" | "egress",

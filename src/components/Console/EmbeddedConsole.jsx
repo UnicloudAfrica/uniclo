@@ -1,27 +1,24 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Terminal, 
-  Maximize2, 
-  Minimize2, 
-  X, 
-  Settings, 
-  Volume2, 
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Terminal,
+  Maximize2,
+  Minimize2,
+  X,
+  Volume2,
   VolumeX,
   Wifi,
   WifiOff,
   RotateCw,
-  Power,
-  Monitor
-} from 'lucide-react';
-import config from '../../config';
-import useAdminAuthStore from '../../stores/adminAuthStore';
+  Monitor,
+} from "lucide-react";
+import { useApiContext } from "../../hooks/useApiContext";
 
-const EmbeddedConsole = ({ 
-  instanceId, 
-  isVisible, 
-  onClose, 
+const EmbeddedConsole = ({
+  instanceId,
+  isVisible,
+  onClose,
   initialPosition = { x: 100, y: 100 },
-  initialSize = { width: 800, height: 600 }
+  initialSize = { width: 800, height: 600 },
 }) => {
   const [position, setPosition] = useState(initialPosition);
   const [size, setSize] = useState(initialSize);
@@ -29,8 +26,8 @@ const EmbeddedConsole = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [connectionStatus, setConnectionStatus] = useState('disconnected');
-  const [consoleType, setConsoleType] = useState('novnc');
+  const [connectionStatus, setConnectionStatus] = useState("disconnected");
+  const [consoleType, setConsoleType] = useState("novnc");
   const [isMuted, setIsMuted] = useState(false);
   const [consoleUrl, setConsoleUrl] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,19 +36,52 @@ const EmbeddedConsole = ({
   const consoleRef = useRef(null);
   const iframeRef = useRef(null);
   const headerRef = useRef(null);
+  const { context, apiBaseUrl, authHeaders } = useApiContext();
 
-  // Fetch console URL - Disabled as instance-management endpoints were removed
-  const fetchConsoleUrl = async (type = 'novnc') => {
+  const fetchConsoleUrl = async (type = "novnc") => {
+    if (!instanceId) return;
     setIsLoading(true);
     setError(null);
-    
+    setConnectionStatus("connecting");
+
     try {
-      // Console access has been temporarily disabled due to removal of instance-management endpoints
-      setError('Console access is currently unavailable. This feature will be restored in the updated instance management interface.');
-      setConnectionStatus('error');
+      const encodedId = encodeURIComponent(instanceId);
+      const typeParam = type ? `?type=${encodeURIComponent(type)}` : "";
+      const path =
+        context === "admin"
+          ? `/instance-management/${encodedId}/console`
+          : context === "tenant"
+            ? `/admin/instance-consoles/${encodedId}`
+            : `/business/instance-consoles/${encodedId}`;
+
+      const response = await fetch(`${apiBaseUrl}${path}${typeParam}`, {
+        method: "GET",
+        headers: authHeaders,
+        credentials: "include",
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || data?.success === false) {
+        throw new Error(data?.error || data?.message || "Failed to get console URL");
+      }
+
+      const url =
+        data?.data?.url ||
+        data?.data?.console_url ||
+        data?.message?.url ||
+        data?.message?.console_url ||
+        data?.url ||
+        data?.console_url;
+
+      if (!url) {
+        throw new Error("Console URL not available for this instance.");
+      }
+
+      setConsoleUrl(url);
     } catch (err) {
-      setError(err.message);
-      setConnectionStatus('error');
+      setConsoleUrl(null);
+      setError(err?.message || "Failed to get console access");
+      setConnectionStatus("error");
     } finally {
       setIsLoading(false);
     }
@@ -90,11 +120,11 @@ const EmbeddedConsole = ({
 
   useEffect(() => {
     if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
       return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
       };
     }
   }, [isDragging, dragOffset]);
@@ -109,7 +139,7 @@ const EmbeddedConsole = ({
   // Console actions
   const handleRefresh = () => {
     if (iframeRef.current) {
-      iframeRef.current.src = iframeRef.current.src;
+      iframeRef.current.src = iframeRef.current.src; // eslint-disable-line no-self-assign
     } else {
       fetchConsoleUrl(consoleType);
     }
@@ -127,20 +157,29 @@ const EmbeddedConsole = ({
 
   const getStatusColor = () => {
     switch (connectionStatus) {
-      case 'connected': return 'bg-green-500';
-      case 'connecting': return 'bg-yellow-500';
-      case 'error': return 'bg-red-500';
-      default: return 'bg-gray-500';
+      case "connected":
+        return "bg-green-500";
+      case "connecting":
+        return "bg-yellow-500";
+      case "error":
+        return "bg-red-500";
+      default:
+        return "bg-gray-500";
     }
   };
 
   const getConsoleTypeIcon = (type) => {
     switch (type) {
-      case 'novnc': return <Monitor className="w-4 h-4" />;
-      case 'spice-html5': return <Terminal className="w-4 h-4" />;
-      case 'rdp-html5': return <Monitor className="w-4 h-4" />;
-      case 'serial': return <Terminal className="w-4 h-4" />;
-      default: return <Terminal className="w-4 h-4" />;
+      case "novnc":
+        return <Monitor className="w-4 h-4" />;
+      case "spice-html5":
+        return <Terminal className="w-4 h-4" />;
+      case "rdp-html5":
+        return <Monitor className="w-4 h-4" />;
+      case "serial":
+        return <Terminal className="w-4 h-4" />;
+      default:
+        return <Terminal className="w-4 h-4" />;
     }
   };
 
@@ -150,17 +189,17 @@ const EmbeddedConsole = ({
     <div
       ref={consoleRef}
       className={`fixed bg-gray-900 border border-gray-700 rounded-lg shadow-2xl z-50 overflow-hidden transition-all duration-300 ${
-        isDragging ? 'cursor-move' : ''
+        isDragging ? "cursor-move" : ""
       }`}
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
-        width: isMinimized ? '300px' : `${size.width}px`,
-        height: isMinimized ? '40px' : `${size.height}px`,
-        minWidth: '300px',
-        minHeight: '200px',
-        maxWidth: '90vw',
-        maxHeight: '90vh',
+        width: isMinimized ? "300px" : `${size.width}px`,
+        height: isMinimized ? "40px" : `${size.height}px`,
+        minWidth: "300px",
+        minHeight: "200px",
+        maxWidth: "90vw",
+        maxHeight: "90vh",
       }}
       onMouseDown={handleMouseDown}
     >
@@ -171,9 +210,7 @@ const EmbeddedConsole = ({
       >
         <div className="flex items-center space-x-2">
           <Terminal className="w-4 h-4 text-blue-400" />
-          <span className="text-sm text-white font-medium">
-            Console - {instanceId}
-          </span>
+          <span className="text-sm text-white font-medium">Console - {instanceId}</span>
           <div className={`w-2 h-2 rounded-full ${getStatusColor()}`} />
         </div>
 
@@ -184,16 +221,16 @@ const EmbeddedConsole = ({
               {getConsoleTypeIcon(consoleType)}
             </button>
             <div className="absolute right-0 top-8 hidden group-hover:block bg-gray-800 border border-gray-600 rounded shadow-lg min-w-40 z-50">
-              {['novnc', 'spice-html5', 'rdp-html5', 'serial'].map(type => (
+              {["novnc", "spice-html5", "rdp-html5", "serial"].map((type) => (
                 <button
                   key={type}
                   onClick={() => handleConsoleTypeChange(type)}
                   className={`flex items-center space-x-2 px-3 py-2 text-sm hover:bg-gray-700 w-full text-left ${
-                    consoleType === type ? 'bg-gray-700 text-blue-400' : 'text-gray-300'
+                    consoleType === type ? "bg-gray-700 text-blue-400" : "text-gray-300"
                   }`}
                 >
                   {getConsoleTypeIcon(type)}
-                  <span className="capitalize">{type.replace('-', ' ')}</span>
+                  <span className="capitalize">{type.replace("-", " ")}</span>
                 </button>
               ))}
             </div>
@@ -276,11 +313,11 @@ const EmbeddedConsole = ({
               src={consoleUrl}
               className="w-full h-full border-none"
               title={`Console for ${instanceId}`}
-              style={{ height: 'calc(100% - 40px)' }}
-              onLoad={() => setConnectionStatus('connected')}
+              style={{ height: "calc(100% - 40px)" }}
+              onLoad={() => setConnectionStatus("connected")}
               onError={() => {
-                setConnectionStatus('error');
-                setError('Failed to load console');
+                setConnectionStatus("error");
+                setError("Failed to load console");
               }}
             />
           )}
@@ -289,7 +326,7 @@ const EmbeddedConsole = ({
           <div className="absolute bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 px-3 py-1 flex items-center justify-between text-xs">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-1">
-                {connectionStatus === 'connected' ? (
+                {connectionStatus === "connected" ? (
                   <Wifi className="w-3 h-3 text-green-400" />
                 ) : (
                   <WifiOff className="w-3 h-3 text-red-400" />
@@ -297,7 +334,8 @@ const EmbeddedConsole = ({
                 <span className="text-gray-300 capitalize">{connectionStatus}</span>
               </div>
               <div className="text-gray-400">
-                Type: <span className="text-gray-300 capitalize">{consoleType.replace('-', ' ')}</span>
+                Type:{" "}
+                <span className="text-gray-300 capitalize">{consoleType.replace("-", " ")}</span>
               </div>
             </div>
 
@@ -331,13 +369,13 @@ export const useConsoleManager = () => {
   const [consoles, setConsoles] = useState([]);
 
   const openConsole = (instanceId, options = {}) => {
-    const existingConsole = consoles.find(c => c.instanceId === instanceId);
-    
+    const existingConsole = consoles.find((c) => c.instanceId === instanceId);
+
     if (existingConsole) {
       // Bring existing console to front
-      setConsoles(prev => [
-        ...prev.filter(c => c.instanceId !== instanceId),
-        { ...existingConsole, zIndex: Math.max(...prev.map(c => c.zIndex), 1000) + 1 }
+      setConsoles((prev) => [
+        ...prev.filter((c) => c.instanceId !== instanceId),
+        { ...existingConsole, zIndex: Math.max(...prev.map((c) => c.zIndex), 1000) + 1 },
       ]);
       return;
     }
@@ -345,20 +383,20 @@ export const useConsoleManager = () => {
     const newConsole = {
       id: `console-${instanceId}-${Date.now()}`,
       instanceId,
-      position: { 
-        x: 100 + (consoles.length * 30), 
-        y: 100 + (consoles.length * 30) 
+      position: {
+        x: 100 + consoles.length * 30,
+        y: 100 + consoles.length * 30,
       },
       size: { width: 800, height: 600 },
-      zIndex: Math.max(...consoles.map(c => c.zIndex), 1000) + 1,
+      zIndex: Math.max(...consoles.map((c) => c.zIndex), 1000) + 1,
       ...options,
     };
 
-    setConsoles(prev => [...prev, newConsole]);
+    setConsoles((prev) => [...prev, newConsole]);
   };
 
   const closeConsole = (instanceId) => {
-    setConsoles(prev => prev.filter(c => c.instanceId !== instanceId));
+    setConsoles((prev) => prev.filter((c) => c.instanceId !== instanceId));
   };
 
   const closeAllConsoles = () => {

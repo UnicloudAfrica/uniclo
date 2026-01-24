@@ -1,8 +1,6 @@
 // @ts-nocheck
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Calculator, Flag, Globe, Loader2, Percent, Pencil, Plus } from "lucide-react";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell.tsx";
 import { ModernButton } from "../../shared/components/ui";
 import { ModernCard } from "../../shared/components/ui";
@@ -389,8 +387,6 @@ export default function AdminTax() {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell contentClassName="space-y-8">
         <ResourceHero
           title="Tax configuration"

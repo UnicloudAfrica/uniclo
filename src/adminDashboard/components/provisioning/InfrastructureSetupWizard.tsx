@@ -5,6 +5,7 @@ import { ModernButton } from "../../../shared/components/ui";
 import NetworkPresetSelector, {
   DEFAULT_PRESETS,
 } from "../../../shared/components/network/NetworkPresetSelector";
+import { useNetworkPresets } from "../../../hooks/networkPresetHooks";
 
 interface InfrastructureSetupWizardProps {
   project: any;
@@ -22,6 +23,9 @@ const InfrastructureSetupWizard: React.FC<InfrastructureSetupWizardProps> = ({
 
   const adminSetupMutation = useSetupInfrastructure();
   const setupMutation = customSetupMutation || adminSetupMutation;
+  const { data: networkPresets = DEFAULT_PRESETS } = useNetworkPresets();
+  const presetCatalog =
+    Array.isArray(networkPresets) && networkPresets.length > 0 ? networkPresets : DEFAULT_PRESETS;
 
   const handleSetup = () => {
     setupMutation.mutate(
@@ -37,7 +41,7 @@ const InfrastructureSetupWizard: React.FC<InfrastructureSetupWizardProps> = ({
     );
   };
 
-  const selectedBpDetails = DEFAULT_PRESETS.find((b) => b.id === selectedBlueprint);
+  const selectedBpDetails = presetCatalog.find((b) => b.id === selectedBlueprint);
 
   return (
     <div className="max-w-5xl mx-auto mt-8 px-4">
@@ -53,7 +57,7 @@ const InfrastructureSetupWizard: React.FC<InfrastructureSetupWizardProps> = ({
         <NetworkPresetSelector
           value={selectedBlueprint}
           onChange={setSelectedBlueprint}
-          presets={DEFAULT_PRESETS}
+          presets={presetCatalog}
           showAdvancedOption={false}
         />
       </div>

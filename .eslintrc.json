@@ -5,6 +5,7 @@
     },
     "extends": [
         "eslint:recommended",
+        "plugin:react-hooks/recommended",
         "prettier"
     ],
     "parserOptions": {
@@ -15,7 +16,8 @@
         "sourceType": "module"
     },
     "plugins": [
-        "prettier"
+        "prettier",
+        "react-hooks"
     ],
     "ignorePatterns": [
         "*.d.ts"

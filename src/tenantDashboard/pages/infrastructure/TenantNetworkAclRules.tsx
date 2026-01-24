@@ -8,7 +8,7 @@ import {
   useNetworkAclRules,
   useAddNetworkAclRule,
   useRemoveNetworkAclRule,
-} from "../../../hooks/adminHooks/vpcInfraHooks";
+} from "../../../shared/hooks/vpcInfraHooks";
 
 interface NaclRule {
   rule_number: number;
@@ -25,10 +25,11 @@ interface NaclRule {
 const TenantNetworkAclRules: React.FC = () => {
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get("project") || "";
+  const region = searchParams.get("region") || "";
   const aclId = searchParams.get("acl") || "";
   const aclName = searchParams.get("name") || "Network ACL";
 
-  const { data: aclData, isLoading } = useNetworkAclRules(projectId, aclId);
+  const { data: aclData, isLoading } = useNetworkAclRules(projectId, aclId, region);
   const addRuleMutation = useAddNetworkAclRule();
   const removeRuleMutation = useRemoveNetworkAclRule();
 
@@ -46,6 +47,7 @@ const TenantNetworkAclRules: React.FC = () => {
   const handleAddRule = async () => {
     await addRuleMutation.mutateAsync({
       projectId,
+      region,
       networkAclId: aclId,
       payload: newRule,
     });
@@ -56,6 +58,7 @@ const TenantNetworkAclRules: React.FC = () => {
     if (window.confirm(`Remove rule #${ruleNumber}?`)) {
       await removeRuleMutation.mutateAsync({
         projectId,
+        region,
         networkAclId: aclId,
         payload: { rule_number: ruleNumber, egress },
       });

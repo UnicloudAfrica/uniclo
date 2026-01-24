@@ -13,8 +13,6 @@ import {
 } from "lucide-react";
 import adminRegionApi from "../../services/adminRegionApi";
 import ToastUtils from "../../utils/toastUtil";
-import AdminSidebar from "../components/AdminSidebar";
-import AdminHeadbar from "../components/adminHeadbar";
 import AdminPageShell from "../components/AdminPageShell.tsx";
 import { ModernCard } from "../../shared/components/ui";
 import { ModernButton } from "../../shared/components/ui";
@@ -287,31 +285,17 @@ const RegionApprovalEdit = () => {
   );
 
   if (loading) {
-    return (
-      <>
-        <AdminHeadbar />
-        <AdminSidebar />
-        {renderLoadingShell()}
-      </>
-    );
+    return <>{renderLoadingShell()}</>;
   }
 
   if (!region) {
-    return (
-      <>
-        <AdminHeadbar />
-        <AdminSidebar />
-        {renderNotFoundShell()}
-      </>
-    );
+    return <>{renderNotFoundShell()}</>;
   }
 
   const actionTone = ACTION_COPY[action]?.tone || "primary";
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title={copy.title}
         description={copy.description}

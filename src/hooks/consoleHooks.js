@@ -16,8 +16,9 @@ const fetchConsoleUrl = async (instanceId, consoleType = "novnc") => {
 };
 
 // GET: Fetch console URL using direct API call (alternative approach)
-const fetchConsoleUrlDirect = async (instanceId) => {
-  const res = await silentApi("GET", `/business/instance-consoles/${instanceId}`);
+const fetchConsoleUrlDirect = async (instanceId, consoleType = "novnc") => {
+  const typeParam = consoleType ? `?type=${encodeURIComponent(consoleType)}` : "";
+  const res = await silentApi("GET", `/business/instance-consoles/${instanceId}${typeParam}`);
   if (!res.data) {
     throw new Error(`Failed to fetch console URL for instance ${instanceId}`);
   }
@@ -38,10 +39,10 @@ export const useGetConsoleUrl = (instanceId, consoleType = "novnc", options = {}
 };
 
 // Hook to get console URL using direct API call
-export const useGetConsoleUrlDirect = (instanceId, options = {}) => {
+export const useGetConsoleUrlDirect = (instanceId, consoleType = "novnc", options = {}) => {
   return useQuery({
-    queryKey: ["console-url-direct", instanceId],
-    queryFn: () => fetchConsoleUrlDirect(instanceId),
+    queryKey: ["console-url-direct", instanceId, consoleType],
+    queryFn: () => fetchConsoleUrlDirect(instanceId, consoleType),
     enabled: !!instanceId,
     staleTime: 1000 * 60,
     refetchOnWindowFocus: false,

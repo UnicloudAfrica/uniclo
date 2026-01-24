@@ -1,8 +1,6 @@
 // @ts-nocheck
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import AdminSidebar from "../components/AdminSidebar";
-import AdminHeadbar from "../components/adminHeadbar";
 import AdminPageShell from "../components/AdminPageShell.tsx";
 import { ModernButton } from "../../shared/components/ui";
 import PricingSideMenu from "../components/pricingSideMenu";
@@ -166,20 +164,20 @@ const PRICING_TAB_CONFIG = [
   },
   {
     id: "object-storage",
-    name: "Object Storage Pricing",
+    name: "Silo Storage Pricing",
     caption: "S3-compatible",
     productType: "object_storage_configuration",
     heroTitle: "Object storage pricing",
     heroDescription:
-      "Manage object storage rates so S3-compatible workloads are billed consistently.",
+      "Manage Silo Storage rates so S3-compatible workloads are billed consistently.",
     tableTitle: "Object storage pricing",
-    tableDescription: "Review per-GB-month pricing for object storage across each region.",
+    tableDescription: "Review per-GB-month pricing for Silo Storage across each region.",
     icon: HardDrive,
     metrics: (stats) => [
       {
         label: "Storage SKUs",
         value: stats.total,
-        description: "Priced object storage entries",
+        description: "Priced Silo Storage entries",
         icon: <HardDrive className="h-5 w-5" />,
       },
       {
@@ -195,9 +193,9 @@ const PRICING_TAB_CONFIG = [
         icon: <TrendingUp className="h-5 w-5" />,
       },
     ],
-    emptyTitle: "No object storage pricing",
+    emptyTitle: "No Silo Storage pricing",
     emptyDescription:
-      "Set per-GB prices so tenants can consume object storage with transparent billing.",
+      "Set per-GB prices so tenants can consume Silo Storage with transparent billing.",
   },
   {
     id: "compute",
@@ -676,8 +674,6 @@ export default function AdminPricing({ initialTab = DEFAULT_TAB_ID }: any) {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         contentClassName="space-y-8"
         description="Align pricing across compute, storage, networking, and rack services for every region."

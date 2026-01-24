@@ -1,23 +1,28 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import TenantPageShell from "../components/TenantPageShell";
-import ObjectStorageCreateLayout from "../../shared/components/objectStorage/ObjectStorageCreateLayout";
+import { ObjectStorageCreateContent } from "../../shared/components/object-storage";
+import useTenantAuthStore from "../../stores/tenantAuthStore";
+import objectStorageApi from "../../services/objectStorageApi";
 
 const ObjectStorageCreate = () => {
-  const navigate = useNavigate();
+  const tenant = useTenantAuthStore((state) => state?.tenant);
+  const tenantId = tenant?.id || tenant?.identifier || "";
 
   return (
     <TenantPageShell
-      title="Provision Object Storage"
-      description="Choose how you want to provision capacity for your tenant."
+      title="Create Silo Storage"
+      description="Configure and provision Silo Storage for your workspace"
     >
-      <ObjectStorageCreateLayout
-        persona="tenant"
+      <ObjectStorageCreateContent
+        dashboardContext="tenant"
+        config={{
+          context: "tenant",
+          tenantId,
+          submitOrderFn: (payload) => objectStorageApi.createOrder(payload),
+        }}
         enableFastTrack={false}
-        onBack={() => navigate(-1)}
-        onStandardPlan={() =>
-          navigate("/dashboard/object-storage/purchase")
-        }
+        showCustomerContext={false}
+        showPriceOverride={false}
       />
     </TenantPageShell>
   );

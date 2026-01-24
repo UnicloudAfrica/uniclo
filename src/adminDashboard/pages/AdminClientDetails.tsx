@@ -1,8 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
 import AdminActiveTab from "../components/adminActiveTab";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import OverviewClient from "../components/clientsComps/OverviewClient";
 import ClientModules from "../components/clientsComps/ClientModules";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -158,8 +156,6 @@ const AdminClientDetails = () => {
   if (isClientFetching || clientId === null) {
     return (
       <>
-        <AdminHeadbar />
-        <AdminSidebar />
         <AdminActiveTab />
         <AdminPageShell contentClassName="p-6 md:p-8 flex items-center justify-center flex-col">
           <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
@@ -172,8 +168,6 @@ const AdminClientDetails = () => {
   if (isError || !clientDetails) {
     return (
       <>
-        <AdminHeadbar />
-        <AdminSidebar />
         <AdminActiveTab />
         <AdminPageShell contentClassName="p-6 md:p-8 flex flex-col items-center justify-center text-center">
           <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
@@ -194,8 +188,6 @@ const AdminClientDetails = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminActiveTab />
       <AdminPageShell
         title={`Client • ${fullName || "Record"}`}

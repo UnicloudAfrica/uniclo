@@ -6,8 +6,6 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight, Loader2, AlertCircle } from "lucide-react";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell";
 import { ModernCard, ModernButton } from "../../shared/components/ui";
 import adminRegionApi from "../../services/adminRegionApi";
@@ -178,8 +176,6 @@ const RegionCreate = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title="Create New Region"
         description="Set up a new data center region in a few steps"

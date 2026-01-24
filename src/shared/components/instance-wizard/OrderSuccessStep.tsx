@@ -39,6 +39,12 @@ interface PipelineStep {
   context?: Record<string, any>;
 }
 
+interface InstanceSummary {
+  key: string;
+  name: string;
+  identifier: string;
+}
+
 interface ConfigurationPipelineGroup {
   key: string;
   title: string;
@@ -46,6 +52,9 @@ interface ConfigurationPipelineGroup {
   termLabel: string;
   instanceIds: string[];
   instanceCount: number;
+  instanceSummaries: InstanceSummary[];
+  requiresElasticIp: boolean;
+  requiresDataVolumes: boolean;
 }
 
 interface OrderSuccessStepProps {
@@ -111,10 +120,22 @@ const DEFAULT_INSTANCE_PIPELINE: PipelineStep[] = [
     description: "Booting the instance and running readiness checks.",
   },
   {
+    id: "allocate_elastic_ip",
+    label: "Elastic IP allocation",
+    status: "not_started",
+    description: "Allocating and attaching Elastic IPs.",
+  },
+  {
+    id: "attach_data_volumes",
+    label: "Data volumes",
+    status: "not_started",
+    description: "Creating and attaching additional volumes.",
+  },
+  {
     id: "post_provision",
     label: "Finalizing resources",
     status: "not_started",
-    description: "Attaching volumes and allocating IPs.",
+    description: "Final checks and bookkeeping.",
   },
   {
     id: "instance_ready",
@@ -138,6 +159,70 @@ const normalizeText = (value?: string | number | null): string => {
   return String(value).trim();
 };
 
+const resolveInstanceKey = (instance: any): string => {
+  const id = instance?.id;
+  if (id !== null && id !== undefined) {
+    const normalized = normalizeText(id);
+    if (normalized) return normalized;
+  }
+
+  const identifier = normalizeText(instance?.identifier);
+  if (identifier) return identifier;
+
+  return "";
+};
+
+const resolveInstanceLookupId = (instance: any): string => {
+  const identifier = normalizeText(instance?.identifier);
+  if (identifier) return identifier;
+
+  const id = instance?.id;
+  if (id !== null && id !== undefined) {
+    const normalized = normalizeText(id);
+    if (normalized) return normalized;
+  }
+
+  return "";
+};
+
+const resolveInstanceName = (instance: any, fallbackIndex?: number): string => {
+  const name = normalizeText(instance?.name);
+  if (name) return name;
+
+  if (Array.isArray(instance?.tags)) {
+    const tag = instance.tags.find(
+      (entry: any) => normalizeText(entry?.key).toLowerCase() === "name"
+    );
+    const tagValue = normalizeText(tag?.value);
+    if (tagValue) return tagValue;
+  }
+
+  if (Number.isFinite(fallbackIndex)) {
+    return `Instance ${fallbackIndex}`;
+  }
+
+  return "Instance";
+};
+
+const resolveAdditionalVolumes = (instance: any): any[] => {
+  const configVolumes = instance?.configuration?.additional_volumes;
+  if (Array.isArray(configVolumes) && configVolumes.length > 0) {
+    return configVolumes;
+  }
+
+  const metadataVolumes = instance?.metadata?.data_volumes ?? instance?.metadata?.volumes_to_attach;
+  if (Array.isArray(metadataVolumes) && metadataVolumes.length > 0) {
+    return metadataVolumes;
+  }
+
+  const tagVolumes = instance?.tags?.data_volumes;
+  if (Array.isArray(tagVolumes) && tagVolumes.length > 0) {
+    return tagVolumes;
+  }
+
+  return [];
+};
+
 const normalizeVolumeEntry = (volume: any) => {
   if (!volume) return null;
   const typeId = normalizeText(volume.volume_type_id ?? volume.id ?? volume.type_id ?? "");
@@ -145,6 +230,18 @@ const normalizeVolumeEntry = (volume: any) => {
   const size = normalizeText(volume.storage_size_gb ?? volume.size_gb ?? volume.size ?? "");
   if (!typeId && !name && !size) return null;
   return { typeId, name, size };
+};
+
+const hasElasticIp = (instance: any): boolean => {
+  const countValue = Number(
+    instance?.floating_ip_count ?? instance?.configuration?.floating_ip_count ?? 0
+  );
+  return Number.isFinite(countValue) && countValue > 0;
+};
+
+const hasDataVolumes = (instance: any): boolean => {
+  const volumes = resolveAdditionalVolumes(instance);
+  return volumes.some((volume) => Boolean(normalizeVolumeEntry(volume)));
 };
 
 const formatVolumeEntry = (entry: { typeId: string; name: string; size: string }) => {
@@ -206,13 +303,13 @@ const buildConfigurationKey = (instance: any) => {
 
 const buildConfigurationLabel = (instance: any) => {
   const config = instance?.configuration || {};
-  const regionLabel = normalizeText(instance?.region || config.regionLabel || config.region) || "Region";
+  const regionLabel =
+    normalizeText(instance?.region || config.regionLabel || config.region) || "Region";
   const projectLabel =
     normalizeText(config?.project?.name || config?.project?.identifier || "") || "Project";
   const computeLabel =
     normalizeText(config?.compute?.name || config?.compute?.id || "") || "Compute";
-  const imageLabel =
-    normalizeText(config?.os_image?.name || config?.os_image?.id || "") || "Image";
+  const imageLabel = normalizeText(config?.os_image?.name || config?.os_image?.id || "") || "Image";
   const { label: volumeLabel } = buildVolumeSummary(
     config?.primary_volume,
     config?.additional_volumes || []
@@ -264,23 +361,29 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
     return total + (Number.isFinite(countValue) ? countValue : 1);
   }, 0);
   const sanitizedDownloads = useMemo(
-    () =>
-      (keypairDownloads || []).filter(
-        (item) => item && item.name && item.material
-      ),
+    () => (keypairDownloads || []).filter((item) => item && item.name && item.material),
     [keypairDownloads]
   );
   const [showKeypairModal, setShowKeypairModal] = useState(false);
   const [downloadedKeys, setDownloadedKeys] = useState<string[]>([]);
   const [emailingKeys, setEmailingKeys] = useState<string[]>([]);
+  const [isRetryingHealthCheck, setIsRetryingHealthCheck] = useState(false);
   const [instanceProgress, setInstanceProgress] = useState<Record<string, PipelineStep[]>>({});
+  const instanceRefs = useMemo(() => {
+    if (!Array.isArray(instances)) return [];
+    return instances
+      .map((instance: any) => {
+        const key = resolveInstanceKey(instance);
+        const lookupId = resolveInstanceLookupId(instance);
+        const broadcastId = normalizeText(instance?.id);
+        if (!key || !lookupId) return null;
+        return { key, lookupId, broadcastId };
+      })
+      .filter(Boolean);
+  }, [instances]);
   const instanceIds = useMemo(
-    () =>
-      (instances || [])
-        .map((instance: any) => instance?.id)
-        .filter((id: any) => id !== null && id !== undefined)
-        .map((id: any) => String(id)),
-    [instances]
+    () => instanceRefs.map((ref: any) => ref.broadcastId).filter((id: string) => id !== ""),
+    [instanceRefs]
   );
 
   useEffect(() => {
@@ -291,8 +394,8 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
 
     const next: Record<string, PipelineStep[]> = {};
     instances.forEach((instance: any) => {
-      const id = instance?.id;
-      if (id === null || id === undefined) return;
+      const id = resolveInstanceKey(instance);
+      if (!id) return;
       const steps = Array.isArray(instance?.provisioning_progress)
         ? instance.provisioning_progress
         : [];
@@ -340,19 +443,152 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
 
   useInstanceBroadcasting(instanceIds, handleInstanceUpdate);
 
+  const fetchProgress = useCallback(
+    async (refs = instanceRefs) => {
+      if (!Array.isArray(refs) || refs.length === 0) return;
+
+      for (const ref of refs) {
+        try {
+          const response = await fetch(`${apiBaseUrl}/instances/${ref.lookupId}`, {
+            headers: authHeaders,
+            credentials: "include",
+          });
+          if (!response.ok) continue;
+          const data = await response.json();
+          const instance = data.data || data;
+          const steps = Array.isArray(instance?.provisioning_progress)
+            ? instance.provisioning_progress
+            : [];
+          if (steps.length > 0) {
+            setInstanceProgress((prev) => ({
+              ...prev,
+              [String(ref.key)]: steps.map((step: any) => ({
+                id: step.id || step.key || step.label || "",
+                label: step.label || "Step",
+                status: normalizeStatus(step.status),
+                description: step.description,
+                updated_at: step.updated_at,
+                context: step.context,
+              })),
+            }));
+          }
+        } catch (err) {
+          console.warn(`Failed to fetch progress for instance ${ref.lookupId}`, err);
+        }
+      }
+    },
+    [apiBaseUrl, authHeaders, instanceRefs]
+  );
+
+  // Polling fallback: fetch progress from API every 3 seconds
+  useEffect(() => {
+    if (!isAuthenticated || instanceRefs.length === 0) return;
+
+    // Initial fetch
+    fetchProgress();
+
+    // Poll every 3 seconds while instances are provisioning
+    const interval = setInterval(() => {
+      // Check if all instances are complete or failed - stop polling
+      const allDone = Object.values(instanceProgress).every((steps) => {
+        if (!Array.isArray(steps) || steps.length === 0) return false;
+        return steps.every((s) => s.status === "completed" || s.status === "failed");
+      });
+      if (allDone && Object.keys(instanceProgress).length > 0) {
+        clearInterval(interval);
+        return;
+      }
+      fetchProgress();
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [fetchProgress, isAuthenticated, instanceProgress, instanceRefs.length]);
+
+  const resolveLookupIds = useCallback(
+    (keys: string[]) => {
+      return keys
+        .map((key) => instanceRefs.find((ref: any) => ref.key === key)?.lookupId)
+        .filter((id: string | undefined): id is string => Boolean(id));
+    },
+    [instanceRefs]
+  );
+
+  const handleRetryHealthCheck = useCallback(
+    async (keys: string[]) => {
+      if (!isAuthenticated) {
+        ToastUtils.error("Sign in to retry health checks.");
+        return;
+      }
+
+      const lookupIds = resolveLookupIds(keys);
+      if (lookupIds.length === 0) {
+        ToastUtils.error("No instances available to refresh.");
+        return;
+      }
+
+      setIsRetryingHealthCheck(true);
+      try {
+        const results = await Promise.allSettled(
+          lookupIds.map(async (lookupId) => {
+            const response = await fetch(
+              `${apiBaseUrl}/instance-management/${lookupId}/refresh-status`,
+              {
+                method: "POST",
+                headers: authHeaders,
+                credentials: "include",
+              }
+            );
+
+            if (!response.ok) {
+              const data = await response.json().catch(() => ({}));
+              throw new Error(data?.message || "Failed to refresh instance status.");
+            }
+          })
+        );
+
+        const failures = results.filter((result) => result.status === "rejected");
+        if (failures.length > 0) {
+          console.error("Health check refresh failures:", failures);
+          ToastUtils.error(`Failed to refresh ${failures.length} instance(s).`);
+        } else {
+          ToastUtils.success("Health check refresh triggered.");
+        }
+
+        await fetchProgress();
+      } finally {
+        setIsRetryingHealthCheck(false);
+      }
+    },
+    [apiBaseUrl, authHeaders, fetchProgress, isAuthenticated, resolveLookupIds]
+  );
+
   const instancePipelineSkeleton = useMemo(() => {
     const firstWithSteps = Object.values(instanceProgress).find(
       (steps) => Array.isArray(steps) && steps.length > 0
     );
-    if (Array.isArray(firstWithSteps) && firstWithSteps.length > 0) {
-      return firstWithSteps.map((step) => ({
+    if (!Array.isArray(firstWithSteps) || firstWithSteps.length === 0) {
+      return DEFAULT_INSTANCE_PIPELINE;
+    }
+
+    const defaults = DEFAULT_INSTANCE_PIPELINE.map((step) => {
+      const match = firstWithSteps.find((item) => item.id === step.id);
+      return {
+        ...step,
+        label: match?.label || step.label,
+        description: match?.description || step.description,
+      };
+    });
+    const defaultIds = new Set(defaults.map((step) => step.id));
+    const extras = firstWithSteps
+      .filter((step) => step.id && !defaultIds.has(step.id))
+      .map((step) => ({
         id: step.id,
         label: step.label,
         status: "not_started" as const,
         description: step.description,
       }));
-    }
-    return DEFAULT_INSTANCE_PIPELINE;
+
+    return [...defaults, ...extras];
   }, [instanceProgress]);
 
   const buildAggregatedSteps = useCallback(
@@ -391,7 +627,9 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
         }, step.updated_at);
 
         const description =
-          failedCount > 0 ? `${failedCount}/${ids.length} failed` : `${completedCount}/${ids.length} complete`;
+          failedCount > 0
+            ? `${failedCount}/${ids.length} failed`
+            : `${completedCount}/${ids.length} complete`;
 
         return {
           ...step,
@@ -404,6 +642,24 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
     [instancePipelineSkeleton, instanceProgress]
   );
 
+  const filterPipelineSteps = useCallback(
+    (
+      steps: PipelineStep[],
+      requirements: { requiresElasticIp: boolean; requiresDataVolumes: boolean }
+    ) => {
+      return steps.filter((step) => {
+        if (step.id === "allocate_elastic_ip" && !requirements.requiresElasticIp) {
+          return false;
+        }
+        if (step.id === "attach_data_volumes" && !requirements.requiresDataVolumes) {
+          return false;
+        }
+        return true;
+      });
+    },
+    []
+  );
+
   const configurationGroups = useMemo<ConfigurationPipelineGroup[]>(() => {
     if (!Array.isArray(instances) || instances.length === 0) return [];
 
@@ -412,7 +668,7 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
     instances.forEach((instance: any) => {
       const key = buildConfigurationKey(instance);
       const { title, subtitle, monthsValue } = buildConfigurationLabel(instance);
-      const instanceId = normalizeText(instance?.id || "");
+      const instanceId = resolveInstanceKey(instance);
       if (!instanceId) return;
 
       if (!groups.has(key)) {
@@ -423,6 +679,9 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
           termLabel: "",
           instanceIds: [],
           instanceCount: 0,
+          instanceSummaries: [],
+          requiresElasticIp: false,
+          requiresDataVolumes: false,
           monthsValues: [],
         });
       }
@@ -430,8 +689,23 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
       const group = groups.get(key);
       if (!group) return;
 
+      const displayIdentifier =
+        normalizeText(instance?.identifier) || normalizeText(instance?.id) || instanceId;
+      const displayName = resolveInstanceName(instance, group.instanceSummaries.length + 1);
+
       group.instanceIds.push(instanceId);
+      group.instanceSummaries.push({
+        key: instanceId,
+        name: displayName,
+        identifier: displayIdentifier,
+      });
       group.instanceCount = group.instanceIds.length;
+      if (hasElasticIp(instance)) {
+        group.requiresElasticIp = true;
+      }
+      if (hasDataVolumes(instance)) {
+        group.requiresDataVolumes = true;
+      }
       if (monthsValue !== null) {
         group.monthsValues.push(monthsValue);
       }
@@ -452,6 +726,9 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
         termLabel,
         instanceIds: group.instanceIds,
         instanceCount: group.instanceCount,
+        instanceSummaries: group.instanceSummaries,
+        requiresElasticIp: group.requiresElasticIp,
+        requiresDataVolumes: group.requiresDataVolumes,
       };
     });
   }, [instances]);
@@ -460,9 +737,12 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
     () =>
       configurationGroups.map((group) => ({
         ...group,
-        steps: buildAggregatedSteps(group.instanceIds),
+        steps: filterPipelineSteps(buildAggregatedSteps(group.instanceIds), {
+          requiresElasticIp: group.requiresElasticIp,
+          requiresDataVolumes: group.requiresDataVolumes,
+        }),
       })),
-    [buildAggregatedSteps, configurationGroups]
+    [buildAggregatedSteps, configurationGroups, filterPipelineSteps]
   );
 
   useEffect(() => {
@@ -510,8 +790,7 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
         }
 
         ToastUtils.success(
-          payload?.message ||
-            `Key pair ${keyLabel ? `"${keyLabel}" ` : ""}emailed successfully.`
+          payload?.message || `Key pair ${keyLabel ? `"${keyLabel}" ` : ""}emailed successfully.`
         );
       } catch (error: any) {
         ToastUtils.error(error?.message || "Could not email the key pair.");
@@ -542,9 +821,7 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
             <div className="space-y-3">
               {sanitizedDownloads.map((item) => {
                 const keyLabel = item.name || "keypair";
-                const contextLabel = [item.project_name, item.region]
-                  .filter(Boolean)
-                  .join(" • ");
+                const contextLabel = [item.project_name, item.region].filter(Boolean).join(" • ");
                 const hasDownloaded = downloadedKeys.includes(keyLabel);
                 const emailKey = item.id !== undefined && item.id !== null ? String(item.id) : "";
                 const isEmailing = emailKey ? emailingKeys.includes(emailKey) : false;
@@ -720,12 +997,37 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
                             <p className="text-xs text-gray-500">{group.subtitle}</p>
                           </div>
                           <div className="text-right text-xs text-gray-500">
-                            <p>{group.instanceCount} instance{group.instanceCount === 1 ? "" : "s"}</p>
+                            <p>
+                              {group.instanceCount} instance{group.instanceCount === 1 ? "" : "s"}
+                            </p>
                             <p>Term: {group.termLabel}</p>
                           </div>
                         </div>
+                        {group.instanceSummaries.length > 0 && (
+                          <div className="mt-2 space-y-1 text-xs text-gray-500">
+                            {group.instanceSummaries.map((item) => (
+                              <div key={item.key} className="flex flex-wrap items-center gap-2">
+                                <span className="font-medium text-gray-700">{item.name}</span>
+                                <span className="font-mono text-gray-500">({item.identifier})</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <SetupProgressCard steps={group.steps} isLoading={false} />
+                      {group.steps.some(
+                        (step) =>
+                          (step.id === "wait_for_active" || step.id === "instance_ready") &&
+                          step.status === "failed"
+                      ) && (
+                        <ModernButton
+                          variant="outline"
+                          onClick={() => handleRetryHealthCheck(group.instanceIds)}
+                          disabled={isRetryingHealthCheck}
+                        >
+                          {isRetryingHealthCheck ? "Retrying..." : "Retry Health Check"}
+                        </ModernButton>
+                      )}
                     </div>
                   ))}
                 </div>

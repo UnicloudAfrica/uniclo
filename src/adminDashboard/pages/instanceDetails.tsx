@@ -28,8 +28,6 @@ import {
   Upload,
 } from "lucide-react";
 
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import EmbeddedConsole, { useConsoleManager } from "../../components/Console/EmbeddedConsole";
 import ToastUtils from "../../utils/toastUtil";
@@ -221,7 +219,6 @@ const MetricCard = ({ title, value, unit, trend, icon: Icon, color = "blue" }: a
 
 // Enhanced Instance Details Component
 export default function InstanceDetails() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [instanceId, setInstanceId] = useState(null); // canonical instance identifier used for API calls
   const [instanceIdentifier, setInstanceIdentifier] = useState(null); // identifier to fetch (kept separately to trigger effects)
   const [instanceDetails, setInstanceDetails] = useState(null);
@@ -399,19 +396,9 @@ export default function InstanceDetails() {
     }
   };
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-  };
-
   if (isLoading) {
     return (
       <>
-        <AdminHeadbar onMenuClick={toggleMobileMenu} />
-        <AdminSidebar isMobileMenuOpen={isMobileMenuOpen} onCloseMobileMenu={closeMobileMenu} />
         <AdminActiveTab />
         <AdminPageShell contentClassName="p-6 md:p-8 flex items-center justify-center">
           <div className="text-center">
@@ -426,8 +413,6 @@ export default function InstanceDetails() {
   if (isError || !instanceDetails) {
     return (
       <>
-        <AdminHeadbar onMenuClick={toggleMobileMenu} />
-        <AdminSidebar isMobileMenuOpen={isMobileMenuOpen} onCloseMobileMenu={closeMobileMenu} />
         <AdminActiveTab />
         <AdminPageShell contentClassName="p-6 md:p-8 flex flex-col items-center justify-center text-center">
           <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
@@ -491,8 +476,6 @@ export default function InstanceDetails() {
 
   return (
     <>
-      <AdminHeadbar onMenuClick={toggleMobileMenu} />
-      <AdminSidebar isMobileMenuOpen={isMobileMenuOpen} onCloseMobileMenu={closeMobileMenu} />
       <AdminActiveTab />
 
       <AdminPageShell
@@ -520,6 +503,8 @@ export default function InstanceDetails() {
                       resume: Play,
                       snapshot: Camera,
                       resize: Maximize,
+                      retry_provisioning: RotateCw,
+                      sync_provisioning: RefreshCw,
                       console: Terminal,
                       destroy: Trash2,
                     }[actionKey] || Play

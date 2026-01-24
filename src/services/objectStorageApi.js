@@ -77,7 +77,7 @@ const objectStorageApi = {
 
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const message = data?.message || data?.error || "Failed to fetch object storage accounts.";
+      const message = data?.message || data?.error || "Failed to fetch Silo Storage accounts.";
       throw new Error(message);
     }
 
@@ -154,7 +154,7 @@ const objectStorageApi = {
 
     const data = await response.json().catch(() => ({}));
     if (!response.ok || data?.success === false) {
-      const message = data?.message || data?.error || "Failed to create object storage order.";
+      const message = data?.message || data?.error || "Failed to create Silo Storage order.";
       throw new Error(message);
     }
 
@@ -162,7 +162,7 @@ const objectStorageApi = {
   },
   async fetchBuckets(accountId, params = {}) {
     if (!accountId) {
-      throw new Error("Account ID is required to load buckets.");
+      throw new Error("Account ID is required to load silos.");
     }
     const { basePath, headers } = resolveRequestContext();
     const query = new URLSearchParams(params).toString();
@@ -176,7 +176,7 @@ const objectStorageApi = {
 
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const message = data?.message || data?.error || "Failed to fetch buckets.";
+      const message = data?.message || data?.error || "Failed to fetch silos.";
       throw new Error(message);
     }
 
@@ -184,7 +184,7 @@ const objectStorageApi = {
   },
   async createBucket(accountId, payload) {
     if (!accountId) {
-      throw new Error("Account ID is required to create a bucket.");
+      throw new Error("Account ID is required to create a silo.");
     }
     const { basePath, headers } = resolveRequestContext();
     const response = await fetch(`${basePath}/accounts/${accountId}/buckets`, {
@@ -196,7 +196,7 @@ const objectStorageApi = {
 
     const data = await response.json().catch(() => ({}));
     if (!response.ok || data?.success === false) {
-      const message = data?.message || data?.error || "Failed to create bucket.";
+      const message = data?.message || data?.error || "Failed to create silo.";
       throw new Error(message);
     }
 
@@ -204,7 +204,7 @@ const objectStorageApi = {
   },
   async deleteBucket(accountId, bucketId) {
     if (!accountId || !bucketId) {
-      throw new Error("Account and bucket identifiers are required.");
+      throw new Error("Account and silo identifiers are required.");
     }
 
     const { basePath, headers } = resolveRequestContext();
@@ -216,7 +216,7 @@ const objectStorageApi = {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      const message = data?.message || data?.error || "Failed to delete bucket.";
+      const message = data?.message || data?.error || "Failed to delete silo.";
       throw new Error(message);
     }
 
@@ -226,7 +226,7 @@ const objectStorageApi = {
   // File browser operations
   async listObjects(accountId, bucketName, prefix = "") {
     if (!accountId || !bucketName) {
-      throw new Error("Account and bucket identifiers are required.");
+      throw new Error("Account and silo identifiers are required.");
     }
     const { basePath, headers } = resolveRequestContext();
     const params = new URLSearchParams();
@@ -245,7 +245,7 @@ const objectStorageApi = {
 
   async getObjectUrl(accountId, bucketName, objectKey) {
     if (!accountId || !bucketName || !objectKey) {
-      throw new Error("Account, bucket, and object key are required.");
+      throw new Error("Account, silo, and object key are required.");
     }
     const { basePath, headers } = resolveRequestContext();
     const url = `${basePath}/accounts/${accountId}/buckets/${bucketName}/objects/url`;
@@ -266,7 +266,7 @@ const objectStorageApi = {
 
   async deleteObject(accountId, bucketName, objectKey) {
     if (!accountId || !bucketName || !objectKey) {
-      throw new Error("Account, bucket, and object key are required.");
+      throw new Error("Account, silo, and object key are required.");
     }
     const { basePath, headers } = resolveRequestContext();
     const url = `${basePath}/accounts/${accountId}/buckets/${bucketName}/objects`;
@@ -287,7 +287,7 @@ const objectStorageApi = {
 
   async getUploadUrl(accountId, bucketName, objectKey, contentType) {
     if (!accountId || !bucketName || !objectKey) {
-      throw new Error("Account, bucket, and object key are required.");
+      throw new Error("Account, silo, and object key are required.");
     }
     const { basePath, headers } = resolveRequestContext();
     const url = `${basePath}/accounts/${accountId}/buckets/${bucketName}/upload-url`;
@@ -311,7 +311,7 @@ const objectStorageApi = {
    */
   async uploadFile(accountId, bucketName, objectKey, file) {
     if (!accountId || !bucketName || !objectKey || !file) {
-      throw new Error("Account, bucket, object key, and file are required.");
+      throw new Error("Account, silo, object key, and file are required.");
     }
     const { basePath, headers } = resolveRequestContext();
     const url = `${basePath}/accounts/${accountId}/buckets/${bucketName}/upload`;
@@ -379,6 +379,55 @@ const objectStorageApi = {
       throw new Error(message);
     }
     return data;
+  },
+
+  /**
+   * Create a new access key (rotation).
+   */
+  async createAccessKey(accountId, payload = {}) {
+    if (!accountId) {
+      throw new Error("Account ID is required.");
+    }
+    const { basePath, headers } = resolveRequestContext();
+    const url = `${basePath}/accounts/${accountId}/keys`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      credentials: "include",
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const message = data?.message || data?.error || "Failed to create access key.";
+      throw new Error(message);
+    }
+    return data?.data || data;
+  },
+
+  /**
+   * Revoke an access key.
+   */
+  async revokeAccessKey(accountId, accessKeyId) {
+    if (!accountId || !accessKeyId) {
+      throw new Error("Account ID and Access Key ID are required.");
+    }
+    const { basePath, headers } = resolveRequestContext();
+    const url = `${basePath}/accounts/${accountId}/keys/${accessKeyId}`;
+
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers,
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      const message = data?.message || data?.error || "Failed to revoke access key.";
+      throw new Error(message);
+    }
+
+    return true;
   },
 
   /**
@@ -578,7 +627,7 @@ const objectStorageApi = {
     return data?.data || data;
   },
 
-  // Delete an object storage account (admin only)
+  // Delete an Silo Storage account (admin only)
   async deleteAccount(accountId) {
     const { basePath, headers } = resolveRequestContext();
     const url = `${basePath}/accounts/${accountId}`;

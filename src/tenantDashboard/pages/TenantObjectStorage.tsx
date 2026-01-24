@@ -4,7 +4,7 @@ import TenantClientPageShell from "../components/TenantClientPageShell";
 
 const TenantObjectStorage = () => (
   <TenantClientPageShell
-    title="Object Storage"
+    title="Silo Storage"
     description="Object storage management is currently unavailable from this portal."
   />
 );

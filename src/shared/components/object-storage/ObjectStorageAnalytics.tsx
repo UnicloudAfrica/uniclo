@@ -283,7 +283,7 @@ const ObjectStorageAnalytics: React.FC<ObjectStorageAnalyticsProps> = ({
         </button>
       </div>
 
-      {/* Objects & Buckets Info */}
+      {/* Objects & Silos Info */}
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div className="p-3 bg-slate-50 rounded-lg">
           <span className="text-slate-500">Total Objects:</span>
@@ -292,7 +292,7 @@ const ObjectStorageAnalytics: React.FC<ObjectStorageAnalyticsProps> = ({
           </span>
         </div>
         <div className="p-3 bg-slate-50 rounded-lg">
-          <span className="text-slate-500">Buckets:</span>
+          <span className="text-slate-500">Silos:</span>
           <span className="ml-2 font-medium text-slate-700">{current.bucket_count}</span>
         </div>
       </div>

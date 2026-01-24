@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Key, ArrowLeft, Loader2, Upload, AlertCircle } from "lucide-react";
-import AdminHeadbar from "../../components/adminHeadbar";
-import AdminSidebar from "../../components/AdminSidebar";
 import AdminPageShell from "../../components/AdminPageShell";
 import { useCreateKeyPair } from "../../../hooks/adminHooks/keyPairHooks";
 import { useFetchProjects } from "../../../hooks/adminHooks/projectHooks"; // Assuming this hook exists based on previous checks
@@ -87,8 +85,6 @@ const AdminKeyPairCreate: React.FC = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title="Create Key Pair"
         description="Generate a new SSH key pair or import an existing public key."

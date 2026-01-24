@@ -1,14 +1,7 @@
 import React from "react";
 import { GitMerge } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
-
-interface VpcPeeringConnection {
-  id: string;
-  name?: string;
-  status?: string;
-  requester_vpc_id?: string;
-  accepter_vpc_id?: string;
-}
+import type { VpcPeeringConnection } from "./types";
 
 interface VpcPeeringTableProps {
   peeringConnections: VpcPeeringConnection[];
@@ -16,6 +9,7 @@ interface VpcPeeringTableProps {
   emptyMessage?: string;
   onAccept?: (pc: VpcPeeringConnection) => void;
   onReject?: (pc: VpcPeeringConnection) => void;
+  onDelete?: (pc: VpcPeeringConnection) => void;
   showActions?: boolean;
 }
 
@@ -25,10 +19,15 @@ const VpcPeeringTable: React.FC<VpcPeeringTableProps> = ({
   emptyMessage = "No VPC peering connections found",
   onAccept,
   onReject,
+  onDelete,
   showActions = false,
 }) => {
-  const getStatusColor = (status?: string) => {
-    switch (status?.toLowerCase()) {
+  const resolveStatus = (status?: string | { code?: string }) =>
+    typeof status === "string" ? status : status?.code;
+
+  const getStatusColor = (status?: string | { code?: string }) => {
+    const statusValue = resolveStatus(status);
+    switch (statusValue?.toLowerCase()) {
       case "active":
         return "bg-green-100 text-green-700";
       case "pending-acceptance":
@@ -92,28 +91,47 @@ const VpcPeeringTable: React.FC<VpcPeeringTableProps> = ({
               <td className="py-3 px-4 font-mono text-xs text-gray-500">{pc.requester_vpc_id}</td>
               <td className="py-3 px-4 font-mono text-xs text-gray-500">{pc.accepter_vpc_id}</td>
               <td className="py-3 px-4">
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(pc.status)}`}
-                >
-                  {pc.status || "unknown"}
-                </span>
-              </td>
-              {showActions && pc.status?.toLowerCase() === "pending-acceptance" && (
-                <td className="py-3 px-4 text-right space-x-2">
-                  {onAccept && (
-                    <button
-                      onClick={() => onAccept(pc)}
-                      className="text-xs text-green-600 hover:text-green-800"
+                {(() => {
+                  const statusValue = resolveStatus(pc.status);
+                  return (
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                        pc.status
+                      )}`}
                     >
-                      Accept
-                    </button>
+                      {statusValue || "unknown"}
+                    </span>
+                  );
+                })()}
+              </td>
+              {showActions && (
+                <td className="py-3 px-4 text-right space-x-2">
+                  {resolveStatus(pc.status)?.toLowerCase() === "pending-acceptance" && (
+                    <>
+                      {onAccept && (
+                        <button
+                          onClick={() => onAccept(pc)}
+                          className="text-xs text-green-600 hover:text-green-800"
+                        >
+                          Accept
+                        </button>
+                      )}
+                      {onReject && (
+                        <button
+                          onClick={() => onReject(pc)}
+                          className="text-xs text-red-600 hover:text-red-800"
+                        >
+                          Reject
+                        </button>
+                      )}
+                    </>
                   )}
-                  {onReject && (
+                  {onDelete && (
                     <button
-                      onClick={() => onReject(pc)}
+                      onClick={() => onDelete(pc)}
                       className="text-xs text-red-600 hover:text-red-800"
                     >
-                      Reject
+                      Delete
                     </button>
                   )}
                 </td>

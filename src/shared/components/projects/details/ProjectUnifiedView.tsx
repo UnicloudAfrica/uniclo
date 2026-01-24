@@ -40,6 +40,7 @@ export interface ResourceCounts {
   vpc_peering?: number;
   internet_gateways?: number;
   load_balancers?: number;
+  users?: number;
 }
 
 export interface IGWDetails {
@@ -106,6 +107,7 @@ export interface ProjectUnifiedViewProps {
   onViewVpcPeering?: () => void;
   onViewInternetGateways?: () => void;
   onViewLoadBalancers?: () => void;
+  onViewUsers?: () => void;
 
   // Loading states ...
   isEnablingInternet?: boolean;
@@ -151,6 +153,7 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
   onViewVpcPeering,
   onViewInternetGateways,
   onViewLoadBalancers,
+  onViewUsers,
   isEnablingInternet = false,
   isProvisioning = false,
   isSyncing = false,
@@ -159,8 +162,23 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
   showSyncButton = true,
   showHero = true,
 }) => {
-  const hasInternetGateway = networkStatus?.internet_gateway?.configured ?? false;
-  const igwDetails = networkStatus?.internet_gateway?.details ?? null;
+  const fallbackIgw = Array.isArray(igws) && igws.length > 0 ? igws[0] : null;
+  const fallbackIgwDetails = fallbackIgw
+    ? {
+        id: fallbackIgw.id ?? fallbackIgw.provider_resource_id,
+        name: fallbackIgw.name ?? fallbackIgw.label,
+        external_id: fallbackIgw.provider_resource_id ?? fallbackIgw.external_id,
+        state: fallbackIgw.state ?? fallbackIgw.status,
+        created_at: fallbackIgw.created_at,
+      }
+    : null;
+
+  const hasInternetGateway =
+    Boolean(networkStatus?.internet_gateway?.configured) ||
+    Boolean(fallbackIgw) ||
+    (typeof resourceCounts.internet_gateways === "number" && resourceCounts.internet_gateways > 0);
+
+  const igwDetails = networkStatus?.internet_gateway?.details ?? fallbackIgwDetails;
 
   const activeStep = setupSteps?.find((s) => s.status === "pending");
 
@@ -221,6 +239,7 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
             vpcPeering={resourceCounts.vpc_peering || 0}
             internetGateways={resourceCounts.internet_gateways || 0}
             loadBalancers={resourceCounts.load_balancers || 0}
+            users={resourceCounts.users || 0}
             onViewAll={onViewAllResources}
             onViewVpcs={onViewVpcs}
             onViewSubnets={onViewSubnets}
@@ -234,6 +253,7 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
             onViewVpcPeering={onViewVpcPeering}
             onViewInternetGateways={onViewInternetGateways}
             onViewLoadBalancers={onViewLoadBalancers}
+            onViewUsers={onViewUsers}
           />
         </div>
       </div>

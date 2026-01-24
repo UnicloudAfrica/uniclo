@@ -1,9 +1,7 @@
 import React, { useMemo } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
+import { useLocation } from "react-router-dom";
+import SubheaderBlock from "../components/SubheaderBlock";
 import { designTokens } from "../../styles/designTokens";
-
-const DEFAULT_BREADCRUMB_COLOR = designTokens.colors.primary[500];
 
 const toTitleCase = (value: string = ""): string =>
   value
@@ -37,50 +35,6 @@ const buildBreadcrumbs = (pathname: string = "", homeHref: string = "/"): Breadc
   }
 
   return crumbs;
-};
-
-interface BreadcrumbTrailProps {
-  breadcrumbs?: Breadcrumb[];
-  color?: string;
-}
-
-const BreadcrumbTrail: React.FC<BreadcrumbTrailProps> = ({
-  breadcrumbs,
-  color = DEFAULT_BREADCRUMB_COLOR,
-}) => {
-  if (!breadcrumbs?.length) return null;
-
-  return (
-    <nav className="flex flex-wrap items-center gap-2 text-sm">
-      {breadcrumbs.map((item, index) => {
-        const isLast = index === breadcrumbs.length - 1;
-        return (
-          <React.Fragment key={`${item?.label}-${index}`}>
-            {index > 0 && <ChevronRight className="h-4 w-4" color={`${color}66`} />}
-            {item?.href && !isLast ? (
-              <Link
-                to={item.href}
-                className="font-medium text-[#288DD1] transition-colors hover:text-[#0F75B5]"
-              >
-                {item.label}
-              </Link>
-            ) : (
-              <span
-                className="font-medium transition-colors"
-                style={{
-                  color,
-                  fontWeight: isLast ? 600 : 500,
-                  opacity: isLast ? 1 : 0.65,
-                }}
-              >
-                {item?.label}
-              </span>
-            )}
-          </React.Fragment>
-        );
-      })}
-    </nav>
-  );
 };
 
 interface DashboardPageShellProps {
@@ -142,39 +96,14 @@ const DashboardPageShell: React.FC<DashboardPageShellProps> = ({
       {customHeader ? (
         customHeader
       ) : (
-        <header
-          className={[
-            "bg-white border-b border-gray-200 px-6 md:px-8 py-6 space-y-4",
-            headerClassName,
-          ]
-            .filter(Boolean)
-            .join(" ")
-            .trim()}
-        >
-          <BreadcrumbTrail breadcrumbs={computedBreadcrumbs} />
-
-          {(headerTitle || description || actions || subHeaderContent) && (
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-col gap-3">
-                {headerTitle && <h1 className="text-2xl font-bold text-gray-900">{headerTitle}</h1>}
-                {description &&
-                  (typeof description === "string" ? (
-                    <p className="mt-1 text-sm text-gray-500">{description}</p>
-                  ) : (
-                    <div className="mt-1">{description}</div>
-                  ))}
-                {subHeaderContent ? (
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                    {subHeaderContent}
-                  </div>
-                ) : null}
-              </div>
-              {actions && (
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">{actions}</div>
-              )}
-            </div>
-          )}
-        </header>
+        <SubheaderBlock
+          breadcrumbs={computedBreadcrumbs}
+          title={headerTitle}
+          description={description}
+          actions={actions}
+          subHeaderContent={subHeaderContent}
+          className={headerClassName}
+        />
       )}
 
       <ContentWrapper

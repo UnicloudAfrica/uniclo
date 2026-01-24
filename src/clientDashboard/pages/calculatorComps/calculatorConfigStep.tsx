@@ -253,7 +253,7 @@ const CalculatorConfigStep = ({
   const validateStorageItem = () => {
     const newErrors = {};
     if (!storageItem.region) newErrors.region = "Region is required.";
-    if (!storageItem.tier_id) newErrors.tier_id = "Select an object storage tier.";
+    if (!storageItem.tier_id) newErrors.tier_id = "Select an Silo Storage tier.";
     if (!storageItem.quantity || storageItem.quantity < 1)
       newErrors.quantity = "Quantity must be at least 1.";
     if (!storageItem.months || storageItem.months < 1)
@@ -355,7 +355,7 @@ const CalculatorConfigStep = ({
       total_price: totalPrice,
       currency: resolveTierCurrency(selectedTier),
       _display: {
-        name: selectedTier.product?.name || "Object Storage Tier",
+        name: selectedTier.product?.name || "Silo Storage Tier",
         region: storageItem.region,
         summary: `${quantity} x ${months} month${months === 1 ? "" : "s"}`,
       },
@@ -415,9 +415,9 @@ const CalculatorConfigStep = ({
         </p>
       </div>
 
-      {/* Object Storage Section */}
+      {/* Silo Storage Section */}
       <div className="bg-white border rounded-lg p-6">
-        <h4 className="font-semibold text-gray-800 mb-4">Object Storage Add-on</h4>
+        <h4 className="font-semibold text-gray-800 mb-4">Silo Storage Add-on</h4>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
@@ -515,7 +515,7 @@ const CalculatorConfigStep = ({
             className="px-4 py-2 bg-slate-800 text-white rounded-md hover:bg-slate-900 transition-colors flex items-center"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Add Object Storage
+            Add Silo Storage
           </button>
         </div>
 
@@ -528,7 +528,7 @@ const CalculatorConfigStep = ({
               >
                 <div>
                   <div className="font-medium text-gray-900">
-                    {item.product_name || "Object Storage Tier"}
+                    {item.product_name || "Silo Storage Tier"}
                   </div>
                   <div className="text-sm text-gray-600">
                     Region: {item.region} • {item.quantity} unit
@@ -759,41 +759,37 @@ const CalculatorConfigStep = ({
             </div>
           )}
 
-          {/* Floating IP (Optional) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Floating IP (Optional)
+              Attach EIP when provisioning
             </label>
-            <select
-              value={currentItem.floating_ip_id || ""}
-              onChange={(e) => updateCurrentItem("floating_ip_id", e.target.value)}
-              className={inputClass}
-              disabled={!currentItem.region}
-            >
-              <option value="">No Floating IP</option>
-              {floatingIps?.map((ip: any) => (
-                <option key={ip.product.productable_id} value={ip.product.productable_id}>
-                  {ip.product.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Floating IP Count */}
-          {currentItem.floating_ip_id && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Floating IP Count
-              </label>
+            <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700">
               <input
-                type="number"
-                min="0"
-                value={currentItem.floating_ip_count}
-                onChange={(e) => updateCurrentItem("floating_ip_count", e.target.value)}
-                className={inputClass}
+                type="checkbox"
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                checked={Number(currentItem.floating_ip_count || 0) > 0}
+                onChange={(e) => {
+                  const enabled = e.target.checked;
+                  const defaultId = floatingIps?.[0]?.product?.productable_id ?? null;
+                  setCurrentItem((prev) => ({
+                    ...prev,
+                    floating_ip_count: enabled ? 1 : 0,
+                    floating_ip_id: enabled ? prev.floating_ip_id || defaultId : null,
+                  }));
+                  setItemErrors((prev) => ({
+                    ...prev,
+                    floating_ip_count: null,
+                    floating_ip_id: null,
+                  }));
+                }}
+                disabled={!currentItem.region}
               />
-            </div>
-          )}
+              <span>Allocate and attach one Elastic IP.</span>
+            </label>
+            <p className="text-xs text-gray-500 mt-1">
+              When enabled, one EIP is reserved and attached during provisioning.
+            </p>
+          </div>
         </div>
 
         <div className="mt-4">

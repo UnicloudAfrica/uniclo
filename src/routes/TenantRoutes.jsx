@@ -11,7 +11,7 @@ import Requests from "../dashboard/pages/requests";
 import Project from "../dashboard/pages/ProjectMain";
 import DashboardProjectCreate from "../dashboard/pages/ProjectCreate";
 import ProjectDetails from "../dashboard/pages/ProjectDetails";
-import Settings from "../dashboard/pages/settings";
+import TenantAccountSettings from "../dashboard/pages/AccountSettings";
 import DashboardTaxConfigurations from "../dashboard/pages/taxConfiguration";
 import Products from "../dashboard/pages/products";
 import TenantPricingCalculator from "../tenantDashboard/pages/TenantPricingCalculator";
@@ -42,7 +42,6 @@ import RegionRequestDetail from "../tenantDashboard/pages/RegionRequestDetail";
 import NewRegionRequest from "../tenantDashboard/pages/NewRegionRequest";
 import RevenueDashboard from "../tenantDashboard/pages/RevenueDashboard";
 import OnboardingDashboard from "../dashboard/onboarding";
-import TenantBrandingSettings from "../tenantDashboard/pages/TenantBrandingSettings";
 import TenantProvisioningWizard from "../tenantDashboard/pages/TenantProvisioningWizard";
 import TenantTemplates from "../tenantDashboard/pages/TenantTemplates";
 import TenantDiscountManager from "../tenantDashboard/pages/TenantDiscountManager";
@@ -192,15 +191,14 @@ const TenantRoutes = () => {
         {/* Standalone */}
         <Route path="/dashboard/products" element={<Products />} />
         <Route path="/dashboard/support" element={<SupportTicket />} />
-        <Route path="/dashboard/settings" element={<Settings />} />
-        <Route path="/dashboard/branding" element={<TenantBrandingSettings />} />
-
+        <Route path="/dashboard/account" element={<TenantAccountSettings />} />
         {/* Legacy redirects */}
         <Route path="/tenant-dashboard/*" element={<Navigate to="/dashboard" replace />} />
         <Route
           path="/dashboard/account-settings"
-          element={<Navigate to="/dashboard/settings" replace />}
+          element={<Navigate to="/dashboard/account" replace />}
         />
+        <Route path="/dashboard/settings" element={<Navigate to="/dashboard/account" replace />} />
         <Route
           path="/dashboard/support-ticket"
           element={<Navigate to="/dashboard/support" replace />}

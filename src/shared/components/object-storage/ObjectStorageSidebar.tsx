@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Database,
   Key,
@@ -26,6 +26,7 @@ import StorageGauge3D from "./StorageGauge3D";
 import ExtendStorageModal from "./ExtendStorageModal";
 import objectStorageApi from "../../../services/objectStorageApi";
 import ToastUtils from "../../../utils/toastUtil";
+import ObjectStorageCredentials from "./ObjectStorageCredentials";
 
 interface Bucket {
   id: string;
@@ -63,6 +64,12 @@ const ObjectStorageSidebar: React.FC<ObjectStorageSidebarProps> = ({
   const [showBucketForm, setShowBucketForm] = useState(false);
   const [newBucketName, setNewBucketName] = useState("");
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [newAccessKey, setNewAccessKey] = useState<any>(null);
+  const [rotationConfirmed, setRotationConfirmed] = useState(false);
+  const [rotatingKeyId, setRotatingKeyId] = useState<string | null>(null);
+  const [rotationError, setRotationError] = useState<string | null>(null);
+  const [isRotating, setIsRotating] = useState(false);
+  const [isRevokingOldKey, setIsRevokingOldKey] = useState(false);
 
   // Secret reveal state
   const [showRevealModal, setShowRevealModal] = useState(false);
@@ -72,6 +79,25 @@ const ObjectStorageSidebar: React.FC<ObjectStorageSidebarProps> = ({
 
   // Extend storage modal state
   const [showExtendModal, setShowExtendModal] = useState(false);
+
+  useEffect(() => {
+    setRevealedSecret(null);
+    setSecretViewed(false);
+    setNewAccessKey(null);
+    setRotationConfirmed(false);
+    setRotatingKeyId(null);
+    setRotationError(null);
+  }, [account?.id]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      setRevealedSecret(null);
+      setSecretViewed(false);
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
 
   // Extract account details
   const endpoint = account?.meta?.public_url || account?.meta?.provisioning?.result?.public_url;
@@ -111,17 +137,31 @@ const ObjectStorageSidebar: React.FC<ObjectStorageSidebarProps> = ({
     }
   };
 
-  const downloadCredentials = () => {
+  const downloadCredentialsFor = ({
+    endpoint: endpointValue,
+    accessKeyId: accessKeyValue,
+    secretKey: secretValue,
+    label,
+  }: {
+    endpoint?: string;
+    accessKeyId?: string;
+    secretKey?: string;
+    label?: string;
+  }) => {
+    const normalizedLabel = String(label || account?.name || "storage")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
     const credentials = {
-      endpoint: endpoint || "",
-      access_key_id: accessKeyId || "",
-      secret_access_key: revealedSecret || "",
-      account_name: account?.name || "",
+      endpoint: endpointValue || "",
+      access_key_id: accessKeyValue || "",
+      secret_access_key: secretValue || "",
+      account_name: label || account?.name || "",
       created_at: new Date().toISOString(),
       warning: "KEEP THIS FILE SECURE! The secret key cannot be recovered if lost.",
     };
 
-    const content = `# Object Storage Credentials
+    const content = `# Silo Storage Credentials
 # Account: ${credentials.account_name}
 # Downloaded: ${credentials.created_at}
 # ⚠️ WARNING: Keep this file secure and never share it!
@@ -135,13 +175,92 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `s3-credentials-${account?.name || "storage"}.txt`;
+    a.download = `s3-credentials-${normalizedLabel || "storage"}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
     ToastUtils.success("Credentials downloaded. Store this file securely!");
+  };
+
+  const downloadCredentials = () => {
+    downloadCredentialsFor({
+      endpoint,
+      accessKeyId,
+      secretKey: revealedSecret || "",
+      label: account?.name || "storage",
+    });
+  };
+
+  const normalizeAccessKeyPayload = (payload: any) => {
+    if (!payload) return null;
+    if (payload.key_id || payload.id) return payload;
+    if (payload.data) return normalizeAccessKeyPayload(payload.data);
+    return payload;
+  };
+
+  const handleRotateAccessKey = async () => {
+    if (!account?.id) return;
+    setRotationError(null);
+    setIsRotating(true);
+    try {
+      const data = await objectStorageApi.createAccessKey(account.id, { label: "rotated" });
+      const created = normalizeAccessKeyPayload(data);
+      if (!created) {
+        throw new Error("Access key created but no credentials were returned.");
+      }
+
+      if (!created.secret_once && created.id) {
+        try {
+          const revealed = await objectStorageApi.revealSecretKey(account.id, created.id);
+          created.secret_once = revealed?.secret_key || revealed?.secret_once || null;
+        } catch (revealError: any) {
+          setRotationError(
+            revealError?.message ||
+              "Access key created, but the secret could not be revealed. Please rotate again."
+          );
+        }
+      }
+
+      if (!created.secret_once) {
+        setRotationError(
+          (prev) =>
+            prev ||
+            "Access key created, but the secret is unavailable. Rotate again to generate new credentials."
+        );
+      }
+
+      setNewAccessKey(created);
+      setRotationConfirmed(false);
+      setRotatingKeyId(accessKey?.id || null);
+      ToastUtils.success("New access key created. Save it now.");
+      onRefresh();
+    } catch (err: any) {
+      const message = err?.message || "Failed to create access key.";
+      setRotationError(message);
+      ToastUtils.error(message);
+    } finally {
+      setIsRotating(false);
+    }
+  };
+
+  const handleRevokeOldKey = async () => {
+    const oldKeyId = rotatingKeyId || accessKey?.id;
+    if (!account?.id || !oldKeyId) return;
+    setIsRevokingOldKey(true);
+    try {
+      await objectStorageApi.revokeAccessKey(account.id, oldKeyId);
+      ToastUtils.success("Old access key revoked.");
+      setNewAccessKey(null);
+      setRotationConfirmed(false);
+      setRotatingKeyId(null);
+      onRefresh();
+    } catch (err: any) {
+      ToastUtils.error(err?.message || "Failed to revoke access key.");
+    } finally {
+      setIsRevokingOldKey(false);
+    }
   };
 
   const handleCreateBucket = async (e: React.FormEvent) => {
@@ -182,7 +301,7 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
           <div className="bg-slate-50 rounded-lg p-3 text-center">
             <div className="flex items-center justify-center gap-1.5 text-slate-500 mb-1">
               <BarChart3 className="h-3.5 w-3.5" />
-              <span className="text-xs">Buckets</span>
+              <span className="text-xs">Silos</span>
             </div>
             <p className="text-lg font-bold text-slate-900">{buckets.length}</p>
           </div>
@@ -309,24 +428,104 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
                 </div>
               )}
             </div>
+
+            <div className="mt-4 border-t border-slate-100 pt-4 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Rotate Access Key
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Create a new key, update your apps, then deactivate the old key.
+                  </p>
+                </div>
+                <button
+                  onClick={handleRotateAccessKey}
+                  disabled={isRotating || Boolean(newAccessKey)}
+                  className="text-xs rounded-lg border border-primary-200 px-3 py-1.5 text-primary-600 hover:bg-primary-50 disabled:opacity-50"
+                >
+                  {isRotating ? "Creating..." : "Rotate key"}
+                </button>
+              </div>
+
+              {rotationError && <p className="text-xs text-rose-600">{rotationError}</p>}
+
+              {newAccessKey && (
+                <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-3">
+                  <div className="text-xs text-slate-500">
+                    Old key:{" "}
+                    <span className="font-mono text-slate-700">
+                      {accessKey?.key_id || "unknown"}
+                    </span>
+                  </div>
+
+                  <ObjectStorageCredentials
+                    endpoint={endpoint}
+                    accessKeyId={newAccessKey?.key_id}
+                    secretKey={newAccessKey?.secret_once}
+                    showSecretOnce={true}
+                    confirmLabel="I have downloaded and copied these credentials"
+                    onSecretDismissed={() => setRotationConfirmed(true)}
+                  />
+
+                  <button
+                    onClick={() =>
+                      downloadCredentialsFor({
+                        endpoint,
+                        accessKeyId: newAccessKey?.key_id,
+                        secretKey: newAccessKey?.secret_once,
+                        label: `${account?.name || "storage"}-rotated`,
+                      })
+                    }
+                    disabled={!newAccessKey?.secret_once}
+                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary-500 px-3 py-2 text-sm font-medium text-white hover:bg-primary-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download new credentials
+                  </button>
+
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={handleRevokeOldKey}
+                      disabled={!rotationConfirmed || isRevokingOldKey}
+                      className="w-full rounded-lg bg-rose-500 px-3 py-2 text-sm font-medium text-white hover:bg-rose-600 disabled:opacity-50"
+                    >
+                      {isRevokingOldKey ? "Deactivating..." : "Deactivate old key"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewAccessKey(null);
+                        setRotationConfirmed(false);
+                        setRotatingKeyId(null);
+                      }}
+                      disabled={!rotationConfirmed}
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      Keep old key active
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
 
-      {/* Buckets Section */}
+      {/* Silos Section */}
       <div>
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Buckets</h3>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Silos</h3>
           <button
             onClick={() => setShowBucketForm(!showBucketForm)}
             className="p-1 text-primary-600 hover:bg-primary-50 rounded"
-            title="Create bucket"
+            title="Create Silo"
           >
             <Plus className="h-4 w-4" />
           </button>
         </div>
 
-        {/* Create Bucket Form */}
+        {/* Create Silo Form */}
         {showBucketForm && (
           <form onSubmit={handleCreateBucket} className="p-3 bg-slate-50 border-b border-slate-200">
             <input
@@ -335,7 +534,7 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
               onChange={(e) =>
                 setNewBucketName(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))
               }
-              placeholder="bucket-name"
+              placeholder="silo-name"
               className="w-full text-sm rounded-lg border border-slate-300 px-3 py-2 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
               disabled={creatingBucket}
             />
@@ -345,7 +544,7 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
                 disabled={creatingBucket || !newBucketName.trim()}
                 className="flex-1 text-sm rounded-lg bg-primary-500 px-3 py-1.5 text-white hover:bg-primary-600 disabled:opacity-50"
               >
-                {creatingBucket ? "Creating..." : "Create"}
+                {creatingBucket ? "Creating..." : "Create Silo"}
               </button>
               <button
                 type="button"
@@ -361,7 +560,7 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
           </form>
         )}
 
-        {/* Bucket List */}
+        {/* Silo List */}
         <div>
           {bucketsLoading ? (
             <div className="flex items-center justify-center py-8">
@@ -370,7 +569,7 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
           ) : buckets.length === 0 ? (
             <div className="text-center py-8 px-4">
               <Database className="mx-auto h-8 w-8 text-slate-300" />
-              <p className="mt-2 text-sm text-slate-500">No buckets yet</p>
+              <p className="mt-2 text-sm text-slate-500">No silos yet</p>
             </div>
           ) : (
             <div>

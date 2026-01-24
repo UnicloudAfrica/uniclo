@@ -1,8 +1,6 @@
 // @ts-nocheck
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell.tsx";
 import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
 import { AddAdminModal } from "./adminComps/addAdmin";
@@ -15,8 +13,6 @@ const AdminUserCreate = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title="Add Admin User"
         description="Provision a new administrator and grant access to the platform."

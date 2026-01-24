@@ -1,29 +1,26 @@
 import React from "react";
 import { Network } from "lucide-react";
 import ModernCard from "../ui/ModernCard";
-
-interface Subnet {
-  id: string;
-  name?: string;
-  cidr?: string;
-  cidr_block?: string;
-  vpc_id?: string;
-  state?: string;
-  available_ips?: number;
-}
+import type { Subnet } from "./types";
 
 interface SubnetsTableProps {
   subnets: Subnet[];
   isLoading?: boolean;
   showVpcColumn?: boolean;
+  showDefaultBadge?: boolean;
   emptyMessage?: string;
+  onDelete?: (subnet: Subnet) => void;
+  showActions?: boolean;
 }
 
 const SubnetsTable: React.FC<SubnetsTableProps> = ({
   subnets,
   isLoading = false,
   showVpcColumn = true,
+  showDefaultBadge = false,
   emptyMessage = "No subnets found",
+  onDelete,
+  showActions = false,
 }) => {
   const getStateColor = (state?: string) => {
     switch (state?.toLowerCase()) {
@@ -75,13 +72,25 @@ const SubnetsTable: React.FC<SubnetsTableProps> = ({
             <th className="text-left py-3 px-4 text-xs font-semibold text-gray-600 uppercase">
               Available IPs
             </th>
+            {showActions && (
+              <th className="text-right py-3 px-4 text-xs font-semibold text-gray-600 uppercase">
+                Actions
+              </th>
+            )}
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
           {subnets.map((subnet) => (
             <tr key={subnet.id} className="hover:bg-gray-50">
               <td className="py-3 px-4">
-                <div className="font-medium text-gray-900">{subnet.name || "Unnamed"}</div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-gray-900">{subnet.name || "Unnamed"}</span>
+                  {showDefaultBadge && subnet.is_default && (
+                    <span className="px-1.5 py-0.5 bg-blue-100 text-blue-600 text-[10px] font-medium rounded">
+                      DEFAULT
+                    </span>
+                  )}
+                </div>
                 <div className="text-xs text-gray-500 font-mono">{subnet.id}</div>
               </td>
               <td className="py-3 px-4 font-mono text-sm">{subnet.cidr_block || subnet.cidr}</td>
@@ -96,6 +105,16 @@ const SubnetsTable: React.FC<SubnetsTableProps> = ({
                 </span>
               </td>
               <td className="py-3 px-4 text-sm">{subnet.available_ips ?? "-"}</td>
+              {showActions && onDelete && (
+                <td className="py-3 px-4 text-right">
+                  <button
+                    onClick={() => onDelete(subnet)}
+                    className="text-xs text-red-600 hover:text-red-800"
+                  >
+                    Delete
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

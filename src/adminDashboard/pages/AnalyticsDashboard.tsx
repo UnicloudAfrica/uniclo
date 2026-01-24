@@ -14,8 +14,6 @@ import {
   PieChart,
   Activity,
 } from "lucide-react";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell";
 import adminApi from "../../index/admin/api";
 
@@ -169,9 +167,7 @@ const AnalyticsDashboard: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex min-h-screen bg-gray-50">
-        <AdminSidebar />
         <div className="flex-1 flex flex-col">
-          <AdminHeadbar />
           <div className="flex-1 p-6 flex items-center justify-center">
             <div className="text-gray-500">Loading analytics...</div>
           </div>
@@ -198,9 +194,7 @@ const AnalyticsDashboard: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <AdminSidebar />
       <div className="flex-1 flex flex-col">
-        <AdminHeadbar />
         <AdminPageShell
           title="Analytics Dashboard"
           description="Platform performance metrics and insights"

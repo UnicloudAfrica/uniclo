@@ -446,7 +446,7 @@ const PartnerRegionQualificationForm = ({ value, meta, onChange }) => {
                         Object storage automation (optional)
                       </p>
                       <p className="text-xs text-gray-500">
-                        Provide access keys if you want us to manage buckets and quotas.
+                        Provide access keys if you want us to manage silos and quotas.
                       </p>
                     </div>
                     <label className="inline-flex items-center gap-2 text-sm font-medium text-gray-700">

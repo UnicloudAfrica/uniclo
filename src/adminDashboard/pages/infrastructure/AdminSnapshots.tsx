@@ -1,8 +1,6 @@
 import React, { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import AdminPageShell from "../../components/AdminPageShell";
-import AdminHeadbar from "../../components/adminHeadbar";
-import AdminSidebar from "../../components/AdminSidebar";
 import { StorageManagementContainer } from "../../../shared/components/infrastructure/storage";
 
 const AdminSnapshots: React.FC = () => {
@@ -23,8 +21,6 @@ const AdminSnapshots: React.FC = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell title="Snapshots" description="Manage volume snapshots across all tenants">
         <StorageManagementContainer projectId={projectId} region={region} initialTab="snapshots" />
       </AdminPageShell>

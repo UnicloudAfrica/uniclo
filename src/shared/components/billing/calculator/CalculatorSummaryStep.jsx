@@ -78,7 +78,7 @@ const CalculatorSummaryStep = ({ calculatorData, pricingResult, onRecalculate })
 
   const storageItems = calculatorData.object_storage_items || [];
   const fallbackStorageLines = storageItems.map((item) => ({
-    name: item.product_name || "Object Storage Tier",
+    name: item.product_name || "Silo Storage Tier",
     region: item.region,
     quantity: item.quantity,
     unit_price: Number(item.unit_price || 0),
@@ -456,9 +456,7 @@ const CalculatorSummaryStep = ({ calculatorData, pricingResult, onRecalculate })
                   key={`storage-${item.region}-${idx}`}
                   className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-700"
                 >
-                  <span className="font-semibold">
-                    {item.product_name || "Object Storage Tier"}
-                  </span>{" "}
+                  <span className="font-semibold">{item.product_name || "Silo Storage Tier"}</span>{" "}
                   • {formatRegionName(item.region)} • {item.quantity} allocation
                   {item.quantity === 1 ? "" : "s"} • {item.months} month
                   {item.months === 1 ? "" : "s"}

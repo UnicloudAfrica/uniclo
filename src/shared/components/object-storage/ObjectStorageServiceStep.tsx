@@ -1,6 +1,8 @@
 import React from "react";
+import { Plus } from "lucide-react";
 import { Option } from "../../../hooks/objectStorageUtils";
 import { ResolvedProfile } from "../../../hooks/useObjectStoragePricing";
+import { ModernButton, ModernCard } from "../ui";
 import { ObjectStorageProfileCard } from "./ObjectStorageProfileCard";
 
 export interface ObjectStorageServiceStepProps {
@@ -18,6 +20,7 @@ export interface ObjectStorageServiceStepProps {
   onRegionChange: (id: string, region: string) => void;
   onTierChange: (id: string, tierKey: string) => void;
   onMonthsChange: (id: string, months: string) => void;
+  onStorageGbChange: (id: string, storageGb: string) => void;
   onNameChange: (id: string, name: string) => void;
   onUnitPriceChange?: (id: string, unitPrice: string) => void;
 }
@@ -35,6 +38,7 @@ export const ObjectStorageServiceStep: React.FC<ObjectStorageServiceStepProps> =
   onRegionChange,
   onTierChange,
   onMonthsChange,
+  onStorageGbChange,
   onNameChange,
   onUnitPriceChange,
 }) => {
@@ -42,15 +46,13 @@ export const ObjectStorageServiceStep: React.FC<ObjectStorageServiceStepProps> =
   const canRemove = profiles.length > 1;
 
   return (
-    <div className="service-step">
-      <div className="step-header">
-        <h2 className="step-title">Service Profiles</h2>
-        <p className="step-description">
-          Configure your object storage profiles. Select regions, tiers, and contract length.
-        </p>
-      </div>
+    <ModernCard title="Service Profiles">
+      <p className="text-sm text-slate-500 -mt-2 mb-4">
+        Configure your Silo Storage profiles. Select regions, tiers, storage size, and contract
+        length.
+      </p>
 
-      <div className="profiles-container">
+      <div className="space-y-4">
         {profiles.map((profile, index) => (
           <ObjectStorageProfileCard
             key={profile.id}
@@ -61,11 +63,12 @@ export const ObjectStorageServiceStep: React.FC<ObjectStorageServiceStepProps> =
             errors={profileErrors[profile.id]}
             canRemove={canRemove}
             showPriceOverride={showPriceOverride && dashboardContext === "admin"}
-            onUpdate={() => {}} // Not used directly
+            onUpdate={() => {}}
             onRemove={() => onRemoveProfile(profile.id)}
             onRegionChange={(region) => onRegionChange(profile.id, region)}
             onTierChange={(tierKey) => onTierChange(profile.id, tierKey)}
             onMonthsChange={(months) => onMonthsChange(profile.id, months)}
+            onStorageGbChange={(storageGb) => onStorageGbChange(profile.id, storageGb)}
             onNameChange={(name) => onNameChange(profile.id, name)}
             onUnitPriceChange={
               onUnitPriceChange
@@ -77,24 +80,19 @@ export const ObjectStorageServiceStep: React.FC<ObjectStorageServiceStepProps> =
       </div>
 
       {canAddMore && (
-        <div className="add-profile-container">
-          <button
-            type="button"
-            className="btn btn-outline-primary btn-add-profile"
-            onClick={onAddProfile}
-          >
-            <span className="btn-icon">+</span>
-            Add Another Profile
-          </button>
-          <small className="profiles-limit">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <ModernButton variant="outline" onClick={onAddProfile} leftIcon={<Plus size={16} />}>
+            Add another profile
+          </ModernButton>
+          <span className="text-xs text-slate-500">
             {profiles.length} of {maxProfiles} profiles
-          </small>
+          </span>
         </div>
       )}
 
       {!canAddMore && (
-        <p className="profiles-limit-warning">Maximum of {maxProfiles} profiles reached.</p>
+        <p className="mt-4 text-xs text-amber-600">Maximum of {maxProfiles} profiles reached.</p>
       )}
-    </div>
+    </ModernCard>
   );
 };

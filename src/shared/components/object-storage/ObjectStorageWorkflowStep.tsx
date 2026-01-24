@@ -1,10 +1,14 @@
 import React from "react";
+import { CreditCard, Gauge } from "lucide-react";
 import { Option } from "../../../hooks/objectStorageUtils";
+import CustomerContextSelector from "../common/CustomerContextSelector";
+import { ModernCard, ModernSelect } from "../ui";
 
 export interface ObjectStorageWorkflowStepProps {
   // Mode
   mode: string;
   onModeChange: (mode: string) => void;
+  enableFastTrack?: boolean;
 
   // Customer Context - only show for admin
   showCustomerContext?: boolean;
@@ -33,6 +37,7 @@ export interface ObjectStorageWorkflowStepProps {
 export const ObjectStorageWorkflowStep: React.FC<ObjectStorageWorkflowStepProps> = ({
   mode,
   onModeChange,
+  enableFastTrack = true,
   showCustomerContext = true,
   contextType,
   onContextTypeChange,
@@ -52,166 +57,113 @@ export const ObjectStorageWorkflowStep: React.FC<ObjectStorageWorkflowStepProps>
   dashboardContext,
 }) => {
   return (
-    <div className="workflow-step">
-      <div className="step-header">
-        <h2 className="step-title">Workflow & Assignment</h2>
-        <p className="step-description">
-          Choose your provisioning mode and who this request is for.
-        </p>
-      </div>
+    <ModernCard title="Workflow & Assignment">
+      <p className="text-sm text-slate-500 -mt-2 mb-4">
+        Choose your provisioning mode and who this request is for.
+      </p>
+      <div className="space-y-6">
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">Provisioning Mode</label>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div
+              onClick={() => onModeChange("standard")}
+              className={`cursor-pointer rounded-xl border p-4 transition-all ${
+                mode === "standard"
+                  ? "border-primary-500 bg-primary-50 ring-1 ring-primary-200"
+                  : "border-slate-200 hover:border-slate-300"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`rounded-lg p-2 ${
+                    mode === "standard"
+                      ? "bg-primary-100 text-primary-600"
+                      : "bg-slate-100 text-slate-500"
+                  }`}
+                >
+                  <CreditCard className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-900">Standard Workflow</p>
+                  <p className="text-xs text-slate-500">
+                    Configure, price, and generate payment link.
+                  </p>
+                </div>
+              </div>
+            </div>
 
-      {/* Provisioning Mode */}
-      <div className="form-section">
-        <h3 className="section-title">Provisioning Mode</h3>
-        <div className="mode-selector">
-          <div
-            className={`mode-card ${mode === "standard" ? "selected" : ""}`}
-            onClick={() => onModeChange("standard")}
-          >
-            <div className="mode-icon">📋</div>
-            <div className="mode-content">
-              <div className="mode-name">Standard Workflow</div>
-              <div className="mode-desc">Configure, price, and generate payment link.</div>
-            </div>
-            <div className="mode-radio">
-              <input
-                type="radio"
-                name="provisioning-mode"
-                checked={mode === "standard"}
-                onChange={() => onModeChange("standard")}
-              />
-            </div>
-          </div>
-
-          <div
-            className={`mode-card ${mode === "fast-track" ? "selected" : ""}`}
-            onClick={() => onModeChange("fast-track")}
-          >
-            <div className="mode-icon">⚡</div>
-            <div className="mode-content">
-              <div className="mode-name">Fast-Track</div>
-              <div className="mode-desc">Skip payment and provision immediately.</div>
-            </div>
-            <div className="mode-radio">
-              <input
-                type="radio"
-                name="provisioning-mode"
-                checked={mode === "fast-track"}
-                onChange={() => onModeChange("fast-track")}
-              />
-            </div>
+            {enableFastTrack && (
+              <div
+                onClick={() => onModeChange("fast-track")}
+                className={`cursor-pointer rounded-xl border p-4 transition-all ${
+                  mode === "fast-track"
+                    ? "border-primary-500 bg-primary-50 ring-1 ring-primary-200"
+                    : "border-slate-200 hover:border-slate-300"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`rounded-lg p-2 ${
+                      mode === "fast-track"
+                        ? "bg-primary-100 text-primary-600"
+                        : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    <Gauge className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900">Fast-Track</p>
+                    <p className="text-xs text-slate-500">
+                      Skip payment and provision immediately.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      </div>
 
-      {/* Customer Context - Only for Admin */}
-      {showCustomerContext && dashboardContext === "admin" && (
-        <div className="form-section">
-          <h3 className="section-title">Customer Context</h3>
-          <p className="section-description">Select who you are performing this action for.</p>
+        {showCustomerContext && dashboardContext === "admin" && (
+          <CustomerContextSelector
+            contextType={contextType}
+            setContextType={onContextTypeChange}
+            selectedTenantId={selectedTenantId}
+            setSelectedTenantId={onTenantChange}
+            selectedUserId={selectedUserId}
+            setSelectedUserId={onUserChange}
+            tenants={tenantOptions.map((option) => ({
+              id: option.value,
+              name: option.label,
+            }))}
+            isTenantsFetching={isTenantsFetching}
+            userPool={clientOptions.map((option) => ({
+              id: option.value,
+              email: option.label,
+            }))}
+            isUsersFetching={isUsersFetching}
+          />
+        )}
 
-          <div className="context-selector">
-            <label className="context-option">
-              <input
-                type="radio"
-                name="context-type"
-                value=""
-                checked={contextType === ""}
-                onChange={() => onContextTypeChange("")}
-              />
-              <span>Unassigned</span>
-            </label>
-            <label className="context-option">
-              <input
-                type="radio"
-                name="context-type"
-                value="tenant"
-                checked={contextType === "tenant"}
-                onChange={() => onContextTypeChange("tenant")}
-              />
-              <span>Tenant</span>
-            </label>
-            <label className="context-option">
-              <input
-                type="radio"
-                name="context-type"
-                value="user"
-                checked={contextType === "user"}
-                onChange={() => onContextTypeChange("user")}
-              />
-              <span>User</span>
-            </label>
-          </div>
-
-          {/* Tenant Selection */}
-          {contextType === "tenant" && (
-            <div className="form-group">
-              <label>Select Tenant</label>
-              <select
-                className="form-control"
-                value={selectedTenantId}
-                onChange={(e) => onTenantChange(e.target.value)}
-                disabled={isTenantsFetching}
-              >
-                <option value="">{isTenantsFetching ? "Loading..." : "Select a tenant..."}</option>
-                {tenantOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* User Selection */}
-          {contextType === "user" && (
-            <div className="form-group">
-              <label>Select User</label>
-              <select
-                className="form-control"
-                value={selectedUserId}
-                onChange={(e) => onUserChange(e.target.value)}
-                disabled={isUsersFetching}
-              >
-                <option value="">{isUsersFetching ? "Loading..." : "Select a user..."}</option>
-                {clientOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Billing Country */}
-      <div className="form-section">
-        <h3 className="section-title">Billing Country</h3>
-        <div className="form-group">
-          <select
-            className="form-control"
+        <div>
+          <label className="mb-1 block text-sm font-medium text-slate-700">Billing Country</label>
+          <ModernSelect
             value={countryCode}
-            onChange={(e) => onCountryChange(e.target.value)}
+            onChange={(event) => {
+              if (!isCountryLocked) {
+                onCountryChange(event.target.value);
+              }
+            }}
+            options={countryOptions}
+            placeholder={isCountriesLoading ? "Loading countries..." : "Select billing country"}
             disabled={isCountryLocked || isCountriesLoading}
-          >
-            <option value="">{isCountriesLoading ? "Loading..." : "Select country..."}</option>
-            {countryOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          {isCountryLocked && (
-            <small className="form-text text-muted">
-              Country is locked based on customer selection.
-            </small>
-          )}
-          <small className="form-text text-muted">
-            Used for tax calculation and currency selection.
-          </small>
+            helper={
+              isCountryLocked
+                ? "Country is locked based on the selected customer."
+                : "Used for tax calculation and currency selection."
+            }
+          />
         </div>
       </div>
-    </div>
+    </ModernCard>
   );
 };

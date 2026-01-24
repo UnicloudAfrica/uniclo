@@ -2,8 +2,6 @@
 import { ChevronDown, Loader2, Pencil } from "lucide-react";
 import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
 import PricingSideMenu from "../components/pricingSideMenu";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import { useEffect, useState } from "react";
 import {
@@ -117,8 +115,6 @@ const AdminColocation = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminActiveTab />
       <AdminPageShell contentClassName="p-6 md:p-8">
         <div className="flex justify-end mb-4">

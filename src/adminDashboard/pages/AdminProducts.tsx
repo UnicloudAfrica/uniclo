@@ -17,8 +17,6 @@ import {
   Trash2,
   ChevronDown,
 } from "lucide-react";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell";
 import { ModernCard } from "../../shared/components/ui";
 import { ModernButton } from "../../shared/components/ui";
@@ -172,7 +170,7 @@ const PRODUCT_TAB_CONFIG = [
   },
   {
     id: "object-storage",
-    name: "Object Storage",
+    name: "Silo Storage",
     caption: "S3-compatible",
     productType: "object_storage_configuration",
     heroTitle: "Object storage catalogue",
@@ -180,13 +178,13 @@ const PRODUCT_TAB_CONFIG = [
       "Track S3-compatible storage availability, pricing, and quotas across regions.",
     tableTitle: "Object storage products",
     tableDescription:
-      "Review regional object storage SKUs and confirm pricing aligns with provider costs.",
+      "Review regional Silo Storage SKUs and confirm pricing aligns with provider costs.",
     icon: HardDrive,
     metrics: (stats: any) => [
       {
         label: "Storage SKUs",
         value: stats.total,
-        description: "Available object storage entries",
+        description: "Available Silo Storage entries",
         icon: <HardDrive className="h-5 w-5" />,
       },
       {
@@ -202,9 +200,9 @@ const PRODUCT_TAB_CONFIG = [
         icon: <Globe className="h-5 w-5" />,
       },
     ],
-    emptyTitle: "No object storage products",
+    emptyTitle: "No Silo Storage products",
     emptyDescription:
-      "Add object storage SKUs so tenants can provision and manage bucket-based storage.",
+      "Add Silo Storage SKUs so tenants can provision and manage silo-based storage.",
   },
   {
     id: "compute",
@@ -480,8 +478,7 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
         }
       }
       if (!pricingMatch) return row;
-      const price =
-        pricingMatch.price_usd ?? pricingMatch.price_local ?? row.price;
+      const price = pricingMatch.price_usd ?? pricingMatch.price_local ?? row.price;
       return {
         ...row,
         price,
@@ -745,8 +742,6 @@ export default function AdminProducts({ initialTab = DEFAULT_TAB_ID }: AdminProd
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         contentClassName="space-y-8"
         description="Maintain platform products across regions and keep provisioning catalogues aligned."

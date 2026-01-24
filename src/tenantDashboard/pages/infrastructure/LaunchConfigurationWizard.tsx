@@ -4,7 +4,7 @@ import { Settings, ArrowLeft, ArrowRight, Check, Server, Key, Shield } from "luc
 import TenantPageShell from "../../components/TenantPageShell";
 import ModernCard from "../../../shared/components/ui/ModernCard";
 import ModernButton from "../../../shared/components/ui/ModernButton";
-import { useSecurityGroups } from "../../../hooks/adminHooks/vpcInfraHooks";
+import { useSecurityGroups } from "../../../shared/hooks/vpcInfraHooks";
 import { useFetchTenantKeyPairs } from "../../../hooks/keyPairsHook";
 import { useImages } from "../../../hooks/storageHooks";
 import { useCreateLaunchConfiguration } from "../../../hooks/autoScalingHooks";
@@ -73,7 +73,7 @@ const LaunchConfigurationWizard: React.FC = () => {
 
   const { data: images = [] } = useImages(projectId, region);
   const { data: keyPairs = [] } = useFetchTenantKeyPairs(projectId, region);
-  const { data: sgs = [] } = useSecurityGroups(projectId);
+  const { data: sgs = [] } = useSecurityGroups(projectId, region);
   const createMutation = useCreateLaunchConfiguration();
 
   const handleNext = () => setStep(step + 1);

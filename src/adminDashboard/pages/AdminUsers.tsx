@@ -2,8 +2,6 @@
 import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Users, ShieldCheck, UserCog, Plus, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell";
 import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
 import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
@@ -305,11 +303,7 @@ export default function AdminUsers() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
-      <AdminSidebar />
-
       <div className="flex flex-1 flex-col overflow-hidden">
-        <AdminHeadbar />
-
         <main className="flex-1 overflow-y-auto">
           <AdminPageShell
             title="Admin Users"

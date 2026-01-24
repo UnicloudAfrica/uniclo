@@ -10,8 +10,6 @@ import { useSharedClients } from "../../hooks/sharedCalculatorHooks";
 import { useFetchProductPricing } from "../../hooks/resource";
 import { useCustomerContext } from "../../hooks/adminHooks/useCustomerContext";
 import CustomerContextSelector from "../../shared/components/common/CustomerContextSelector";
-import AdminSidebar from "../components/AdminSidebar";
-import AdminHeadbar from "../components/adminHeadbar";
 import StepProgress from "../../dashboard/components/instancesubcomps/stepProgress";
 import QuoteInfoStep from "./quoteComps/quoteInfoStep";
 import QuoteResourceStep from "./quoteComps/quoteResourceStep";
@@ -62,9 +60,8 @@ const AdminMultiQuote = () => {
     bandwidth_id: null,
     bandwidth_count: 0,
     floating_ip_id: null,
-    floating_ip_id: null,
     floating_ip_count: 0,
-    // Object Storage fields
+    // Silo Storage fields
     object_storage_region: "",
     object_storage_product_id: null,
     object_storage_quantity: 1000, // Default 1TB
@@ -177,8 +174,7 @@ const AdminMultiQuote = () => {
       if (!formData.bill_to_name) newErrors.bill_to_name = "Bill to name is required.";
     } else if (step === 1) {
       if (pricingRequests.length === 0 && objectStorageRequests.length === 0) {
-        newErrors.general =
-          "Please add at least one item (compute or object storage) to the quote.";
+        newErrors.general = "Please add at least one item (compute or Silo Storage) to the quote.";
       }
     } else if (step === 3) {
       // Final review step
@@ -277,7 +273,7 @@ const AdminMultiQuote = () => {
       const productName =
         objectStorageProducts?.find(
           (p) => p.product.productable_id === parseInt(formData.object_storage_product_id)
-        )?.product.name || "Object Storage";
+        )?.product.name || "Silo Storage";
 
       const newRequest = {
         region: formData.object_storage_region,
@@ -290,7 +286,7 @@ const AdminMultiQuote = () => {
         },
       };
       setObjectStorageRequests([...objectStorageRequests, newRequest]);
-      // Reset object storage fields
+      // Reset Silo Storage fields
       setFormData((prev) => ({
         ...prev,
         object_storage_product_id: null,
@@ -420,7 +416,7 @@ const AdminMultiQuote = () => {
             onAddRequest={addPricingRequest}
             pricingRequests={pricingRequests}
             onRemoveRequest={removePricingRequest}
-            // Object Storage Props
+            // Silo Storage Props
             objectStorageProducts={objectStorageProducts}
             isObjectStorageProductsFetching={isObjectStorageProductsFetching}
             onAddObjectStorageRequest={addObjectStorageRequest}
@@ -678,8 +674,6 @@ const AdminMultiQuote = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title="Create Multi-Quote"
         description="Build complex product quotes, assign them to tenants or users, and generate pricing breakdowns."

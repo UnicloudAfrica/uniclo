@@ -29,7 +29,7 @@ const QuoteResourceStep = ({
   onAddRequest,
   pricingRequests,
   onRemoveRequest,
-  // Object Storage Props
+  // Silo Storage Props
   objectStorageProducts,
   isObjectStorageProductsFetching,
   onAddObjectStorageRequest,
@@ -386,7 +386,7 @@ const QuoteResourceStep = ({
               <HardDrive className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-slate-900">Object Storage</h3>
+              <h3 className="text-base font-semibold text-slate-900">Silo Storage</h3>
               <p className="text-sm text-slate-500">Add scalable S3-compatible storage.</p>
             </div>
           </header>
@@ -475,7 +475,7 @@ const QuoteResourceStep = ({
               onClick={onAddObjectStorageRequest}
               leftIcon={<Plus className="h-4 w-4" />}
             >
-              Add Object Storage
+              Add Silo Storage
             </ModernButton>
           </div>
         </ModernCard>
@@ -567,10 +567,10 @@ const QuoteResourceStep = ({
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="space-y-1">
                       <p className="text-xs uppercase tracking-wide text-slate-400">
-                        Object Storage {idx + 1}
+                        Silo Storage {idx + 1}
                       </p>
                       <h4 className="text-sm font-semibold text-slate-900">
-                        {item._display?.name || "Object Storage"}
+                        {item._display?.name || "Silo Storage"}
                       </h4>
                       <div className="text-xs text-slate-500">
                         Region: <span className="font-medium text-slate-600">{item.region}</span> ·{" "}

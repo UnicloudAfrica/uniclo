@@ -1,11 +1,17 @@
 // @ts-nocheck
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import logo from "./assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useLoginAccount } from "../../hooks/authHooks";
 import useTenantAuthStore from "../../stores/tenantAuthStore";
 import useAuthRedirect from "../../utils/authRedirect";
+import {
+  resolveBrandLogo,
+  useApplyBrandingTheme,
+  usePublicBrandingTheme,
+} from "../../hooks/useBrandingTheme";
+import { getSubdomain } from "../../utils/getSubdomain";
 
 const TenantLogin = ({ tenant = "Tenant" }: any) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -16,34 +22,27 @@ const TenantLogin = ({ tenant = "Tenant" }: any) => {
   const navigate = useNavigate();
   const { userEmail, setUserEmail } = useTenantAuthStore.getState();
   const { isLoading } = useAuthRedirect();
-  const [tenantData, setTenantData] = useState({
+  const fallbackBrand = {
     name: tenant,
-    logo: logo, // Placeholder logo
-    color: "#288DD1", // Placeholder color
+    logo,
+    color: "#288DD1",
+  };
+  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+  const subdomain = typeof window !== "undefined" ? getSubdomain() : null;
+  const { data: branding } = usePublicBrandingTheme({
+    domain: hostname,
+    subdomain,
   });
-
-  // Simulate API request to fetch tenant data
-  useEffect(() => {
-    const fetchTenantData = async () => {
-      try {
-        const mockResponse = {
-          name: tenant === "Tenant" ? "Default Tenant" : `${tenant} Corp`,
-          logo: logo, // Placeholder, could be a URL like "https://example.com/${tenant}-logo.png"
-          color: tenant === "Tenant" ? "#FF5722" : "#FF5722", // Different example color
-        };
-        setTenantData(mockResponse);
-      } catch (error) {
-        console.error("Failed to fetch tenant data:", error);
-        setTenantData({
-          name: tenant,
-          logo: logo,
-          color: "#288DD1",
-        });
-      }
-    };
-
-    fetchTenantData();
-  }, [tenant]);
+  useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
+  const accentColor = branding?.accentColor || fallbackBrand.color;
+  const accentTint = /^#([0-9A-F]{6}|[0-9A-F]{3})$/i.test(accentColor)
+    ? `${accentColor}20`
+    : "#288DD120";
+  const brandName = branding?.company?.name || fallbackBrand.name;
+  const logoSrc = resolveBrandLogo(branding, fallbackBrand.logo);
+  const logoAlt = branding?.company?.name
+    ? `${branding.company.name} Logo`
+    : `${fallbackBrand.name} Logo`;
 
   // Validation function
   const validateForm = () => {
@@ -74,7 +73,6 @@ const TenantLogin = ({ tenant = "Tenant" }: any) => {
     const userData = {
       email,
       password,
-      role: "Client", // Fixed to Client for tenant login
     };
 
     mutate(userData, {
@@ -92,7 +90,7 @@ const TenantLogin = ({ tenant = "Tenant" }: any) => {
   if (isLoading) {
     return (
       <div className="w-full h-svh flex items-center justify-center">
-        <Loader2 className="w-12 text-[#288DD1] animate-spin" />
+        <Loader2 className="w-12 animate-spin" style={{ color: accentColor }} />
       </div>
     );
   }
@@ -100,17 +98,13 @@ const TenantLogin = ({ tenant = "Tenant" }: any) => {
   return (
     <div
       className="min-h-screen flex items-center justify-center p-8 font-Outfit"
-      style={{ backgroundColor: tenantData.color + "20" }} // Light background tint
+      style={{ backgroundColor: accentTint }} // Light background tint
     >
       <div className="max-w-md mx-auto w-full bg-white p-6 rounded-xl shadow-md">
         <div className="mb-6 text-center">
-          <img
-            src={tenantData.logo}
-            className="w-[100px] mx-auto mb-4 rounded"
-            alt={`${tenantData.name} Logo`}
-          />
+          <img src={logoSrc} className="w-[100px] mx-auto mb-4 rounded" alt={logoAlt} />
           <h1 className="text-2xl font-semibold text-[#121212] mb-2">Welcome Back</h1>
-          <p className="text-[#676767] text-sm">Sign in to {tenantData.name}'s portal.</p>
+          <p className="text-[#676767] text-sm">Welcome back to {brandName}.</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -157,8 +151,8 @@ const TenantLogin = ({ tenant = "Tenant" }: any) => {
           <div className="text-right">
             <Link
               to="/forgot-password"
-              className="text-sm text-[tenantData.color] hover:opacity-80 font-medium"
-              style={{ color: tenantData.color, transition: "opacity 0.3s" }}
+              className="text-sm hover:opacity-80 font-medium"
+              style={{ color: accentColor, transition: "opacity 0.3s" }}
             >
               Forgot Password?
             </Link>
@@ -167,9 +161,9 @@ const TenantLogin = ({ tenant = "Tenant" }: any) => {
           <button
             type="submit"
             disabled={isPending}
-            className="w-full bg-[tenantData.color] hover:opacity-80 text-white font-semibold py-3 px-4 rounded-lg transition-opacity focus:outline-none focus:ring-1 focus:ring-[tenantData.color] focus:ring-offset-2 flex items-center justify-center"
+            className="w-full hover:opacity-80 text-white font-semibold py-3 px-4 rounded-lg transition-opacity focus:outline-none focus:ring-1 focus:ring-offset-2 flex items-center justify-center"
             style={{
-              backgroundColor: tenantData.color,
+              backgroundColor: accentColor,
               transition: "opacity 0.3s",
             }}
           >
@@ -180,8 +174,8 @@ const TenantLogin = ({ tenant = "Tenant" }: any) => {
             <Link
               to="/register"
               type="button"
-              className="text-sm text-[tenantData.color] hover:opacity-80 font-medium"
-              style={{ color: tenantData.color, transition: "opacity 0.3s" }}
+              className="text-sm hover:opacity-80 font-medium"
+              style={{ color: accentColor, transition: "opacity 0.3s" }}
             >
               Sign Up
             </Link>

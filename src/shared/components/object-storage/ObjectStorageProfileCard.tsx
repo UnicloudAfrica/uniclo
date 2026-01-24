@@ -1,6 +1,8 @@
 import React from "react";
+import { Package, X } from "lucide-react";
 import { Option } from "../../../hooks/objectStorageUtils";
 import { ResolvedProfile } from "../../../hooks/useObjectStoragePricing";
+import { ModernInput, ModernSelect } from "../ui";
 
 export interface ObjectStorageProfileCardProps {
   profile: ResolvedProfile;
@@ -15,6 +17,7 @@ export interface ObjectStorageProfileCardProps {
   onRegionChange: (region: string) => void;
   onTierChange: (tierKey: string) => void;
   onMonthsChange: (months: string) => void;
+  onStorageGbChange: (storageGb: string) => void;
   onNameChange: (name: string) => void;
   onUnitPriceChange?: (unitPrice: string) => void;
 }
@@ -32,6 +35,7 @@ export const ObjectStorageProfileCard: React.FC<ObjectStorageProfileCardProps> =
   onRegionChange,
   onTierChange,
   onMonthsChange,
+  onStorageGbChange,
   onNameChange,
   onUnitPriceChange,
 }) => {
@@ -56,144 +60,134 @@ export const ObjectStorageProfileCard: React.FC<ObjectStorageProfileCardProps> =
     { value: "36", label: "36 months" },
   ];
 
+  const tierHelper = isLoadingPricing
+    ? "Loading tiers..."
+    : profile.region
+      ? ""
+      : "Select a region first.";
+
+  const storageHelper = profile.tierQuotaGb
+    ? `Default tier size: ${profile.tierQuotaGb} GB`
+    : "Enter storage size in GB.";
+
   return (
-    <div className="profile-card">
-      <div className="profile-card-header">
-        <div className="profile-title">
-          <span className="profile-icon">📦</span>
-          <span className="profile-name">
-            {profile.name || profile.tierName || `Storage Profile ${index + 1}`}
-          </span>
+    <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-5">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-primary-50 p-2 text-primary-600">
+            <Package className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-slate-900">
+              {profile.name || profile.tierName || `Storage Profile ${index + 1}`}
+            </p>
+            <p className="text-xs text-slate-500">Profile {index + 1}</p>
+          </div>
         </div>
         {canRemove && (
           <button
             type="button"
-            className="btn-icon btn-remove"
+            className="rounded-full border border-slate-200 p-2 text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
             onClick={onRemove}
             title="Remove profile"
           >
-            ✕
+            <X className="h-4 w-4" />
           </button>
         )}
       </div>
 
-      <div className="profile-card-body">
-        {/* Profile Name */}
-        <div className="form-group">
-          <label htmlFor={`profile-name-${profile.id}`}>Profile Name (Optional)</label>
-          <input
-            type="text"
-            id={`profile-name-${profile.id}`}
-            className="form-control"
-            value={profile.name}
-            onChange={(e) => onNameChange(e.target.value)}
-            placeholder="e.g., Production Storage"
-          />
-        </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <ModernInput
+          label="Profile Name (optional)"
+          value={profile.name || ""}
+          onChange={(event) => onNameChange(event.target.value)}
+          placeholder="e.g., Production Storage"
+        />
 
-        {/* Region Selection */}
-        <div className="form-group">
-          <label htmlFor={`profile-region-${profile.id}`}>Region *</label>
-          <select
-            id={`profile-region-${profile.id}`}
-            className={`form-control ${errors.region ? "is-invalid" : ""}`}
-            value={profile.region}
-            onChange={(e) => onRegionChange(e.target.value)}
-          >
-            <option value="">Select a region...</option>
-            {regionOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          {errors.region && <div className="invalid-feedback">{errors.region}</div>}
-        </div>
+        <ModernSelect
+          label="Region"
+          value={profile.region}
+          onChange={(event) => onRegionChange(event.target.value)}
+          options={regionOptions}
+          placeholder="Select a region"
+          error={errors.region}
+        />
 
-        {/* Tier Selection */}
-        <div className="form-group">
-          <label htmlFor={`profile-tier-${profile.id}`}>Storage Tier *</label>
-          {isLoadingPricing ? (
-            <div className="loading-placeholder">Loading tiers...</div>
-          ) : (
-            <select
-              id={`profile-tier-${profile.id}`}
-              className={`form-control ${errors.tierKey ? "is-invalid" : ""}`}
-              value={profile.tierKey}
-              onChange={(e) => onTierChange(e.target.value)}
-              disabled={!profile.region}
-            >
-              <option value="">
-                {profile.region ? "Select a tier..." : "Select region first"}
-              </option>
-              {profile.tierOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          )}
-          {errors.tierKey && <div className="invalid-feedback">{errors.tierKey}</div>}
-        </div>
+        <ModernSelect
+          label="Storage Tier"
+          value={profile.tierKey}
+          onChange={(event) => onTierChange(event.target.value)}
+          options={profile.tierOptions}
+          placeholder={profile.region ? "Select a tier" : "Select a region first"}
+          disabled={!profile.region || Boolean(isLoadingPricing)}
+          helper={tierHelper}
+          error={errors.tierKey}
+        />
 
-        {/* Contract Length */}
-        <div className="form-group">
-          <label htmlFor={`profile-months-${profile.id}`}>Contract Length *</label>
-          <select
-            id={`profile-months-${profile.id}`}
-            className={`form-control ${errors.months ? "is-invalid" : ""}`}
-            value={profile.months.toString()}
-            onChange={(e) => onMonthsChange(e.target.value)}
-          >
-            {monthOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          {errors.months && <div className="invalid-feedback">{errors.months}</div>}
-        </div>
+        <ModernInput
+          label="Storage Size (GB)"
+          type="number"
+          min="1"
+          max="100000"
+          step="1"
+          value={profile.storageGb ? String(profile.storageGb) : ""}
+          onChange={(event) => onStorageGbChange(event.target.value)}
+          placeholder={profile.tierQuotaGb ? String(profile.tierQuotaGb) : "100"}
+          helper={storageHelper}
+          error={errors.storageGb}
+        />
 
-        {/* Price Override (Admin only) */}
+        <ModernSelect
+          label="Contract Length"
+          value={profile.months.toString()}
+          onChange={(event) => onMonthsChange(event.target.value)}
+          options={monthOptions}
+          placeholder="Select term length"
+          error={errors.months}
+        />
+
         {showPriceOverride && (
-          <div className="form-group">
-            <label htmlFor={`profile-price-${profile.id}`}>
-              Unit Price Override ({profile.currency})
-            </label>
-            <input
+          <div className="md:col-span-2">
+            <ModernInput
+              label={`Unit Price Override (${profile.currency} / GB)`}
               type="number"
-              id={`profile-price-${profile.id}`}
-              className="form-control"
               value={profile.unitPriceOverride || ""}
-              onChange={(e) => onUnitPriceChange?.(e.target.value)}
+              onChange={(event) => onUnitPriceChange?.(event.target.value)}
               placeholder={`Default: ${profile.fallbackUnitPrice.toFixed(2)}`}
               min="0"
               step="0.01"
+              helper="Leave empty to use default pricing."
             />
-            <small className="form-text text-muted">Leave empty to use default pricing</small>
           </div>
         )}
       </div>
 
-      {/* Profile Summary */}
       {profile.hasTierData && (
-        <div className="profile-card-footer">
-          <div className="profile-summary">
-            <div className="summary-item">
-              <span className="label">Unit Price:</span>
-              <span className="value">
-                {formatCurrency(profile.unitPrice, profile.currency)}/mo
-              </span>
+        <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+          <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Unit price</p>
+              <p className="font-semibold text-slate-900">
+                {formatCurrency(profile.unitPrice, profile.currency)} / GB / month
+              </p>
             </div>
-            <div className="summary-item">
-              <span className="label">Duration:</span>
-              <span className="value">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Storage size</p>
+              <p className="font-semibold text-slate-900">
+                {profile.storageGb ? `${profile.storageGb} GB` : "N/A"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Duration</p>
+              <p className="font-semibold text-slate-900">
                 {profile.months} month{profile.months !== 1 ? "s" : ""}
-              </span>
+              </p>
             </div>
-            <div className="summary-item total">
-              <span className="label">Subtotal:</span>
-              <span className="value">{formatCurrency(profile.subtotal, profile.currency)}</span>
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Subtotal</p>
+              <p className="font-semibold text-slate-900">
+                {formatCurrency(profile.subtotal, profile.currency)}
+              </p>
             </div>
           </div>
         </div>

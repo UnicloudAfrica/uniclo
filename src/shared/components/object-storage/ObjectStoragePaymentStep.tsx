@@ -1,5 +1,7 @@
 import React from "react";
+import { CheckCircle2, XCircle } from "lucide-react";
 import { SummaryTotals } from "../../../hooks/useObjectStoragePricing";
+import { PaymentModal } from "../ui";
 
 export interface PaymentOption {
   gateway: string;
@@ -19,30 +21,28 @@ export interface PaymentOption {
 
 export interface ObjectStoragePaymentStepProps {
   paymentOptions: PaymentOption[];
-  selectedOption: PaymentOption | null;
-  onSelectOption: (option: PaymentOption) => void;
-  onPaystackPay?: (option: PaymentOption) => void;
-  onStripePay?: (option: PaymentOption) => void;
   totals: SummaryTotals;
   isPaymentComplete?: boolean;
   isPaymentFailed?: boolean;
   isProcessing?: boolean;
   transactionId?: string;
-  dashboardContext: "admin" | "tenant" | "client";
+  transactionData?: any;
+  onPaymentComplete?: (payload: any) => void;
+  onPaymentOptionChange?: (option: any) => void;
+  apiBaseUrl?: string;
 }
 
 export const ObjectStoragePaymentStep: React.FC<ObjectStoragePaymentStepProps> = ({
   paymentOptions,
-  selectedOption,
-  onSelectOption,
-  onPaystackPay,
-  onStripePay,
   totals,
   isPaymentComplete,
   isPaymentFailed,
   isProcessing,
   transactionId,
-  dashboardContext,
+  transactionData,
+  onPaymentComplete,
+  onPaymentOptionChange,
+  apiBaseUrl,
 }) => {
   const formatCurrency = (amount: number, currency: string) => {
     try {
@@ -56,140 +56,81 @@ export const ObjectStoragePaymentStep: React.FC<ObjectStoragePaymentStepProps> =
     }
   };
 
-  const getGatewayIcon = (gateway: string) => {
-    switch (gateway?.toLowerCase()) {
-      case "paystack":
-        return "💳";
-      case "stripe":
-        return "💳";
-      case "bank_transfer":
-      case "bank":
-        return "🏦";
-      default:
-        return "💰";
-    }
-  };
-
-  const getGatewayLabel = (option: PaymentOption) => {
-    const gateway = option.gateway || "Unknown";
-    const method = option.method || "";
-    if (method) {
-      return `${gateway} - ${method}`;
-    }
-    return gateway;
-  };
-
-  const handlePayNow = (option: PaymentOption) => {
-    const gateway = option.gateway?.toLowerCase();
-    if (gateway === "paystack" && onPaystackPay) {
-      onPaystackPay(option);
-    } else if (gateway === "stripe" && onStripePay) {
-      onStripePay(option);
-    } else if (option.payment_url) {
-      window.open(option.payment_url, "_blank");
-    }
-  };
+  const showPaymentOptions = Boolean(transactionData) && paymentOptions.length > 0;
 
   return (
-    <div className="payment-step">
-      <div className="step-header">
-        <h2 className="step-title">Payment</h2>
-        <p className="step-description">Select a payment method to complete your order.</p>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold text-slate-900">Payment</h2>
+        <p className="text-sm text-slate-500">Select a payment method to complete your order.</p>
       </div>
 
-      {/* Payment Status */}
+      <div className="rounded-xl border border-slate-200 bg-white p-4 text-center">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Amount due</p>
+        <p className="mt-1 text-2xl font-semibold text-slate-900">
+          {formatCurrency(totals.total, totals.currency)}
+        </p>
+        {totals.tax > 0 && (
+          <p className="mt-1 text-xs text-slate-500">
+            Subtotal {formatCurrency(totals.subtotal, totals.currency)} + Tax{" "}
+            {formatCurrency(totals.tax, totals.currency)}
+          </p>
+        )}
+      </div>
+
       {isPaymentComplete && (
-        <div className="payment-status-banner success">
-          <span className="status-icon">✓</span>
-          <div className="status-content">
-            <div className="status-title">Payment Successful</div>
-            {transactionId && <div className="status-detail">Transaction: {transactionId}</div>}
+        <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+          <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-600" />
+          <div>
+            <p className="text-sm font-semibold text-emerald-900">Payment Successful</p>
+            {transactionId && (
+              <p className="text-xs text-emerald-700">Transaction: {transactionId}</p>
+            )}
           </div>
         </div>
       )}
 
       {isPaymentFailed && (
-        <div className="payment-status-banner failed">
-          <span className="status-icon">✕</span>
-          <div className="status-content">
-            <div className="status-title">Payment Failed</div>
-            <div className="status-detail">Please try again or select a different method.</div>
+        <div className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
+          <XCircle className="mt-0.5 h-5 w-5 text-rose-600" />
+          <div>
+            <p className="text-sm font-semibold text-rose-900">Payment Failed</p>
+            <p className="text-xs text-rose-700">Please try again or select a different method.</p>
           </div>
         </div>
       )}
 
-      {/* Payment Amount */}
-      <div className="payment-amount-card">
-        <div className="amount-label">Amount Due</div>
-        <div className="amount-value">{formatCurrency(totals.total, totals.currency)}</div>
-        {totals.tax > 0 && (
-          <div className="amount-breakdown">
-            Subtotal: {formatCurrency(totals.subtotal, totals.currency)} + Tax:{" "}
-            {formatCurrency(totals.tax, totals.currency)}
-          </div>
-        )}
-      </div>
-
-      {/* Payment Options */}
-      {!isPaymentComplete && paymentOptions.length > 0 && (
-        <div className="payment-options">
-          <h3 className="section-title">Available Payment Methods</h3>
-          <div className="options-grid">
-            {paymentOptions.map((option, index) => {
-              const isSelected = selectedOption === option;
-              const fees = option.charge_breakdown?.total_fees || 0;
-
-              return (
-                <div
-                  key={`${option.gateway}-${option.method || index}`}
-                  className={`payment-option-card ${isSelected ? "selected" : ""}`}
-                  onClick={() => onSelectOption(option)}
-                >
-                  <div className="option-header">
-                    <span className="option-icon">{getGatewayIcon(option.gateway)}</span>
-                    <span className="option-name">{getGatewayLabel(option)}</span>
-                    {isSelected && <span className="selected-badge">✓</span>}
-                  </div>
-                  {fees > 0 && (
-                    <div className="option-fees">
-                      Gateway fee: {formatCurrency(fees, option.currency || totals.currency)}
-                    </div>
-                  )}
-                  {isSelected && (
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-pay-now"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handlePayNow(option);
-                      }}
-                      disabled={isProcessing}
-                    >
-                      {isProcessing ? "Processing..." : "Pay Now"}
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+      {!isPaymentComplete && showPaymentOptions ? (
+        <PaymentModal
+          isOpen
+          mode="inline"
+          onClose={() => {}}
+          transactionData={transactionData}
+          onPaymentComplete={onPaymentComplete}
+          onPaymentOptionChange={onPaymentOptionChange}
+          apiBaseUrl={apiBaseUrl}
+          paymentOptions={paymentOptions}
+          pricingSummary={{
+            subtotal: totals.subtotal,
+            tax: totals.tax,
+            grandTotal: totals.total,
+            currency: totals.currency,
+          }}
+          className="border border-slate-200/80"
+        />
+      ) : !isPaymentComplete ? (
+        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+          {isProcessing
+            ? "Generating payment options..."
+            : "No payment options available. Please go back and generate payment options."}
         </div>
-      )}
+      ) : null}
 
-      {/* No Payment Options */}
-      {!isPaymentComplete && paymentOptions.length === 0 && (
-        <div className="no-payment-options">
-          <p>No payment options available. Please go back and generate payment options.</p>
-        </div>
-      )}
-
-      {/* Payment Complete - Continue */}
       {isPaymentComplete && (
-        <div className="payment-complete-actions">
-          <p className="success-message">
-            Payment has been successfully processed. You can now proceed to review and submit your
-            order.
-          </p>
-        </div>
+        <p className="text-xs text-slate-500">
+          Payment has been successfully processed. You can now proceed to review and submit your
+          order.
+        </p>
       )}
     </div>
   );

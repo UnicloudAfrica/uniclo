@@ -11,6 +11,7 @@ import {
   evaluateConfigurationCompleteness,
   normalizePaymentOptions,
 } from "../utils/instanceCreationUtils";
+import { buildProvisioningSteps } from "../shared/components/instance-wizard/provisioningSteps";
 
 // ═══════════════════════════════════════════════════════════════════
 // CLIENT INSTANCE CREATION LOGIC HOOK
@@ -27,15 +28,7 @@ export const useClientProvisioningLogic = () => {
   // ─────────────────────────────────────────────────────────────────
   // Steps Configuration (Simplified for client)
   // ─────────────────────────────────────────────────────────────────
-  const steps = useMemo(
-    () => [
-      { id: "configure", title: "Cube-Instance setup", desc: "Select region, size, and image" },
-      { id: "payment", title: "Payment", desc: "Complete payment" },
-      { id: "review", title: "Review & provision", desc: "Confirm order" },
-      { id: "success", title: "Success", desc: "Provisioning started" },
-    ],
-    []
-  );
+  const steps = useMemo(() => buildProvisioningSteps("standard"), []);
 
   const [activeStep, setActiveStep] = useState(0);
 
@@ -128,7 +121,7 @@ export const useClientProvisioningLogic = () => {
   // Build Options
   // ─────────────────────────────────────────────────────────────────
   const countryOptions: Option[] = useMemo(
-    () => countriesData.map((c: any) => ({ value: c.code || c.id, label: c.name })),
+    () => countriesData.map((c: any) => ({ value: c.iso2 || c.code || c.id, label: c.name })),
     [countriesData]
   );
 
@@ -223,7 +216,7 @@ export const useClientProvisioningLogic = () => {
 
         return {
           project_id: isNewProject ? undefined : cfg.project_id || undefined,
-          project_name: isNewProject ? (cfg.project_name || undefined) : undefined,
+          project_name: isNewProject ? cfg.project_name || undefined : undefined,
           network_preset: isNewProject
             ? cfg.network_preset === "empty"
               ? "standard"

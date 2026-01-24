@@ -1,8 +1,6 @@
 import React, { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import AdminPageShell from "../../components/AdminPageShell";
-import AdminHeadbar from "../../components/adminHeadbar";
-import AdminSidebar from "../../components/AdminSidebar";
 import { StorageManagementContainer } from "../../../shared/components/infrastructure/storage";
 
 const AdminImages: React.FC = () => {
@@ -23,8 +21,6 @@ const AdminImages: React.FC = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell title="Machine Images" description="Manage machine images across all tenants">
         <StorageManagementContainer projectId={projectId} region={region} initialTab="images" />
       </AdminPageShell>

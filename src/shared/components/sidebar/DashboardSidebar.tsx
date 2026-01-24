@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, X, ChevronLeft, ChevronRight, Menu } from "lucide-react";
+import { LogOut, X, ChevronLeft, ChevronRight } from "lucide-react";
 import CollapsibleMenu from "./CollapsibleMenu";
 import type { MenuEntry } from "./CollapsibleMenu";
 import useSidebarStore from "../../../stores/sidebarStore";
@@ -43,6 +43,16 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   const navigate = useNavigate();
   const { isCollapsed, toggleCollapse, closeMobile } = useSidebarStore();
 
+  useEffect(() => {
+    const root = document.documentElement;
+    if (isCollapsed) {
+      root.classList.add("sidebar-collapsed");
+    } else {
+      root.classList.remove("sidebar-collapsed");
+    }
+    return () => root.classList.remove("sidebar-collapsed");
+  }, [isCollapsed]);
+
   const handleItemClick = () => {
     onCloseMobileMenu?.();
     closeMobile();
@@ -70,8 +80,9 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
     <>
       {/* Desktop Sidebar */}
       <div
-        className={`hidden md:block fixed top-[74px] left-0 z-[1000] h-full border-r border-[#C8CBD9] bg-[#fff] font-Outfit transition-all duration-300 ease-in-out ${isCollapsed ? "w-16" : "w-60 xl:w-[20%] min-w-[240px]"
-          }`}
+        className={`hidden md:block fixed top-[74px] left-0 z-[1000] h-full border-r border-[#C8CBD9] bg-[#fff] font-Outfit transition-all duration-300 ease-in-out ${
+          isCollapsed ? "w-16" : "w-60 xl:w-[20%] min-w-[240px]"
+        }`}
       >
         <div className="flex flex-col h-full">
           {/* Header with collapse toggle */}
@@ -83,10 +94,12 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             )}
             <button
               onClick={toggleCollapse}
-              className={`p-1 rounded-md hover:bg-gray-100 text-gray-500 transition-colors ${isCollapsed ? "mx-auto" : "mr-2"
-                }`}
+              className={`p-2 rounded-md hover:bg-gray-100 text-gray-600 transition-colors ${
+                isCollapsed ? "mx-auto bg-gray-100 hover:bg-gray-200 shadow-sm" : "mr-2"
+              }`}
+              title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+              {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={16} />}
             </button>
           </div>
 
@@ -123,15 +136,17 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
       {/* Mobile Overlay Sidebar */}
       <div className="md:hidden">
         <div
-          className={`fixed inset-0 bg-black z-[999] transition-all duration-300 ease-in-out ${isMobileMenuOpen
-            ? "bg-opacity-50 pointer-events-auto"
-            : "bg-opacity-0 pointer-events-none"
-            }`}
+          className={`fixed inset-0 bg-black z-[999] transition-all duration-300 ease-in-out ${
+            isMobileMenuOpen
+              ? "bg-opacity-50 pointer-events-auto"
+              : "bg-opacity-0 pointer-events-none"
+          }`}
           onClick={onCloseMobileMenu}
         >
           <div
-            className={`fixed top-0 left-0 h-full w-[280px] bg-[#14547F] text-white flex flex-col transform transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-              }`}
+            className={`fixed top-0 left-0 h-full w-[280px] bg-[#14547F] text-white flex flex-col transform transition-transform duration-300 ease-in-out ${
+              isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
             style={themeColor ? { backgroundColor: themeColor } : undefined}
             onClick={(e) => e.stopPropagation()}
           >

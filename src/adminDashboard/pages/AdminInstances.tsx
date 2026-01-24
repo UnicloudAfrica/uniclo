@@ -25,8 +25,6 @@ import {
   Zap,
 } from "lucide-react";
 
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 // @ts-ignore
 import { useConsoleManager } from "../../components/Console/EmbeddedConsole";
 import ToastUtils from "../../utils/toastUtil";
@@ -158,14 +156,12 @@ export default function AdminInstances() {
 
   // Navigate to instance details
   const navigateToInstanceDetails = (instanceId: string) => {
-    navigate(
-      `/admin-dashboard/instances/details?identifier=${encodeURIComponent(instanceId)}`
-    );
+    navigate(`/admin-dashboard/instances/details?identifier=${encodeURIComponent(instanceId)}`);
   };
 
   // Handle console access
-  const handleConsoleAccess = (instanceId: string) => {
-    openConsole(instanceId);
+  const handleConsoleAccess = (instanceIdentifier: string) => {
+    openConsole(instanceIdentifier);
   };
 
   const totalInstancesCount = instances.length;
@@ -337,26 +333,32 @@ export default function AdminInstances() {
       header: "Actions",
       align: "right",
       render: (_: any, instance: any) => {
+        const status = (instance.status || "").toLowerCase();
         const quickActions = [
           {
             key: "start",
             label: "Start",
             icon: Play,
-            condition: instance.status === "stopped",
+            condition: status === "stopped",
           },
           {
             key: "stop",
             label: "Stop",
             icon: Square,
-            condition: instance.status === "running",
+            condition: status === "running",
           },
           {
             key: "reboot",
             label: "Reboot",
             icon: RotateCw,
-            condition: instance.status === "running",
+            condition: status === "running",
           },
-          { key: "console", label: "Console", icon: Terminal, condition: true },
+          {
+            key: "console",
+            label: "Console",
+            icon: Terminal,
+            condition: ["active", "running"].includes(status),
+          },
         ];
         const availableActions = quickActions.filter((action: any) => action.condition);
 
@@ -367,7 +369,7 @@ export default function AdminInstances() {
                 key={action.key}
                 onClick={() => {
                   if (action.key === "console") {
-                    handleConsoleAccess(instance.id);
+                    handleConsoleAccess(instance.identifier || instance.id);
                   } else {
                     executeInstanceAction(instance.id, action.key);
                   }
@@ -382,33 +384,38 @@ export default function AdminInstances() {
               <button className="rounded-full border border-slate-200 p-1.5 text-slate-400 transition hover:border-blue-200 hover:text-blue-500">
                 <MoreHorizontal className="h-4 w-4" />
               </button>
-              <div className="absolute right-0 mt-2 w-48 hidden group-hover:block z-10 rounded-xl border border-slate-100 bg-white p-2 shadow-xl">
-                <div className="space-y-1 text-sm text-slate-600">
+              <div
+                className="dropdown-menu-solid absolute right-0 top-full mt-2 w-48 hidden group-hover:block rounded-xl border border-slate-200 bg-white p-2 shadow-2xl"
+                style={{
+                  zIndex: 9999,
+                }}
+              >
+                <div className="space-y-1 text-sm text-slate-600 bg-white rounded-lg">
                   <button
                     onClick={() => navigateToInstanceDetails(instance.identifier)}
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 transition hover:bg-slate-50"
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 transition hover:bg-slate-100 bg-white"
                   >
                     <Eye className="h-4 w-4 text-blue-500" />
                     View Details
                   </button>
                   <button
                     onClick={() => executeInstanceAction(instance.id, "suspend")}
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 transition hover:bg-slate-50"
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 transition hover:bg-slate-100 bg-white"
                   >
                     <Pause className="h-4 w-4 text-amber-500" />
                     Suspend
                   </button>
                   <button
                     onClick={() => executeInstanceAction(instance.id, "hibernate")}
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 transition hover:bg-slate-50"
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 transition hover:bg-slate-100 bg-white"
                   >
                     <Moon className="h-4 w-4 text-violet-500" />
                     Hibernate
                   </button>
-                  <div className="h-px bg-slate-100" />
+                  <div className="h-px bg-slate-200 my-1" />
                   <button
                     onClick={() => executeInstanceAction(instance.id, "destroy")}
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-red-600 transition hover:bg-red-50"
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-red-600 transition hover:bg-red-100 bg-white"
                   >
                     <Trash2 className="h-4 w-4" />
                     Destroy
@@ -436,9 +443,6 @@ export default function AdminInstances() {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
-
       <AdminPageShell
         title="Instance Management"
         description="Manage and monitor your cloud instances"

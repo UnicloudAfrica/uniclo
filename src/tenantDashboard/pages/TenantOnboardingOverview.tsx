@@ -190,8 +190,6 @@ const StepList = ({ steps, activeStepId, onSelectStep }: any) => (
 );
 
 const TenantOnboardingOverview = () => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("onboarding");
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [activeStep, setActiveStep] = useState(null);
   const [decision, setDecision] = useState("in_review");
@@ -552,20 +550,11 @@ const TenantOnboardingOverview = () => {
     );
   };
 
-  const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
-  const closeMobileMenu = () => setIsMobileMenuOpen(false);
-
   return (
     <>
-      <Sidebar
-        tenantData={tenantData}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        isMobileMenuOpen={isMobileMenuOpen}
-        onCloseMobileMenu={closeMobileMenu}
-      />
-      <HeaderBar tenantData={tenantData} onMenuClick={toggleMobileMenu} />
-      <BreadcrumbNav tenantData={tenantData} activeTab={activeTab} />
+      <Sidebar tenantData={tenantData} />
+      <HeaderBar tenantData={tenantData} />
+      <BreadcrumbNav tenantData={tenantData} />
 
       <main ref={contentRef} className="dashboard-content-shell overflow-y-auto p-6 md:p-8">
         <div className="flex items-center justify-between">

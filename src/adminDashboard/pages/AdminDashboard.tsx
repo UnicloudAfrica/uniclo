@@ -19,8 +19,6 @@ import {
 // @ts-ignore
 import useAuthRedirect from "../../utils/adminAuthRedirect";
 import AdminPageShell from "../components/AdminPageShell";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 
 interface Partner {
   id: string;
@@ -137,8 +135,6 @@ export default function AdminDashboard() {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title="Admin Overview"
         description="Monitor tenants, clients, and infrastructure health from a single view."

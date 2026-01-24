@@ -17,6 +17,7 @@ const ClientDashboardLayout = () => {
 
   useApplyBrandingTheme(theme?.branding, {
     fallbackLogo: theme?.businessLogoHref,
+    updateFavicon: true,
   });
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);

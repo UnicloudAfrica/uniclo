@@ -8,7 +8,7 @@ const TenantObjectStoragePurchase = () => {
 
   return (
     <TenantPageShell
-      title="Purchase Object Storage"
+      title="Purchase Silo Storage"
       description="Capture the tenant's preferred region and tier, then generate a payable order."
       subHeaderContent={
         <button
@@ -22,10 +22,12 @@ const TenantObjectStoragePurchase = () => {
       }
     >
       <div className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-700">
-        <p className="text-base font-semibold text-slate-900">Object storage purchase unavailable</p>
+        <p className="text-base font-semibold text-slate-900">
+          Object storage purchase unavailable
+        </p>
         <p className="mt-2">
-          The object storage purchase form has been removed. Please contact support or your administrator to place
-          a storage order.
+          The object storage purchase form has been removed. Please contact support or your
+          administrator to place a storage order.
         </p>
         <button
           type="button"

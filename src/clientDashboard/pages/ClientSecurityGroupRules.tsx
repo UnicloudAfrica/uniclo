@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Shield } from "lucide-react";
 import ClientPageShell from "../components/ClientPageShell";
 import ModernCard from "../../shared/components/ui/ModernCard";
-import { useSecurityGroupRules } from "../../hooks/adminHooks/vpcInfraHooks";
+import { useSecurityGroupRules } from "../../shared/hooks/vpcInfraHooks";
 
 interface SecurityRule {
   protocol?: string;
@@ -15,10 +15,11 @@ interface SecurityRule {
 const ClientSecurityGroupRules: React.FC = () => {
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get("project") || "";
+  const region = searchParams.get("region") || "";
   const sgId = searchParams.get("sg") || "";
   const sgName = searchParams.get("name") || "Security Group";
 
-  const { data: rules, isLoading } = useSecurityGroupRules(projectId, sgId);
+  const { data: rules, isLoading } = useSecurityGroupRules(projectId, sgId, region);
 
   const ingressRules = rules?.ingress_rules || [];
   const egressRules = rules?.egress_rules || [];

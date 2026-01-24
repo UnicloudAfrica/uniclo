@@ -3,7 +3,6 @@ import React, { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import AdminPageHeader from "./AdminPageHeader";
 import { designTokens } from "../../styles/designTokens";
-import useSidebarStore from "../../stores/sidebarStore";
 
 const friendlyPathMap: Record<string, string> = {
   "admin-dashboard": "Home",
@@ -101,8 +100,6 @@ const AdminPageShell: React.FC<AdminPageShellProps> = ({
   icon,
 }) => {
   const location = useLocation();
-  const { isCollapsed } = useSidebarStore();
-
   const autoBreadcrumbs = useMemo(() => buildBreadcrumbs(location?.pathname), [location?.pathname]);
 
   const resolvedBreadcrumbs = breadcrumbs && breadcrumbs.length ? breadcrumbs : autoBreadcrumbs;
@@ -127,11 +124,6 @@ const AdminPageShell: React.FC<AdminPageShellProps> = ({
         .filter(Boolean)
         .join(" ")
         .trim()}
-      style={{
-        left: isCollapsed ? "4rem" : undefined, // 4rem = 64px (w-16)
-        width: isCollapsed ? "calc(100% - 4rem)" : undefined,
-        transition: "left 300ms ease-in-out, width 300ms ease-in-out",
-      }}
     >
       <AdminPageHeader
         breadcrumbs={resolvedBreadcrumbs}

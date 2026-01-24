@@ -203,15 +203,15 @@ const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
       prefix: arr.slice(0, index + 1).join("/") + "/",
     }));
 
-  // Welcome state when no bucket is selected
+  // Welcome state when no silo is selected
   if (!bucketName) {
     return (
       <div className="h-full flex flex-col">
         {/* Welcome Header */}
         <div className="p-8 bg-gradient-to-br from-primary-500 to-primary-600 text-white">
-          <h1 className="text-2xl font-bold mb-2">Welcome to Object Storage</h1>
+          <h1 className="text-2xl font-bold mb-2">Welcome to Silo Storage</h1>
           <p className="text-primary-100">
-            Select a bucket from the sidebar to browse files, or create a new bucket to get started.
+            Select a Silo from the sidebar to browse files, or create a new Silo to get started.
           </p>
         </div>
 
@@ -250,7 +250,7 @@ const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
                 <div>
                   <h3 className="font-medium text-blue-900">Upload Files</h3>
                   <p className="text-sm text-blue-700 mt-1">
-                    Drag and drop files directly into any bucket, or use the upload button.
+                    Drag and drop files directly into any Silo, or use the upload button.
                   </p>
                 </div>
               </div>

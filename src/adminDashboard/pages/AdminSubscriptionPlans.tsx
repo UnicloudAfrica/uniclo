@@ -17,8 +17,6 @@ import {
   MoreVertical,
   Search,
 } from "lucide-react";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell";
 import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
 import { ModernButton } from "../../shared/components/ui";
@@ -252,8 +250,6 @@ export default function AdminSubscriptionPlans() {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title="Subscription Plans"
         description="Create and manage billing plans for your customers"

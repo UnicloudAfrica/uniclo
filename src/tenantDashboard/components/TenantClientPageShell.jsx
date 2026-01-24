@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Sidebar from "./TenantSidebar";
 import HeaderBar from "./TenantHeadbar";
-import BreadcrumbNav from "./clientAciveTab";
+import DashboardPageShell from "../../shared/layouts/DashboardPageShell";
 import { useTenantBrandingTheme } from "../../hooks/useBrandingTheme";
 
 const TenantClientPageShell = ({
@@ -9,7 +9,8 @@ const TenantClientPageShell = ({
   description,
   children,
   className = "",
-  contentClassName = "",
+  contentClassName = "space-y-6",
+  ...rest
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
@@ -40,29 +41,17 @@ const TenantClientPageShell = ({
         activeTab={activeTab}
         setActiveTab={setActiveTab}
       />
-      <div className="flex flex-col min-h-screen transition-all duration-300 md:pl-20 lg:pl-[20%] pt-[74px] relative z-0">
-        <header className="bg-white border-b border-gray-200 px-6 py-6 md:px-8 space-y-4">
-          <BreadcrumbNav />
-          <div className="flex flex-col gap-1">
-            {title ? <h1 className="text-2xl font-bold text-gray-900">{title}</h1> : null}
-            {description ? (
-              typeof description === "string" ? (
-                <p className="text-sm text-gray-500">{description}</p>
-              ) : (
-                description
-              )
-            ) : null}
-          </div>
-        </header>
-        <main
-          className={["dashboard-content-shell p-6 md:p-8 space-y-6 flex-1 bg-gray-50", className]
-            .filter(Boolean)
-            .join(" ")
-            .trim()}
-        >
-          {children}
-        </main>
-      </div>
+      <DashboardPageShell
+        title={title}
+        description={description}
+        homeHref="/dashboard"
+        mainClassName={["tenant-dashboard-shell", className].filter(Boolean).join(" ").trim()}
+        contentClassName={contentClassName}
+        backgroundColor="#F9FAFB"
+        {...rest}
+      >
+        {children}
+      </DashboardPageShell>
     </>
   );
 };

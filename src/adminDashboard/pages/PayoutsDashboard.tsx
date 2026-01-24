@@ -13,8 +13,6 @@ import {
   Calendar,
   CreditCard,
 } from "lucide-react";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell";
 import { ModernButton } from "../../shared/components/ui";
 import adminApi from "../../index/admin/api";
@@ -244,9 +242,7 @@ const PayoutsDashboard: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <AdminSidebar />
       <div className="flex-1 flex flex-col">
-        <AdminHeadbar />
         <AdminPageShell
           title="Tenant Payouts"
           description="Manage settlements and payouts to tenants"

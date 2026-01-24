@@ -4,8 +4,6 @@ import { Link } from "react-router-dom";
 import { Loader2, Eye, Edit, Plus, CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
 import adminRegionApi from "../../services/adminRegionApi";
 import ToastUtils from "../../utils/toastUtil";
-import AdminSidebar from "../components/AdminSidebar";
-import AdminHeadbar from "../components/adminHeadbar";
 import { ModernCard } from "../../shared/components/ui";
 import ModernTable from "../../shared/components/ui/ModernTable";
 import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
@@ -215,8 +213,6 @@ const RegionApprovals = () => {
   if (loading) {
     return (
       <>
-        <AdminHeadbar />
-        <AdminSidebar />
         <AdminPageShell contentClassName="p-6 md:p-8 flex items-center justify-center">
           <Loader2
             className="w-12 animate-spin"
@@ -229,8 +225,6 @@ const RegionApprovals = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title="Region Approvals"
         description="Review and manage region requests"

@@ -9,13 +9,13 @@ const TenantObjectStorageDetail = () => {
 
   return (
     <TenantPageShell
-      title="Object Storage"
-      description="View account details, manage buckets, and browse files"
+      title="Silo Storage"
+      description="View account details, manage silos, and browse files"
     >
       <ObjectStorageAccountDetail
         accountId={accountId}
         backUrl="/dashboard/object-storage"
-        backLabel="Back to Object Storage"
+        backLabel="Back to Silo Storage"
         canDelete={true}
       />
     </TenantPageShell>

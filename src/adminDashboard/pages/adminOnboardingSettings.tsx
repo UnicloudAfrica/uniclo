@@ -8,8 +8,6 @@ import {
 } from "../../hooks/adminHooks/onboardingSettingsHooks";
 import { Loader2, Plus, Save, Trash2, X } from "lucide-react";
 import ToastUtils from "../../utils/toastUtil";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell.tsx";
 import useAuthRedirect from "../../utils/adminAuthRedirect";
 import { useFetchCountries as useAdminFetchCountries } from "../../hooks/adminHooks/countriesHooks";
@@ -159,8 +157,6 @@ const AdminOnboardingSettings = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title="Onboarding Step Settings"
         description="Control which onboarding steps are required, optional, or grace-based for each persona."

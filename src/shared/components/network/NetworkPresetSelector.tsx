@@ -8,6 +8,8 @@ export interface NetworkPreset {
   icon: React.ReactNode;
   features: string[];
   recommended?: boolean;
+  isPublic?: boolean;
+  requiresEip?: boolean;
 }
 
 export const DEFAULT_PRESETS: NetworkPreset[] = [
@@ -18,6 +20,8 @@ export const DEFAULT_PRESETS: NetworkPreset[] = [
     icon: <Globe className="w-5 h-5" />,
     features: ["Public subnet", "Internet Gateway", "SSH/HTTP/HTTPS ports"],
     recommended: true,
+    isPublic: true,
+    requiresEip: true,
   },
   {
     id: "private",
@@ -25,6 +29,8 @@ export const DEFAULT_PRESETS: NetworkPreset[] = [
     description: "Internal network with no public access",
     icon: <Lock className="w-5 h-5" />,
     features: ["Private subnet", "No internet gateway", "Internal traffic only"],
+    isPublic: false,
+    requiresEip: false,
   },
   {
     id: "multi-tier",
@@ -32,6 +38,8 @@ export const DEFAULT_PRESETS: NetworkPreset[] = [
     description: "Public and private subnets for web + app layers",
     icon: <Layers className="w-5 h-5" />,
     features: ["Public + private subnets", "Internet Gateway", "Separate security groups"],
+    isPublic: true,
+    requiresEip: true,
   },
   {
     id: "database",
@@ -39,6 +47,8 @@ export const DEFAULT_PRESETS: NetworkPreset[] = [
     description: "Optimized for database deployments",
     icon: <Database className="w-5 h-5" />,
     features: ["Private subnet", "MySQL/PostgreSQL/MongoDB/Redis ports", "Internal access only"],
+    isPublic: false,
+    requiresEip: false,
   },
   {
     id: "empty",
@@ -52,6 +62,8 @@ export const DEFAULT_PRESETS: NetworkPreset[] = [
       "No Route Tables",
       "Manual Network Setup Required",
     ],
+    isPublic: false,
+    requiresEip: false,
   },
 ];
 

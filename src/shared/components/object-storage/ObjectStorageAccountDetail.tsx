@@ -24,6 +24,7 @@ import ObjectStorageTransactions from "./ObjectStorageTransactions";
 import ExtendStorageModal from "./ExtendStorageModal";
 import DeleteStorageAccountModal from "./DeleteStorageAccountModal";
 import ToastUtils from "../../../utils/toastUtil";
+import { useObjectStorageBroadcasting } from "../../../hooks/useObjectStorageBroadcasting";
 
 const statusConfig = {
   active: { label: "Active", icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-50" },
@@ -40,10 +41,10 @@ interface ObjectStorageAccountDetailProps {
 }
 
 /**
- * Object Storage Account Detail Page
+ * Silo Storage Account Detail Page
  *
  * Features a 1/4 - 3/4 split layout with tabs:
- * - Left sidebar (1/4): Account overview with 3D storage gauge, credentials, and bucket list
+ * - Left sidebar (1/4): Account overview with 3D storage gauge, credentials, and silo list
  * - Main content (3/4): Tabbed view - Files browser or Analytics
  *
  * This component is shared across Admin, Tenant, and Client dashboards.
@@ -51,7 +52,7 @@ interface ObjectStorageAccountDetailProps {
 const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
   accountId,
   backUrl,
-  backLabel = "Back to Object Storage",
+  backLabel = "Back to Silo Storage",
   canDelete = false,
 }) => {
   const navigate = useNavigate();
@@ -79,19 +80,30 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
   // Delete account modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const fetchAccountDetails = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await objectStorageApi.fetchAccount(accountId);
-      setAccount(data);
-      setError(null);
-    } catch (err: any) {
-      setError(err.message);
-      ToastUtils.error("Failed to load account details");
-    } finally {
-      setLoading(false);
-    }
-  }, [accountId]);
+  const fetchAccountDetails = useCallback(
+    async (options: { silent?: boolean } = {}) => {
+      try {
+        if (!options.silent) {
+          setLoading(true);
+        }
+        const data = await objectStorageApi.fetchAccount(accountId);
+        setAccount(data);
+        setError(null);
+      } catch (err: any) {
+        if (!options.silent) {
+          setError(err.message);
+          ToastUtils.error("Failed to load account details");
+        } else {
+          console.error("Failed to refresh account details:", err);
+        }
+      } finally {
+        if (!options.silent) {
+          setLoading(false);
+        }
+      }
+    },
+    [accountId]
+  );
 
   const fetchBuckets = useCallback(async () => {
     try {
@@ -99,7 +111,7 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
       const data = await objectStorageApi.fetchBuckets(accountId);
       setBuckets(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Failed to load buckets:", err);
+      console.error("Failed to load silos:", err);
     } finally {
       setBucketsLoading(false);
     }
@@ -112,14 +124,28 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
     }
   }, [accountId, fetchAccountDetails, fetchBuckets]);
 
+  const handleProvisioningUpdate = useCallback(
+    (event: any) => {
+      if (!event?.step) return;
+      fetchAccountDetails({ silent: true });
+
+      if (event.step.id === "access_key_ready" || event.step.id === "finalize") {
+        fetchBuckets();
+      }
+    },
+    [fetchAccountDetails, fetchBuckets]
+  );
+
+  useObjectStorageBroadcasting(accountId, handleProvisioningUpdate);
+
   const handleCreateBucket = async (name: string) => {
     try {
       setCreatingBucket(true);
       await objectStorageApi.createBucket(accountId, { name });
-      ToastUtils.success("Bucket created successfully");
+      ToastUtils.success("Silo created successfully");
       fetchBuckets();
     } catch (err: any) {
-      ToastUtils.error(err.message || "Failed to create bucket");
+      ToastUtils.error(err.message || "Failed to create silo");
       throw err;
     } finally {
       setCreatingBucket(false);
@@ -127,18 +153,18 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
   };
 
   const handleDeleteBucket = async (bucket: any) => {
-    if (!window.confirm(`Delete bucket "${bucket.name}"? This cannot be undone.`)) return;
+    if (!window.confirm(`Delete silo "${bucket.name}"? This cannot be undone.`)) return;
 
     try {
       setDeletingBucketId(bucket.id);
       await objectStorageApi.deleteBucket(accountId, bucket.id);
-      ToastUtils.success("Bucket deleted");
+      ToastUtils.success("Silo deleted");
       if (selectedBucket === bucket.name) {
         setSelectedBucket(null);
       }
       fetchBuckets();
     } catch (err: any) {
-      ToastUtils.error(err.message || "Failed to delete bucket");
+      ToastUtils.error(err.message || "Failed to delete silo");
     } finally {
       setDeletingBucketId(null);
     }

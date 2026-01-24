@@ -15,8 +15,6 @@ import {
   ChevronRight,
   Filter,
 } from "lucide-react";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell";
 import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
 import { ModernButton } from "../../shared/components/ui";
@@ -297,8 +295,6 @@ export default function WalletDashboard() {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title="Wallet & Billing"
         description="Manage your account balance and billing preferences"

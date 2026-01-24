@@ -41,7 +41,7 @@ const Blog = () => {
       <motion.div>
         <div className="mt-[10em] px-4 md:px-8 lg:px-16 w-full font-Outfit text-[#121212]">
           <p className=" font-medium text-3xl md:text-[40px] md:leading-[50px] text-center">
-            Unicloud in the Press
+            Unicloud in the Press
           </p>
           <p className=" text-center font-normal mt-3 md:px-[15%] text-[#676767] text-lg md:text-xl ">
             Explore Our Blog for insightful articles on cloud trends, best pratices and success
@@ -207,7 +207,7 @@ const Blog = () => {
                   type="text"
                 />
                 <Link to="/contact" target="_blank" rel="noopener noreferrer">
-                  <button className="  md:w-auto px-6 md:px-9 py-3 md:py-4 bg-[#fff] rounded-[30px] text-base text-[#000]">
+                  <button className="md:w-auto px-6 md:px-9 py-3 md:py-4 bg-[#fff] rounded-[30px] text-base text-[#000]">
                     Subscribe
                   </button>
                 </Link>

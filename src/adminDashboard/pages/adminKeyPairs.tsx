@@ -1,7 +1,5 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import NetworkSideMenu from "../components/infraSideMenu";
 import { useFetchKeyPairs } from "../../hooks/adminHooks/keyPairHooks";
@@ -12,8 +10,6 @@ export default function AdminKeyPairs() {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminActiveTab />
       <AdminPageShell
         title="Key Pairs"

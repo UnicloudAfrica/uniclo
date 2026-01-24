@@ -11,8 +11,6 @@ import {
   ShieldCheck,
   SquarePen,
 } from "lucide-react";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell.tsx";
 import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
 import { ModernButton } from "../../shared/components/ui";
@@ -152,8 +150,6 @@ const AdminUserDetails = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title={`Admin • ${fullName || "Profile"}`}
         description={adminRecord?.email || "Review administrator access, profile, and controls."}

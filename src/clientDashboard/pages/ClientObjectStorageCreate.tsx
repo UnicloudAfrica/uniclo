@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React from "react";
+import ObjectStorageCreate from "./ObjectStorageCreate";
 
-// Intentionally render nothing for this route.
-const ClientObjectStorageCreate: React.FC = () => null;
+const ClientObjectStorageCreate: React.FC = () => <ObjectStorageCreate />;
 
 export default ClientObjectStorageCreate;

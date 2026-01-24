@@ -1,7 +1,5 @@
 // @ts-nocheck
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell.tsx";
 import ProductSideMenu from "./inventoryComponents/productssidemenu";
 import BandWidth from "./inventoryComponents/bandwidth";
@@ -132,16 +130,16 @@ export default function AdminInventory() {
       },
       {
         id: "object-storage",
-        name: "Object Storage",
+        name: "Silo Storage",
         Component: ObjectStorageInventory,
         icon: HardDrive,
         caption: "S3-compatible",
         summary: {
           description:
-            "Monitor object storage availability across regions. Ensure tenant accounts and quotas stay aligned with provider limits.",
+            "Monitor Silo Storage availability across regions. Ensure tenant accounts and quotas stay aligned with provider limits.",
           metrics: [
             { label: "Storage accounts", value: "—", description: "Tenant accounts" },
-            { label: "Buckets", value: "—", description: "Provisioned containers" },
+            { label: "Silos", value: "—", description: "Provisioned silos" },
           ],
         },
       },
@@ -250,8 +248,6 @@ export default function AdminInventory() {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         contentClassName="space-y-8"
         description="Monitor and manage platform inventory across all regions to keep provisioning ready."

@@ -2,30 +2,8 @@
 import React from "react";
 import { useFetchClientProfile } from "../../hooks/clientHooks/resources";
 import { useFetchClientProjects } from "../../hooks/clientHooks/projectHooks";
-import { DashboardSidebar, MenuEntry } from "../../shared/components/sidebar";
-import {
-  LayoutDashboard,
-  Briefcase,
-  Server,
-  Calculator,
-  CreditCard,
-  LifeBuoy,
-  Settings,
-  HardDrive,
-  Key,
-  Cable,
-  Network,
-  Shield,
-  Globe,
-  Globe2,
-  Route as RouteIcon,
-  ShieldCheck,
-  GitMerge,
-  Camera,
-  Layers,
-  TrendingUp,
-  LayoutTemplate,
-} from "lucide-react";
+import { DashboardSidebar } from "../../shared/components/sidebar";
+import { buildClientMenuItems } from "../../shared/config/sidebarMenus";
 
 interface ClientSidebarProps {
   isMobileMenuOpen?: boolean;
@@ -54,87 +32,10 @@ const ClientSidebar: React.FC<ClientSidebarProps> = ({ isMobileMenuOpen, onClose
     ? projectsResponse
     : (projectsResponse as any)?.data || [];
 
-  // Menu items - with optional groups for clients
-  const menuItems: MenuEntry[] = [
-    {
-      name: "Home",
-      icon: LayoutDashboard,
-      isLucide: true,
-      path: "/client-dashboard",
-    },
-    ...(projects.length > 0
-      ? [
-          {
-            name: "Infrastructure",
-            icon: Server,
-            isLucide: true,
-            children: [
-              {
-                name: "Projects",
-                icon: Briefcase,
-                isLucide: true,
-                path: "/client-dashboard/projects",
-              },
-              {
-                name: "Instances",
-                icon: Server,
-                isLucide: true,
-                path: "/client-dashboard/instances",
-              },
-              {
-                name: "Templates",
-                icon: LayoutTemplate,
-                isLucide: true,
-                path: "/client-dashboard/templates",
-              },
-              {
-                name: "Object Storage",
-                icon: HardDrive,
-                isLucide: true,
-                path: "/client-dashboard/object-storage",
-              },
-            ],
-          },
-        ]
-      : [
-          {
-            name: "Object Storage",
-            icon: HardDrive,
-            isLucide: true,
-            path: "/client-dashboard/object-storage",
-          },
-          {
-            name: "Templates",
-            icon: LayoutTemplate,
-            isLucide: true,
-            path: "/client-dashboard/templates",
-          },
-        ]),
-    {
-      name: "Pricing Calculator",
-      icon: Calculator,
-      isLucide: true,
-      path: "/client-dashboard/pricing-calculator",
-    },
-    {
-      name: "Orders & Payments",
-      icon: CreditCard,
-      isLucide: true,
-      path: "/client-dashboard/orders-payments",
-    },
-    {
-      name: "Support",
-      icon: LifeBuoy,
-      isLucide: true,
-      path: "/client-dashboard/support",
-    },
-    {
-      name: "Account Settings",
-      icon: Settings,
-      isLucide: true,
-      path: "/client-dashboard/account-settings",
-    },
-  ];
+  const menuItems = React.useMemo(
+    () => buildClientMenuItems(projects.length > 0),
+    [projects.length]
+  );
 
   const clientProfile = profile as ClientProfile | undefined;
 

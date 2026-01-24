@@ -13,7 +13,7 @@ import {
 import TenantPageShell from "../../components/TenantPageShell";
 import ModernCard from "../../../shared/components/ui/ModernCard";
 import ModernButton from "../../../shared/components/ui/ModernButton";
-import { useSubnets } from "../../../hooks/adminHooks/vpcInfraHooks";
+import { useSubnets } from "../../../shared/hooks/vpcInfraHooks";
 import {
   useLaunchConfigurations,
   useCreateAutoScalingGroup,
@@ -53,7 +53,7 @@ const AutoScalingGroupWizard: React.FC = () => {
   });
 
   const { data: launchConfigs = [] } = useLaunchConfigurations(projectId, region);
-  const { data: subnets = [] } = useSubnets(projectId);
+  const { data: subnets = [] } = useSubnets(projectId, region);
   const createGroupMutation = useCreateAutoScalingGroup();
   const createPolicyMutation = useCreateScalingPolicy();
 

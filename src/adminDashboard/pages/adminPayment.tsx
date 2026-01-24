@@ -10,8 +10,6 @@ import {
   RefreshCcw,
   Wallet,
 } from "lucide-react";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell.tsx";
 import ResourceHero from "../../shared/components/ui/ResourceHero";
 import ResourceDataExplorer from "../components/ResourceDataExplorer";
@@ -347,9 +345,6 @@ export default function AdminPayment() {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
-
       <AdminPageShell
         title="Payments"
         description="Monitor every transaction flowing through UniCloud billing, track statuses, and export official receipts with the UniCloud brand."

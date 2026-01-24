@@ -2,8 +2,6 @@
 import { useState, useEffect, useRef } from "react";
 import { MoreHorizontal } from "lucide-react";
 import AdminActiveTab from "../components/adminActiveTab";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AddModules from "../components/modulesComp/addModules";
 import AdminPageShell from "../components/AdminPageShell.tsx";
 import ModernTable from "../../shared/components/ui/ModernTable";
@@ -196,8 +194,6 @@ const AdminModules = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminActiveTab />
       <AdminPageShell
         title="Modules"

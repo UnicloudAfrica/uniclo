@@ -23,8 +23,6 @@ import {
 } from "lucide-react";
 import adminRegionApi from "../../services/adminRegionApi";
 import ToastUtils from "../../utils/toastUtil";
-import AdminSidebar from "../components/AdminSidebar";
-import AdminHeadbar from "../components/adminHeadbar";
 import AdminPageShell from "../components/AdminPageShell.tsx";
 import { ModernCard } from "../../shared/components/ui";
 import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
@@ -271,23 +269,11 @@ const RegionDetail = () => {
   );
 
   if (loading) {
-    return (
-      <>
-        <AdminHeadbar />
-        <AdminSidebar />
-        {renderLoadingShell()}
-      </>
-    );
+    return <>{renderLoadingShell()}</>;
   }
 
   if (!region) {
-    return (
-      <>
-        <AdminHeadbar />
-        <AdminSidebar />
-        {renderNotFoundShell()}
-      </>
-    );
+    return <>{renderNotFoundShell()}</>;
   }
 
   const ownershipTenant = region.owner_tenant;
@@ -300,8 +286,6 @@ const RegionDetail = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title={region.name || "Region"}
         description={

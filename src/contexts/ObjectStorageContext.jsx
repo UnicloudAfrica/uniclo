@@ -41,7 +41,7 @@ export const ObjectStorageProvider = ({ children }) => {
       const parsed = JSON.parse(stored);
       return Array.isArray(parsed) ? parsed : [];
     } catch (error) {
-      console.error("Failed to read stored object storage orders", error);
+      console.error("Failed to read stored Silo Storage orders", error);
       return [];
     }
   });
@@ -73,7 +73,7 @@ export const ObjectStorageProvider = ({ children }) => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
     } catch (error) {
-      console.error("Failed to persist object storage orders", error);
+      console.error("Failed to persist Silo Storage orders", error);
     }
   }, [orders]);
 
@@ -126,7 +126,7 @@ export const ObjectStorageProvider = ({ children }) => {
         setAccounts(Array.isArray(items) ? items : []);
         setAccountsMeta(meta ?? null);
       } catch (error) {
-        const message = error?.message || "Unable to load object storage accounts.";
+        const message = error?.message || "Unable to load Silo Storage accounts.";
         setAccountsError(message);
         ToastUtils.error(message);
       } finally {
@@ -177,7 +177,7 @@ export const ObjectStorageProvider = ({ children }) => {
         setAccountBuckets((prev) => ({ ...prev, [accountId]: data }));
         return data;
       } catch (error) {
-        const message = error?.message || "Unable to load buckets.";
+        const message = error?.message || "Unable to load silos.";
         setBucketErrors((prev) => ({ ...prev, [accountId]: message }));
         ToastUtils.error(message);
         throw error;
@@ -200,10 +200,10 @@ export const ObjectStorageProvider = ({ children }) => {
         const response = await objectStorageApi.createBucket(accountId, payload);
         await loadBuckets(accountId, { force: true });
         await loadAccounts();
-        ToastUtils.success(response?.message || "Bucket created successfully.");
+        ToastUtils.success(response?.message || "Silo created successfully.");
         return response;
       } catch (error) {
-        const message = error?.message || "Unable to create bucket.";
+        const message = error?.message || "Unable to create silo.";
         ToastUtils.error(message);
         throw error;
       }
@@ -214,7 +214,7 @@ export const ObjectStorageProvider = ({ children }) => {
   const deleteBucket = useCallback(
     async (accountId, bucketId) => {
       if (!accountId || !bucketId) {
-        throw new Error("Account and bucket identifiers are required.");
+        throw new Error("Account and silo identifiers are required.");
       }
       if (!isAuthenticated) {
         throw new Error("Missing authentication session. Please sign in again.");
@@ -223,9 +223,9 @@ export const ObjectStorageProvider = ({ children }) => {
         await objectStorageApi.deleteBucket(accountId, bucketId);
         await loadBuckets(accountId, { force: true });
         await loadAccounts();
-        ToastUtils.success("Bucket deleted successfully.");
+        ToastUtils.success("Silo deleted successfully.");
       } catch (error) {
-        const message = error?.message || "Unable to delete bucket.";
+        const message = error?.message || "Unable to delete silo.";
         ToastUtils.error(message);
         throw error;
       }

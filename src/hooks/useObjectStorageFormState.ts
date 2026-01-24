@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { ServiceProfile, createServiceProfile } from "./objectStorageUtils";
 
 export interface UseObjectStorageFormStateReturn {
@@ -9,6 +9,7 @@ export interface UseObjectStorageFormStateReturn {
   handleRegionChange: (profileId: string, region: string) => void;
   handleTierChange: (profileId: string, tierKey: string) => void;
   handleMonthsChange: (profileId: string, months: string) => void;
+  handleStorageGbChange: (profileId: string, storageGb: string) => void;
   handleNameChange: (profileId: string, name: string) => void;
   handleUnitPriceChange: (profileId: string, unitPrice: string) => void;
   resetProfiles: () => void;
@@ -65,6 +66,13 @@ export const useObjectStorageFormState = (): UseObjectStorageFormStateReturn => 
     [updateProfile]
   );
 
+  const handleStorageGbChange = useCallback(
+    (profileId: string, storageGb: string) => {
+      updateProfile(profileId, { storageGb });
+    },
+    [updateProfile]
+  );
+
   const handleNameChange = useCallback(
     (profileId: string, name: string) => {
       updateProfile(profileId, { name });
@@ -91,6 +99,7 @@ export const useObjectStorageFormState = (): UseObjectStorageFormStateReturn => 
     handleRegionChange,
     handleTierChange,
     handleMonthsChange,
+    handleStorageGbChange,
     handleNameChange,
     handleUnitPriceChange,
     resetProfiles,

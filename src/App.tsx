@@ -8,6 +8,8 @@ import PublicRoutes from "./routes/PublicRoutes";
 import TenantRoutes from "./routes/TenantRoutes";
 import ClientRoutes from "./routes/ClientRoutes";
 import AdminRoutes from "./routes/AdminRoutes";
+import AdminShell from "./adminDashboard/components/AdminShell";
+import { AdminShellProvider } from "./adminDashboard/components/AdminShellContext";
 
 // Helper types so we can inject the rendered <Route> elements directly.
 const renderPublicRoutes = PublicRoutes as () => React.ReactElement;
@@ -18,6 +20,7 @@ const renderAdminRoutes = AdminRoutes as () => React.ReactElement;
 const App: React.FC = () => {
   const location = useLocation();
   const subdomain = getSubdomain();
+  const isAdminRoute = location.pathname.startsWith("/admin-dashboard");
   // const isTenant = !!subdomain; // True for xyz.unicloudafrica.com, false for unicloudafrica.com
 
   useEffect(() => {
@@ -25,7 +28,8 @@ const App: React.FC = () => {
   }, [location.pathname]);
 
   return (
-    <>
+    <AdminShellProvider isActive={isAdminRoute}>
+      {isAdminRoute && <AdminShell />}
       <AnimatePresence mode="wait">
         <Routes>
           {/* Public & Marketing Routes */}
@@ -41,7 +45,7 @@ const App: React.FC = () => {
           {renderAdminRoutes()}
         </Routes>
       </AnimatePresence>
-    </>
+    </AdminShellProvider>
   );
 };
 

@@ -234,7 +234,7 @@ const CalculatorSummaryStep = ({ calculatorData, pricingResult, onRecalculate })
 
   const storageItems = calculatorData.object_storage_items || [];
   const fallbackStorageLines = storageItems.map((item: any) => ({
-    name: item.product_name || "Object Storage Tier",
+    name: item.product_name || "Silo Storage Tier",
     region: item.region,
     quantity: item.quantity,
     unit_price: Number(item.unit_price || 0),

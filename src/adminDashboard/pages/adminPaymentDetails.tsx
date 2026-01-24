@@ -10,8 +10,6 @@ import {
   Loader2,
   Wallet,
 } from "lucide-react";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell.tsx";
 import ResourceHero from "../../shared/components/ui/ResourceHero";
 import { ModernButton } from "../../shared/components/ui";
@@ -101,7 +99,6 @@ const StatusPill = ({ status }: any) => {
 export default function AdminPaymentDetails() {
   const navigate = useNavigate();
   const { transactionId } = useParams();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   const {
     data,
@@ -334,9 +331,6 @@ export default function AdminPaymentDetails() {
   };
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
-
       <AdminPageShell
         title="Payment Detail"
         description="Drill into a payment to review customer, gateway, and provisioning data in one place."

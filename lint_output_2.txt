@@ -1,0 +1,1299 @@
+
+> unicloud@0.1.0 lint
+> eslint src/**/*.{js,jsx,ts,tsx}
+
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminComps/blog.jsx
+    4:10  warning  'Editor' is defined but never used       no-unused-vars
+    7:10  warning  'PageContext' is defined but never used  no-unused-vars
+   37:30  warning  'e' is defined but never used            no-unused-vars
+  101:43  warning  'snapshot' is defined but never used     no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminComps/board.jsx
+   4:10  warning  'Editor' is defined but never used                       no-unused-vars
+   7:10  warning  'PageContext' is defined but never used                  no-unused-vars
+  34:10  warning  'position' is assigned a value but never used            no-unused-vars
+  52:43  warning  'snapshot' is defined but never used                     no-unused-vars
+  71:30  warning  'e' is defined but never used                            no-unused-vars
+  86:11  warning  'parentParentParent' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminComps/career.jsx
+    4:10  warning  'Editor' is defined but never used                       no-unused-vars
+    9:3   warning  'query' is defined but never used                        no-unused-vars
+   10:3   warning  'orderBy' is defined but never used                      no-unused-vars
+   11:3   warning  'onSnapshot' is defined but never used                   no-unused-vars
+   15:22  warning  'ref' is defined but never used                          no-unused-vars
+   15:27  warning  'uploadBytes' is defined but never used                  no-unused-vars
+   15:40  warning  'getDownloadURL' is defined but never used               no-unused-vars
+   37:9   warning  'storage' is assigned a value but never used             no-unused-vars
+   40:10  warning  'page' is assigned a value but never used                no-unused-vars
+   40:16  warning  'setPage' is assigned a value but never used             no-unused-vars
+  101:30  warning  'e' is defined but never used                            no-unused-vars
+  116:11  warning  'parentParentParent' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminComps/cases.jsx
+    3:10  warning  'Editor' is defined but never used                       no-unused-vars
+    9:3   warning  'query' is defined but never used                        no-unused-vars
+   10:3   warning  'orderBy' is defined but never used                      no-unused-vars
+   11:3   warning  'onSnapshot' is defined but never used                   no-unused-vars
+   16:10  warning  'PageContext' is defined but never used                  no-unused-vars
+   93:43  warning  'snapshot' is defined but never used                     no-unused-vars
+  115:30  warning  'e' is defined but never used                            no-unused-vars
+  130:11  warning  'parentParentParent' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminComps/events.jsx
+    3:10  warning  'Editor' is defined but never used                       no-unused-vars
+    9:3   warning  'query' is defined but never used                        no-unused-vars
+   10:3   warning  'orderBy' is defined but never used                      no-unused-vars
+   11:3   warning  'onSnapshot' is defined but never used                   no-unused-vars
+   41:10  warning  'page' is assigned a value but never used                no-unused-vars
+   41:16  warning  'setPage' is assigned a value but never used             no-unused-vars
+   51:22  warning  'setEventArray' is assigned a value but never used       no-unused-vars
+   94:43  warning  'snapshot' is defined but never used                     no-unused-vars
+  117:30  warning  'e' is defined but never used                            no-unused-vars
+  132:11  warning  'parentParentParent' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminComps/general.jsx
+   1:32  warning  'useEffect' is defined but never used                no-unused-vars
+   8:19  warning  'onAuthStateChanged' is defined but never used       no-unused-vars
+  22:9   warning  'auth' is assigned a value but never used            no-unused-vars
+  36:10  warning  'file1url' is assigned a value but never used        no-unused-vars
+  36:20  warning  'setFile1url' is assigned a value but never used     no-unused-vars
+  38:23  warning  'setGeneralItem' is assigned a value but never used  no-unused-vars
+  78:41  warning  'snapshot' is defined but never used                 no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminComps/login.jsx
+   9:23  warning  'setGeneralItem' is assigned a value but never used  no-unused-vars
+  37:15  warning  'user' is assigned a value but never used            no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminComps/resources.jsx
+    4:10  warning  'Editor' is defined but never used                       no-unused-vars
+    9:3   warning  'query' is defined but never used                        no-unused-vars
+   10:3   warning  'orderBy' is defined but never used                      no-unused-vars
+   11:3   warning  'onSnapshot' is defined but never used                   no-unused-vars
+   41:10  warning  'page' is assigned a value but never used                no-unused-vars
+   41:16  warning  'setPage' is assigned a value but never used             no-unused-vars
+   50:25  warning  'setResourceArray' is assigned a value but never used    no-unused-vars
+   93:43  warning  'snapshot' is defined but never used                     no-unused-vars
+  115:30  warning  'e' is defined but never used                            no-unused-vars
+  130:11  warning  'parentParentParent' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminComps/solutions.jsx
+    3:10  warning  'Editor' is defined but never used                       no-unused-vars
+    9:3   warning  'query' is defined but never used                        no-unused-vars
+   10:3   warning  'orderBy' is defined but never used                      no-unused-vars
+   11:3   warning  'onSnapshot' is defined but never used                   no-unused-vars
+   16:10  warning  'PageContext' is defined but never used                  no-unused-vars
+   45:27  warning  'setSolutionContent' is assigned a value but never used  no-unused-vars
+   50:25  warning  'setSolutionArray' is assigned a value but never used    no-unused-vars
+   93:43  warning  'snapshot' is defined but never used                     no-unused-vars
+  115:30  warning  'e' is defined but never used                            no-unused-vars
+  130:11  warning  'parentParentParent' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/components/PaymentSummary.jsx
+    1:8   warning  'React' is defined but never used                                                                                         no-unused-vars
+    3:3   warning  'CreditCard' is defined but never used                                                                                    no-unused-vars
+    4:3   warning  'Clock' is defined but never used                                                                                         no-unused-vars
+    5:3   warning  'CheckCircle' is defined but never used                                                                                   no-unused-vars
+    6:3   warning  'AlertCircle' is defined but never used                                                                                   no-unused-vars
+    7:3   warning  'ExternalLink' is defined but never used                                                                                  no-unused-vars
+    8:3   warning  'RefreshCw' is defined but never used                                                                                     no-unused-vars
+    9:3   warning  'Server' is defined but never used                                                                                        no-unused-vars
+   10:3   warning  'DollarSign' is defined but never used                                                                                    no-unused-vars
+   18:24  warning  'order' is assigned a value but never used                                                                                no-unused-vars
+   91:7   warning  Unexpected console statement                                                                                              no-console
+  103:6   warning  React Hook useEffect has a missing dependency: 'pollTransactionStatus'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/components/achieve.jsx
+   1:8   warning  'leftBorder' is defined but never used   no-unused-vars
+   2:8   warning  'rightBorder' is defined but never used  no-unused-vars
+  16:14  error    Irregular whitespace not allowed         no-irregular-whitespace
+  16:19  error    Irregular whitespace not allowed         no-irregular-whitespace
+  16:22  error    Irregular whitespace not allowed         no-irregular-whitespace
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/components/ad.jsx
+  1:10  warning  'motion' is defined but never used  no-unused-vars
+  4:10  warning  'Link' is defined but never used    no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/components/blog.jsx
+  1:8   warning  'arrowdown' is defined but never used    no-unused-vars
+  3:10  warning  'PageContext' is defined but never used  no-unused-vars
+  4:10  warning  'Link' is defined but never used         no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/components/carousel.jsx
+  2:8   warning  'binance' is defined but never used   no-unused-vars
+  3:8   warning  'bitcoin' is defined but never used   no-unused-vars
+  4:8   warning  'coinbase' is defined but never used  no-unused-vars
+  5:8   warning  'tether' is defined but never used    no-unused-vars
+  6:8   warning  'bitmex' is defined but never used    no-unused-vars
+  7:10  warning  'motion' is defined but never used    no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/components/faq.jsx
+  2:10  warning  'motion' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/components/features.jsx
+  7:10  warning  'motion' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/components/footer.jsx
+   4:8   warning  'whatsapp' is defined but never used                 no-unused-vars
+   5:10  warning  'Link' is defined but never used                     no-unused-vars
+  10:23  warning  'setGeneralItem' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/components/hero.jsx
+  2:10  warning  'Link' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/components/navbar.jsx
+    3:10  warning  'Link' is defined but never used                         no-unused-vars
+   25:10  warning  'generalitem' is assigned a value but never used         no-unused-vars
+   25:23  warning  'setGeneralItem' is assigned a value but never used      no-unused-vars
+  411:7   warning  'CollapsibleSection' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/components/sidebar.jsx
+  19:10  warning  'page' is assigned a value but never used  no-unused-vars
+  34:9   warning  'app' is assigned a value but never used   no-unused-vars
+  54:15  warning  'error' is defined but never used          no-unused-vars
+  55:9   warning  Unexpected console statement               no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/contexts/ObjectStorageContext.jsx
+    1:8  warning  'React' is defined but never used                                                                                     no-unused-vars
+   44:7  warning  Unexpected console statement                                                                                          no-console
+   76:7  warning  Unexpected console statement                                                                                          no-console
+  136:5  warning  React Hook useCallback has a missing dependency: 'accountsLoading'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/adminHooks.js
+    64:7  warning  'fetchSubTenantById' is assigned a value but never used                       no-unused-vars
+    70:7  warning  'updateSubTenant' is assigned a value but never used                          no-unused-vars
+    76:7  warning  'deleteSubTenant' is assigned a value but never used                          no-unused-vars
+    86:7  warning  'fetchTenantClientById' is assigned a value but never used                    no-unused-vars
+   109:7  warning  'fetchRegionById' is assigned a value but never used                          no-unused-vars
+   147:7  warning  'fetchAdminProductPricingById' is assigned a value but never used             no-unused-vars
+   153:7  warning  'updateAdminProductPricing' is assigned a value but never used                no-unused-vars
+   159:7  warning  'deleteAdminProductPricing' is assigned a value but never used                no-unused-vars
+   201:7  warning  'linkProviderRegionCredentialUser' is assigned a value but never used         no-unused-vars
+   207:7  warning  'rotateProviderRegionCredentialIfMissing' is assigned a value but never used  no-unused-vars
+   213:7  warning  'reconcileProviderRegionCredentials' is assigned a value but never used       no-unused-vars
+   242:7  warning  'fetchProviderDiscoveryProjectsDrift' is assigned a value but never used      no-unused-vars
+   255:7  warning  'linkProviderDiscoveryUsers' is assigned a value but never used               no-unused-vars
+   268:7  warning  'fetchProviderDiscoveryRunById' is assigned a value but never used            no-unused-vars
+   278:7  warning  'createProjectUserSync' is assigned a value but never used                    no-unused-vars
+   288:7  warning  'createAdminMultiInitiationPreview' is assigned a value but never used        no-unused-vars
+   298:7  warning  'fetchAdminProductOffers' is assigned a value but never used                  no-unused-vars
+   305:7  warning  'createAdminProductOffer' is assigned a value but never used                  no-unused-vars
+   311:7  warning  'fetchAdminProductOfferById' is assigned a value but never used               no-unused-vars
+   317:7  warning  'updateAdminProductOffer' is assigned a value but never used                  no-unused-vars
+   323:7  warning  'deleteAdminProductOffer' is assigned a value but never used                  no-unused-vars
+   333:7  warning  'fetchAdminTaxConfigurations' is assigned a value but never used              no-unused-vars
+   343:7  warning  'createAdminTaxConfiguration' is assigned a value but never used              no-unused-vars
+   349:7  warning  'fetchAdminTaxConfigurationById' is assigned a value but never used           no-unused-vars
+   355:7  warning  'updateAdminTaxConfiguration' is assigned a value but never used              no-unused-vars
+   361:7  warning  'deleteAdminTaxConfiguration' is assigned a value but never used              no-unused-vars
+   371:7  warning  'fetchColocationSettings' is assigned a value but never used                  no-unused-vars
+   377:7  warning  'createColocationSetting' is assigned a value but never used                  no-unused-vars
+   387:7  warning  'fetchAdminProducts' is assigned a value but never used                       no-unused-vars
+   394:7  warning  'createAdminProduct' is assigned a value but never used                       no-unused-vars
+   400:7  warning  'fetchAdminProductById' is assigned a value but never used                    no-unused-vars
+   406:7  warning  'updateAdminProduct' is assigned a value but never used                       no-unused-vars
+   412:7  warning  'deleteAdminProduct' is assigned a value but never used                       no-unused-vars
+   422:7  warning  'fetchAdminProductComputeInstances' is assigned a value but never used        no-unused-vars
+   432:7  warning  'createAdminProductComputeInstance' is assigned a value but never used        no-unused-vars
+   455:7  warning  'fetchZadaraDomainById' is assigned a value but never used                    no-unused-vars
+   520:7  warning  Unexpected console statement                                                  no-console
+   545:7  warning  Unexpected console statement                                                  no-console
+   558:7  warning  Unexpected console statement                                                  no-console
+   585:7  warning  Unexpected console statement                                                  no-console
+   612:7  warning  Unexpected console statement                                                  no-console
+   626:7  warning  Unexpected console statement                                                  no-console
+   639:7  warning  Unexpected console statement                                                  no-console
+   666:7  warning  Unexpected console statement                                                  no-console
+   675:7  warning  Unexpected console statement                                                  no-console
+   688:7  warning  Unexpected console statement                                                  no-console
+   715:7  warning  Unexpected console statement                                                  no-console
+   728:7  warning  Unexpected console statement                                                  no-console
+   755:7  warning  Unexpected console statement                                                  no-console
+   768:7  warning  Unexpected console statement                                                  no-console
+   815:7  warning  Unexpected console statement                                                  no-console
+   829:7  warning  Unexpected console statement                                                  no-console
+   842:7  warning  Unexpected console statement                                                  no-console
+   855:7  warning  Unexpected console statement                                                  no-console
+   869:7  warning  Unexpected console statement                                                  no-console
+  1003:7  warning  Unexpected console statement                                                  no-console
+  1017:7  warning  Unexpected console statement                                                  no-console
+  1030:7  warning  Unexpected console statement                                                  no-console
+  1054:7  warning  Unexpected console statement                                                  no-console
+  1068:7  warning  Unexpected console statement                                                  no-console
+  1081:7  warning  Unexpected console statement                                                  no-console
+  1116:7  warning  Unexpected console statement                                                  no-console
+  1130:7  warning  Unexpected console statement                                                  no-console
+  1143:7  warning  Unexpected console statement                                                  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/adminUserHooks.js
+   80:7  warning  Unexpected console statement  no-console
+   95:7  warning  Unexpected console statement  no-console
+  109:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/advancedVpcHooks.js
+   49:7  warning  'deleteNatGateway' is assigned a value but never used             no-unused-vars
+   61:7  warning  'detachNatGateway' is assigned a value but never used             no-unused-vars
+   81:7  warning  'fetchNetworkAclById' is assigned a value but never used          no-unused-vars
+   93:7  warning  'updateNetworkAcl' is assigned a value but never used             no-unused-vars
+   99:7  warning  'deleteNetworkAcl' is assigned a value but never used             no-unused-vars
+  119:7  warning  'fetchVpcSecurityPostureById' is assigned a value but never used  no-unused-vars
+  151:7  warning  'fetchVpcPeeringById' is assigned a value but never used          no-unused-vars
+  229:7  warning  Unexpected console statement                                      no-console
+  243:7  warning  Unexpected console statement                                      no-console
+  257:7  warning  Unexpected console statement                                      no-console
+  281:7  warning  Unexpected console statement                                      no-console
+  306:7  warning  Unexpected console statement                                      no-console
+  320:7  warning  Unexpected console statement                                      no-console
+  344:7  warning  Unexpected console statement                                      no-console
+  358:7  warning  Unexpected console statement                                      no-console
+  372:7  warning  Unexpected console statement                                      no-console
+  396:7  warning  Unexpected console statement                                      no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/authHooks.js
+   39:31  warning  'payload' is assigned a value but never used  no-unused-vars
+   56:7   warning  Unexpected console statement                  no-console
+   58:17  warning  'data' is defined but never used              no-unused-vars
+   68:15  warning  'error' is defined but never used             no-unused-vars
+   71:17  warning  'data' is defined but never used              no-unused-vars
+   82:7   warning  Unexpected console statement                  no-console
+   84:17  warning  'data' is defined but never used              no-unused-vars
+   95:7   warning  Unexpected console statement                  no-console
+   97:17  warning  'data' is defined but never used              no-unused-vars
+  107:7   warning  Unexpected console statement                  no-console
+  109:17  warning  'data' is defined but never used              no-unused-vars
+  119:7   warning  Unexpected console statement                  no-console
+  121:17  warning  'data' is defined but never used              no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/businessClientHooks.js
+    4:8  warning  'api' is defined but never used                         no-unused-vars
+    7:3  warning  'useSharedCalculatorOptions' is defined but never used  no-unused-vars
+    8:3  warning  'useSharedMultiQuotes' is defined but never used        no-unused-vars
+    9:3  warning  'useSharedCalculatorPricing' is defined but never used  no-unused-vars
+  322:9  warning  'queryClient' is assigned a value but never used        no-unused-vars
+  326:7  warning  Unexpected console statement                            no-console
+  479:7  warning  Unexpected console statement                            no-console
+  488:7  warning  Unexpected console statement                            no-console
+  497:7  warning  Unexpected console statement                            no-console
+  510:7  warning  Unexpected console statement                            no-console
+  519:7  warning  Unexpected console statement                            no-console
+  528:7  warning  Unexpected console statement                            no-console
+  537:7  warning  Unexpected console statement                            no-console
+  546:7  warning  Unexpected console statement                            no-console
+  555:7  warning  Unexpected console statement                            no-console
+  568:7  warning  Unexpected console statement                            no-console
+  577:7  warning  Unexpected console statement                            no-console
+  586:7  warning  Unexpected console statement                            no-console
+  613:7  warning  Unexpected console statement                            no-console
+  637:7  warning  Unexpected console statement                            no-console
+  675:7  warning  Unexpected console statement                            no-console
+  688:7  warning  Unexpected console statement                            no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/businessHooks.js
+   1:10  warning  'useQuery' is defined but never used              no-unused-vars
+   3:8   warning  'silentApi' is defined but never used             no-unused-vars
+  16:9   warning  'queryClient' is assigned a value but never used  no-unused-vars
+  24:7   warning  Unexpected console statement                      no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/calculatorOptionHooks.js
+  61:9  warning  'queryClient' is assigned a value but never used  no-unused-vars
+  68:7  warning  Unexpected console statement                      no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/cartHooks.js
+   38:9   warning  'queryClient' is assigned a value but never used  no-unused-vars
+   45:17  warning  'data' is defined but never used                  no-unused-vars
+   50:7   warning  Unexpected console statement                      no-console
+   62:17  warning  'data' is defined but never used                  no-unused-vars
+   67:7   warning  Unexpected console statement                      no-console
+   78:15  warning  'error' is defined but never used                 no-unused-vars
+   81:17  warning  'data' is defined but never used                  no-unused-vars
+   95:7   warning  Unexpected console statement                      no-console
+   97:17  warning  'data' is defined but never used                  no-unused-vars
+  111:7   warning  Unexpected console statement                      no-console
+  113:17  warning  'data' is defined but never used                  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/clientHooks.js
+   35:5  warning  Unexpected console statement  no-console
+   89:7  warning  Unexpected console statement  no-console
+   93:7  warning  Unexpected console statement  no-console
+  104:7  warning  Unexpected console statement  no-console
+  109:7  warning  Unexpected console statement  no-console
+  120:7  warning  Unexpected console statement  no-console
+  124:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/consoleHooks.js
+   3:8  warning  'api' is defined but never used  no-unused-vars
+  65:7  warning  Unexpected console statement     no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/elasticIPHooks.js
+   81:7  warning  Unexpected console statement  no-console
+   94:7  warning  Unexpected console statement  no-console
+  107:7  warning  Unexpected console statement  no-console
+  120:7  warning  Unexpected console statement  no-console
+  133:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/enhancedVolumeHooks.js
+  147:7  warning  Unexpected console statement  no-console
+  161:7  warning  Unexpected console statement  no-console
+  174:7  warning  Unexpected console statement  no-console
+  188:7  warning  Unexpected console statement  no-console
+  230:7  warning  Unexpected console statement  no-console
+  244:7  warning  Unexpected console statement  no-console
+  258:7  warning  Unexpected console statement  no-console
+  279:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/eni.js
+   87:7  warning  Unexpected console statement  no-console
+  100:7  warning  Unexpected console statement  no-console
+  113:7  warning  Unexpected console statement  no-console
+  126:7  warning  Unexpected console statement  no-console
+  139:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/instancesHook.js
+  188:9  warning  'queryClient' is assigned a value but never used  no-unused-vars
+  196:7  warning  Unexpected console statement                      no-console
+  202:9  warning  'queryClient' is assigned a value but never used  no-unused-vars
+  209:7  warning  Unexpected console statement                      no-console
+  225:7  warning  Unexpected console statement                      no-console
+  242:7  warning  Unexpected console statement                      no-console
+  272:7  warning  Unexpected console statement                      no-console
+  328:7  warning  Unexpected console statement                      no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/internetGatewayHooks.js
+   39:15  warning  'internet_gateway_id' is assigned a value but never used  no-unused-vars
+   95:7   warning  Unexpected console statement                              no-console
+  108:7   warning  Unexpected console statement                              no-console
+  121:7   warning  Unexpected console statement                              no-console
+  134:7   warning  Unexpected console statement                              no-console
+  147:7   warning  Unexpected console statement                              no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/leadsHook.js
+   1:10  warning  'useQuery' is defined but never used              no-unused-vars
+   3:8   warning  'silentApi' is defined but never used             no-unused-vars
+  16:9   warning  'queryClient' is assigned a value but never used  no-unused-vars
+  24:7   warning  Unexpected console statement                      no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/modulesHook.js
+  1:20  warning  'useMutation' is defined but never used     no-unused-vars
+  1:33  warning  'useQueryClient' is defined but never used  no-unused-vars
+  2:8   warning  'api' is defined but never used             no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/networkPresetHooks.ts
+   6:9   warning  Replace `⏎··DEFAULT_PRESETS,⏎··NetworkPreset,⏎` with `·DEFAULT_PRESETS,·NetworkPreset·`  prettier/prettier
+  38:45  warning  Replace `⏎······?·preset.requires_eip⏎·····` with `·?·preset.requires_eip`               prettier/prettier
+  43:19  warning  Replace `⏎····fallback?.features·??⏎···` with `·fallback?.features·??`                   prettier/prettier
+  46:1   warning  Delete `··`                                                                              prettier/prettier
+  47:1   warning  Delete `··`                                                                              prettier/prettier
+  48:7   warning  Delete `··`                                                                              prettier/prettier
+  49:1   warning  Delete `··`                                                                              prettier/prettier
+  50:5   warning  Delete `··`                                                                              prettier/prettier
+  51:1   warning  Delete `··`                                                                              prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/pricingHooks.js
+  101:7  warning  Unexpected console statement  no-console
+  114:7  warning  Unexpected console statement  no-console
+  127:7  warning  Unexpected console statement  no-console
+  141:7  warning  Unexpected console statement  no-console
+  155:7  warning  Unexpected console statement  no-console
+  181:7  warning  Unexpected console statement  no-console
+  195:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/productsHook.js
+  1:20  warning  'useMutation' is defined but never used     no-unused-vars
+  1:33  warning  'useQueryClient' is defined but never used  no-unused-vars
+  2:8   warning  'api' is defined but never used             no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/profileHooks.js
+   90:7  warning  Unexpected console statement  no-console
+  103:7  warning  Unexpected console statement  no-console
+  116:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/projectHooks.js
+  156:7  warning  Unexpected console statement  no-console
+  172:7  warning  Unexpected console statement  no-console
+  187:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/quoteHooks.js
+   1:10  warning  'useQuery' is defined but never used              no-unused-vars
+   3:8   warning  'tenantApi' is defined but never used             no-unused-vars
+  15:9   warning  'queryClient' is assigned a value but never used  no-unused-vars
+  23:7   warning  Unexpected console statement                      no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/regionHooks.js
+  65:7  warning  Unexpected console statement  no-console
+  79:7  warning  Unexpected console statement  no-console
+  92:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/resource.js
+  1:20  warning  'useMutation' is defined but never used  no-unused-vars
+  2:8   warning  'api' is defined but never used          no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/routeTable.js
+   84:7  warning  Unexpected console statement  no-console
+   97:7  warning  Unexpected console statement  no-console
+  110:7  warning  Unexpected console statement  no-console
+  123:7  warning  Unexpected console statement  no-console
+  136:7  warning  Unexpected console statement  no-console
+  149:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/securityGroupHooks.js
+   89:7  warning  Unexpected console statement  no-console
+  105:7  warning  Unexpected console statement  no-console
+  118:7  warning  Unexpected console statement  no-console
+  131:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/settingsHooks.js
+  211:7  warning  Unexpected console statement  no-console
+  224:7  warning  Unexpected console statement  no-console
+  247:7  warning  Unexpected console statement  no-console
+  256:7  warning  Unexpected console statement  no-console
+  269:7  warning  Unexpected console statement  no-console
+  296:7  warning  Unexpected console statement  no-console
+  340:7  warning  Unexpected console statement  no-console
+  364:7  warning  Unexpected console statement  no-console
+  392:7  warning  Unexpected console statement  no-console
+  416:7  warning  Unexpected console statement  no-console
+  440:7  warning  Unexpected console statement  no-console
+  477:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/sharedCalculatorHooks.js
+   78:9   warning  Unexpected console statement      no-console
+   95:7   warning  Unexpected console statement      no-console
+  148:5   warning  Unexpected console statement      no-console
+  150:5   warning  Unexpected console statement      no-console
+  162:5   warning  Unexpected console statement      no-console
+  174:17  warning  'data' is defined but never used  no-unused-vars
+  179:7   warning  Unexpected console statement      no-console
+  198:17  warning  'data' is defined but never used  no-unused-vars
+  203:7   warning  Unexpected console statement      no-console
+  226:7   warning  Unexpected console statement      no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/sharedResourceHooks.js
+    8:8  warning  'api' is defined but never used  no-unused-vars
+   47:5  warning  Unexpected console statement     no-console
+  172:7  warning  Unexpected console statement     no-console
+  181:7  warning  Unexpected console statement     no-console
+  200:7  warning  Unexpected console statement     no-console
+  209:7  warning  Unexpected console statement     no-console
+  235:7  warning  Unexpected console statement     no-console
+  248:7  warning  Unexpected console statement     no-console
+  275:7  warning  Unexpected console statement     no-console
+  284:7  warning  Unexpected console statement     no-console
+  303:7  warning  Unexpected console statement     no-console
+  312:7  warning  Unexpected console statement     no-console
+  353:7  warning  Unexpected console statement     no-console
+  366:7  warning  Unexpected console statement     no-console
+  393:7  warning  Unexpected console statement     no-console
+  402:7  warning  Unexpected console statement     no-console
+  421:7  warning  Unexpected console statement     no-console
+  430:7  warning  Unexpected console statement     no-console
+  458:7  warning  Unexpected console statement     no-console
+  471:7  warning  Unexpected console statement     no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/subnetHooks.js
+   84:7  warning  Unexpected console statement  no-console
+   98:7  warning  Unexpected console statement  no-console
+  111:7  warning  Unexpected console statement  no-console
+  124:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/supportHook.js
+   2:8  warning  'api' is defined but never used        no-unused-vars
+   3:8  warning  'silentApi' is defined but never used  no-unused-vars
+  76:7  warning  Unexpected console statement           no-console
+  92:7  warning  Unexpected console statement           no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/taxHooks.js
+  102:7  warning  Unexpected console statement  no-console
+  118:7  warning  Unexpected console statement  no-console
+  133:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/tenantAdminHooks.js
+  299:7   warning  Unexpected console statement           no-console
+  324:7   warning  Unexpected console statement           no-console
+  337:7   warning  Unexpected console statement           no-console
+  378:7   warning  Unexpected console statement           no-console
+  403:7   warning  Unexpected console statement           no-console
+  416:7   warning  Unexpected console statement           no-console
+  443:7   warning  Unexpected console statement           no-console
+  468:7   warning  Unexpected console statement           no-console
+  481:7   warning  Unexpected console statement           no-console
+  494:7   warning  Unexpected console statement           no-console
+  521:7   warning  Unexpected console statement           no-console
+  562:7   warning  Unexpected console statement           no-console
+  589:7   warning  Unexpected console statement           no-console
+  613:7   warning  Unexpected console statement           no-console
+  640:7   warning  Unexpected console statement           no-console
+  664:7   warning  Unexpected console statement           no-console
+  691:7   warning  Unexpected console statement           no-console
+  700:17  warning  'data' is defined but never used       no-unused-vars
+  700:23  warning  'variables' is defined but never used  no-unused-vars
+  704:7   warning  Unexpected console statement           no-console
+  717:7   warning  Unexpected console statement           no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/transactionHooks.js
+  17:9   warning  'queryClient' is assigned a value but never used  no-unused-vars
+  24:7   warning  Unexpected console statement                      no-console
+  26:17  warning  'data' is defined but never used                  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/useAdminCreateInstanceLogic.ts
+    1:40  warning  'useCallback' is defined but never used                                                                                                                                no-unused-vars
+   17:3   warning  'resolveCountryCodeFromEntity' is defined but never used                                                                                                               no-unused-vars
+   18:3   warning  'matchCountryFromOptions' is defined but never used                                                                                                                    no-unused-vars
+   63:50  warning  'isGeneralRegionsLoading' is assigned a value but never used                                                                                                           no-unused-vars
+   96:25  warning  Replace `()·=>·buildProvisioningSteps(isFastTrack·?·"fast-track"·:·"standard"),·[` with `⏎····()·=>·buildProvisioningSteps(isFastTrack·?·"fast-track"·:·"standard"),`  prettier/prettier
+   97:5   warning  Replace `isFastTrack,` with `[isFastTrack]`                                                                                                                            prettier/prettier
+   98:3   warning  Delete `]`                                                                                                                                                             prettier/prettier
+  164:15  warning  Insert `··`                                                                                                                                                            prettier/prettier
+  165:1   warning  Insert `··`                                                                                                                                                            prettier/prettier
+  166:15  warning  Insert `··`                                                                                                                                                            prettier/prettier
+  167:1   warning  Replace `··············` with `················`                                                                                                                       prettier/prettier
+  168:1   warning  Insert `··`                                                                                                                                                            prettier/prettier
+  169:15  warning  Insert `··`                                                                                                                                                            prettier/prettier
+  170:1   warning  Insert `··`                                                                                                                                                            prettier/prettier
+  203:27  warning  Insert `⏎·······`                                                                                                                                                      prettier/prettier
+  259:6   warning  React Hook useMemo has a missing dependency: 'selectedTenantId'. Either include it or remove the dependency array                                                      react-hooks/exhaustive-deps
+  320:5   warning  Insert `··`                                                                                                                                                            prettier/prettier
+  321:1   warning  Insert `··`                                                                                                                                                            prettier/prettier
+  322:5   warning  Insert `··`                                                                                                                                                            prettier/prettier
+  323:1   warning  Replace `····` with `······`                                                                                                                                           prettier/prettier
+  327:5   warning  Insert `··`                                                                                                                                                            prettier/prettier
+  328:1   warning  Insert `··`                                                                                                                                                            prettier/prettier
+  329:1   warning  Insert `··`                                                                                                                                                            prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/useAdminNetworkPolicySettings.ts
+  43:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/useAdminTenantBilling.ts
+  129:7  warning  Unexpected console statement  no-console
+  142:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/useAdminTenantNetworkSettings.ts
+  57:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/useAnimations.jsx
+  24:34  warning  The ref value 'ref.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'ref.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/useApiContext.ts
+  78:6  warning  React Hook useMemo has missing dependencies: 'adminGetHeaders', 'clientGetHeaders', and 'tenantGetHeaders'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/useBrandingTheme.js
+   17:18  warning  Delete `⏎···`                                                                                                                 prettier/prettier
+  180:40  warning  Replace `⏎··{·tenantId,·domain,·subdomain·}·=·{},⏎··options·=·{}⏎` with `{·tenantId,·domain,·subdomain·}·=·{},·options·=·{}`  prettier/prettier
+  219:19  warning  Delete `⏎···`                                                                                                                 prettier/prettier
+  280:45  warning  'fallbackLogo' is assigned a value but never used                                                                             no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/useClientProvisioningLogic.ts
+    2:10  warning  'Configuration' is defined but never used                                       no-unused-vars
+   40:5   warning  'setConfigurations' is assigned a value but never used                          no-unused-vars
+   82:9   warning  Unexpected console statement                                                    no-console
+  111:9   warning  Unexpected console statement                                                    no-console
+  219:40  warning  Replace `(cfg.project_name·||·undefined)` with `cfg.project_name·||·undefined`  prettier/prettier
+  269:11  warning  Insert `··`                                                                     prettier/prettier
+  270:11  warning  Insert `··`                                                                     prettier/prettier
+  271:1   warning  Insert `··`                                                                     prettier/prettier
+  272:13  warning  Insert `··`                                                                     prettier/prettier
+  273:11  warning  Insert `··`                                                                     prettier/prettier
+  274:1   warning  Insert `··`                                                                     prettier/prettier
+  313:6   warning  'paymentResult' is defined but never used                                       no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/useContextAwareSettings.ts
+   80:9  warning  Unexpected console statement  no-console
+   94:9  warning  Unexpected console statement  no-console
+  107:9  warning  Unexpected console statement  no-console
+  121:9  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/useInstanceApi.js
+  224:21  warning  Replace `⏎··········(instance)·=>·instance.id·!==·instanceId·&&·instance.identifier·!==·instanceId⏎········` with `(instance)·=>·instance.id·!==·instanceId·&&·instance.identifier·!==·instanceId`  prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/useInstanceOrderCreation.ts
+   17:19  warning  'step' is defined but never used                                                                                                      no-unused-vars
+   29:3   warning  'navigate' is defined but never used                                                                                                  no-unused-vars
+  120:38  warning  Replace `(cfg.project_name·||·undefined)` with `cfg.project_name·||·undefined`                                                        prettier/prettier
+  149:51  warning  Replace `·?·{·assignment_scope:·assignmentScopePayload·}` with `⏎··········?·{·assignment_scope:·assignmentScopePayload·}⏎·········`  prettier/prettier
+  150:54  warning  Replace `·?·{·member_user_ids:·sanitizedMemberIds·}` with `⏎··········?·{·member_user_ids:·sanitizedMemberIds·}⏎·········`            prettier/prettier
+  248:7   warning  Unexpected console statement                                                                                                          no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/useInstanceResources.ts
+  32:22  warning  'method' is defined but never used    no-unused-vars
+  32:38  warning  'endpoint' is defined but never used  no-unused-vars
+  32:56  warning  'body' is defined but never used      no-unused-vars
+  71:7   warning  Unexpected console statement          no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/useInstanceTemplates.ts
+  102:17  warning  'id' is defined but never used   no-unused-vars
+  106:15  warning  'err' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/useObjectStorageFormState.ts
+   7:19  warning  'profileId' is defined but never used  no-unused-vars
+   8:19  warning  'profileId' is defined but never used  no-unused-vars
+   8:38  warning  'updates' is defined but never used    no-unused-vars
+   9:24  warning  'profileId' is defined but never used  no-unused-vars
+   9:43  warning  'region' is defined but never used     no-unused-vars
+  10:22  warning  'profileId' is defined but never used  no-unused-vars
+  10:41  warning  'tierKey' is defined but never used    no-unused-vars
+  11:24  warning  'profileId' is defined but never used  no-unused-vars
+  11:43  warning  'months' is defined but never used     no-unused-vars
+  12:27  warning  'profileId' is defined but never used  no-unused-vars
+  12:46  warning  'storageGb' is defined but never used  no-unused-vars
+  13:22  warning  'profileId' is defined but never used  no-unused-vars
+  13:41  warning  'name' is defined but never used       no-unused-vars
+  14:27  warning  'profileId' is defined but never used  no-unused-vars
+  14:46  warning  'unitPrice' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/useObjectStorageLogic.ts
+    8:3   warning  'createServiceProfile' is defined but never used                                                                                                                                                                                  no-unused-vars
+   17:3   warning  'COUNTRY_FALLBACK' is defined but never used                                                                                                                                                                                      no-unused-vars
+   44:5   warning  'region' is defined but never used                                                                                                                                                                                                no-unused-vars
+   45:5   warning  'productType' is defined but never used                                                                                                                                                                                           no-unused-vars
+   46:5   warning  'options' is defined but never used                                                                                                                                                                                               no-unused-vars
+   48:20  warning  'payload' is defined but never used                                                                                                                                                                                               no-unused-vars
+   64:19  warning  'id' is defined but never used                                                                                                                                                                                                    no-unused-vars
+   65:19  warning  'id' is defined but never used                                                                                                                                                                                                    no-unused-vars
+   65:31  warning  'updates' is defined but never used                                                                                                                                                                                               no-unused-vars
+   66:24  warning  'id' is defined but never used                                                                                                                                                                                                    no-unused-vars
+   66:36  warning  'region' is defined but never used                                                                                                                                                                                                no-unused-vars
+   67:22  warning  'id' is defined but never used                                                                                                                                                                                                    no-unused-vars
+   67:34  warning  'tierKey' is defined but never used                                                                                                                                                                                               no-unused-vars
+   68:24  warning  'id' is defined but never used                                                                                                                                                                                                    no-unused-vars
+   68:36  warning  'months' is defined but never used                                                                                                                                                                                                no-unused-vars
+   69:27  warning  'id' is defined but never used                                                                                                                                                                                                    no-unused-vars
+   69:39  warning  'storageGb' is defined but never used                                                                                                                                                                                             no-unused-vars
+   70:22  warning  'id' is defined but never used                                                                                                                                                                                                    no-unused-vars
+   70:34  warning  'name' is defined but never used                                                                                                                                                                                                  no-unused-vars
+   71:27  warning  'id' is defined but never used                                                                                                                                                                                                    no-unused-vars
+   71:39  warning  'unitPrice' is defined but never used                                                                                                                                                                                             no-unused-vars
+   85:23  warning  'code' is defined but never used                                                                                                                                                                                                  no-unused-vars
+   86:24  warning  'locked' is defined but never used                                                                                                                                                                                                no-unused-vars
+   90:20  warning  'type' is defined but never used                                                                                                                                                                                                  no-unused-vars
+   92:25  warning  'id' is defined but never used                                                                                                                                                                                                    no-unused-vars
+   94:23  warning  'id' is defined but never used                                                                                                                                                                                                    no-unused-vars
+  113:30  warning  'option' is defined but never used                                                                                                                                                                                                no-unused-vars
+  128:22  warning  'mode' is defined but never used                                                                                                                                                                                                  no-unused-vars
+  129:14  warning  'step' is defined but never used                                                                                                                                                                                                  no-unused-vars
+  134:17  warning  'options' is defined but never used                                                                                                                                                                                               no-unused-vars
+  135:28  warning  'payload' is defined but never used                                                                                                                                                                                               no-unused-vars
+  137:17  warning  'event' is defined but never used                                                                                                                                                                                                 no-unused-vars
+  137:30  warning  'fastTrackOverride' is defined but never used                                                                                                                                                                                     no-unused-vars
+  137:59  warning  'options' is defined but never used                                                                                                                                                                                               no-unused-vars
+  295:45  warning  Replace `⏎····?·adminContext.setSelectedTenantId⏎···` with `·?·adminContext.setSelectedTenantId`                                                                                                                                  prettier/prettier
+  302:9   warning  The 'tenants' conditional could make the dependencies of useMemo Hook (at line 496) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'tenants' in its own useMemo() Hook    react-hooks/exhaustive-deps
+  304:9   warning  The 'userPool' conditional could make the dependencies of useMemo Hook (at line 526) change on every render. Move it inside the useMemo callback. Alternatively, wrap the initialization of 'userPool' in its own useMemo() Hook  react-hooks/exhaustive-deps
+  308:10  warning  'errors' is assigned a value but never used                                                                                                                                                                                       no-unused-vars
+  309:10  warning  'profileErrors' is assigned a value but never used                                                                                                                                                                                no-unused-vars
+  712:5   warning  React Hook useCallback has a missing dependency: 'canFastTrack'. Either include it or remove the dependency array                                                                                                                 react-hooks/exhaustive-deps
+  813:15  warning  Replace `data?.fast_track·??·data?.fastTrack·??·isFastTrack` with `(data?.fast_track·??·data?.fastTrack·??·isFastTrack)`                                                                                                          prettier/prettier
+  826:54  warning  '_options' is assigned a value but never used                                                                                                                                                                                     no-unused-vars
+  850:33  warning  Replace `⏎··············?·baseName⏎·············` with `·?·baseName`                                                                                                                                                              prettier/prettier
+  903:11  warning  Unexpected console statement                                                                                                                                                                                                      no-console
+  906:9   warning  Unexpected console statement                                                                                                                                                                                                      no-console
+  913:5   warning  React Hook useCallback has unnecessary dependencies: 'contextType' and 'selectedCurrency'. Either exclude them or remove the dependency array                                                                                     react-hooks/exhaustive-deps
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/useObjectStoragePricing.ts
+  179:27  warning  Replace `⏎··········line?.meta?.object_storage?.storage_gb·??⏎··········line?.meta?.storage_gb·??⏎·········` with `·line?.meta?.object_storage?.storage_gb·??·line?.meta?.storage_gb·??`  prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/useProjectBroadcasting.js
+  26:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/useResponsive.js
+  157:39  warning  'isDesktop' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/useTenantBilling.ts
+  126:7  warning  Unexpected console statement  no-console
+  159:7  warning  Unexpected console statement  no-console
+  172:7  warning  Unexpected console statement  no-console
+  234:7  warning  Unexpected console statement  no-console
+  248:7  warning  Unexpected console statement  no-console
+  337:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/useTenantBroadcasting.js
+  23:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/useTenantProvisioningLogic.ts
+    3:10  warning  'Configuration' is defined but never used                                                                                                                              no-unused-vars
+   56:25  warning  Replace `()·=>·buildProvisioningSteps(isFastTrack·?·"fast-track"·:·"standard"),·[` with `⏎····()·=>·buildProvisioningSteps(isFastTrack·?·"fast-track"·:·"standard"),`  prettier/prettier
+   57:5   warning  Replace `isFastTrack,` with `[isFastTrack]`                                                                                                                            prettier/prettier
+   58:3   warning  Delete `]`                                                                                                                                                             prettier/prettier
+  125:9   warning  Unexpected console statement                                                                                                                                           no-console
+  146:9   warning  Unexpected console statement                                                                                                                                           no-console
+  174:9   warning  Unexpected console statement                                                                                                                                           no-console
+  300:57  warning  'index' is defined but never used                                                                                                                                      no-unused-vars
+  332:40  warning  Replace `(cfg.project_name·||·undefined)` with `cfg.project_name·||·undefined`                                                                                         prettier/prettier
+  390:11  warning  Insert `··`                                                                                                                                                            prettier/prettier
+  391:11  warning  Insert `··`                                                                                                                                                            prettier/prettier
+  392:1   warning  Insert `··`                                                                                                                                                            prettier/prettier
+  393:13  warning  Insert `··`                                                                                                                                                            prettier/prettier
+  394:11  warning  Insert `··`                                                                                                                                                            prettier/prettier
+  395:1   warning  Insert `··`                                                                                                                                                            prettier/prettier
+  449:6   warning  'paymentResult' is defined but never used                                                                                                                              no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/useUserBroadcasting.js
+  23:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/volumeExtraHooks.js
+   89:7  warning  Unexpected console statement  no-console
+  102:7  warning  Unexpected console statement  no-console
+  116:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/volumeHooks.js
+  71:7  warning  Unexpected console statement  no-console
+  85:7  warning  Unexpected console statement  no-console
+  98:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/vpcHooks.js
+   90:7  warning  Unexpected console statement  no-console
+  104:7  warning  Unexpected console statement  no-console
+  117:7  warning  Unexpected console statement  no-console
+  130:7  warning  Unexpected console statement  no-console
+  250:7  warning  Unexpected console statement  no-console
+  264:7  warning  Unexpected console statement  no-console
+  277:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/about.jsx
+   1:8   warning  'Certifications' is defined but never used  no-unused-vars
+   2:8   warning  'Navbar' is defined but never used          no-unused-vars
+   9:8   warning  'Ads' is defined but never used             no-unused-vars
+  12:8   warning  'Footer' is defined but never used          no-unused-vars
+  13:10  warning  'motion' is defined but never used          no-unused-vars
+  17:9   warning  'data' is assigned a value but never used   no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/advisory.jsx
+  1:8   warning  'Footer' is defined but never used  no-unused-vars
+  2:8   warning  'Navbar' is defined but never used  no-unused-vars
+  5:10  warning  'Link' is defined but never used    no-unused-vars
+  6:8   warning  'Ads' is defined but never used     no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/blog.jsx
+  1:8   warning  'Footer' is defined but never used  no-unused-vars
+  2:8   warning  'Navbar' is defined but never used  no-unused-vars
+  6:10  warning  'motion' is defined but never used  no-unused-vars
+  9:10  warning  'Link' is defined but never used    no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/career.jsx
+   2:8   warning  'Footer' is defined but never used                         no-unused-vars
+   3:8   warning  'Navbar' is defined but never used                         no-unused-vars
+   4:8   warning  'time' is defined but never used                           no-unused-vars
+   5:8   warning  'dollar' is defined but never used                         no-unused-vars
+   6:8   warning  'pin' is defined but never used                            no-unused-vars
+   7:8   warning  'arrow' is defined but never used                          no-unused-vars
+   8:10  warning  'PageContext' is defined but never used                    no-unused-vars
+   9:10  warning  'Link' is defined but never used                           no-unused-vars
+  16:9   warning  'handleSelectClick' is assigned a value but never used     no-unused-vars
+  20:9   warning  'handleSelectBlur' is assigned a value but never used      no-unused-vars
+  23:9   warning  'handleLocationChange' is assigned a value but never used  no-unused-vars
+  27:9   warning  'filteredCareers' is assigned a value but never used       no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/cms.jsx
+   1:8   warning  'Topbar' is defined but never used          no-unused-vars
+   2:8   warning  'Sidebar' is defined but never used         no-unused-vars
+   7:8   warning  'BlogAdmin' is defined but never used       no-unused-vars
+   8:8   warning  'EventsAdmin' is defined but never used     no-unused-vars
+   9:8   warning  'ResoucesAdmin' is defined but never used   no-unused-vars
+  10:8   warning  'SolutionsAdmin' is defined but never used  no-unused-vars
+  11:8   warning  'Cases' is defined but never used           no-unused-vars
+  12:8   warning  'General' is defined but never used         no-unused-vars
+  13:8   warning  'Board' is defined but never used           no-unused-vars
+  14:8   warning  'Career' is defined but never used          no-unused-vars
+  40:15  warning  'uid' is assigned a value but never used    no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/contact.jsx
+    1:8   warning  'Ads' is defined but never used                                                                                                                                                                                                         no-unused-vars
+    2:8   warning  'Footer' is defined but never used                                                                                                                                                                                                      no-unused-vars
+    3:8   warning  'Navbar' is defined but never used                                                                                                                                                                                                      no-unused-vars
+    4:10  warning  'motion' is defined but never used                                                                                                                                                                                                      no-unused-vars
+   20:23  warning  'setGeneralItem' is assigned a value but never used                                                                                                                                                                                     no-unused-vars
+   29:19  warning  'setLoading' is assigned a value but never used                                                                                                                                                                                         no-unused-vars
+   49:10  warning  'companyNameError' is assigned a value but never used                                                                                                                                                                                   no-unused-vars
+   49:28  warning  'setCompanyNameError' is assigned a value but never used                                                                                                                                                                                no-unused-vars
+   50:10  warning  'companyWebsiteError' is assigned a value but never used                                                                                                                                                                                no-unused-vars
+   50:31  warning  'setCompanyWebsiteError' is assigned a value but never used                                                                                                                                                                             no-unused-vars
+   69:6   warning  React Hook useEffect has an unnecessary dependency: 'countries'. Either exclude it or remove the dependency array. Outer scope values like 'countries' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+  189:9   warning  Unexpected console statement                                                                                                                                                                                                            no-console
+  193:9   warning  Unexpected console statement                                                                                                                                                                                                            no-console
+  197:7   warning  Unexpected console statement                                                                                                                                                                                                            no-console
+  211:78  error    Irregular whitespace not allowed                                                                                                                                                                                                        no-irregular-whitespace
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/detailedSolu.jsx
+   1:8   warning  'Footer' is defined but never used  no-unused-vars
+   2:8   warning  'Navbar' is defined but never used  no-unused-vars
+   3:21  warning  'Link' is defined but never used    no-unused-vars
+   4:10  warning  'useRef' is defined but never used  no-unused-vars
+   7:10  warning  'motion' is defined but never used  no-unused-vars
+  51:13  warning  Unexpected console statement        no-console
+  55:13  warning  Unexpected console statement        no-console
+  60:11  warning  Unexpected console statement        no-console
+  79:9   warning  Unexpected console statement        no-console
+  85:27  warning  'e' is defined but never used       no-unused-vars
+  97:9   warning  Unexpected console statement        no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/detailedblog.jsx
+    1:8   warning  'Footer' is defined but never used  no-unused-vars
+    2:8   warning  'Navbar' is defined but never used  no-unused-vars
+    3:21  warning  'Link' is defined but never used    no-unused-vars
+    4:10  warning  'useRef' is defined but never used  no-unused-vars
+    8:24  warning  'getDoc' is defined but never used  no-unused-vars
+    8:32  warning  'doc' is defined but never used     no-unused-vars
+    9:10  warning  'motion' is defined but never used  no-unused-vars
+   68:13  warning  Unexpected console statement        no-console
+   72:11  warning  Unexpected console statement        no-console
+   92:9   warning  Unexpected console statement        no-console
+   98:27  warning  'e' is defined but never used       no-unused-vars
+  110:9   warning  Unexpected console statement        no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/detailedboard.jsx
+   1:8   warning  'Footer' is defined but never used  no-unused-vars
+   2:8   warning  'Navbar' is defined but never used  no-unused-vars
+   3:21  warning  'Link' is defined but never used    no-unused-vars
+   4:10  warning  'useRef' is defined but never used  no-unused-vars
+   6:24  warning  'getDoc' is defined but never used  no-unused-vars
+   6:32  warning  'doc' is defined but never used     no-unused-vars
+   7:10  warning  'motion' is defined but never used  no-unused-vars
+   8:8   warning  'copy' is defined but never used    no-unused-vars
+  56:13  warning  Unexpected console statement        no-console
+  60:11  warning  Unexpected console statement        no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/detailedcareer.jsx
+    1:8   warning  'Footer' is defined but never used                                                                                                                                                                                                      no-unused-vars
+    2:8   warning  'Navbar' is defined but never used                                                                                                                                                                                                      no-unused-vars
+    3:21  warning  'Link' is defined but never used                                                                                                                                                                                                        no-unused-vars
+    4:10  warning  'useRef' is defined but never used                                                                                                                                                                                                      no-unused-vars
+    7:37  warning  'getDocs' is defined but never used                                                                                                                                                                                                     no-unused-vars
+    7:46  warning  'collection' is defined but never used                                                                                                                                                                                                  no-unused-vars
+    7:58  warning  'query' is defined but never used                                                                                                                                                                                                       no-unused-vars
+    8:10  warning  'motion' is defined but never used                                                                                                                                                                                                      no-unused-vars
+   14:8   warning  'DatePicker' is defined but never used                                                                                                                                                                                                  no-unused-vars
+   57:13  warning  Unexpected console statement                                                                                                                                                                                                            no-console
+   62:11  warning  Unexpected console statement                                                                                                                                                                                                            no-console
+   69:27  warning  'e' is defined but never used                                                                                                                                                                                                           no-unused-vars
+   81:9   warning  Unexpected console statement                                                                                                                                                                                                            no-console
+   89:27  warning  'e' is defined but never used                                                                                                                                                                                                           no-unused-vars
+  151:6   warning  React Hook useEffect has an unnecessary dependency: 'countries'. Either exclude it or remove the dependency array. Outer scope values like 'countries' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+  320:9   warning  Unexpected console statement                                                                                                                                                                                                            no-console
+  325:9   warning  Unexpected console statement                                                                                                                                                                                                            no-console
+  328:7   warning  Unexpected console statement                                                                                                                                                                                                            no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/detailedcase.jsx
+   1:8   warning  'Footer' is defined but never used  no-unused-vars
+   2:8   warning  'Navbar' is defined but never used  no-unused-vars
+   3:21  warning  'Link' is defined but never used    no-unused-vars
+   4:10  warning  'useRef' is defined but never used  no-unused-vars
+   5:8   warning  'React' is defined but never used   no-unused-vars
+  10:10  warning  'motion' is defined but never used  no-unused-vars
+  48:13  warning  Unexpected console statement        no-console
+  52:13  warning  Unexpected console statement        no-console
+  57:11  warning  Unexpected console statement        no-console
+  76:9   warning  Unexpected console statement        no-console
+  82:27  warning  'e' is defined but never used       no-unused-vars
+  94:9   warning  Unexpected console statement        no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/detailedmanage.jsx
+   1:8   warning  'Footer' is defined but never used  no-unused-vars
+   2:8   warning  'Navbar' is defined but never used  no-unused-vars
+   3:21  warning  'Link' is defined but never used    no-unused-vars
+   4:10  warning  'useRef' is defined but never used  no-unused-vars
+   6:24  warning  'getDoc' is defined but never used  no-unused-vars
+   6:32  warning  'doc' is defined but never used     no-unused-vars
+   7:10  warning  'motion' is defined but never used  no-unused-vars
+   8:8   warning  'copy' is defined but never used    no-unused-vars
+  56:13  warning  Unexpected console statement        no-console
+  60:11  warning  Unexpected console statement        no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/detailedresouces.jsx
+   1:8   warning  'Footer' is defined but never used  no-unused-vars
+   2:8   warning  'Navbar' is defined but never used  no-unused-vars
+   3:21  warning  'Link' is defined but never used    no-unused-vars
+   4:10  warning  'useRef' is defined but never used  no-unused-vars
+   7:10  warning  'motion' is defined but never used  no-unused-vars
+  52:13  warning  Unexpected console statement        no-console
+  57:11  warning  Unexpected console statement        no-console
+  76:9   warning  Unexpected console statement        no-console
+  82:27  warning  'e' is defined but never used       no-unused-vars
+  94:9   warning  Unexpected console statement        no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/events.jsx
+  1:8   warning  'Footer' is defined but never used  no-unused-vars
+  2:8   warning  'Navbar' is defined but never used  no-unused-vars
+  3:10  warning  'motion' is defined but never used  no-unused-vars
+  9:10  warning  'Link' is defined but never used    no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/extResource.jsx
+  1:8   warning  'Footer' is defined but never used  no-unused-vars
+  2:8   warning  'Navbar' is defined but never used  no-unused-vars
+  6:10  warning  'motion' is defined but never used  no-unused-vars
+  7:10  warning  'Link' is defined but never used    no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/extResource1.jsx
+  1:8   warning  'Footer' is defined but never used  no-unused-vars
+  2:8   warning  'Navbar' is defined but never used  no-unused-vars
+  5:10  warning  'motion' is defined but never used  no-unused-vars
+  6:10  warning  'Link' is defined but never used    no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/faqPage.jsx
+  1:8   warning  'Navbar' is defined but never used  no-unused-vars
+  3:10  warning  'motion' is defined but never used  no-unused-vars
+  6:8   warning  'Footer' is defined but never used  no-unused-vars
+  8:10  warning  'Link' is defined but never used    no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/landing.jsx
+   1:8   warning  'Acheive' is defined but never used         no-unused-vars
+   2:8   warning  'Ads' is defined but never used             no-unused-vars
+   3:8   warning  'BlogHero' is defined but never used        no-unused-vars
+   4:8   warning  'Carousel' is defined but never used        no-unused-vars
+   5:8   warning  'Certifications' is defined but never used  no-unused-vars
+   6:8   warning  'Faq' is defined but never used             no-unused-vars
+   7:8   warning  'Features' is defined but never used        no-unused-vars
+   8:8   warning  'Footer' is defined but never used          no-unused-vars
+   9:8   warning  'Hero' is defined but never used            no-unused-vars
+  10:8   warning  'Navbar' is defined but never used          no-unused-vars
+  11:10  warning  'motion' is defined but never used          no-unused-vars
+  12:10  warning  'Helmet' is defined but never used          no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/management.jsx
+  1:8   warning  'Footer' is defined but never used  no-unused-vars
+  2:8   warning  'Navbar' is defined but never used  no-unused-vars
+  5:10  warning  'Link' is defined but never used    no-unused-vars
+  6:8   warning  'Ads' is defined but never used     no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/partnership.jsx
+   1:8   warning  'Footer' is defined but never used                no-unused-vars
+   2:8   warning  'Navbar' is defined but never used                no-unused-vars
+   5:10  warning  'motion' is defined but never used                no-unused-vars
+   6:10  warning  'Link' is defined but never used                  no-unused-vars
+  38:7   warning  'PartnerCard' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/press.jsx
+  1:10  warning  'Link' is defined but never used    no-unused-vars
+  2:8   warning  'Footer' is defined but never used  no-unused-vars
+  3:8   warning  'Navbar' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/resources.jsx
+  1:8   warning  'Footer' is defined but never used     no-unused-vars
+  2:8   warning  'Navbar' is defined but never used     no-unused-vars
+  3:8   warning  'arrowdown' is defined but never used  no-unused-vars
+  6:10  warning  'motion' is defined but never used     no-unused-vars
+  9:10  warning  'Link' is defined but never used       no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/services.jsx
+   1:8   warning  'Footer' is defined but never used                      no-unused-vars
+   2:8   warning  'Navbar' is defined but never used                      no-unused-vars
+   3:8   warning  'arrowdown' is defined but never used                   no-unused-vars
+  15:10  warning  'motion' is defined but never used                      no-unused-vars
+  16:8   warning  'mark' is defined but never used                        no-unused-vars
+  19:10  warning  'Link' is defined but never used                        no-unused-vars
+  36:9   warning  'analytics' is assigned a value but never used          no-unused-vars
+  40:10  warning  'activeButton' is assigned a value but never used       no-unused-vars
+  42:9   warning  'handleButtonClick' is assigned a value but never used  no-unused-vars
+  95:9   warning  'plan' is assigned a value but never used               no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/solutions.jsx
+   2:10  warning  'Link' is defined but never used       no-unused-vars
+   6:8   warning  'arrowdown' is defined but never used  no-unused-vars
+   7:8   warning  'Navbar' is defined but never used     no-unused-vars
+   8:8   warning  'Footer' is defined but never used     no-unused-vars
+  10:10  warning  'motion' is defined but never used     no-unused-vars
+  38:29  warning  'index' is defined but never used      no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/terms.jsx
+  1:8   warning  'Footer' is defined but never used  no-unused-vars
+  2:8   warning  'Navbar' is defined but never used  no-unused-vars
+  3:10  warning  'motion' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/routes/AdminRoute.jsx
+  1:8   warning  'React' is defined but never used                  no-unused-vars
+  2:10  warning  'Navigate' is defined but never used               no-unused-vars
+  3:10  warning  'Loader2' is defined but never used                no-unused-vars
+  6:7   warning  'LoaderScreen' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/routes/AdminRoutes.tsx
+  35:8  warning  'AdminMultiQuote' is defined but never used          no-unused-vars
+  37:8  warning  'AdminAdvancedCalculator' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/routes/ClientRoute.jsx
+  1:8   warning  'React' is defined but never used                  no-unused-vars
+  2:10  warning  'Navigate' is defined but never used               no-unused-vars
+  3:10  warning  'Loader2' is defined but never used                no-unused-vars
+  6:7   warning  'LoaderScreen' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/routes/ClientRoutes.jsx
+   1:8   warning  'React' is defined but never used                            no-unused-vars
+   2:10  warning  'Route' is defined but never used                            no-unused-vars
+   3:8   warning  'ClientDashboardLayout' is defined but never used            no-unused-vars
+   4:8   warning  'ClientRoute' is defined but never used                      no-unused-vars
+   5:8   warning  'ClientDashboard' is defined but never used                  no-unused-vars
+   6:8   warning  'ClientProject' is defined but never used                    no-unused-vars
+   7:8   warning  'ClientProjectCreate' is defined but never used              no-unused-vars
+   8:8   warning  'ClientProjectDetails' is defined but never used             no-unused-vars
+   9:8   warning  'ClientInstances' is defined but never used                  no-unused-vars
+  10:8   warning  'ClientInstanceCreate' is defined but never used             no-unused-vars
+  11:8   warning  'ClientProvisioningWizard' is defined but never used         no-unused-vars
+  12:8   warning  'ClientTemplates' is defined but never used                  no-unused-vars
+  14:8   warning  'ClientLaunch' is defined but never used                     no-unused-vars
+  15:8   warning  'ObjectStoragePage' is defined but never used                no-unused-vars
+  16:8   warning  'ClientObjectStoragePurchasePage' is defined but never used  no-unused-vars
+  17:8   warning  'ClientObjectStorageCreate' is defined but never used        no-unused-vars
+  18:8   warning  'ClientObjectStorageDetail' is defined but never used        no-unused-vars
+  19:8   warning  'ClientPricingCalculator' is defined but never used          no-unused-vars
+  20:8   warning  'ClientPaymentHistory' is defined but never used             no-unused-vars
+  21:8   warning  'ClientSettings' is defined but never used                   no-unused-vars
+  22:8   warning  'ClientSupport' is defined but never used                    no-unused-vars
+  23:8   warning  'ClientBillingPage' is defined but never used                no-unused-vars
+  24:8   warning  'ClientKeyPairs' is defined but never used                   no-unused-vars
+  25:8   warning  'ClientNetworkInterfaces' is defined but never used          no-unused-vars
+  26:8   warning  'ClientSubnets' is defined but never used                    no-unused-vars
+  27:8   warning  'ClientSecurityGroups' is defined but never used             no-unused-vars
+  28:8   warning  'ClientElasticIps' is defined but never used                 no-unused-vars
+  29:8   warning  'ClientNatGateways' is defined but never used                no-unused-vars
+  30:8   warning  'ClientRouteTables' is defined but never used                no-unused-vars
+  31:8   warning  'ClientNetworkAcls' is defined but never used                no-unused-vars
+  32:8   warning  'ClientVpcPeering' is defined but never used                 no-unused-vars
+  33:8   warning  'ClientSecurityGroupRules' is defined but never used         no-unused-vars
+  34:8   warning  'ClientDnsManagement' is defined but never used              no-unused-vars
+  35:8   warning  'ClientSnapshots' is defined but never used                  no-unused-vars
+  36:8   warning  'ClientImages' is defined but never used                     no-unused-vars
+  37:8   warning  'ClientAutoScaling' is defined but never used                no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/routes/PublicRoutes.jsx
+   1:8   warning  'React' is defined but never used              no-unused-vars
+   2:10  warning  'Route' is defined but never used              no-unused-vars
+   3:8   warning  'About' is defined but never used              no-unused-vars
+   4:8   warning  'Contact' is defined but never used            no-unused-vars
+   5:8   warning  'FaqPage' is defined but never used            no-unused-vars
+   6:8   warning  'Landing' is defined but never used            no-unused-vars
+   7:8   warning  'Partnership' is defined but never used        no-unused-vars
+   8:8   warning  'Resources' is defined but never used          no-unused-vars
+   9:8   warning  'Services' is defined but never used           no-unused-vars
+  10:8   warning  'Terms' is defined but never used              no-unused-vars
+  11:8   warning  'Solutions' is defined but never used          no-unused-vars
+  12:8   warning  'DetailedSolution' is defined but never used   no-unused-vars
+  13:8   warning  'Events' is defined but never used             no-unused-vars
+  14:8   warning  'Blog' is defined but never used               no-unused-vars
+  15:8   warning  'Cms' is defined but never used                no-unused-vars
+  16:8   warning  'Advisory' is defined but never used           no-unused-vars
+  17:8   warning  'DetailedBlog' is defined but never used       no-unused-vars
+  18:8   warning  'DetailedResources' is defined but never used  no-unused-vars
+  19:8   warning  'DetailedCases' is defined but never used      no-unused-vars
+  20:8   warning  'DetailedBoard' is defined but never used      no-unused-vars
+  21:8   warning  'Career' is defined but never used             no-unused-vars
+  22:8   warning  'DetailedCareer' is defined but never used     no-unused-vars
+  23:8   warning  'Login' is defined but never used              no-unused-vars
+  24:8   warning  'Management' is defined but never used         no-unused-vars
+  25:8   warning  'DetailedManage' is defined but never used     no-unused-vars
+  26:8   warning  'ExtResouce' is defined but never used         no-unused-vars
+  27:8   warning  'ExtResouce1' is defined but never used        no-unused-vars
+  28:8   warning  'VerifyMail' is defined but never used         no-unused-vars
+  29:8   warning  'ForgotPassword' is defined but never used     no-unused-vars
+  30:8   warning  'ResetPassword' is defined but never used      no-unused-vars
+  31:8   warning  'TenantHome' is defined but never used         no-unused-vars
+  32:8   warning  'DashboardSignUpV2' is defined but never used  no-unused-vars
+  33:8   warning  'DashboardLoginV2' is defined but never used   no-unused-vars
+  34:8   warning  'TenantRegister' is defined but never used     no-unused-vars
+  35:8   warning  'TenantLogin' is defined but never used        no-unused-vars
+  37:8   warning  'Press' is defined but never used              no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/routes/TenantRoute.jsx
+  1:8   warning  'React' is defined but never used                  no-unused-vars
+  2:10  warning  'Navigate' is defined but never used               no-unused-vars
+  2:33  warning  'Outlet' is defined but never used                 no-unused-vars
+  3:10  warning  'Loader2' is defined but never used                no-unused-vars
+  7:7   warning  'LoaderScreen' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/routes/TenantRoutes.jsx
+   1:8   warning  'React' is defined but never used                        no-unused-vars
+   2:10  warning  'Route' is defined but never used                        no-unused-vars
+   2:17  warning  'Navigate' is defined but never used                     no-unused-vars
+   3:8   warning  'TenantRoute' is defined but never used                  no-unused-vars
+   4:8   warning  'Dashboard' is defined but never used                    no-unused-vars
+   6:8   warning  'PurchasedModules' is defined but never used             no-unused-vars
+   7:8   warning  'PaymentHistory' is defined but never used               no-unused-vars
+   8:8   warning  'SupportTicket' is defined but never used                no-unused-vars
+   9:8   warning  'ClientsOverview' is defined but never used              no-unused-vars
+  10:8   warning  'Requests' is defined but never used                     no-unused-vars
+  11:8   warning  'Project' is defined but never used                      no-unused-vars
+  12:8   warning  'DashboardProjectCreate' is defined but never used       no-unused-vars
+  13:8   warning  'ProjectDetails' is defined but never used               no-unused-vars
+  14:8   warning  'TenantAccountSettings' is defined but never used        no-unused-vars
+  15:8   warning  'DashboardTaxConfigurations' is defined but never used   no-unused-vars
+  16:8   warning  'Products' is defined but never used                     no-unused-vars
+  17:8   warning  'TenantPricingCalculator' is defined but never used      no-unused-vars
+  18:8   warning  'TenantCreateInvoice' is defined but never used          no-unused-vars
+  19:8   warning  'DashboardInstances' is defined but never used           no-unused-vars
+  21:8   warning  'TenantQuoteCalculator' is defined but never used        no-unused-vars
+  22:8   warning  'DashboardObjectStorage' is defined but never used       no-unused-vars
+  23:8   warning  'TenantObjectStorageCreate' is defined but never used    no-unused-vars
+  24:8   warning  'TenantObjectStoragePurchase' is defined but never used  no-unused-vars
+  25:8   warning  'TenantObjectStorageDetail' is defined but never used    no-unused-vars
+  26:8   warning  'DashboardLeads' is defined but never used               no-unused-vars
+  27:8   warning  'DashboardLeadCreate' is defined but never used          no-unused-vars
+  28:8   warning  'DashboardLeadDetails' is defined but never used         no-unused-vars
+  29:8   warning  'PartnersAndClientsPage' is defined but never used       no-unused-vars
+  30:8   warning  'NewPartnerPage' is defined but never used               no-unused-vars
+  31:8   warning  'PartnerDetailsPage' is defined but never used           no-unused-vars
+  32:8   warning  'EditPartnerPage' is defined but never used              no-unused-vars
+  33:8   warning  'NewClientPage' is defined but never used                no-unused-vars
+  34:8   warning  'ClientDetailsPage' is defined but never used            no-unused-vars
+  35:8   warning  'EditClientPage' is defined but never used               no-unused-vars
+  36:8   warning  'InviteTenantUserPage' is defined but never used         no-unused-vars
+  37:8   warning  'TenantUserDetailsPage' is defined but never used        no-unused-vars
+  38:8   warning  'EditTenantUserPage' is defined but never used           no-unused-vars
+  39:8   warning  'TenantOnboardingOverview' is defined but never used     no-unused-vars
+  40:8   warning  'RegionRequests' is defined but never used               no-unused-vars
+  41:8   warning  'RegionRequestDetail' is defined but never used          no-unused-vars
+  42:8   warning  'NewRegionRequest' is defined but never used             no-unused-vars
+  43:8   warning  'RevenueDashboard' is defined but never used             no-unused-vars
+  44:8   warning  'OnboardingDashboard' is defined but never used          no-unused-vars
+  45:8   warning  'TenantProvisioningWizard' is defined but never used     no-unused-vars
+  46:8   warning  'TenantTemplates' is defined but never used              no-unused-vars
+  47:8   warning  'TenantDiscountManager' is defined but never used        no-unused-vars
+  48:8   warning  'TenantPayoutsPage' is defined but never used            no-unused-vars
+  49:8   warning  'TenantBillingSettings' is defined but never used        no-unused-vars
+  50:8   warning  'TenantInvoicesPage' is defined but never used           no-unused-vars
+  52:3   warning  'TenantKeyPairs' is defined but never used               no-unused-vars
+  53:3   warning  'TenantNetworkInterfaces' is defined but never used      no-unused-vars
+  54:3   warning  'TenantSubnets' is defined but never used                no-unused-vars
+  55:3   warning  'TenantSecurityGroups' is defined but never used         no-unused-vars
+  56:3   warning  'TenantElasticIps' is defined but never used             no-unused-vars
+  57:3   warning  'TenantNatGateways' is defined but never used            no-unused-vars
+  58:3   warning  'TenantRouteTables' is defined but never used            no-unused-vars
+  59:3   warning  'TenantNetworkAcls' is defined but never used            no-unused-vars
+  60:3   warning  'TenantVpcPeering' is defined but never used             no-unused-vars
+  61:3   warning  'TenantSecurityGroupRules' is defined but never used     no-unused-vars
+  62:3   warning  'TenantNetworkAclRules' is defined but never used        no-unused-vars
+  63:3   warning  'TenantLoadBalancers' is defined but never used          no-unused-vars
+  64:3   warning  'LoadBalancerWizard' is defined but never used           no-unused-vars
+  65:3   warning  'TenantLoadBalancerDetail' is defined but never used     no-unused-vars
+  66:3   warning  'TenantDnsManagement' is defined but never used          no-unused-vars
+  67:3   warning  'TenantSnapshots' is defined but never used              no-unused-vars
+  68:3   warning  'TenantImages' is defined but never used                 no-unused-vars
+  69:3   warning  'TenantAutoScaling' is defined but never used            no-unused-vars
+  70:3   warning  'LaunchConfigurationWizard' is defined but never used    no-unused-vars
+  71:3   warning  'AutoScalingGroupWizard' is defined but never used       no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/services/adminRegionApi.js
+   59:7   warning  Unexpected console statement  no-console
+   86:7   warning  Unexpected console statement  no-console
+  118:7   warning  Unexpected console statement  no-console
+  151:7   warning  Unexpected console statement  no-console
+  184:7   warning  Unexpected console statement  no-console
+  216:7   warning  Unexpected console statement  no-console
+  240:7   warning  Unexpected console statement  no-console
+  261:7   warning  Unexpected console statement  no-console
+  284:7   warning  Unexpected console statement  no-console
+  317:7   warning  Unexpected console statement  no-console
+  345:7   warning  Unexpected console statement  no-console
+  381:13  warning  Unexpected console statement  no-console
+  393:7   warning  Unexpected console statement  no-console
+  431:7   warning  Unexpected console statement  no-console
+  474:7   warning  Unexpected console statement  no-console
+  504:7   warning  Unexpected console statement  no-console
+  533:7   warning  Unexpected console statement  no-console
+  566:7   warning  Unexpected console statement  no-console
+  594:7   warning  Unexpected console statement  no-console
+  636:7   warning  Unexpected console statement  no-console
+  672:7   warning  Unexpected console statement  no-console
+  705:7   warning  Unexpected console statement  no-console
+  740:7   warning  Unexpected console statement  no-console
+  769:7   warning  Unexpected console statement  no-console
+  798:7   warning  Unexpected console statement  no-console
+  827:7   warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/services/instanceApi.js
+   67:7   warning  Unexpected console statement                 no-console
+   94:7   warning  Unexpected console statement                 no-console
+  123:7   warning  Unexpected console statement                 no-console
+  153:7   warning  Unexpected console statement                 no-console
+  182:7   warning  Unexpected console statement                 no-console
+  195:51  warning  'params' is assigned a value but never used  no-unused-vars
+  196:5   warning  Unexpected console statement                 no-console
+  222:9   warning  Insert `··`                                  prettier/prettier
+  223:1   warning  Insert `··`                                  prettier/prettier
+  224:1   warning  Insert `··`                                  prettier/prettier
+  240:7   warning  Unexpected console statement                 no-console
+  268:5   warning  Unexpected console statement                 no-console
+  322:7   warning  Unexpected console statement                 no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/services/tenantRegionApi.js
+   54:7  warning  Unexpected console statement  no-console
+   83:7  warning  Unexpected console statement  no-console
+  111:7  warning  Unexpected console statement  no-console
+  140:7  warning  Unexpected console statement  no-console
+  169:7  warning  Unexpected console statement  no-console
+  202:7  warning  Unexpected console statement  no-console
+  235:7  warning  Unexpected console statement  no-console
+  265:7  warning  Unexpected console statement  no-console
+  304:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/stores/clientAuthStore.js
+  38:11  warning  '_get' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/stores/sidebarStore.ts
+   8:18  warning  'value' is defined but never used  no-unused-vars
+  10:19  warning  'value' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/stores/templateCartStore.ts
+  13:15  warning  'template' is defined but never used    no-unused-vars
+  13:30  warning  'quantity' is defined but never used    no-unused-vars
+  14:20  warning  'templateId' is defined but never used  no-unused-vars
+  15:20  warning  'templateId' is defined but never used  no-unused-vars
+  15:40  warning  'quantity' is defined but never used    no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/types/images.d.ts
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to override
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/utils/VerificationCodeInput.tsx
+    8:19  warning  'code' is defined but never used  no-unused-vars
+    9:17  warning  'code' is defined but never used  no-unused-vars
+   17:25  warning  Delete `·`                        prettier/prettier
+   18:23  warning  Delete `·`                        prettier/prettier
+   19:21  warning  Delete `·`                        prettier/prettier
+  158:70  warning  Insert `⏎··············`          prettier/prettier
+  161:1   warning  Delete `··`                       prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/utils/createApiClient.js
+   24:7   warning  Unexpected console statement  no-console
+   29:3   warning  Unexpected console statement  no-console
+  222:11  warning  Unexpected console statement  no-console
+  248:7   warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/utils/fastTrackUtils.js
+  36:3  warning  'lineTotals' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/utils/fileInput.jsx
+  1:8   warning  'React' is defined but never used        no-unused-vars
+  2:10  warning  'Upload' is defined but never used       no-unused-vars
+  2:18  warning  'CheckCircle' is defined but never used  no-unused-vars
+  2:31  warning  'X' is defined but never used            no-unused-vars
+  7:3   warning  'field' is defined but never used        no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/utils/productImportUtils.ts
+  1:19  warning  'xlsxUtils' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/utils/projectExport.js
+  168:5  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/utils/projectUtils.jsx
+    1:10  warning  'Activity' is defined but never used     no-unused-vars
+    1:20  warning  'AlertCircle' is defined but never used  no-unused-vars
+    1:33  warning  'Check' is defined but never used        no-unused-vars
+    1:40  warning  'Clock' is defined but never used        no-unused-vars
+    1:47  warning  'Loader2' is defined but never used      no-unused-vars
+    1:56  warning  'XCircle' is defined but never used      no-unused-vars
+  245:5   warning  Unexpected console statement             no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/utils/queryProvider.jsx
+   2:23  warning  'QueryClientProvider' is defined but never used  no-unused-vars
+   3:10  warning  'Suspense' is defined but never used             no-unused-vars
+  15:15  warning  Unexpected console statement                     no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/utils/skeletonModules.jsx
+  1:8  warning  'Skeleton' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/utils/testInfrastructureApi.js
+  23:7  warning  Unexpected console statement  no-console
+  26:7  warning  Unexpected console statement  no-console
+  49:7  warning  Unexpected console statement  no-console
+  52:7  warning  Unexpected console statement  no-console
+  84:7  warning  Unexpected console statement  no-console
+  87:7  warning  Unexpected console statement  no-console
+
+✖ 1031 problems (4 errors, 1027 warnings)
+  0 errors and 63 warnings potentially fixable with the `--fix` option.
+

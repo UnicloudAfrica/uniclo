@@ -2,19 +2,15 @@ import { BellRing, CircleHelp, Menu } from "lucide-react";
 import logo from "./assets/logo.png";
 import { useLocation } from "react-router-dom";
 import { useFetchProfile } from "../../hooks/resource";
-import {
-  useApplyBrandingTheme,
-  useTenantBrandingTheme,
-} from "../../hooks/useBrandingTheme";
+import { useApplyBrandingTheme, useTenantBrandingTheme } from "../../hooks/useBrandingTheme";
 import { designTokens } from "../../styles/designTokens";
 
 const Headbar = ({ onMenuClick }) => {
   const location = useLocation();
   const { data: profile, isFetching: isProfileFetching } = useFetchProfile();
-  const { data: branding, isFetching: isBrandingFetching } =
-    useTenantBrandingTheme();
+  const { data: branding, isFetching: isBrandingFetching } = useTenantBrandingTheme();
 
-  useApplyBrandingTheme(branding, { fallbackLogo: logo });
+  useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
 
   // Map URL path segments to human-readable names
   const pathMap = {
@@ -29,15 +25,10 @@ const Headbar = ({ onMenuClick }) => {
 
   // Get the active page name
   const getActivePageName = () => {
-    const pathSegments = location.pathname
-      .split("/")
-      .filter((segment) => segment); // Remove empty segments
+    const pathSegments = location.pathname.split("/").filter((segment) => segment); // Remove empty segments
     if (pathSegments.length === 0) return "Home";
     const lastSegment = pathSegments[pathSegments.length - 1];
-    return (
-      pathMap[lastSegment] ||
-      lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1)
-    );
+    return pathMap[lastSegment] || lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);
   };
 
   // Get user initials
@@ -72,11 +63,7 @@ const Headbar = ({ onMenuClick }) => {
             <img
               src={branding?.logo ?? logo}
               className="max-h-[54px] max-w-[160px] object-contain"
-              alt={
-                branding?.company?.name
-                  ? `${branding.company.name} Logo`
-                  : "Portal Logo"
-              }
+              alt={branding?.company?.name ? `${branding.company.name} Logo` : "Portal Logo"}
             />
           </a>
         )}
@@ -133,9 +120,7 @@ const Headbar = ({ onMenuClick }) => {
           <button onClick={onMenuClick}>
             <Menu />
           </button>
-          <p className="font-semibold text-base text-[#1C1C1C]">
-            {activePageName}
-          </p>
+          <p className="font-semibold text-base text-[#1C1C1C]">{activePageName}</p>
         </div>
         <div className="flex items-center border border-[#ECEDF0] justify-center rounded-[8px] w-10 h-10">
           <BellRing className="text-[#1C1C1C] w-4" />

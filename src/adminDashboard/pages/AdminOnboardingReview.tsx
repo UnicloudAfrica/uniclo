@@ -12,8 +12,6 @@ import {
   Send,
   Users,
 } from "lucide-react";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell";
 import { ModernCard } from "../../shared/components/ui";
 import { ModernButton } from "../../shared/components/ui";
@@ -1017,8 +1015,6 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
   };
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title={title}
         description={description}

@@ -9,8 +9,6 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
 } from "lucide-react";
-import AdminHeadbar from "../../components/adminHeadbar";
-import AdminSidebar from "../../components/AdminSidebar";
 import AdminPageShell from "../../components/AdminPageShell";
 import ModernButton from "../../../shared/components/ui/ModernButton";
 import ModernCard from "../../../shared/components/ui/ModernCard";
@@ -18,7 +16,7 @@ import {
   useSecurityGroupRules,
   useAddSecurityGroupRule,
   useRemoveSecurityGroupRule,
-} from "../../../hooks/adminHooks/vpcInfraHooks";
+} from "../../../shared/hooks/vpcInfraHooks";
 
 interface SecurityGroupRule {
   ip_protocol: string;
@@ -49,6 +47,7 @@ const AdminSecurityGroupRules: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const projectId = searchParams.get("project") || "";
+  const region = searchParams.get("region") || "";
   const securityGroupId = searchParams.get("sg") || "";
   const securityGroupName = searchParams.get("name") || "Security Group";
 
@@ -60,7 +59,11 @@ const AdminSecurityGroupRules: React.FC = () => {
   const [cidr, setCidr] = useState("0.0.0.0/0");
   const [description, setDescription] = useState("");
 
-  const { data: rulesData, isLoading, refetch } = useSecurityGroupRules(projectId, securityGroupId);
+  const {
+    data: rulesData,
+    isLoading,
+    refetch,
+  } = useSecurityGroupRules(projectId, securityGroupId, region);
   const { mutate: addRule, isPending: isAdding } = useAddSecurityGroupRule();
   const { mutate: removeRule, isPending: isRemoving } = useRemoveSecurityGroupRule();
 
@@ -71,6 +74,7 @@ const AdminSecurityGroupRules: React.FC = () => {
     addRule(
       {
         projectId,
+        region,
         securityGroupId,
         payload: {
           direction,
@@ -93,6 +97,7 @@ const AdminSecurityGroupRules: React.FC = () => {
     if (confirm("Are you sure you want to remove this rule?")) {
       removeRule({
         projectId,
+        region,
         securityGroupId,
         payload: {
           direction,
@@ -172,34 +177,42 @@ const AdminSecurityGroupRules: React.FC = () => {
                 </td>
               </tr>
             ) : (
-              rules.map((rule, idx) => (
-                <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                  <td className="py-2 px-4">
-                    <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded">
-                      {rule.ip_protocol?.toUpperCase() === "-1"
-                        ? "ALL"
-                        : rule.ip_protocol?.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="py-2 px-4 font-mono text-sm">
-                    {formatPortRange(rule.from_port, rule.to_port)}
-                  </td>
-                  <td className="py-2 px-4">
-                    <span className="text-sm font-mono text-gray-600">
-                      {rule.ip_ranges?.[0]?.cidr_ip || "All"}
-                    </span>
-                  </td>
-                  <td className="py-2 px-4 text-right">
-                    <button
-                      onClick={() => handleRemoveRule(rule, direction)}
-                      disabled={isRemoving}
-                      className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))
+              rules.map((rule, idx) => {
+                const rawProtocol = rule.ip_protocol;
+                const protocol =
+                  typeof rawProtocol === "string" || typeof rawProtocol === "number"
+                    ? String(rawProtocol)
+                    : "";
+                const protocolLabel =
+                  protocol === "-1" ? "ALL" : protocol ? protocol.toUpperCase() : "—";
+
+                return (
+                  <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                    <td className="py-2 px-4">
+                      <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded">
+                        {protocolLabel}
+                      </span>
+                    </td>
+                    <td className="py-2 px-4 font-mono text-sm">
+                      {formatPortRange(rule.from_port, rule.to_port)}
+                    </td>
+                    <td className="py-2 px-4">
+                      <span className="text-sm font-mono text-gray-600">
+                        {rule.ip_ranges?.[0]?.cidr_ip || "All"}
+                      </span>
+                    </td>
+                    <td className="py-2 px-4 text-right">
+                      <button
+                        onClick={() => handleRemoveRule(rule, direction)}
+                        disabled={isRemoving}
+                        className="p-1.5 text-red-500 hover:bg-red-50 rounded transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
@@ -209,8 +222,6 @@ const AdminSecurityGroupRules: React.FC = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title="Security Group Rules"
         description={`${securityGroupName} (${securityGroupId})`}

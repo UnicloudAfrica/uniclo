@@ -5,12 +5,27 @@ import logo from "./assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useForgotPassword } from "../../hooks/authHooks";
 import useTenantAuthStore from "../../stores/tenantAuthStore";
+import {
+  resolveBrandLogo,
+  useApplyBrandingTheme,
+  usePublicBrandingTheme,
+} from "../../hooks/useBrandingTheme";
+import { getSubdomain } from "../../utils/getSubdomain";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState({});
   const { mutate: forgotPassword, isPending } = useForgotPassword();
   const { userEmail, setUserEmail } = useTenantAuthStore.getState();
+  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+  const subdomain = typeof window !== "undefined" ? getSubdomain() : null;
+  const { data: branding } = usePublicBrandingTheme({
+    domain: hostname,
+    subdomain,
+  });
+  useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
+  const logoSrc = resolveBrandLogo(branding, logo);
+  const logoAlt = branding?.company?.name ? `${branding.company.name} Logo` : "Logo";
 
   const navigate = useNavigate();
 
@@ -58,18 +73,15 @@ export default function ForgotPassword() {
           {/* Logo */}
           <div className="mb-8">
             <div className="flex items-center justify-center">
-              <img src={logo} className="w-[100px]" alt="Logo" />
+              <img src={logoSrc} className="w-[100px]" alt={logoAlt} />
             </div>
           </div>
 
           {/* Welcome Title */}
           <div className="mb-8 w-full text-center">
-            <h1 className="text-2xl font-semibold text-[#121212] mb-2">
-              Forgot Password
-            </h1>
+            <h1 className="text-2xl font-semibold text-[#121212] mb-2">Forgot Password</h1>
             <p className="text-[#676767] text-sm">
-              Enter your email address to reset your password. We will send you
-              a verification code.
+              Enter your email address to reset your password. We will send you a verification code.
             </p>
           </div>
 
@@ -77,10 +89,7 @@ export default function ForgotPassword() {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email Field */}
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email
               </label>
               <input
@@ -93,9 +102,7 @@ export default function ForgotPassword() {
                   errors.email ? "border-red-500" : "border-gray-300"
                 }`}
               />
-              {errors.email && (
-                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-              )}
+              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
             </div>
 
             {/* General Error */}
@@ -109,18 +116,12 @@ export default function ForgotPassword() {
               disabled={isPending}
               className="w-full bg-[#288DD1] hover:bg-[#6db1df] text-white font-semibold py-3 px-4 rounded-[30px] transition-colors focus:outline-none focus:ring-1 focus:ring-[#288DD1] focus:ring-offset-2 flex items-center justify-center"
             >
-              {isPending ? (
-                <Loader2 className="w-4 text-white animate-spin" />
-              ) : (
-                "Send Reset Code"
-              )}
+              {isPending ? <Loader2 className="w-4 text-white animate-spin" /> : "Send Reset Code"}
             </button>
 
             {/* Back to Login Link */}
             <div className="text-center">
-              <span className="text-sm text-[#1E1E1E99]">
-                Remember your password?{" "}
-              </span>
+              <span className="text-sm text-[#1E1E1E99]">Remember your password? </span>
               <Link
                 to="/sign-in"
                 type="button"

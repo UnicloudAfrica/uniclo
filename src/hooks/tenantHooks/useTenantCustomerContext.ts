@@ -77,7 +77,7 @@ export const useTenantCustomerContext = (options: { enabled?: boolean } = {}) =>
   const isSelfSelected = selectedTenantId && String(selectedTenantId) === String(selfTenantId);
 
   const { data: sharedClients = [], isFetching: isSharedClientsFetching } = useSharedClients(
-    contextType === "user" ? selectedTenantId || null : null,
+    contextType === "user" ? ((selectedTenantId || null) as any) : null,
     { enabled: enabled && contextType === "user" && (isSelfSelected || !selectedTenantIdentifier) }
   );
 
@@ -104,7 +104,10 @@ export const useTenantCustomerContext = (options: { enabled?: boolean } = {}) =>
 
   useEffect(() => {
     if (contextType === "unassigned") {
-      setSelectedTenantId("");
+      // "Unassigned" means internal team use - assign to self tenant
+      if (selfTenantId) {
+        setSelectedTenantId(String(selfTenantId));
+      }
       setSelectedUserId("");
       return;
     }
@@ -117,7 +120,10 @@ export const useTenantCustomerContext = (options: { enabled?: boolean } = {}) =>
   const handleContextTypeChange = (type: string) => {
     setContextType(type);
     if (type === "unassigned") {
-      setSelectedTenantId("");
+      // "Unassigned" = internal team use, assign to self tenant
+      if (selfTenantId) {
+        setSelectedTenantId(String(selfTenantId));
+      }
       setSelectedUserId("");
       return;
     }

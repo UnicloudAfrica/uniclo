@@ -2,6 +2,8 @@
 import React from "react";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import CheckboxGroup from "./checkboxGroup";
+import { DEFAULT_PRESETS } from "../../../shared/components/network/NetworkPresetSelector";
+import { useNetworkPresets } from "../../../hooks/networkPresetHooks";
 
 const ResourceAllocationStep = ({
   formData,
@@ -40,6 +42,50 @@ const ResourceAllocationStep = ({
       currency: currency || "USD",
     }).format(amount);
   };
+  const { data: networkPresets = DEFAULT_PRESETS } = useNetworkPresets();
+  const presetCatalog = React.useMemo(
+    () =>
+      Array.isArray(networkPresets) && networkPresets.length > 0 ? networkPresets : DEFAULT_PRESETS,
+    [networkPresets]
+  );
+  const requiredEipPresetIds = React.useMemo(
+    () => new Set(presetCatalog.filter((preset) => preset.requiresEip).map((preset) => preset.id)),
+    [presetCatalog]
+  );
+  const selectedProjectPresetId =
+    formData?.selectedProject?.metadata?.network_preset ||
+    formData?.selectedProject?.network_preset ||
+    "";
+  const isPresetRequiresEip = requiredEipPresetIds.has(String(selectedProjectPresetId));
+  const presetSyncRef = React.useRef<string | null>(null);
+
+  React.useEffect(() => {
+    if (!selectedProjectPresetId || !formData?.selectedProject?.id) {
+      return;
+    }
+
+    const key = `${formData.selectedProject.id}:${selectedProjectPresetId}`;
+    if (presetSyncRef.current === key) {
+      return;
+    }
+    presetSyncRef.current = key;
+
+    const shouldAttach = requiredEipPresetIds.has(String(selectedProjectPresetId));
+    const isEnabled = Number(formData.floating_ip_count || 0) > 0;
+    if (shouldAttach === isEnabled) {
+      return;
+    }
+
+    updateFormData("floating_ip_count", shouldAttach ? 1 : 0);
+    updateFormData("selectedFloatingIp", shouldAttach ? (floatingIps?.[0] ?? null) : null);
+  }, [
+    floatingIps,
+    formData?.floating_ip_count,
+    formData?.selectedProject?.id,
+    requiredEipPresetIds,
+    selectedProjectPresetId,
+    updateFormData,
+  ]);
 
   return (
     <div className="w-full">
@@ -288,71 +334,34 @@ const ResourceAllocationStep = ({
             )}
           </div>
 
-          <div className="space-y-4">
-            <div>
-              <label
-                htmlFor="floating_ip_id"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Floating IP
-              </label>
-              <span
-                className={`w-full input-field block transition-all ${
-                  errors.selectedFloatingIp ? "border-red-500 border" : "border-gray-300"
-                }`}
-              >
-                {isFloatingIpsFetching ? (
-                  <div className="flex items-center ">
-                    <Loader2 className="w-4 h-4 animate-spin mr-2 text-gray-500" />
-                    <span className="text-gray-500 text-sm">Loading floating IPs...</span>
-                  </div>
-                ) : floatingIps && floatingIps.length > 0 ? (
-                  <select
-                    id="floating_ip_id"
-                    value={formData.selectedFloatingIp?.product?.id || ""}
-                    onChange={(e) => {
-                      handleSelectChange("selectedFloatingIp", e.target.value, floatingIps);
-                      updateFormData("floating_ip_count", e.target.value ? 1 : 0);
-                    }}
-                    className="w-full bg-transparent outline-none "
-                    disabled={isSubmissionPending}
-                  >
-                    <option value="">Select a Floating IP</option>
-                    {floatingIps.map(({ product, pricing }: any) => (
-                      <option key={product.id} value={product.id}>
-                        {product.name}: {product.productable_name} -{" "}
-                        {formatCurrency(pricing.effective.price_local, pricing.effective.currency)}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <div className="flex items-center py-2 text-gray-500 text-sm">
-                    No floating IPs available.
-                  </div>
-                )}
-              </span>
-            </div>
-            {formData.selectedFloatingIp && (
-              <div>
-                <label
-                  htmlFor="floating_ip_count"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Floating IP Count<span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="floating_ip_count"
-                  type="number"
-                  value={formData.floating_ip_count}
-                  onChange={(e) => updateFormData("floating_ip_count", e.target.value)}
-                  placeholder="Enter count"
-                  min="1"
-                  className={`w-full input-field ${
-                    errors.floating_ip_count ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-              </div>
-            )}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Attach EIP when provisioning
+            </label>
+            <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                checked={Number(formData.floating_ip_count || 0) > 0}
+                disabled={isPresetRequiresEip || isSubmissionPending}
+                onChange={(e) => {
+                  const enabled = e.target.checked;
+                  updateFormData("floating_ip_count", enabled ? 1 : 0);
+                  updateFormData("selectedFloatingIp", enabled ? (floatingIps?.[0] ?? null) : null);
+                }}
+              />
+              <span>Allocate and attach one Elastic IP.</span>
+              {isPresetRequiresEip && (
+                <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                  Required by preset
+                </span>
+              )}
+            </label>
+            <p className="text-xs text-gray-500">
+              {isPresetRequiresEip
+                ? "This preset requires an EIP; this is locked on."
+                : "When enabled, one EIP is reserved and attached during provisioning."}
+            </p>
           </div>
 
           <div>

@@ -1,9 +1,20 @@
 import React, { useMemo } from "react";
-import { Server, HardDrive, Network, Calendar, Cpu, Image, KeyRound, Folder, Shield } from "lucide-react";
+import {
+  Server,
+  HardDrive,
+  Network,
+  Calendar,
+  Cpu,
+  Image,
+  KeyRound,
+  Folder,
+  Shield,
+} from "lucide-react";
 import { Configuration } from "../../../types/InstanceConfiguration";
 import { ModernCard } from "../ui";
 import { DEFAULT_PRESETS } from "../network/NetworkPresetSelector";
 import { formatCurrencyValue, toNumber } from "../../../utils/instanceCreationUtils";
+import { useNetworkPresets } from "../../../hooks/networkPresetHooks";
 
 interface ConfigurationSummary {
   id: string;
@@ -55,6 +66,12 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
   effectivePaymentOption,
   backendPricingData,
 }) => {
+  const { data: networkPresets = DEFAULT_PRESETS } = useNetworkPresets();
+  const presetCatalog = useMemo(
+    () =>
+      Array.isArray(networkPresets) && networkPresets.length > 0 ? networkPresets : DEFAULT_PRESETS,
+    [networkPresets]
+  );
   const resourceLabelPlural = resourceLabel.toLowerCase().endsWith("s")
     ? resourceLabel
     : `${resourceLabel}s`;
@@ -65,8 +82,8 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
     return new Map(configurationSummaries.map((summary) => [summary.id, summary]));
   }, [configurationSummaries]);
   const presetMap = useMemo(
-    () => new Map(DEFAULT_PRESETS.map((preset) => [preset.id, preset.name])),
-    []
+    () => new Map(presetCatalog.map((preset) => [preset.id, preset.name])),
+    [presetCatalog]
   );
   const totalInstances = configurations.reduce(
     (sum, cfg) => sum + Number(cfg.instance_count || 0),
@@ -81,17 +98,11 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
   const gatewayTotal = toNumber(
     gatewayBreakdown?.grand_total ?? effectivePaymentOption?.total ?? 0
   );
-  const gatewayFees = toNumber(
-    gatewayBreakdown?.total_fees ?? summaryGatewayFeesValue ?? 0
-  );
+  const gatewayFees = toNumber(gatewayBreakdown?.total_fees ?? summaryGatewayFeesValue ?? 0);
   const payableTotal =
-    gatewayTotal > 0
-      ? gatewayTotal
-      : estimatedTotalResolved + (gatewayFees || 0);
-  const difference =
-    estimatedTotalResolved > 0 ? payableTotal - estimatedTotalResolved : 0;
-  const showPricingBreakdown =
-    estimatedTotalResolved > 0 || gatewayFees !== 0 || payableTotal > 0;
+    gatewayTotal > 0 ? gatewayTotal : estimatedTotalResolved + (gatewayFees || 0);
+  const difference = estimatedTotalResolved > 0 ? payableTotal - estimatedTotalResolved : 0;
+  const showPricingBreakdown = estimatedTotalResolved > 0 || gatewayFees !== 0 || payableTotal > 0;
   const displayCurrency =
     summaryDisplayCurrency ||
     backendPricingData?.currency ||
@@ -103,15 +114,15 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
       const summary = summaryById.get(cfg.id);
       return Boolean(
         cfg.region ||
-          cfg.compute_instance_id ||
-          cfg.os_image_id ||
-          cfg.volume_type_id ||
-          cfg.compute_label ||
-          cfg.os_image_label ||
-          cfg.volume_type_label ||
-          summary?.computeLabel ||
-          summary?.osLabel ||
-          summary?.storageLabel
+        cfg.compute_instance_id ||
+        cfg.os_image_id ||
+        cfg.volume_type_id ||
+        cfg.compute_label ||
+        cfg.os_image_label ||
+        cfg.volume_type_label ||
+        summary?.computeLabel ||
+        summary?.osLabel ||
+        summary?.storageLabel
       );
     });
   const sanitizeLabel = (label?: string) => {
@@ -200,8 +211,7 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
                     : cfg.project_name || cfg.project_id;
                 const networkPresetLabel =
                   cfg.project_mode === "new" || cfg.template_locked
-                    ? presetMap.get(String(cfg.network_preset || "")) ||
-                      (cfg.network_preset || "")
+                    ? presetMap.get(String(cfg.network_preset || "")) || cfg.network_preset || ""
                     : "";
                 const securityGroupCount = Array.isArray(cfg.security_group_ids)
                   ? cfg.security_group_ids.length
@@ -217,15 +227,11 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
                   (sanitizeLabel(summary?.osLabel) || sanitizeLabel(cfg.os_image_label));
                 const storageLabelBase =
                   cfg.volume_type_id &&
-                  (sanitizeLabel(summary?.storageLabel) ||
-                    sanitizeLabel(cfg.volume_type_label));
+                  (sanitizeLabel(summary?.storageLabel) || sanitizeLabel(cfg.volume_type_label));
                 const shouldAppendSize =
-                  cfg.storage_size_gb &&
-                  !storageLabelBase?.toLowerCase().includes("gb");
+                  cfg.storage_size_gb && !storageLabelBase?.toLowerCase().includes("gb");
                 const storageLabel = storageLabelBase
-                  ? `${storageLabelBase}${
-                      shouldAppendSize ? ` • ${cfg.storage_size_gb} GB` : ""
-                    }`
+                  ? `${storageLabelBase}${shouldAppendSize ? ` • ${cfg.storage_size_gb} GB` : ""}`
                   : "";
                 const keypairLabel =
                   cfg.keypair_name &&
@@ -327,10 +333,23 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
                         </div>
                       )}
 
-                      {cfg.storage_size_gb && (
+                      {cfg.storage_size_gb && Number(cfg.storage_size_gb) > 0 && (
                         <div className="flex items-center gap-2 text-slate-600">
                           <HardDrive className="h-3 w-3 flex-shrink-0" />
-                          <span>{cfg.storage_size_gb} GB storage</span>
+                          <span>Root Disk: {cfg.storage_size_gb} GB</span>
+                        </div>
+                      )}
+
+                      {cfg.volume_types && cfg.volume_types.length > 0 && (
+                        <div className="pl-5 border-l-2 border-slate-100 space-y-1">
+                          {cfg.volume_types.map((vol, vIdx) => (
+                            <div key={vIdx} className="flex items-center gap-2 text-slate-500">
+                              <HardDrive className="h-3 w-3 flex-shrink-0" />
+                              <span>
+                                Data Vol {vIdx + 1}: {vol.storage_size_gb} GB
+                              </span>
+                            </div>
+                          ))}
                         </div>
                       )}
 

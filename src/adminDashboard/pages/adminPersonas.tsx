@@ -1,7 +1,5 @@
 // @ts-nocheck
 import React, { useState } from "react";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import AdminPageShell from "../components/AdminPageShell.tsx";
 import ProductSideMenu from "./inventoryComponents/productssidemenu";
@@ -9,8 +7,6 @@ import ProductSideMenu from "./inventoryComponents/productssidemenu";
 export default function AdminPersonas() {
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminActiveTab />
       <AdminPageShell
         title="Product Personas"

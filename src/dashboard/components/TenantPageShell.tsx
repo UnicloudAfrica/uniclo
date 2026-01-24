@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Loader2 } from "lucide-react";
 import TenantHeadbar from "../../tenantDashboard/components/TenantHeadbar";
 import TenantSidebar from "../../tenantDashboard/components/TenantSidebar";
@@ -22,8 +22,6 @@ const TenantPageShell: React.FC<TenantPageShellProps> = ({
   children,
   ...shellProps
 }) => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("home");
   const { isLoading } = useAuthRedirect();
   const { data: theme } = useTenantBrandingTheme();
 
@@ -31,14 +29,6 @@ const TenantPageShell: React.FC<TenantPageShellProps> = ({
     name: theme?.company?.name || "Tenant",
     logo: theme?.logo || "",
     color: theme?.accentColor || "#1C1C1C",
-  };
-
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen((prev) => !prev);
-  };
-
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
   };
 
   if (isLoading) {
@@ -51,8 +41,8 @@ const TenantPageShell: React.FC<TenantPageShellProps> = ({
 
   return (
     <>
-      <TenantHeadbar tenantData={tenantData} onMenuClick={toggleMobileMenu} />
-      <TenantSidebar tenantData={tenantData} activeTab={activeTab} setActiveTab={setActiveTab} />
+      <TenantHeadbar tenantData={tenantData} />
+      <TenantSidebar tenantData={tenantData} />
       <ActiveTab />
       <DashboardPageShell
         homeHref="/dashboard"

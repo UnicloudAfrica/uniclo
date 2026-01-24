@@ -14,8 +14,6 @@ import {
   Phone,
   Filter,
 } from "lucide-react";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import { ModernButton } from "../../shared/components/ui";
 import { ModernCard } from "../../shared/components/ui";
 import { useFetchLeads, useFetchLeadStats } from "../../hooks/adminHooks/leadsHook";
@@ -680,8 +678,6 @@ export default function AdminLeads() {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         description="Stay on top of every inquiry—from first contact to close—and spot which prospects need attention next."
         contentClassName="space-y-8"

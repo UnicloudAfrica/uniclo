@@ -304,7 +304,7 @@ const QuoteFinalReviewStep = ({
                 >
                   <div>
                     <p className="text-sm font-medium text-slate-900">
-                      {item._display?.name || "Object Storage"}
+                      {item._display?.name || "Silo Storage"}
                     </p>
                     <p className="text-xs text-slate-500">
                       {item.region} • {item.quantity} GB

@@ -1,8 +1,6 @@
 // @ts-nocheck
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell";
 import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
 import AddClientModal from "./clientComps/AddClient";
@@ -15,8 +13,6 @@ const AdminClientCreate = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title="Add Client"
         description="Create a new client profile and assign the appropriate tenant."

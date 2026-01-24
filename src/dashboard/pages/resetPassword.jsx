@@ -6,6 +6,12 @@ import { Link, useNavigate } from "react-router-dom";
 import useTenantAuthStore from "../../stores/tenantAuthStore";
 import { useResetPassword } from "../../hooks/authHooks";
 import { useResendOTP } from "../../hooks/authHooks";
+import {
+  resolveBrandLogo,
+  useApplyBrandingTheme,
+  usePublicBrandingTheme,
+} from "../../hooks/useBrandingTheme";
+import { getSubdomain } from "../../utils/getSubdomain";
 
 export default function ResetPassword() {
   const { userEmail, clearUserEmail } = useTenantAuthStore.getState();
@@ -13,10 +19,18 @@ export default function ResetPassword() {
   const [otp, setOtp] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
-  const { mutate: resetPassword, isPending: isResetPending } =
-    useResetPassword();
+  const { mutate: resetPassword, isPending: isResetPending } = useResetPassword();
   const { mutate: resendOtp, isPending: isResendPending } = useResendOTP();
   const navigate = useNavigate();
+  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+  const subdomain = typeof window !== "undefined" ? getSubdomain() : null;
+  const { data: branding } = usePublicBrandingTheme({
+    domain: hostname,
+    subdomain,
+  });
+  useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
+  const logoSrc = resolveBrandLogo(branding, logo);
+  const logoAlt = branding?.company?.name ? `${branding.company.name} Logo` : "Logo";
 
   // Timer state for resend OTP
   const [timeLeft, setTimeLeft] = useState(0); // Start with 0, set to 50 on success
@@ -39,9 +53,7 @@ export default function ResetPassword() {
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs
-      .toString()
-      .padStart(2, "0")}`;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   // Validation function
@@ -119,22 +131,16 @@ export default function ResetPassword() {
           {/* Logo */}
           <div className="mb-8">
             <div className="flex items-center justify-center">
-              <img src={logo} className="w-[100px]" alt="Logo" />
+              <img src={logoSrc} className="w-[100px]" alt={logoAlt} />
             </div>
           </div>
 
           {/* Welcome Title */}
           <div className="mb-8 w-full text-center">
-            <h1 className="text-2xl font-semibold text-[#121212] mb-2">
-              Reset Password
-            </h1>
+            <h1 className="text-2xl font-semibold text-[#121212] mb-2">Reset Password</h1>
             <p className="text-[#676767] text-sm">
-              Enter your new password and the verification code sent to your
-              email{" "}
-              <span className="underline underline-offset-1">
-                {userEmail || "your email"}
-              </span>
-              .
+              Enter your new password and the verification code sent to your email{" "}
+              <span className="underline underline-offset-1">{userEmail || "your email"}</span>.
             </p>
           </div>
 
@@ -142,10 +148,7 @@ export default function ResetPassword() {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Password Field */}
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 New Password
               </label>
               <div className="relative">
@@ -171,17 +174,12 @@ export default function ResetPassword() {
                   )}
                 </button>
               </div>
-              {errors.password && (
-                <p className="text-red-500 text-xs mt-1">{errors.password}</p>
-              )}
+              {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
             </div>
 
             {/* OTP Field with Resend */}
             <div>
-              <label
-                htmlFor="otp"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
+              <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
                 Verification Code
               </label>
               <input
@@ -194,9 +192,7 @@ export default function ResetPassword() {
                   errors.otp ? "border-red-500" : "border-gray-300"
                 }`}
               />
-              {errors.otp && (
-                <p className="text-red-500 text-xs mt-1">{errors.otp}</p>
-              )}
+              {errors.otp && <p className="text-red-500 text-xs mt-1">{errors.otp}</p>}
               <div className="text- mt-2">
                 <span className="text-[#676767] text-xs sm:text-sm">
                   Didn't receive a code?{" "}
@@ -216,10 +212,7 @@ export default function ResetPassword() {
                     )}
                   </button>
                   {timeLeft > 0 && (
-                    <span className="text-[#288DD1]">
-                      {" "}
-                      in {formatTime(timeLeft)}
-                    </span>
+                    <span className="text-[#288DD1]"> in {formatTime(timeLeft)}</span>
                   )}
                 </span>
               </div>
@@ -245,9 +238,7 @@ export default function ResetPassword() {
 
             {/* Back to Login Link */}
             <div className="text-center">
-              <span className="text-sm text-[#1E1E1E99]">
-                Remember your password?{" "}
-              </span>
+              <span className="text-sm text-[#1E1E1E99]">Remember your password? </span>
               <Link
                 to="/sign-in"
                 type="button"

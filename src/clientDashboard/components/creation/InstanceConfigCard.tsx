@@ -19,6 +19,8 @@ import { useFetchClientSecurityGroups } from "../../../hooks/clientHooks/securit
 import { useFetchClientKeyPairs } from "../../../hooks/clientHooks/keyPairsHook";
 import { useFetchClientSubnets } from "../../../hooks/clientHooks/subnetHooks";
 import { useFetchClientVpcs } from "../../../hooks/clientHooks/vpcHooks";
+import { DEFAULT_PRESETS } from "../../../shared/components/network/NetworkPresetSelector";
+import { useNetworkPresets } from "../../../hooks/networkPresetHooks";
 
 const extractRegionCode = (region: any) => {
   if (!region) return "";
@@ -106,6 +108,55 @@ const InstanceConfigCard = ({
     if (Array.isArray(vpcs?.data)) return vpcs.data;
     return [];
   }, [vpcs]);
+
+  const { data: networkPresets = DEFAULT_PRESETS } = useNetworkPresets();
+  const presetCatalog = useMemo(
+    () =>
+      Array.isArray(networkPresets) && networkPresets.length > 0 ? networkPresets : DEFAULT_PRESETS,
+    [networkPresets]
+  );
+  const requiredEipPresetIds = useMemo(
+    () => new Set(presetCatalog.filter((preset) => preset.requiresEip).map((preset) => preset.id)),
+    [presetCatalog]
+  );
+  const selectedProject = useMemo(() => {
+    if (!projectIdentifier) return null;
+    return (projectsForRegion || []).find((project: any) => {
+      const identifier =
+        project?.identifier || project?.project_id || project?.id || project?.uuid || "";
+      return String(identifier) === String(projectIdentifier);
+    });
+  }, [projectIdentifier, projectsForRegion]);
+  const selectedProjectPresetId =
+    selectedProject?.metadata?.network_preset || selectedProject?.network_preset || "";
+  const isPresetRequiresEip = requiredEipPresetIds.has(String(selectedProjectPresetId));
+  const presetSyncRef = React.useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!selectedProjectPresetId || !projectIdentifier) {
+      return;
+    }
+
+    const key = `${projectIdentifier}:${selectedProjectPresetId}`;
+    if (presetSyncRef.current === key) {
+      return;
+    }
+    presetSyncRef.current = key;
+
+    const shouldAttach = requiredEipPresetIds.has(String(selectedProjectPresetId));
+    const isEnabled = Number(config.floating_ip_count || 0) > 0;
+    if (shouldAttach === isEnabled) {
+      return;
+    }
+
+    updateConfig("floating_ip_count", shouldAttach ? 1 : 0);
+  }, [
+    config.floating_ip_count,
+    projectIdentifier,
+    requiredEipPresetIds,
+    selectedProjectPresetId,
+    updateConfig,
+  ]);
 
   // Fetch region-scoped products for this specific configuration
   const { data: computeInstancesByRegion } = useFetchProductPricing(
@@ -586,14 +637,29 @@ const InstanceConfigCard = ({
               </div>
 
               <div>
-                <ModernInput
-                  label="Floating IPs"
-                  type="number"
-                  min="0"
-                  max="5"
-                  value={config.floating_ip_count || 0}
-                  onChange={(e) => updateConfig("floating_ip_count", parseInt(e.target.value))}
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Attach EIP when provisioning
+                </label>
+                <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    checked={Number(config.floating_ip_count || 0) > 0}
+                    disabled={isPresetRequiresEip}
+                    onChange={(e) => updateConfig("floating_ip_count", e.target.checked ? 1 : 0)}
+                  />
+                  <span>Allocate and attach one Elastic IP.</span>
+                  {isPresetRequiresEip && (
+                    <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                      Required by preset
+                    </span>
+                  )}
+                </label>
+                <p className="text-xs text-gray-500 mt-1">
+                  {isPresetRequiresEip
+                    ? "This preset requires an EIP; this is locked on."
+                    : "When enabled, one EIP is reserved and attached during provisioning."}
+                </p>
               </div>
             </div>
 

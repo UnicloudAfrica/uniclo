@@ -19,11 +19,11 @@ const ClientObjectStoragePurchasePage = () => {
       <Sidebar isMobileMenuOpen={isMobileMenuOpen} onCloseMobileMenu={closeMobileMenu} />
       <ClientActiveTab />
       <ClientPageShell
-        title="Purchase Object Storage"
+        title="Purchase Silo Storage"
         description="Choose the Zadara region and tier required for this client workspace."
         breadcrumbs={[
           { label: "Home", href: "/client-dashboard" },
-          { label: "Object Storage", href: "/client-dashboard/object-storage" },
+          { label: "Silo Storage", href: "/client-dashboard/object-storage" },
           { label: "Purchase" },
         ]}
         subHeaderContent={

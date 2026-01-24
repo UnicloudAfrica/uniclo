@@ -1,7 +1,5 @@
 // @ts-nocheck
 import { useState } from "react";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import { useFetchCalculatorOptions } from "../../hooks/adminHooks/calculatorOptionHooks";
 import { useFetchRegions } from "../../hooks/adminHooks/regionHooks";
@@ -13,8 +11,6 @@ const AdminCalculatorOptions = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminActiveTab />
       <AdminPageShell contentClassName="p-6 md:p-8"> </AdminPageShell>
     </>

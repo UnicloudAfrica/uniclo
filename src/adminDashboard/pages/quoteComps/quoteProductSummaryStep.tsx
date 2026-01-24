@@ -158,7 +158,7 @@ const ProductSummaryStep = ({ pricingRequests, objectStorageRequests, formData }
       header: "CONFIGURATION",
       render: (_, item) => (
         <span className="text-sm font-medium text-slate-900">
-          {item._display?.name || "Object Storage"}
+          {item._display?.name || "Silo Storage"}
         </span>
       ),
     },
@@ -239,7 +239,7 @@ const ProductSummaryStep = ({ pricingRequests, objectStorageRequests, formData }
               <HardDrive className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-slate-900">Object Storage Items</h3>
+              <h3 className="text-base font-semibold text-slate-900">Silo Storage Items</h3>
               <p className="text-sm text-slate-500">
                 {objectStorageData.length} storage configuration
                 {objectStorageData.length === 1 ? "" : "s"}

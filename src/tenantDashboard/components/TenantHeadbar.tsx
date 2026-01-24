@@ -3,6 +3,8 @@ import React from "react";
 import { DashboardHeadbar } from "../../shared/components/headbar";
 import { useDashboardProfile } from "../../shared/hooks/useDashboardProfile";
 import useSidebarStore from "../../stores/sidebarStore";
+import { buildTenantHeadbarPreset } from "../../shared/config/headbarPresets";
+import { useTenantBrandingTheme, useApplyBrandingTheme } from "../../hooks/useBrandingTheme";
 
 interface TenantHeadbarProps {
   tenantData?: {
@@ -17,18 +19,23 @@ interface TenantHeadbarProps {
 const TenantHeadbar: React.FC<TenantHeadbarProps> = ({ tenantData, onMenuClick }) => {
   const { profile, isFetching: isProfileFetching } = useDashboardProfile("tenant");
   const { toggleMobile } = useSidebarStore();
+  const { data: branding } = useTenantBrandingTheme();
+  useApplyBrandingTheme(branding, { fallbackLogo: tenantData?.logo, updateFavicon: true });
+  const resolvedTenantData = {
+    name: branding?.company?.name || tenantData?.name,
+    logo: branding?.logo || tenantData?.logo,
+    color: branding?.accentColor || tenantData?.color,
+  };
+  const preset = buildTenantHeadbarPreset(resolvedTenantData);
 
   const handleMobileMenuToggle = () => {
-    if (onMenuClick) {
-      onMenuClick();
-    } else {
-      toggleMobile();
-    }
+    toggleMobile();
+    onMenuClick?.();
   };
 
   return (
     <DashboardHeadbar
-      dashboardType="tenant"
+      {...preset}
       onMobileMenuToggle={handleMobileMenuToggle}
       userProfile={{
         email: profile.email,
@@ -37,18 +44,6 @@ const TenantHeadbar: React.FC<TenantHeadbarProps> = ({ tenantData, onMenuClick }
         initials: profile.initials,
         avatar: profile.avatar,
       }}
-      logo={{
-        src: tenantData?.logo || "/logo.svg",
-        alt: `${tenantData?.name || "Tenant"} Logo`,
-        link: "/dashboard",
-        className: "w-[71px] h-[54px]",
-      }}
-      themeColor={tenantData?.color || "#14547F"}
-      logoutPath="/tenant-signin"
-      profilePath="/tenant-dashboard/app-settings"
-      showNotifications={true}
-      showHelp={true}
-      helpPath="/tenant-dashboard/support-ticket"
       isProfileLoading={isProfileFetching}
     />
   );

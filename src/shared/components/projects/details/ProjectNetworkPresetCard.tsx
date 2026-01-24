@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Globe, Lock, Layers, Database, Network, CheckCircle, Settings } from "lucide-react";
+import { DEFAULT_PRESETS } from "../../network/NetworkPresetSelector";
+import { useNetworkPresets } from "../../../../hooks/networkPresetHooks";
 
 interface ProjectNetworkPresetCardProps {
   preset: string | null;
@@ -43,7 +45,22 @@ const ProjectNetworkPresetCard: React.FC<ProjectNetworkPresetCardProps> = ({
   onViewDetails,
   isLoading = false,
 }) => {
-  const presetInfo = preset ? PRESET_INFO[preset] : null;
+  const { data: networkPresets = DEFAULT_PRESETS } = useNetworkPresets();
+  const presetCatalog = useMemo(
+    () =>
+      Array.isArray(networkPresets) && networkPresets.length > 0 ? networkPresets : DEFAULT_PRESETS,
+    [networkPresets]
+  );
+  const dynamicPreset = presetCatalog.find((item) => item.id === preset);
+  const presetInfo = dynamicPreset
+    ? {
+        name: dynamicPreset.name,
+        icon: dynamicPreset.icon,
+        description: dynamicPreset.description,
+      }
+    : preset
+      ? PRESET_INFO[preset]
+      : null;
   const hasNetwork = vpcCount > 0 || subnetCount > 0;
 
   if (isLoading) {

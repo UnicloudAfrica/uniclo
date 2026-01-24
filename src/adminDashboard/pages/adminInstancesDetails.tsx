@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   AlertTriangle,
@@ -27,8 +27,6 @@ import {
   Zap,
   Loader2,
 } from "lucide-react";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell.tsx";
 import { ModernCard } from "../../shared/components/ui";
 import { ModernButton } from "../../shared/components/ui";
@@ -37,6 +35,7 @@ import StatusPill from "../../shared/components/ui/StatusPill";
 import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
 import ModernInput from "../../shared/components/ui/ModernInput";
 import ToastUtils from "../../utils/toastUtil";
+import { encodeProjectId } from "../../shared/domains/projects/utils/projectHelpers";
 import {
   useFetchInstanceManagementDetails,
   useInstanceManagementAction,
@@ -59,6 +58,8 @@ const USAGE_PERIOD_OPTIONS = [
 ];
 
 const LOG_LINE_OPTIONS = [50, 100, 200, 500];
+const PROVISIONING_POLL_INTERVAL_MS = 5000;
+const PROVISIONING_POLL_MAX_ATTEMPTS = 6;
 
 const ACTION_LIBRARY = {
   start: {
@@ -116,6 +117,26 @@ const ACTION_LIBRARY = {
     description: "Change compute resources",
     icon: Maximize,
     tone: "info",
+  },
+  retry_provisioning: {
+    label: "Retry Provisioning",
+    description: "Requeue provisioning from the last successful step",
+    icon: RotateCw,
+    tone: "warning",
+    disableOnStatus: (status) =>
+      !["pending", "failed", "error", "awaiting_manual_provisioning"].includes(
+        (status || "").toLowerCase()
+      ),
+  },
+  sync_provisioning: {
+    label: "Sync Provisioning",
+    description: "Sync local state with the provider",
+    icon: RefreshCw,
+    tone: "info",
+    disableOnStatus: (status) =>
+      !["pending", "failed", "error", "awaiting_manual_provisioning", "provisioning"].includes(
+        (status || "").toLowerCase()
+      ),
   },
   destroy: {
     label: "Destroy",
@@ -229,6 +250,10 @@ const AdminInstancesDetails = () => {
   });
   const [pendingAction, setPendingAction] = useState(null);
   const [isConsoleLoading, setIsConsoleLoading] = useState(false);
+  const [isAutoSyncing, setIsAutoSyncing] = useState(false);
+  const provisioningPollRef = useRef(null);
+  const provisioningPollAttemptsRef = useRef(0);
+  const provisioningPollTokenRef = useRef(0);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -263,7 +288,7 @@ const AdminInstancesDetails = () => {
   const monitoringMetrics = managementDetails?.monitoring_metrics;
 
   const consoleResourceId =
-    managedInstance?.id || managedInstance?.identifier || instanceIdentifier;
+    managedInstance?.identifier || instanceIdentifier || managedInstance?.id;
 
   const {
     data: lifecycleData,
@@ -294,6 +319,78 @@ const AdminInstancesDetails = () => {
   } = useInstanceLogs(instanceIdentifier, { lines: logLines }, { enabled: !!instanceIdentifier });
   const { mutateAsync: updateMetadataMutation, isPending: isMetadataUpdating } =
     useUpdateInstanceMetadata();
+
+  const stopProvisioningPoll = useCallback(() => {
+    provisioningPollTokenRef.current += 1;
+    if (provisioningPollRef.current) {
+      clearTimeout(provisioningPollRef.current);
+      provisioningPollRef.current = null;
+    }
+    setIsAutoSyncing(false);
+  }, []);
+
+  const startProvisioningPoll = useCallback(() => {
+    if (!instanceIdentifier) return;
+    stopProvisioningPoll();
+    provisioningPollAttemptsRef.current = 0;
+    const pollToken = provisioningPollTokenRef.current + 1;
+    provisioningPollTokenRef.current = pollToken;
+    setIsAutoSyncing(true);
+
+    const poll = async () => {
+      if (provisioningPollTokenRef.current !== pollToken) {
+        return;
+      }
+      if (!instanceIdentifier) {
+        stopProvisioningPoll();
+        return;
+      }
+
+      provisioningPollAttemptsRef.current += 1;
+      let nextStatus = null;
+
+      try {
+        await refreshStatusMutation(instanceIdentifier);
+        const refreshed = await refetchManagement();
+        await refetchLifecycle();
+        nextStatus = (refreshed?.data?.instance?.status || "").toLowerCase();
+      } catch (error) {
+        console.error("Auto-sync status poll failed", error);
+      }
+
+      if (provisioningPollTokenRef.current !== pollToken) {
+        return;
+      }
+
+      const shouldContinue =
+        provisioningPollAttemptsRef.current < PROVISIONING_POLL_MAX_ATTEMPTS &&
+        (!nextStatus ||
+          ["provisioning", "pending", "awaiting_manual_provisioning"].includes(nextStatus));
+
+      if (shouldContinue) {
+        provisioningPollRef.current = setTimeout(poll, PROVISIONING_POLL_INTERVAL_MS);
+        return;
+      }
+
+      stopProvisioningPoll();
+    };
+
+    poll();
+  }, [
+    instanceIdentifier,
+    refreshStatusMutation,
+    refetchManagement,
+    refetchLifecycle,
+    stopProvisioningPoll,
+  ]);
+
+  useEffect(() => {
+    return () => stopProvisioningPoll();
+  }, [stopProvisioningPoll]);
+
+  useEffect(() => {
+    stopProvisioningPoll();
+  }, [instanceIdentifier, stopProvisioningPoll]);
 
   const rawMetadata = displayInstance?.metadata;
   const effectiveMetadata = useMemo(
@@ -769,13 +866,17 @@ const AdminInstancesDetails = () => {
     const resources = [];
 
     if (displayInstance.project?.name) {
+      const projectIdentifier =
+        displayInstance.project.identifier || displayInstance.project.id || "";
+      const projectHref = projectIdentifier
+        ? `/admin-dashboard/projects/details?id=${encodeProjectId(String(projectIdentifier))}`
+        : null;
+
       resources.push({
         key: "project",
         label: "Project",
         value: displayInstance.project.name,
-        href: displayInstance.project.id
-          ? `/admin-dashboard/projects/${displayInstance.project.id}`
-          : null,
+        href: projectHref,
         icon: Layers,
       });
     }
@@ -979,6 +1080,9 @@ const AdminInstancesDetails = () => {
           confirmed,
         });
         ToastUtils.success(`${formatStatusText(actionKey)} initiated.`);
+        if (actionKey === "retry_provisioning") {
+          startProvisioningPoll();
+        }
         await Promise.all([refetchManagement(), refetchLifecycle()]);
       } catch (error) {
         console.error(`Failed to trigger ${actionKey} action`, error);
@@ -1012,6 +1116,7 @@ const AdminInstancesDetails = () => {
         throw result.error;
       }
       const consoleUrl =
+        result?.data?.url ||
         result?.data?.console_url ||
         result?.data?.consoleUrl ||
         result?.console_url ||
@@ -1183,8 +1288,6 @@ const AdminInstancesDetails = () => {
   if (identifierError) {
     return (
       <>
-        <AdminHeadbar />
-        <AdminSidebar />
         <AdminPageShell
           title="Instance Details"
           description="Review workload telemetry and lifecycle information."
@@ -1205,8 +1308,6 @@ const AdminInstancesDetails = () => {
   if (isLoadingDetails) {
     return (
       <>
-        <AdminHeadbar />
-        <AdminSidebar />
         <AdminPageShell
           title="Instance Details"
           description="Review workload telemetry and lifecycle information."
@@ -1224,8 +1325,6 @@ const AdminInstancesDetails = () => {
   if (combinedIsError) {
     return (
       <>
-        <AdminHeadbar />
-        <AdminSidebar />
         <AdminPageShell
           title="Instance Details"
           description="Review workload telemetry and lifecycle information."
@@ -1247,8 +1346,6 @@ const AdminInstancesDetails = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title={displayInstance.name || "Instance"}
         description={
@@ -1339,6 +1436,12 @@ const AdminInstancesDetails = () => {
               >
                 Sync status
               </ModernButton>
+              {isAutoSyncing && (
+                <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs text-slate-500">
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-blue-500" />
+                  Auto-syncing after retry
+                </div>
+              )}
             </div>
           </div>
         </div>

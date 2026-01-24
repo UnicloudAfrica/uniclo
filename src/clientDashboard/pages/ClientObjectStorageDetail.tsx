@@ -20,18 +20,18 @@ const ClientObjectStorageDetail = () => {
       <ClientSidebar isMobileMenuOpen={isMobileMenuOpen} onCloseMobileMenu={closeMobileMenu} />
       <ClientActiveTab />
       <ClientPageShell
-        title="Object Storage"
-        description="View account details, manage buckets, and browse files"
+        title="Silo Storage"
+        description="View account details, manage silos, and browse files"
         breadcrumbs={[
           { label: "Home", href: "/client-dashboard" },
-          { label: "Object Storage", href: "/client-dashboard/object-storage" },
+          { label: "Silo Storage", href: "/client-dashboard/object-storage" },
           { label: "Details" },
         ]}
       >
         <ObjectStorageAccountDetail
           accountId={accountId}
           backUrl="/client-dashboard/object-storage"
-          backLabel="Back to Object Storage"
+          backLabel="Back to Silo Storage"
           canDelete={true}
         />
       </ClientPageShell>

@@ -114,9 +114,6 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({
           <ModernButton variant="outline" onClick={onBack} leftIcon={<ArrowLeft size={18} />}>
             Back
           </ModernButton>
-          <ModernButton variant="outline" onClick={onEditConfiguration}>
-            Edit Configuration
-          </ModernButton>
           <ModernButton onClick={handleConfirm}>
             {confirmLabel || "Confirm & Provision"}
           </ModernButton>

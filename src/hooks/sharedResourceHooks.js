@@ -6,6 +6,8 @@ import silentAdminApi from "../index/admin/silent";
 import tenantApi from "../index/tenant/tenantApi";
 import silentTenantApi from "../index/tenant/silentTenant";
 import api from "../index/api";
+import config from "../config";
+import useAdminAuthStore from "../stores/adminAuthStore";
 
 /**
  * Shared Resource Hooks
@@ -119,10 +121,43 @@ const deleteInstanceLifecycle = async (identifier, apiClient = clientApi) => {
 // Instance Console Operations (Shared across all contexts)
 // ================================
 
-const fetchInstanceConsoleById = async (id, silentApiClient = clientSilentApi) => {
-  const res = await silentApiClient("GET", `/instance-consoles/${id}`);
+const fetchInstanceConsoleById = async (
+  id,
+  silentApiClient = clientSilentApi,
+  consoleType = "novnc"
+) => {
+  const typeParam = consoleType ? `?type=${encodeURIComponent(consoleType)}` : "";
+  const res = await silentApiClient(
+    "GET",
+    `/instance-consoles/${encodeURIComponent(id)}${typeParam}`
+  );
   if (!res.data) throw new Error(`Failed to fetch instance console with ID ${id}`);
   return res.data;
+};
+
+const fetchAdminInstanceConsoleById = async (id, consoleType = "novnc") => {
+  const typeParam = consoleType ? `?type=${encodeURIComponent(consoleType)}` : "";
+  const authState = useAdminAuthStore?.getState?.();
+  const headers = authState?.getAuthHeaders?.() || {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+
+  const response = await fetch(
+    `${config.adminURL}/instance-management/${encodeURIComponent(id)}/console${typeParam}`,
+    {
+      method: "GET",
+      headers,
+      credentials: "include",
+    }
+  );
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok || payload?.success === false) {
+    throw new Error(payload?.error || payload?.message || "Failed to fetch instance console");
+  }
+
+  return payload?.data || payload;
 };
 
 // ================================
@@ -217,13 +252,14 @@ export const useDeleteInstanceLifecycle = () => {
 
 // Instance Console Hooks for Business/Client
 export const useFetchInstanceConsoleById = (id, options = {}) => {
+  const { consoleType, ...queryOptions } = options;
   return useQuery({
-    queryKey: ["instance-console", id],
-    queryFn: () => fetchInstanceConsoleById(id, clientSilentApi),
+    queryKey: ["instance-console", id, consoleType],
+    queryFn: () => fetchInstanceConsoleById(id, clientSilentApi, consoleType),
     enabled: !!id,
     staleTime: 1000 * 60,
     refetchOnWindowFocus: false,
-    ...options,
+    ...queryOptions,
   });
 };
 
@@ -334,13 +370,14 @@ export const useAdminDeleteInstanceLifecycle = () => {
 
 // Instance Console Hooks for Admin
 export const useAdminFetchInstanceConsoleById = (id, options = {}) => {
+  const { consoleType, ...queryOptions } = options;
   return useQuery({
-    queryKey: ["admin-instance-console", id],
-    queryFn: () => fetchInstanceConsoleById(id, silentAdminApi),
+    queryKey: ["admin-instance-console", id, consoleType],
+    queryFn: () => fetchAdminInstanceConsoleById(id, consoleType),
     enabled: !!id,
     staleTime: 1000 * 60,
     refetchOnWindowFocus: false,
-    ...options,
+    ...queryOptions,
   });
 };
 

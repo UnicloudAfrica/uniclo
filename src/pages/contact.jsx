@@ -208,7 +208,7 @@ const Contact = () => {
           </p>
           <p className=" text-center font-normal mt-3 text-[#000000CC] md:px-[10%] text-lg md:text-xl ">
             Ready to transform your business in the cloud? Contact UniCloud Africa now for secure,
-            scalable, and reliable solutions. Let's shape your digital future together!
+            scalable, and reliable solutions. Let's shape your digital future together!
           </p>
 
           <motion.div className=" my-8 w-full">

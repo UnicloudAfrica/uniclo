@@ -74,7 +74,7 @@ const EmptyState = ({ icon: Icon = HardDrive, title, description, actions }) => 
     <Icon className="h-10 w-10 text-primary-500" />
     <div className="space-y-1">
       <h3 className="text-lg font-semibold text-slate-900">
-        {title || "No object storage accounts yet"}
+        {title || "No Silo Storage accounts yet"}
       </h3>
       <p className="text-sm text-slate-500">
         {description || "Provision a plan to sync storage accounts into this workspace."}
@@ -109,7 +109,7 @@ const EmptyState = ({ icon: Icon = HardDrive, title, description, actions }) => 
 const DEFAULT_PAGE_SIZES = [10, 25, 50];
 
 /**
- * Simplified ObjectStorageTable
+ * Simplified Silo Storage table
  *
  * Displays accounts in a clean table/card layout.
  * Clicking a row navigates to the detail page instead of expanding inline.
@@ -158,7 +158,7 @@ const ObjectStorageTable = ({
           <th className="px-4 py-4">Status</th>
           <th className="px-4 py-4">Provider / Region</th>
           <th className="px-4 py-4">Quota</th>
-          <th className="px-4 py-4 text-center">Buckets</th>
+          <th className="px-4 py-4 text-center">Silos</th>
           <th className="px-4 py-4">Created</th>
           <th className="px-4 py-4 w-12"></th>
         </tr>
@@ -245,7 +245,7 @@ const ObjectStorageTable = ({
               <p className="text-sm font-semibold text-slate-900">{quota}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500">Buckets</p>
+              <p className="text-xs text-slate-500">Silos</p>
               <p className="text-sm font-semibold text-slate-900">{account.buckets_count ?? 0}</p>
             </div>
             <div>
@@ -366,7 +366,7 @@ const ObjectStorageTable = ({
     body = (
       <div className="flex flex-col items-center gap-3 px-6 py-16 text-slate-500">
         <HardDrive className="h-10 w-10 animate-pulse text-primary-500" />
-        <p className="text-sm">Loading object storage accounts…</p>
+        <p className="text-sm">Loading Silo Storage accounts…</p>
       </div>
     );
   } else if (error) {

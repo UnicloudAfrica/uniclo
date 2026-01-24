@@ -84,10 +84,9 @@ const EditObjectStorageTierModal = ({ isOpen, onClose, tier, onUpdated }: any) =
         onClose?.();
       },
       onError: (error) => {
-        console.error("Failed to update object storage tier", error);
+        console.error("Failed to update Silo Storage tier", error);
         ToastUtils.error(
-          error?.response?.data?.message ||
-            "Failed to update object storage tier. Please try again."
+          error?.response?.data?.message || "Failed to update Silo Storage tier. Please try again."
         );
       },
     });

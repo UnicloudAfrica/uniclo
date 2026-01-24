@@ -1,7 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import silentApi from "../index/silent";
 import clientSilentApi from "../index/client/silent";
+import adminSilentApi from "../index/admin/silent";
+import useClientAuthStore from "../stores/clientAuthStore";
 
 // Default colors matching admin dashboard's neutral scheme
 // Using black/dark colors instead of bright cyan/blue until tenant customizes
@@ -12,6 +14,7 @@ const mapBrandingPayload = (payload = {}) => {
   const brand = payload.brand ?? {};
   const company = payload.company ?? {};
   const palette = brand.palette ?? {};
+  const favicon = payload.favicon ?? brand.favicon ?? company.favicon ?? null;
 
   const accentColor =
     palette.accent ?? brand.accent_color ?? company.accent_color ?? DEFAULT_ACCENT;
@@ -20,6 +23,7 @@ const mapBrandingPayload = (payload = {}) => {
 
   return {
     logo: payload.logo ?? null,
+    favicon,
     logoHref:
       payload.logo_href ?? company.logo_href ?? company.website ?? company.support_url ?? null,
     company,
@@ -37,6 +41,54 @@ const isMissingBrandingRoute = (error) => {
   return message.includes("could not be found") || message.includes("not found");
 };
 
+const PUBLIC_BRANDING_CACHE_PREFIX = "public-branding:v1:";
+
+const buildPublicBrandingCacheKey = ({ tenantId, domain, subdomain } = {}) => {
+  const safeTenantId = tenantId ? String(tenantId).trim() : "";
+  const safeDomain = domain ? String(domain).trim().toLowerCase() : "";
+  const safeSubdomain = subdomain ? String(subdomain).trim().toLowerCase() : "";
+  return [safeTenantId, safeDomain, safeSubdomain].join("|");
+};
+
+export const getCachedPublicBrandingTheme = ({ tenantId, domain, subdomain } = {}) => {
+  const cacheKey = buildPublicBrandingCacheKey({ tenantId, domain, subdomain });
+  return readPublicBrandingCache(cacheKey);
+};
+
+const readPublicBrandingCache = (cacheKey) => {
+  if (!cacheKey || typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(`${PUBLIC_BRANDING_CACHE_PREFIX}${cacheKey}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.value ?? null;
+  } catch (error) {
+    return null;
+  }
+};
+
+const writePublicBrandingCache = (cacheKey, value) => {
+  if (!cacheKey || typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    const payload = {
+      value,
+      storedAt: Date.now(),
+    };
+    window.localStorage.setItem(
+      `${PUBLIC_BRANDING_CACHE_PREFIX}${cacheKey}`,
+      JSON.stringify(payload)
+    );
+  } catch (error) {
+    // Ignore storage failures (private mode, quota exceeded).
+  }
+};
+
 const fetchTenantBrandingTheme = async () => {
   try {
     const res = await silentApi("GET", "/settings/profile/branding");
@@ -52,9 +104,56 @@ const fetchTenantBrandingTheme = async () => {
   }
 };
 
-const fetchClientBrandingTheme = async () => {
+const buildBrandingQuery = ({ tenantId, domain, subdomain } = {}) => {
+  const params = new URLSearchParams();
+  if (tenantId) {
+    params.set("tenant_id", tenantId);
+  }
+  if (domain) {
+    params.set("domain", domain);
+  }
+  if (subdomain) {
+    params.set("subdomain", subdomain);
+  }
+  const query = params.toString();
+  return query ? `?${query}` : "";
+};
+
+const fetchPublicBrandingTheme = async ({ tenantId, domain, subdomain } = {}) => {
   try {
-    const res = await clientSilentApi("GET", "/settings/profile/branding");
+    const query = buildBrandingQuery({ tenantId, domain, subdomain });
+    const res = await silentApi("GET", `/branding${query}`);
+    if (!res?.data?.branding) {
+      return mapBrandingPayload();
+    }
+    return mapBrandingPayload(res.data.branding);
+  } catch (error) {
+    if (isMissingBrandingRoute(error)) {
+      return mapBrandingPayload();
+    }
+    throw error;
+  }
+};
+
+const fetchClientBrandingTheme = async (tenantId) => {
+  try {
+    const query = tenantId ? `?tenant_id=${encodeURIComponent(tenantId)}` : "";
+    const res = await clientSilentApi("GET", `/settings/profile/branding${query}`);
+    if (!res?.data?.branding) {
+      return mapBrandingPayload();
+    }
+    return mapBrandingPayload(res.data.branding);
+  } catch (error) {
+    if (isMissingBrandingRoute(error)) {
+      return mapBrandingPayload();
+    }
+    throw error;
+  }
+};
+
+const fetchAdminBrandingTheme = async () => {
+  try {
+    const res = await adminSilentApi("GET", "/settings/profile/branding");
     if (!res?.data?.branding) {
       return mapBrandingPayload();
     }
@@ -77,10 +176,46 @@ export const useTenantBrandingTheme = (options = {}) => {
   });
 };
 
-export const useClientBrandingTheme = (options = {}) => {
+export const usePublicBrandingTheme = ({ tenantId, domain, subdomain } = {}, options = {}) => {
+  const cacheKey = buildPublicBrandingCacheKey({ tenantId, domain, subdomain });
+  const cachedBranding = readPublicBrandingCache(cacheKey);
+  const { onSuccess, ...restOptions } = options;
+
   return useQuery({
-    queryKey: ["branding-theme", "client"],
-    queryFn: fetchClientBrandingTheme,
+    queryKey: ["branding-theme", "public", tenantId ?? null, domain ?? null, subdomain ?? null],
+    queryFn: () => fetchPublicBrandingTheme({ tenantId, domain, subdomain }),
+    initialData: cachedBranding ?? undefined,
+    initialDataUpdatedAt: cachedBranding ? 0 : undefined,
+    staleTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: false,
+    onSuccess: (data) => {
+      if (cacheKey) {
+        writePublicBrandingCache(cacheKey, data);
+      }
+      if (typeof onSuccess === "function") {
+        onSuccess(data);
+      }
+    },
+    ...restOptions,
+  });
+};
+
+export const useAdminBrandingTheme = (options = {}) => {
+  return useQuery({
+    queryKey: ["branding-theme", "admin"],
+    queryFn: fetchAdminBrandingTheme,
+    staleTime: 1000 * 60 * 10,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+
+export const useClientBrandingTheme = (options = {}) => {
+  const tenant = useClientAuthStore((state) => state?.tenant);
+  const tenantId = tenant?.id || tenant?.identifier || tenant?.tenant_id || tenant?.uuid || null;
+  return useQuery({
+    queryKey: ["branding-theme", "client", tenantId],
+    queryFn: () => fetchClientBrandingTheme(tenantId),
     staleTime: 1000 * 60 * 10,
     refetchOnWindowFocus: false,
     ...options,
@@ -107,7 +242,37 @@ const hexToRgba = (hex, alpha) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
-export const applyBrandingToCss = (theme, { fallbackLogo } = {}) => {
+const DEFAULT_LOGO_PATH = "/assets/images/logo.png";
+
+export const resolveBrandLogo = (theme, fallbackLogo) => {
+  const candidate = theme?.logo ?? null;
+  if (!candidate) {
+    return fallbackLogo ?? null;
+  }
+
+  const normalized = String(candidate).toLowerCase();
+  if (normalized.includes(DEFAULT_LOGO_PATH)) {
+    return fallbackLogo ?? candidate;
+  }
+
+  return candidate;
+};
+
+let initialFaviconHref;
+const resolveInitialFavicon = () => {
+  if (typeof document === "undefined") {
+    return null;
+  }
+  if (initialFaviconHref !== undefined) {
+    return initialFaviconHref;
+  }
+
+  const favicon = document.querySelector("link[rel='icon']");
+  initialFaviconHref = favicon?.href || null;
+  return initialFaviconHref;
+};
+
+export const applyBrandingToCss = (theme, { fallbackLogo, updateFavicon = false } = {}) => {
   const accent = theme?.accentColor ?? DEFAULT_ACCENT;
   const primary = theme?.primaryColor ?? DEFAULT_PRIMARY;
   const palette = theme?.palette ?? {};
@@ -135,22 +300,34 @@ export const applyBrandingToCss = (theme, { fallbackLogo } = {}) => {
   root.style.setProperty("--theme-tag-bg", palette.tag_bg ?? hexToRgba(accent, 0.16));
   root.style.setProperty("--theme-tag-text", palette.tag_text ?? accent);
 
-  const logoForFavicon = theme?.logo ?? fallbackLogo ?? null;
-  if (logoForFavicon) {
-    const faviconSelectors = ["link[rel='icon']", "link[rel='shortcut icon']"];
-    faviconSelectors.forEach((selector) => {
-      const favicon = document.querySelector(selector);
-      if (favicon && favicon.href !== logoForFavicon) {
-        favicon.href = logoForFavicon;
-      }
-    });
+  if (updateFavicon) {
+    const fallbackFavicon = resolveInitialFavicon();
+    const faviconSource = theme?.favicon ?? fallbackFavicon ?? null;
+    if (faviconSource) {
+      const faviconSelectors = ["link[rel='icon']", "link[rel='shortcut icon']"];
+      faviconSelectors.forEach((selector) => {
+        const favicon = document.querySelector(selector);
+        if (favicon) {
+          // Create a temporary anchor to resolve relative paths to absolute
+          const tempAnchor = document.createElement("a");
+          tempAnchor.href = faviconSource;
+          const fullyQualifiedFavicon = tempAnchor.href;
+
+          if (favicon.href !== fullyQualifiedFavicon) {
+            favicon.href = fullyQualifiedFavicon;
+          }
+        }
+      });
+    }
   }
 };
 
 export const useApplyBrandingTheme = (theme, options = {}) => {
-  const { fallbackLogo } = options;
+  const { fallbackLogo, enabled = true, updateFavicon = false } = options;
+  const useSyncEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
-  useEffect(() => {
-    applyBrandingToCss(theme, { fallbackLogo });
-  }, [theme, fallbackLogo]);
+  useSyncEffect(() => {
+    if (!enabled) return;
+    applyBrandingToCss(theme, { fallbackLogo, updateFavicon });
+  }, [theme, fallbackLogo, enabled, updateFavicon]);
 };

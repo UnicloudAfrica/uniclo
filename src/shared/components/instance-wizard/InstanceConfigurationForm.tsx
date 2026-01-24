@@ -5,6 +5,7 @@ import { ModernButton, ModernCard, ModernSelect, SearchableSelect } from "../ui"
 import { DEFAULT_PRESETS } from "../network/NetworkPresetSelector";
 import TemplateSelector from "./TemplateSelector";
 import { useApiContext } from "../../../hooks/useApiContext";
+import { useNetworkPresets } from "../../../hooks/networkPresetHooks";
 import { useProjectMembershipSuggestions } from "../../../hooks/adminHooks/projectHooks";
 import adminApi from "../../../index/admin/api";
 import tenantApi from "../../../index/tenant/tenantApi";
@@ -241,32 +242,52 @@ const InstanceConfigurationForm: React.FC<Props> = ({
   lockAssignmentScope = false,
 }) => {
   const { context } = useApiContext();
+  const { data: networkPresets = DEFAULT_PRESETS } = useNetworkPresets();
   const selectedRegion = cfg.region;
   const projectMode = cfg.project_mode === "new" ? "new" : "existing";
   const isTemplateLocked = Boolean(cfg.template_locked || cfg.template_id);
   const effectiveProjectMode = isTemplateLocked ? "new" : projectMode;
   const isNewProject = effectiveProjectMode === "new";
   const networkPresetValue = cfg.network_preset || "standard";
+  const floatingIpCount = Number(cfg.floating_ip_count ?? 0);
+  const normalizedFloatingIpCount = Number.isFinite(floatingIpCount) ? floatingIpCount : 0;
+  const hasFloatingIp = normalizedFloatingIpCount > 0;
+  const presetCatalog = useMemo(
+    () =>
+      Array.isArray(networkPresets) && networkPresets.length > 0 ? networkPresets : DEFAULT_PRESETS,
+    [networkPresets]
+  );
+  const publicPresetIds = useMemo(
+    () => new Set(presetCatalog.filter((preset) => preset.isPublic).map((preset) => preset.id)),
+    [presetCatalog]
+  );
+  const requiredEipPresetIds = useMemo(
+    () => new Set(presetCatalog.filter((preset) => preset.requiresEip).map((preset) => preset.id)),
+    [presetCatalog]
+  );
+  const isPublicPreset = publicPresetIds.has(String(networkPresetValue));
   const isCube = variant === "cube";
   const resourceLabel = isCube ? "Cube-Instance" : "Instance";
   const configurationLabel = isCube ? "Cube-Instance" : "Configuration";
   const presetOptions = useMemo(
     () =>
-      DEFAULT_PRESETS.filter((preset) => preset.id !== "empty").map((preset) => ({
-        value: preset.id,
-        label: preset.name,
-        raw: preset,
-      })),
-    []
+      presetCatalog
+        .filter((preset) => preset.id !== "empty")
+        .map((preset) => ({
+          value: preset.id,
+          label: preset.name,
+          raw: preset,
+        })),
+    [presetCatalog]
   );
   const presetDetails = useMemo(
     () =>
-      DEFAULT_PRESETS.map((preset) => ({
+      presetCatalog.map((preset) => ({
         value: preset.id,
         label: preset.name,
         raw: preset,
       })),
-    []
+    [presetCatalog]
   );
   const selectedPreset = presetOptions.find(
     (preset) => String(preset.value) === String(networkPresetValue)
@@ -302,15 +323,16 @@ const InstanceConfigurationForm: React.FC<Props> = ({
 
   const selectedProjectOption = useMemo(() => {
     if (!cfg.project_id) return null;
-    return projectSelectOptions.find(
-      (option) => String(option.value) === String(cfg.project_id)
-    );
+    return projectSelectOptions.find((option) => String(option.value) === String(cfg.project_id));
   }, [cfg.project_id, projectSelectOptions]);
   const selectedProject = selectedProjectOption?.raw;
   const selectedProjectPresetId = resolveProjectPreset(selectedProject);
   const selectedProjectPreset = presetDetails.find(
     (preset) => String(preset.value) === String(selectedProjectPresetId)
   )?.raw;
+  const isSelectedProjectPresetPublic = publicPresetIds.has(String(selectedProjectPresetId));
+  const effectivePresetId = isNewProject ? networkPresetValue : selectedProjectPresetId;
+  const isPresetRequiresEip = requiredEipPresetIds.has(String(effectivePresetId));
 
   const handleExistingProjectSelect = (value: string) => {
     const selectedOption = projectSelectOptions.find(
@@ -590,10 +612,8 @@ const InstanceConfigurationForm: React.FC<Props> = ({
       | HTMLSelectElement
       | null;
     const activeKey = active?.getAttribute("data-focus-key") || "";
-    const selectionStart =
-      active && "selectionStart" in active ? active.selectionStart : null;
-    const selectionEnd =
-      active && "selectionEnd" in active ? active.selectionEnd : null;
+    const selectionStart = active && "selectionStart" in active ? active.selectionStart : null;
+    const selectionEnd = active && "selectionEnd" in active ? active.selectionEnd : null;
     const scrollContainer = getScrollContainer(active);
     const currentScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
     const currentY = window.scrollY;
@@ -637,6 +657,88 @@ const InstanceConfigurationForm: React.FC<Props> = ({
     [cfg.id, preserveInputState, updateConfiguration]
   );
 
+  const presetSyncRef = useRef<string | null>(null);
+  const autoSwitchToastRef = useRef<string | null>(null);
+  const previousEipEnabledRef = useRef<boolean>(hasFloatingIp);
+
+  useEffect(() => {
+    const presetId = isNewProject ? networkPresetValue : selectedProjectPresetId;
+    if (!presetId) {
+      return;
+    }
+
+    if (!isNewProject && !cfg.project_id) {
+      return;
+    }
+
+    const key = `${cfg.id}:${presetId}:${cfg.project_id || ""}`;
+    if (presetSyncRef.current === key) {
+      return;
+    }
+    presetSyncRef.current = key;
+
+    const shouldAttach = requiredEipPresetIds.has(String(presetId));
+    const isEnabled = Number(cfg.floating_ip_count || 0) > 0;
+    if (shouldAttach === isEnabled) {
+      return;
+    }
+
+    updateConfigWithFocus({ floating_ip_count: shouldAttach ? 1 : 0 });
+  }, [
+    cfg.floating_ip_count,
+    cfg.id,
+    cfg.project_id,
+    isNewProject,
+    networkPresetValue,
+    requiredEipPresetIds,
+    selectedProjectPresetId,
+    updateConfigWithFocus,
+  ]);
+
+  useEffect(() => {
+    const previous = previousEipEnabledRef.current;
+    previousEipEnabledRef.current = hasFloatingIp;
+
+    if (!isNewProject || !hasFloatingIp) {
+      return;
+    }
+
+    if (isPublicPreset) {
+      return;
+    }
+
+    if (previous) {
+      return;
+    }
+
+    const key = `${cfg.id}:${networkPresetValue}:${normalizedFloatingIpCount}:${isTemplateLocked}`;
+    if (autoSwitchToastRef.current === key) {
+      return;
+    }
+    autoSwitchToastRef.current = key;
+
+    if (isTemplateLocked) {
+      ToastUtils.warning("Elastic IPs require a public network preset.", {
+        description: "Update the preset or remove Elastic IPs to continue.",
+      });
+      return;
+    }
+
+    updateConfigWithFocus({ network_preset: "standard" });
+    ToastUtils.warning("Elastic IPs require a public network preset.", {
+      description: "Switched to Standard to support Elastic IPs.",
+    });
+  }, [
+    cfg.id,
+    hasFloatingIp,
+    isNewProject,
+    isPublicPreset,
+    isTemplateLocked,
+    networkPresetValue,
+    normalizedFloatingIpCount,
+    updateConfigWithFocus,
+  ]);
+
   const handleSecurityGroupToggle = (value: string, checked: boolean) => {
     const current = Array.isArray(cfg.security_group_ids) ? cfg.security_group_ids : [];
     const next = new Set(current.map((v) => String(v)));
@@ -645,9 +747,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
     } else {
       next.delete(String(value));
     }
-    preserveInputState(() =>
-      updateConfiguration(cfg.id, { security_group_ids: Array.from(next) })
-    );
+    preserveInputState(() => updateConfiguration(cfg.id, { security_group_ids: Array.from(next) }));
   };
 
   const assignmentScope = cfg.assignment_scope || "internal";
@@ -954,6 +1054,12 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                             Includes: {selectedProjectPreset.features.join(", ")}
                           </p>
                         )}
+                      {hasFloatingIp && !isSelectedProjectPresetPublic && (
+                        <p className="mt-2 text-xs text-amber-600">
+                          Elastic IPs require a public preset. This project is private and will be
+                          upgraded during provisioning.
+                        </p>
+                      )}
                     </>
                   ) : selectedProject ? (
                     <p className="text-slate-500">
@@ -988,9 +1094,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                   <ModernSelect
                     label="Network preset *"
                     value={networkPresetValue}
-                    onChange={(e) =>
-                      updateConfigWithFocus({ network_preset: e.target.value })
-                    }
+                    onChange={(e) => updateConfigWithFocus({ network_preset: e.target.value })}
                     options={[{ value: "", label: "Select network preset" }, ...presetOptions]}
                     helper="Choose the base network layout for this new project."
                     disabled={isSubmitting}
@@ -1000,11 +1104,17 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
                     <p className="font-semibold text-slate-700">{selectedPreset.name}</p>
                     <p className="mt-1">{selectedPreset.description}</p>
-                    {Array.isArray(selectedPreset.features) && selectedPreset.features.length > 0 && (
-                      <p className="mt-1 text-slate-500">
-                        Includes: {selectedPreset.features.join(", ")}
-                      </p>
-                    )}
+                    {Array.isArray(selectedPreset.features) &&
+                      selectedPreset.features.length > 0 && (
+                        <p className="mt-1 text-slate-500">
+                          Includes: {selectedPreset.features.join(", ")}
+                        </p>
+                      )}
+                    <p className="mt-2 text-xs text-slate-500">
+                      {hasFloatingIp
+                        ? `Elastic IPs: ${normalizedFloatingIpCount} will be allocated and attached during provisioning.`
+                        : 'Elastic IPs: none requested. Enable "Attach EIP when provisioning" to attach one.'}
+                    </p>
                   </div>
                 ) : (
                   <p className="text-xs text-slate-500">
@@ -1189,7 +1299,11 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                 },
                 ...computeOptions,
               ]}
-              helper={templateComputeLabel ? `Template: ${templateComputeLabel}` : "Select the compute flavor."}
+              helper={
+                templateComputeLabel
+                  ? `Template: ${templateComputeLabel}`
+                  : "Select the compute flavor."
+              }
               disabled={!selectedRegion}
             />
           </SectionWrapper>
@@ -1212,7 +1326,9 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                 { value: "", label: selectedRegion ? "Select OS image" : "Select region first" },
                 ...osImageOptions,
               ]}
-              helper={templateImageLabel ? `Template: ${templateImageLabel}` : "Choose the base image."}
+              helper={
+                templateImageLabel ? `Template: ${templateImageLabel}` : "Choose the base image."
+              }
               disabled={!selectedRegion}
             />
           </SectionWrapper>
@@ -1240,7 +1356,9 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                   ...volumeTypeOptions,
                 ]}
                 helper={
-                  templateVolumeLabel ? `Template: ${templateVolumeLabel}` : "Choose the primary volume class."
+                  templateVolumeLabel
+                    ? `Template: ${templateVolumeLabel}`
+                    : "Choose the primary volume class."
                 }
                 disabled={!selectedRegion}
               />
@@ -1379,19 +1497,31 @@ const InstanceConfigurationForm: React.FC<Props> = ({
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="md:col-span-2">
                   <label className="mb-1 block text-sm font-medium text-slate-700">
-                    Floating IPs
+                    Attach EIP when provisioning
                   </label>
-                  <input
-                    type="number"
-                    min="0"
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
-                    value={cfg.floating_ip_count}
-                    onChange={(e) =>
-                      updateConfigWithFocus({ floating_ip_count: e.target.value })
-                    }
-                  />
+                  <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                      checked={hasFloatingIp}
+                      disabled={isPresetRequiresEip}
+                      onChange={(e) =>
+                        updateConfigWithFocus({
+                          floating_ip_count: e.target.checked ? 1 : 0,
+                        })
+                      }
+                    />
+                    <span>Allocate and attach one Elastic IP.</span>
+                    {isPresetRequiresEip && (
+                      <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                        Required by preset
+                      </span>
+                    )}
+                  </label>
                   <p className="mt-1 text-xs text-slate-500">
-                    Optional count of floating IPs to reserve.
+                    {isPresetRequiresEip
+                      ? "This preset requires an EIP; this is locked on."
+                      : "When enabled, one EIP is reserved and attached during provisioning."}
                   </p>
                 </div>
               </div>
@@ -1621,7 +1751,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  {resourceLabel} name
+                  {resourceLabel} name *
                 </label>
                 <input
                   type="text"
@@ -1629,7 +1759,8 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
                   value={cfg.name}
                   onChange={(e) => updateConfigWithFocus({ name: e.target.value })}
-                  placeholder="Optional friendly name"
+                  placeholder="Enter cube-instance name"
+                  required
                 />
               </div>
               <div>
@@ -1774,14 +1905,17 @@ const InstanceConfigurationForm: React.FC<Props> = ({
 
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Instance name</label>
+          <label className="mb-1 block text-sm font-medium text-slate-700">
+            Cube-Instance name *
+          </label>
           <input
             type="text"
             data-focus-key={focusKey("instance_name")}
             className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
             value={cfg.name}
             onChange={(e) => updateConfigWithFocus({ name: e.target.value })}
-            placeholder="Optional friendly name"
+            placeholder="Enter cube-instance name"
+            required
           />
         </div>
         <div>
@@ -1815,21 +1949,21 @@ const InstanceConfigurationForm: React.FC<Props> = ({
           <span className="text-sm font-semibold">Infrastructure Configuration</span>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-            <ModernSelect
-              label="Region *"
-              value={cfg.region || ""}
-              onChange={(e) => {
-                const selectedLabel = e.target.selectedOptions?.[0]?.text || "";
-                updateConfigWithFocus({
-                  region: e.target.value,
-                  region_label: e.target.value ? selectedLabel : "",
-                });
-              }}
-              placeholder=""
-              options={[{ value: "", label: "Select region" }, ...regionOptions]}
-              helper="Region code used for pricing and provisioning."
-              disabled={isLoadingResources}
-            />
+          <ModernSelect
+            label="Region *"
+            value={cfg.region || ""}
+            onChange={(e) => {
+              const selectedLabel = e.target.selectedOptions?.[0]?.text || "";
+              updateConfigWithFocus({
+                region: e.target.value,
+                region_label: e.target.value ? selectedLabel : "",
+              });
+            }}
+            placeholder=""
+            options={[{ value: "", label: "Select region" }, ...regionOptions]}
+            helper="Region code used for pricing and provisioning."
+            disabled={isLoadingResources}
+          />
           <ModernSelect
             label="Project mode"
             value={effectiveProjectMode}
@@ -1875,6 +2009,12 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                         Includes: {selectedProjectPreset.features.join(", ")}
                       </p>
                     )}
+                  {hasFloatingIp && !isSelectedProjectPresetPublic && (
+                    <p className="mt-2 text-xs text-amber-600">
+                      Elastic IPs require a public preset. This project is private and will be
+                      upgraded during provisioning.
+                    </p>
+                  )}
                 </>
               ) : selectedProject ? (
                 <p className="text-slate-500">
@@ -1924,6 +2064,11 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                     Includes: {selectedPreset.features.join(", ")}
                   </p>
                 )}
+                <p className="mt-2 text-xs text-slate-500">
+                  {hasFloatingIp
+                    ? `Elastic IPs: ${normalizedFloatingIpCount} will be allocated and attached during provisioning.`
+                    : 'Elastic IPs: none requested. Enable "Attach EIP when provisioning" to attach one.'}
+                </p>
               </div>
             ) : (
               <p className="text-xs text-slate-500">
@@ -1947,7 +2092,11 @@ const InstanceConfigurationForm: React.FC<Props> = ({
               { value: "", label: selectedRegion ? "Select instance type" : "Select region first" },
               ...computeOptions,
             ]}
-            helper={templateComputeLabel ? `Template: ${templateComputeLabel}` : "Select the compute flavor."}
+            helper={
+              templateComputeLabel
+                ? `Template: ${templateComputeLabel}`
+                : "Select the compute flavor."
+            }
             disabled={!selectedRegion}
           />
           <SearchableSelect
@@ -1964,20 +2113,38 @@ const InstanceConfigurationForm: React.FC<Props> = ({
               { value: "", label: selectedRegion ? "Select OS image" : "Select region first" },
               ...osImageOptions,
             ]}
-            helper={templateImageLabel ? `Template: ${templateImageLabel}` : "Choose the base image."}
+            helper={
+              templateImageLabel ? `Template: ${templateImageLabel}` : "Choose the base image."
+            }
             disabled={!selectedRegion}
           />
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Floating IPs</label>
-            <input
-              type="number"
-              min="0"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
-              value={cfg.floating_ip_count}
-              onChange={(e) => updateConfigWithFocus({ floating_ip_count: e.target.value })}
-            />
+            <label className="mb-1 block text-sm font-medium text-slate-700">
+              Attach EIP when provisioning
+            </label>
+            <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                checked={hasFloatingIp}
+                disabled={isPresetRequiresEip}
+                onChange={(e) =>
+                  updateConfigWithFocus({
+                    floating_ip_count: e.target.checked ? 1 : 0,
+                  })
+                }
+              />
+              <span>Allocate and attach one Elastic IP.</span>
+              {isPresetRequiresEip && (
+                <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                  Required by preset
+                </span>
+              )}
+            </label>
             <p className="mt-1 text-xs text-slate-500">
-              Optional count of floating IPs to reserve.
+              {isPresetRequiresEip
+                ? "This preset requires an EIP; this is locked on."
+                : "When enabled, one EIP is reserved and attached during provisioning."}
             </p>
           </div>
         </div>
@@ -2003,7 +2170,9 @@ const InstanceConfigurationForm: React.FC<Props> = ({
               ...volumeTypeOptions,
             ]}
             helper={
-              templateVolumeLabel ? `Template: ${templateVolumeLabel}` : "Choose the primary volume class."
+              templateVolumeLabel
+                ? `Template: ${templateVolumeLabel}`
+                : "Choose the primary volume class."
             }
             disabled={!selectedRegion}
           />
@@ -2160,9 +2329,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                     data-focus-key={focusKey("keypair_public_key")}
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
                     value={cfg.keypair_public_key || ""}
-                    onChange={(e) =>
-                      updateConfigWithFocus({ keypair_public_key: e.target.value })
-                    }
+                    onChange={(e) => updateConfigWithFocus({ keypair_public_key: e.target.value })}
                     placeholder="ssh-rsa AAAA..."
                   />
                 </div>

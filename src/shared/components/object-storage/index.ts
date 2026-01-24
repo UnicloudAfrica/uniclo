@@ -1,4 +1,4 @@
-// Barrel exports for Object Storage shared components
+// Barrel exports for Silo Storage shared components
 export { ObjectStorageWizard } from "./ObjectStorageWizard";
 export { ObjectStorageProfileCard } from "./ObjectStorageProfileCard";
 export { ObjectStorageOrderSummary } from "./ObjectStorageOrderSummary";
@@ -7,6 +7,7 @@ export { ObjectStorageServiceStep } from "./ObjectStorageServiceStep";
 export { ObjectStoragePaymentStep } from "./ObjectStoragePaymentStep";
 export { ObjectStorageReviewStep } from "./ObjectStorageReviewStep";
 export { ObjectStorageCreateContent } from "./ObjectStorageCreateContent";
+export { ObjectStorageOrderSuccessStep } from "./ObjectStorageOrderSuccessStep";
 
 // New UI components
 export { default as ObjectStorageAccountDetail } from "./ObjectStorageAccountDetail";

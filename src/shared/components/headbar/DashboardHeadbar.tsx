@@ -23,6 +23,7 @@ export interface DashboardHeadbarProps {
     alt?: string;
     link?: string;
     className?: string;
+    fallbackSrc?: string;
   };
   /** Theme color for branding (hex color) */
   themeColor?: string;
@@ -81,7 +82,7 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
       "tax-configuration": "Tax Configuration",
       account: "Account Settings",
       instances: "Instances",
-      "object-storage": "Object Storage",
+      "object-storage": "Silo Storage",
     },
     client: {
       "client-dashboard": "Home",
@@ -91,7 +92,7 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
       security: "Security",
       support: "Support",
       "account-settings": "Account Settings",
-      "object-storage": "Object Storage",
+      "object-storage": "Silo Storage",
       "pricing-calculator": "Pricing Calculator",
     },
     tenant: {
@@ -100,12 +101,12 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
       "instances-request": "Instances Request",
       "payment-history": "Payment History",
       "support-ticket": "Support Ticket",
-      "app-settings": "App Settings",
+      account: "Account Settings",
       leads: "Leads",
       revenue: "Revenue",
       "region-requests": "Region Requests",
       onboarding: "Onboarding Review",
-      "object-storage": "Object Storage",
+      "object-storage": "Silo Storage",
     },
   };
 
@@ -162,6 +163,19 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
   };
 
   const logoConfig = logo || defaultLogo;
+  const resolvedLogoSrc = logoConfig.src || logoConfig.fallbackSrc || defaultLogo.src;
+  const [logoSrc, setLogoSrc] = useState(resolvedLogoSrc);
+
+  useEffect(() => {
+    setLogoSrc(logoConfig.src || logoConfig.fallbackSrc || defaultLogo.src);
+  }, [logoConfig.src, logoConfig.fallbackSrc]);
+
+  const handleLogoError = () => {
+    const fallback = logoConfig.fallbackSrc || defaultLogo.src;
+    if (fallback && logoSrc !== fallback) {
+      setLogoSrc(fallback);
+    }
+  };
 
   return (
     <>
@@ -180,9 +194,10 @@ const DashboardHeadbar: React.FC<DashboardHeadbarProps> = ({
           ) : (
             <Link to={logoConfig.link || "/"} className="inline-flex items-center">
               <img
-                src={logoConfig.src}
+                src={logoSrc}
                 className={logoConfig.className || "w-auto h-[54px] max-w-[160px] object-contain"}
                 alt={logoConfig.alt}
+                onError={handleLogoError}
               />
             </Link>
           )}

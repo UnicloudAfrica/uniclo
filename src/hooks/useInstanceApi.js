@@ -198,22 +198,18 @@ export const useInstanceList = () => {
   // Refresh specific instance in the list
   const refreshInstance = useCallback(
     async (instanceId) => {
-      try {
-        const result = await refreshInstanceStatus(instanceId);
+      const result = await refreshInstanceStatus(instanceId);
 
-        // Update the instance in the local state
-        setInstances((prev) =>
-          prev.map((instance) =>
-            instance.id === instanceId || instance.identifier === instanceId
-              ? { ...instance, ...result.data }
-              : instance
-          )
-        );
+      // Update the instance in the local state
+      setInstances((prev) =>
+        prev.map((instance) =>
+          instance.id === instanceId || instance.identifier === instanceId
+            ? { ...instance, ...result.data }
+            : instance
+        )
+      );
 
-        return result;
-      } catch (err) {
-        throw err;
-      }
+      return result;
     },
     [refreshInstanceStatus]
   );
@@ -221,25 +217,19 @@ export const useInstanceList = () => {
   // Remove instance from local state after deletion
   const removeInstance = useCallback(
     async (instanceId) => {
-      try {
-        await deleteInstance(instanceId);
+      await deleteInstance(instanceId);
 
-        // Remove from local state
-        setInstances((prev) =>
-          prev.filter(
-            (instance) => instance.id !== instanceId && instance.identifier !== instanceId
-          )
-        );
+      // Remove from local state
+      setInstances((prev) =>
+        prev.filter((instance) => instance.id !== instanceId && instance.identifier !== instanceId)
+      );
 
-        // Remove from selection if selected
-        setSelectedInstances((prev) => {
-          const newSelected = new Set(prev);
-          newSelected.delete(instanceId);
-          return newSelected;
-        });
-      } catch (err) {
-        throw err;
-      }
+      // Remove from selection if selected
+      setSelectedInstances((prev) => {
+        const newSelected = new Set(prev);
+        newSelected.delete(instanceId);
+        return newSelected;
+      });
     },
     [deleteInstance]
   );

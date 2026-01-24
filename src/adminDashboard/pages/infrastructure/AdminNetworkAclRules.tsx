@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { ShieldCheck, Plus, Trash2, ArrowLeft, RefreshCw, ChevronLeft } from "lucide-react";
-import AdminHeadbar from "../../components/adminHeadbar";
-import AdminSidebar from "../../components/AdminSidebar";
 import AdminPageShell from "../../components/AdminPageShell";
 import ModernButton from "../../../shared/components/ui/ModernButton";
 import ModernCard from "../../../shared/components/ui/ModernCard";
@@ -10,7 +8,7 @@ import {
   useNetworkAclRules,
   useAddNetworkAclRule,
   useRemoveNetworkAclRule,
-} from "../../../hooks/adminHooks/vpcInfraHooks";
+} from "../../../shared/hooks/vpcInfraHooks";
 
 interface AclRule {
   rule_number: number;
@@ -26,6 +24,7 @@ const AdminNetworkAclRules: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const projectId = searchParams.get("project") || "";
+  const region = searchParams.get("region") || "";
   const aclId = searchParams.get("acl") || "";
   const aclName = searchParams.get("name") || "Network ACL";
 
@@ -38,7 +37,7 @@ const AdminNetworkAclRules: React.FC = () => {
     cidr_block: "0.0.0.0/0",
   });
 
-  const { data: rulesData, isLoading, refetch } = useNetworkAclRules(projectId, aclId);
+  const { data: rulesData, isLoading, refetch } = useNetworkAclRules(projectId, aclId, region);
   const addRuleMutation = useAddNetworkAclRule();
   const removeRuleMutation = useRemoveNetworkAclRule();
 
@@ -46,6 +45,7 @@ const AdminNetworkAclRules: React.FC = () => {
     e.preventDefault();
     await addRuleMutation.mutateAsync({
       projectId,
+      region,
       networkAclId: aclId,
       payload: newRule,
     });
@@ -57,6 +57,7 @@ const AdminNetworkAclRules: React.FC = () => {
     if (window.confirm(`Remove rule #${ruleNumber}?`)) {
       await removeRuleMutation.mutateAsync({
         projectId,
+        region,
         networkAclId: aclId,
         payload: { rule_number: ruleNumber, egress },
       });
@@ -73,8 +74,6 @@ const AdminNetworkAclRules: React.FC = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title={`Rules: ${aclName}`}
         description="Manage stateless traffic filtering rules"
@@ -84,7 +83,7 @@ const AdminNetworkAclRules: React.FC = () => {
           { label: "Infrastructure", href: "/admin-dashboard/projects" },
           {
             label: "Network ACLs",
-            href: `/admin-dashboard/infrastructure/network-acls?project=${projectId}`,
+            href: `/admin-dashboard/infrastructure/network-acls?project=${projectId}&region=${region}`,
           },
           { label: "Rules" },
         ]}

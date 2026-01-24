@@ -1,32 +1,27 @@
 // @ts-nocheck
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  Palette,
-  Image,
-  Globe,
-  Mail,
-  Phone,
-  Link,
-  Check,
-  X,
-  Upload,
-  RefreshCw,
-  Eye,
-  Save,
   AlertCircle,
   CheckCircle,
   Copy,
+  Globe,
+  Image,
+  Mail,
+  Palette,
+  RefreshCw,
+  Save,
+  Upload,
+  X,
 } from "lucide-react";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
-import { ModernButton } from "../../shared/components/ui";
+import { ModernButton, ModernCard } from "../../shared/components/ui";
+import ToastUtils from "../../utils/toastUtil";
 import {
   useFetchBranding,
   useUpdateBranding,
-  usePreviewBranding,
   useVerifyDomain,
   useResetBranding,
   generateColorPalette,
-  isLightColor,
 } from "../../hooks/brandingHooks";
 
 // ═══════════════════════════════════════════════════════════════════
@@ -99,13 +94,13 @@ const FileUploadField: React.FC<{
   label: string;
   accept: string;
   currentUrl?: string;
-  onChange: (file: File) => void;
+  onChange: (file: File | null) => void;
   hint?: string;
 }> = ({ label, accept, currentUrl, onChange, hint }) => {
   const [preview, setPreview] = useState<string | null>(currentUrl || null);
   const [dragOver, setDragOver] = useState(false);
 
-  const handleFile = (file: File) => {
+  const handleFile = (file: File | null) => {
     if (file) {
       onChange(file);
       setPreview(URL.createObjectURL(file));
@@ -134,7 +129,10 @@ const FileUploadField: React.FC<{
           <div className="relative inline-block">
             <img src={preview} alt="Preview" className="h-20 rounded-lg object-contain" />
             <button
-              onClick={() => setPreview(null)}
+              onClick={() => {
+                onChange(null);
+                setPreview(null);
+              }}
               className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full"
             >
               <X size={12} />
@@ -150,7 +148,7 @@ const FileUploadField: React.FC<{
         <input
           type="file"
           accept={accept}
-          onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+          onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
           className="absolute inset-0 opacity-0 cursor-pointer"
           style={{ display: preview ? "none" : "block" }}
         />
@@ -228,15 +226,179 @@ const DomainVerification: React.FC<{
   );
 };
 
-// ═══════════════════════════════════════════════════════════════════
-// MAIN COMPONENT
-// ═══════════════════════════════════════════════════════════════════
+const BrandingSettingsSkeleton = () => (
+  <div className="animate-pulse space-y-4">
+    {[1, 2, 3].map((i: any) => (
+      <div key={i} className="h-24 bg-gray-100 rounded-xl" />
+    ))}
+  </div>
+);
 
-export default function TenantBrandingSettings() {
+const BrandingSettingsActions = ({
+  isResetting,
+  isSaving,
+  onReset,
+  onSave,
+}: {
+  isResetting: boolean;
+  isSaving: boolean;
+  onReset: () => void;
+  onSave: () => void;
+}) => (
+  <>
+    <ModernButton variant="outline" onClick={onReset} disabled={isResetting}>
+      <RefreshCw size={16} className={isResetting ? "animate-spin" : ""} />
+      Reset
+    </ModernButton>
+    <ModernButton onClick={onSave} disabled={isSaving}>
+      <Save size={16} />
+      {isSaving ? "Saving..." : "Save Changes"}
+    </ModernButton>
+  </>
+);
+
+const BrandingSettingsSections = ({
+  brandingData,
+  formData,
+  palette,
+  onChange,
+  onFileChange,
+}: {
+  brandingData: any;
+  formData: any;
+  palette: Record<string, string> | null;
+  onChange: (field: string, value: string) => void;
+  onFileChange: (field: string, file: File | null) => void;
+}) => (
+  <>
+    {/* Color Palette Preview */}
+    <div className="bg-white rounded-xl border border-gray-100 p-6">
+      <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <Palette size={18} />
+        Brand Colors
+      </h3>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <ColorPickerField
+          label="Primary Color"
+          value={formData.primary_color}
+          onChange={(c) => onChange("primary_color", c)}
+        />
+        <ColorPickerField
+          label="Secondary Color"
+          value={formData.secondary_color}
+          onChange={(c) => onChange("secondary_color", c)}
+        />
+      </div>
+
+      {/* Color Preview */}
+      {palette && (
+        <div className="mt-4 flex gap-1">
+          {Object.entries(palette).map(([shade, color]) => (
+            <div
+              key={shade}
+              className="flex-1 h-8 first:rounded-l-lg last:rounded-r-lg"
+              style={{ backgroundColor: color as string }}
+              title={`${shade}: ${color}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+
+    {/* Logo & Images */}
+    <div className="bg-white rounded-xl border border-gray-100 p-6">
+      <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <Image size={18} />
+        Logo & Images
+      </h3>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <FileUploadField
+          label="Logo"
+          accept="image/png,image/jpeg,image/svg+xml"
+          currentUrl={brandingData?.resolved?.logo}
+          onChange={(f) => onFileChange("logo", f)}
+          hint="PNG, JPG, or SVG. Max 2MB."
+        />
+        <FileUploadField
+          label="Favicon"
+          accept="image/png,image/x-icon"
+          currentUrl={brandingData?.resolved?.favicon}
+          onChange={(f) => onFileChange("favicon", f)}
+          hint="ICO or PNG. 32x32px recommended."
+        />
+      </div>
+    </div>
+
+    {/* Business Information */}
+    <div className="bg-white rounded-xl border border-gray-100 p-6">
+      <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <Mail size={18} />
+        Business Information
+      </h3>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="text-sm font-medium text-gray-700 block mb-1">Company Name</label>
+          <input
+            type="text"
+            value={formData.company_name}
+            onChange={(e) => onChange("company_name", e.target.value)}
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-700 block mb-1">Website</label>
+          <input
+            type="url"
+            value={formData.website}
+            onChange={(e) => onChange("website", e.target.value)}
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-700 block mb-1">Support Email</label>
+          <input
+            type="email"
+            value={formData.support_email}
+            onChange={(e) => onChange("support_email", e.target.value)}
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-700 block mb-1">Support Phone</label>
+          <input
+            type="tel"
+            value={formData.support_phone}
+            onChange={(e) => onChange("support_phone", e.target.value)}
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+    </div>
+
+    {/* Custom Domain */}
+    <div className="bg-white rounded-xl border border-gray-100 p-6">
+      <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+        <Globe size={18} />
+        Custom Domain
+      </h3>
+      <p className="text-sm text-gray-500 mb-4">
+        Use your own domain for a fully branded experience.
+      </p>
+      <DomainVerification
+        currentDomain={brandingData?.settings?.branding?.custom_domain}
+        isVerified={brandingData?.settings?.branding?.custom_domain_verified}
+      />
+    </div>
+  </>
+);
+
+const useTenantBrandingSettingsState = () => {
   const { data: brandingData, isLoading } = useFetchBranding();
   const { mutate: updateBranding, isPending: isSaving } = useUpdateBranding();
   const { mutate: resetBranding, isPending: isResetting } = useResetBranding();
-  const { mutate: previewBranding } = usePreviewBranding();
 
   const [formData, setFormData] = useState({
     primary_color: "#3B82F6",
@@ -250,7 +412,6 @@ export default function TenantBrandingSettings() {
   });
 
   const [files, setFiles] = useState<Record<string, File>>({});
-  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     if (brandingData?.settings) {
@@ -272,11 +433,32 @@ export default function TenantBrandingSettings() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleFileChange = (field: string, file: File) => {
-    setFiles((prev) => ({ ...prev, [field]: file }));
+  const handleFileChange = (field: string, file: File | null) => {
+    setFiles((prev) => {
+      const next = { ...prev };
+      if (file) {
+        next[field] = file;
+      } else {
+        delete next[field];
+      }
+      return next;
+    });
   };
 
   const handleSave = () => {
+    const hasExistingFavicon = Boolean(
+      brandingData?.resolved?.favicon ||
+      brandingData?.settings?.branding?.favicon_url ||
+      brandingData?.settings?.branding?.favicon_path
+    );
+    const isLogoUpdate = Boolean(files.logo);
+    const isFaviconUpdate = Boolean(files.favicon);
+
+    if (isLogoUpdate && !isFaviconUpdate && !hasExistingFavicon) {
+      ToastUtils.error("Please upload a favicon when setting your logo.");
+      return;
+    }
+
     (updateBranding as any)({ ...formData, ...files });
   };
 
@@ -288,160 +470,98 @@ export default function TenantBrandingSettings() {
 
   const palette = generateColorPalette(formData.primary_color);
 
-  if (isLoading) {
+  return {
+    brandingData,
+    isLoading,
+    isSaving,
+    isResetting,
+    formData,
+    palette,
+    handleChange,
+    handleFileChange,
+    handleSave,
+    handleReset,
+  };
+};
+
+export const TenantBrandingSettingsPanel = ({
+  showActions = false,
+  actionsClassName = "",
+}: {
+  showActions?: boolean;
+  actionsClassName?: string;
+}) => {
+  const state = useTenantBrandingSettingsState();
+
+  if (state.isLoading) {
+    return <BrandingSettingsSkeleton />;
+  }
+
+  return (
+    <div className="space-y-6">
+      {showActions && (
+        <div
+          className={["flex flex-wrap justify-end gap-2", actionsClassName]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          <BrandingSettingsActions
+            isResetting={state.isResetting}
+            isSaving={state.isSaving}
+            onReset={state.handleReset}
+            onSave={state.handleSave}
+          />
+        </div>
+      )}
+      <BrandingSettingsSections
+        brandingData={state.brandingData}
+        formData={state.formData}
+        palette={state.palette}
+        onChange={state.handleChange}
+        onFileChange={state.handleFileChange}
+      />
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// MAIN COMPONENT
+// ═══════════════════════════════════════════════════════════════════
+
+export default function TenantBrandingSettings() {
+  const state = useTenantBrandingSettingsState();
+
+  if (state.isLoading) {
     return (
-      <>
-        <TenantPageShell title="Branding Settings" description="Loading...">
-          <div className="animate-pulse space-y-4">
-            {[1, 2, 3].map((i: any) => (
-              <div key={i} className="h-24 bg-gray-100 rounded-xl" />
-            ))}
-          </div>
-        </TenantPageShell>
-      </>
+      <TenantPageShell title="Branding Settings" description="Loading...">
+        <BrandingSettingsSkeleton />
+      </TenantPageShell>
     );
   }
 
   return (
-    <>
-      <TenantPageShell
-        title="Branding Settings"
-        description="Customize your white-label experience"
-        actions={
-          <div className="flex gap-2">
-            <ModernButton variant="outline" onClick={handleReset} disabled={isResetting}>
-              <RefreshCw size={16} className={isResetting ? "animate-spin" : ""} />
-              Reset
-            </ModernButton>
-            <ModernButton onClick={handleSave} disabled={isSaving}>
-              <Save size={16} />
-              {isSaving ? "Saving..." : "Save Changes"}
-            </ModernButton>
-          </div>
-        }
-        contentClassName="space-y-6"
-      >
-        {/* Color Palette Preview */}
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
-          <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <Palette size={18} />
-            Brand Colors
-          </h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ColorPickerField
-              label="Primary Color"
-              value={formData.primary_color}
-              onChange={(c) => handleChange("primary_color", c)}
-            />
-            <ColorPickerField
-              label="Secondary Color"
-              value={formData.secondary_color}
-              onChange={(c) => handleChange("secondary_color", c)}
-            />
-          </div>
-
-          {/* Color Preview */}
-          {palette && (
-            <div className="mt-4 flex gap-1">
-              {Object.entries(palette).map(([shade, color]) => (
-                <div
-                  key={shade}
-                  className="flex-1 h-8 first:rounded-l-lg last:rounded-r-lg"
-                  style={{ backgroundColor: color as string }}
-                  title={`${shade}: ${color}`}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Logo & Images */}
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
-          <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <Image size={18} />
-            Logo & Images
-          </h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FileUploadField
-              label="Logo"
-              accept="image/png,image/jpeg,image/svg+xml"
-              currentUrl={brandingData?.resolved?.logo}
-              onChange={(f) => handleFileChange("logo", f)}
-              hint="PNG, JPG, or SVG. Max 2MB."
-            />
-            <FileUploadField
-              label="Favicon"
-              accept="image/png,image/x-icon"
-              onChange={(f) => handleFileChange("favicon", f)}
-              hint="ICO or PNG. 32x32px recommended."
-            />
-          </div>
-        </div>
-
-        {/* Business Information */}
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
-          <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <Mail size={18} />
-            Business Information
-          </h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">Company Name</label>
-              <input
-                type="text"
-                value={formData.company_name}
-                onChange={(e) => handleChange("company_name", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">Website</label>
-              <input
-                type="url"
-                value={formData.website}
-                onChange={(e) => handleChange("website", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">Support Email</label>
-              <input
-                type="email"
-                value={formData.support_email}
-                onChange={(e) => handleChange("support_email", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1">Support Phone</label>
-              <input
-                type="tel"
-                value={formData.support_phone}
-                onChange={(e) => handleChange("support_phone", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Custom Domain */}
-        <div className="bg-white rounded-xl border border-gray-100 p-6">
-          <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <Globe size={18} />
-            Custom Domain
-          </h3>
-          <p className="text-sm text-gray-500 mb-4">
-            Use your own domain for a fully branded experience.
-          </p>
-          <DomainVerification
-            currentDomain={brandingData?.settings?.branding?.custom_domain}
-            isVerified={brandingData?.settings?.branding?.custom_domain_verified}
+    <TenantPageShell
+      title="Branding Settings"
+      description="Customize your white-label experience"
+      actions={
+        <div className="flex gap-2">
+          <BrandingSettingsActions
+            isResetting={state.isResetting}
+            isSaving={state.isSaving}
+            onReset={state.handleReset}
+            onSave={state.handleSave}
           />
         </div>
-      </TenantPageShell>
-    </>
+      }
+      contentClassName="space-y-6"
+    >
+      <BrandingSettingsSections
+        brandingData={state.brandingData}
+        formData={state.formData}
+        palette={state.palette}
+        onChange={state.handleChange}
+        onFileChange={state.handleFileChange}
+      />
+    </TenantPageShell>
   );
 }

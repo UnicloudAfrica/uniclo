@@ -1,8 +1,6 @@
 import React from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Zap, Plus, Trash2, RefreshCw, Layers, Shield, Globe } from "lucide-react";
-import AdminHeadbar from "../../components/adminHeadbar";
-import AdminSidebar from "../../components/AdminSidebar";
 import AdminPageShell from "../../components/AdminPageShell";
 import ModernCard from "../../../shared/components/ui/ModernCard";
 import ModernButton from "../../../shared/components/ui/ModernButton";
@@ -46,8 +44,6 @@ const AdminLoadBalancers: React.FC = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title="Load Balancers"
         description="Manage and monitor Load Balancers across projects"

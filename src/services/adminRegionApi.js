@@ -365,7 +365,7 @@ class AdminRegionApiService {
       if (data.success || response.ok) {
         ToastUtils.success(data.message || "Platform region created successfully");
         const regionCode = data?.data?.code || regionData.code;
-        // If object storage payload included, verify right away using new endpoint
+        // If Silo Storage payload included, verify right away using new endpoint
         if (regionData.object_storage?.enabled && regionCode) {
           try {
             await this.verifyObjectStorage(regionCode, {
@@ -528,10 +528,10 @@ class AdminRegionApiService {
         };
       }
 
-      throw new Error(data.message || "Failed to verify object storage");
+      throw new Error(data.message || "Failed to verify Silo Storage");
     } catch (error) {
-      console.error(`Error verifying object storage for region ${regionCode}:`, error);
-      ToastUtils.error(error.message || "Failed to verify object storage");
+      console.error(`Error verifying Silo Storage for region ${regionCode}:`, error);
+      ToastUtils.error(error.message || "Failed to verify Silo Storage");
       throw error;
     }
   }

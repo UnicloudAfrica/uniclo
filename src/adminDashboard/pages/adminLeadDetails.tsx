@@ -21,8 +21,6 @@ import {
   MapPin,
   UserCheck,
 } from "lucide-react";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import { ModernCard } from "../../shared/components/ui";
 import { ModernButton } from "../../shared/components/ui";
@@ -125,7 +123,6 @@ export default function AdminLeadDetails() {
 
   // State management
   const [uiState, setUiState] = useState({
-    isMobileMenuOpen: false,
     isEditLeadOpen: false,
     isAddDocOpen: false,
     isAddStageModalOpen: false,
@@ -217,8 +214,6 @@ export default function AdminLeadDetails() {
   if (isFetching || dataState.leadId === null) {
     return (
       <>
-        <AdminHeadbar />
-        <AdminSidebar />
         <AdminActiveTab />
         <AdminPageShell contentClassName="p-6 md:p-8 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-[#288DD1]" />
@@ -232,8 +227,6 @@ export default function AdminLeadDetails() {
   if (isError || !leadDetails) {
     return (
       <>
-        <AdminHeadbar />
-        <AdminSidebar />
         <AdminActiveTab />
         <AdminPageShell contentClassName="p-6 md:p-8 flex flex-col items-center justify-center text-center">
           <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
@@ -270,8 +263,6 @@ export default function AdminLeadDetails() {
   };
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminActiveTab />
 
       <main className="top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] bg-[#FAFAFA] min-h-full p-6 md:p-8 relative">

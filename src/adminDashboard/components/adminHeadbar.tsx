@@ -5,12 +5,36 @@ import { DashboardHeadbar } from "../../shared/components/headbar";
 import { useDashboardProfile } from "../../shared/hooks/useDashboardProfile";
 import { clearAllAuthSessions } from "../../stores/sessionUtils";
 import useSidebarStore from "../../stores/sidebarStore";
+import { buildAdminHeadbarPreset } from "../../shared/config/headbarPresets";
+import { useAdminBrandingTheme, useApplyBrandingTheme } from "../../hooks/useBrandingTheme";
 import logo from "./assets/logo.png";
+import { useAdminShellContext } from "./AdminShellContext";
 
-const AdminHeadbar: React.FC = () => {
+interface AdminHeadbarProps {
+  forceRender?: boolean;
+}
+
+const AdminHeadbar: React.FC<AdminHeadbarProps> = ({ forceRender = false }) => {
+  const { isActive } = useAdminShellContext();
+  const shouldRender = forceRender || !isActive;
   const navigate = useNavigate();
-  const { profile, isFetching: isProfileFetching } = useDashboardProfile("admin");
+  const { profile, isFetching: isProfileFetching } = useDashboardProfile("admin", {
+    enabled: shouldRender,
+  });
   const { toggleMobile } = useSidebarStore();
+  const { data: branding, isFetching: isBrandingFetching } = useAdminBrandingTheme({
+    enabled: shouldRender,
+  });
+  useApplyBrandingTheme(branding, { fallbackLogo: logo, enabled: shouldRender });
+
+  const preset = buildAdminHeadbarPreset(
+    branding?.logo || logo,
+    branding?.accentColor || branding?.primaryColor
+  );
+
+  if (!shouldRender) {
+    return null;
+  }
 
   const handleLogout = async () => {
     try {
@@ -26,7 +50,7 @@ const AdminHeadbar: React.FC = () => {
 
   return (
     <DashboardHeadbar
-      dashboardType="admin"
+      {...preset}
       onMobileMenuToggle={toggleMobile}
       userProfile={{
         initials: profile.initials,
@@ -35,18 +59,9 @@ const AdminHeadbar: React.FC = () => {
         lastName: profile.lastName,
         avatar: profile.avatar,
       }}
-      logo={{
-        src: logo,
-        alt: "UniCloud Admin Portal",
-        link: "/admin-dashboard",
-      }}
       onLogout={handleLogout}
-      logoutPath="/admin-signin"
-      profilePath="/admin-dashboard/account"
-      showNotifications={true}
-      showHelp={true}
-      helpPath="/admin-dashboard/tickets"
       isProfileLoading={isProfileFetching}
+      isThemeLoading={isBrandingFetching}
     />
   );
 };

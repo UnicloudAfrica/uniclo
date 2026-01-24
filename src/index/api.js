@@ -48,11 +48,7 @@ const api = async (method, uri, body = null) => {
     } else {
       const errorMessage = res?.data?.error || res?.error || res?.message || "An error occurred";
 
-      const handled = handleAuthRedirect(response, res, "/sign-in");
-      if (handled) {
-        return;
-      }
-
+      handleAuthRedirect(response, res, "/sign-in");
       throw new Error(errorMessage);
     }
   } catch (err) {

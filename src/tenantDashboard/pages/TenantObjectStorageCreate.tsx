@@ -5,30 +5,16 @@ import Sidebar from "../components/TenantSidebar";
 import DashboardPageShell from "../../shared/layouts/DashboardPageShell";
 import { ObjectStorageCreateContent } from "../../shared/components/object-storage";
 import useTenantAuthStore from "../../stores/tenantAuthStore";
-
-// Tenant-specific submit function placeholder
-const createTenantSubmitOrder = (tenantId: string) => async (payload: any) => {
-  // TODO: Implement actual tenant API call
-  console.log("Submitting tenant order:", payload);
-  return { success: true };
-};
+import objectStorageApi from "../../services/objectStorageApi";
 
 interface TenantObjectStorageCreateProps {
   tenantId?: string;
 }
 
-/**
- * Tenant Object Storage Create Page
- *
- * Uses the shared ObjectStorageCreateContent component wrapped
- * in the tenant dashboard layout.
- */
 const TenantObjectStorageCreate: React.FC<TenantObjectStorageCreateProps> = ({
   tenantId: propTenantId,
 }) => {
-  const [activeTab, setActiveTab] = useState("object storage");
-
-  // Get tenant auth
+  const [activeTab, setActiveTab] = useState("silo storage");
   const tenantAuth = useTenantAuthStore((state) => state);
   const currentTenantId = propTenantId || tenantAuth?.tenant?.id || "";
   const tenantData = tenantAuth?.tenant || {
@@ -37,7 +23,6 @@ const TenantObjectStorageCreate: React.FC<TenantObjectStorageCreateProps> = ({
     color: "#288DD1",
   };
 
-  // Mobile menu handler for headerbar
   const handleMenuClick = () => {
     // The sidebar manages its own mobile menu state internally
   };
@@ -50,15 +35,17 @@ const TenantObjectStorageCreate: React.FC<TenantObjectStorageCreateProps> = ({
         homeHref="/tenant-dashboard"
         mainClassName="tenant-dashboard-shell"
         backgroundColor="#F9FAFB"
-        title="Create Object Storage"
+        title="Create Silo Storage"
+        description="Configure and provision Silo Storage for your workspace"
       >
         <ObjectStorageCreateContent
           dashboardContext="tenant"
           config={{
             context: "tenant",
             tenantId: currentTenantId,
-            submitOrderFn: createTenantSubmitOrder(currentTenantId),
+            submitOrderFn: (payload) => objectStorageApi.createOrder(payload),
           }}
+          enableFastTrack={false}
           showCustomerContext={false}
           showPriceOverride={false}
         />

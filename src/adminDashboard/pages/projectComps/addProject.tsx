@@ -11,7 +11,11 @@ import { useFetchTenants } from "../../../hooks/adminHooks/tenantHooks";
 import { useFetchClients } from "../../../hooks/adminHooks/clientHooks";
 import { DropdownSelect } from "./dropdownSelect"; // Ensure this path is correct
 import { useFetchRegions } from "../../../hooks/adminHooks/regionHooks";
-import NetworkPresetSelector from "../../../shared/components/network/NetworkPresetSelector";
+import NetworkPresetSelector, {
+  DEFAULT_PRESETS,
+} from "../../../shared/components/network/NetworkPresetSelector";
+import { useNetworkPresets } from "../../../hooks/networkPresetHooks";
+import { useCloudPolicies } from "../../../hooks/adminHooks/cloudPolicyHooks";
 const MAX_ATTEMPTS = 10;
 
 const INITIAL_FORM_STATE = {
@@ -36,8 +40,25 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }: any) =>
   const { isFetching: isRegionsFetching, data: regions } = useFetchRegions();
   const { data: tenants, isFetching: isTenantsFetching } = useFetchTenants();
   const { data: clients, isFetching: isClientsFetching } = useFetchClients();
+  const { data: networkPresets = DEFAULT_PRESETS } = useNetworkPresets();
   const [selectedMembers, setSelectedMembers] = useState([]);
+  const [userPolicies, setUserPolicies] = useState({}); // { userId: [policyIds] }
+  const { data: cloudPolicies = [], isFetching: isPoliciesFetching } = useCloudPolicies(
+    {
+      region: formData.region,
+      provider: "zadara",
+      active_only: true,
+    },
+    {
+      enabled: !!formData.region,
+    }
+  );
   const membersFetchKeyRef = useRef(null);
+  const presetCatalog = useMemo(
+    () =>
+      Array.isArray(networkPresets) && networkPresets.length > 0 ? networkPresets : DEFAULT_PRESETS,
+    [networkPresets]
+  );
 
   // Provider derived server-side; no UI binding
 
@@ -157,6 +178,36 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }: any) =>
       member_user_ids: null,
     }));
   };
+
+  const handleTogglePolicy = (userId, policyId) => {
+    setUserPolicies((prev) => {
+      const current = prev[userId] || [];
+      if (current.includes(policyId)) {
+        return { ...prev, [userId]: current.filter((id) => id !== policyId) };
+      }
+      return { ...prev, [userId]: [...current, policyId] };
+    });
+  };
+
+  const compulsoryPolicyIds = useMemo(() => {
+    return cloudPolicies
+      .filter((p) => p.is_default) // Using is_default as a proxy for compulsory
+      .map((p) => p.id);
+  }, [cloudPolicies]);
+
+  useEffect(() => {
+    if (selectedMembers.length > 0 && cloudPolicies.length > 0) {
+      setUserPolicies((prev) => {
+        const next = { ...prev };
+        selectedMembers.forEach((member) => {
+          if (!next[member.id]) {
+            next[member.id] = [...compulsoryPolicyIds];
+          }
+        });
+        return next;
+      });
+    }
+  }, [selectedMembers, compulsoryPolicyIds]);
 
   const clientOptions = useMemo(() => {
     return (clients || []).map((client: any) => {
@@ -324,6 +375,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }: any) =>
       region: formData.region,
       assignment_scope: formData.assignment_scope,
       member_user_ids: selectedMembers.map((member: any) => Number(member.id)),
+      user_policies: userPolicies,
       // Optional network preset - stored in metadata
       metadata: formData.network_preset ? { network_preset: formData.network_preset } : undefined,
       // provider omitted; derived server-side
@@ -476,6 +528,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }: any) =>
           <NetworkPresetSelector
             value={formData.network_preset || null}
             onChange={(preset) => updateFormData("network_preset", preset)}
+            presets={presetCatalog}
             showAdvancedOption={false}
           />
           {formData.network_preset && (
@@ -713,6 +766,56 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }: any) =>
                 </p>
               )}
             </div>
+
+            {/* Per-User Policy Management Section */}
+            {selectedMembers.length > 0 && cloudPolicies.length > 0 && (
+              <div className="mt-4 rounded-[12px] border border-gray-200 bg-white overflow-hidden">
+                <div className="px-4 py-2 border-b border-gray-200 bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500 flex justify-between items-center">
+                  <span>Policy Assignment Per Member</span>
+                  <span className="text-[10px] normal-case font-normal">
+                    Default policies are pre-selected
+                  </span>
+                </div>
+                <div className="divide-y divide-gray-100 max-h-64 overflow-y-auto">
+                  {selectedMembers.map((member) => (
+                    <div key={member.id} className="p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600 uppercase">
+                          {(member.name || member.email || "U").charAt(0)}
+                        </div>
+                        <span className="text-sm font-medium text-gray-800">
+                          {member.name || member.email}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {cloudPolicies.map((policy) => {
+                          const isCompulsory = policy.is_compulsory;
+                          const isSelected =
+                            (userPolicies[member.id] || []).includes(policy.id) || isCompulsory;
+                          return (
+                            <button
+                              key={policy.id}
+                              type="button"
+                              disabled={isCompulsory}
+                              onClick={() => handleTogglePolicy(member.id, policy.id)}
+                              className={`text-[10px] px-2 py-1 rounded-md border transition-all ${
+                                isSelected
+                                  ? "bg-blue-50 border-blue-200 text-blue-700"
+                                  : "bg-white border-gray-200 text-gray-500 hover:border-blue-200"
+                              } ${isCompulsory ? "opacity-75 cursor-not-allowed font-semibold" : ""}`}
+                              title={policy.description}
+                            >
+                              {policy.name}
+                              {isCompulsory && " (Required)"}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         ) : (
           <p className="text-sm text-gray-500">

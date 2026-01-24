@@ -114,6 +114,24 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 }) => {
   // Auto-detect context from URL
   const context = useMemo(() => detectApiContext(), []);
+  const appPaths = useMemo(() => {
+    if (context === "admin") {
+      return {
+        storage: "/admin-dashboard/object-storage",
+        instances: "/admin-dashboard/instances",
+      };
+    }
+    if (context === "tenant") {
+      return {
+        storage: "/dashboard/object-storage",
+        instances: "/dashboard/instances",
+      };
+    }
+    return {
+      storage: "/client-dashboard/object-storage",
+      instances: "/client-dashboard/instances",
+    };
+  }, [context]);
 
   const adminIsAuthenticated = useAdminAuthStore((state) => state.isAuthenticated);
   const adminGetAuthHeaders = useAdminAuthStore((state) => state.getAuthHeaders);
@@ -261,10 +279,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     optionReference ||
     transactionReference ||
     (propReference && !isNumericReference(propReference) ? propReference : null);
-  const statusLookupIdentifier =
-    transaction?.id || transactionIdentifier || propReference || null;
+  const statusLookupIdentifier = transaction?.id || transactionIdentifier || propReference || null;
   const displayReference =
-    transactionIdentifier || propReference || (transaction?.id != null ? String(transaction?.id) : null);
+    transactionIdentifier ||
+    propReference ||
+    (transaction?.id != null ? String(transaction?.id) : null);
 
   const paystackEmail = useMemo(
     () =>
@@ -547,7 +566,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         )
           .toString()
           .toLowerCase();
-        const successStatuses = ["successful", "completed", "paid"];
+        const successStatuses = ["successful", "completed", "paid", "success", "approved"];
         const isSuccess = successStatuses.includes(txStatus);
 
         if (!isSuccess) {
@@ -622,7 +641,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         channel: "saved_card",
       });
     } else {
-      setPaymentStatus("failed");
+      setPaymentStatus("pending");
     }
   }, [selectedSavedCard, confirmTransaction, onPaymentComplete, transactionIdentifier]);
 
@@ -797,8 +816,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     );
     const payableTotal =
       gatewayTotal > 0 ? gatewayTotal : estimatedTotalResolved + (resolvedGatewayFees || 0);
-    const adjustment =
-      estimatedTotalResolved > 0 ? payableTotal - estimatedTotalResolved : 0;
+    const adjustment = estimatedTotalResolved > 0 ? payableTotal - estimatedTotalResolved : 0;
     const displayCurrency =
       pricingSummary.currency ||
       propCurrency ||
@@ -986,10 +1004,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         "Generating...";
   const hasPricingSummary = Boolean(
     pricingSummary.subtotal ||
-      pricingSummary.tax ||
-      pricingSummary.gatewayFees ||
-      pricingSummary.grandTotal ||
-      activeOptionForAmounts?.charge_breakdown
+    pricingSummary.tax ||
+    pricingSummary.gatewayFees ||
+    pricingSummary.grandTotal ||
+    activeOptionForAmounts?.charge_breakdown
   );
   const showPricingBreakdown = hasPricingSummary && amountDetails.payableTotal > 0;
   const currentSelectableOptions =
@@ -1080,7 +1098,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                   <div className="flex items-center justify-between">
                     <span style={{ color: designTokens.colors.neutral[600] }}>Estimated tax</span>
                     <span style={{ color: designTokens.colors.neutral[900] }}>
-                      {amountDetails.displayCurrency} {formatCurrencyValue(amountDetails.resolvedTax)}
+                      {amountDetails.displayCurrency}{" "}
+                      {formatCurrencyValue(amountDetails.resolvedTax)}
                     </span>
                   </div>
                 )}
@@ -1141,9 +1160,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             )}
             {showPricingBreakdown && hasAdjustment && (
               <p className="text-[11px]" style={{ color: designTokens.colors.neutral[500] }}>
-                Gateway total is{" "}
-                {amountDetails.adjustment > 0 ? "higher" : "lower"} than the estimate by{" "}
-                {amountDetails.displayCurrency}{" "}
+                Gateway total is {amountDetails.adjustment > 0 ? "higher" : "lower"} than the
+                estimate by {amountDetails.displayCurrency}{" "}
                 {formatCurrencyValue(Math.abs(amountDetails.adjustment))}.
               </p>
             )}
@@ -1515,12 +1533,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 setTimeout(() => {
                   if (isStorageOrder && firstStorageAccountId) {
                     // Navigate to specific storage account
-                    window.location.href = `/admin-dashboard/object-storage/${firstStorageAccountId}`;
+                    window.location.href = `${appPaths.storage}/${firstStorageAccountId}`;
                   } else if (isStorageOrder) {
                     // Fallback to storage list
-                    window.location.href = "/admin-dashboard/object-storage";
+                    window.location.href = appPaths.storage;
                   } else {
-                    window.location.href = "/admin-dashboard/instances";
+                    window.location.href = appPaths.instances;
                   }
                 }, 500);
               }}

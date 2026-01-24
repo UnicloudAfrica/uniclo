@@ -12,8 +12,6 @@ import {
   Download,
   RefreshCw,
 } from "lucide-react";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell";
 import { ModernButton } from "../../shared/components/ui";
 import adminApi from "../../index/admin/api";
@@ -209,8 +207,6 @@ const SettlementsDashboard: React.FC = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title="Settlement Dashboard"
         description="Track financial settlements between admin, tenants, and clients"

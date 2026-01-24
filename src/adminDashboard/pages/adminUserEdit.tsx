@@ -2,8 +2,6 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AlertTriangle, ArrowLeft, Loader2 } from "lucide-react";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell.tsx";
 import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
 import { ModernButton } from "../../shared/components/ui";
@@ -47,8 +45,6 @@ const AdminUserEdit = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title="Edit Admin User"
         description={

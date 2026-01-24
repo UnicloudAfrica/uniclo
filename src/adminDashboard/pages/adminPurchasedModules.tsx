@@ -2,8 +2,6 @@
 import React, { useState } from "react";
 import useAuthRedirect from "../../utils/adminAuthRedirect";
 import { useFetchProducts } from "../../hooks/adminHooks/productsHook";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import ModernTable from "../../shared/components/ui/ModernTable";
 import { ModernCard } from "../../shared/components/ui";
@@ -155,8 +153,6 @@ export default function AdminPurchasedModules() {
   if (ispurchasedProductsFetching) {
     return (
       <>
-        <AdminHeadbar />
-        <AdminSidebar />
         <AdminActiveTab />
         <main className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8 flex items-center justify-center">
           <Loader2
@@ -175,8 +171,6 @@ export default function AdminPurchasedModules() {
   if (isPurchasedProductsError) {
     return (
       <>
-        <AdminHeadbar />
-        <AdminSidebar />
         <AdminActiveTab />
         <main
           className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8 flex items-center justify-center"
@@ -208,8 +202,6 @@ export default function AdminPurchasedModules() {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminActiveTab />
       <main
         className="absolute top-[126px] left-0 md:left-20 lg:left-[20%] font-Outfit w-full md:w-[calc(100%-5rem)] lg:w-[80%] min-h-full p-6 md:p-8"

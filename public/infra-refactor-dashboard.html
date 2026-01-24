@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infrastructure Refactor Control Center</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+        rel="stylesheet">
+
+    <style>
+        /* ========================================
+       CSS VARIABLES
+    ======================================== */
+        :root {
+            /* Colors */
+            --color-bg-base: #1a1a1f;
+            --color-bg-elevated: #232329;
+            --color-bg-surface: #2a2a32;
+            --color-bg-hover: #35353f;
+
+            --color-text-primary: #f5f5f0;
+            --color-text-secondary: #9d9d9d;
+            --color-text-muted: #6b6b6b;
+
+            --color-accent-teal: #0d9488;
+            --color-accent-teal-light: #14b8a6;
+            --color-accent-teal-dark: #0f766e;
+
+            --color-accent-orange: #ea580c;
+            --color-accent-orange-light: #f97316;
+            --color-accent-orange-dark: #c2410c;
+
+            --color-success: #22c55e;
+            --color-warning: #eab308;
+            --color-danger: #ef4444;
+            --color-info: #3b82f6;
+
+            --color-border: #3a3a45;
+            --color-border-subtle: #2d2d35;
+
+            /* Spacing */
+            --space-xs: 0.25rem;
+            --space-sm: 0.5rem;
+            --space-md: 1rem;
+            --space-lg: 1.5rem;
+            --space-xl: 2rem;
+            --space-2xl: 3rem;
+            --space-3xl: 4rem;
+
+            /* Radius */
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --radius-full: 9999px;
+
+            /* Shadows */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+            --shadow-glow-teal: 0 0 20px rgba(13, 148, 136, 0.3);
+            --shadow-glow-orange: 0 0 20px rgba(234, 88, 12, 0.3);
+
+            /* Transitions */
+            --transition-fast: 150ms ease;
+            --transition-base: 250ms ease;
+            --transition-slow: 400ms ease;
+        }
+
+        /* ========================================
+       RESET & BASE
+    ======================================== */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font-size: 16px;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+            background: var(--color-bg-base);
+            color: var(--color-text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+
+            /* Blueprint pattern background */
+            background-image:
+                linear-gradient(rgba(13, 148, 136, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(13, 148, 136, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        a {
+            color: var(--color-accent-teal-light);
+            text-decoration: none;
+            transition: color var(--transition-fast);
+        }
+
+        a:hover {
+            color: var(--color-accent-orange-light);
+        }
+
+        button {
+            font-family: inherit;
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+
+        /* Focus states */
+        :focus-visible {
+            outline: 2px solid var(--color-accent-teal);
+            outline-offset: 2px;
+        }
+
+        /* ========================================
+       LAYOUT
+    ======================================== */
+        .app-container {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            min-height: 100vh;
+        }
+
+        @media (max-width: 1024px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--color-bg-elevated);
+            border-right: 1px solid var(--color-border);
+            padding: var(--space-xl);
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                display: none;
+            }
+        }
+
+        .sidebar-logo {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--color-accent-teal);
+            margin-bottom: var(--space-2xl);
+        }
+
+        .sidebar-nav {
+            list-style: none;
+        }
+
+        .sidebar-nav li {
+            margin-bottom: var(--space-xs);
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-md);
+            color: var(--color-text-secondary);
+            font-size: 0.875rem;
+            transition: all var(--transition-fast);
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background: var(--color-bg-surface);
+            color: var(--color-text-primary);
+        }
+
+        .sidebar-nav a.active {
+            border-left: 3px solid var(--color-accent-teal);
+        }
+
+        /* Main */
+        .main {
+            padding: var(--space-2xl);
+            max-width: 1400px;
+        }
+
+        @media (max-width: 768px) {
+            .main {
+                padding: var(--space-lg);
+            }
+        }
+
+        /* ========================================
+       HERO HEADER
+    ======================================== */
+        .hero {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: var(--space-xl);
+            align-items: start;
+            margin-bottom: var(--space-3xl);
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @media (max-width: 768px) {
+            .hero {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+        }
+
+        .hero-content h1 {
+            font-size: 2.5rem;
+            margin-bottom: var(--space-sm);
+            background: linear-gradient(135deg, var(--color-text-primary), var(--color-accent-teal-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-summary {
+            color: var(--color-text-secondary);
+            font-size: 1.125rem;
+            max-width: 600px;
+            margin-bottom: var(--space-lg);
+        }
+
+        .hero-status {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-sm) var(--space-md);
+            background: var(--color-bg-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-full);
+            font-size: 0.875rem;
+        }
+
+        .hero-status .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--color-success);
+            animation: pulse 2s infinite;
+        }
+
+        /* Progress Ring */
+        .progress-ring-container {
+            position: relative;
+            width: 140px;
+            height: 140px;
+        }
+
+        @media (max-width: 768px) {
+            .progress-ring-container {
+                margin: 0 auto;
+            }
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: var(--color-border);
+            stroke-width: 8;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: url(#progress-gradient);
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke-dasharray: 408;
+            stroke-dashoffset: 204;
+            transition: stroke-dashoffset 1s ease-out;
+        }
+
+        .progress-ring-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .progress-ring-text .value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--color-text-primary);
+        }
+
+        .progress-ring-text .label {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* ========================================
+       CARDS
+    ======================================== */
+        .card {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            transition: all var(--transition-base);
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-md);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .card-title .icon {
+            color: var(--color-accent-teal);
+        }
+
+        /* ========================================
+       PHASE CARDS
+    ======================================== */
+        .phases-section {
+            margin-bottom: var(--space-3xl);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-lg);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .phases-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: var(--space-md);
+        }
+
+        .phase-card {
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.5s ease-out backwards;
+        }
+
+        .phase-card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .phase-card:nth-child(2) {
+            animation-delay: 0.15s;
+        }
+
+        .phase-card:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .phase-card:nth-child(4) {
+            animation-delay: 0.25s;
+        }
+
+        .phase-card:nth-child(5) {
+            animation-delay: 0.3s;
+        }
+
+        .phase-card:nth-child(6) {
+            animation-delay: 0.35s;
+        }
+
+        .phase-card:nth-child(7) {
+            animation-delay: 0.4s;
+        }
+
+        .phase-number {
+            position: absolute;
+            top: var(--space-md);
+            right: var(--space-md);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--color-border);
+            line-height: 1;
+        }
+
+        .phase-card h3 {
+            font-size: 1rem;
+            margin-bottom: var(--space-sm);
+            padding-right: 50px;
+        }
+
+        .phase-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-md);
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+        }
+
+        .phase-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .phase-deps {
+            font-size: 0.75rem;
+            color: var(--color-text-secondary);
+            margin-bottom: var(--space-md);
+        }
+
+        /* Status Pills */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .status-pill.complete {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--color-success);
+        }
+
+        .status-pill.in-progress {
+            background: rgba(234, 179, 8, 0.15);
+            color: var(--color-warning);
+        }
+
+        .status-pill.pending {
+            background: rgba(107, 107, 107, 0.15);
+            color: var(--color-text-muted);
+        }
+
+        .status-pill.active {
+            background: rgba(13, 148, 136, 0.15);
+            color: var(--color-accent-teal-light);
+        }
+
+        /* ========================================
+       AUDIT MATRIX
+    ======================================== */
+        .audit-section {
+            margin-bottom: var(--space-3xl);
+        }
+
+        .audit-table-wrapper {
+            overflow-x: auto;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-border);
+        }
+
+        .audit-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .audit-table th {
+            background: var(--color-bg-surface);
+            padding: var(--space-md);
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-secondary);
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .audit-table td {
+            padding: var(--space-md);
+            border-bottom: 1px solid var(--color-border-subtle);
+            background: var(--color-bg-elevated);
+        }
+
+        .audit-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .audit-table tr:hover td {
+            background: var(--color-bg-hover);
+        }
+
+        .capability-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+        }
+
+        .capability-chip.yes {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--color-success);
+        }
+
+        .capability-chip.no {
+            background: rgba(107, 107, 107, 0.2);
+            color: var(--color-text-muted);
+        }
+
+        .shareable-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-xs);
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .shareable-chip.a {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--color-success);
+        }
+
+        .shareable-chip.b {
+            background: rgba(234, 179, 8, 0.15);
+            color: var(--color-warning);
+        }
+
+        .shareable-chip.c {
+            background: rgba(234, 88, 12, 0.15);
+            color: var(--color-accent-orange-light);
+        }
+
+        /* ========================================
+       FEATURE FLAGS
+    ======================================== */
+        .flags-section {
+            margin-bottom: var(--space-3xl);
+        }
+
+        .kill-switch-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-md);
+            padding: var(--space-md) var(--space-lg);
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(234, 88, 12, 0.1));
+            border: 1px solid var(--color-danger);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-lg);
+        }
+
+        .kill-switch-banner .content {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+
+        .kill-switch-banner .icon {
+            color: var(--color-danger);
+            font-size: 1.5rem;
+        }
+
+        .kill-switch-banner h4 {
+            font-size: 0.875rem;
+            margin-bottom: 2px;
+        }
+
+        .kill-switch-banner p {
+            font-size: 0.75rem;
+            color: var(--color-text-secondary);
+        }
+
+        .flags-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: var(--space-md);
+        }
+
+        .flag-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .flag-info h4 {
+            font-size: 0.875rem;
+            margin-bottom: 4px;
+        }
+
+        .flag-info p {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+        }
+
+        .flag-toggles {
+            display: flex;
+            gap: var(--space-sm);
+        }
+
+        .toggle-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .toggle-group label {
+            font-size: 0.625rem;
+            text-transform: uppercase;
+            color: var(--color-text-muted);
+        }
+
+        /* Toggle Switch */
+        .toggle {
+            position: relative;
+            width: 36px;
+            height: 20px;
+            background: var(--color-bg-surface);
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            transition: background var(--transition-fast);
+        }
+
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle .slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: var(--color-text-muted);
+            border-radius: 50%;
+            transition: all var(--transition-fast);
+        }
+
+        .toggle input:checked+.slider {
+            left: 18px;
+            background: var(--color-accent-teal);
+        }
+
+        .toggle input:checked~.toggle {
+            background: var(--color-accent-teal-dark);
+        }
+
+        .toggle:has(input:checked) {
+            background: rgba(13, 148, 136, 0.3);
+        }
+
+        /* ========================================
+       ROLLOUT TIMELINE
+    ======================================== */
+        .timeline-section {
+            margin-bottom: var(--space-3xl);
+        }
+
+        .timeline {
+            display: flex;
+            gap: var(--space-md);
+            overflow-x: auto;
+            padding-bottom: var(--space-md);
+        }
+
+        .timeline-week {
+            flex: 0 0 180px;
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-md);
+            transition: all var(--transition-base);
+        }
+
+        .timeline-week:hover {
+            border-color: var(--color-accent-teal);
+        }
+
+        .timeline-week.current {
+            border-color: var(--color-accent-orange);
+            box-shadow: var(--shadow-glow-orange);
+        }
+
+        .timeline-week h4 {
+            font-size: 0.875rem;
+            margin-bottom: var(--space-xs);
+        }
+
+        .timeline-week .date {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            margin-bottom: var(--space-md);
+        }
+
+        .resource-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-xs);
+        }
+
+        .resource-chip {
+            padding: 4px 8px;
+            background: var(--color-bg-surface);
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+
+        .resource-chip.done {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--color-success);
+        }
+
+        .resource-chip.active {
+            background: rgba(234, 179, 8, 0.15);
+            color: var(--color-warning);
+        }
+
+        /* ========================================
+       CHECKLIST & SIGN-OFF
+    ======================================== */
+        .grid-2col {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-lg);
+            margin-bottom: var(--space-3xl);
+        }
+
+        @media (max-width: 1024px) {
+            .grid-2col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .checklist {
+            list-style: none;
+        }
+
+        .checklist li {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-sm);
+            padding: var(--space-sm) 0;
+            border-bottom: 1px solid var(--color-border-subtle);
+            font-size: 0.875rem;
+        }
+
+        .checklist li:last-child {
+            border-bottom: none;
+        }
+
+        .checklist .checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .checklist .checkbox.checked {
+            background: var(--color-accent-teal);
+            border-color: var(--color-accent-teal);
+            color: white;
+        }
+
+        .signoff-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .signoff-table th,
+        .signoff-table td {
+            padding: var(--space-sm) var(--space-md);
+            text-align: left;
+            border-bottom: 1px solid var(--color-border-subtle);
+        }
+
+        .signoff-table th {
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-muted);
+        }
+
+        /* ========================================
+       NEXT ACTIONS CALLOUT
+    ======================================== */
+        .next-actions {
+            background: linear-gradient(135deg, var(--color-bg-elevated), var(--color-bg-surface));
+            border: 1px solid var(--color-accent-teal-dark);
+            border-radius: var(--radius-xl);
+            padding: var(--space-xl);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .next-actions::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--color-accent-teal), var(--color-accent-orange));
+        }
+
+        .next-actions h3 {
+            font-size: 1.125rem;
+            margin-bottom: var(--space-md);
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .next-actions h3 .icon {
+            color: var(--color-accent-orange);
+        }
+
+        .next-actions-list {
+            list-style: none;
+        }
+
+        .next-actions-list li {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-sm) 0;
+            font-size: 0.9rem;
+        }
+
+        .next-actions-list .number {
+            width: 24px;
+            height: 24px;
+            background: var(--color-accent-teal);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        /* ========================================
+       MOBILE STICKY BAR
+    ======================================== */
+        .mobile-sticky-bar {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--color-bg-elevated);
+            border-top: 1px solid var(--color-border);
+            padding: var(--space-md);
+            z-index: 100;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-sticky-bar {
+                display: block;
+            }
+
+            .main {
+                padding-bottom: 100px;
+            }
+        }
+
+        .mobile-sticky-bar button {
+            width: 100%;
+            padding: var(--space-md);
+            background: linear-gradient(135deg, var(--color-accent-teal), var(--color-accent-teal-dark));
+            color: white;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-sm);
+        }
+
+        /* ========================================
+       ANIMATIONS
+    ======================================== */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* Animation utility */
+        .animate-fade-in {
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        /* ========================================
+       UTILITY CLASSES
+    ======================================== */
+        .text-muted {
+            color: var(--color-text-muted);
+        }
+
+        .text-secondary {
+            color: var(--color-text-secondary);
+        }
+
+        .text-teal {
+            color: var(--color-accent-teal-light);
+        }
+
+        .text-orange {
+            color: var(--color-accent-orange-light);
+        }
+
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .mb-0 {
+            margin-bottom: 0;
+        }
+
+        .mb-sm {
+            margin-bottom: var(--space-sm);
+        }
+
+        .mb-md {
+            margin-bottom: var(--space-md);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">⬡ Control Center</div>
+            <ul class="sidebar-nav">
+                <li><a href="#hero" class="active">⌂ Overview</a></li>
+                <li><a href="#phases">◈ Phases</a></li>
+                <li><a href="#audit">⊞ Audit Matrix</a></li>
+                <li><a href="#flags">⚑ Feature Flags</a></li>
+                <li><a href="#timeline">↦ Timeline</a></li>
+                <li><a href="#checklist">✓ Acceptance</a></li>
+                <li><a href="#actions">→ Next Actions</a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Hero Header -->
+            <header class="hero" id="hero">
+                <div class="hero-content">
+                    <h1>Infrastructure Refactor Control Center</h1>
+                    <p class="hero-summary">
+                        Consolidating duplicated infrastructure components across Admin, Tenant, and Client dashboards
+                        into reusable shared modules with permission-based gating.
+                    </p>
+                    <div class="hero-status">
+                        <span class="dot"></span>
+                        <span>Phase 1-2 Active • Execution Mode</span>
+                    </div>
+                </div>
+                <div class="progress-ring-container">
+                    <svg class="progress-ring" width="140" height="140">
+                        <defs>
+                            <linearGradient id="progress-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#0d9488" />
+                                <stop offset="100%" stop-color="#ea580c" />
+                            </linearGradient>
+                        </defs>
+                        <circle class="progress-ring-bg" cx="70" cy="70" r="65" />
+                        <circle class="progress-ring-fill" cx="70" cy="70" r="65" />
+                    </svg>
+                    <div class="progress-ring-text">
+                        <div class="value">50%</div>
+                        <div class="label">Complete</div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Phase Cards -->
+            <section class="phases-section" id="phases">
+                <div class="section-header">
+                    <h2 class="section-title">◈ Implementation Phases</h2>
+                    <span class="text-muted">7 phases • 16-23 days estimated</span>
+                </div>
+                <div class="phases-grid">
+                    <article class="card phase-card">
+                        <span class="phase-number">0</span>
+                        <h3>Audit & Difference Matrix</h3>
+                        <div class="phase-meta">
+                            <span>⧖ 2-3 days</span>
+                        </div>
+                        <p class="phase-deps">Creates permission interfaces per resource</p>
+                        <span class="status-pill complete">✓ Complete</span>
+                    </article>
+
+                    <article class="card phase-card">
+                        <span class="phase-number">1</span>
+                        <h3>Composition-First Base Components</h3>
+                        <div class="phase-meta">
+                            <span>⧖ 3-4 days</span>
+                            <span>← Phase 0</span>
+                        </div>
+                        <p class="phase-deps">Slots + props + hooks pattern</p>
+                        <span class="status-pill complete">✓ Complete</span>
+                    </article>
+
+                    <article class="card phase-card">
+                        <span class="phase-number">2</span>
+                        <h3>Form Components + Permission Gating</h3>
+                        <div class="phase-meta">
+                            <span>⧖ 3-4 days</span>
+                            <span>← Phase 1</span>
+                        </div>
+                        <p class="phase-deps">Single UI with capability flags</p>
+                        <span class="status-pill in-progress">⟳ In Progress</span>
+                    </article>
+
+                    <article class="card phase-card">
+                        <span class="phase-number">3</span>
+                        <h3>Legacy vs Modern Base Separation</h3>
+                        <div class="phase-meta">
+                            <span>⧖ 2 days</span>
+                            <span>← Phase 2</span>
+                        </div>
+                        <p class="phase-deps">Distinct component paths for migration</p>
+                        <span class="status-pill pending">◌ Pending</span>
+                    </article>
+
+                    <article class="card phase-card">
+                        <span class="phase-number">4</span>
+                        <h3>TS/JS Migration Policy</h3>
+                        <div class="phase-meta">
+                            <span>⧖ 1-2 days</span>
+                            <span>← Phase 2</span>
+                        </div>
+                        <p class="phase-deps">Convert .jsx → .tsx during refactor</p>
+                        <span class="status-pill pending">◌ Pending</span>
+                    </article>
+
+                    <article class="card phase-card">
+                        <span class="phase-number">5</span>
+                        <h3>Container Implementation</h3>
+                        <div class="phase-meta">
+                            <span>⧖ 3-4 days</span>
+                            <span>← Phase 3,4</span>
+                        </div>
+                        <p class="phase-deps">Hierarchy → permissions → UI</p>
+                        <span class="status-pill pending">◌ Pending</span>
+                    </article>
+
+                    <article class="card phase-card">
+                        <span class="phase-number">6</span>
+                        <h3>Incremental Rollout</h3>
+                        <div class="phase-meta">
+                            <span>⧖ 2-4 days</span>
+                            <span>← Phase 5</span>
+                        </div>
+                        <p class="phase-deps">Feature flags per resource × dashboard</p>
+                        <span class="status-pill pending">◌ Pending</span>
+                    </article>
+                </div>
+            </section>
+
+            <!-- Audit Matrix -->
+            <section class="audit-section" id="audit">
+                <div class="section-header">
+                    <h2 class="section-title">⊞ Resource Audit Matrix</h2>
+                </div>
+                <div class="audit-table-wrapper">
+                    <table class="audit-table">
+                        <thead>
+                            <tr>
+                                <th>Resource</th>
+                                <th>Admin Create</th>
+                                <th>Admin Delete</th>
+                                <th>Tenant Create</th>
+                                <th>Tenant Delete</th>
+                                <th>Client Access</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Elastic IPs</strong></td>
+                                <td><span class="capability-chip yes">✓</span></td>
+                                <td><span class="capability-chip yes">✓</span></td>
+                                <td><span class="capability-chip yes">✓</span></td>
+                                <td><span class="capability-chip yes">✓</span></td>
+                                <td><span class="capability-chip no">R</span></td>
+                                <td><span class="shareable-chip a">A</span></td>
+                                <td><span class="status-pill complete">✓ Done</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Security Groups</strong></td>
+                                <td><span class="capability-chip yes">✓</span></td>
+                                <td><span class="capability-chip yes">✓</span></td>
+                                <td><span class="capability-chip no">–</span></td>
+                                <td><span class="capability-chip no">–</span></td>
+                                <td><span class="capability-chip no">R</span></td>
+                                <td><span class="shareable-chip a">A</span></td>
+                                <td><span class="status-pill complete">✓ Done</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Subnets</strong></td>
+                                <td><span class="capability-chip yes">✓</span></td>
+                                <td><span class="capability-chip yes">✓</span></td>
+                                <td><span class="capability-chip yes">✓</span></td>
+                                <td><span class="capability-chip yes">✓</span></td>
+                                <td><span class="capability-chip no">R</span></td>
+                                <td><span class="shareable-chip a">A</span></td>
+                                <td><span class="status-pill complete">✓ Done</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>VPCs</strong></td>
+                                <td><span class="capability-chip yes">✓</span></td>
+                                <td><span class="capability-chip yes">✓</span></td>
+                                <td><span class="capability-chip no">–</span></td>
+                                <td><span class="capability-chip no">–</span></td>
+                                <td><span class="capability-chip yes">✓</span></td>
+                                <td><span class="shareable-chip c">C</span></td>
+                                <td><span class="status-pill in-progress">⟳ Audit</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Volumes</strong></td>
+                                <td><span class="capability-chip yes">✓</span></td>
+                                <td><span class="capability-chip yes">✓</span></td>
+                                <td><span class="capability-chip yes">✓</span></td>
+                                <td><span class="capability-chip yes">✓</span></td>
+                                <td><span class="capability-chip yes">✓</span></td>
+                                <td><span class="shareable-chip b">B</span></td>
+                                <td><span class="status-pill pending">◌ Pending</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Network Interfaces</strong></td>
+                                <td><span class="capability-chip yes">✓</span></td>
+                                <td><span class="capability-chip yes">✓</span></td>
+                                <td><span class="capability-chip no">–</span></td>
+                                <td><span class="capability-chip no">–</span></td>
+                                <td><span class="capability-chip no">R</span></td>
+                                <td><span class="shareable-chip b">B</span></td>
+                                <td><span class="status-pill pending">◌ Pending</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-muted" style="margin-top: var(--space-md); font-size: 0.75rem;">
+                    Categories: <strong>A</strong> = Fully Shareable &nbsp;|&nbsp; <strong>B</strong> = Minor
+                    Differences &nbsp;|&nbsp; <strong>C</strong> = New Components Needed &nbsp;|&nbsp;
+                    <strong>R</strong> = Read-only
+                </p>
+            </section>
+
+            <!-- Feature Flags -->
+            <section class="flags-section" id="flags">
+                <div class="section-header">
+                    <h2 class="section-title">⚑ Feature Flags Panel</h2>
+                </div>
+
+                <div class="kill-switch-banner">
+                    <div class="content">
+                        <span class="icon">⚠</span>
+                        <div>
+                            <h4>Emergency Kill Switch</h4>
+                            <p>REACT_APP_DISABLE_INFRA_REFACTOR — Instant rollback to legacy</p>
+                        </div>
+                    </div>
+                    <label class="toggle">
+                        <input type="checkbox" id="kill-switch">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="flags-grid">
+                    <article class="card flag-card">
+                        <div class="flag-info">
+                            <h4>Elastic IPs</h4>
+                            <p>Shared container + permissions</p>
+                        </div>
+                        <div class="flag-toggles">
+                            <div class="toggle-group">
+                                <label>Admin</label>
+                                <label class="toggle">
+                                    <input type="checkbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-group">
+                                <label>Tenant</label>
+                                <label class="toggle">
+                                    <input type="checkbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-group">
+                                <label>Client</label>
+                                <label class="toggle">
+                                    <input type="checkbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="card flag-card">
+                        <div class="flag-info">
+                            <h4>Security Groups</h4>
+                            <p>Shared container + VPC hook pattern</p>
+                        </div>
+                        <div class="flag-toggles">
+                            <div class="toggle-group">
+                                <label>Admin</label>
+                                <label class="toggle">
+                                    <input type="checkbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-group">
+                                <label>Tenant</label>
+                                <label class="toggle">
+                                    <input type="checkbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-group">
+                                <label>Client</label>
+                                <label class="toggle">
+                                    <input type="checkbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="card flag-card">
+                        <div class="flag-info">
+                            <h4>Subnets</h4>
+                            <p>Shared container + display flags</p>
+                        </div>
+                        <div class="flag-toggles">
+                            <div class="toggle-group">
+                                <label>Admin</label>
+                                <label class="toggle">
+                                    <input type="checkbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-group">
+                                <label>Tenant</label>
+                                <label class="toggle">
+                                    <input type="checkbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-group">
+                                <label>Client</label>
+                                <label class="toggle">
+                                    <input type="checkbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="card flag-card">
+                        <div class="flag-info">
+                            <h4>VPCs</h4>
+                            <p>Requires new shared components</p>
+                        </div>
+                        <div class="flag-toggles">
+                            <div class="toggle-group">
+                                <label>Admin</label>
+                                <label class="toggle">
+                                    <input type="checkbox">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-group">
+                                <label>Tenant</label>
+                                <label class="toggle">
+                                    <input type="checkbox">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="toggle-group">
+                                <label>Client</label>
+                                <label class="toggle">
+                                    <input type="checkbox">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <!-- Rollout Timeline -->
+            <section class="timeline-section" id="timeline">
+                <div class="section-header">
+                    <h2 class="section-title">↦ Rollout Timeline</h2>
+                </div>
+                <div class="timeline">
+                    <div class="timeline-week">
+                        <h4>Week 1</h4>
+                        <div class="date">Jan 13-19</div>
+                        <div class="resource-chips">
+                            <span class="resource-chip done">Elastic IPs</span>
+                        </div>
+                    </div>
+                    <div class="timeline-week current">
+                        <h4>Week 2</h4>
+                        <div class="date">Jan 20-26</div>
+                        <div class="resource-chips">
+                            <span class="resource-chip done">Security Groups</span>
+                            <span class="resource-chip done">Subnets</span>
+                            <span class="resource-chip active">VPCs</span>
+                        </div>
+                    </div>
+                    <div class="timeline-week">
+                        <h4>Week 3</h4>
+                        <div class="date">Jan 27 - Feb 2</div>
+                        <div class="resource-chips">
+                            <span class="resource-chip">VPCs</span>
+                            <span class="resource-chip">Volumes</span>
+                        </div>
+                    </div>
+                    <div class="timeline-week">
+                        <h4>Week 4</h4>
+                        <div class="date">Feb 3-9</div>
+                        <div class="resource-chips">
+                            <span class="resource-chip">Volumes</span>
+                            <span class="resource-chip">Network Interfaces</span>
+                        </div>
+                    </div>
+                    <div class="timeline-week">
+                        <h4>Week 5</h4>
+                        <div class="date">Feb 10-16</div>
+                        <div class="resource-chips">
+                            <span class="resource-chip">Internet Gateways</span>
+                            <span class="resource-chip">NAT Gateways</span>
+                        </div>
+                    </div>
+                    <div class="timeline-week">
+                        <h4>Week 6</h4>
+                        <div class="date">Feb 17-23</div>
+                        <div class="resource-chips">
+                            <span class="resource-chip">Route Tables</span>
+                            <span class="resource-chip">Cleanup</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Checklist & Sign-off -->
+            <div class="grid-2col" id="checklist">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><span class="icon">✓</span> Acceptance Criteria</h3>
+                    </div>
+                    <ul class="checklist">
+                        <li>
+                            <span class="checkbox checked">✓</span>
+                            <span>Permission presets file created with type-safe interfaces</span>
+                        </li>
+                        <li>
+                            <span class="checkbox checked">✓</span>
+                            <span>Container pattern established with wrapper prop</span>
+                        </li>
+                        <li>
+                            <span class="checkbox checked">✓</span>
+                            <span>No double-fetch in thin wrappers (hooks passed as refs)</span>
+                        </li>
+                        <li>
+                            <span class="checkbox checked">✓</span>
+                            <span>Optional hooks use stub pattern (Rules of Hooks safe)</span>
+                        </li>
+                        <li>
+                            <span class="checkbox"></span>
+                            <span>All resources use shared containers</span>
+                        </li>
+                        <li>
+                            <span class="checkbox"></span>
+                            <span>Legacy code removed after 2-week soak period</span>
+                        </li>
+                        <li>
+                            <span class="checkbox"></span>
+                            <span>E2E tests pass for all 3 dashboards</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><span class="icon">📋</span> Sign-off Matrix</h3>
+                    </div>
+                    <table class="signoff-table">
+                        <thead>
+                            <tr>
+                                <th>Role</th>
+                                <th>Name</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Tech Lead</td>
+                                <td>—</td>
+                                <td><span class="status-pill pending">◌ Pending</span></td>
+                            </tr>
+                            <tr>
+                                <td>QA Lead</td>
+                                <td>—</td>
+                                <td><span class="status-pill pending">◌ Pending</span></td>
+                            </tr>
+                            <tr>
+                                <td>Product Owner</td>
+                                <td>—</td>
+                                <td><span class="status-pill pending">◌ Pending</span></td>
+                            </tr>
+                            <tr>
+                                <td>DevOps</td>
+                                <td>—</td>
+                                <td><span class="status-pill pending">◌ Pending</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Next Actions -->
+            <section class="next-actions" id="actions">
+                <h3><span class="icon">→</span> Next Actions</h3>
+                <ul class="next-actions-list">
+                    <li>
+                        <span class="number">1</span>
+                        <span>Decide VPCs approach: Full refactor (4h) OR Partial Admin-only (2h) OR Skip</span>
+                    </li>
+                    <li>
+                        <span class="number">2</span>
+                        <span>Create VpcsOverview component if proceeding with refactor</span>
+                    </li>
+                    <li>
+                        <span class="number">3</span>
+                        <span>Implement VpcsContainer with wrapper pattern</span>
+                    </li>
+                    <li>
+                        <span class="number">4</span>
+                        <span>Convert AdminVpcs to thin wrapper</span>
+                    </li>
+                    <li>
+                        <span class="number">5</span>
+                        <span>Audit next resource: Volumes or Network Interfaces</span>
+                    </li>
+                </ul>
+            </section>
+        </main>
+    </div>
+
+    <!-- Mobile Sticky Bar -->
+    <div class="mobile-sticky-bar">
+        <button>
+            <span>→</span>
+            <span>View Next Actions</span>
+        </button>
+    </div>
+
+    <script>
+        // Smooth scroll for sidebar nav
+        document.querySelectorAll('.sidebar-nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = document.querySelector(link.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+
+                // Update active state
+                document.querySelectorAll('.sidebar-nav a').forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+            });
+        });
+
+        // Intersection Observer for active nav state
+        const sections = document.querySelectorAll('section, header');
+        const navLinks = document.querySelectorAll('.sidebar-nav a');
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = entry.target.id;
+                    navLinks.forEach(link => {
+                        link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+                    });
+                }
+            });
+        }, { threshold: 0.3 });
+
+        sections.forEach(section => {
+            if (section.id) observer.observe(section);
+        });
+
+        // Toggle animation
+        document.querySelectorAll('.toggle input').forEach(toggle => {
+            toggle.addEventListener('change', function () {
+                this.closest('.toggle').classList.toggle('checked', this.checked);
+            });
+        });
+
+        // Mobile sticky bar scroll to actions
+        document.querySelector('.mobile-sticky-bar button').addEventListener('click', () => {
+            document.querySelector('#actions').scrollIntoView({ behavior: 'smooth' });
+        });
+    </script>
+</body>
+
+</html>

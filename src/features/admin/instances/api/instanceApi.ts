@@ -4,6 +4,8 @@
  */
 
 import { apiClient } from "@/shared/api/client";
+import config from "@/config";
+import useAdminAuthStore from "@/stores/adminAuthStore";
 import { API_ENDPOINTS } from "@/shared/api/endpoints";
 import type {
   Instance,
@@ -122,11 +124,32 @@ export const adminInstanceApi = {
   /**
    * Get instance console output
    */
-  getConsoleOutput: async (instanceId: string): Promise<InstanceConsoleOutput> => {
-    const { data } = await apiClient.get<InstanceConsoleOutput>(
-      `/admin/instance-management/${instanceId}/console`
+  getConsoleOutput: async (
+    instanceId: string,
+    consoleType = "novnc"
+  ): Promise<InstanceConsoleOutput> => {
+    const typeParam = consoleType ? `?type=${encodeURIComponent(consoleType)}` : "";
+    const authState = useAdminAuthStore?.getState?.();
+    const headers = authState?.getAuthHeaders?.() || {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    };
+
+    const response = await fetch(
+      `${config.adminURL}/instance-management/${encodeURIComponent(instanceId)}/console${typeParam}`,
+      {
+        method: "GET",
+        headers,
+        credentials: "include",
+      }
     );
-    return data;
+    const payload = await response.json().catch(() => ({}));
+
+    if (!response.ok || payload?.success === false) {
+      throw new Error(payload?.error || payload?.message || "Failed to fetch instance console");
+    }
+
+    return payload?.data || payload;
   },
 
   /**

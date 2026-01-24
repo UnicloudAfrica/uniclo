@@ -5,8 +5,6 @@ import { ArrowLeft, Loader2, Plus, Trash2, Upload } from "lucide-react";
 // @ts-ignore
 import Papa from "papaparse";
 import { read as readWorkbook, utils as xlsxUtils } from "xlsx";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminActiveTab from "../components/adminActiveTab";
 import AdminPageShell from "../components/AdminPageShell";
 import { ModernCard } from "../../shared/components/ui";
@@ -396,8 +394,6 @@ const AdminProductCreate: React.FC = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminActiveTab />
       <AdminPageShell
         title="Add Products"

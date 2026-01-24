@@ -8,6 +8,7 @@ interface ObjectStorageCredentialsProps {
   secretKey?: string; // Only shown once after creation
   showSecretOnce?: boolean;
   onSecretDismissed?: () => void;
+  confirmLabel?: string;
   className?: string;
 }
 
@@ -17,6 +18,7 @@ const ObjectStorageCredentials: React.FC<ObjectStorageCredentialsProps> = ({
   secretKey,
   showSecretOnce = false,
   onSecretDismissed,
+  confirmLabel = "I have saved the secret key",
   className = "",
 }) => {
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -119,7 +121,7 @@ const ObjectStorageCredentials: React.FC<ObjectStorageCredentialsProps> = ({
               onClick={handleDismissSecret}
               className="mt-3 w-full rounded-lg bg-amber-100 px-3 py-2 text-sm font-medium text-amber-800 hover:bg-amber-200 transition"
             >
-              I have saved the secret key
+              {confirmLabel}
             </button>
           </div>
         )}

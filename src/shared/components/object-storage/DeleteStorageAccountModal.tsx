@@ -100,7 +100,7 @@ const DeleteStorageAccountModal: React.FC<DeleteStorageAccountModalProps> = ({
                 <ul className="text-sm text-amber-700 space-y-1">
                   {bucketCount > 0 && (
                     <li>
-                      • {bucketCount} bucket{bucketCount > 1 ? "s" : ""} and all objects inside
+                      • {bucketCount} silo{bucketCount > 1 ? "s" : ""} and all objects inside
                     </li>
                   )}
                   {accessKeyCount > 0 && (

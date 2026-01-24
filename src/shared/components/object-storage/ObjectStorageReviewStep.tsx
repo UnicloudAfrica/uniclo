@@ -1,4 +1,5 @@
 import React from "react";
+import { ModernButton } from "../ui";
 import { ResolvedProfile, SummaryTotals } from "../../../hooks/useObjectStoragePricing";
 import { ObjectStorageOrderSummary } from "./ObjectStorageOrderSummary";
 
@@ -34,110 +35,78 @@ export const ObjectStorageReviewStep: React.FC<ObjectStorageReviewStepProps> = (
   isSubmitting,
   gatewayFees = 0,
   grandTotalWithFees,
-  dashboardContext,
   onSubmit,
   onBack,
   onGeneratePaymentOptions,
 }) => {
   const canSubmit = isFastTrack || isPaymentComplete;
-  const hasProfiles = profiles.length > 0 && profiles.every((p) => p.hasTierData);
+  const hasProfiles = profiles.length > 0 && profiles.every((profile) => profile.hasTierData);
 
   return (
-    <div className="review-step">
-      <div className="step-header">
-        <h2 className="step-title">Review & Submit</h2>
-        <p className="step-description">Review your order details before submitting.</p>
-      </div>
+    <div className="space-y-6">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 text-center">
+        <h2 className="text-2xl font-bold text-slate-900">Review & Provision</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          Confirm your Silo Storage order details before provisioning.
+        </p>
 
-      {/* Order Summary */}
-      <div className="review-summary">
-        <ObjectStorageOrderSummary
-          profiles={profiles}
-          totals={totals}
-          assignmentLabel={assignmentLabel}
-          countryLabel={countryLabel}
-          workflowLabel={workflowLabel}
-          transactionId={transactionId}
-          isPaymentComplete={isPaymentComplete}
-          gatewayFees={gatewayFees}
-          grandTotalWithFees={grandTotalWithFees}
-          showDetailedBreakdown={true}
-        />
-      </div>
-
-      {/* Validation Messages */}
-      {!hasProfiles && (
-        <div className="validation-warning">
-          <span className="warning-icon">⚠</span>
-          <span>Please configure at least one complete service profile before submitting.</span>
-        </div>
-      )}
-
-      {!isFastTrack && !isPaymentComplete && (
-        <div className="validation-warning">
-          <span className="warning-icon">⚠</span>
-          <span>
-            Payment is required before submitting. Please complete payment in the previous step.
-          </span>
-        </div>
-      )}
-
-      {/* Actions */}
-      <div className="review-actions">
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={onBack}
-          disabled={isSubmitting}
-        >
-          Back
-        </button>
-
-        <div className="action-spacer" />
-
-        {!isFastTrack && !isPaymentComplete && onGeneratePaymentOptions && (
-          <button
-            type="button"
-            className="btn btn-outline-primary"
-            onClick={onGeneratePaymentOptions}
-            disabled={isSubmitting || !hasProfiles}
-          >
-            Generate Payment Options
-          </button>
+        {!hasProfiles && (
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-left text-xs text-amber-800">
+            Please configure at least one complete service profile before provisioning.
+          </div>
         )}
 
-        <button
-          type="button"
-          className={`btn ${canSubmit ? "btn-primary" : "btn-secondary"}`}
-          onClick={onSubmit}
-          disabled={isSubmitting || !hasProfiles || !canSubmit}
-        >
-          {isSubmitting ? (
-            <>
-              <span className="spinner-sm" /> Submitting...
-            </>
-          ) : isFastTrack ? (
-            "Provision Now"
-          ) : (
-            "Submit Order"
+        {!isFastTrack && !isPaymentComplete && (
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-left text-xs text-amber-800">
+            Payment is required before provisioning. Complete payment in the previous step.
+          </div>
+        )}
+
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <ModernButton variant="outline" onClick={onBack} isDisabled={isSubmitting}>
+            Back
+          </ModernButton>
+
+          {!isFastTrack && !isPaymentComplete && onGeneratePaymentOptions && (
+            <ModernButton
+              variant="outline"
+              onClick={onGeneratePaymentOptions}
+              isDisabled={isSubmitting || !hasProfiles}
+            >
+              Generate payment options
+            </ModernButton>
           )}
-        </button>
+
+          <ModernButton
+            onClick={onSubmit}
+            isLoading={isSubmitting}
+            isDisabled={isSubmitting || !hasProfiles || !canSubmit}
+          >
+            {isFastTrack ? "Provision now" : "Confirm & provision"}
+          </ModernButton>
+        </div>
+
+        <p className="mt-4 text-xs text-slate-500">
+          {isFastTrack
+            ? "Fast-track requests provision immediately."
+            : "Provisioning begins once payment is verified."}
+        </p>
       </div>
 
-      {/* Info about what happens next */}
-      <div className="review-info">
-        {isFastTrack ? (
-          <p className="info-text">
-            <strong>Fast-Track Mode:</strong> Your object storage will be provisioned immediately
-            after submission.
-          </p>
-        ) : (
-          <p className="info-text">
-            <strong>Standard Mode:</strong> Your order will be submitted for processing after
-            payment confirmation.
-          </p>
-        )}
-      </div>
+      <ObjectStorageOrderSummary
+        profiles={profiles}
+        totals={totals}
+        assignmentLabel={assignmentLabel}
+        countryLabel={countryLabel}
+        workflowLabel={workflowLabel}
+        transactionId={transactionId}
+        isPaymentComplete={isPaymentComplete}
+        gatewayFees={gatewayFees}
+        grandTotalWithFees={grandTotalWithFees}
+        showDetailedBreakdown={true}
+      />
     </div>
   );
 };
+
+export default ObjectStorageReviewStep;

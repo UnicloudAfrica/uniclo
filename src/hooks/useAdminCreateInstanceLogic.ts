@@ -21,6 +21,7 @@ import {
 } from "../utils/instanceCreationUtils";
 import { useFetchCountries } from "./resource";
 import { useApiContext } from "./useApiContext";
+import { buildProvisioningSteps } from "../shared/components/instance-wizard/provisioningSteps";
 
 export const useAdminCreateInstanceLogic = () => {
   const navigate = useNavigate();
@@ -92,51 +93,10 @@ export const useAdminCreateInstanceLogic = () => {
     return ["paid", "successful", "completed"].includes(status.toLowerCase());
   }, [submissionResult, orderReceipt]);
 
-  const steps = useMemo(() => {
-    if (isFastTrack) {
-      return [
-        {
-          id: "workflow",
-          title: "Workflow & Assignment",
-          desc: "Choose fast-track mode and assign user or tenant.",
-        },
-        {
-          id: "services",
-          title: "Cube-Instance setup",
-          desc: "Select region, size, image, storage, and networking.",
-        },
-        {
-          id: "review",
-          title: "Review & Provision",
-          desc: "Confirm details and provision cube-instances.",
-        },
-        {
-          id: "success",
-          title: "Success",
-          desc: "Provisioning started.",
-        },
-      ];
-    }
-    return [
-      {
-        id: "workflow",
-        title: "Workflow & Assignment",
-        desc: "Choose standard mode and assign user or tenant.",
-      },
-      {
-        id: "services",
-        title: "Cube-Instance setup",
-        desc: "Select region, size, image, storage, and networking.",
-      },
-      { id: "payment", title: "Payment", desc: "Generate payment options and share with finance." },
-      {
-        id: "review",
-        title: "Review & provision",
-        desc: "Validate totals and confirm provisioning.",
-      },
-      { id: "success", title: "Success", desc: "Provisioning started." },
-    ];
-  }, [isFastTrack]);
+  const steps = useMemo(
+    () => buildProvisioningSteps(isFastTrack ? "fast-track" : "standard"),
+    [isFastTrack]
+  );
 
   useEffect(() => {
     setActiveStep((prev) => Math.min(prev, steps.length - 1));
@@ -201,8 +161,8 @@ export const useAdminCreateInstanceLogic = () => {
         .map((item: any): Option | null => {
           const code =
             normalizeCountryCandidate(
-              item?.code ||
-                item?.iso2 ||
+              item?.iso2 ||
+                item?.code ||
                 item?.country_code ||
                 item?.iso_code ||
                 item?.iso ||
@@ -241,7 +201,8 @@ export const useAdminCreateInstanceLogic = () => {
 
     return configurations.map((cfg) => {
       const status = evaluateConfigurationCompleteness(cfg);
-      const computeLabel = cfg.compute_label || formatComputeLabel(cfg.compute_instance_id, instanceTypes);
+      const computeLabel =
+        cfg.compute_label || formatComputeLabel(cfg.compute_instance_id, instanceTypes);
       const resolvedComputeLabel =
         computeLabel && !["Not selected", "Instance selected"].includes(computeLabel)
           ? computeLabel

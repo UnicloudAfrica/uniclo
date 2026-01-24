@@ -21,8 +21,6 @@ import {
 // @ts-ignore
 import TicketDrawer from "./supportComps/ticketDrawer";
 import { useFetchAdminSupportMessages } from "../../hooks/adminHooks/adminSupportHooks";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell";
 import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
 import { ModernButton } from "../../shared/components/ui";
@@ -374,8 +372,6 @@ export default function AdminSupportTicket() {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title="Support Tickets"
         description="Manage support requests with SLA tracking and escalation workflow"

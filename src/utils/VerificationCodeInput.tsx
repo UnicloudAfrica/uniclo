@@ -34,7 +34,7 @@ export default function VerificationCodeInput({
 
   // Timer effect
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
+    let interval: ReturnType<typeof setTimeout> | null = null;
     if (isActive && timeLeft > 0) {
       interval = setInterval(() => {
         setTimeLeft((timeLeft) => timeLeft - 1);

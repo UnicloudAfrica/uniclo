@@ -1,11 +1,13 @@
 // @ts-nocheck
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
 import AdminPageShell from "../components/AdminPageShell.tsx";
 import ProjectsPageContainer from "../../shared/components/projects/ProjectsPageContainer";
-import { useFetchProjects, useDeleteProject } from "../../hooks/adminHooks/projectHooks";
+import {
+  useFetchProjects,
+  useDeleteProject,
+  useBulkSyncProjectStatus,
+} from "../../hooks/adminHooks/projectHooks";
 import { encodeProjectId } from "../../utils/projectUtils";
 import ToastUtils from "../../utils/toastUtil";
 
@@ -23,6 +25,7 @@ const AdminProjects = () => {
   } = useFetchProjects();
 
   const deleteProjectMutation = useDeleteProject();
+  const bulkSyncStatusMutation = useBulkSyncProjectStatus();
 
   // Extract projects array from response
   const projects = projectsResponse?.data || [];
@@ -91,15 +94,39 @@ const AdminProjects = () => {
       ToastUtils.error(err?.message || "Failed to export projects");
     }
   };
+
+  // Sync all project statuses based on provisioning progress
+  const handleBulkSyncStatus = async () => {
+    try {
+      ToastUtils.info("Syncing project statuses...");
+      const result = await bulkSyncStatusMutation.mutateAsync([]);
+      if (result.fixed > 0) {
+        ToastUtils.success(`Fixed ${result.fixed} project status(es)`);
+      } else {
+        ToastUtils.success("All project statuses are already correct");
+      }
+    } catch (err) {
+      console.error("Failed to sync statuses:", err);
+      ToastUtils.error(err?.message || "Failed to sync project statuses");
+    }
+  };
+
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title="Projects"
         description="Manage and monitor all infrastructure projects"
         contentClassName="space-y-6"
         mainClassName="admin-dashboard-shell"
+        headerActions={
+          <button
+            onClick={handleBulkSyncStatus}
+            disabled={bulkSyncStatusMutation.isPending}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            {bulkSyncStatusMutation.isPending ? "Syncing..." : "🔄 Sync All Statuses"}
+          </button>
+        }
       >
         <ProjectsPageContainer
           projects={projects}

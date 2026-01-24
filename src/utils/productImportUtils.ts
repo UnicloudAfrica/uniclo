@@ -4,7 +4,7 @@ export const OBJECT_STORAGE_TYPE = "object_storage_configuration";
 export const DEFAULT_OBJECT_STORAGE_PRICE_PER_GB = 0.16;
 
 export const objectStorageNameForQuota = (quota: number): string =>
-  quota === 1 ? "Object Storage (per GiB)" : `Object Storage ${quota} GiB`;
+  quota === 1 ? "Silo Storage (per GiB)" : `Silo Storage ${quota} GiB`;
 
 export const productTypes = [
   { value: "compute_instance", label: "Compute Instance" },
@@ -12,7 +12,7 @@ export const productTypes = [
   { value: "os_image", label: "OS Image" },
   { value: "bandwidth", label: "Bandwidth" },
   { value: "ip", label: "Floating IP" },
-  { value: OBJECT_STORAGE_TYPE, label: "Object Storage" },
+  { value: OBJECT_STORAGE_TYPE, label: "Silo Storage" },
   { value: "volume_type", label: "Volume Type" },
 ];
 

@@ -1,9 +1,17 @@
 // @ts-nocheck
 import React, { useState, useMemo } from "react";
-import { Users, ShieldCheck, Building2, UserPlus, Plus, Search, Filter } from "lucide-react";
+import {
+  Users,
+  ShieldCheck,
+  Building2,
+  UserPlus,
+  Plus,
+  Search,
+  Filter,
+  ArrowUpRight,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import AdminHeadbar from "../components/adminHeadbar";
-import AdminSidebar from "../components/AdminSidebar";
+import { useQueryClient } from "@tanstack/react-query";
 import AdminPageShell from "../components/AdminPageShell";
 import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
 import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
@@ -11,6 +19,7 @@ import { ModernButton } from "../../shared/components/ui";
 import { useFetchClients } from "../../hooks/adminHooks/clientHooks";
 import DeleteClientModal from "./clientComps/DeleteClient";
 import { EditClientModal } from "./clientComps/EditClient";
+import PromoteClientModal from "./clientComps/PromoteClientModal";
 import { TableActionButtons } from "../../shared/components/tables";
 import ModernTable from "../../shared/components/ui/ModernTable";
 
@@ -18,9 +27,11 @@ const encodeId = (id: string) => encodeURIComponent(btoa(id));
 
 const AdminClients = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [selectedTenantId, setSelectedTenantId] = useState("");
   const [isDeleteClientModalOpen, setIsDeleteClientModalOpen] = useState(false);
   const [isEditClientModalOpen, setIsEditClientModalOpen] = useState(false);
+  const [isPromoteClientModalOpen, setIsPromoteClientModalOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
 
@@ -75,6 +86,11 @@ const AdminClients = () => {
     setIsDeleteClientModalOpen(true);
   };
 
+  const handlePromoteClient = (client: any) => {
+    setSelectedClient(client);
+    setIsPromoteClientModalOpen(true);
+  };
+
   const closeEditClientModal = () => {
     setIsEditClientModalOpen(false);
     setSelectedClient(null);
@@ -82,6 +98,11 @@ const AdminClients = () => {
 
   const closeDeleteClientModal = () => {
     setIsDeleteClientModalOpen(false);
+    setSelectedClient(null);
+  };
+
+  const closePromoteClientModal = () => {
+    setIsPromoteClientModalOpen(false);
     setSelectedClient(null);
   };
 
@@ -267,6 +288,17 @@ const AdminClients = () => {
             showDelete={!item.deleted_at}
             showDuplicate
             showArchive={!item.archived}
+            customActions={
+              item.tenant_id
+                ? []
+                : [
+                    {
+                      label: "Promote to tenant",
+                      icon: <ArrowUpRight className="h-4 w-4" />,
+                      onClick: () => handlePromoteClient(item),
+                    },
+                  ]
+            }
             itemName={`${item.first_name} ${item.last_name}`}
           />
         </div>
@@ -282,8 +314,6 @@ const AdminClients = () => {
 
   return (
     <>
-      <AdminHeadbar />
-      <AdminSidebar />
       <AdminPageShell
         title="Clients Management"
         description="Manage client accounts, tenant assignments, and contacts."
@@ -391,6 +421,15 @@ const AdminClients = () => {
         onClose={closeDeleteClientModal}
         client={selectedClient}
         onDeleteConfirm={onClientDeleteConfirm}
+      />
+
+      <PromoteClientModal
+        isOpen={isPromoteClientModalOpen}
+        onClose={closePromoteClientModal}
+        client={selectedClient}
+        onPromoted={() => {
+          queryClient.invalidateQueries({ queryKey: ["clients"] });
+        }}
       />
     </>
   );

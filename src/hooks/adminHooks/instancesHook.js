@@ -14,9 +14,7 @@ const fetchInstanceRequests = async (params = {}) => {
 
   // Build query string from parameters
   const queryString = Object.keys(queryParams)
-    .filter(
-      (key) => queryParams[key] !== undefined && queryParams[key] !== null
-    )
+    .filter((key) => queryParams[key] !== undefined && queryParams[key] !== null)
     .map((key) => `${key}=${encodeURIComponent(queryParams[key])}`)
     .join("&");
 
@@ -42,9 +40,7 @@ const fetchPurchasedInstances = async (params = {}) => {
 
   // Build query string from parameters
   const queryString = Object.keys(queryParams)
-    .filter(
-      (key) => queryParams[key] !== undefined && queryParams[key] !== null
-    )
+    .filter((key) => queryParams[key] !== undefined && queryParams[key] !== null)
     .map((key) => `${key}=${encodeURIComponent(queryParams[key])}`)
     .join("&");
 
@@ -68,29 +64,17 @@ const fetchInstanceRequestById = async (id) => {
 };
 
 const fetchInstanceManagementDetailsByIdentifier = async (identifier) => {
-  const res = await silentApi("GET", `/instances/${identifier}`);
-  const instance = res?.data;
+  const res = await silentApi("GET", `/instance-management/${identifier}`);
+  const details = res?.data;
 
-  if (!instance) {
-    throw new Error(
-      `Failed to fetch instance management details for ${identifier}`
-    );
+  if (!details?.instance) {
+    throw new Error(`Failed to fetch instance management details for ${identifier}`);
   }
 
   return {
-    instance,
-    provider_details:
-      instance.provider_details ||
-      instance.provider_details_snapshot ||
-      instance.provider_vm ||
-      null,
-    available_actions: instance.available_actions || null,
-    console_info: instance.console_info || null,
-    network_info: instance.network_info || null,
-    security_info: instance.security_info || null,
-    monitoring_metrics: instance.monitoring_metrics || null,
+    ...details,
     supports_instance_actions: Boolean(
-      instance.available_actions && Object.keys(instance.available_actions).length
+      details.available_actions && Object.keys(details.available_actions).length
     ),
   };
 };
@@ -216,9 +200,13 @@ const executeInstanceManagementAction = async ({
     payload.confirmed = true;
   }
 
-  throw new Error(
-    "Instance lifecycle actions are not available in the current environment."
-  );
+  const res = await api("POST", `/instance-management/${identifier}/actions`, payload);
+
+  if (!res?.success) {
+    throw new Error(res?.message || `Failed to execute ${action} action`);
+  }
+
+  return res.data ?? res;
 };
 
 const refreshInstanceManagementStatus = async (identifier) => {
@@ -226,7 +214,13 @@ const refreshInstanceManagementStatus = async (identifier) => {
     throw new Error("Instance identifier is required to refresh status.");
   }
 
-  return { success: true };
+  const res = await api("POST", `/instance-management/${identifier}/refresh-status`);
+
+  if (!res?.success) {
+    throw new Error(res?.message || "Failed to refresh instance status");
+  }
+
+  return res.data ?? res;
 };
 
 const fetchInstanceUsageStats = async ({ identifier, period = "24h" }) => {
@@ -248,9 +242,7 @@ const updateInstanceMetadata = async ({ identifier, payload }) => {
   const res = await silentApi("PUT", `/instances/${identifier}`, payload);
 
   if (!res?.success) {
-    throw new Error(
-      res?.message || `Failed to update metadata for ${identifier}`
-    );
+    throw new Error(res?.message || `Failed to update metadata for ${identifier}`);
   }
 
   return res.data ?? res;
@@ -274,11 +266,7 @@ export const useRefreshInstanceStatus = () => {
   });
 };
 
-export const useInstanceUsageStats = (
-  identifier,
-  period = "24h",
-  options = {}
-) => {
+export const useInstanceUsageStats = (identifier, period = "24h", options = {}) => {
   const { enabled = true, ...rest } = options;
 
   return useQuery({

@@ -19,7 +19,7 @@ const AddTenantProductPricing = ({ isOpen, onClose, defaultPrice, onSubmit }) =>
 
   const modalProps = useMemo(
     () => ({
-      title: "Enable Object Storage",
+      title: "Enable Silo Storage",
       description:
         "Set the price per GB-month for this tenant. Leave blank to inherit the platform default.",
       size: "md",

@@ -14,6 +14,7 @@ import { getAuth, signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { PageContext } from "../contexts/contextprovider";
 import {
+  lockMarketingTheme,
   resolveBrandLogo,
   useApplyBrandingTheme,
   usePublicBrandingTheme,
@@ -30,8 +31,9 @@ const Sidebar = () => {
     domain: hostname,
     subdomain,
   });
-  useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
-  const brandLogoSrc = resolveBrandLogo(branding, logo);
+  const lockedBranding = lockMarketingTheme(branding);
+  useApplyBrandingTheme(lockedBranding, { fallbackLogo: logo, updateFavicon: true });
+  const brandLogoSrc = resolveBrandLogo(lockedBranding, logo);
   const brandLogoAlt = branding?.company?.name
     ? `${branding.company.name} Logo`
     : "UniCloud Africa Logo";

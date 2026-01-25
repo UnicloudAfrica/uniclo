@@ -383,6 +383,18 @@ const mixRgb = (base, target, weight) => ({
 
 const rgbToChannels = (rgb) => `${rgb.r} ${rgb.g} ${rgb.b}`;
 
+export const lockMarketingTheme = (theme = {}) => ({
+  ...theme,
+  accentColor: "#3FE0C8",
+  primaryColor: "#288DD1",
+  palette: {
+    ...theme?.palette,
+    text: "#6B7280",
+    muted: "#6B7280",
+    border: "rgba(63, 224, 200, 0.2)",
+  },
+});
+
 export const resolveBrandLogo = (theme, fallbackLogo) => {
   const rawCandidate =
     normalizeLogoValue(theme?.logo) ??

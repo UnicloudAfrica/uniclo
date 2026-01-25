@@ -1,5 +1,6 @@
 import logo from "./assets/logo.png";
 import {
+  lockMarketingTheme,
   resolveBrandLogo,
   useApplyBrandingTheme,
   usePublicBrandingTheme,
@@ -14,8 +15,9 @@ const Topbar = () => {
     domain: hostname,
     subdomain,
   });
-  useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
-  const brandLogoSrc = resolveBrandLogo(branding, logo);
+  const lockedBranding = lockMarketingTheme(branding);
+  useApplyBrandingTheme(lockedBranding, { fallbackLogo: logo, updateFavicon: true });
+  const brandLogoSrc = resolveBrandLogo(lockedBranding, logo);
   const brandLogoAlt = branding?.company?.name
     ? `${branding.company.name} Logo`
     : "UniCloud Africa Logo";

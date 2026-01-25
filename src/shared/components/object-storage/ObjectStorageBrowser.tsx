@@ -208,24 +208,24 @@ const ObjectStorageBrowser: React.FC<ObjectStorageBrowserProps> = ({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+    <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3">
         <div className="flex items-center gap-3">
           {onBack && (
             <button
               onClick={onBack}
-              className="rounded-lg p-2 text-slate-500 hover:bg-slate-200 hover:text-slate-700"
+              className="rounded-lg p-2 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
           )}
-          <h3 className="font-semibold text-slate-900">{bucketName}</h3>
+          <h3 className="font-semibold text-gray-900">{bucketName}</h3>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowNewFolder(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             <FolderPlus className="h-4 w-4" />
             New Folder
@@ -249,7 +249,7 @@ const ObjectStorageBrowser: React.FC<ObjectStorageBrowserProps> = ({
           <button
             onClick={fetchObjects}
             disabled={loading}
-            className="rounded-lg p-2 text-slate-500 hover:bg-slate-200 hover:text-slate-700"
+            className="rounded-lg p-2 text-gray-500 hover:bg-gray-200 hover:text-gray-700"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </button>
@@ -258,7 +258,7 @@ const ObjectStorageBrowser: React.FC<ObjectStorageBrowserProps> = ({
 
       {/* Upload Progress */}
       {uploading && (
-        <div className="border-b border-slate-200 bg-blue-50 px-4 py-2">
+        <div className="border-b border-gray-200 bg-blue-50 px-4 py-2">
           <div className="flex items-center gap-3">
             <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
             <span className="text-sm text-blue-700">Uploading... {uploadProgress}%</span>
@@ -273,22 +273,22 @@ const ObjectStorageBrowser: React.FC<ObjectStorageBrowserProps> = ({
       )}
 
       {/* Breadcrumbs */}
-      <div className="flex items-center gap-1 border-b border-slate-100 bg-white px-4 py-2 text-sm overflow-x-auto">
+      <div className="flex items-center gap-1 border-b border-gray-100 bg-white px-4 py-2 text-sm overflow-x-auto">
         <button
           onClick={() => setCurrentPrefix("")}
-          className="flex items-center gap-1 rounded px-2 py-1 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          className="flex items-center gap-1 rounded px-2 py-1 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
         >
           <Home className="h-4 w-4" />
         </button>
         {breadcrumbs.map((crumb, idx) => (
           <React.Fragment key={crumb.prefix}>
-            <ChevronRight className="h-4 w-4 text-slate-400 flex-shrink-0" />
+            <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0" />
             <button
               onClick={() => navigateToFolder(crumb.prefix)}
-              className={`rounded px-2 py-1 hover:bg-slate-100 ${
+              className={`rounded px-2 py-1 hover:bg-gray-100 ${
                 idx === breadcrumbs.length - 1
-                  ? "font-medium text-slate-900"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "font-medium text-gray-900"
+                  : "text-gray-600 hover:text-gray-900"
               }`}
             >
               {crumb.name}
@@ -299,15 +299,15 @@ const ObjectStorageBrowser: React.FC<ObjectStorageBrowserProps> = ({
 
       {/* New Folder Form */}
       {showNewFolder && (
-        <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
+        <div className="border-b border-gray-200 bg-gray-50 px-4 py-3">
           <div className="flex items-center gap-2">
-            <FolderPlus className="h-5 w-5 text-slate-400" />
+            <FolderPlus className="h-5 w-5 text-gray-400" />
             <input
               type="text"
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
               placeholder="Folder name"
-              className="flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+              className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
               onKeyDown={(e) => e.key === "Enter" && handleCreateFolder()}
               autoFocus
             />
@@ -322,7 +322,7 @@ const ObjectStorageBrowser: React.FC<ObjectStorageBrowserProps> = ({
                 setShowNewFolder(false);
                 setNewFolderName("");
               }}
-              className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100"
+              className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
             >
               Cancel
             </button>
@@ -337,22 +337,22 @@ const ObjectStorageBrowser: React.FC<ObjectStorageBrowserProps> = ({
         </div>
       ) : folders.length === 0 && files.length === 0 ? (
         <div className="py-16 text-center">
-          <Folder className="mx-auto h-12 w-12 text-slate-300" />
-          <p className="mt-3 text-slate-600">This folder is empty</p>
-          <p className="text-sm text-slate-400">Upload files or create a new folder</p>
+          <Folder className="mx-auto h-12 w-12 text-gray-300" />
+          <p className="mt-3 text-gray-600">This folder is empty</p>
+          <p className="text-sm text-gray-400">Upload files or create a new folder</p>
         </div>
       ) : (
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-gray-100">
           {/* Folders */}
           {folders.map((folder) => (
             <div
               key={folder.key}
               onClick={() => navigateToFolder(folder.key)}
-              className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-slate-50"
+              className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-gray-50"
             >
               <Folder className="h-5 w-5 text-amber-500" />
-              <span className="flex-1 font-medium text-slate-900">{folder.name}</span>
-              <ChevronRight className="h-4 w-4 text-slate-400" />
+              <span className="flex-1 font-medium text-gray-900">{folder.name}</span>
+              <ChevronRight className="h-4 w-4 text-gray-400" />
             </div>
           ))}
 
@@ -360,11 +360,11 @@ const ObjectStorageBrowser: React.FC<ObjectStorageBrowserProps> = ({
           {files.map((file) => {
             const FileIcon = getFileIcon(file.name);
             return (
-              <div key={file.key} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50">
-                <FileIcon className="h-5 w-5 text-slate-400" />
+              <div key={file.key} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50">
+                <FileIcon className="h-5 w-5 text-gray-400" />
                 <div className="flex-1 min-w-0">
-                  <p className="truncate font-medium text-slate-900">{file.name}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="truncate font-medium text-gray-900">{file.name}</p>
+                  <p className="text-xs text-gray-500">
                     {formatSize(file.size || 0)}
                     {file.last_modified &&
                       ` • ${new Date(file.last_modified).toLocaleDateString()}`}
@@ -374,7 +374,7 @@ const ObjectStorageBrowser: React.FC<ObjectStorageBrowserProps> = ({
                   {isPreviewable(file.name) && (
                     <button
                       onClick={() => handlePreview(file)}
-                      className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                      className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
                       title="Preview"
                     >
                       <Eye className="h-4 w-4" />
@@ -382,7 +382,7 @@ const ObjectStorageBrowser: React.FC<ObjectStorageBrowserProps> = ({
                   )}
                   <button
                     onClick={() => handleDownload(file)}
-                    className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                    className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
                     title="Download"
                   >
                     <Download className="h-4 w-4" />
@@ -390,7 +390,7 @@ const ObjectStorageBrowser: React.FC<ObjectStorageBrowserProps> = ({
                   <button
                     onClick={() => handleDelete(file)}
                     disabled={deletingKey === file.key}
-                    className="rounded-lg p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                    className="rounded-lg p-2 text-gray-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
                     title="Delete"
                   >
                     {deletingKey === file.key ? (
@@ -410,14 +410,14 @@ const ObjectStorageBrowser: React.FC<ObjectStorageBrowserProps> = ({
       {previewUrl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
           <div className="relative max-h-[90vh] max-w-4xl w-full rounded-2xl bg-white overflow-hidden">
-            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-              <h3 className="font-semibold text-slate-900">{previewName}</h3>
+            <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+              <h3 className="font-semibold text-gray-900">{previewName}</h3>
               <button
                 onClick={() => {
                   setPreviewUrl(null);
                   setPreviewName("");
                 }}
-                className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -430,7 +430,7 @@ const ObjectStorageBrowser: React.FC<ObjectStorageBrowserProps> = ({
               ) : (
                 <iframe
                   src={previewUrl}
-                  className="h-[70vh] w-full bg-slate-50"
+                  className="h-[70vh] w-full bg-gray-50"
                   title={previewName}
                 />
               )}

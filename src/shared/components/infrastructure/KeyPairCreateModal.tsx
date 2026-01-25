@@ -220,7 +220,7 @@ const KeyPairCreateModal: React.FC<KeyPairCreateModalProps> = ({
             className="text-sm leading-relaxed"
             style={{ color: designTokens.colors.neutral[600] }}
           >
-            Store this private key securely. UniCloud cannot display it again. Copy it to your
+            Store this private key securely. This portal cannot display it again. Copy it to your
             clipboard or download it as a PEM file.
           </p>
           <div className="rounded-2xl border border-dashed px-4 py-4">

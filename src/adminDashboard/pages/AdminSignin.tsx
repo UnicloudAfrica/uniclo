@@ -1,7 +1,6 @@
 // @ts-nocheck
 import React, { useEffect, useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import sideBg from "./assets/sideBg.svg";
 import logo from "./assets/logo.png";
 import { useNavigate } from "react-router-dom";
 
@@ -9,6 +8,12 @@ import useAdminAuthStore from "../../stores/adminAuthStore";
 // @ts-ignore
 import useAuthRedirect from "../../utils/adminAuthRedirect";
 import { useLoginAdminAccount } from "../../hooks/adminHooks/authHooks";
+import {
+  resolveBrandLogo,
+  useAdminBrandingTheme,
+  useApplyBrandingTheme,
+} from "../../hooks/useBrandingTheme";
+import useImageFallback from "../../hooks/useImageFallback";
 
 interface LoginErrors {
   email?: string;
@@ -26,6 +31,12 @@ export default function AdminLogin() {
   const navigate = useNavigate();
   const { setUserEmail, setTwoFactorRequired, clearTwoFactorRequirement } = useAdminAuthStore();
   const { isLoading } = useAuthRedirect();
+  const { data: branding } = useAdminBrandingTheme();
+  useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
+  const logoSrc = resolveBrandLogo(branding, logo);
+  const logoAlt = branding?.company?.name ? `${branding.company.name} Logo` : "Logo";
+  const companyName = branding?.company?.name || "Unicloud Africa";
+  const { src: resolvedLogoSrc, onError: handleLogoError } = useImageFallback(logoSrc, logo);
 
   useEffect(() => {
     clearTwoFactorRequirement();
@@ -101,7 +112,12 @@ export default function AdminLogin() {
           {/* Logo */}
           <div className="mb-8">
             <div className="flex items-center justify-center">
-              <img src={logo} className="w-[100px]" alt="Logo" />
+              <img
+                src={resolvedLogoSrc}
+                className="w-[100px]"
+                alt={logoAlt}
+                onError={handleLogoError}
+              />
             </div>
           </div>
 
@@ -109,7 +125,7 @@ export default function AdminLogin() {
           <div className="mb-8 w-full text-center">
             <h1 className="text-2xl font-semibold text-[#121212] mb-2">Welcome Back</h1>
             <p className="text-[#676767] text-sm">
-              Welcome back to Unicloud Africa. Enter your details to access the admin dashboard
+              Welcome back to {companyName}. Enter your details to access the admin dashboard
             </p>
           </div>
 
@@ -180,14 +196,7 @@ export default function AdminLogin() {
       </div>
 
       {/* Right Side - Illustration */}
-      <div
-        style={{
-          backgroundImage: `url(${sideBg})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-        className="flex-1 side-bg hidden lg:flex items-center justify-center relative overflow-hidden"
-      ></div>
+      <div className="flex-1 side-bg hidden lg:flex items-center justify-center relative overflow-hidden"></div>
     </div>
   );
 }

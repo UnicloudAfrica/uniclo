@@ -267,14 +267,14 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-slate-200 bg-white p-6 text-center">
+      <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
           <CheckCircle2 className="h-6 w-6" />
         </div>
-        <h2 className="text-2xl font-bold text-slate-900">
+        <h2 className="text-2xl font-bold text-gray-900">
           {isFastTrack ? "Provisioning started" : "Order confirmed"}
         </h2>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-gray-600">
           {isFastTrack
             ? "Fast-track provisioning is underway. Live updates will appear below."
             : "Payment verified. Provisioning has begun and will update in real time."}
@@ -285,10 +285,10 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
             {infoItems.map((item) => (
               <div
                 key={item.label}
-                className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2"
+                className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2"
               >
-                <p className="text-xs font-semibold text-slate-600">{item.label}</p>
-                <p className="text-sm font-semibold text-slate-900 break-all">{item.value}</p>
+                <p className="text-xs font-semibold text-gray-600">{item.label}</p>
+                <p className="text-sm font-semibold text-gray-900 break-all">{item.value}</p>
               </div>
             ))}
           </div>
@@ -323,16 +323,16 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
         )}
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6">
-        <h3 className="text-lg font-semibold text-slate-900">Provisioning progress</h3>
-        <p className="text-sm text-slate-500">
+      <div className="rounded-xl border border-gray-200 bg-white p-6">
+        <h3 className="text-lg font-semibold text-gray-900">Provisioning progress</h3>
+        <p className="text-sm text-gray-500">
           Provisioning runs per service profile. Credentials appear once the final step completes
           for all profiles.
         </p>
 
         <div className="mt-6 space-y-6">
           {accountSummaries.length === 0 ? (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-gray-500">
               Provisioning updates will appear once the workflow starts.
             </p>
           ) : (
@@ -340,8 +340,8 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
               <div key={entry.id} className="space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">{entry.label}</p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-sm font-semibold text-gray-900">{entry.label}</p>
+                    <p className="text-xs text-gray-500">
                       {entry.region ? `Region: ${entry.region}` : `Account ID: ${entry.id}`}
                     </p>
                   </div>
@@ -358,11 +358,11 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
                     isLoading={Boolean(loadingIds[entry.id])}
                   />
                 ) : isLoading ? (
-                  <div className="flex items-center gap-2 text-sm text-slate-500">
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
                     <Loader2 className="h-4 w-4 animate-spin" /> Loading provisioning status...
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-gray-500">
                     Provisioning updates will appear once the workflow starts.
                   </p>
                 )}
@@ -373,10 +373,10 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
       </div>
 
       {credentialsReady && (
-        <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-6">
+        <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-6">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900">Credentials</h3>
-            <p className="text-sm text-slate-500">
+            <h3 className="text-lg font-semibold text-gray-900">Credentials</h3>
+            <p className="text-sm text-gray-500">
               Download and copy the credentials for each profile. The secret is shown once per
               profile.
             </p>
@@ -386,12 +386,12 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
             {credentialEntries.map((entry) => (
               <div
                 key={entry.id}
-                className="rounded-xl border border-slate-200 bg-slate-50/40 p-5 space-y-4"
+                className="rounded-xl border border-gray-200 bg-gray-50/40 p-5 space-y-4"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">{entry.label}</p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-sm font-semibold text-gray-900">{entry.label}</p>
+                    <p className="text-xs text-gray-500">
                       {entry.region ? `Region: ${entry.region}` : `Account ID: ${entry.id}`}
                     </p>
                   </div>

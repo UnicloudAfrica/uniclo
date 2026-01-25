@@ -24,7 +24,7 @@ const TenantSidebar: React.FC<TenantSidebarProps> = ({ tenantData }) => {
   const navigate = useNavigate();
   const { isMobileOpen, closeMobile } = useSidebarStore();
 
-  const themeColor = tenantData?.color || "#1C1C1C";
+  const themeColor = tenantData?.color || "#288DD1";
 
   const handleLogout = async () => {
     try {

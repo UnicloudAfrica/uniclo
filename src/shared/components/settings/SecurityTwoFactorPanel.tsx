@@ -38,8 +38,8 @@ const SecurityTwoFactorPanel: React.FC<SecurityTwoFactorPanelProps> = ({
             variant={enabled ? "outline" : "primary"}
             className={`flex items-center gap-2 ${
               enabled
-                ? "hover:!bg-[#e8f4fd] !text-[#288DD1] !border-[#288DD1]"
-                : "!bg-[#288DD1] hover:!bg-[#0f6cad] !text-white !border-transparent"
+                ? "hover:!bg-[--theme-color-10] !text-[--theme-color] !border-[--theme-color]"
+                : "!bg-[--theme-color] hover:opacity-90 !text-white !border-transparent"
             }`}
             onClick={enabled ? onDisable : onEnable}
             disabled={isBusy || isFetching}

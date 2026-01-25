@@ -811,12 +811,12 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
         size="md"
       >
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-gray-600">
             These key pairs were generated during provisioning. Download each private key and keep
             it safe.
           </p>
           {sanitizedDownloads.length === 0 ? (
-            <p className="text-sm text-slate-500">No key pairs to download.</p>
+            <p className="text-sm text-gray-500">No key pairs to download.</p>
           ) : (
             <div className="space-y-3">
               {sanitizedDownloads.map((item) => {
@@ -828,13 +828,13 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
                 return (
                   <div
                     key={`${item.id || keyLabel}-${contextLabel}`}
-                    className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3"
+                    className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
-                        <p className="text-sm font-semibold text-slate-800">{keyLabel}</p>
+                        <p className="text-sm font-semibold text-gray-800">{keyLabel}</p>
                         {contextLabel ? (
-                          <p className="text-xs text-slate-500">{contextLabel}</p>
+                          <p className="text-xs text-gray-500">{contextLabel}</p>
                         ) : null}
                       </div>
                       <div className="flex flex-wrap items-center gap-2">

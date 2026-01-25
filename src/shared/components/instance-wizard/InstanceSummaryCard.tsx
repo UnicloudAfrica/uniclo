@@ -143,22 +143,22 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
     <ModernCard variant="outlined" padding="lg" className="sticky top-4" onClick={undefined}>
       <div className="space-y-4">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-1">
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">
             {summaryTitle || "Order Summary"}
           </h3>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-gray-600">
             {summaryDescription || "Auto-calculated from the captured configuration."}
           </p>
         </div>
 
         {/* Customer Context */}
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold text-slate-700">Customer Context</h4>
-          <div className="text-sm text-slate-600">
+          <h4 className="text-sm font-semibold text-gray-700">Customer Context</h4>
+          <div className="text-sm text-gray-600">
             {contextType === "tenant" && (
               <p>
                 Tenant:{" "}
-                <span className="font-medium text-slate-900">
+                <span className="font-medium text-gray-900">
                   {selectedTenantName || "Tenant selected"}
                 </span>
               </p>
@@ -166,7 +166,7 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
             {contextType === "user" && (
               <p>
                 User:{" "}
-                <span className="font-medium text-slate-900">
+                <span className="font-medium text-gray-900">
                   {selectedClientName || "User selected"}
                 </span>
               </p>
@@ -174,7 +174,7 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
             {contextType === "client" && (
               <p>
                 Client:{" "}
-                <span className="font-medium text-slate-900">{selectedClientName || "Self"}</span>
+                <span className="font-medium text-gray-900">{selectedClientName || "Self"}</span>
               </p>
             )}
             {contextType === "unassigned" && <p className="text-amber-600">⚠ Unassigned</p>}
@@ -184,18 +184,18 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
         {/* Billing Country */}
         {billingCountry && (
           <div className="space-y-2">
-            <h4 className="text-sm font-semibold text-slate-700">Billing Country</h4>
-            <p className="text-sm text-slate-900">{billingCountry}</p>
+            <h4 className="text-sm font-semibold text-gray-700">Billing Country</h4>
+            <p className="text-sm text-gray-900">{billingCountry}</p>
           </div>
         )}
 
-        <div className="border-t border-slate-200 pt-4">
-          <h4 className="text-sm font-semibold text-slate-700 mb-3">
+        <div className="border-t border-gray-200 pt-4">
+          <h4 className="text-sm font-semibold text-gray-700 mb-3">
             {resourceLabel} configurations
           </h4>
 
           {!hasConfigurations ? (
-            <p className="text-sm text-slate-500 italic">
+            <p className="text-sm text-gray-500 italic">
               No {resourceLabelPlural.toLowerCase()} configured yet
             </p>
           ) : (
@@ -240,14 +240,14 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
                 return (
                   <div
                     key={cfg.id}
-                    className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2"
+                    className="rounded-lg border border-gray-200 bg-gray-50 p-3 space-y-2"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-slate-700">
+                      <span className="text-xs font-semibold text-gray-700">
                         {resourceLabel} #{idx + 1}
                       </span>
                       {cfg.name && (
-                        <span className="text-xs text-slate-600 truncate max-w-[120px]">
+                        <span className="text-xs text-gray-600 truncate max-w-[120px]">
                           {cfg.name}
                         </span>
                       )}
@@ -255,56 +255,56 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
 
                     <div className="space-y-1.5 text-xs">
                       {cfg.region && (
-                        <div className="flex items-center gap-2 text-slate-600">
+                        <div className="flex items-center gap-2 text-gray-600">
                           <Network className="h-3 w-3 flex-shrink-0" />
                           <span className="truncate">{summary?.regionLabel || cfg.region}</span>
                         </div>
                       )}
 
                       {projectLabel && (
-                        <div className="flex items-center gap-2 text-slate-600">
+                        <div className="flex items-center gap-2 text-gray-600">
                           <Folder className="h-3 w-3 flex-shrink-0" />
                           <span className="truncate">Project: {projectLabel}</span>
                         </div>
                       )}
 
                       {networkPresetLabel && (
-                        <div className="flex items-center gap-2 text-slate-600">
+                        <div className="flex items-center gap-2 text-gray-600">
                           <Network className="h-3 w-3 flex-shrink-0" />
                           <span className="truncate">Network preset: {networkPresetLabel}</span>
                         </div>
                       )}
 
                       {computeLabel && (
-                        <div className="flex items-center gap-2 text-slate-600">
+                        <div className="flex items-center gap-2 text-gray-600">
                           <Cpu className="h-3 w-3 flex-shrink-0" />
                           <span className="truncate">{computeLabel}</span>
                         </div>
                       )}
 
                       {osLabel && (
-                        <div className="flex items-center gap-2 text-slate-600">
+                        <div className="flex items-center gap-2 text-gray-600">
                           <Image className="h-3 w-3 flex-shrink-0" />
                           <span className="truncate">{osLabel}</span>
                         </div>
                       )}
 
                       {storageLabel && (
-                        <div className="flex items-center gap-2 text-slate-600">
+                        <div className="flex items-center gap-2 text-gray-600">
                           <HardDrive className="h-3 w-3 flex-shrink-0" />
                           <span className="truncate">{storageLabel}</span>
                         </div>
                       )}
 
                       {keypairLabel && (
-                        <div className="flex items-center gap-2 text-slate-600">
+                        <div className="flex items-center gap-2 text-gray-600">
                           <KeyRound className="h-3 w-3 flex-shrink-0" />
                           <span className="truncate">{keypairLabel}</span>
                         </div>
                       )}
 
                       {securityGroupCount > 0 && (
-                        <div className="flex items-center gap-2 text-slate-600">
+                        <div className="flex items-center gap-2 text-gray-600">
                           <Shield className="h-3 w-3 flex-shrink-0" />
                           <span>
                             {securityGroupCount} security group
@@ -314,7 +314,7 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
                       )}
 
                       {extraVolumeCount > 0 && (
-                        <div className="flex items-center gap-2 text-slate-600">
+                        <div className="flex items-center gap-2 text-gray-600">
                           <HardDrive className="h-3 w-3 flex-shrink-0" />
                           <span>
                             {extraVolumeCount} data volume
@@ -324,7 +324,7 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
                       )}
 
                       {cfg.instance_count && (
-                        <div className="flex items-center gap-2 text-slate-600">
+                        <div className="flex items-center gap-2 text-gray-600">
                           <Server className="h-3 w-3 flex-shrink-0" />
                           <span>
                             {cfg.instance_count} instance
@@ -334,16 +334,16 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
                       )}
 
                       {cfg.storage_size_gb && Number(cfg.storage_size_gb) > 0 && (
-                        <div className="flex items-center gap-2 text-slate-600">
+                        <div className="flex items-center gap-2 text-gray-600">
                           <HardDrive className="h-3 w-3 flex-shrink-0" />
                           <span>Root Disk: {cfg.storage_size_gb} GB</span>
                         </div>
                       )}
 
                       {cfg.volume_types && cfg.volume_types.length > 0 && (
-                        <div className="pl-5 border-l-2 border-slate-100 space-y-1">
+                        <div className="pl-5 border-l-2 border-gray-100 space-y-1">
                           {cfg.volume_types.map((vol, vIdx) => (
-                            <div key={vIdx} className="flex items-center gap-2 text-slate-500">
+                            <div key={vIdx} className="flex items-center gap-2 text-gray-500">
                               <HardDrive className="h-3 w-3 flex-shrink-0" />
                               <span>
                                 Data Vol {vIdx + 1}: {vol.storage_size_gb} GB
@@ -354,7 +354,7 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
                       )}
 
                       {cfg.months && (
-                        <div className="flex items-center gap-2 text-slate-600">
+                        <div className="flex items-center gap-2 text-gray-600">
                           <Calendar className="h-3 w-3 flex-shrink-0" />
                           <span>
                             {cfg.months} month{Number(cfg.months) !== 1 ? "s" : ""}
@@ -368,12 +368,10 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
 
               {/* Total Summary */}
               {totalInstances > 0 && (
-                <div className="pt-3 border-t border-slate-200">
+                <div className="pt-3 border-t border-gray-200">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-semibold text-slate-700">
-                      Total {resourceLabelPlural}
-                    </span>
-                    <span className="font-bold text-slate-900">{totalInstances}</span>
+                    <span className="font-semibold text-gray-700">Total {resourceLabelPlural}</span>
+                    <span className="font-bold text-gray-900">{totalInstances}</span>
                   </div>
                 </div>
               )}
@@ -382,13 +380,13 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
         </div>
 
         {showPricingBreakdown && (
-          <div className="pt-4 border-t border-slate-200 space-y-3">
-            <h4 className="text-sm font-semibold text-slate-700">Pricing breakdown</h4>
-            <div className="space-y-2 text-xs text-slate-600">
+          <div className="pt-4 border-t border-gray-200 space-y-3">
+            <h4 className="text-sm font-semibold text-gray-700">Pricing breakdown</h4>
+            <div className="space-y-2 text-xs text-gray-600">
               {resolvedSubtotal > 0 && (
                 <div className="flex items-center justify-between">
                   <span>Subtotal</span>
-                  <span className="font-medium text-slate-900">
+                  <span className="font-medium text-gray-900">
                     {displayCurrency} {formatCurrencyValue(resolvedSubtotal)}
                   </span>
                 </div>
@@ -396,13 +394,13 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
               {resolvedTax > 0 && (
                 <div className="flex items-center justify-between">
                   <span>Estimated tax</span>
-                  <span className="font-medium text-slate-900">
+                  <span className="font-medium text-gray-900">
                     {displayCurrency} {formatCurrencyValue(resolvedTax)}
                   </span>
                 </div>
               )}
               {estimatedTotalResolved > 0 && (resolvedSubtotal > 0 || resolvedTax > 0) && (
-                <div className="flex items-center justify-between text-[11px] text-slate-500">
+                <div className="flex items-center justify-between text-[11px] text-gray-500">
                   <span>Estimated total</span>
                   <span>
                     {displayCurrency} {formatCurrencyValue(estimatedTotalResolved)}
@@ -412,7 +410,7 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
               {gatewayFees > 0 && (
                 <div className="flex items-center justify-between">
                   <span>Gateway fees</span>
-                  <span className="font-medium text-slate-900">
+                  <span className="font-medium text-gray-900">
                     {displayCurrency} {formatCurrencyValue(gatewayFees)}
                   </span>
                 </div>
@@ -425,21 +423,21 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
                   </span>
                 </div>
               )}
-              <div className="flex items-center justify-between border-t border-slate-200 pt-2 text-sm">
-                <span className="font-semibold text-slate-700">Total payable</span>
-                <span className="font-bold text-slate-900">
+              <div className="flex items-center justify-between border-t border-gray-200 pt-2 text-sm">
+                <span className="font-semibold text-gray-700">Total payable</span>
+                <span className="font-bold text-gray-900">
                   {displayCurrency} {formatCurrencyValue(payableTotal)}
                 </span>
               </div>
             </div>
             {difference > 0.01 && (
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-gray-500">
                 Gateway total is higher than the estimate by {displayCurrency}{" "}
                 {formatCurrencyValue(difference)}.
               </p>
             )}
             {difference < -0.01 && (
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-gray-500">
                 Gateway total is lower than the estimate by {displayCurrency}{" "}
                 {formatCurrencyValue(Math.abs(difference))}.
               </p>
@@ -447,8 +445,8 @@ const InstanceSummaryCard: React.FC<InstanceSummaryCardProps> = ({
           </div>
         )}
 
-        <div className="pt-3 border-t border-slate-200">
-          <p className="text-xs text-slate-500">
+        <div className="pt-3 border-t border-gray-200">
+          <p className="text-xs text-gray-500">
             Taxes are estimated and may change after finance review.
           </p>
         </div>

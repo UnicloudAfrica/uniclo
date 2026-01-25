@@ -2,7 +2,7 @@ import React from "react";
 import { Menu } from "lucide-react";
 import BreadcrumbTrail from "./BreadcrumbTrail";
 
-const DEFAULT_BREADCRUMB_COLOR = "#288DD1";
+const DEFAULT_BREADCRUMB_COLOR = "var(--theme-color, #288DD1)";
 
 interface Breadcrumb {
   label: string;

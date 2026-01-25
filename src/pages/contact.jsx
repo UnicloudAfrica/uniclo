@@ -448,7 +448,7 @@ const Contact = () => {
 
               <button
                 onClick={handleSubmit}
-                className=" w-full flex h-[45px] mt-6 rounded-[30px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] hover:bg-opacity-75 transition-all justify-center items-center"
+                className=" w-full flex h-[45px] mt-6 rounded-[30px] bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] hover:bg-opacity-75 transition-all justify-center items-center"
               >
                 {loading === "No" && (
                   <p className=" font-Outfit text-base text-white">Send Message</p>
@@ -460,7 +460,7 @@ const Contact = () => {
 
           <div className=" w-full p-5 mt-16 md:p-8 border rounded-[30px] border-[#DAE0E6] flex flex-col lg:flex-row justify-center md:justify-between items-start space-y-6 lg:space-y-0">
             <div className=" space-y-2 w-full lg:w-1/3">
-              <button className=" w-12 h-12 bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] rounded-[50%] flex justify-center items-center">
+              <button className=" w-12 h-12 bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] rounded-[50%] flex justify-center items-center">
                 <img src={office} alt="" />
               </button>
               <div className=" space-y-2">
@@ -484,7 +484,7 @@ const Contact = () => {
             </div>
 
             <div className=" space-y-2 w-full lg:w-1/3">
-              <button className=" w-12 h-12 bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] rounded-[50%] flex justify-center items-center">
+              <button className=" w-12 h-12 bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] rounded-[50%] flex justify-center items-center">
                 <img src={chat} alt="" />
               </button>
               <p className=" font-medium text-xl"> Contact us on</p>
@@ -503,7 +503,7 @@ const Contact = () => {
             </div>
 
             <div className=" space-y-2 w-full lg:w-1/3">
-              <button className=" w-12 h-12 bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] rounded-[50%] flex justify-center items-center">
+              <button className=" w-12 h-12 bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] rounded-[50%] flex justify-center items-center">
                 <img src={text} alt="" />
               </button>
               {/* <p className=" font-medium text-xl">
@@ -534,7 +534,7 @@ const Contact = () => {
                 onClick={() => {
                   setSuccessMessage(false);
                 }}
-                className=" bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] mt-6 hover:bg-opacity-75 px-3 py-1 rounded-md text-white text-sm font-Outfit"
+                className=" bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] mt-6 hover:bg-opacity-75 px-3 py-1 rounded-md text-white text-sm font-Outfit"
               >
                 Okay!
               </button>
@@ -554,7 +554,7 @@ const Contact = () => {
                 onClick={() => {
                   setErrorMessage(false);
                 }}
-                className=" bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] mt-6 hover:bg-opacity-75 px-3 py-1 rounded-md text-white text-sm font-Outfit"
+                className=" bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] mt-6 hover:bg-opacity-75 px-3 py-1 rounded-md text-white text-sm font-Outfit"
               >
                 Okay!
               </button>

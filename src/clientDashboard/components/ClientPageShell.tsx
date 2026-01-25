@@ -11,7 +11,7 @@ const ClientPageShell: React.FC<ClientPageShellProps> = (props: any) => (
   <DashboardPageShell
     homeHref="/client-dashboard"
     mainClassName="client-dashboard-shell"
-    backgroundColor="#F9FAFB"
+    backgroundColor="var(--theme-surface-alt)"
     {...props}
   />
 );

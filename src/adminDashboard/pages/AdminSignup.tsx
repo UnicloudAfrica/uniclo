@@ -1,13 +1,18 @@
 // @ts-nocheck
 import React, { useState } from "react";
 import { ChevronLeft, Loader2 } from "lucide-react";
-import sideBg from "./assets/sideBg.svg";
 import logo from "./assets/logo.png";
 import { PersonalInfoStep } from "./signupsteps/StepTwo";
 import { CreateAccountStep } from "./signupsteps/StepOne";
 import useAdminAuthStore from "../../stores/adminAuthStore";
 import { Link, useNavigate } from "react-router-dom";
 import { useCreateAdminAccount } from "../../hooks/adminHooks/authHooks";
+import {
+  resolveBrandLogo,
+  useAdminBrandingTheme,
+  useApplyBrandingTheme,
+} from "../../hooks/useBrandingTheme";
+import useImageFallback from "../../hooks/useImageFallback";
 
 interface SignupFormData {
   email?: string;
@@ -47,6 +52,12 @@ export default function AdminSignup() {
     businessName: "",
   });
   const { isLoading } = useAdminAuthStore();
+  const { data: branding } = useAdminBrandingTheme();
+  useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
+  const logoSrc = resolveBrandLogo(branding, logo);
+  const logoAlt = branding?.company?.name ? `${branding.company.name} Logo` : "Logo";
+  const companyName = branding?.company?.name || "Unicloud Africa";
+  const { src: resolvedLogoSrc, onError: handleLogoError } = useImageFallback(logoSrc, logo);
 
   const steps = ["Create Account", "Personal Info"];
 
@@ -200,14 +211,19 @@ export default function AdminSignup() {
           <div className="max-w-md mx-auto w-full">
             <div className="mb-8">
               <div className="flex items-center justify-center">
-                <img src={logo} className="w-[100px]" alt="Logo" />
+                <img
+                  src={resolvedLogoSrc}
+                  className="w-[100px]"
+                  alt={logoAlt}
+                  onError={handleLogoError}
+                />
               </div>
             </div>
             <div className="mb-8 w-full text-center">
               <h1 className="text-2xl font-semibold text-[#121212] mb-2">
                 Create an Admin Account
               </h1>
-              <p className="text-[#676767] text-sm">Create an admin account on Unicloud Africa.</p>
+              <p className="text-[#676767] text-sm">Create an admin account on {companyName}.</p>
             </div>
             <StepProgress currentStep={currentStep} steps={steps} />
             <div className="">{renderCurrentStep()}</div>
@@ -243,14 +259,7 @@ export default function AdminSignup() {
           </div>
         </div>
 
-        <div
-          style={{
-            backgroundImage: `url(${sideBg})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-          className="flex-1 side-bg hidden lg:flex items-center justify-center relative overflow-hidden"
-        ></div>
+        <div className="flex-1 side-bg hidden lg:flex items-center justify-center relative overflow-hidden"></div>
       </div>
     </>
   );

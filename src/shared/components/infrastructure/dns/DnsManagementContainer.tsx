@@ -61,7 +61,7 @@ const DnsManagementContainer: React.FC<DnsManagementContainerProps> = ({ project
       projectId,
       region,
       changeBatch: {
-        comment: "Added record via UniCloud UI",
+        comment: "Added record via portal UI",
         changes: [
           {
             action: "CREATE",
@@ -80,7 +80,7 @@ const DnsManagementContainer: React.FC<DnsManagementContainerProps> = ({ project
       projectId,
       region,
       changeBatch: {
-        comment: "Deleted record via UniCloud UI",
+        comment: "Deleted record via portal UI",
         changes: [
           {
             action: "DELETE",

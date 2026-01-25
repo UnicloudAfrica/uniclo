@@ -40,7 +40,7 @@ apiClient.interceptors.response.use(
     // Handle 401 Unauthorized - redirect to login
     if (error.response?.status === 401) {
       // localStorage.removeItem("sanctum_token"); // Token is in cookie now
-      window.location.href = "/login";
+      window.location.href = "/sign-in";
     }
 
     // Handle 403 Forbidden

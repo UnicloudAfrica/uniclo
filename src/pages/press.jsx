@@ -78,7 +78,7 @@ export default function Press() {
             print media
           </p>
           <Link to="/contact" className=" mx-auto">
-            <button className="text-white px-6 md:px-9 py-3 text-base md:text-xl w-[231px] mt-8 rounded-[30px] bg-gradient-to-r from-[#288DD1] via-[#3fd0e0] to-[#3FE0C8]">
+            <button className="text-white px-6 md:px-9 py-3 text-base md:text-xl w-[231px] mt-8 rounded-[30px] bg-gradient-to-r from-[var(--theme-color)] via-[var(--secondary-color)] to-[var(--secondary-color)]">
               Get Press Kit
             </button>
           </Link>

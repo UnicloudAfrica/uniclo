@@ -279,8 +279,8 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
   return (
     <div className="h-full overflow-y-auto bg-white">
       {/* Storage Overview Section */}
-      <div className="p-4 border-b border-slate-200">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-4">
+      <div className="p-4 border-b border-gray-200">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-4">
           Storage Overview
         </h3>
 
@@ -291,37 +291,37 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
 
         {/* Quick Stats */}
         <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="bg-slate-50 rounded-lg p-3 text-center">
-            <div className="flex items-center justify-center gap-1.5 text-slate-500 mb-1">
+          <div className="bg-gray-50 rounded-lg p-3 text-center">
+            <div className="flex items-center justify-center gap-1.5 text-gray-500 mb-1">
               <HardDrive className="h-3.5 w-3.5" />
               <span className="text-xs">Objects</span>
             </div>
-            <p className="text-lg font-bold text-slate-900">{objectCount}</p>
+            <p className="text-lg font-bold text-gray-900">{objectCount}</p>
           </div>
-          <div className="bg-slate-50 rounded-lg p-3 text-center">
-            <div className="flex items-center justify-center gap-1.5 text-slate-500 mb-1">
+          <div className="bg-gray-50 rounded-lg p-3 text-center">
+            <div className="flex items-center justify-center gap-1.5 text-gray-500 mb-1">
               <BarChart3 className="h-3.5 w-3.5" />
               <span className="text-xs">Silos</span>
             </div>
-            <p className="text-lg font-bold text-slate-900">{buckets.length}</p>
+            <p className="text-lg font-bold text-gray-900">{buckets.length}</p>
           </div>
         </div>
 
         {/* Region & Created */}
         <div className="mt-4 space-y-2 text-sm">
           <div className="flex items-center justify-between">
-            <span className="text-slate-500 flex items-center gap-1.5">
+            <span className="text-gray-500 flex items-center gap-1.5">
               <Globe className="h-3.5 w-3.5" />
               Region
             </span>
-            <span className="font-medium text-slate-700">{account?.region || "—"}</span>
+            <span className="font-medium text-gray-700">{account?.region || "—"}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-slate-500 flex items-center gap-1.5">
+            <span className="text-gray-500 flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5" />
               Created
             </span>
-            <span className="font-medium text-slate-700">
+            <span className="font-medium text-gray-700">
               {account?.created_at ? new Date(account.created_at).toLocaleDateString() : "—"}
             </span>
           </div>
@@ -351,19 +351,19 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
       </div>
 
       {/* Credentials Section (Collapsible) */}
-      <div className="border-b border-slate-200">
+      <div className="border-b border-gray-200">
         <button
           onClick={() => setShowCredentials(!showCredentials)}
-          className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
           <span className="flex items-center gap-2">
-            <Key className="h-4 w-4 text-slate-500" />
+            <Key className="h-4 w-4 text-gray-500" />
             S3 Credentials
           </span>
           {showCredentials ? (
-            <ChevronDown className="h-4 w-4 text-slate-400" />
+            <ChevronDown className="h-4 w-4 text-gray-400" />
           ) : (
-            <ChevronRight className="h-4 w-4 text-slate-400" />
+            <ChevronRight className="h-4 w-4 text-gray-400" />
           )}
         </button>
 
@@ -371,14 +371,14 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
           <div className="px-4 pb-4 space-y-3">
             {endpoint && (
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Endpoint</label>
+                <label className="block text-xs text-gray-500 mb-1">Endpoint</label>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 text-xs bg-slate-100 px-2 py-1.5 rounded font-mono truncate">
+                  <code className="flex-1 text-xs bg-gray-100 px-2 py-1.5 rounded font-mono truncate">
                     {endpoint}
                   </code>
                   <button
                     onClick={() => copyToClipboard(endpoint, "endpoint")}
-                    className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"
+                    className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
                   >
                     {copiedField === "endpoint" ? (
                       <Check className="h-3.5 w-3.5 text-emerald-500" />
@@ -391,14 +391,14 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
             )}
             {accessKeyId && (
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Access Key ID</label>
+                <label className="block text-xs text-gray-500 mb-1">Access Key ID</label>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 text-xs bg-slate-100 px-2 py-1.5 rounded font-mono truncate">
+                  <code className="flex-1 text-xs bg-gray-100 px-2 py-1.5 rounded font-mono truncate">
                     {accessKeyId}
                   </code>
                   <button
                     onClick={() => copyToClipboard(accessKeyId, "accessKey")}
-                    className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"
+                    className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
                   >
                     {copiedField === "accessKey" ? (
                       <Check className="h-3.5 w-3.5 text-emerald-500" />
@@ -412,7 +412,7 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
 
             {/* Secret Key Section */}
             <div>
-              <label className="block text-xs text-slate-500 mb-1">Secret Access Key</label>
+              <label className="block text-xs text-gray-500 mb-1">Secret Access Key</label>
               {canRevealSecret && !secretViewed ? (
                 <button
                   onClick={() => setShowRevealModal(true)}
@@ -422,20 +422,20 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
                   Click to Reveal (One-Time Only)
                 </button>
               ) : (
-                <div className="flex items-center gap-2 text-xs bg-slate-100 px-2 py-2 rounded text-slate-500">
+                <div className="flex items-center gap-2 text-xs bg-gray-100 px-2 py-2 rounded text-gray-500">
                   <EyeOff className="h-3.5 w-3.5" />
                   <span>Secret key already viewed or not available</span>
                 </div>
               )}
             </div>
 
-            <div className="mt-4 border-t border-slate-100 pt-4 space-y-3">
+            <div className="mt-4 border-t border-gray-100 pt-4 space-y-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                     Rotate Access Key
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-gray-500">
                     Create a new key, update your apps, then deactivate the old key.
                   </p>
                 </div>
@@ -451,10 +451,10 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
               {rotationError && <p className="text-xs text-rose-600">{rotationError}</p>}
 
               {newAccessKey && (
-                <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-3">
-                  <div className="text-xs text-slate-500">
+                <div className="rounded-lg border border-gray-200 bg-white p-3 space-y-3">
+                  <div className="text-xs text-gray-500">
                     Old key:{" "}
-                    <span className="font-mono text-slate-700">
+                    <span className="font-mono text-gray-700">
                       {accessKey?.key_id || "unknown"}
                     </span>
                   </div>
@@ -500,7 +500,7 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
                         setRotatingKeyId(null);
                       }}
                       disabled={!rotationConfirmed}
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50"
                     >
                       Keep old key active
                     </button>
@@ -514,8 +514,8 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
 
       {/* Silos Section */}
       <div>
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">Silos</h3>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">Silos</h3>
           <button
             onClick={() => setShowBucketForm(!showBucketForm)}
             className="p-1 text-primary-600 hover:bg-primary-50 rounded"
@@ -527,7 +527,7 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
 
         {/* Create Silo Form */}
         {showBucketForm && (
-          <form onSubmit={handleCreateBucket} className="p-3 bg-slate-50 border-b border-slate-200">
+          <form onSubmit={handleCreateBucket} className="p-3 bg-gray-50 border-b border-gray-200">
             <input
               type="text"
               value={newBucketName}
@@ -535,7 +535,7 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
                 setNewBucketName(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))
               }
               placeholder="silo-name"
-              className="w-full text-sm rounded-lg border border-slate-300 px-3 py-2 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+              className="w-full text-sm rounded-lg border border-gray-300 px-3 py-2 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
               disabled={creatingBucket}
             />
             <div className="flex gap-2 mt-2">
@@ -552,7 +552,7 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
                   setShowBucketForm(false);
                   setNewBucketName("");
                 }}
-                className="text-sm rounded-lg border border-slate-300 px-3 py-1.5 text-slate-600 hover:bg-slate-100"
+                className="text-sm rounded-lg border border-gray-300 px-3 py-1.5 text-gray-600 hover:bg-gray-100"
               >
                 Cancel
               </button>
@@ -568,8 +568,8 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
             </div>
           ) : buckets.length === 0 ? (
             <div className="text-center py-8 px-4">
-              <Database className="mx-auto h-8 w-8 text-slate-300" />
-              <p className="mt-2 text-sm text-slate-500">No silos yet</p>
+              <Database className="mx-auto h-8 w-8 text-gray-300" />
+              <p className="mt-2 text-sm text-gray-500">No silos yet</p>
             </div>
           ) : (
             <div>
@@ -580,23 +580,23 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
                   tabIndex={0}
                   onClick={() => onSelectBucket(bucket.name)}
                   onKeyPress={(e) => e.key === "Enter" && onSelectBucket(bucket.name)}
-                  className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors border-b border-slate-100 ${
+                  className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors border-b border-gray-100 ${
                     selectedBucket === bucket.name
                       ? "bg-primary-50 border-l-2 border-l-primary-500"
-                      : "hover:bg-slate-50"
+                      : "hover:bg-gray-50"
                   }`}
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <Database
                       className={`h-4 w-4 flex-shrink-0 ${
-                        selectedBucket === bucket.name ? "text-primary-600" : "text-slate-400"
+                        selectedBucket === bucket.name ? "text-primary-600" : "text-gray-400"
                       }`}
                     />
                     <span
                       className={`text-sm truncate ${
                         selectedBucket === bucket.name
                           ? "font-medium text-primary-700"
-                          : "text-slate-700"
+                          : "text-gray-700"
                       }`}
                     >
                       {bucket.name}
@@ -608,7 +608,7 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
                       onDeleteBucket(bucket);
                     }}
                     disabled={deletingBucketId === bucket.id}
-                    className="p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="p-1 text-gray-400 hover:text-rose-500 hover:bg-rose-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     {deletingBucketId === bucket.id ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -700,14 +700,14 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
                   </div>
 
                   <div className="mb-4">
-                    <label className="block text-xs text-slate-500 mb-1">Secret Access Key</label>
+                    <label className="block text-xs text-gray-500 mb-1">Secret Access Key</label>
                     <div className="flex items-center gap-2">
-                      <code className="flex-1 text-xs bg-slate-100 px-3 py-2.5 rounded-lg font-mono break-all select-all">
+                      <code className="flex-1 text-xs bg-gray-100 px-3 py-2.5 rounded-lg font-mono break-all select-all">
                         {revealedSecret}
                       </code>
                       <button
                         onClick={() => copyToClipboard(revealedSecret, "secret")}
-                        className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
+                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
                       >
                         {copiedField === "secret" ? (
                           <Check className="h-4 w-4 text-emerald-500" />
@@ -726,7 +726,7 @@ SECRET_ACCESS_KEY=${credentials.secret_access_key}
                     Download All Credentials
                   </button>
 
-                  <p className="mt-4 text-xs text-center text-slate-500">
+                  <p className="mt-4 text-xs text-center text-gray-500">
                     The credentials file will include endpoint, access key ID, and secret key.
                   </p>
                 </>

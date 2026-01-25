@@ -184,7 +184,7 @@ const DropzoneUploader: React.FC<DropzoneUploaderProps> = ({
                     ${
                       isDragActive
                         ? "border-primary-500 bg-primary-50"
-                        : "border-slate-300 hover:border-primary-400 hover:bg-slate-50"
+                        : "border-gray-300 hover:border-primary-400 hover:bg-gray-50"
                     }
                     ${compact ? "p-4" : "p-8"}
                 `}
@@ -198,10 +198,10 @@ const DropzoneUploader: React.FC<DropzoneUploaderProps> = ({
               <Upload className={`${compact ? "h-5 w-5" : "h-8 w-8"} text-primary-600`} />
             )}
           </div>
-          <p className={`font-medium text-slate-700 ${compact ? "text-sm" : "text-base"}`}>
+          <p className={`font-medium text-gray-700 ${compact ? "text-sm" : "text-base"}`}>
             {isDragActive ? "Drop files here" : "Drag & drop files here"}
           </p>
-          <p className={`text-slate-500 mt-1 ${compact ? "text-xs" : "text-sm"}`}>
+          <p className={`text-gray-500 mt-1 ${compact ? "text-xs" : "text-sm"}`}>
             or click to browse
           </p>
         </div>
@@ -209,9 +209,9 @@ const DropzoneUploader: React.FC<DropzoneUploaderProps> = ({
 
       {/* Upload Queue */}
       {uploads.length > 0 && (
-        <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+        <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
           {/* Queue Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-200">
+          <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
             <div className="flex items-center gap-4 text-sm">
               {uploadingCount > 0 && (
                 <span className="flex items-center gap-1 text-primary-600">
@@ -219,7 +219,7 @@ const DropzoneUploader: React.FC<DropzoneUploaderProps> = ({
                   Uploading {uploadingCount}
                 </span>
               )}
-              {pendingCount > 0 && <span className="text-slate-500">{pendingCount} pending</span>}
+              {pendingCount > 0 && <span className="text-gray-500">{pendingCount} pending</span>}
               {successCount > 0 && (
                 <span className="flex items-center gap-1 text-emerald-600">
                   <CheckCircle2 className="h-4 w-4" />
@@ -244,26 +244,26 @@ const DropzoneUploader: React.FC<DropzoneUploaderProps> = ({
           </div>
 
           {/* File List */}
-          <div className="max-h-64 overflow-y-auto divide-y divide-slate-100">
+          <div className="max-h-64 overflow-y-auto divide-y divide-gray-100">
             {uploads.map((upload) => (
               <div key={upload.id} className="flex items-center gap-3 px-4 py-3">
-                <FileIcon className="h-5 w-5 text-slate-400 flex-shrink-0" />
+                <FileIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-slate-700 truncate">
+                    <span className="text-sm font-medium text-gray-700 truncate">
                       {upload.name}
                     </span>
-                    <span className="text-xs text-slate-500 ml-2">{formatBytes(upload.size)}</span>
+                    <span className="text-xs text-gray-500 ml-2">{formatBytes(upload.size)}</span>
                   </div>
                   {upload.status === "uploading" && (
                     <div className="space-y-1">
-                      <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-primary-500 transition-all duration-300"
                           style={{ width: `${upload.progress}%` }}
                         />
                       </div>
-                      <div className="flex justify-between text-xs text-slate-500">
+                      <div className="flex justify-between text-xs text-gray-500">
                         <span>{upload.progress}%</span>
                         {upload.speed && <span>{formatSpeed(upload.speed)}</span>}
                       </div>
@@ -284,7 +284,7 @@ const DropzoneUploader: React.FC<DropzoneUploaderProps> = ({
                   {upload.status === "pending" && (
                     <button
                       onClick={() => removeUpload(upload.id)}
-                      className="p-1 text-slate-400 hover:text-slate-600"
+                      className="p-1 text-gray-400 hover:text-gray-600"
                     >
                       <X className="h-4 w-4" />
                     </button>

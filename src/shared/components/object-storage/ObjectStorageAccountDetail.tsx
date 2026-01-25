@@ -30,7 +30,7 @@ const statusConfig = {
   active: { label: "Active", icon: CheckCircle2, color: "text-emerald-500", bg: "bg-emerald-50" },
   provisioning: { label: "Provisioning", icon: Clock, color: "text-amber-500", bg: "bg-amber-50" },
   provision_failed: { label: "Failed", icon: XCircle, color: "text-rose-500", bg: "bg-rose-50" },
-  suspended: { label: "Suspended", icon: XCircle, color: "text-slate-500", bg: "bg-slate-100" },
+  suspended: { label: "Suspended", icon: XCircle, color: "text-gray-500", bg: "bg-gray-100" },
 };
 
 interface ObjectStorageAccountDetailProps {
@@ -201,9 +201,9 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
     return (
       <div className="flex items-center justify-center py-16 px-4">
         <div className="text-center max-w-md w-full">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 mb-6">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 mb-6">
             <svg
-              className="h-8 w-8 text-slate-400"
+              className="h-8 w-8 text-gray-400"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -216,8 +216,8 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
               />
             </svg>
           </div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-2">Storage Account Not Found</h3>
-          <p className="text-sm text-slate-500 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Storage Account Not Found</h3>
+          <p className="text-sm text-gray-500 mb-6">
             This storage account may have been deleted or you don't have permission to view it.
           </p>
           <button
@@ -235,22 +235,22 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Compact Header */}
-      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 flex-shrink-0">
+      <div className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 flex-shrink-0">
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate(backUrl)}
-            className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900"
+            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="h-4 w-4" />
             {backLabel}
           </button>
-          <div className="h-6 w-px bg-slate-200" />
+          <div className="h-6 w-px bg-gray-200" />
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-primary-100 p-2">
               <Database className="h-5 w-5 text-primary-600" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-slate-900">{account.name}</h1>
+              <h1 className="text-lg font-semibold text-gray-900">{account.name}</h1>
               <div className="flex items-center gap-2">
                 <span
                   className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${status.bg} ${status.color}`}
@@ -264,13 +264,13 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
+        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
           <button
             onClick={() => setActiveTab("files")}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
               activeTab === "files"
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-600 hover:text-slate-900"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
             }`}
           >
             <FolderOpen className="h-4 w-4" />
@@ -280,8 +280,8 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
             onClick={() => setActiveTab("analytics")}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
               activeTab === "analytics"
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-600 hover:text-slate-900"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
             }`}
           >
             <BarChart3 className="h-4 w-4" />
@@ -291,8 +291,8 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
             onClick={() => setActiveTab("subscription")}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
               activeTab === "subscription"
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-600 hover:text-slate-900"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
             }`}
           >
             <CreditCard className="h-4 w-4" />
@@ -302,8 +302,8 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
             onClick={() => setActiveTab("transactions")}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
               activeTab === "transactions"
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-600 hover:text-slate-900"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
             }`}
           >
             <Receipt className="h-4 w-4" />
@@ -313,7 +313,7 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
 
         <button
           onClick={handleRefresh}
-          className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
           <RefreshCw className="h-4 w-4" />
           Refresh
@@ -332,7 +332,7 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
       {/* Main Content: 1/4 - 3/4 Split using Grid */}
       <div className="grid grid-cols-4 flex-1 min-h-0 overflow-hidden">
         {/* Left Sidebar (1/4) */}
-        <div className="col-span-1 border-r border-slate-200 overflow-y-auto bg-white">
+        <div className="col-span-1 border-r border-gray-200 overflow-y-auto bg-white">
           <ObjectStorageSidebar
             account={account}
             buckets={buckets}
@@ -348,7 +348,7 @@ const ObjectStorageAccountDetail: React.FC<ObjectStorageAccountDetailProps> = ({
         </div>
 
         {/* Main Content Area (3/4) */}
-        <div className="col-span-3 overflow-hidden bg-slate-50">
+        <div className="col-span-3 overflow-hidden bg-gray-50">
           {activeTab === "files" ? (
             <ObjectStorageFileBrowser
               accountId={accountId}

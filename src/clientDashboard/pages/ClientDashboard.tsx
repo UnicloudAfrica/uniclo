@@ -14,9 +14,11 @@ import {
   Users,
   LucideIcon,
 } from "lucide-react";
-import mobileIllustration from "./assets/mobile.svg";
-import cloudIllustration from "./assets/cloud-connection.svg";
-import monitorIllustration from "./assets/monitor.svg";
+import {
+  CloudConnectionIllustration,
+  MobileIllustration,
+  MonitorIllustration,
+} from "../../shared/components/branding/BrandIllustrations";
 import { Link } from "react-router-dom";
 import { useFetchClientProfile } from "../../hooks/clientHooks/resources";
 import VerifyAccountPromptModal from "../components/verifyAccountPrompt";
@@ -112,9 +114,9 @@ const useFetchTenantDashboard = (): { data: DashboardData; isFetching: boolean }
   };
 };
 
-const ICON_MAP: Record<string, string> = {
-  mobile: mobileIllustration,
-  storage: cloudIllustration,
+const ICON_MAP: Record<string, React.ElementType> = {
+  mobile: MobileIllustration,
+  storage: CloudConnectionIllustration,
 };
 
 const METRIC_ICON_MAP: Record<string, LucideIcon> = {
@@ -228,8 +230,8 @@ const OfferCard: React.FC<OfferCardProps> = ({ offer, type, ctaLabel }: any) => 
     : `${product?.media_type || product?.storage_class || "Flexible"} Storage`;
 
   const description = product?.description || offer?.description || "";
-  const imageSrc =
-    ICON_MAP[product?.icon || ""] || (isTrial ? mobileIllustration : cloudIllustration);
+  const OfferIllustration =
+    ICON_MAP[product?.icon || ""] || (isTrial ? MobileIllustration : CloudConnectionIllustration);
 
   return (
     <div className="relative w-full overflow-hidden rounded-2xl border border-[--theme-border-color] bg-white/90 p-6 shadow-sm transition-all duration-200 hover:border-[--theme-color] hover:shadow-lg">
@@ -242,11 +244,7 @@ const OfferCard: React.FC<OfferCardProps> = ({ offer, type, ctaLabel }: any) => 
         </div>
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2 text-sm text-[#1E1E1EB2]">
-            <img
-              src={monitorIllustration}
-              alt=""
-              className="h-5 w-5 shrink-0 text-[--theme-color]"
-            />
+            <MonitorIllustration className="h-5 w-5 shrink-0 text-[--theme-color]" />
             <span>{spec}</span>
           </div>
           <p className="text-2xl font-semibold text-[--theme-color]">
@@ -266,11 +264,7 @@ const OfferCard: React.FC<OfferCardProps> = ({ offer, type, ctaLabel }: any) => 
           </button>
         </div>
       </div>
-      <img
-        src={imageSrc}
-        alt=""
-        className="pointer-events-none absolute -right-6 bottom-0 h-32 w-auto opacity-70 md:-right-4"
-      />
+      <OfferIllustration className="pointer-events-none absolute -right-6 bottom-0 h-32 w-auto opacity-70 md:-right-4" />
       {!isTrial && discountPercentage ? (
         <span className="absolute right-4 top-4 rounded-full bg-[--theme-color-10] px-3 py-1 text-xs font-semibold text-[--theme-color]">
           Save {formatPercentage(discountPercentage)}%
@@ -330,9 +324,9 @@ const ClientDashboard: React.FC = () => {
   );
 
   const accentGradient = useMemo(() => {
-    // Default to admin colors if theme is missing or using old defaults
-    const start = theme?.themeColor || "#1C1C1C";
-    const end = theme?.secondaryColor || "#14547F";
+    // Default to the platform theme when branding is unavailable.
+    const start = theme?.themeColor || "#288DD1";
+    const end = theme?.secondaryColor || "#3FE0C8";
     return `linear-gradient(135deg, ${start} 0%, ${end} 100%)`;
   }, [theme?.themeColor, theme?.secondaryColor]);
 

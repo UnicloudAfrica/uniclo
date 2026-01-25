@@ -58,7 +58,7 @@ const ObjectStoragePlanActions = ({
           type="button"
           onClick={onStandardPlan}
           disabled={loading}
-          className="inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 shadow-lg shadow-primary-900/20 transition hover:-translate-y-0.5 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-2.5 text-sm font-semibold text-gray-900 shadow-lg shadow-primary-900/20 transition hover:-trangray-y-0.5 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:cursor-not-allowed disabled:opacity-50"
         >
           <ShieldCheck className="h-4 w-4" />
           {standardLabel}
@@ -68,7 +68,7 @@ const ObjectStoragePlanActions = ({
             type="button"
             onClick={onFastTrack}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-200 to-emerald-400 px-5 py-2.5 text-sm font-semibold text-emerald-950 shadow-lg shadow-emerald-900/20 transition hover:-translate-y-0.5 hover:from-emerald-300 hover:to-emerald-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-200 to-emerald-400 px-5 py-2.5 text-sm font-semibold text-emerald-950 shadow-lg shadow-emerald-900/20 transition hover:-trangray-y-0.5 hover:from-emerald-300 hover:to-emerald-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Zap className="h-4 w-4" />
             {fastTrackLabel}

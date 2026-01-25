@@ -71,23 +71,23 @@ export const ObjectStorageProfileCard: React.FC<ObjectStorageProfileCardProps> =
     : "Enter storage size in GB.";
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-5">
+    <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-5">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="rounded-lg bg-primary-50 p-2 text-primary-600">
             <Package className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-900">
+            <p className="text-sm font-semibold text-gray-900">
               {profile.name || profile.tierName || `Storage Profile ${index + 1}`}
             </p>
-            <p className="text-xs text-slate-500">Profile {index + 1}</p>
+            <p className="text-xs text-gray-500">Profile {index + 1}</p>
           </div>
         </div>
         {canRemove && (
           <button
             type="button"
-            className="rounded-full border border-slate-200 p-2 text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
+            className="rounded-full border border-gray-200 p-2 text-gray-500 transition hover:border-gray-300 hover:text-gray-700"
             onClick={onRemove}
             title="Remove profile"
           >
@@ -163,29 +163,29 @@ export const ObjectStorageProfileCard: React.FC<ObjectStorageProfileCardProps> =
       </div>
 
       {profile.hasTierData && (
-        <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+        <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
           <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">Unit price</p>
-              <p className="font-semibold text-slate-900">
+              <p className="text-xs uppercase tracking-wide text-gray-500">Unit price</p>
+              <p className="font-semibold text-gray-900">
                 {formatCurrency(profile.unitPrice, profile.currency)} / GB / month
               </p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">Storage size</p>
-              <p className="font-semibold text-slate-900">
+              <p className="text-xs uppercase tracking-wide text-gray-500">Storage size</p>
+              <p className="font-semibold text-gray-900">
                 {profile.storageGb ? `${profile.storageGb} GB` : "N/A"}
               </p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">Duration</p>
-              <p className="font-semibold text-slate-900">
+              <p className="text-xs uppercase tracking-wide text-gray-500">Duration</p>
+              <p className="font-semibold text-gray-900">
                 {profile.months} month{profile.months !== 1 ? "s" : ""}
               </p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">Subtotal</p>
-              <p className="font-semibold text-slate-900">
+              <p className="text-xs uppercase tracking-wide text-gray-500">Subtotal</p>
+              <p className="font-semibold text-gray-900">
                 {formatCurrency(profile.subtotal, profile.currency)}
               </p>
             </div>

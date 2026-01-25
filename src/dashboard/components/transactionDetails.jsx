@@ -3,10 +3,21 @@ import { X, Download } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import logo from "./assets/logo.png"; // Replace with your logo path
+import { resolveBrandLogo, useTenantBrandingTheme } from "../../hooks/useBrandingTheme";
+import { hexToRgbArray, resolvePdfLogo } from "../../utils/pdfBranding";
 
 const DetailedTransaction = ({ selectedItem, isModalOpen, closeModal }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState(null);
+  const { data: branding } = useTenantBrandingTheme();
+  const companyName = branding?.company?.name || "Your Company";
+  const supportEmail = branding?.company?.support_email || branding?.company?.email || "";
+  const supportPhone = branding?.company?.support_phone || branding?.company?.phone || "";
+  const supportLine = [supportEmail, supportPhone].filter(Boolean).join(" | ");
+  const brandLogoSrc = resolveBrandLogo(branding, logo);
+  const primaryColor = hexToRgbArray(branding?.accentColor, [40, 141, 209]);
+  const secondaryColor = hexToRgbArray(branding?.primaryColor, [102, 102, 102]);
+  const textColor = [51, 51, 51];
 
   const StatusBadge = ({ status }) => {
     const baseClass =
@@ -16,8 +27,7 @@ const DetailedTransaction = ({ selectedItem, isModalOpen, closeModal }) => {
       failed: "bg-[#EB417833] text-[#EB4178]",
       pending: "bg-[#F5A62333] text-[#F5A623]",
     };
-    const styleClass =
-      statusStyles[status.toLowerCase()] || "bg-gray-100 text-gray-600";
+    const styleClass = statusStyles[status.toLowerCase()] || "bg-gray-100 text-gray-600";
     return <span className={`${baseClass} ${styleClass}`}>{status}</span>;
   };
 
@@ -45,18 +55,18 @@ const DetailedTransaction = ({ selectedItem, isModalOpen, closeModal }) => {
 
       // Set default font and colors
       doc.setFont("helvetica", "normal");
-      const primaryColor = [40, 141, 209]; // #288DD1
-      const textColor = [51, 51, 51]; // #333333
-      const secondaryColor = [102, 102, 102]; // #666666
 
       // Add Logo (71px × 54px ≈ 18.78mm × 14.25mm)
-      doc.addImage(logo, "PNG", 20, 10, 18.78, 14.25);
+      const logoAsset = await resolvePdfLogo(brandLogoSrc, logo);
+      if (logoAsset) {
+        doc.addImage(logoAsset.dataUrl, logoAsset.format, 20, 10, 18.78, 14.25);
+      }
 
       // Header
       doc.setFontSize(22);
       doc.setTextColor(...primaryColor);
       doc.setFont("helvetica", "bold");
-      doc.text("UniCloud Africa", 20, 35);
+      doc.text(companyName, 20, 35);
 
       doc.setFontSize(14);
       doc.setTextColor(...secondaryColor);
@@ -140,8 +150,10 @@ const DetailedTransaction = ({ selectedItem, isModalOpen, closeModal }) => {
       doc.setTextColor(...secondaryColor);
       doc.setFont("helvetica", "normal");
       doc.text("Thank you for your business!", 20, yPos);
-      doc.text("UniCloud Africa - Cloud Computing Solutions", 20, yPos + 10);
-      doc.text("support@unicloudafrica.com | +234-xxx-xxx-xxxx", 20, yPos + 15);
+      doc.text(companyName, 20, yPos + 10);
+      if (supportLine) {
+        doc.text(supportLine, 20, yPos + 15);
+      }
 
       // Save PDF
       doc.save(`Receipt-${selectedItem.identifier}.pdf`);
@@ -165,9 +177,7 @@ const DetailedTransaction = ({ selectedItem, isModalOpen, closeModal }) => {
           <div className="bg-white rounded-[30px] shadow-xl max-w-md w-full">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 bg-[#F2F2F2] border-b rounded-t-[30px] border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">
-                Transaction Details
-              </h3>
+              <h3 className="text-lg font-medium text-gray-900">Transaction Details</h3>
               <button
                 onClick={closeModal}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -179,55 +189,35 @@ const DetailedTransaction = ({ selectedItem, isModalOpen, closeModal }) => {
             {/* Modal Content */}
             <div className="p-6 space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-[#575758]">
-                  Transaction ID:
-                </span>
-                <span className="text-sm text-[#575758]">
-                  {selectedItem.identifier}
-                </span>
+                <span className="text-sm font-medium text-[#575758]">Transaction ID:</span>
+                <span className="text-sm text-[#575758]">{selectedItem.identifier}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-[#575758]">
-                  Date:
-                </span>
+                <span className="text-sm font-medium text-[#575758]">Date:</span>
                 <span className="text-sm text-[#575758]">
                   {formatDate(selectedItem.updated_at)}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-[#575758]">
-                  Description:
-                </span>
-                <span className="text-sm text-[#575758]">
-                  {selectedItem.description}
-                </span>
+                <span className="text-sm font-medium text-[#575758]">Description:</span>
+                <span className="text-sm text-[#575758]">{selectedItem.description}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-[#575758]">
-                  Amount:
-                </span>
+                <span className="text-sm font-medium text-[#575758]">Amount:</span>
                 <span className="text-sm text-[#575758]">
                   ₦{selectedItem.amount.toLocaleString()}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-[#575758]">
-                  Payment Method:
-                </span>
-                <span className="text-sm text-[#575758]">
-                  {selectedItem.payment_gateway}
-                </span>
+                <span className="text-sm font-medium text-[#575758]">Payment Method:</span>
+                <span className="text-sm text-[#575758]">{selectedItem.payment_gateway}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-[#575758]">
-                  Status:
-                </span>
+                <span className="text-sm font-medium text-[#575758]">Status:</span>
                 <StatusBadge status={selectedItem.status} />
               </div>
               <div className="pt-4 border-t border-[#E8E6EA]">
-                <span className="text-sm font-medium text-[#575758]">
-                  Purchased Items:
-                </span>
+                <span className="text-sm font-medium text-[#575758]">Purchased Items:</span>
                 <div className="mt-2 space-y-2">
                   {selectedItem.metadata.lines.map((line, index) => (
                     <div key={index} className="text-sm text-[#575758]">
@@ -236,22 +226,15 @@ const DetailedTransaction = ({ selectedItem, isModalOpen, closeModal }) => {
                         <span>Qty: {line.qty}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>
-                          Unit Price: ₦
-                          {parseFloat(line.unit_price)?.toLocaleString()}
-                        </span>
-                        <span>
-                          Total: ₦{line.line_amount?.toLocaleString()}
-                        </span>
+                        <span>Unit Price: ₦{parseFloat(line.unit_price)?.toLocaleString()}</span>
+                        <span>Total: ₦{line.line_amount?.toLocaleString()}</span>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
               {downloadError && (
-                <div className="text-sm text-red-600 text-center">
-                  {downloadError}
-                </div>
+                <div className="text-sm text-red-600 text-center">{downloadError}</div>
               )}
             </div>
 

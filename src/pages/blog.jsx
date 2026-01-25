@@ -105,7 +105,7 @@ const Blog = () => {
             <div className="w-full flex justify-center mt-8">
               <button
                 onClick={() => setVisibleBlogs(filteredBlogs.length)}
-                className=" bg-gradient-to-r from-[#288DD1] via-[#3fd0e0] to-[#3FE0C8] text-sm md:text-xl font-normal text-white py-3 px-9 rounded-[30px] text-center"
+                className=" bg-gradient-to-r from-[var(--theme-color)] via-[var(--secondary-color)] to-[var(--secondary-color)] text-sm md:text-xl font-normal text-white py-3 px-9 rounded-[30px] text-center"
               >
                 View more
               </button>
@@ -185,7 +185,7 @@ const Blog = () => {
           </div>
 
           <motion.div className="  py-[3em] w-full font-Outfit text-[#fff] mt-16">
-            <div className=" w-full h-[400px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] relative">
+            <div className=" w-full h-[400px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] relative">
               <img
                 src={adbg}
                 className="hidden md:block absolute left-0 w-full h-full object-cover rounded-[30px]"

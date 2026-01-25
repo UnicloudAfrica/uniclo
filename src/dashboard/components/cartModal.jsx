@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Loader2, Trash2, X } from "lucide-react";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
-import monitor from "./assets/monitor.svg";
+import { MonitorIllustration } from "../../shared/components/branding/BrandIllustrations";
 import debounce from "lodash/debounce";
 import { useEmptyCart } from "../../hooks/cartHooks";
 
@@ -25,12 +25,7 @@ const CartModal = ({
   );
   const { mutate: emptyCart, isPending: isEmptying } = useEmptyCart();
   useEffect(() => {
-    setLocalQuantities(
-      cartItems.reduce(
-        (acc, item) => ({ ...acc, [item.id]: item.quantity }),
-        {}
-      )
-    );
+    setLocalQuantities(cartItems.reduce((acc, item) => ({ ...acc, [item.id]: item.quantity }), {}));
   }, [cartItems]);
 
   // Handle checkout success to close and trigger parent callback
@@ -43,10 +38,7 @@ const CartModal = ({
 
   if (!isOpen) return null;
 
-  const totalCost = cartItems.reduce(
-    (sum, item) => sum + parseFloat(item.subtotal || 0),
-    0
-  );
+  const totalCost = cartItems.reduce((sum, item) => sum + parseFloat(item.subtotal || 0), 0);
 
   const debouncedUpdateQuantity = debounce((itemId, newQuantity) => {
     updateCartQuantity(itemId, newQuantity);
@@ -55,10 +47,7 @@ const CartModal = ({
   const handleQuantityChange = (itemId, change) => {
     const item = cartItems.find((item) => item.id === itemId);
     if (item && !isLoading) {
-      const newQuantity = Math.max(
-        0,
-        (localQuantities[itemId] || item.quantity) + change
-      );
+      const newQuantity = Math.max(0, (localQuantities[itemId] || item.quantity) + change);
       setLocalQuantities((prev) => ({ ...prev, [item.id]: newQuantity }));
 
       if (newQuantity === 0) {
@@ -80,9 +69,7 @@ const CartModal = ({
   };
 
   const truncateText = (text, maxLength = 25) => {
-    return text.length > maxLength
-      ? text.substring(0, maxLength) + "..."
-      : text;
+    return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
   };
 
   return (
@@ -132,12 +119,7 @@ const CartModal = ({
                     <div className="w-1/4 hidden md:flex">
                       <div className="w-full">
                         <Skeleton width={80} height={16} />
-                        <Skeleton
-                          width={120}
-                          height={32}
-                          borderRadius={20}
-                          className="mt-2"
-                        />
+                        <Skeleton width={120} height={32} borderRadius={20} className="mt-2" />
                       </div>
                     </div>
                     <div className="w-1/4">
@@ -156,45 +138,32 @@ const CartModal = ({
               </div>
             </div>
           ) : cartItems.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">
-              Your cart is empty.
-            </p>
+            <p className="text-center text-gray-500 py-8">Your cart is empty.</p>
           ) : (
             <div className="space-y-6 divide-y divide-[#EDEFF6]">
               {cartItems.map((item) => {
                 const { productable } = item;
-                const title = truncateText(
-                  `${productable.name} Compute Instances`,
-                  30
-                );
+                const title = truncateText(`${productable.name} Compute Instances`, 30);
                 const specs = getSpecs(item);
                 const totalAmount = parseFloat(item.subtotal || 0);
-                const currentQuantity =
-                  localQuantities[item.id] || item.quantity;
+                const currentQuantity = localQuantities[item.id] || item.quantity;
 
                 return (
-                  <div
-                    key={item.id}
-                    className="flex flex-row justify-between items-start py-6"
-                  >
+                  <div key={item.id} className="flex flex-row justify-between items-start py-6">
                     <div className="flex justify-between items-start w-2/4">
                       <div className="flex-1">
                         <h3 className="font-medium text-[#1C1C1C] text-base md:text-lg break-words">
                           {title}
                         </h3>
                         <div className="flex items-center mt-1.5 text-sm text-[#1E1E1EB2] space-x-1.5">
-                          <img src={monitor} alt="" />
-                          <span className="font-medium text-sm break-words">
-                            {specs}
-                          </span>
+                          <MonitorIllustration className="h-4 w-4 text-[--theme-color]" />
+                          <span className="font-medium text-sm break-words">{specs}</span>
                         </div>
                         <div className="flex md:hidden justify-between items-center mt-3 w-1/4">
                           <div className="flex items-start flex-col">
                             <div className="flex items-center border border-gray-300 mt-2 rounded-[30px] py-2 px-4">
                               <button
-                                onClick={() =>
-                                  handleQuantityChange(item.id, -1)
-                                }
+                                onClick={() => handleQuantityChange(item.id, -1)}
                                 className="text-[#1c1c1c] font-normal hover:bg-gray-100 transition-colors"
                                 disabled={isLoading}
                               >
@@ -217,9 +186,7 @@ const CartModal = ({
                     </div>
                     <div className="hidden md:flex justify-between items-center w-1/4">
                       <div className="flex items-start flex-col">
-                        <span className="text-sm text-[#1E1E1EB2] font-medium">
-                          Number
-                        </span>
+                        <span className="text-sm text-[#1E1E1EB2] font-medium">Number</span>
                         <div className="flex items-center border border-gray-300 mt-2 rounded-[30px] py-2 px-4">
                           <button
                             onClick={() => handleQuantityChange(item.id, -1)}
@@ -242,9 +209,7 @@ const CartModal = ({
                       </div>
                     </div>
                     <div className="text-left w-1/4">
-                      <div className="text-sm text-[#1E1E1EB2] font-medium mb-1">
-                        Total Cost
-                      </div>
+                      <div className="text-sm text-[#1E1E1EB2] font-medium mb-1">Total Cost</div>
                       <div className="text-xl font-semibold text-[#288DD1] font-Outfit">
                         ₦{totalAmount.toLocaleString()}
                       </div>
@@ -268,9 +233,7 @@ const CartModal = ({
         {cartItems.length > 0 && !isLoading && (
           <div className="border-t py-4 px-6">
             <div className="flex justify-between items-center">
-              <span className="text-lg font-semibold text-[#1C1C1C]">
-                Total Cost
-              </span>
+              <span className="text-lg font-semibold text-[#1C1C1C]">Total Cost</span>
               <span className="text-2xl font-semibold text-[#288DD1]">
                 ₦{totalCost.toLocaleString()}
               </span>

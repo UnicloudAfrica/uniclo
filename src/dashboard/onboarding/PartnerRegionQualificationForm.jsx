@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { AlertCircle, CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import ToastUtils from "../../utils/toastUtil.ts";
 import { useVerifyPartnerRegionQualification } from "../../hooks/onboardingHooks";
+import { useTenantBrandingTheme } from "../../hooks/useBrandingTheme";
 
 const PROVIDER_OPTIONS = [
   { value: "zadara", label: "Zadara" },
@@ -106,6 +107,8 @@ const setNestedValue = (object, path, value) => {
 };
 
 const PartnerRegionQualificationForm = ({ value, meta, onChange }) => {
+  const { data: branding } = useTenantBrandingTheme();
+  const brandName = branding?.company?.name || "the platform";
   const payload = useMemo(() => ensureDefaults(value), [value]);
   const verificationMutation = useVerifyPartnerRegionQualification();
 
@@ -219,7 +222,7 @@ const PartnerRegionQualificationForm = ({ value, meta, onChange }) => {
                   : "border-gray-300 hover:border-[--theme-color]"
               }`}
             >
-              No, we resell UniCloud regions
+              No, we resell {brandName} regions
             </button>
           </div>
           <p className="text-xs text-gray-500 mt-2">
@@ -300,7 +303,9 @@ const PartnerRegionQualificationForm = ({ value, meta, onChange }) => {
                 className="w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-[--theme-color] focus:outline-none text-sm p-3"
               >
                 <option value="manual">Manual – we will manage provisioning</option>
-                <option value="automated">Automated – we want UniCloud bots to provision</option>
+                <option value="automated">
+                  Automated – we want {brandName} automation to provision
+                </option>
               </select>
             </div>
           </div>
@@ -316,7 +321,7 @@ const PartnerRegionQualificationForm = ({ value, meta, onChange }) => {
                     onChange={(event) => updateValue("region.meta.crm_sync", event.target.checked)}
                     className="rounded border-gray-300 text-[--theme-color] focus:ring-[--theme-color]"
                   />
-                  Sync leads to UniCloud CRM
+                  Sync leads to {brandName} CRM
                 </label>
               </div>
               <div className="flex items-center gap-3 text-sm mt-2">

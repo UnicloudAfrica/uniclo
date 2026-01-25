@@ -12,6 +12,7 @@ import PartnerRegionQualificationForm from "./PartnerRegionQualificationForm";
 import BusinessProfileForm, { ensureBusinessProfileDefaults } from "./BusinessProfileForm";
 import BrandingThemeForm, { ensureBrandingThemeDefaults } from "./BrandingThemeForm";
 import FileDropInput from "./FileDropInput";
+import { useTenantBrandingTheme } from "../../hooks/useBrandingTheme";
 
 const statusCopy = {
   draft: { label: "Draft", tone: "bg-slate-100 text-slate-700" },
@@ -26,6 +27,8 @@ const defaultStatusMeta = { label: "Draft", tone: "bg-slate-100 text-slate-700" 
 
 const OnboardingDashboard = () => {
   const { data: state, isLoading: isStateLoading } = useOnboardingState();
+  const { data: branding } = useTenantBrandingTheme();
+  const brandName = branding?.company?.name || "your provider";
   const persona = state?.persona ?? state?.target ?? "tenant";
   const hasTenantAssociation = Boolean(
     state?.tenant_id ??
@@ -309,7 +312,7 @@ const OnboardingDashboard = () => {
           <h1 className="text-3xl font-semibold text-gray-900">Complete your onboarding</h1>
           <p className="text-gray-600 mt-1 max-w-2xl">
             We’ll unlock the full dashboard once these steps are approved. You can save drafts,
-            upload documents, and have a running conversation with the Unicloud review team here.
+            upload documents, and have a running conversation with the {brandName} review team here.
           </p>
           <ProgressBar
             approved={state?.progress?.approved ?? 0}

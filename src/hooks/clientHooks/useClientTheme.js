@@ -1,39 +1,51 @@
 import { useMemo } from "react";
-import { useClientBrandingTheme } from "../useBrandingTheme";
+import useClientAuthStore from "../../stores/clientAuthStore";
+import {
+  getTenantId,
+  resolveBrandLogo,
+  resolveEffectiveBrandingTheme,
+  useClientBrandingTheme,
+  usePlatformBrandingTheme,
+} from "../useBrandingTheme";
 
 const FALLBACK_LOGO = "https://dummyimage.com/150x50/e5e7eb/6b7280.png&text=Client+Logo";
 
 const mapBrandingToClientTheme = (branding) => {
-  if (!branding) {
-    return {
-      businessLogoHref: FALLBACK_LOGO,
-      businessLogoLink: null,
-      themeColor: "#1C1C1C", // Black - matches admin
-      secondaryColor: "#14547F", // Dark blue - matches admin
-      palette: {},
-      company: {},
-      branding: null,
-    };
-  }
-
   return {
-    businessLogoHref: branding.logo ?? FALLBACK_LOGO,
-    businessLogoLink: branding.logoHref ?? null,
-    themeColor: branding.accentColor ?? "#1C1C1C",
-    secondaryColor: branding.primaryColor ?? "#14547F",
-    palette: branding.palette ?? {},
-    company: branding.company ?? {},
-    branding,
+    businessLogoHref: resolveBrandLogo(branding, FALLBACK_LOGO),
+    businessLogoLink: branding?.logoHref ?? null,
+    themeColor: branding?.accentColor ?? "#288DD1",
+    secondaryColor: branding?.primaryColor ?? "#3FE0C8",
+    palette: branding?.palette ?? {},
+    company: branding?.company ?? {},
+    branding: branding ?? null,
   };
 };
 
 const useClientTheme = (options = {}) => {
-  const query = useClientBrandingTheme(options);
-  const data = useMemo(() => mapBrandingToClientTheme(query.data), [query.data]);
+  const tenant = useClientAuthStore((state) => state?.tenant);
+  const tenantId = getTenantId(tenant);
+  const { enabled = true, ...restOptions } = options;
+  const tenantQuery = useClientBrandingTheme({
+    ...restOptions,
+    enabled: enabled && Boolean(tenantId),
+  });
+  const fallbackQuery = usePlatformBrandingTheme({
+    enabled: enabled && (!tenantId || tenantQuery.data?.isFallback || tenantQuery.isError),
+  });
+  const effectiveBranding = tenantId
+    ? resolveEffectiveBrandingTheme(tenantQuery.data, fallbackQuery.data)
+    : (fallbackQuery.data ?? tenantQuery.data);
+  const data = useMemo(() => mapBrandingToClientTheme(effectiveBranding), [effectiveBranding]);
+  const activeQuery = tenantId ? tenantQuery : fallbackQuery;
 
   return {
-    ...query,
+    ...activeQuery,
     data,
+    isFetching: tenantQuery.isFetching || fallbackQuery.isFetching,
+    isLoading: tenantQuery.isLoading || fallbackQuery.isLoading,
+    isError: tenantQuery.isError || fallbackQuery.isError,
+    error: tenantQuery.error ?? fallbackQuery.error,
   };
 };
 

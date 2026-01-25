@@ -12,6 +12,7 @@ import {
   useApplyBrandingTheme,
   usePublicBrandingTheme,
 } from "../../hooks/useBrandingTheme";
+import useImageFallback from "../../hooks/useImageFallback";
 import { getSubdomain } from "../../utils/getSubdomain";
 
 const TenantRegister = ({ tenant = "Tenant" }: any) => {
@@ -47,6 +48,10 @@ const TenantRegister = ({ tenant = "Tenant" }: any) => {
   const logoAlt = branding?.company?.name
     ? `${branding.company.name} Logo`
     : `${fallbackBrand.name} Logo`;
+  const { src: resolvedLogoSrc, onError: handleLogoError } = useImageFallback(
+    logoSrc,
+    fallbackBrand.logo
+  );
 
   const [signupRole, setSignupRole] = useState("client");
   const [formData, setFormData] = useState({
@@ -185,7 +190,12 @@ const TenantRegister = ({ tenant = "Tenant" }: any) => {
     >
       <div className="max-w-md mx-auto w-full bg-white p-6 rounded-xl shadow-md">
         <div className="mb-6 text-center">
-          <img src={logoSrc} className="w-[100px] mx-auto mb-4 rounded" alt={logoAlt} />
+          <img
+            src={resolvedLogoSrc}
+            className="w-[100px] mx-auto mb-4 rounded"
+            alt={logoAlt}
+            onError={handleLogoError}
+          />
           <h1 className="text-2xl font-semibold text-[#121212] mb-2">Create an Account</h1>
           <p className="text-[#676767] text-sm">
             Join {brandName} and launch your cloud in minutes.
@@ -408,7 +418,7 @@ const TenantRegister = ({ tenant = "Tenant" }: any) => {
           <div className="text-center mt-4">
             <span className="text-sm text-[#1E1E1E99]">Already have an account? </span>
             <Link
-              to="/login"
+              to="/sign-in"
               type="button"
               className="text-sm hover:opacity-80 font-medium"
               style={{ color: accentColor, transition: "opacity 0.3s" }}

@@ -45,7 +45,7 @@ const ObjectStorageCredentials: React.FC<ObjectStorageCredentialsProps> = ({
     <button
       type="button"
       onClick={() => handleCopy(value, field)}
-      className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-700 transition"
+      className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-500 hover:text-gray-700 transition"
       title={copiedField === field ? "Copied!" : "Copy"}
     >
       {copiedField === field ? (
@@ -57,10 +57,10 @@ const ObjectStorageCredentials: React.FC<ObjectStorageCredentialsProps> = ({
   );
 
   return (
-    <div className={`rounded-xl border border-slate-200 bg-white p-5 ${className}`}>
+    <div className={`rounded-xl border border-gray-200 bg-white p-5 ${className}`}>
       <div className="flex items-center gap-2 mb-4">
         <Key className="h-5 w-5 text-primary-500" />
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
           S3 Connection Details
         </h3>
       </div>
@@ -68,10 +68,10 @@ const ObjectStorageCredentials: React.FC<ObjectStorageCredentialsProps> = ({
       <div className="space-y-4">
         {/* Endpoint */}
         {endpoint && (
-          <div className="rounded-lg bg-slate-50 p-3">
-            <p className="text-xs font-medium text-slate-500 mb-1">Endpoint URL</p>
+          <div className="rounded-lg bg-gray-50 p-3">
+            <p className="text-xs font-medium text-gray-500 mb-1">Endpoint URL</p>
             <div className="flex items-center gap-2">
-              <code className="flex-1 text-sm font-mono text-slate-700 break-all">{endpoint}</code>
+              <code className="flex-1 text-sm font-mono text-gray-700 break-all">{endpoint}</code>
               <CopyButton value={endpoint} field="endpoint" />
             </div>
           </div>
@@ -79,10 +79,10 @@ const ObjectStorageCredentials: React.FC<ObjectStorageCredentialsProps> = ({
 
         {/* Access Key ID */}
         {accessKeyId && (
-          <div className="rounded-lg bg-slate-50 p-3">
-            <p className="text-xs font-medium text-slate-500 mb-1">Access Key ID</p>
+          <div className="rounded-lg bg-gray-50 p-3">
+            <p className="text-xs font-medium text-gray-500 mb-1">Access Key ID</p>
             <div className="flex items-center gap-2">
-              <code className="flex-1 text-sm font-mono text-slate-700">{accessKeyId}</code>
+              <code className="flex-1 text-sm font-mono text-gray-700">{accessKeyId}</code>
               <CopyButton value={accessKeyId} field="accessKey" />
             </div>
           </div>
@@ -101,15 +101,15 @@ const ObjectStorageCredentials: React.FC<ObjectStorageCredentialsProps> = ({
               </div>
             </div>
             <div className="rounded-lg bg-white p-3 border border-amber-200">
-              <p className="text-xs font-medium text-slate-500 mb-1">Secret Access Key</p>
+              <p className="text-xs font-medium text-gray-500 mb-1">Secret Access Key</p>
               <div className="flex items-center gap-2">
-                <code className="flex-1 text-sm font-mono text-slate-700">
+                <code className="flex-1 text-sm font-mono text-gray-700">
                   {secretVisible ? secretKey : "••••••••••••••••••••••••••••••••"}
                 </code>
                 <button
                   type="button"
                   onClick={() => setSecretVisible(!secretVisible)}
-                  className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition"
+                  className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition"
                 >
                   {secretVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -128,7 +128,7 @@ const ObjectStorageCredentials: React.FC<ObjectStorageCredentialsProps> = ({
 
         {/* No secret - permanent display */}
         {!secretKey && (
-          <p className="text-xs text-slate-400 mt-2">
+          <p className="text-xs text-gray-400 mt-2">
             Secret key was only shown once during creation. Contact support to regenerate
             credentials.
           </p>

@@ -4,10 +4,21 @@ import { X, Download } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import logo from "./assets/logo.png"; // Replace with your logo path
+import useClientTheme from "../../hooks/clientHooks/useClientTheme";
+import { hexToRgbArray, resolvePdfLogo } from "../../utils/pdfBranding";
 
 const DetailedTransaction = ({ selectedItem, isModalOpen, closeModal }: any) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState(null);
+  const { data: theme } = useClientTheme();
+  const companyName = theme?.company?.name || "Your Company";
+  const supportEmail = theme?.company?.support_email || theme?.company?.email || "";
+  const supportPhone = theme?.company?.support_phone || theme?.company?.phone || "";
+  const supportLine = [supportEmail, supportPhone].filter(Boolean).join(" | ");
+  const brandLogoSrc = theme?.businessLogoHref || logo;
+  const primaryColor = hexToRgbArray(theme?.themeColor, [40, 141, 209]);
+  const secondaryColor = hexToRgbArray(theme?.secondaryColor, [102, 102, 102]);
+  const textColor = [51, 51, 51];
 
   const StatusBadge = ({ status }: any) => {
     const baseClass =
@@ -45,18 +56,18 @@ const DetailedTransaction = ({ selectedItem, isModalOpen, closeModal }: any) => 
 
       // Set default font and colors
       doc.setFont("helvetica", "normal");
-      const primaryColor = [40, 141, 209]; // #288DD1
-      const textColor = [51, 51, 51]; // #333333
-      const secondaryColor = [102, 102, 102]; // #666666
 
       // Add Logo (71px × 54px ≈ 18.78mm × 14.25mm)
-      doc.addImage(logo, "PNG", 20, 10, 18.78, 14.25);
+      const logoAsset = await resolvePdfLogo(brandLogoSrc, logo);
+      if (logoAsset) {
+        doc.addImage(logoAsset.dataUrl, logoAsset.format, 20, 10, 18.78, 14.25);
+      }
 
       // Header
       doc.setFontSize(22);
       doc.setTextColor(...primaryColor);
       doc.setFont("helvetica", "bold");
-      doc.text("UniCloud Africa", 20, 35);
+      doc.text(companyName, 20, 35);
 
       doc.setFontSize(14);
       doc.setTextColor(...secondaryColor);
@@ -140,8 +151,10 @@ const DetailedTransaction = ({ selectedItem, isModalOpen, closeModal }: any) => 
       doc.setTextColor(...secondaryColor);
       doc.setFont("helvetica", "normal");
       doc.text("Thank you for your business!", 20, yPos);
-      doc.text("UniCloud Africa - Cloud Computing Solutions", 20, yPos + 10);
-      doc.text("support@unicloudafrica.com | +234-xxx-xxx-xxxx", 20, yPos + 15);
+      doc.text(companyName, 20, yPos + 10);
+      if (supportLine) {
+        doc.text(supportLine, 20, yPos + 15);
+      }
 
       // Save PDF
       doc.save(`Receipt-${selectedItem.identifier}.pdf`);

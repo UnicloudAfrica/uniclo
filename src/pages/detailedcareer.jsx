@@ -365,7 +365,7 @@ const DetailedCareer = () => {
                   </button>
                   <button
                     onClick={handleinterest}
-                    className=" flex px-4 py-1 md:px-6 md:py-2 bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] rounded-[30px] justify-center items-center"
+                    className=" flex px-4 py-1 md:px-6 md:py-2 bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] rounded-[30px] justify-center items-center"
                   >
                     <p className="text-sm md:text-base font-medium text-[#fff]">I am interested</p>
                   </button>
@@ -413,7 +413,7 @@ const DetailedCareer = () => {
             {selectedCareerItem.details && (
               <button
                 onClick={handleinterest}
-                className=" flex px-6 py-2 bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] rounded-[30px] justify-center items-center my-6 "
+                className=" flex px-6 py-2 bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] rounded-[30px] justify-center items-center my-6 "
               >
                 <p className=" text-base font-medium text-[#fff]">I am interested</p>
               </button>
@@ -818,7 +818,7 @@ const DetailedCareer = () => {
 
               <button
                 onClick={handleSubmit}
-                className=" w-full flex h-[45px] mt-6 rounded-[30px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] hover:bg-opacity-75 transition-all justify-center items-center"
+                className=" w-full flex h-[45px] mt-6 rounded-[30px] bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] hover:bg-opacity-75 transition-all justify-center items-center"
               >
                 {loading === "No" && (
                   <p className=" font-Outfit text-base text-white">Submit Application</p>
@@ -841,7 +841,7 @@ const DetailedCareer = () => {
               onClick={() => {
                 setSuccessMessage(false);
               }}
-              className=" bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] mt-6 hover:bg-opacity-75 px-3 py-1 rounded-md text-white text-sm font-Outfit"
+              className=" bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] mt-6 hover:bg-opacity-75 px-3 py-1 rounded-md text-white text-sm font-Outfit"
             >
               Okay!
             </button>
@@ -861,7 +861,7 @@ const DetailedCareer = () => {
               onClick={() => {
                 setErrorMessage(false);
               }}
-              className=" bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] mt-6 hover:bg-opacity-75 px-3 py-1 rounded-md text-white text-sm font-Outfit"
+              className=" bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] mt-6 hover:bg-opacity-75 px-3 py-1 rounded-md text-white text-sm font-Outfit"
             >
               Okay!
             </button>

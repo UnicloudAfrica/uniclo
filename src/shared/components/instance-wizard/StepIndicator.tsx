@@ -56,8 +56,8 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
                 isActive
                   ? "border-primary-500 bg-primary-50/50 ring-1 ring-primary-200"
                   : isCompleted
-                    ? "cursor-pointer border-slate-200 bg-white hover:border-slate-300"
-                    : "border-slate-100 bg-slate-50 opacity-60"
+                    ? "cursor-pointer border-gray-200 bg-white hover:border-gray-300"
+                    : "border-gray-100 bg-gray-50 opacity-60"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -67,7 +67,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
                       ? "bg-primary-600 text-white"
                       : isCompleted
                         ? "bg-emerald-500 text-white"
-                        : "bg-slate-200 text-slate-500"
+                        : "bg-gray-200 text-gray-500"
                   }`}
                 >
                   {isCompleted ? <CheckCircle className="h-3.5 w-3.5" /> : idx + 1}
@@ -80,11 +80,11 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
               </div>
               <div>
                 <p
-                  className={`text-sm font-semibold ${isActive ? "text-primary-900" : "text-slate-900"}`}
+                  className={`text-sm font-semibold ${isActive ? "text-primary-900" : "text-gray-900"}`}
                 >
                   {step.title}
                 </p>
-                <p className="text-xs text-slate-500">{step.desc}</p>
+                <p className="text-xs text-gray-500">{step.desc}</p>
               </div>
             </div>
           );

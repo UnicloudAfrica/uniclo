@@ -148,7 +148,7 @@ const EventsAdmin = () => {
           <button
             className={`font-medium font-Outfit text-sm py-2 px-5 rounded-[20px] transition-all ${
               activeButton === "create"
-                ? " bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] text-[#121212]"
+                ? " bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] text-[#121212]"
                 : ""
             }`}
             onClick={() => {
@@ -160,7 +160,7 @@ const EventsAdmin = () => {
           <button
             className={`font-medium font-Outfit text-sm py-2 px-5 rounded-[20px] transition-all ${
               activeButton === "overview"
-                ? " bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] text-[#121212]"
+                ? " bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] text-[#121212]"
                 : ""
             }`}
             onClick={() => {
@@ -282,7 +282,7 @@ const EventsAdmin = () => {
 
             <button
               onClick={sumbmitImg}
-              className=" w-full flex h-[45px] mt-6 rounded-[8px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] hover:bg-opacity-75 transition-all justify-center items-center"
+              className=" w-full flex h-[45px] mt-6 rounded-[8px] bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] hover:bg-opacity-75 transition-all justify-center items-center"
             >
               {loadValue === "No" && (
                 <p className=" font-Outfit text-base text-white">Create Event</p>
@@ -333,7 +333,7 @@ const EventsAdmin = () => {
                       <td className=" text-white my-auto capitalize border-[#00000049] ">
                         <button
                           onClick={handleDelete}
-                          className=" px-2 py-1 text-xs rounded-md bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC]"
+                          className=" px-2 py-1 text-xs rounded-md bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)]"
                         >
                           Delete
                         </button>

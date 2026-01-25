@@ -28,7 +28,7 @@ const TenantPageShell: React.FC<TenantPageShellProps> = ({
   const tenantData = {
     name: theme?.company?.name || "Tenant",
     logo: theme?.logo || "",
-    color: theme?.accentColor || "#1C1C1C",
+    color: theme?.accentColor || "#288DD1",
   };
 
   if (isLoading) {
@@ -49,7 +49,7 @@ const TenantPageShell: React.FC<TenantPageShellProps> = ({
         title={title}
         description={description}
         subHeaderContent={subHeaderContent}
-        backgroundColor="#F9FAFB"
+        backgroundColor="var(--theme-surface-alt)"
         {...shellProps}
       >
         {children}

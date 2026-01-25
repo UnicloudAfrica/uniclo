@@ -61,17 +61,17 @@ export const ObjectStoragePaymentStep: React.FC<ObjectStoragePaymentStepProps> =
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold text-slate-900">Payment</h2>
-        <p className="text-sm text-slate-500">Select a payment method to complete your order.</p>
+        <h2 className="text-2xl font-semibold text-gray-900">Payment</h2>
+        <p className="text-sm text-gray-500">Select a payment method to complete your order.</p>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-4 text-center">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Amount due</p>
-        <p className="mt-1 text-2xl font-semibold text-slate-900">
+      <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
+        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Amount due</p>
+        <p className="mt-1 text-2xl font-semibold text-gray-900">
           {formatCurrency(totals.total, totals.currency)}
         </p>
         {totals.tax > 0 && (
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-gray-500">
             Subtotal {formatCurrency(totals.subtotal, totals.currency)} + Tax{" "}
             {formatCurrency(totals.tax, totals.currency)}
           </p>
@@ -116,10 +116,10 @@ export const ObjectStoragePaymentStep: React.FC<ObjectStoragePaymentStepProps> =
             grandTotal: totals.total,
             currency: totals.currency,
           }}
-          className="border border-slate-200/80"
+          className="border border-gray-200/80"
         />
       ) : !isPaymentComplete ? (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-500">
           {isProcessing
             ? "Generating payment options..."
             : "No payment options available. Please go back and generate payment options."}
@@ -127,7 +127,7 @@ export const ObjectStoragePaymentStep: React.FC<ObjectStoragePaymentStepProps> =
       ) : null}
 
       {isPaymentComplete && (
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-gray-500">
           Payment has been successfully processed. You can now proceed to review and submit your
           order.
         </p>

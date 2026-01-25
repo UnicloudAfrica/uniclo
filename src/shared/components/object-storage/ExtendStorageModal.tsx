@@ -199,20 +199,20 @@ const ExtendStorageModal: React.FC<ExtendStorageModalProps> = ({
             /* Selection UI */
             <>
               {/* Current Usage */}
-              <div className="mb-6 p-4 bg-slate-50 rounded-xl">
+              <div className="mb-6 p-4 bg-gray-50 rounded-xl">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm text-slate-500">Current Storage</span>
-                  <span className="text-sm font-medium text-slate-700">{currentQuotaGb} GB</span>
+                  <span className="text-sm text-gray-500">Current Storage</span>
+                  <span className="text-sm font-medium text-gray-700">{currentQuotaGb} GB</span>
                 </div>
-                <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-primary-500 rounded-full transition-all"
                     style={{ width: `${Math.min((usedGb / currentQuotaGb) * 100, 100)}%` }}
                   />
                 </div>
                 <div className="flex justify-between mt-1">
-                  <span className="text-xs text-slate-400">{usedGb.toFixed(2)} GB used</span>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-gray-400">{usedGb.toFixed(2)} GB used</span>
+                  <span className="text-xs text-gray-400">
                     {(currentQuotaGb - usedGb).toFixed(2)} GB free
                   </span>
                 </div>
@@ -225,7 +225,7 @@ const ExtendStorageModal: React.FC<ExtendStorageModalProps> = ({
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     billingPeriod === "monthly"
                       ? "bg-primary-500 text-white"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
                   Monthly
@@ -235,7 +235,7 @@ const ExtendStorageModal: React.FC<ExtendStorageModalProps> = ({
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     billingPeriod === "yearly"
                       ? "bg-primary-500 text-white"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
                   Yearly (Save ~15%)
@@ -260,7 +260,7 @@ const ExtendStorageModal: React.FC<ExtendStorageModalProps> = ({
                         onChange={(e) => setFastTrackEnabled(e.target.checked)}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 rounded-full peer peer-checked:after:trangray-x-full rtl:peer-checked:after:-trangray-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
                     </div>
                   </label>
                 </div>
@@ -278,16 +278,16 @@ const ExtendStorageModal: React.FC<ExtendStorageModalProps> = ({
                     className={`p-4 rounded-xl border-2 text-left transition-all ${
                       selectedOption === option.gb
                         ? "border-primary-500 bg-primary-50"
-                        : "border-slate-200 hover:border-primary-300"
+                        : "border-gray-200 hover:border-primary-300"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-lg text-slate-800">{option.label}</span>
+                      <span className="font-bold text-lg text-gray-800">{option.label}</span>
                       {selectedOption === option.gb && (
                         <Check className="h-5 w-5 text-primary-500" />
                       )}
                     </div>
-                    <span className="text-sm text-slate-500">
+                    <span className="text-sm text-gray-500">
                       {formatPrice(
                         billingPeriod === "yearly" ? option.price_yearly : option.price_monthly
                       )}
@@ -299,7 +299,7 @@ const ExtendStorageModal: React.FC<ExtendStorageModalProps> = ({
 
               {/* Custom Amount */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-slate-600 mb-2">
+                <label className="block text-sm font-medium text-gray-600 mb-2">
                   Or enter custom amount
                 </label>
                 <div className="flex items-center gap-2">
@@ -313,9 +313,9 @@ const ExtendStorageModal: React.FC<ExtendStorageModalProps> = ({
                     placeholder="e.g., 200"
                     min="1"
                     max="1000"
-                    className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                    className="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                   />
-                  <span className="text-slate-500 font-medium">GB</span>
+                  <span className="text-gray-500 font-medium">GB</span>
                 </div>
               </div>
 

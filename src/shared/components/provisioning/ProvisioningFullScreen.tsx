@@ -49,18 +49,24 @@ const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Background decoration */}
-      <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-[#E6F4FB] to-transparent -z-10" />
+      <div
+        className="absolute top-0 left-0 w-full h-96 -z-10"
+        style={{
+          background:
+            "linear-gradient(to bottom, var(--theme-color-10, rgba(40, 141, 209, 0.1)), transparent)",
+        }}
+      />
 
       <div className="w-full max-w-2xl animate-in fade-in zoom-in duration-500">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-4 relative">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[--theme-color-10] mb-4 relative">
             {isComplete ? (
               <CheckCircle className="w-8 h-8 text-green-500" />
             ) : (
-              <Loader2 className="w-8 h-8 text-[#288DD1] animate-spin" />
+              <Loader2 className="w-8 h-8 text-[--theme-color] animate-spin" />
             )}
             {!isComplete && (
-              <div className="absolute inset-0 rounded-full border-4 border-blue-500/20 animate-pulse" />
+              <div className="absolute inset-0 rounded-full border-4 border-[--theme-color-20] animate-pulse" />
             )}
           </div>
 
@@ -82,14 +88,14 @@ const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
           </div>
           <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
             <div
-              className={`h-full transition-all duration-1000 ease-out relative ${isComplete ? "bg-green-500" : "bg-[#288DD1]"}`}
+              className={`h-full transition-all duration-1000 ease-out relative ${isComplete ? "bg-green-500" : "bg-[--theme-color]"}`}
               style={{ width: `${progress}%` }}
             >
               <div className="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]" />
             </div>
           </div>
           {currentStep && (
-            <p className="text-center text-sm text-[#288DD1] mt-3 font-medium animate-pulse">
+            <p className="text-center text-sm text-[--theme-color] mt-3 font-medium animate-pulse">
               Current: {currentStep.label}...
             </p>
           )}
@@ -105,7 +111,7 @@ const ProvisioningFullScreen: React.FC<ProvisioningFullScreenProps> = ({
           <div className="mt-8 flex justify-center">
             <button
               onClick={onViewProject}
-              className="inline-flex items-center gap-2 px-8 py-3 bg-[#288DD1] hover:bg-[#1e7ab8] text-white font-semibold rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105"
+              className="inline-flex items-center gap-2 px-8 py-3 bg-[--theme-color] hover:opacity-90 text-white font-semibold rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105"
             >
               Go to Project
               <ArrowRight className="w-5 h-5" />

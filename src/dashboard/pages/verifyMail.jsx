@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import sideBg from "./assets/sideBg.svg";
 import logo from "./assets/logo.png";
 import VerificationCodeInput from "../../utils/VerificationCodeInput";
 import useTenantAuthStore from "../../stores/tenantAuthStore";
@@ -14,6 +13,7 @@ import {
   useApplyBrandingTheme,
   usePublicBrandingTheme,
 } from "../../hooks/useBrandingTheme";
+import useImageFallback from "../../hooks/useImageFallback";
 import { getSubdomain } from "../../utils/getSubdomain";
 
 export default function VerifyMail() {
@@ -35,6 +35,7 @@ export default function VerifyMail() {
   useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
   const logoSrc = resolveBrandLogo(branding, logo);
   const logoAlt = branding?.company?.name ? `${branding.company.name} Logo` : "Logo";
+  const { src: resolvedLogoSrc, onError: handleLogoError } = useImageFallback(logoSrc, logo);
 
   // Handle OTP code changes from VerificationCodeInput
   const handleCodeChange = (updatedCode) => {
@@ -145,7 +146,12 @@ export default function VerifyMail() {
           {/* Logo */}
           <div className="mb-8">
             <div className="flex items-center justify-center">
-              <img src={logoSrc} className="w-[100px]" alt={logoAlt} />
+              <img
+                src={resolvedLogoSrc}
+                className="w-[100px]"
+                alt={logoAlt}
+                onError={handleLogoError}
+              />
             </div>
           </div>
 
@@ -190,14 +196,7 @@ export default function VerifyMail() {
       </div>
 
       {/* Right Side - Illustration */}
-      <div
-        style={{
-          backgroundImage: `url(${sideBg})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-        className="flex-1 side-bg hidden lg:flex items-center justify-center relative overflow-hidden"
-      ></div>
+      <div className="flex-1 side-bg hidden lg:flex items-center justify-center relative overflow-hidden"></div>
     </div>
   );
 }

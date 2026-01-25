@@ -184,13 +184,15 @@ const SelectableInput = ({
                         onClick={() => handleOptionSelect(option)}
                         className={`flex w-full items-center justify-between px-4 py-2 text-left text-sm transition ${
                           isSelected
-                            ? "bg-[#288DD1]/10 font-medium text-[#288DD1]"
+                            ? "bg-[--theme-color-10] font-medium text-[--theme-color]"
                             : "text-slate-700 hover:bg-slate-50"
                         }`}
                       >
                         {option.name}
                         {isSelected && (
-                          <span className="text-xs font-semibold text-[#288DD1]">Selected</span>
+                          <span className="text-xs font-semibold text-[--theme-color]">
+                            Selected
+                          </span>
                         )}
                       </button>
                     </li>

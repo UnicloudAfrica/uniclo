@@ -23,8 +23,8 @@ const LaunchSideMenu: React.FC = () => {
   ];
 
   return (
-    <div className="w-full lg:w-[20%] bg-white rounded-lg shadow-sm p-4 lg:p-6 flex flex-col space-y-2 mb-6 lg:mb-0 lg:mr-6 font-Outfit">
-      <h3 className="text-lg font-semibold text-gray-800 mb-2">Network</h3>
+    <div className="w-full lg:w-[20%] bg-[--theme-card-bg] rounded-lg shadow-sm p-4 lg:p-6 flex flex-col space-y-2 mb-6 lg:mb-0 lg:mr-6 font-Outfit">
+      <h3 className="text-lg font-semibold text-[--theme-heading-color] mb-2">Network</h3>
       <nav className="flex flex-col space-y-1">
         {tabs.map((tab: any) => (
           <NavLink
@@ -33,8 +33,8 @@ const LaunchSideMenu: React.FC = () => {
             className={({ isActive }) =>
               `w-full text-left px-3 py-2 rounded-md transition-colors text-sm duration-200 ${
                 isActive
-                  ? "bg-gray-50 text-[#1c1c1c] font-medium"
-                  : "text-[#676767] hover:bg-gray-100"
+                  ? "bg-[--theme-color-10] text-[--theme-heading-color] font-medium"
+                  : "text-[--theme-muted-color] hover:bg-[--theme-color-10] hover:text-[--theme-heading-color]"
               }`
             }
           >

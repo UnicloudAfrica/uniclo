@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Loader2 } from "lucide-react";
-import sideBg from "./assets/sideBg.svg";
 import logo from "./assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useForgotPassword } from "../../hooks/authHooks";
@@ -10,6 +9,7 @@ import {
   useApplyBrandingTheme,
   usePublicBrandingTheme,
 } from "../../hooks/useBrandingTheme";
+import useImageFallback from "../../hooks/useImageFallback";
 import { getSubdomain } from "../../utils/getSubdomain";
 
 export default function ForgotPassword() {
@@ -26,6 +26,7 @@ export default function ForgotPassword() {
   useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
   const logoSrc = resolveBrandLogo(branding, logo);
   const logoAlt = branding?.company?.name ? `${branding.company.name} Logo` : "Logo";
+  const { src: resolvedLogoSrc, onError: handleLogoError } = useImageFallback(logoSrc, logo);
 
   const navigate = useNavigate();
 
@@ -73,7 +74,12 @@ export default function ForgotPassword() {
           {/* Logo */}
           <div className="mb-8">
             <div className="flex items-center justify-center">
-              <img src={logoSrc} className="w-[100px]" alt={logoAlt} />
+              <img
+                src={resolvedLogoSrc}
+                className="w-[100px]"
+                alt={logoAlt}
+                onError={handleLogoError}
+              />
             </div>
           </div>
 
@@ -135,14 +141,7 @@ export default function ForgotPassword() {
       </div>
 
       {/* Right Side - Illustration */}
-      <div
-        style={{
-          backgroundImage: `url(${sideBg})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-        className="flex-1 side-bg hidden lg:flex items-center justify-center relative overflow-hidden"
-      ></div>
+      <div className="flex-1 side-bg hidden lg:flex items-center justify-center relative overflow-hidden"></div>
     </div>
   );
 }

@@ -345,7 +345,7 @@ const AssignEdgeConfigModal = ({ isOpen, onClose, onSuccess, projectId, region }
             <button
               onClick={handleAutoAssign}
               disabled={isPending || !selectedRegion}
-              className="px-6 py-3 border border-[#288DD1] text-[#288DD1] font-medium rounded-[30px] hover:bg-[#E8F4FB] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="px-6 py-3 border border-[#288DD1] text-[#288DD1] font-medium rounded-[30px] hover:bg-primary-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Auto Assign Defaults
               {isPending && <Loader2 className="w-4 h-4 ml-2 text-[#288DD1] animate-spin" />}

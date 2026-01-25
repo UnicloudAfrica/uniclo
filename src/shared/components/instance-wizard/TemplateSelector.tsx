@@ -23,7 +23,7 @@ const TemplateSelector: React.FC<Props> = ({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-8 text-slate-500 gap-2">
+      <div className="flex items-center justify-center py-8 text-gray-500 gap-2">
         <Loader2 className="w-5 h-5 animate-spin" /> Loading templates...
       </div>
     );
@@ -40,7 +40,7 @@ const TemplateSelector: React.FC<Props> = ({
       </div>
       <div className="flex items-center gap-2">
         <LayoutTemplate className="w-5 h-5 text-primary-600" />
-        <h3 className="text-lg font-semibold text-slate-900">Quick Start from Template</h3>
+        <h3 className="text-lg font-semibold text-gray-900">Quick Start from Template</h3>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -54,21 +54,21 @@ const TemplateSelector: React.FC<Props> = ({
                  ${
                    isSelected
                      ? "border-primary-500 bg-primary-50 ring-1 ring-primary-500"
-                     : "border-slate-200 bg-white hover:border-primary-300 hover:shadow-md"
+                     : "border-gray-200 bg-white hover:border-primary-300 hover:shadow-md"
                  }
                `}
             >
               <div className="flex justify-between items-start mb-3">
                 <div className="flex-1">
-                  <p className="font-semibold text-slate-900">{tpl.name}</p>
+                  <p className="font-semibold text-gray-900">{tpl.name}</p>
                   {tpl.description && (
-                    <p className="text-sm text-slate-500 mt-1 line-clamp-2">{tpl.description}</p>
+                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">{tpl.description}</p>
                   )}
 
                   {/* Configuration Summary Badge */}
                   <div className="flex flex-wrap gap-2 mt-3">
                     {tpl.configuration?.region && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-800">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
                         {tpl.configuration.region}
                       </span>
                     )}
@@ -87,7 +87,7 @@ const TemplateSelector: React.FC<Props> = ({
 
                 {/* Delete Action (hover only) */}
                 <button
-                  className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
+                  className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all"
                   onClick={(e) => {
                     e.stopPropagation();
                     if (confirm("Delete this template?")) deleteTemplate(tpl.id);
@@ -100,7 +100,7 @@ const TemplateSelector: React.FC<Props> = ({
 
               {/* Action Buttons */}
               {showActions && (
-                <div className="flex gap-2 mt-4 pt-3 border-t border-slate-100">
+                <div className="flex gap-2 mt-4 pt-3 border-t border-gray-100">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -117,7 +117,7 @@ const TemplateSelector: React.FC<Props> = ({
                         e.stopPropagation();
                         onCustomize(tpl);
                       }}
-                      className="px-3 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1.5"
+                      className="px-3 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1.5"
                     >
                       <Settings className="w-4 h-4" />
                       {secondaryActionLabel}

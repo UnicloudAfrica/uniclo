@@ -288,7 +288,7 @@ const AddSubnet = ({ isOpen, onClose, projectId, region: defaultRegion = "" }) =
                       key={s}
                       type="button"
                       onClick={() => updateFormData("cidr_block", s)}
-                      className="px-2 py-1 rounded-full border border-[#288DD1] text-[#288DD1] hover:bg-[#E6F2FA]"
+                      className="px-2 py-1 rounded-full border border-[#288DD1] text-[#288DD1] hover:bg-primary-50"
                       title="Use this CIDR"
                     >
                       {s}

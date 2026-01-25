@@ -6,32 +6,32 @@ export const designTokens = {
   colors: {
     // Primary Brand Colors
     primary: {
-      50: "#E8F4FD",
-      100: "#D1E9FB",
-      200: "#A3D3F7",
-      300: "#75BDF3",
-      400: "#47A7EF",
-      500: "#14547F", // Main UniCloud brand color (Dark Blue - Admin Default)
-      600: "#0891b2",
-      700: "#0e7490",
-      800: "#155e75",
-      900: "#164e63",
-      950: "#081629",
+      50: "#eef6fb",
+      100: "#ddedf8",
+      200: "#c3dff2",
+      300: "#a0cdeb",
+      400: "#6db1e0",
+      500: "#288dd1", // Main UniCloud brand color (global default)
+      600: "#2174ab",
+      700: "#1b608e",
+      800: "#164c71",
+      900: "#103854",
+      950: "#0c2a3f",
     },
 
-    // Secondary Colors - UniCloud Purple/Magenta
+    // Secondary Colors - UniCloud Teal
     secondary: {
-      50: "#fdf4ff",
-      100: "#fae8ff",
-      200: "#f5d0fe",
-      300: "#f0abfc",
-      400: "#e879f9",
-      500: "#d946ef", // UniCloud secondary/accent color
-      600: "#c026d3",
-      700: "#a21caf",
-      800: "#86198f",
-      900: "#701a75",
-      950: "#4a044e",
+      50: "#f0fdfb",
+      100: "#e0faf6",
+      200: "#c9f6f0",
+      300: "#abf1e7",
+      400: "#7ceada",
+      500: "#3fe0c8", // UniCloud secondary/accent color
+      600: "#34b8a4",
+      700: "#2b9888",
+      800: "#22796c",
+      900: "#195a50",
+      950: "#0f3631",
     },
 
     // Neutral Grays - Modern balanced grays

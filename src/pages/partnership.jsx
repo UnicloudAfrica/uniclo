@@ -107,7 +107,7 @@ const Partnership = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <div className="w-full h-[380px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[#288DD1] via-[#3fd0e0] to-[#3FE0C8] relative overflow-hidden">
+          <div className="w-full h-[380px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[var(--theme-color)] via-[var(--secondary-color)] to-[var(--secondary-color)] relative overflow-hidden">
             <img
               src={adbg}
               className="hidden md:block absolute left-0 w-full h-full object-cover rounded-[30px] opacity-30"

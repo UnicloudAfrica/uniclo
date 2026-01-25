@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useCreateAccount } from "../../hooks/authHooks";
 import { useVerifyBusiness } from "../../hooks/businessHooks";
 import useTenantAuthStore from "../../stores/tenantAuthStore";
-import sideBg from "./assets/sideBg.svg";
 import Header from "./signup/header";
 import { Loader2, ShieldCheck, AlertCircle } from "lucide-react";
 import { useFetchCountries } from "../../hooks/resource";
@@ -49,7 +48,7 @@ export default function DashboardSignUpV2() {
   useApplyBrandingTheme(branding, { updateFavicon: true });
   const headerLogo = resolveBrandLogo(branding, null);
   const logoAlt = branding?.company?.name ? `${branding.company.name} Logo` : "Logo";
-  const companyName = branding?.company?.name || "Unicloud Africa";
+  const companyName = branding?.company?.name || "Your Company";
 
   const [activeRole, setActiveRole] = useState("tenant");
   const [formData, setFormData] = useState(INITIAL_FORM);
@@ -496,14 +495,7 @@ export default function DashboardSignUpV2() {
           </form>
         </div>
       </div>
-      <div
-        style={{
-          backgroundImage: `url(${sideBg})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-        className="flex-1 side-bg hidden lg:flex items-center justify-center relative overflow-hidden"
-      ></div>
+      <div className="flex-1 side-bg hidden lg:flex items-center justify-center relative overflow-hidden"></div>
     </div>
   );
 }

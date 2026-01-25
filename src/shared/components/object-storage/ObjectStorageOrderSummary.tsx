@@ -65,31 +65,31 @@ export const ObjectStorageOrderSummary: React.FC<ObjectStorageOrderSummaryProps>
   return (
     <ModernCard variant="outlined" padding="lg" className="space-y-4">
       <div>
-        <h3 className="text-lg font-semibold text-slate-900">Order Summary</h3>
-        <p className="text-sm text-slate-600">Auto-calculated from the captured configuration.</p>
+        <h3 className="text-lg font-semibold text-gray-900">Order Summary</h3>
+        <p className="text-sm text-gray-600">Auto-calculated from the captured configuration.</p>
       </div>
 
       <div className="space-y-2 text-sm">
         <div className="flex items-start justify-between gap-4">
-          <span className="text-slate-500">Customer Context</span>
-          <span className="text-right font-medium text-slate-900">
+          <span className="text-gray-500">Customer Context</span>
+          <span className="text-right font-medium text-gray-900">
             {assignmentLabel || "Unassigned"}
           </span>
         </div>
         <div className="flex items-start justify-between gap-4">
-          <span className="text-slate-500">Billing Country</span>
-          <span className="text-right font-medium text-slate-900">
+          <span className="text-gray-500">Billing Country</span>
+          <span className="text-right font-medium text-gray-900">
             {countryLabel || "Not selected"}
           </span>
         </div>
         <div className="flex items-start justify-between gap-4">
-          <span className="text-slate-500">Workflow</span>
-          <span className="text-right font-medium text-slate-900">{workflowLabel}</span>
+          <span className="text-gray-500">Workflow</span>
+          <span className="text-right font-medium text-gray-900">{workflowLabel}</span>
         </div>
         {transactionId && (
           <div className="flex items-start justify-between gap-4">
-            <span className="text-slate-500">Transaction</span>
-            <span className="text-right font-mono text-xs font-semibold text-slate-700">
+            <span className="text-gray-500">Transaction</span>
+            <span className="text-right font-mono text-xs font-semibold text-gray-700">
               {transactionId}
             </span>
           </div>
@@ -108,20 +108,20 @@ export const ObjectStorageOrderSummary: React.FC<ObjectStorageOrderSummaryProps>
         </div>
       )}
 
-      <div className="border-t border-slate-200 pt-4 space-y-3">
-        <h4 className="text-sm font-semibold text-slate-700">Service Profiles</h4>
+      <div className="border-t border-gray-200 pt-4 space-y-3">
+        <h4 className="text-sm font-semibold text-gray-700">Service Profiles</h4>
         {displayLines.length === 0 ? (
-          <p className="text-sm text-slate-500 italic">No profiles configured yet.</p>
+          <p className="text-sm text-gray-500 italic">No profiles configured yet.</p>
         ) : (
           <div className="space-y-2">
             {displayLines.map((line) => (
               <div
                 key={line.id}
-                className="flex items-start justify-between gap-3 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2"
+                className="flex items-start justify-between gap-3 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2"
               >
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">{line.name}</p>
-                  <div className="mt-1 flex flex-wrap gap-2 text-xs text-slate-500">
+                  <p className="text-sm font-semibold text-gray-900">{line.name}</p>
+                  <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-500">
                     {line.region && <span>{line.region}</span>}
                     {line.storageGb && <span>{line.storageGb} GB</span>}
                     {showDetailedBreakdown && line.months && (
@@ -134,7 +134,7 @@ export const ObjectStorageOrderSummary: React.FC<ObjectStorageOrderSummaryProps>
                     )}
                   </div>
                 </div>
-                <span className="text-sm font-semibold text-slate-900">
+                <span className="text-sm font-semibold text-gray-900">
                   {formatCurrency(line.subtotal, line.currency)}
                 </span>
               </div>
@@ -143,20 +143,20 @@ export const ObjectStorageOrderSummary: React.FC<ObjectStorageOrderSummaryProps>
         )}
       </div>
 
-      <div className="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm space-y-2">
+      <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 text-sm space-y-2">
         <div className="flex items-center justify-between">
-          <span className="text-slate-600">Subtotal</span>
-          <span className="font-medium text-slate-900">
+          <span className="text-gray-600">Subtotal</span>
+          <span className="font-medium text-gray-900">
             {formatCurrency(totals.subtotal, totals.currency)}
           </span>
         </div>
 
         {totals.tax > 0 && (
           <div className="flex items-center justify-between">
-            <span className="text-slate-600">
+            <span className="text-gray-600">
               Tax {totals.taxRate > 0 ? `(${totals.taxRate}%)` : ""}
             </span>
-            <span className="font-medium text-slate-900">
+            <span className="font-medium text-gray-900">
               {formatCurrency(totals.tax, totals.currency)}
             </span>
           </div>
@@ -164,20 +164,20 @@ export const ObjectStorageOrderSummary: React.FC<ObjectStorageOrderSummaryProps>
 
         {gatewayFees > 0 && (
           <div className="flex items-center justify-between">
-            <span className="text-slate-600">Gateway Fees</span>
-            <span className="font-medium text-slate-900">
+            <span className="text-gray-600">Gateway Fees</span>
+            <span className="font-medium text-gray-900">
               {formatCurrency(gatewayFees, totals.currency)}
             </span>
           </div>
         )}
 
-        <div className="mt-2 flex items-center justify-between border-t border-slate-200 pt-2 text-base font-semibold text-primary-600">
+        <div className="mt-2 flex items-center justify-between border-t border-gray-200 pt-2 text-base font-semibold text-primary-600">
           <span>Grand Total</span>
           <span>{formatCurrency(finalTotal, totals.currency)}</span>
         </div>
       </div>
 
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-gray-500">
         Taxes are estimated and may change after finance review.
       </p>
     </ModernCard>

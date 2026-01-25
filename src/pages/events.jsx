@@ -59,7 +59,7 @@ const Events = () => {
               </p>
 
               <motion.div className=" mt-16 w-full font-Outfit text-[#fff]">
-                <div className=" w-full h-[400px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] p-6 relative md:space-y-2">
+                <div className=" w-full h-[400px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] p-6 relative md:space-y-2">
                   <img
                     src={adbg}
                     className="hidden md:block absolute left-0 w-full h-full object-cover rounded-[30px]"
@@ -108,7 +108,7 @@ const Events = () => {
                         <p className="gradient-text">Trending Event</p>
                       </button>
                     </div>
-                    <div className=" w-full md:w-[35%] relative bg-gradient-to-r rounded-b-[30px] md:rounded-b-0 md:rounded-bl-[0px] md:border-l-2 border-dashed border-[#FFFFFF] md:rounded-r-[30px] from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] p-6">
+                    <div className=" w-full md:w-[35%] relative bg-gradient-to-r rounded-b-[30px] md:rounded-b-0 md:rounded-bl-[0px] md:border-l-2 border-dashed border-[#FFFFFF] md:rounded-r-[30px] from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] p-6">
                       <p className=" text-white font-medium text-xl md:text-2xl">
                         Transforming [Client Name] with Cloud Migration
                       </p>
@@ -142,7 +142,7 @@ const Events = () => {
                         <p className="text-left mt-3 text-[#121212] font-medium text-base">
                           {item.date}
                         </p>
-                        <button className=" block w-full md:w-auto mr-auto rounded-[30px] text-white font-semibold text-base mt-4 bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] py-3 px-16">
+                        <button className=" block w-full md:w-auto mr-auto rounded-[30px] text-white font-semibold text-base mt-4 bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] py-3 px-16">
                           Book event
                         </button>
                       </div>
@@ -150,7 +150,7 @@ const Events = () => {
                   </div>
 
                   <motion.div className="  py-[3em] w-full font-Outfit text-[#fff]">
-                    <div className=" w-full h-[400px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] p-6 relative">
+                    <div className=" w-full h-[400px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] p-6 relative">
                       <img
                         src={adbg}
                         className="hidden md:block absolute left-0 w-full h-full object-cover rounded-[30px]"

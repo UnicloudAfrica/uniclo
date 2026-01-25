@@ -17,9 +17,17 @@ import FormLayout, {
 } from "../../../adminDashboard/components/FormLayout";
 import ToastUtils from "../../../utils/toastUtil.ts";
 import { useCreateTenantPartner } from "../../../hooks/tenantHooks/partnerHooks";
+import { getBaseDomain } from "../../../utils/getSubdomain";
 
 const TenantAddPartnerWizard = ({ onClose }) => {
   const [currentStep, setCurrentStep] = useState(0);
+  const baseDomain = getBaseDomain();
+  const domainSuffix = baseDomain ? `.${baseDomain}` : "";
+  const displaySuffix = domainSuffix || ".your-domain.com";
+  const exampleDomain = baseDomain ? `acme.${baseDomain}` : "acme.your-domain.com";
+  const domainHint = baseDomain
+    ? `Suffix: ${baseDomain}. Example: ${exampleDomain}`
+    : `Suffix uses your deployment base domain in production. Example: ${exampleDomain}`;
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -174,7 +182,7 @@ const TenantAddPartnerWizard = ({ onClose }) => {
     };
 
     if (formData.domain) {
-      payload.domain = `${formData.domain}.unicloudafrica.com`;
+      payload.domain = `${formData.domain}${domainSuffix}`;
     }
 
     createPartner(payload, {
@@ -199,7 +207,7 @@ const TenantAddPartnerWizard = ({ onClose }) => {
 
   const uploadedDocs = docKeys.filter((key) => formData.business[key]).length;
   const progress = Math.round(((currentStep + 1) / steps.length) * 100);
-  const domainPreview = formData.domain ? `${formData.domain}.unicloudafrica.com` : "Not assigned";
+  const domainPreview = formData.domain ? `${formData.domain}${displaySuffix}` : "Not assigned";
   const contactName = [formData.first_name, formData.last_name].filter(Boolean).join(" ").trim();
 
   const toTitle = (value) =>
@@ -356,6 +364,7 @@ const TenantAddPartnerWizard = ({ onClose }) => {
     {
       label: "Subdomain",
       value: domainPreview,
+      hint: domainHint,
     },
     {
       label: "Documents",

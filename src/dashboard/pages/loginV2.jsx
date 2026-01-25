@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import sideBg from "./assets/sideBg.svg";
 import logo from "./assets/logo.png";
 import { Link, useNavigate } from "react-router-dom";
 import { useLoginAccount } from "../../hooks/authHooks";
@@ -10,6 +9,7 @@ import {
   useApplyBrandingTheme,
   usePublicBrandingTheme,
 } from "../../hooks/useBrandingTheme";
+import useImageFallback from "../../hooks/useImageFallback";
 import { getSubdomain } from "../../utils/getSubdomain";
 // import useAuthRedirect from "../../utils/authRedirect";
 
@@ -30,6 +30,8 @@ export default function DashboardLoginV2() {
   useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
   const logoSrc = resolveBrandLogo(branding, logo);
   const logoAlt = branding?.company?.name ? `${branding.company.name} Logo` : "Logo";
+  const brandName = branding?.company?.name || "Your Company";
+  const { src: resolvedLogoSrc, onError: handleLogoError } = useImageFallback(logoSrc, logo);
   //   const { isLoading } = useAuthRedirect();
 
   // Validation function
@@ -91,7 +93,12 @@ export default function DashboardLoginV2() {
           {/* Logo */}
           <div className="mb-8">
             <div className="flex items-center justify-center">
-              <img src={logoSrc} className="w-[100px]" alt={logoAlt} />
+              <img
+                src={resolvedLogoSrc}
+                className="w-[100px]"
+                alt={logoAlt}
+                onError={handleLogoError}
+              />
             </div>
           </div>
 
@@ -99,7 +106,7 @@ export default function DashboardLoginV2() {
           <div className="mb-8 w-full text-center">
             <h1 className="text-2xl font-semibold text-[#121212] mb-2">Welcome Back</h1>
             <p className="text-[#676767] text-sm">
-              Welcome back to Unicloud Africa. Enter your details to access your account
+              Welcome back to {brandName}. Enter your details to access your account
             </p>
           </div>
 
@@ -191,14 +198,7 @@ export default function DashboardLoginV2() {
       </div>
 
       {/* Right Side - Illustration */}
-      <div
-        style={{
-          backgroundImage: `url(${sideBg})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-        className="flex-1 side-bg hidden lg:flex items-center justify-center relative overflow-hidden"
-      ></div>
+      <div className="flex-1 side-bg hidden lg:flex items-center justify-center relative overflow-hidden"></div>
     </div>
   );
 }

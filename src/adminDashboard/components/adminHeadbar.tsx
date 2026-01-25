@@ -6,7 +6,11 @@ import { useDashboardProfile } from "../../shared/hooks/useDashboardProfile";
 import { clearAllAuthSessions } from "../../stores/sessionUtils";
 import useSidebarStore from "../../stores/sidebarStore";
 import { buildAdminHeadbarPreset } from "../../shared/config/headbarPresets";
-import { useAdminBrandingTheme, useApplyBrandingTheme } from "../../hooks/useBrandingTheme";
+import {
+  resolveBrandLogo,
+  useAdminBrandingTheme,
+  useApplyBrandingTheme,
+} from "../../hooks/useBrandingTheme";
 import logo from "./assets/logo.png";
 import { useAdminShellContext } from "./AdminShellContext";
 
@@ -28,7 +32,7 @@ const AdminHeadbar: React.FC<AdminHeadbarProps> = ({ forceRender = false }) => {
   useApplyBrandingTheme(branding, { fallbackLogo: logo, enabled: shouldRender });
 
   const preset = buildAdminHeadbarPreset(
-    branding?.logo || logo,
+    resolveBrandLogo(branding, logo),
     branding?.accentColor || branding?.primaryColor
   );
 

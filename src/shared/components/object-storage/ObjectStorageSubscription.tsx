@@ -143,8 +143,8 @@ export const ObjectStorageSubscription: React.FC<ObjectStorageSubscriptionProps>
       },
       expired: { bg: "bg-red-100", text: "text-red-700", icon: <XCircle className="h-4 w-4" /> },
       cancelled: {
-        bg: "bg-slate-100",
-        text: "text-slate-700",
+        bg: "bg-gray-100",
+        text: "text-gray-700",
         icon: <XCircle className="h-4 w-4" />,
       },
     };
@@ -178,7 +178,7 @@ export const ObjectStorageSubscription: React.FC<ObjectStorageSubscriptionProps>
 
   if (!subscription) {
     return (
-      <div className="text-center py-12 text-slate-500">
+      <div className="text-center py-12 text-gray-500">
         <p>Unable to load subscription details.</p>
         <button onClick={loadSubscription} className="mt-4 text-primary-600 hover:underline">
           Try Again
@@ -218,11 +218,11 @@ export const ObjectStorageSubscription: React.FC<ObjectStorageSubscriptionProps>
       )}
 
       {subscription.is_cancelled && (
-        <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-start gap-3">
-          <XCircle className="h-5 w-5 text-slate-600 mt-0.5" />
+        <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl flex items-start gap-3">
+          <XCircle className="h-5 w-5 text-gray-600 mt-0.5" />
           <div>
-            <p className="font-medium text-slate-800">Subscription Cancelled</p>
-            <p className="text-sm text-slate-600">
+            <p className="font-medium text-gray-800">Subscription Cancelled</p>
+            <p className="text-sm text-gray-600">
               Cancelled on {formatDate(subscription.cancelled_at)}.
               {subscription.cancellation_reason && ` Reason: ${subscription.cancellation_reason}`}
               {!subscription.is_expired &&
@@ -235,54 +235,54 @@ export const ObjectStorageSubscription: React.FC<ObjectStorageSubscriptionProps>
       {/* Main Info Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Status Card */}
-        <div className="p-5 bg-white border border-slate-200 rounded-xl">
+        <div className="p-5 bg-white border border-gray-200 rounded-xl">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm text-slate-500">Status</span>
+            <span className="text-sm text-gray-500">Status</span>
             {getStatusBadge(subscription.subscription_status)}
           </div>
-          <div className="text-2xl font-bold text-slate-800">{subscription.quota_gb} GB</div>
-          <div className="text-sm text-slate-500">{subscription.used_gb} GB used</div>
+          <div className="text-2xl font-bold text-gray-800">{subscription.quota_gb} GB</div>
+          <div className="text-sm text-gray-500">{subscription.used_gb} GB used</div>
         </div>
 
         {/* Expiry Card */}
-        <div className="p-5 bg-white border border-slate-200 rounded-xl">
-          <div className="flex items-center gap-2 text-sm text-slate-500 mb-3">
+        <div className="p-5 bg-white border border-gray-200 rounded-xl">
+          <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
             <Calendar className="h-4 w-4" />
             <span>Expires</span>
           </div>
-          <div className="text-2xl font-bold text-slate-800">
+          <div className="text-2xl font-bold text-gray-800">
             {subscription.expires_at ? formatDate(subscription.expires_at) : "No expiry"}
           </div>
           {subscription.days_until_expiry !== null && subscription.days_until_expiry > 0 && (
-            <div className="text-sm text-slate-500">
+            <div className="text-sm text-gray-500">
               {subscription.days_until_expiry} days remaining
             </div>
           )}
         </div>
 
         {/* Auto-Renew Card */}
-        <div className="p-5 bg-white border border-slate-200 rounded-xl">
-          <div className="flex items-center gap-2 text-sm text-slate-500 mb-3">
+        <div className="p-5 bg-white border border-gray-200 rounded-xl">
+          <div className="flex items-center gap-2 text-sm text-gray-500 mb-3">
             <RefreshCw className="h-4 w-4" />
             <span>Auto-Renewal</span>
           </div>
           <div className="flex items-center justify-between">
             <span
-              className={`text-lg font-semibold ${subscription.auto_renew ? "text-green-600" : "text-slate-400"}`}
+              className={`text-lg font-semibold ${subscription.auto_renew ? "text-green-600" : "text-gray-400"}`}
             >
               {subscription.auto_renew ? "Enabled" : "Disabled"}
             </span>
             <button
               onClick={toggleAutoRenew}
               disabled={updatingAutoRenew || subscription.is_cancelled}
-              className="p-1 hover:bg-slate-100 rounded transition-colors disabled:opacity-50"
+              className="p-1 hover:bg-gray-100 rounded transition-colors disabled:opacity-50"
             >
               {updatingAutoRenew ? (
-                <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
               ) : subscription.auto_renew ? (
                 <ToggleRight className="h-8 w-8 text-green-500" />
               ) : (
-                <ToggleLeft className="h-8 w-8 text-slate-400" />
+                <ToggleLeft className="h-8 w-8 text-gray-400" />
               )}
             </button>
           </div>
@@ -324,13 +324,13 @@ export const ObjectStorageSubscription: React.FC<ObjectStorageSubscriptionProps>
       {showCancelModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-            <h3 className="text-lg font-semibold text-slate-800 mb-2">Cancel Subscription</h3>
-            <p className="text-sm text-slate-600 mb-4">
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">Cancel Subscription</h3>
+            <p className="text-sm text-gray-600 mb-4">
               Your storage will remain accessible until {formatDate(subscription.expires_at)}. After
               that, access will be suspended.
             </p>
             <textarea
-              className="w-full p-3 border border-slate-300 rounded-lg mb-4"
+              className="w-full p-3 border border-gray-300 rounded-lg mb-4"
               placeholder="Reason for cancellation (optional)"
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
@@ -339,7 +339,7 @@ export const ObjectStorageSubscription: React.FC<ObjectStorageSubscriptionProps>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setShowCancelModal(false)}
-                className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg"
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
               >
                 Keep Subscription
               </button>
@@ -359,11 +359,9 @@ export const ObjectStorageSubscription: React.FC<ObjectStorageSubscriptionProps>
       {showRenewModal && !renewResult && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-            <h3 className="text-lg font-semibold text-slate-800 mb-4">Renew Subscription</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Renew Subscription</h3>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Renewal Period
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Renewal Period</label>
               <div className="grid grid-cols-4 gap-2">
                 {[1, 3, 6, 12].map((m) => (
                   <button
@@ -372,7 +370,7 @@ export const ObjectStorageSubscription: React.FC<ObjectStorageSubscriptionProps>
                     className={`py-2 px-3 rounded-lg border text-sm font-medium transition-colors ${
                       renewMonths === m
                         ? "border-primary-500 bg-primary-50 text-primary-700"
-                        : "border-slate-200 text-slate-600 hover:border-slate-300"
+                        : "border-gray-200 text-gray-600 hover:border-gray-300"
                     }`}
                   >
                     {m} {m === 1 ? "month" : "months"}
@@ -383,7 +381,7 @@ export const ObjectStorageSubscription: React.FC<ObjectStorageSubscriptionProps>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setShowRenewModal(false)}
-                className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg"
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
               >
                 Cancel
               </button>

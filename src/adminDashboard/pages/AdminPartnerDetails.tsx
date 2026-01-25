@@ -94,7 +94,7 @@ export default function AdminPartnerDetails() {
         ? `Industry • ${partnerDetails.business.industry}`
         : "Industry not captured",
       icon: Building2,
-      accentBg: "bg-[#288DD1]/10",
+      accentBg: "bg-primary/10",
       accentText: "text-[#288DD1]",
     },
     {
@@ -236,7 +236,7 @@ export default function AdminPartnerDetails() {
           {summaryCards.map(({ label, value, hint, icon: Icon, accentBg, accentText }) => (
             <div
               key={label}
-              className="rounded-3xl border border-[#EAECF0] bg-white p-5 shadow-sm transition hover:border-[#288DD1]/50 hover:shadow-md"
+              className="rounded-3xl border border-[#EAECF0] bg-white p-5 shadow-sm transition hover:border-primary/50 hover:shadow-md"
             >
               <div className="flex items-start gap-3">
                 <span
@@ -268,12 +268,12 @@ export default function AdminPartnerDetails() {
                   className={`group flex items-start gap-3 rounded-3xl border px-5 py-4 text-left shadow-sm transition ${
                     isActive
                       ? "border-[#288DD1] bg-[#F3FAFF] shadow-md"
-                      : "border-transparent bg-white hover:border-[#288DD1]/40 hover:shadow-md"
+                      : "border-transparent bg-white hover:border-primary/40 hover:shadow-md"
                   }`}
                 >
                   <span
                     className={`mt-1 flex h-10 w-10 items-center justify-center rounded-2xl ${
-                      isActive ? "bg-[#288DD1]/15 text-[#288DD1]" : "bg-slate-100 text-slate-500"
+                      isActive ? "bg-primary/15 text-[#288DD1]" : "bg-slate-100 text-slate-500"
                     }`}
                   >
                     <Icon className="h-5 w-5" />

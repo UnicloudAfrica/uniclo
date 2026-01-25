@@ -121,7 +121,7 @@ const AddEni = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: any)
                   type="button"
                   onClick={handleRefreshNetworks}
                   disabled={isSyncingVpcs || !form.region}
-                  className="text-xs text-[#288DD1] hover:text-[#1a6aa5] underline disabled:no-underline disabled:text-gray-400 disabled:cursor-not-allowed bg-transparent border-none p-0"
+                  className="text-xs text-[#288DD1] hover:text-primary-600 underline disabled:no-underline disabled:text-gray-400 disabled:cursor-not-allowed bg-transparent border-none p-0"
                 >
                   {isSyncingVpcs ? "Refreshing..." : "Refresh list"}
                 </button>
@@ -158,7 +158,7 @@ const AddEni = ({ isOpen, onClose, projectId, region: defaultRegion = "" }: any)
                   type="button"
                   onClick={handleRefreshNetworks}
                   disabled={isSyncingVpcs}
-                  className="text-[#288DD1] hover:text-[#1a6aa5] underline disabled:no-underline disabled:text-gray-400 disabled:cursor-not-allowed bg-transparent border-none p-0"
+                  className="text-[#288DD1] hover:text-primary-600 underline disabled:no-underline disabled:text-gray-400 disabled:cursor-not-allowed bg-transparent border-none p-0"
                 >
                   {isSyncingVpcs ? "Refreshing..." : "Refresh list"}
                 </button>

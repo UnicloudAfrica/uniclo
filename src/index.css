@@ -124,18 +124,30 @@ textarea {
 
 :root {
   --bar-bg: #121212;
-  --unicloud-blue: #288dd1;
-  --theme-color: #1c1c1c;
-  --secondary-color: #14547f;
-  --theme-color-10: rgba(40, 141, 209, 0.1);
-  --theme-color-20: rgba(40, 141, 209, 0.2);
-  --theme-border-color: rgba(50, 114, 202, 0.18);
+  --unicloud-blue: var(--theme-color, #288dd1);
+  --theme-color: #288dd1;
+  --theme-color-rgb: 40 141 209;
+  --secondary-color: #3fe0c8;
+  --secondary-color-rgb: 63 224 200;
+  --theme-color-10: rgba(40, 141, 209, 0.08);
+  --theme-color-20: rgba(40, 141, 209, 0.18);
+  --theme-color-50: 238 246 251;
+  --theme-color-100: 221 237 248;
+  --theme-color-200: 195 223 242;
+  --theme-color-300: 160 205 235;
+  --theme-color-400: 109 177 224;
+  --theme-color-500: 40 141 209;
+  --theme-color-600: 33 116 171;
+  --theme-color-700: 27 96 142;
+  --theme-color-800: 22 76 113;
+  --theme-color-900: 16 56 84;
+  --theme-border-color: rgba(63, 224, 200, 0.2);
   --theme-card-bg: #ffffff;
   --theme-surface-alt: #f3f4f6;
-  --theme-heading-color: #1f2937;
-  --theme-text-color: #1f2937;
+  --theme-heading-color: #111827;
+  --theme-text-color: #6b7280;
   --theme-muted-color: #6b7280;
-  --theme-badge-success-bg: rgba(40, 141, 209, 0.16);
+  --theme-badge-success-bg: rgba(40, 141, 209, 0.2);
   --theme-badge-success-text: #288dd1;
   --theme-badge-pending-bg: #fef3c7;
   --theme-badge-pending-text: #92400e;
@@ -149,6 +161,7 @@ textarea {
 html,
 body {
   font-family: "Outfit", "Inter", "SF Pro Display", system-ui, sans-serif;
+  color: var(--theme-text-color);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -239,7 +252,7 @@ body {
 }
 
 .gradient-text {
-  background: linear-gradient(45deg, var(--unicloud-blue), #3fe0c8);
+  background: linear-gradient(45deg, var(--theme-color, #288dd1), var(--secondary-color, #3fe0c8));
   -webkit-background-clip: text;
   color: transparent;
 }
@@ -259,7 +272,7 @@ body {
 
 .hover\:text-\[\#1976D2\]:hover,
 .focus\:text-\[\#1976D2\]:focus {
-  color: var(--secondary-color) !important;
+  color: rgb(var(--theme-color-600)) !important;
 }
 
 .bg-\[\#288DD1\],
@@ -276,18 +289,82 @@ body {
 
 .bg-\[\#1976D2\],
 .hover\:bg-\[\#1976D2\]:hover {
-  background-color: var(--secondary-color) !important;
+  background-color: rgb(var(--theme-color-600)) !important;
 }
 
 .text-\[\#6db1df\],
 .hover\:text-\[\#6db1df\]:hover,
 .focus\:text-\[\#6db1df\]:focus {
-  color: var(--theme-color-20) !important;
+  color: rgb(var(--theme-color-300)) !important;
 }
 
 .hover\:bg-\[\#6db1df\]:hover,
 .focus\:bg-\[\#6db1df\]:focus {
-  background-color: var(--theme-color-20) !important;
+  background-color: rgb(var(--theme-color-300)) !important;
+}
+
+.text-\[\#1a6aa5\],
+.hover\:text-\[\#1a6aa5\]:hover,
+.focus\:text-\[\#1a6aa5\]:focus {
+  color: rgb(var(--theme-color-600)) !important;
+}
+
+.text-\[\#1C1C1C\],
+.text-\[\#1c1c1c\],
+.hover\:text-\[\#1C1C1C\]:hover,
+.hover\:text-\[\#1c1c1c\]:hover,
+.focus\:text-\[\#1C1C1C\]:focus,
+.focus\:text-\[\#1c1c1c\]:focus {
+  color: var(--theme-heading-color) !important;
+}
+
+.text-\[\#676767\],
+.text-\[\#666666\],
+.hover\:text-\[\#676767\]:hover,
+.hover\:text-\[\#666666\]:hover,
+.focus\:text-\[\#676767\]:focus,
+.focus\:text-\[\#666666\]:focus {
+  color: var(--theme-muted-color) !important;
+}
+
+.text-\[\#1E1E1EB2\],
+.text-\[\#1E1E1ECC\],
+.text-\[\#1E1E1E99\],
+.text-\[\#1E1E1E33\] {
+  color: var(--theme-muted-color) !important;
+}
+
+.text-\[\#0b4977\],
+.hover\:text-\[\#0b4977\]:hover,
+.focus\:text-\[\#0b4977\]:focus {
+  color: rgb(var(--theme-color-700)) !important;
+}
+
+.bg-\[\#1d75b4\],
+.hover\:bg-\[\#1d75b4\]:hover,
+.focus\:bg-\[\#1d75b4\]:focus {
+  background-color: rgb(var(--theme-color-600)) !important;
+}
+
+.bg-\[\#FAFAFA\],
+.bg-\[\#fafafa\],
+.bg-\[\#F9FAFB\],
+.bg-\[\#f9fafb\] {
+  background-color: var(--theme-surface-alt) !important;
+}
+
+.bg-\[\#F5F5F4\],
+.bg-\[\#f5f5f4\] {
+  background-color: var(--theme-surface-alt) !important;
+}
+
+.bg-\[\#E6F2FA\],
+.hover\:bg-\[\#E6F2FA\]:hover,
+.focus\:bg-\[\#E6F2FA\]:focus,
+.bg-\[\#E8F4FB\],
+.hover\:bg-\[\#E8F4FB\]:hover,
+.focus\:bg-\[\#E8F4FB\]:focus {
+  background-color: rgb(var(--theme-color-50)) !important;
 }
 
 .border-\[\#288DD1\],
@@ -302,6 +379,20 @@ body {
   border-color: var(--theme-border-color) !important;
 }
 
+.border-\[\#ECEDF0\],
+.border-\[\#ecedf0\],
+.border-\[\#C8CBD9\],
+.border-\[\#c8cbd9\],
+.border-\[\#EEF2F6\],
+.border-\[\#eef2f6\] {
+  border-color: var(--theme-border-color) !important;
+}
+
+.border-\[\#EAEBF0\],
+.border-\[\#eaebf0\] {
+  border-color: var(--theme-border-color) !important;
+}
+
 .focus\:ring-\[\#288DD1\]:focus,
 .focus\:ring-\[\#288dd1\]:focus,
 .ring-\[\#288DD1\] {
@@ -310,7 +401,7 @@ body {
 
 .focus\:ring-\[\#1976D2\]:focus,
 .ring-\[\#1976D2\] {
-  --tw-ring-color: var(--secondary-color) !important;
+  --tw-ring-color: rgb(var(--theme-color-600)) !important;
 }
 
 .text-\[\#288DD1\] svg,
@@ -319,7 +410,7 @@ body {
 }
 
 .gradient-txt {
-  background: linear-gradient(45deg, var(--unicloud-blue) cc, #3fe0c8);
+  background: linear-gradient(45deg, var(--theme-color, #288dd1), var(--secondary-color, #3fe0c8));
   -webkit-background-clip: text;
   color: transparent;
 }
@@ -402,13 +493,17 @@ img {
 /* dashboard styling */
 
 .side-bg {
-  background: linear-gradient(90.7deg, #d9e6ef 3.29%, #7fc2e9 136.88%);
+  background: linear-gradient(
+    135deg,
+    rgba(var(--theme-color-rgb), 0.14) 0%,
+    rgba(var(--secondary-color-rgb), 0.18) 100%
+  );
 }
 
 .input-field {
   width: 100%;
   padding: 12px 20px;
-  background-color: #f5f5f4;
+  background-color: var(--theme-surface-alt);
   border-radius: 8px;
   border: none;
   outline: none;
@@ -451,7 +546,11 @@ input[type="number"] {
 }
 
 .text-unicloud {
-  background: linear-gradient(84.45deg, #288dd1 2.78%, #3fe0c8 91.98%);
+  background: linear-gradient(
+    84.45deg,
+    var(--theme-color, #288dd1) 2.78%,
+    var(--secondary-color, #3fe0c8) 91.98%
+  );
   -webkit-background-clip: text;
   color: transparent;
 }

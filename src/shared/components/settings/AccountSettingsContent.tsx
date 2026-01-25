@@ -727,7 +727,7 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
                           </ModernButton>
                           <ModernButton
                             variant="primary"
-                            className="flex items-center gap-2 !bg-[#288DD1] hover:!bg-[#0f6cad] !text-white !border-transparent"
+                            className="flex items-center gap-2 !bg-[--theme-color] hover:opacity-90 !text-white !border-transparent"
                             onClick={() => handleSaveSection(activeTabConfig)}
                             disabled={savingSection === activeTabConfig.id || isUpdatingSettings}
                           >
@@ -830,7 +830,7 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
                     : handleConfirmDisableTwoFactor
                 }
                 disabled={isTwoFactorProcessing || twoFactorOtp.trim().length !== 6}
-                className="flex items-center gap-2 !bg-[#288DD1] hover:!bg-[#0f6cad] !text-white !border-transparent"
+                className="flex items-center gap-2 !bg-[--theme-color] hover:opacity-90 !text-white !border-transparent"
               >
                 {isTwoFactorProcessing ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

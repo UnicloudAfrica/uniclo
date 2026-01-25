@@ -50,7 +50,7 @@ const StorageGauge3D: React.FC<StorageGauge3DProps> = ({ usedGb, totalGb, showWa
         <div
           className="absolute top-4 left-0 w-32 h-28 border-l-2 border-r-2"
           style={{
-            backgroundColor: "#f8fafc",
+            backgroundColor: "var(--theme-surface-alt)",
             borderColor: colors.fill,
           }}
         >
@@ -82,7 +82,7 @@ const StorageGauge3D: React.FC<StorageGauge3DProps> = ({ usedGb, totalGb, showWa
         <div
           className="absolute bottom-0 left-0 w-32 h-8 rounded-[50%] border-2"
           style={{
-            backgroundColor: percentage > 0 ? colors.fill : "#f1f5f9",
+            backgroundColor: percentage > 0 ? colors.fill : "var(--theme-surface-alt)",
             borderColor: colors.fill,
             zIndex: 2,
           }}
@@ -92,7 +92,7 @@ const StorageGauge3D: React.FC<StorageGauge3DProps> = ({ usedGb, totalGb, showWa
       {/* Usage text */}
       <div className="mt-4 text-center">
         <div className={`text-2xl font-bold ${colors.text}`}>{percentage.toFixed(0)}%</div>
-        <div className="text-sm text-slate-500 mt-1">
+        <div className="text-sm text-[--theme-muted-color] mt-1">
           {formatStorage(usedGb)} / {formatStorage(totalGb)}
         </div>
       </div>

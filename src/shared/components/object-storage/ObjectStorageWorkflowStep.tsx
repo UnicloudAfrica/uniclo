@@ -58,19 +58,19 @@ export const ObjectStorageWorkflowStep: React.FC<ObjectStorageWorkflowStepProps>
 }) => {
   return (
     <ModernCard title="Workflow & Assignment">
-      <p className="text-sm text-slate-500 -mt-2 mb-4">
+      <p className="text-sm text-gray-500 -mt-2 mb-4">
         Choose your provisioning mode and who this request is for.
       </p>
       <div className="space-y-6">
         <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">Provisioning Mode</label>
+          <label className="mb-2 block text-sm font-medium text-gray-700">Provisioning Mode</label>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div
               onClick={() => onModeChange("standard")}
               className={`cursor-pointer rounded-xl border p-4 transition-all ${
                 mode === "standard"
                   ? "border-primary-500 bg-primary-50 ring-1 ring-primary-200"
-                  : "border-slate-200 hover:border-slate-300"
+                  : "border-gray-200 hover:border-gray-300"
               }`}
             >
               <div className="flex items-center gap-3">
@@ -78,14 +78,14 @@ export const ObjectStorageWorkflowStep: React.FC<ObjectStorageWorkflowStepProps>
                   className={`rounded-lg p-2 ${
                     mode === "standard"
                       ? "bg-primary-100 text-primary-600"
-                      : "bg-slate-100 text-slate-500"
+                      : "bg-gray-100 text-gray-500"
                   }`}
                 >
                   <CreditCard className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-900">Standard Workflow</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="font-semibold text-gray-900">Standard Workflow</p>
+                  <p className="text-xs text-gray-500">
                     Configure, price, and generate payment link.
                   </p>
                 </div>
@@ -98,7 +98,7 @@ export const ObjectStorageWorkflowStep: React.FC<ObjectStorageWorkflowStepProps>
                 className={`cursor-pointer rounded-xl border p-4 transition-all ${
                   mode === "fast-track"
                     ? "border-primary-500 bg-primary-50 ring-1 ring-primary-200"
-                    : "border-slate-200 hover:border-slate-300"
+                    : "border-gray-200 hover:border-gray-300"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -106,16 +106,14 @@ export const ObjectStorageWorkflowStep: React.FC<ObjectStorageWorkflowStepProps>
                     className={`rounded-lg p-2 ${
                       mode === "fast-track"
                         ? "bg-primary-100 text-primary-600"
-                        : "bg-slate-100 text-slate-500"
+                        : "bg-gray-100 text-gray-500"
                     }`}
                   >
                     <Gauge className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-900">Fast-Track</p>
-                    <p className="text-xs text-slate-500">
-                      Skip payment and provision immediately.
-                    </p>
+                    <p className="font-semibold text-gray-900">Fast-Track</p>
+                    <p className="text-xs text-gray-500">Skip payment and provision immediately.</p>
                   </div>
                 </div>
               </div>
@@ -145,7 +143,7 @@ export const ObjectStorageWorkflowStep: React.FC<ObjectStorageWorkflowStepProps>
         )}
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">Billing Country</label>
+          <label className="mb-1 block text-sm font-medium text-gray-700">Billing Country</label>
           <ModernSelect
             value={countryCode}
             onChange={(event) => {

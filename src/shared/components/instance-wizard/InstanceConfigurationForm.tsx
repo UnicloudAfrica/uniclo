@@ -42,10 +42,10 @@ interface SectionWrapperProps {
 }
 
 const SectionWrapper: React.FC<SectionWrapperProps> = ({ title, description, children }) => (
-  <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+  <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
     <div className="space-y-1">
-      <p className="text-sm font-semibold text-slate-900">{title}</p>
-      {description && <p className="text-xs text-slate-500">{description}</p>}
+      <p className="text-sm font-semibold text-gray-900">{title}</p>
+      {description && <p className="text-xs text-gray-500">{description}</p>}
     </div>
     {children}
   </div>
@@ -125,17 +125,17 @@ const TagsInput: React.FC<TagsInputProps> = ({
   };
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+    <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
       <div className="flex flex-wrap items-center gap-2">
         {tags.map((tag) => (
           <span
             key={tag}
-            className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700"
+            className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-700"
           >
             {tag}
             <button
               type="button"
-              className="text-slate-400 hover:text-slate-600"
+              className="text-gray-400 hover:text-gray-600"
               onClick={() => onChange(tags.filter((t) => t !== tag).join(", "))}
               aria-label={`Remove tag ${tag}`}
             >
@@ -951,10 +951,10 @@ const InstanceConfigurationForm: React.FC<Props> = ({
       <ModernCard variant="outlined" padding="lg" className="space-y-6" onClick={undefined}>
         <div className="flex items-start justify-between">
           <div className="space-y-1">
-            <p className="text-lg font-semibold text-slate-900">
+            <p className="text-lg font-semibold text-gray-900">
               {configurationLabel} #{index + 1}: {cfg.name || "Untitled"}
             </p>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-gray-600">
               Build a cube-instance with region, size, image, storage, and networking.
             </p>
           </div>
@@ -1017,14 +1017,14 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                 disabled={isTemplateLocked}
               />
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
+                <label className="mb-1 block text-sm font-medium text-gray-700">
                   Duration (Months) *
                 </label>
                 <input
                   type="number"
                   min="1"
                   max="36"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
                   value={cfg.months}
                   onChange={(e) => updateConfigWithFocus({ months: e.target.value })}
                 />
@@ -1041,16 +1041,16 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                   helper="Choose an existing project for this configuration."
                   disabled={isTemplateLocked || !selectedRegion}
                 />
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
                   {selectedProjectPreset ? (
                     <>
-                      <p className="font-semibold text-slate-700">
+                      <p className="font-semibold text-gray-700">
                         Network preset: {selectedProjectPreset.name}
                       </p>
                       <p className="mt-1">{selectedProjectPreset.description}</p>
                       {Array.isArray(selectedProjectPreset.features) &&
                         selectedProjectPreset.features.length > 0 && (
-                          <p className="mt-1 text-slate-500">
+                          <p className="mt-1 text-gray-500">
                             Includes: {selectedProjectPreset.features.join(", ")}
                           </p>
                         )}
@@ -1062,32 +1062,32 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                       )}
                     </>
                   ) : selectedProject ? (
-                    <p className="text-slate-500">
+                    <p className="text-gray-500">
                       No preset recorded. This project will use its existing network resources.
                     </p>
                   ) : (
-                    <p className="text-slate-500">
+                    <p className="text-gray-500">
                       Select a project to view its network preset details.
                     </p>
                   )}
                 </div>
               </div>
             ) : (
-              <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
+              <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
                       Project name *
                     </label>
                     <input
                       type="text"
                       data-focus-key={focusKey("project_name")}
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
                       value={cfg.project_name || ""}
                       onChange={(e) => updateConfigWithFocus({ project_name: e.target.value })}
                       placeholder="Enter project name"
                     />
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-gray-500">
                       Project will be created after payment and uses the selected preset.
                     </p>
                   </div>
@@ -1101,23 +1101,23 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                   />
                 </div>
                 {selectedPreset ? (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-                    <p className="font-semibold text-slate-700">{selectedPreset.name}</p>
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
+                    <p className="font-semibold text-gray-700">{selectedPreset.name}</p>
                     <p className="mt-1">{selectedPreset.description}</p>
                     {Array.isArray(selectedPreset.features) &&
                       selectedPreset.features.length > 0 && (
-                        <p className="mt-1 text-slate-500">
+                        <p className="mt-1 text-gray-500">
                           Includes: {selectedPreset.features.join(", ")}
                         </p>
                       )}
-                    <p className="mt-2 text-xs text-slate-500">
+                    <p className="mt-2 text-xs text-gray-500">
                       {hasFloatingIp
                         ? `Elastic IPs: ${normalizedFloatingIpCount} will be allocated and attached during provisioning.`
                         : 'Elastic IPs: none requested. Enable "Attach EIP when provisioning" to attach one.'}
                     </p>
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-gray-500">
                     Select a preset to see the network layout that will be provisioned.
                   </p>
                 )}
@@ -1132,20 +1132,20 @@ const InstanceConfigurationForm: React.FC<Props> = ({
             >
               <div className="space-y-4">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     Assignment Scope
                   </label>
                   {lockAssignmentScope ? (
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                      <p className="text-sm font-semibold text-slate-900">
+                    <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                      <p className="text-sm font-semibold text-gray-900">
                         {assignmentScopeDetails?.label || "Internal (admins)"}
                       </p>
                       {assignmentScopeDetails?.description ? (
-                        <p className="mt-1 text-xs text-slate-500">
+                        <p className="mt-1 text-xs text-gray-500">
                           {assignmentScopeDetails.description}
                         </p>
                       ) : null}
-                      <p className="mt-2 text-[11px] text-slate-400">
+                      <p className="mt-2 text-[11px] text-gray-400">
                         Controlled by Customer Context in the workflow step.
                       </p>
                     </div>
@@ -1159,11 +1159,11 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                           className={`rounded-2xl border p-4 text-left transition-all ${
                             assignmentScope === option.value
                               ? "border-primary-500 bg-primary-50 ring-1 ring-primary-200"
-                              : "border-slate-200 hover:border-slate-300"
+                              : "border-gray-200 hover:border-gray-300"
                           }`}
                         >
-                          <p className="text-sm font-semibold text-slate-900">{option.label}</p>
-                          <p className="text-xs text-slate-500 mt-1">{option.description}</p>
+                          <p className="text-sm font-semibold text-gray-900">{option.label}</p>
+                          <p className="text-xs text-gray-500 mt-1">{option.description}</p>
                         </button>
                       ))}
                     </div>
@@ -1172,7 +1172,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium text-slate-700">Project Members</label>
+                    <label className="text-sm font-medium text-gray-700">Project Members</label>
                     {showRestoreMembers && (
                       <button
                         type="button"
@@ -1187,9 +1187,9 @@ const InstanceConfigurationForm: React.FC<Props> = ({
 
                   {shouldFetchMembers ? (
                     <>
-                      <div className="min-h-[48px] rounded-2xl border border-slate-200 px-3 py-2 bg-white">
+                      <div className="min-h-[48px] rounded-2xl border border-gray-200 px-3 py-2 bg-white">
                         {isMembersFetching && selectedMembers.length === 0 ? (
-                          <div className="flex items-center text-sm text-slate-500">
+                          <div className="flex items-center text-sm text-gray-500">
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                             Loading members...
                           </div>
@@ -1203,7 +1203,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                                 {member.name || member.email || `User #${member.id}`}
                                 <button
                                   type="button"
-                                  className="ml-2 text-white hover:text-slate-100"
+                                  className="ml-2 text-white hover:text-gray-100"
                                   onClick={() => handleToggleMember(member)}
                                 >
                                   <X className="w-3 h-3" />
@@ -1212,46 +1212,46 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                             ))}
                           </div>
                         ) : (
-                          <p className="text-sm text-slate-500">
+                          <p className="text-sm text-gray-500">
                             No members selected yet. Use the suggestions below to choose who should
                             join the project.
                           </p>
                         )}
                       </div>
 
-                      <div className="mt-3 rounded-2xl border border-slate-200 bg-white">
-                        <div className="px-4 py-2 border-b border-slate-200 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      <div className="mt-3 rounded-2xl border border-gray-200 bg-white">
+                        <div className="px-4 py-2 border-b border-gray-200 text-xs font-semibold uppercase tracking-wide text-gray-500">
                           Suggested members
                         </div>
                         {isMembersFetching ? (
-                          <div className="flex items-center px-4 py-3 text-sm text-slate-500">
+                          <div className="flex items-center px-4 py-3 text-sm text-gray-500">
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                             Fetching latest workspace members...
                           </div>
                         ) : suggestedMembers.length > 0 ? (
-                          <div className="max-h-48 overflow-y-auto divide-y divide-slate-100">
+                          <div className="max-h-48 overflow-y-auto divide-y divide-gray-100">
                             {suggestedMembers.map((member: any) => {
                               const isSelected = selectedMemberIds.has(Number(member.id));
                               return (
                                 <label
                                   key={member.id}
-                                  className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50"
+                                  className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50"
                                 >
                                   <input
                                     type="checkbox"
-                                    className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                                    className="mt-1 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                                     checked={isSelected}
                                     onChange={() => handleToggleMember(member)}
                                   />
                                   <div>
-                                    <p className="text-sm font-medium text-slate-700">
+                                    <p className="text-sm font-medium text-gray-700">
                                       {member.name || member.email || `User #${member.id}`}
                                     </p>
                                     {member.email && (
-                                      <p className="text-xs text-slate-500">{member.email}</p>
+                                      <p className="text-xs text-gray-500">{member.email}</p>
                                     )}
                                     {member.role && (
-                                      <p className="text-[10px] text-slate-400 uppercase tracking-wide mt-1">
+                                      <p className="text-[10px] text-gray-400 uppercase tracking-wide mt-1">
                                         {member.role}
                                       </p>
                                     )}
@@ -1261,7 +1261,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                             })}
                           </div>
                         ) : (
-                          <p className="px-4 py-3 text-sm text-slate-500">
+                          <p className="px-4 py-3 text-sm text-gray-500">
                             No suggested members for this scope yet. Adjust the assignment settings
                             or choose a different customer context.
                           </p>
@@ -1269,7 +1269,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                       </div>
                     </>
                   ) : (
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-gray-500">
                       Select a matching tenant or user to load membership suggestions.
                     </p>
                   )}
@@ -1363,25 +1363,23 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                 disabled={!selectedRegion}
               />
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Size (GB) *</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Size (GB) *</label>
                 <input
                   type="number"
                   min="10"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
                   value={cfg.storage_size_gb}
                   onChange={(e) => updateConfigWithFocus({ storage_size_gb: e.target.value })}
                 />
                 {templateVolumeSize ? (
-                  <p className="mt-1 text-xs text-slate-500">Template size: {templateVolumeSize}</p>
+                  <p className="mt-1 text-xs text-gray-500">Template size: {templateVolumeSize}</p>
                 ) : null}
               </div>
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-slate-900">
-                  Additional data volumes
-                </span>
+                <span className="text-sm font-semibold text-gray-900">Additional data volumes</span>
                 <ModernButton
                   variant="outline"
                   onClick={() => addAdditionalVolume(cfg.id)}
@@ -1391,14 +1389,14 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                 </ModernButton>
               </div>
               {(cfg.additional_volumes || []).length === 0 && (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-gray-500">
                   No extra data volumes. Click “Add data volume” to attach more storage.
                 </p>
               )}
               {(cfg.additional_volumes || []).map((vol) => (
                 <div
                   key={vol.id}
-                  className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 md:grid-cols-3"
+                  className="grid gap-3 rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 md:grid-cols-3"
                 >
                   <SearchableSelect
                     label="Volume type"
@@ -1417,13 +1415,13 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                     disabled={!selectedRegion}
                   />
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
                       Size (GB)
                     </label>
                     <input
                       type="number"
                       min="10"
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
                       value={vol.storage_size_gb}
                       onChange={(e) =>
                         updateAdditionalVolume(cfg.id, vol.id, {
@@ -1431,7 +1429,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                         })
                       }
                     />
-                    <p className="mt-1 text-xs text-slate-500">Capacity for this data volume.</p>
+                    <p className="mt-1 text-xs text-gray-500">Capacity for this data volume.</p>
                   </div>
                   <div className="flex items-end justify-end">
                     <ModernButton
@@ -1475,7 +1473,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                   disabled={!isProjectScoped}
                 />
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">Bandwidth</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Bandwidth</label>
                   <SearchableSelect
                     label=""
                     value={cfg.bandwidth_id}
@@ -1496,13 +1494,13 @@ const InstanceConfigurationForm: React.FC<Props> = ({
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="md:col-span-2">
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
                     Attach EIP when provisioning
                   </label>
-                  <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+                  <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700">
                     <input
                       type="checkbox"
-                      className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                      className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                       checked={hasFloatingIp}
                       disabled={isPresetRequiresEip}
                       onChange={(e) =>
@@ -1518,7 +1516,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                       </span>
                     )}
                   </label>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-gray-500">
                     {isPresetRequiresEip
                       ? "This preset requires an EIP; this is locked on."
                       : "When enabled, one EIP is reserved and attached during provisioning."}
@@ -1527,7 +1525,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
               </div>
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="md:col-span-2">
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
                     Security Groups (Optional)
                   </label>
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -1545,11 +1543,11 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                         return (
                           <label
                             key={id}
-                            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
+                            className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
                           >
                             <input
                               type="checkbox"
-                              className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                               checked={checked}
                               onChange={(e) => handleSecurityGroupToggle(id, e.target.checked)}
                             />
@@ -1558,7 +1556,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                         );
                       })
                     ) : (
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-gray-500">
                         Select a region and project to view available security groups.
                       </p>
                     )}
@@ -1574,7 +1572,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
           >
             {isNewProject ? (
               !hasRegion ? (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-gray-500">
                   Select a region to configure an SSH key pair for this new project.
                 </p>
               ) : (
@@ -1584,26 +1582,26 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                   </div>
                   <div className="grid gap-3 md:grid-cols-2">
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-slate-700">
+                      <label className="mb-1 block text-sm font-medium text-gray-700">
                         Key pair name (optional)
                       </label>
                       <input
                         type="text"
                         data-focus-key={focusKey("keypair_name")}
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
                         value={cfg.keypair_name || ""}
                         onChange={(e) => updateConfigWithFocus({ keypair_name: e.target.value })}
                         placeholder="e.g. cube-instance-key"
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-slate-700">
+                      <label className="mb-1 block text-sm font-medium text-gray-700">
                         Public key (optional)
                       </label>
                       <input
                         type="text"
                         data-focus-key={focusKey("keypair_public_key")}
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
                         value={cfg.keypair_public_key || ""}
                         onChange={(e) =>
                           updateConfigWithFocus({ keypair_public_key: e.target.value })
@@ -1612,19 +1610,19 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                       />
                     </div>
                   </div>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-gray-500">
                     Leave blank to skip keypair creation. You can add keys later in the project.
                   </p>
                 </div>
               )
             ) : !canManageKeypairs ? (
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-gray-500">
                 Key pairs require an existing project. Select a project to manage SSH keys.
               </p>
             ) : (
               <div className="space-y-3">
                 <div className="flex flex-wrap gap-3">
-                  <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+                  <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700">
                     <input
                       type="radio"
                       name={keypairModeName}
@@ -1640,7 +1638,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                     />
                     Use existing key pair
                   </label>
-                  <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+                  <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700">
                     <input
                       type="radio"
                       name={keypairModeName}
@@ -1677,29 +1675,29 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                     disabled={!canSelectExistingKeypairs}
                   />
                 ) : (
-                  <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
                     <div className="grid gap-3 md:grid-cols-2">
                       <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">
+                        <label className="mb-1 block text-sm font-medium text-gray-700">
                           Key pair name *
                         </label>
                         <input
                           type="text"
                           data-focus-key={focusKey("keypair_name_create")}
-                          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
                           value={keypairNameInput}
                           onChange={(e) => setKeypairNameInput(e.target.value)}
                           placeholder="e.g. cube-instance-key"
                         />
                       </div>
                       <div>
-                        <label className="mb-1 block text-sm font-medium text-slate-700">
+                        <label className="mb-1 block text-sm font-medium text-gray-700">
                           Public key (optional)
                         </label>
                         <input
                           type="text"
                           data-focus-key={focusKey("keypair_public_create")}
-                          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
                           value={keypairPublicKey}
                           onChange={(e) => setKeypairPublicKey(e.target.value)}
                           placeholder="ssh-rsa AAAA..."
@@ -1733,7 +1731,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                         </span>
                       )}
                       {keypairMaterial && hasDownloadedKeypair && (
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-gray-500">
                           Key pair is selected for this instance.
                         </span>
                       )}
@@ -1750,13 +1748,13 @@ const InstanceConfigurationForm: React.FC<Props> = ({
           >
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
+                <label className="mb-1 block text-sm font-medium text-gray-700">
                   {resourceLabel} name *
                 </label>
                 <input
                   type="text"
                   data-focus-key={focusKey("instance_name")}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
                   value={cfg.name}
                   onChange={(e) => updateConfigWithFocus({ name: e.target.value })}
                   placeholder="Enter cube-instance name"
@@ -1764,21 +1762,21 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Quantity *</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Quantity *</label>
                 <input
                   type="number"
                   min="1"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
                   value={cfg.instance_count}
                   onChange={(e) => updateConfigWithFocus({ instance_count: e.target.value })}
                 />
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Description</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Description</label>
               <textarea
                 data-focus-key={focusKey("instance_description")}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
                 rows={2}
                 value={cfg.description}
                 onChange={(e) => updateConfigWithFocus({ description: e.target.value })}
@@ -1786,7 +1784,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">
+              <label className="mb-1 block text-sm font-medium text-gray-700">
                 Tags (Optional)
               </label>
               <TagsInput
@@ -1795,7 +1793,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                 placeholder="Type a tag and press comma"
                 dataFocusKey={focusKey("tags")}
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-gray-500">
                 Press comma or enter to create a tag pill.
               </p>
             </div>
@@ -1812,13 +1810,13 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                 padding: "12px 22px",
                 fontSize: "15px",
                 lineHeight: "22px",
-                backgroundColor: "#FFFFFF",
-                border: "1px solid #8CC5F5",
-                color: "#1877D4",
-                boxShadow: "0 1px 2px rgba(24, 119, 212, 0.15)",
+                backgroundColor: "var(--theme-card-bg)",
+                border: "1px solid rgb(var(--theme-color-300))",
+                color: "var(--theme-color)",
+                boxShadow: "0 1px 2px rgba(var(--theme-color-rgb), 0.15)",
               }}
             >
-              <span className="mr-2 text-lg leading-none text-blue-500">+</span>
+              <span className="mr-2 text-lg leading-none text-primary-600">+</span>
               {addConfigurationLabel}
             </ModernButton>
             <div className="flex flex-wrap items-center gap-3">
@@ -1830,9 +1828,9 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                   padding: "12px 26px",
                   fontSize: "15px",
                   lineHeight: "22px",
-                  border: "1px solid #DFE6F0",
-                  backgroundColor: "#FFFFFF",
-                  color: "#0F172A",
+                  border: "1px solid var(--theme-border-color)",
+                  backgroundColor: "var(--theme-card-bg)",
+                  color: "var(--theme-heading-color)",
                 }}
               >
                 Back to workflow
@@ -1847,12 +1845,12 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                   fontSize: "16px",
                   fontWeight: 600,
                   minWidth: "230px",
-                  backgroundColor: "#1D7EDF",
+                  backgroundColor: "var(--theme-color)",
                   color: "#FFFFFF",
-                  border: "1px solid #1D7EDF",
-                  boxShadow: "0 10px 20px rgba(29, 126, 223, 0.2)",
+                  border: "1px solid var(--theme-color)",
+                  boxShadow: "0 10px 20px rgba(var(--theme-color-rgb), 0.2)",
                 }}
-                className="shadow-md shadow-primary-500/25 hover:-translate-y-0.5 transition-all"
+                className="shadow-md shadow-primary-500/25 hover:-trangray-y-0.5 transition-all"
               >
                 {isSubmitting ? submittingLabel : submitLabel}
               </ModernButton>
@@ -1867,10 +1865,10 @@ const InstanceConfigurationForm: React.FC<Props> = ({
     <ModernCard variant="outlined" padding="lg" className="space-y-6" onClick={undefined}>
       <div className="flex items-start justify-between">
         <div className="space-y-1">
-          <p className="text-lg font-semibold text-slate-900">
+          <p className="text-lg font-semibold text-gray-900">
             {configurationLabel} #{index + 1}: {cfg.name || "Untitled"}
           </p>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-gray-600">
             Define {resourceLabel.toLowerCase()}s, storage, and networking for this configuration.
           </p>
         </div>
@@ -1905,13 +1903,13 @@ const InstanceConfigurationForm: React.FC<Props> = ({
 
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
+          <label className="mb-1 block text-sm font-medium text-gray-700">
             Cube-Instance name *
           </label>
           <input
             type="text"
             data-focus-key={focusKey("instance_name")}
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
             value={cfg.name}
             onChange={(e) => updateConfigWithFocus({ name: e.target.value })}
             placeholder="Enter cube-instance name"
@@ -1919,13 +1917,13 @@ const InstanceConfigurationForm: React.FC<Props> = ({
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
+          <label className="mb-1 block text-sm font-medium text-gray-700">
             Number of instances *
           </label>
           <input
             type="number"
             min="1"
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
             value={cfg.instance_count}
             onChange={(e) => updateConfigWithFocus({ instance_count: e.target.value })}
           />
@@ -1933,10 +1931,10 @@ const InstanceConfigurationForm: React.FC<Props> = ({
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700">Description</label>
+        <label className="mb-1 block text-sm font-medium text-gray-700">Description</label>
         <textarea
           data-focus-key={focusKey("instance_description")}
-          className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
           rows={2}
           value={cfg.description}
           onChange={(e) => updateConfigWithFocus({ description: e.target.value })}
@@ -1945,7 +1943,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
       </div>
 
       <div className="space-y-2">
-        <div className="flex items-center gap-2 text-slate-700">
+        <div className="flex items-center gap-2 text-gray-700">
           <span className="text-sm font-semibold">Infrastructure Configuration</span>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
@@ -1973,14 +1971,14 @@ const InstanceConfigurationForm: React.FC<Props> = ({
             disabled={isTemplateLocked}
           />
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label className="mb-1 block text-sm font-medium text-gray-700">
               Duration (Months) *
             </label>
             <input
               type="number"
               min="1"
               max="36"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
               value={cfg.months}
               onChange={(e) => updateConfigWithFocus({ months: e.target.value })}
             />
@@ -1996,16 +1994,16 @@ const InstanceConfigurationForm: React.FC<Props> = ({
               helper="Choose an existing project for this configuration."
               disabled={isTemplateLocked || !selectedRegion}
             />
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
               {selectedProjectPreset ? (
                 <>
-                  <p className="font-semibold text-slate-700">
+                  <p className="font-semibold text-gray-700">
                     Network preset: {selectedProjectPreset.name}
                   </p>
                   <p className="mt-1">{selectedProjectPreset.description}</p>
                   {Array.isArray(selectedProjectPreset.features) &&
                     selectedProjectPreset.features.length > 0 && (
-                      <p className="mt-1 text-slate-500">
+                      <p className="mt-1 text-gray-500">
                         Includes: {selectedProjectPreset.features.join(", ")}
                       </p>
                     )}
@@ -2017,32 +2015,32 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                   )}
                 </>
               ) : selectedProject ? (
-                <p className="text-slate-500">
+                <p className="text-gray-500">
                   No preset recorded. This project will use its existing network resources.
                 </p>
               ) : (
-                <p className="text-slate-500">
+                <p className="text-gray-500">
                   Select a project to view its network preset details.
                 </p>
               )}
             </div>
           </div>
         ) : (
-          <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
+          <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">
+                <label className="mb-1 block text-sm font-medium text-gray-700">
                   Project name *
                 </label>
                 <input
                   type="text"
                   data-focus-key={focusKey("project_name")}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
                   value={cfg.project_name || ""}
                   onChange={(e) => updateConfigWithFocus({ project_name: e.target.value })}
                   placeholder="Enter project name"
                 />
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-gray-500">
                   Project will be created after payment and uses the selected preset.
                 </p>
               </div>
@@ -2056,22 +2054,22 @@ const InstanceConfigurationForm: React.FC<Props> = ({
               />
             </div>
             {selectedPreset ? (
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-                <p className="font-semibold text-slate-700">{selectedPreset.name}</p>
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
+                <p className="font-semibold text-gray-700">{selectedPreset.name}</p>
                 <p className="mt-1">{selectedPreset.description}</p>
                 {Array.isArray(selectedPreset.features) && selectedPreset.features.length > 0 && (
-                  <p className="mt-1 text-slate-500">
+                  <p className="mt-1 text-gray-500">
                     Includes: {selectedPreset.features.join(", ")}
                   </p>
                 )}
-                <p className="mt-2 text-xs text-slate-500">
+                <p className="mt-2 text-xs text-gray-500">
                   {hasFloatingIp
                     ? `Elastic IPs: ${normalizedFloatingIpCount} will be allocated and attached during provisioning.`
                     : 'Elastic IPs: none requested. Enable "Attach EIP when provisioning" to attach one.'}
                 </p>
               </div>
             ) : (
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-gray-500">
                 Select a preset to see the network layout that will be provisioned.
               </p>
             )}
@@ -2119,13 +2117,13 @@ const InstanceConfigurationForm: React.FC<Props> = ({
             disabled={!selectedRegion}
           />
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label className="mb-1 block text-sm font-medium text-gray-700">
               Attach EIP when provisioning
             </label>
-            <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+            <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700">
               <input
                 type="checkbox"
-                className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                 checked={hasFloatingIp}
                 disabled={isPresetRequiresEip}
                 onChange={(e) =>
@@ -2141,7 +2139,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                 </span>
               )}
             </label>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-gray-500">
               {isPresetRequiresEip
                 ? "This preset requires an EIP; this is locked on."
                 : "When enabled, one EIP is reserved and attached during provisioning."}
@@ -2151,7 +2149,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
       </div>
 
       <div className="space-y-2">
-        <div className="flex items-center gap-2 text-slate-700">
+        <div className="flex items-center gap-2 text-gray-700">
           <span className="text-sm font-semibold">Storage Configuration</span>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
@@ -2177,16 +2175,16 @@ const InstanceConfigurationForm: React.FC<Props> = ({
             disabled={!selectedRegion}
           />
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Size (GB) *</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Size (GB) *</label>
             <input
               type="number"
               min="10"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
               value={cfg.storage_size_gb}
               onChange={(e) => updateConfigWithFocus({ storage_size_gb: e.target.value })}
             />
             {templateVolumeSize ? (
-              <p className="mt-1 text-xs text-slate-500">Template size: {templateVolumeSize}</p>
+              <p className="mt-1 text-xs text-gray-500">Template size: {templateVolumeSize}</p>
             ) : null}
           </div>
         </div>
@@ -2194,7 +2192,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
 
       {effectiveProjectMode === "existing" && (
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-slate-700">
+          <div className="flex items-center gap-2 text-gray-700">
             <span className="text-sm font-semibold">Network Configuration</span>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
@@ -2221,7 +2219,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
               disabled={!isProjectScoped}
             />
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Bandwidth</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Bandwidth</label>
               <SearchableSelect
                 label=""
                 value={cfg.bandwidth_id}
@@ -2239,7 +2237,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
-              <label className="mb-1 block text-sm font-medium text-slate-700">
+              <label className="mb-1 block text-sm font-medium text-gray-700">
                 Security Groups (Optional)
               </label>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -2257,11 +2255,11 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                     return (
                       <label
                         key={id}
-                        className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
+                        className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700"
                       >
                         <input
                           type="checkbox"
-                          className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                          className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                           checked={checked}
                           onChange={(e) => handleSecurityGroupToggle(id, e.target.checked)}
                         />
@@ -2270,7 +2268,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                     );
                   })
                 ) : (
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-gray-500">
                     Select a region and project to view available security groups.
                   </p>
                 )}
@@ -2278,27 +2276,25 @@ const InstanceConfigurationForm: React.FC<Props> = ({
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Tags (Optional)</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Tags (Optional)</label>
             <TagsInput
               value={cfg.tags || ""}
               onChange={(next) => updateConfigWithFocus({ tags: next })}
               placeholder="Type a tag and press comma"
               dataFocusKey={focusKey("tags")}
             />
-            <p className="mt-1 text-xs text-slate-500">
-              Press comma or enter to create a tag pill.
-            </p>
+            <p className="mt-1 text-xs text-gray-500">Press comma or enter to create a tag pill.</p>
           </div>
         </div>
       )}
 
       <div className="space-y-2">
-        <div className="flex items-center gap-2 text-slate-700">
+        <div className="flex items-center gap-2 text-gray-700">
           <span className="text-sm font-semibold">Access Keys</span>
         </div>
         {isNewProject ? (
           !hasRegion ? (
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-gray-500">
               Select a region to configure an SSH key pair for this new project.
             </p>
           ) : (
@@ -2308,45 +2304,45 @@ const InstanceConfigurationForm: React.FC<Props> = ({
               </div>
               <div className="grid gap-3 md:grid-cols-2">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
                     Key pair name (optional)
                   </label>
                   <input
                     type="text"
                     data-focus-key={focusKey("keypair_name")}
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
                     value={cfg.keypair_name || ""}
                     onChange={(e) => updateConfigWithFocus({ keypair_name: e.target.value })}
                     placeholder="e.g. cube-instance-key"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
                     Public key (optional)
                   </label>
                   <input
                     type="text"
                     data-focus-key={focusKey("keypair_public_key")}
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
                     value={cfg.keypair_public_key || ""}
                     onChange={(e) => updateConfigWithFocus({ keypair_public_key: e.target.value })}
                     placeholder="ssh-rsa AAAA..."
                   />
                 </div>
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-gray-500">
                 Leave blank to skip keypair creation. You can add keys later in the project.
               </p>
             </div>
           )
         ) : !canManageKeypairs ? (
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-gray-500">
             Key pairs require an existing project. Select a project to manage SSH keys.
           </p>
         ) : (
           <div className="space-y-3">
             <div className="flex flex-wrap gap-3">
-              <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+              <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700">
                 <input
                   type="radio"
                   name={keypairModeName}
@@ -2362,7 +2358,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                 />
                 Use existing key pair
               </label>
-              <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+              <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700">
                 <input
                   type="radio"
                   name={keypairModeName}
@@ -2398,29 +2394,29 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                 disabled={!canSelectExistingKeypairs}
               />
             ) : (
-              <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
                 <div className="grid gap-3 md:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
                       Key pair name *
                     </label>
                     <input
                       type="text"
                       data-focus-key={focusKey("keypair_name_create")}
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
                       value={keypairNameInput}
                       onChange={(e) => setKeypairNameInput(e.target.value)}
                       placeholder="e.g. cube-instance-key"
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
                       Public key (optional)
                     </label>
                     <input
                       type="text"
                       data-focus-key={focusKey("keypair_public_create")}
-                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
                       value={keypairPublicKey}
                       onChange={(e) => setKeypairPublicKey(e.target.value)}
                       placeholder="ssh-rsa AAAA..."
@@ -2454,7 +2450,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                     </span>
                   )}
                   {keypairMaterial && hasDownloadedKeypair && (
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-gray-500">
                       Key pair is selected for this instance.
                     </span>
                   )}
@@ -2467,20 +2463,20 @@ const InstanceConfigurationForm: React.FC<Props> = ({
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold text-slate-900">Additional data volumes</span>
+          <span className="text-sm font-semibold text-gray-900">Additional data volumes</span>
           <ModernButton variant="outline" onClick={() => addAdditionalVolume(cfg.id)} size="sm">
             Add data volume
           </ModernButton>
         </div>
         {(cfg.additional_volumes || []).length === 0 && (
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-gray-500">
             No extra data volumes. Click “Add data volume” to attach more storage.
           </p>
         )}
         {(cfg.additional_volumes || []).map((vol) => (
           <div
             key={vol.id}
-            className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 md:grid-cols-3"
+            className="grid gap-3 rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 md:grid-cols-3"
           >
             <SearchableSelect
               label="Volume type"
@@ -2496,17 +2492,17 @@ const InstanceConfigurationForm: React.FC<Props> = ({
               disabled={!selectedRegion}
             />
             <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Size (GB)</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Size (GB)</label>
               <input
                 type="number"
                 min="10"
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100"
                 value={vol.storage_size_gb}
                 onChange={(e) =>
                   updateAdditionalVolume(cfg.id, vol.id, { storage_size_gb: e.target.value })
                 }
               />
-              <p className="mt-1 text-xs text-slate-500">Capacity for this data volume.</p>
+              <p className="mt-1 text-xs text-gray-500">Capacity for this data volume.</p>
             </div>
             <div className="flex items-end justify-end">
               <ModernButton variant="ghost" onClick={() => removeAdditionalVolume(cfg.id, vol.id)}>
@@ -2527,13 +2523,13 @@ const InstanceConfigurationForm: React.FC<Props> = ({
               padding: "12px 22px",
               fontSize: "15px",
               lineHeight: "22px",
-              backgroundColor: "#FFFFFF",
-              border: "1px solid #8CC5F5",
-              color: "#1877D4",
-              boxShadow: "0 1px 2px rgba(24, 119, 212, 0.15)",
+              backgroundColor: "var(--theme-card-bg)",
+              border: "1px solid rgb(var(--theme-color-300))",
+              color: "var(--theme-color)",
+              boxShadow: "0 1px 2px rgba(var(--theme-color-rgb), 0.15)",
             }}
           >
-            <span className="mr-2 text-lg leading-none text-blue-500">+</span>
+            <span className="mr-2 text-lg leading-none text-primary-600">+</span>
             Add configuration
           </ModernButton>
           <div className="flex flex-wrap items-center gap-3">
@@ -2545,9 +2541,9 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                 padding: "12px 26px",
                 fontSize: "15px",
                 lineHeight: "22px",
-                border: "1px solid #DFE6F0",
-                backgroundColor: "#FFFFFF",
-                color: "#0F172A",
+                border: "1px solid var(--theme-border-color)",
+                backgroundColor: "var(--theme-card-bg)",
+                color: "var(--theme-heading-color)",
               }}
             >
               Back to workflow
@@ -2562,12 +2558,12 @@ const InstanceConfigurationForm: React.FC<Props> = ({
                 fontSize: "16px",
                 fontWeight: 600,
                 minWidth: "230px",
-                backgroundColor: "#1D7EDF",
+                backgroundColor: "var(--theme-color)",
                 color: "#FFFFFF",
-                border: "1px solid #1D7EDF",
-                boxShadow: "0 10px 20px rgba(29, 126, 223, 0.2)",
+                border: "1px solid var(--theme-color)",
+                boxShadow: "0 10px 20px rgba(var(--theme-color-rgb), 0.2)",
               }}
-              className="shadow-md shadow-primary-500/25 hover:-translate-y-0.5 transition-all"
+              className="shadow-md shadow-primary-500/25 hover:-trangray-y-0.5 transition-all"
             >
               {isSubmitting ? "Creating..." : "Create and price"}
             </ModernButton>

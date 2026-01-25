@@ -1598,14 +1598,14 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
     <ModernCard
       variant="filled"
       padding="lg"
-      className="border border-primary-100/70 bg-primary-25 text-sm text-slate-700"
+      className="border border-primary-100/70 bg-primary-25 text-sm text-gray-700"
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <ListChecks className="h-5 w-5 text-primary-600" />
           <div>
-            <p className="text-sm font-semibold text-slate-900">Steps</p>
-            <p className="text-xs text-slate-600">
+            <p className="text-sm font-semibold text-gray-900">Steps</p>
+            <p className="text-xs text-gray-600">
               Follow the steps below; click to jump back if needed.
             </p>
           </div>
@@ -1632,7 +1632,7 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
                   ? "border-primary-300 bg-white shadow-sm"
                   : isCompleted
                     ? "border-emerald-200 bg-white/80"
-                    : "border-slate-200 bg-white/60 hover:border-primary-200",
+                    : "border-gray-200 bg-white/60 hover:border-primary-200",
               ].join(" ")}
             >
               <div className="flex items-center gap-3">
@@ -1643,14 +1643,14 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
                       ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                       : isActiveStep
                         ? "border-primary-200 bg-primary-50 text-primary-700"
-                        : "border-slate-200 bg-slate-50 text-slate-600",
+                        : "border-gray-200 bg-gray-50 text-gray-600",
                   ].join(" ")}
                 >
                   {isCompleted ? <BadgeCheck className="h-4 w-4" /> : index + 1}
                 </span>
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">{step.label}</p>
-                  <p className="text-xs text-slate-600">{step.description}</p>
+                  <p className="text-sm font-semibold text-gray-900">{step.label}</p>
+                  <p className="text-xs text-gray-600">{step.description}</p>
                 </div>
               </div>
               {isActiveStep && (
@@ -1710,7 +1710,7 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
     return (
       <div
         className={[
-          "flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm",
+          "flex flex-col gap-4 rounded-3xl border border-gray-200 bg-white p-5 shadow-sm",
           isSidebar ? "sticky top-4" : "",
           extraClassName,
         ]
@@ -1718,11 +1718,11 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
           .join(" ")}
       >
         <div>
-          <p className="text-sm font-semibold text-slate-900">Step controls</p>
-          <p className="text-xs text-slate-600">{steps[activeStep]?.description}</p>
+          <p className="text-sm font-semibold text-gray-900">Step controls</p>
+          <p className="text-xs text-gray-600">{steps[activeStep]?.description}</p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-gray-500">
             {isFastTrack
               ? "Fast-track skips payment capture and starts provisioning immediately."
               : "Standard flow shares a payment link before provisioning."}
@@ -1735,9 +1735,9 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
                 onClick={handlePreviousStep}
                 style={{
                   ...buttonBaseStyle,
-                  backgroundColor: "#ffffff",
-                  color: "#0f172a",
-                  border: "1px solid #cbd5e1",
+                  backgroundColor: "var(--theme-card-bg)",
+                  color: "var(--theme-heading-color)",
+                  border: "1px solid var(--theme-border-color)",
                 }}
               >
                 Back
@@ -1750,7 +1750,7 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
                 onClick={handleNextStep}
                 style={{
                   ...buttonBaseStyle,
-                  backgroundColor: "#288DD1",
+                  backgroundColor: "var(--theme-color)",
                   color: "#ffffff",
                   border: "1px solid transparent",
                 }}
@@ -1765,12 +1765,12 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
                 disabled={isSubmitting}
                 className={[
                   "inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold text-white shadow-md shadow-primary-500/25 transition-all",
-                  "bg-primary-600 hover:-translate-y-0.5 hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+                  "bg-primary-600 hover:-trangray-y-0.5 hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
                   isSubmitting ? "opacity-70" : "",
                 ].join(" ")}
                 style={{
                   ...buttonBaseStyle,
-                  backgroundColor: "#288DD1",
+                  backgroundColor: "var(--theme-color)",
                   color: "#ffffff",
                   border: "1px solid transparent",
                 }}
@@ -1786,12 +1786,12 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
                 disabled={isSubmitting}
                 className={[
                   "inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl border-2 px-4 text-sm font-semibold text-emerald-900 shadow-sm transition-all",
-                  "border-emerald-300 bg-emerald-50 hover:-translate-y-0.5 hover:border-emerald-400 hover:bg-emerald-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+                  "border-emerald-300 bg-emerald-50 hover:-trangray-y-0.5 hover:border-emerald-400 hover:bg-emerald-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
                   isSubmitting ? "opacity-70" : "",
                 ].join(" ")}
                 style={{
                   ...buttonBaseStyle,
-                  backgroundColor: "#288DD1",
+                  backgroundColor: "var(--theme-color)",
                   color: "#ffffff",
                   border: "1px solid transparent",
                 }}
@@ -1835,8 +1835,8 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
             <ModernCard variant="outlined" padding="lg" className="space-y-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-base font-semibold text-slate-900">Customer context</p>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-base font-semibold text-gray-900">Customer context</p>
+                  <p className="text-sm text-gray-500">
                     Route the request to a tenant or user for visibility, or leave it unassigned for
                     internal tracking.
                   </p>
@@ -1867,8 +1867,8 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
                     isUsersFetching={isUsersFetching}
                   />
                 ) : (
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-600">
-                    <p className="font-semibold text-slate-900">Assignment locked</p>
+                  <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-xs text-gray-600">
+                    <p className="font-semibold text-gray-900">Assignment locked</p>
                     <p>
                       This request is automatically assigned to your{" "}
                       {contextType === "tenant" ? "tenant" : "user"} context.
@@ -1893,7 +1893,7 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
                     onClick={handleNextStep}
                     style={{
                       ...buttonBaseStyle,
-                      backgroundColor: "#288DD1",
+                      backgroundColor: "var(--theme-color)",
                       color: "#ffffff",
                       border: "1px solid transparent",
                     }}
@@ -1910,8 +1910,8 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
             <ModernCard variant="outlined" padding="lg" className="space-y-6">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-base font-semibold text-slate-900">Plan configuration</p>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-base font-semibold text-gray-900">Plan configuration</p>
+                  <p className="text-sm text-gray-500">
                     Define the storage tier, commercial terms, and billing cadence.
                   </p>
                 </div>
@@ -1950,14 +1950,14 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
                   return (
                     <div
                       key={profile.id}
-                      className="rounded-2xl border border-slate-200 bg-white p-4 md:p-6"
+                      className="rounded-2xl border border-gray-200 bg-white p-4 md:p-6"
                     >
                       <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                         <div>
-                          <p className="text-sm font-semibold text-slate-900">
+                          <p className="text-sm font-semibold text-gray-900">
                             Service profile #{index + 1}
                           </p>
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs text-gray-500">
                             Region, tier, and term for this storage allocation.
                           </p>
                         </div>
@@ -2044,20 +2044,20 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
                         />
                       </div>
                       {tierName && (
-                        <div className="mt-3 flex items-center justify-between rounded-xl bg-slate-100 px-4 py-3 text-xs text-slate-600">
+                        <div className="mt-3 flex items-center justify-between rounded-xl bg-gray-100 px-4 py-3 text-xs text-gray-600">
                           <div>
-                            <p className="font-medium text-slate-900">{tierName}</p>
+                            <p className="font-medium text-gray-900">{tierName}</p>
                             <p className="text-[11px] uppercase tracking-wide">
                               {derivedProfile.months} month
                               {derivedProfile.months === 1 ? "" : "s"} term
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-semibold text-slate-900">
+                            <p className="font-semibold text-gray-900">
                               {formatCurrency(derivedProfile.unitPrice, derivedProfile.currency)}
-                              <span className="text-xs font-normal text-slate-500"> /month</span>
+                              <span className="text-xs font-normal text-gray-500"> /month</span>
                             </p>
-                            <p className="text-[11px] text-slate-500">
+                            <p className="text-[11px] text-gray-500">
                               Total{" "}
                               {formatCurrency(derivedProfile.subtotal, derivedProfile.currency)}
                             </p>
@@ -2088,9 +2088,9 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
                       onClick={handlePreviousStep}
                       style={{
                         ...buttonBaseStyle,
-                        backgroundColor: "#ffffff",
-                        color: "#0f172a",
-                        border: "1px solid #cbd5e1",
+                        backgroundColor: "var(--theme-card-bg)",
+                        color: "var(--theme-heading-color)",
+                        border: "1px solid var(--theme-border-color)",
                       }}
                     >
                       Back
@@ -2102,7 +2102,7 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
                     onClick={handleNextStep}
                     style={{
                       ...buttonBaseStyle,
-                      backgroundColor: "#288DD1",
+                      backgroundColor: "var(--theme-color)",
                       color: "#ffffff",
                       border: "1px solid transparent",
                     }}
@@ -2119,8 +2119,8 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
             <ModernCard variant="outlined" padding="lg" className="space-y-4">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-base font-semibold text-slate-900">Payment</p>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-base font-semibold text-gray-900">Payment</p>
+                  <p className="text-sm text-gray-500">
                     Generate payment options for this order and share with finance.
                   </p>
                 </div>
@@ -2128,7 +2128,7 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
               </div>
 
               {isGeneratingPayment ? (
-                <p className="text-sm text-slate-500">Generating payment options…</p>
+                <p className="text-sm text-gray-500">Generating payment options…</p>
               ) : lastOrderSummary?.transaction && paymentOptions.length ? (
                 <PaymentModal
                   isOpen
@@ -2148,13 +2148,13 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
                   onPaymentComplete={() => {
                     ToastUtils.success("Payment completed.");
                   }}
-                  className="border border-slate-200"
+                  className="border border-gray-200"
                   apiBaseUrl={isAdminContext ? config.adminURL : config.baseURL}
                   onPaymentOptionChange={setSelectedPaymentOption}
                 />
               ) : (
                 <div className="space-y-2">
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-gray-500">
                     Payment options will appear here after generating the order.
                   </p>
                   {isPaymentFailed && (
@@ -2181,9 +2181,9 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
                     onClick={handlePreviousStep}
                     style={{
                       ...buttonBaseStyle,
-                      backgroundColor: "#ffffff",
-                      color: "#0f172a",
-                      border: "1px solid #cbd5e1",
+                      backgroundColor: "var(--theme-card-bg)",
+                      color: "var(--theme-heading-color)",
+                      border: "1px solid var(--theme-border-color)",
                     }}
                   >
                     Back
@@ -2196,7 +2196,7 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
                     onClick={handleNextStep}
                     style={{
                       ...buttonBaseStyle,
-                      backgroundColor: "#288DD1",
+                      backgroundColor: "var(--theme-color)",
                       color: "#ffffff",
                       border: "1px solid transparent",
                     }}
@@ -2213,8 +2213,8 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
             <ModernCard variant="outlined" padding="lg" className="space-y-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-base font-semibold text-slate-900">Review checkpoint</p>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-base font-semibold text-gray-900">Review checkpoint</p>
+                  <p className="text-sm text-gray-500">
                     Confirm ownership, billing country, and tier choices before triggering the
                     workflow.
                   </p>
@@ -2225,54 +2225,52 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
                 />
               </div>
               <dl className="grid gap-3 text-sm sm:grid-cols-2">
-                <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
-                  <dt className="text-xs uppercase tracking-wide text-slate-500">Assignment</dt>
-                  <dd className="font-semibold text-slate-900">
+                <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2">
+                  <dt className="text-xs uppercase tracking-wide text-gray-500">Assignment</dt>
+                  <dd className="font-semibold text-gray-900">
                     {contextType ? assignmentLabel : "Unassigned"}
                   </dd>
                 </div>
-                <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
-                  <dt className="text-xs uppercase tracking-wide text-slate-500">
-                    Billing country
-                  </dt>
-                  <dd className="font-semibold text-slate-900">
+                <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2">
+                  <dt className="text-xs uppercase tracking-wide text-gray-500">Billing country</dt>
+                  <dd className="font-semibold text-gray-900">
                     {formData.countryCode || "Not set"}
                   </dd>
                 </div>
-                <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
-                  <dt className="text-xs uppercase tracking-wide text-slate-500">Plan label</dt>
-                  <dd className="font-semibold text-slate-900">{fallbackPlanLabel}</dd>
+                <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2">
+                  <dt className="text-xs uppercase tracking-wide text-gray-500">Plan label</dt>
+                  <dd className="font-semibold text-gray-900">{fallbackPlanLabel}</dd>
                 </div>
-                <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
-                  <dt className="text-xs uppercase tracking-wide text-slate-500">
+                <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2">
+                  <dt className="text-xs uppercase tracking-wide text-gray-500">
                     Profiles captured
                   </dt>
-                  <dd className="font-semibold text-slate-900">
+                  <dd className="font-semibold text-gray-900">
                     {resolvedProfiles.length} profile{resolvedProfiles.length === 1 ? "" : "s"}
                   </dd>
                 </div>
-                <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
-                  <dt className="text-xs uppercase tracking-wide text-slate-500">Workflow</dt>
-                  <dd className="font-semibold text-slate-900">
+                <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2">
+                  <dt className="text-xs uppercase tracking-wide text-gray-500">Workflow</dt>
+                  <dd className="font-semibold text-gray-900">
                     {isFastTrack
                       ? "Fast-track provisioning"
                       : "Payment required before provisioning"}
                   </dd>
                 </div>
-                <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
-                  <dt className="text-xs uppercase tracking-wide text-slate-500">
+                <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2">
+                  <dt className="text-xs uppercase tracking-wide text-gray-500">
                     Display currency
                   </dt>
-                  <dd className="font-semibold text-slate-900">{summaryTotals.currency}</dd>
+                  <dd className="font-semibold text-gray-900">{summaryTotals.currency}</dd>
                 </div>
               </dl>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-gray-500">
                 Need to adjust details? Jump back to earlier steps with the stepper above, then
                 return here to submit.
               </p>
               {!isFastTrack && (
                 <div className="space-y-2">
-                  <p className="text-xs uppercase tracking-wide text-slate-500">Payment options</p>
+                  <p className="text-xs uppercase tracking-wide text-gray-500">Payment options</p>
                 </div>
               )}
             </ModernCard>
@@ -2286,9 +2284,9 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
                   onClick={handlePreviousStep}
                   style={{
                     ...buttonBaseStyle,
-                    backgroundColor: "#ffffff",
-                    color: "#0f172a",
-                    border: "1px solid #cbd5e1",
+                    backgroundColor: "var(--theme-card-bg)",
+                    color: "var(--theme-heading-color)",
+                    border: "1px solid var(--theme-border-color)",
                   }}
                 >
                   Back
@@ -2301,7 +2299,7 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
                   onClick={handleNextStep}
                   style={{
                     ...buttonBaseStyle,
-                    backgroundColor: "#288DD1",
+                    backgroundColor: "var(--theme-color)",
                     color: "#ffffff",
                     border: "1px solid transparent",
                   }}
@@ -2317,12 +2315,12 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
                   disabled={isSubmitting}
                   className={[
                     "inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold text-white shadow-md shadow-primary-500/25 transition-all",
-                    "bg-primary-600 hover:-translate-y-0.5 hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+                    "bg-primary-600 hover:-trangray-y-0.5 hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
                     isSubmitting ? "opacity-70" : "",
                   ].join(" ")}
                   style={{
                     ...buttonBaseStyle,
-                    backgroundColor: "#288DD1",
+                    backgroundColor: "var(--theme-color)",
                     color: "#ffffff",
                     border: "1px solid transparent",
                   }}
@@ -2338,12 +2336,12 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
                   disabled={isSubmitting}
                   className={[
                     "inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl border-2 px-4 text-sm font-semibold text-emerald-900 shadow-sm transition-all",
-                    "border-emerald-300 bg-emerald-50 hover:-translate-y-0.5 hover:border-emerald-400 hover:bg-emerald-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+                    "border-emerald-300 bg-emerald-50 hover:-trangray-y-0.5 hover:border-emerald-400 hover:bg-emerald-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
                     isSubmitting ? "opacity-70" : "",
                   ].join(" ")}
                   style={{
                     ...buttonBaseStyle,
-                    backgroundColor: "#288DD1",
+                    backgroundColor: "var(--theme-color)",
                     color: "#ffffff",
                     border: "1px solid transparent",
                   }}
@@ -2359,8 +2357,8 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
           <ModernCard variant="elevated" padding="lg" className="space-y-4 lg:sticky lg:top-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-base font-semibold text-slate-900">Order summary</p>
-                <p className="text-xs text-slate-500">
+                <p className="text-base font-semibold text-gray-900">Order summary</p>
+                <p className="text-xs text-gray-500">
                   Auto-calculated from the captured configuration.
                 </p>
               </div>
@@ -2371,20 +2369,20 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
             </div>
             <div className="space-y-3 text-sm">
               <div className="flex items-center justify-between">
-                <dt className="text-slate-500">Plan label</dt>
-                <dd className="font-medium text-slate-900">{fallbackPlanLabel}</dd>
+                <dt className="text-gray-500">Plan label</dt>
+                <dd className="font-medium text-gray-900">{fallbackPlanLabel}</dd>
               </div>
               {lastOrderSummary?.transaction && (
                 <div className="flex items-center justify-between">
-                  <dt className="text-slate-500">Transaction status</dt>
-                  <dd className="font-medium text-slate-900 capitalize">
+                  <dt className="text-gray-500">Transaction status</dt>
+                  <dd className="font-medium text-gray-900 capitalize">
                     {(lastOrderSummary.transaction.status || "pending").replace(/_/g, " ")}
                   </dd>
                 </div>
               )}
               {(!backendPricingLines || backendPricingLines.length === 0) &&
               resolvedProfiles.length === 0 ? (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-gray-500">
                   Add at least one service profile to generate a summary.
                 </p>
               ) : (
@@ -2406,20 +2404,20 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
                     return (
                       <div
                         key={line.id || index}
-                        className="flex items-start justify-between rounded-lg border border-slate-100 px-3 py-2"
+                        className="flex items-start justify-between rounded-lg border border-gray-100 px-3 py-2"
                       >
                         <div>
-                          <p className="font-medium text-slate-900">{lineName}</p>
-                          <p className="text-xs text-slate-500">{detail}</p>
+                          <p className="font-medium text-gray-900">{lineName}</p>
+                          <p className="text-xs text-gray-500">{detail}</p>
                         </div>
                         <div className="text-right">
                           {Number.isFinite(unit) && unit > 0 && (
-                            <p className="text-sm font-semibold text-slate-900">
+                            <p className="text-sm font-semibold text-gray-900">
                               {formatCurrency(unit, currency)}
-                              <span className="text-xs font-normal text-slate-500"> /month</span>
+                              <span className="text-xs font-normal text-gray-500"> /month</span>
                             </p>
                           )}
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs text-gray-500">
                             Total {formatCurrency(subtotal, currency)}
                           </p>
                         </div>
@@ -2431,33 +2429,33 @@ const ObjectStorageCreateForm: React.FC<ObjectStorageCreateFormProps> = ({
             </div>
             <dl className="space-y-3 text-sm">
               <div className="flex items-center justify-between">
-                <dt className="text-slate-500">Subtotal</dt>
-                <dd className="font-medium text-slate-900">
+                <dt className="text-gray-500">Subtotal</dt>
+                <dd className="font-medium text-gray-900">
                   {formatCurrency(displayedTotals.subtotal, displayedTotals.currency)}
                 </dd>
               </div>
               <div className="flex items-center justify-between">
-                <dt className="text-slate-500">
+                <dt className="text-gray-500">
                   Estimated tax ({Number(displayedTotals.taxRate.toFixed(2))}%)
                 </dt>
-                <dd className="font-medium text-slate-900">
+                <dd className="font-medium text-gray-900">
                   {formatCurrency(displayedTotals.tax, displayedTotals.currency)}
                 </dd>
               </div>
               <div className="flex items-center justify-between">
-                <dt className="text-slate-500">Gateway fees</dt>
-                <dd className="font-medium text-slate-900">
+                <dt className="text-gray-500">Gateway fees</dt>
+                <dd className="font-medium text-gray-900">
                   {formatCurrency(selectedGatewayFee, displayedTotals.currency)}
                 </dd>
               </div>
               <div className="flex items-center justify-between">
-                <dt className="text-slate-500">Grand total</dt>
-                <dd className="text-lg font-semibold text-slate-900">
+                <dt className="text-gray-500">Grand total</dt>
+                <dd className="text-lg font-semibold text-gray-900">
                   {formatCurrency(grandTotalWithFees, displayedTotals.currency)}
                 </dd>
               </div>
             </dl>
-            <div className="rounded-xl bg-slate-50 p-4 text-xs text-slate-600">
+            <div className="rounded-xl bg-gray-50 p-4 text-xs text-gray-600">
               <p>
                 {resolvedProfiles.length} service profile
                 {resolvedProfiles.length === 1 ? "" : "s"} captured. Taxes are estimated and may

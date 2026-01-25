@@ -1,0 +1,1018 @@
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminComps/blog.jsx
+    4:10  warning  'Editor' is defined but never used       no-unused-vars
+    7:10  warning  'PageContext' is defined but never used  no-unused-vars
+   37:30  warning  'e' is defined but never used            no-unused-vars
+  101:43  warning  'snapshot' is defined but never used     no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminComps/board.jsx
+   4:10  warning  'Editor' is defined but never used                       no-unused-vars
+   7:10  warning  'PageContext' is defined but never used                  no-unused-vars
+  34:10  warning  'position' is assigned a value but never used            no-unused-vars
+  52:43  warning  'snapshot' is defined but never used                     no-unused-vars
+  71:30  warning  'e' is defined but never used                            no-unused-vars
+  86:11  warning  'parentParentParent' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminComps/career.jsx
+    4:10  warning  'Editor' is defined but never used                       no-unused-vars
+    9:3   warning  'query' is defined but never used                        no-unused-vars
+   10:3   warning  'orderBy' is defined but never used                      no-unused-vars
+   11:3   warning  'onSnapshot' is defined but never used                   no-unused-vars
+   15:22  warning  'ref' is defined but never used                          no-unused-vars
+   15:27  warning  'uploadBytes' is defined but never used                  no-unused-vars
+   15:40  warning  'getDownloadURL' is defined but never used               no-unused-vars
+   37:9   warning  'storage' is assigned a value but never used             no-unused-vars
+   40:10  warning  'page' is assigned a value but never used                no-unused-vars
+   40:16  warning  'setPage' is assigned a value but never used             no-unused-vars
+  101:30  warning  'e' is defined but never used                            no-unused-vars
+  116:11  warning  'parentParentParent' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminComps/cases.jsx
+    3:10  warning  'Editor' is defined but never used                       no-unused-vars
+    9:3   warning  'query' is defined but never used                        no-unused-vars
+   10:3   warning  'orderBy' is defined but never used                      no-unused-vars
+   11:3   warning  'onSnapshot' is defined but never used                   no-unused-vars
+   16:10  warning  'PageContext' is defined but never used                  no-unused-vars
+   93:43  warning  'snapshot' is defined but never used                     no-unused-vars
+  115:30  warning  'e' is defined but never used                            no-unused-vars
+  130:11  warning  'parentParentParent' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminComps/events.jsx
+    3:10  warning  'Editor' is defined but never used                       no-unused-vars
+    9:3   warning  'query' is defined but never used                        no-unused-vars
+   10:3   warning  'orderBy' is defined but never used                      no-unused-vars
+   11:3   warning  'onSnapshot' is defined but never used                   no-unused-vars
+   41:10  warning  'page' is assigned a value but never used                no-unused-vars
+   41:16  warning  'setPage' is assigned a value but never used             no-unused-vars
+   51:22  warning  'setEventArray' is assigned a value but never used       no-unused-vars
+   94:43  warning  'snapshot' is defined but never used                     no-unused-vars
+  117:30  warning  'e' is defined but never used                            no-unused-vars
+  132:11  warning  'parentParentParent' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminComps/general.jsx
+   1:32  warning  'useEffect' is defined but never used                no-unused-vars
+   8:19  warning  'onAuthStateChanged' is defined but never used       no-unused-vars
+  22:9   warning  'auth' is assigned a value but never used            no-unused-vars
+  36:10  warning  'file1url' is assigned a value but never used        no-unused-vars
+  36:20  warning  'setFile1url' is assigned a value but never used     no-unused-vars
+  38:23  warning  'setGeneralItem' is assigned a value but never used  no-unused-vars
+  78:41  warning  'snapshot' is defined but never used                 no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminComps/login.jsx
+   9:23  warning  'setGeneralItem' is assigned a value but never used  no-unused-vars
+  37:15  warning  'user' is assigned a value but never used            no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminComps/resources.jsx
+    4:10  warning  'Editor' is defined but never used                       no-unused-vars
+    9:3   warning  'query' is defined but never used                        no-unused-vars
+   10:3   warning  'orderBy' is defined but never used                      no-unused-vars
+   11:3   warning  'onSnapshot' is defined but never used                   no-unused-vars
+   41:10  warning  'page' is assigned a value but never used                no-unused-vars
+   41:16  warning  'setPage' is assigned a value but never used             no-unused-vars
+   50:25  warning  'setResourceArray' is assigned a value but never used    no-unused-vars
+   93:43  warning  'snapshot' is defined but never used                     no-unused-vars
+  115:30  warning  'e' is defined but never used                            no-unused-vars
+  130:11  warning  'parentParentParent' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminComps/solutions.jsx
+    3:10  warning  'Editor' is defined but never used                       no-unused-vars
+    9:3   warning  'query' is defined but never used                        no-unused-vars
+   10:3   warning  'orderBy' is defined but never used                      no-unused-vars
+   11:3   warning  'onSnapshot' is defined but never used                   no-unused-vars
+   16:10  warning  'PageContext' is defined but never used                  no-unused-vars
+   45:27  warning  'setSolutionContent' is assigned a value but never used  no-unused-vars
+   50:25  warning  'setSolutionArray' is assigned a value but never used    no-unused-vars
+   93:43  warning  'snapshot' is defined but never used                     no-unused-vars
+  115:30  warning  'e' is defined but never used                            no-unused-vars
+  130:11  warning  'parentParentParent' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminDashboard/components/InfrastructureSetupFlow.tsx
+  113:7   warning  Unexpected console statement                  no-console
+  139:11  warning  'details' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminDashboard/components/adminHeadbar.tsx
+  48:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminDashboard/components/onboarding/OnboardingStatusBoard.tsx
+  137:15  warning  Unexpected console statement  no-console
+  155:11  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminDashboard/components/pricingSideMenu.tsx
+  80:78  warning  Replace `⏎······················{item.caption}⏎····················` with `{item.caption}`  prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminDashboard/pages/AdminClientDetails.tsx
+  28:5  warning  Unexpected console statement  no-console
+  73:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminDashboard/pages/AdminPartnerDetails.tsx
+  35:5  warning  Unexpected console statement  no-console
+  84:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminDashboard/pages/AdminProjectDetails.tsx
+     7:3    warning  'CheckCircle' is defined but never used                                                                                                                                                                   no-unused-vars
+    17:3    warning  'ArrowLeft' is defined but never used                                                                                                                                                                     no-unused-vars
+    69:10   warning  'designTokens' is defined but never used                                                                                                                                                                  no-unused-vars
+    76:33   warning  'silentApi' is defined but never used                                                                                                                                                                     no-unused-vars
+    81:8    warning  'ProjectDetailsHero' is defined but never used                                                                                                                                                            no-unused-vars
+    82:8    warning  'ProjectInstancesOverview' is defined but never used                                                                                                                                                      no-unused-vars
+    83:8    warning  'ProjectInfrastructureJourney' is defined but never used                                                                                                                                                  no-unused-vars
+    84:8    warning  'ProjectQuickStatus' is defined but never used                                                                                                                                                            no-unused-vars
+   117:11   warning  'Project' is defined but never used                                                                                                                                                                       no-unused-vars
+   157:9    error    Unexpected control character(s) in regular expression: \x00, \x1f                                                                                                                                         no-control-regex
+   158:7    warning  Unexpected console statement                                                                                                                                                                              no-console
+   163:5    warning  Unexpected console statement                                                                                                                                                                              no-console
+   292:30   warning  'setIsInviteSubmitting' is assigned a value but never used                                                                                                                                                no-unused-vars
+   314:6    warning  React Hook useEffect has a missing dependency: 'isInProvisioningMode'. Either include it or remove the dependency array                                                                                   react-hooks/exhaustive-deps
+   367:24   warning  'updateProjectMembers' is assigned a value but never used                                                                                                                                                 no-unused-vars
+   569:9    warning  The 'summary' logical expression could make the dependencies of useMemo Hook (at line 587) change on every render. To fix this, wrap the initialization of 'summary' in its own useMemo() Hook            react-hooks/exhaustive-deps
+   622:7    warning  Unexpected console statement                                                                                                                                                                              no-console
+   650:7    warning  Unexpected console statement                                                                                                                                                                              no-console
+   743:9    warning  The 'projectUsers' logical expression could make the dependencies of useMemo Hook (at line 830) change on every render. To fix this, wrap the initialization of 'projectUsers' in its own useMemo() Hook  react-hooks/exhaustive-deps
+   743:9    warning  The 'projectUsers' logical expression could make the dependencies of useMemo Hook (at line 865) change on every render. To fix this, wrap the initialization of 'projectUsers' in its own useMemo() Hook  react-hooks/exhaustive-deps
+   743:9    warning  The 'projectUsers' logical expression could make the dependencies of useMemo Hook (at line 912) change on every render. To fix this, wrap the initialization of 'projectUsers' in its own useMemo() Hook  react-hooks/exhaustive-deps
+   977:15   warning  'infraStatus' is assigned a value but never used                                                                                                                                                          no-unused-vars
+   995:15   warning  'infraStatus' is assigned a value but never used                                                                                                                                                          no-unused-vars
+  1070:9    warning  'projectStatusVariant' is assigned a value but never used                                                                                                                                                 no-unused-vars
+  1072:9    warning  'infrastructureStepLabel' is assigned a value but never used                                                                                                                                              no-unused-vars
+  1075:9    warning  'heroProviderLabel' is assigned a value but never used                                                                                                                                                    no-unused-vars
+  1078:9    warning  'metadataItems' is assigned a value but never used                                                                                                                                                        no-unused-vars
+  1107:9    warning  'summaryMetrics' is assigned a value but never used                                                                                                                                                       no-unused-vars
+  1203:9    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1204:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1226:41   warning  'isVpcEnabling' is assigned a value but never used                                                                                                                                                        no-unused-vars
+  1228:9    warning  'handleEnableVpc' is assigned a value but never used                                                                                                                                                      no-unused-vars
+  1240:9    warning  'handleEdgeSync' is assigned a value but never used                                                                                                                                                       no-unused-vars
+  1250:7    warning  Unexpected console statement                                                                                                                                                                              no-console
+  1260:9    warning  'handleViewInstanceDetails' is assigned a value but never used                                                                                                                                            no-unused-vars
+  1287:9    warning  'recentInstances' is assigned a value but never used                                                                                                                                                      no-unused-vars
+  1293:9    warning  'handleOpenPayment' is assigned a value but never used                                                                                                                                                    no-unused-vars
+  1324:7    warning  Unexpected console statement                                                                                                                                                                              no-console
+  1346:9    warning  'renderSectionContent' is assigned a value but never used                                                                                                                                                 no-unused-vars
+  1475:21   warning  Insert `··`                                                                                                                                                                                               prettier/prettier
+  1476:21   warning  Insert `··`                                                                                                                                                                                               prettier/prettier
+  1477:1    warning  Insert `··`                                                                                                                                                                                               prettier/prettier
+  1478:21   warning  Insert `··`                                                                                                                                                                                               prettier/prettier
+  1479:21   warning  Insert `··`                                                                                                                                                                                               prettier/prettier
+  1480:1    warning  Replace `··················` with `····················`                                                                                                                                                  prettier/prettier
+  1482:1    warning  Insert `··`                                                                                                                                                                                               prettier/prettier
+  1484:1    warning  Insert `··`                                                                                                                                                                                               prettier/prettier
+  1485:23   warning  Insert `··`                                                                                                                                                                                               prettier/prettier
+  1486:23   warning  Insert `··`                                                                                                                                                                                               prettier/prettier
+  1487:1    warning  Replace `······················` with `························`                                                                                                                                          prettier/prettier
+  1488:1    warning  Insert `··`                                                                                                                                                                                               prettier/prettier
+  1489:1    warning  Insert `··`                                                                                                                                                                                               prettier/prettier
+  1490:21   warning  Insert `··`                                                                                                                                                                                               prettier/prettier
+  1492:1    warning  Insert `··`                                                                                                                                                                                               prettier/prettier
+  1493:23   warning  Insert `··`                                                                                                                                                                                               prettier/prettier
+  1494:1    warning  Insert `··`                                                                                                                                                                                               prettier/prettier
+  1495:23   warning  Insert `··`                                                                                                                                                                                               prettier/prettier
+  1496:1    warning  Insert `··`                                                                                                                                                                                               prettier/prettier
+  1514:19   warning  Unexpected console statement                                                                                                                                                                              no-console
+  1531:19   warning  Unexpected console statement                                                                                                                                                                              no-console
+  1707:31   warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1711:148  warning  Insert `⏎······································`                                                                                                                                                          prettier/prettier
+  1714:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1776:31   warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1777:33   warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1778:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1779:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1780:37   warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1781:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1782:37   warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1783:1    warning  Replace `········································` with `······································`                                                                                                          prettier/prettier
+  1784:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1785:39   warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1786:1    warning  Replace `··········································` with `········································`                                                                                                      prettier/prettier
+  1787:41   warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1788:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1789:39   warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1790:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1791:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1792:41   warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1793:41   warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1794:1    warning  Replace `········································` with `······································`                                                                                                          prettier/prettier
+  1795:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1796:39   warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1797:1    warning  Replace `······································` with `····································`                                                                                                              prettier/prettier
+  1798:39   warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1799:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1800:41   warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1801:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1802:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1803:37   warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1804:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1805:1    warning  Replace `····································` with `··································`                                                                                                                  prettier/prettier
+  1806:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1807:35   warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1808:1    warning  Replace `··································` with `································`                                                                                                                      prettier/prettier
+  1809:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1810:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1811:35   warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1812:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1813:37   warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1814:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1815:41   warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1816:1    warning  Replace `········································` with `······································`                                                                                                          prettier/prettier
+  1817:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1818:37   warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1819:1    warning  Replace `······································` with `····································`                                                                                                              prettier/prettier
+  1820:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1821:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1822:39   warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1823:37   warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1824:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1825:31   warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  1826:1    warning  Delete `··`                                                                                                                                                                                               prettier/prettier
+  2074:17   warning  Insert `··`                                                                                                                                                                                               prettier/prettier
+  2075:17   warning  Insert `··`                                                                                                                                                                                               prettier/prettier
+  2076:1    warning  Insert `··`                                                                                                                                                                                               prettier/prettier
+  2077:17   warning  Insert `··`                                                                                                                                                                                               prettier/prettier
+  2078:17   warning  Insert `··`                                                                                                                                                                                               prettier/prettier
+  2079:1    warning  Insert `··`                                                                                                                                                                                               prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminDashboard/pages/AdminSignin.tsx
+  94:9  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminDashboard/pages/AdminSignup.tsx
+   91:5   warning  Unexpected console statement                                                                                                          no-console
+  105:5   warning  Unexpected console statement                                                                                                          no-console
+  140:9   warning  Unexpected console statement                                                                                                          no-console
+  226:53  warning  Replace `⏎················Create·an·admin·account·on·{companyName}.⏎··············` with `Create·an·admin·account·on·{companyName}.`  prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminDashboard/pages/adminUserDetails.tsx
+   2:26  warning  'useState' is defined but never used  no-unused-vars
+  25:5   warning  Unexpected console statement          no-console
+  40:5   warning  Unexpected console statement          no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminDashboard/pages/eniComps/addEni.tsx
+  28:6  warning  React Hook useEffect has a missing dependency: 'form.region'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/adminDashboard/pages/subnetComps/addSubnet.tsx
+    4:8  warning  'ToastUtils' is defined but never used                                                                                 no-unused-vars
+  112:6  warning  React Hook useEffect has a missing dependency: 'computeSuggestions'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  126:6  warning  React Hook useEffect has a missing dependency: 'formData.region'. Either include it or remove the dependency array     react-hooks/exhaustive-deps
+  147:9  warning  Unexpected console statement                                                                                           no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/clientDashboard/components/transactionDetails.tsx
+  162:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/clientDashboard/pages/projectComps/addProject.tsx
+  101:9  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/components/ad.jsx
+  1:10  warning  'motion' is defined but never used  no-unused-vars
+  4:10  warning  'Link' is defined but never used    no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/components/features.jsx
+  7:10  warning  'motion' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/components/hero.jsx
+  2:10  warning  'Link' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/components/navbar.jsx
+    3:10  warning  'Link' is defined but never used                                    no-unused-vars
+   31:10  warning  'generalitem' is assigned a value but never used                    no-unused-vars
+   31:23  warning  'setGeneralItem' is assigned a value but never used                 no-unused-vars
+   45:79  warning  Replace `⏎····brandLogoSrc,⏎····logo⏎··` with `brandLogoSrc,·logo`  prettier/prettier
+  437:7   warning  'CollapsibleSection' is assigned a value but never used             no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/components/sidebar.jsx
+  26:10  warning  'page' is assigned a value but never used                                                                                                                                                                                                     no-unused-vars
+  38:79  warning  Replace `⏎····brandLogoSrc,⏎····logo⏎··` with `brandLogoSrc,·logo`                                                                                                                                                                            prettier/prettier
+  56:9   warning  'app' is assigned a value but never used                                                                                                                                                                                                      no-unused-vars
+  76:15  warning  'error' is defined but never used                                                                                                                                                                                                             no-unused-vars
+  77:9   warning  Unexpected console statement                                                                                                                                                                                                                  no-console
+  84:13  warning  Replace `⏎··········src={resolvedLogoSrc}⏎··········className="·w-12"⏎··········alt={brandLogoAlt}⏎··········onError={handleLogoError}⏎·······` with `·src={resolvedLogoSrc}·className="·w-12"·alt={brandLogoAlt}·onError={handleLogoError}`  prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/components/topbar.jsx
+  22:79  warning  Replace `⏎····brandLogoSrc,⏎····logo⏎··` with `brandLogoSrc,·logo`  prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/dashboard/components/addProject.jsx
+    1:8   warning  'React' is defined but never used                no-unused-vars
+    2:10  warning  'X' is defined but never used                    no-unused-vars
+    2:13  warning  'Loader2' is defined but never used              no-unused-vars
+    2:22  warning  'Search' is defined but never used               no-unused-vars
+    2:30  warning  'ChevronDown' is defined but never used          no-unused-vars
+    2:43  warning  'Check' is defined but never used                no-unused-vars
+   27:10  warning  'clientPage' is assigned a value but never used  no-unused-vars
+  169:9   warning  Unexpected console statement                     no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/dashboard/components/cartModal.jsx
+    1:8   warning  'React' is defined but never used                                                                                                                                                                                                                                         no-unused-vars
+    2:10  warning  'Loader2' is defined but never used                                                                                                                                                                                                                                       no-unused-vars
+    2:19  warning  'Trash2' is defined but never used                                                                                                                                                                                                                                        no-unused-vars
+    2:27  warning  'X' is defined but never used                                                                                                                                                                                                                                             no-unused-vars
+    3:8   warning  'Skeleton' is defined but never used                                                                                                                                                                                                                                      no-unused-vars
+    5:10  warning  'MonitorIllustration' is defined but never used                                                                                                                                                                                                                           no-unused-vars
+   28:24  warning  Replace `⏎······cartItems.reduce(⏎········(acc,·item)·=>·({·...acc,·[item.id]:·item.quantity·}),⏎········{}⏎······)⏎····` with `cartItems.reduce((acc,·item)·=>·({·...acc,·[item.id]:·item.quantity·}),·{})`                                                              prettier/prettier
+   42:6   warning  React Hook useEffect has a missing dependency: 'onCheckoutSuccess'. Either include it or remove the dependency array. If 'onCheckoutSuccess' changes too often, find the parent component that defines it and wrap that definition in useCallback                         react-hooks/exhaustive-deps
+   46:38  warning  Replace `⏎····(sum,·item)·=>·sum·+·parseFloat(item.subtotal·||·0),⏎····0⏎··` with `(sum,·item)·=>·sum·+·parseFloat(item.subtotal·||·0),·0`                                                                                                                                prettier/prettier
+   58:36  warning  Replace `⏎········0,⏎········(localQuantities[itemId]·||·item.quantity)·+·change⏎······` with `0,·(localQuantities[itemId]·||·item.quantity)·+·change`                                                                                                                    prettier/prettier
+   83:35  warning  Replace `⏎······?·text.substring(0,·maxLength)·+·"..."⏎·····` with `·?·text.substring(0,·maxLength)·+·"..."`                                                                                                                                                              prettier/prettier
+  135:34  warning  Replace `⏎··························width={120}⏎··························height={32}⏎··························borderRadius={20}⏎··························className="mt-2"⏎·······················` with `·width={120}·height={32}·borderRadius={20}·className="mt-2"`  prettier/prettier
+  159:59  warning  Replace `⏎··············Your·cart·is·empty.⏎············` with `Your·cart·is·empty.`                                                                                                                                                                                      prettier/prettier
+  166:44  warning  Replace `⏎··················`${productable.name}·Compute·Instances`,⏎··················30⏎················` with ``${productable.name}·Compute·Instances`,·30`                                                                                                            prettier/prettier
+  172:40  warning  Delete `⏎·················`                                                                                                                                                                                                                                               prettier/prettier
+  176:23  warning  Replace `⏎····················key={item.id}⏎····················className="flex·flex-row·justify-between·items-start·py-6"⏎··················` with `·key={item.id}·className="flex·flex-row·justify-between·items-start·py-6"`                                           prettier/prettier
+  187:77  warning  Replace `⏎····························{specs}⏎··························` with `{specs}`                                                                                                                                                                                  prettier/prettier
+  195:47  warning  Replace `⏎··································handleQuantityChange(item.id,·-1)⏎································` with `·handleQuantityChange(item.id,·-1)`                                                                                                                 prettier/prettier
+  220:80  warning  Replace `⏎··························Number⏎························` with `Number`                                                                                                                                                                                        prettier/prettier
+  245:82  warning  Replace `⏎························Total·Cost⏎······················` with `Total·Cost`                                                                                                                                                                                    prettier/prettier
+  271:70  warning  Replace `⏎················Total·Cost⏎··············` with `Total·Cost`                                                                                                                                                                                                    prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/dashboard/components/partners/TenantAddPartnerWizard.jsx
+    2:10  warning  'Loader2' is defined but never used                                                                       no-unused-vars
+   13:8   warning  'StepNavigation' is defined but never used                                                                no-unused-vars
+   14:8   warning  'FormLayout' is defined but never used                                                                    no-unused-vars
+  210:40  warning  Replace `⏎····?·`${formData.domain}${displaySuffix}`⏎···` with `·?·`${formData.domain}${displaySuffix}``  prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/dashboard/components/transactionDetails.jsx
+    2:10  warning  'X' is defined but never used                                                                                                                                                                                              no-unused-vars
+    2:13  warning  'Download' is defined but never used                                                                                                                                                                                       no-unused-vars
+   22:9   warning  'StatusBadge' is assigned a value but never used                                                                                                                                                                           no-unused-vars
+   30:23  warning  Delete `⏎·····`                                                                                                                                                                                                            prettier/prettier
+  162:7   warning  Unexpected console statement                                                                                                                                                                                               no-console
+  181:65  warning  Replace `⏎················Transaction·Details⏎··············` with `Transaction·Details`                                                                                                                                   prettier/prettier
+  195:70  warning  Replace `⏎··················Transaction·ID:⏎················` with `Transaction·ID:`                                                                                                                                       prettier/prettier
+  198:58  warning  Replace `⏎··················{selectedItem.identifier}⏎················` with `{selectedItem.identifier}`                                                                                                                   prettier/prettier
+  203:70  warning  Replace `⏎··················Date:⏎················` with `Date:`                                                                                                                                                           prettier/prettier
+  211:70  warning  Replace `⏎··················Description:⏎················` with `Description:`                                                                                                                                             prettier/prettier
+  214:58  warning  Replace `⏎··················{selectedItem.description}⏎················` with `{selectedItem.description}`                                                                                                                 prettier/prettier
+  219:70  warning  Replace `⏎··················Amount:⏎················` with `Amount:`                                                                                                                                                       prettier/prettier
+  227:70  warning  Replace `⏎··················Payment·Method:⏎················` with `Payment·Method:`                                                                                                                                       prettier/prettier
+  230:58  warning  Replace `⏎··················{selectedItem.payment_gateway}⏎················` with `{selectedItem.payment_gateway}`                                                                                                         prettier/prettier
+  235:70  warning  Replace `⏎··················Status:⏎················` with `Status:`                                                                                                                                                       prettier/prettier
+  241:70  warning  Replace `⏎··················Purchased·Items:⏎················` with `Purchased·Items:`                                                                                                                                     prettier/prettier
+  252:31  warning  Replace `⏎··························Unit·Price:·₦⏎··························{parseFloat(line.unit_price)?.toLocaleString()}⏎························` with `Unit·Price:·₦{parseFloat(line.unit_price)?.toLocaleString()}`  prettier/prettier
+  256:31  warning  Replace `⏎··························Total:·₦{line.line_amount?.toLocaleString()}⏎························` with `Total:·₦{line.line_amount?.toLocaleString()}`                                                             prettier/prettier
+  265:67  warning  Replace `⏎··················{downloadError}⏎················` with `{downloadError}`                                                                                                                                       prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/dashboard/onboarding/PartnerRegionQualificationForm.jsx
+    1:8   warning  'React' is defined but never used                                                                                                                                     no-unused-vars
+    2:10  warning  'AlertCircle' is defined but never used                                                                                                                               no-unused-vars
+    2:23  warning  'CheckCircle2' is defined but never used                                                                                                                              no-unused-vars
+    2:37  warning  'Loader2' is defined but never used                                                                                                                                   no-unused-vars
+    2:46  warning  'ShieldCheck' is defined but never used                                                                                                                               no-unused-vars
+  306:43  warning  Replace `Automated·–·we·want·{brandName}·automation·to·provision` with `⏎··················Automated·–·we·want·{brandName}·automation·to·provision⏎················`  prettier/prettier
+  552:7   warning  'Field' is assigned a value but never used                                                                                                                            no-unused-vars
+  568:7   warning  'VerificationStatus' is assigned a value but never used                                                                                                               no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/dashboard/onboarding/index.jsx
+    1:8   warning  'React' is defined but never used                           no-unused-vars
+    2:10  warning  'Loader2' is defined but never used                         no-unused-vars
+    2:19  warning  'AlertCircle' is defined but never used                     no-unused-vars
+    2:32  warning  'CheckCircle2' is defined but never used                    no-unused-vars
+    2:46  warning  'MessageCircle' is defined but never used                   no-unused-vars
+    2:61  warning  'Plus' is defined but never used                            no-unused-vars
+    2:67  warning  'Trash2' is defined but never used                          no-unused-vars
+   11:8   warning  'PartnerRegionQualificationForm' is defined but never used  no-unused-vars
+   12:8   warning  'BusinessProfileForm' is defined but never used             no-unused-vars
+   13:8   warning  'BrandingThemeForm' is defined but never used               no-unused-vars
+   14:8   warning  'FileDropInput' is defined but never used                   no-unused-vars
+  532:7   warning  'StatusBlurb' is assigned a value but never used            no-unused-vars
+  561:7   warning  'FieldInput' is assigned a value but never used             no-unused-vars
+  897:7   warning  'ProgressBar' is assigned a value but never used            no-unused-vars
+  920:7   warning  'DocumentGallery' is assigned a value but never used        no-unused-vars
+  956:7   warning  'CollectionField' is assigned a value but never used        no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/dashboard/pages/forgotPassword.jsx
+   1:8   warning  'React' is defined but never used               no-unused-vars
+   2:10  warning  'Loader2' is defined but never used             no-unused-vars
+   4:10  warning  'Link' is defined but never used                no-unused-vars
+  19:11  warning  'userEmail' is assigned a value but never used  no-unused-vars
+  64:9   warning  Unexpected console statement                    no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/dashboard/pages/loginV2.jsx
+   1:8   warning  'React' is defined but never used               no-unused-vars
+   2:10  warning  'Eye' is defined but never used                 no-unused-vars
+   2:15  warning  'EyeOff' is defined but never used              no-unused-vars
+   2:23  warning  'Loader2' is defined but never used             no-unused-vars
+   4:10  warning  'Link' is defined but never used                no-unused-vars
+  23:11  warning  'userEmail' is assigned a value but never used  no-unused-vars
+  75:9   warning  Unexpected console statement                    no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/dashboard/pages/productsComp/sidemenu.jsx
+   1:8   warning  'React' is defined but never used                                                                                                                            no-unused-vars
+   2:10  warning  'Loader2' is defined but never used                                                                                                                          no-unused-vars
+   5:27  warning  Replace `⏎··activeTab,⏎··activeProductType,⏎··onTabChange,⏎··onProductTypeChange,⏎` with `·activeTab,·activeProductType,·onTabChange,·onProductTypeChange·`  prettier/prettier
+  46:78  warning  Replace `⏎············Product·Types⏎··········` with `Product·Types`                                                                                         prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/dashboard/pages/projectComps/TenantAssignEdgeConfigModal.jsx
+  1:8   warning  'React' is defined but never used    no-unused-vars
+  2:10  warning  'X' is defined but never used        no-unused-vars
+  2:13  warning  'Loader2' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/dashboard/pages/resetPassword.jsx
+    1:8   warning  'React' is defined but never used    no-unused-vars
+    2:10  warning  'Eye' is defined but never used      no-unused-vars
+    2:15  warning  'EyeOff' is defined but never used   no-unused-vars
+    2:23  warning  'Loader2' is defined but never used  no-unused-vars
+    4:10  warning  'Link' is defined but never used     no-unused-vars
+  103:9   warning  Unexpected console statement         no-console
+  120:13  warning  Unexpected console statement         no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/dashboard/pages/sign-upV2.jsx
+    1:8   warning  'React' is defined but never used          no-unused-vars
+    6:8   warning  'Header' is defined but never used         no-unused-vars
+    7:10  warning  'Loader2' is defined but never used        no-unused-vars
+    7:19  warning  'ShieldCheck' is defined but never used    no-unused-vars
+    7:32  warning  'AlertCircle' is defined but never used    no-unused-vars
+  498:7   warning  Delete `··`                                prettier/prettier
+  503:10  warning  'SelectField' is defined but never used    no-unused-vars
+  526:10  warning  'Field' is defined but never used          no-unused-vars
+  545:10  warning  'PasswordField' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/dashboard/pages/signup/header.jsx
+  9:13  warning  Replace `⏎··········src={resolvedLogoSrc}⏎··········className="w-[100px]"⏎··········alt={logoAlt}⏎··········onError={handleLogoError}⏎·······` with `·src={resolvedLogoSrc}·className="w-[100px]"·alt={logoAlt}·onError={handleLogoError}`  prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/dashboard/pages/signup/partnerBuisnessStep.jsx
+  2:8   warning  'React' is defined but never used                 no-unused-vars
+  3:10  warning  'Loader2' is defined but never used               no-unused-vars
+  4:8   warning  'ClientBusinessInputs' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/dashboard/pages/subnetComps/addSubnet.jsx
+    2:10  warning  'Loader2' is defined but never used  no-unused-vars
+    2:19  warning  'X' is defined but never used        no-unused-vars
+  166:9   warning  Unexpected console statement         no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/dashboard/pages/verifyMail.jsx
+    1:8   warning  'React' is defined but never used                     no-unused-vars
+    2:10  warning  'Eye' is defined but never used                       no-unused-vars
+    2:15  warning  'EyeOff' is defined but never used                    no-unused-vars
+    2:23  warning  'Loader2' is defined but never used                   no-unused-vars
+    4:8   warning  'VerificationCodeInput' is defined but never used     no-unused-vars
+   25:10  warning  'showPassword' is assigned a value but never used     no-unused-vars
+   25:24  warning  'setShowPassword' is assigned a value but never used  no-unused-vars
+  135:17  warning  'err' is defined but never used                       no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/adminHooks/projectInfrastructureHooks.jsx
+  197:7   warning  Unexpected console statement           no-console
+  228:7   warning  Unexpected console statement           no-console
+  261:7   warning  Unexpected console statement           no-console
+  292:29  warning  'query' is defined but never used      no-unused-vars
+  310:27  warning  'error' is defined but never used      no-unused-vars
+  316:7   warning  Unexpected console statement           no-console
+  362:22  warning  'variables' is defined but never used  no-unused-vars
+  363:7   warning  Unexpected console statement           no-console
+  392:7   warning  Unexpected console statement           no-console
+  473:7   warning  Unexpected console statement           no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/clientHooks/useClientTheme.js
+  38:7  warning  Replace `fallbackQuery.data·??·tenantQuery.data` with `(fallbackQuery.data·??·tenantQuery.data)`  prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/hooks/useBrandingTheme.js
+  293:16  warning  Delete `⏎·····`                                                                                                                                                                                               prettier/prettier
+  428:45  warning  'fallbackLogo' is assigned a value but never used                                                                                                                                                             no-unused-vars
+  461:26  warning  Replace `"--theme-color-50",·rgbToChannels(mixRgb(accentRgb,·{·r:·255,·g:·255,·b:·255·},·0.92))` with `⏎····"--theme-color-50",⏎····rgbToChannels(mixRgb(accentRgb,·{·r:·255,·g:·255,·b:·255·},·0.92))⏎··`    prettier/prettier
+  462:26  warning  Replace `"--theme-color-100",·rgbToChannels(mixRgb(accentRgb,·{·r:·255,·g:·255,·b:·255·},·0.84))` with `⏎····"--theme-color-100",⏎····rgbToChannels(mixRgb(accentRgb,·{·r:·255,·g:·255,·b:·255·},·0.84))⏎··`  prettier/prettier
+  463:26  warning  Replace `"--theme-color-200",·rgbToChannels(mixRgb(accentRgb,·{·r:·255,·g:·255,·b:·255·},·0.72))` with `⏎····"--theme-color-200",⏎····rgbToChannels(mixRgb(accentRgb,·{·r:·255,·g:·255,·b:·255·},·0.72))⏎··`  prettier/prettier
+  464:26  warning  Replace `"--theme-color-300",·rgbToChannels(mixRgb(accentRgb,·{·r:·255,·g:·255,·b:·255·},·0.56))` with `⏎····"--theme-color-300",⏎····rgbToChannels(mixRgb(accentRgb,·{·r:·255,·g:·255,·b:·255·},·0.56))⏎··`  prettier/prettier
+  465:26  warning  Replace `"--theme-color-400",·rgbToChannels(mixRgb(accentRgb,·{·r:·255,·g:·255,·b:·255·},·0.32))` with `⏎····"--theme-color-400",⏎····rgbToChannels(mixRgb(accentRgb,·{·r:·255,·g:·255,·b:·255·},·0.32))⏎··`  prettier/prettier
+  467:26  warning  Replace `"--theme-color-600",·rgbToChannels(mixRgb(accentRgb,·{·r:·0,·g:·0,·b:·0·},·0.18))` with `⏎····"--theme-color-600",⏎····rgbToChannels(mixRgb(accentRgb,·{·r:·0,·g:·0,·b:·0·},·0.18))⏎··`              prettier/prettier
+  468:26  warning  Replace `"--theme-color-700",·rgbToChannels(mixRgb(accentRgb,·{·r:·0,·g:·0,·b:·0·},·0.32))` with `⏎····"--theme-color-700",⏎····rgbToChannels(mixRgb(accentRgb,·{·r:·0,·g:·0,·b:·0·},·0.32))⏎··`              prettier/prettier
+  469:26  warning  Replace `"--theme-color-800",·rgbToChannels(mixRgb(accentRgb,·{·r:·0,·g:·0,·b:·0·},·0.46))` with `⏎····"--theme-color-800",⏎····rgbToChannels(mixRgb(accentRgb,·{·r:·0,·g:·0,·b:·0·},·0.46))⏎··`              prettier/prettier
+  470:26  warning  Replace `"--theme-color-900",·rgbToChannels(mixRgb(accentRgb,·{·r:·0,·g:·0,·b:·0·},·0.6))` with `⏎····"--theme-color-900",⏎····rgbToChannels(mixRgb(accentRgb,·{·r:·0,·g:·0,·b:·0·},·0.6))⏎··`                prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/blog.jsx
+  1:8   warning  'Footer' is defined but never used  no-unused-vars
+  2:8   warning  'Navbar' is defined but never used  no-unused-vars
+  6:10  warning  'motion' is defined but never used  no-unused-vars
+  9:10  warning  'Link' is defined but never used    no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/contact.jsx
+    1:8   warning  'Ads' is defined but never used                                                                                                                                                                                                         no-unused-vars
+    2:8   warning  'Footer' is defined but never used                                                                                                                                                                                                      no-unused-vars
+    3:8   warning  'Navbar' is defined but never used                                                                                                                                                                                                      no-unused-vars
+    4:10  warning  'motion' is defined but never used                                                                                                                                                                                                      no-unused-vars
+   20:23  warning  'setGeneralItem' is assigned a value but never used                                                                                                                                                                                     no-unused-vars
+   29:19  warning  'setLoading' is assigned a value but never used                                                                                                                                                                                         no-unused-vars
+   49:10  warning  'companyNameError' is assigned a value but never used                                                                                                                                                                                   no-unused-vars
+   49:28  warning  'setCompanyNameError' is assigned a value but never used                                                                                                                                                                                no-unused-vars
+   50:10  warning  'companyWebsiteError' is assigned a value but never used                                                                                                                                                                                no-unused-vars
+   50:31  warning  'setCompanyWebsiteError' is assigned a value but never used                                                                                                                                                                             no-unused-vars
+   69:6   warning  React Hook useEffect has an unnecessary dependency: 'countries'. Either exclude it or remove the dependency array. Outer scope values like 'countries' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+  189:9   warning  Unexpected console statement                                                                                                                                                                                                            no-console
+  193:9   warning  Unexpected console statement                                                                                                                                                                                                            no-console
+  197:7   warning  Unexpected console statement                                                                                                                                                                                                            no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/detailedSolu.jsx
+   1:8   warning  'Footer' is defined but never used  no-unused-vars
+   2:8   warning  'Navbar' is defined but never used  no-unused-vars
+   3:21  warning  'Link' is defined but never used    no-unused-vars
+   4:10  warning  'useRef' is defined but never used  no-unused-vars
+   7:10  warning  'motion' is defined but never used  no-unused-vars
+  51:13  warning  Unexpected console statement        no-console
+  55:13  warning  Unexpected console statement        no-console
+  60:11  warning  Unexpected console statement        no-console
+  79:9   warning  Unexpected console statement        no-console
+  85:27  warning  'e' is defined but never used       no-unused-vars
+  97:9   warning  Unexpected console statement        no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/detailedblog.jsx
+    1:8   warning  'Footer' is defined but never used  no-unused-vars
+    2:8   warning  'Navbar' is defined but never used  no-unused-vars
+    3:21  warning  'Link' is defined but never used    no-unused-vars
+    4:10  warning  'useRef' is defined but never used  no-unused-vars
+    8:24  warning  'getDoc' is defined but never used  no-unused-vars
+    8:32  warning  'doc' is defined but never used     no-unused-vars
+    9:10  warning  'motion' is defined but never used  no-unused-vars
+   68:13  warning  Unexpected console statement        no-console
+   72:11  warning  Unexpected console statement        no-console
+   92:9   warning  Unexpected console statement        no-console
+   98:27  warning  'e' is defined but never used       no-unused-vars
+  110:9   warning  Unexpected console statement        no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/detailedboard.jsx
+   1:8   warning  'Footer' is defined but never used  no-unused-vars
+   2:8   warning  'Navbar' is defined but never used  no-unused-vars
+   3:21  warning  'Link' is defined but never used    no-unused-vars
+   4:10  warning  'useRef' is defined but never used  no-unused-vars
+   6:24  warning  'getDoc' is defined but never used  no-unused-vars
+   6:32  warning  'doc' is defined but never used     no-unused-vars
+   7:10  warning  'motion' is defined but never used  no-unused-vars
+   8:8   warning  'copy' is defined but never used    no-unused-vars
+  56:13  warning  Unexpected console statement        no-console
+  60:11  warning  Unexpected console statement        no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/detailedcareer.jsx
+    1:8   warning  'Footer' is defined but never used                                                                                                                                                                                                      no-unused-vars
+    2:8   warning  'Navbar' is defined but never used                                                                                                                                                                                                      no-unused-vars
+    3:21  warning  'Link' is defined but never used                                                                                                                                                                                                        no-unused-vars
+    4:10  warning  'useRef' is defined but never used                                                                                                                                                                                                      no-unused-vars
+    7:37  warning  'getDocs' is defined but never used                                                                                                                                                                                                     no-unused-vars
+    7:46  warning  'collection' is defined but never used                                                                                                                                                                                                  no-unused-vars
+    7:58  warning  'query' is defined but never used                                                                                                                                                                                                       no-unused-vars
+    8:10  warning  'motion' is defined but never used                                                                                                                                                                                                      no-unused-vars
+   14:8   warning  'DatePicker' is defined but never used                                                                                                                                                                                                  no-unused-vars
+   57:13  warning  Unexpected console statement                                                                                                                                                                                                            no-console
+   62:11  warning  Unexpected console statement                                                                                                                                                                                                            no-console
+   69:27  warning  'e' is defined but never used                                                                                                                                                                                                           no-unused-vars
+   81:9   warning  Unexpected console statement                                                                                                                                                                                                            no-console
+   89:27  warning  'e' is defined but never used                                                                                                                                                                                                           no-unused-vars
+  151:6   warning  React Hook useEffect has an unnecessary dependency: 'countries'. Either exclude it or remove the dependency array. Outer scope values like 'countries' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+  320:9   warning  Unexpected console statement                                                                                                                                                                                                            no-console
+  325:9   warning  Unexpected console statement                                                                                                                                                                                                            no-console
+  328:7   warning  Unexpected console statement                                                                                                                                                                                                            no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/detailedcase.jsx
+   1:8   warning  'Footer' is defined but never used  no-unused-vars
+   2:8   warning  'Navbar' is defined but never used  no-unused-vars
+   3:21  warning  'Link' is defined but never used    no-unused-vars
+   4:10  warning  'useRef' is defined but never used  no-unused-vars
+   5:8   warning  'React' is defined but never used   no-unused-vars
+  10:10  warning  'motion' is defined but never used  no-unused-vars
+  48:13  warning  Unexpected console statement        no-console
+  52:13  warning  Unexpected console statement        no-console
+  57:11  warning  Unexpected console statement        no-console
+  76:9   warning  Unexpected console statement        no-console
+  82:27  warning  'e' is defined but never used       no-unused-vars
+  94:9   warning  Unexpected console statement        no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/detailedmanage.jsx
+   1:8   warning  'Footer' is defined but never used  no-unused-vars
+   2:8   warning  'Navbar' is defined but never used  no-unused-vars
+   3:21  warning  'Link' is defined but never used    no-unused-vars
+   4:10  warning  'useRef' is defined but never used  no-unused-vars
+   6:24  warning  'getDoc' is defined but never used  no-unused-vars
+   6:32  warning  'doc' is defined but never used     no-unused-vars
+   7:10  warning  'motion' is defined but never used  no-unused-vars
+   8:8   warning  'copy' is defined but never used    no-unused-vars
+  56:13  warning  Unexpected console statement        no-console
+  60:11  warning  Unexpected console statement        no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/detailedresouces.jsx
+   1:8   warning  'Footer' is defined but never used  no-unused-vars
+   2:8   warning  'Navbar' is defined but never used  no-unused-vars
+   3:21  warning  'Link' is defined but never used    no-unused-vars
+   4:10  warning  'useRef' is defined but never used  no-unused-vars
+   7:10  warning  'motion' is defined but never used  no-unused-vars
+  52:13  warning  Unexpected console statement        no-console
+  57:11  warning  Unexpected console statement        no-console
+  76:9   warning  Unexpected console statement        no-console
+  82:27  warning  'e' is defined but never used       no-unused-vars
+  94:9   warning  Unexpected console statement        no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/events.jsx
+  1:8   warning  'Footer' is defined but never used  no-unused-vars
+  2:8   warning  'Navbar' is defined but never used  no-unused-vars
+  3:10  warning  'motion' is defined but never used  no-unused-vars
+  9:10  warning  'Link' is defined but never used    no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/extResource.jsx
+  1:8   warning  'Footer' is defined but never used  no-unused-vars
+  2:8   warning  'Navbar' is defined but never used  no-unused-vars
+  6:10  warning  'motion' is defined but never used  no-unused-vars
+  7:10  warning  'Link' is defined but never used    no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/extResource1.jsx
+  1:8   warning  'Footer' is defined but never used  no-unused-vars
+  2:8   warning  'Navbar' is defined but never used  no-unused-vars
+  5:10  warning  'motion' is defined but never used  no-unused-vars
+  6:10  warning  'Link' is defined but never used    no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/faqPage.jsx
+  1:8   warning  'Navbar' is defined but never used  no-unused-vars
+  3:10  warning  'motion' is defined but never used  no-unused-vars
+  6:8   warning  'Footer' is defined but never used  no-unused-vars
+  8:10  warning  'Link' is defined but never used    no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/partnership.jsx
+   1:8   warning  'Footer' is defined but never used                no-unused-vars
+   2:8   warning  'Navbar' is defined but never used                no-unused-vars
+   5:10  warning  'motion' is defined but never used                no-unused-vars
+   6:10  warning  'Link' is defined but never used                  no-unused-vars
+  38:7   warning  'PartnerCard' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/press.jsx
+  1:10  warning  'Link' is defined but never used    no-unused-vars
+  2:8   warning  'Footer' is defined but never used  no-unused-vars
+  3:8   warning  'Navbar' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/resources.jsx
+  1:8   warning  'Footer' is defined but never used     no-unused-vars
+  2:8   warning  'Navbar' is defined but never used     no-unused-vars
+  3:8   warning  'arrowdown' is defined but never used  no-unused-vars
+  6:10  warning  'motion' is defined but never used     no-unused-vars
+  9:10  warning  'Link' is defined but never used       no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/services.jsx
+   1:8   warning  'Footer' is defined but never used                      no-unused-vars
+   2:8   warning  'Navbar' is defined but never used                      no-unused-vars
+   3:8   warning  'arrowdown' is defined but never used                   no-unused-vars
+  15:10  warning  'motion' is defined but never used                      no-unused-vars
+  16:8   warning  'mark' is defined but never used                        no-unused-vars
+  19:10  warning  'Link' is defined but never used                        no-unused-vars
+  36:9   warning  'analytics' is assigned a value but never used          no-unused-vars
+  40:10  warning  'activeButton' is assigned a value but never used       no-unused-vars
+  42:9   warning  'handleButtonClick' is assigned a value but never used  no-unused-vars
+  95:9   warning  'plan' is assigned a value but never used               no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/pages/solutions.jsx
+   2:10  warning  'Link' is defined but never used       no-unused-vars
+   6:8   warning  'arrowdown' is defined but never used  no-unused-vars
+   7:8   warning  'Navbar' is defined but never used     no-unused-vars
+   8:8   warning  'Footer' is defined but never used     no-unused-vars
+  10:10  warning  'motion' is defined but never used     no-unused-vars
+  38:29  warning  'index' is defined but never used      no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/api/client.ts
+  48:7   warning  Unexpected console statement       no-console
+  53:7   warning  Unexpected console statement       no-console
+  63:30  warning  'token' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/BreadcrumbTrail.jsx
+   1:8   warning  'React' is defined but never used                                                                                                                                                                                                                                                    no-unused-vars
+   2:10  warning  'Link' is defined but never used                                                                                                                                                                                                                                                     no-unused-vars
+   3:10  warning  'ChevronRight' is defined but never used                                                                                                                                                                                                                                             no-unused-vars
+   6:27  warning  Replace `⏎····breadcrumbs,⏎····color·=·DEFAULT_BREADCRUMB_COLOR,⏎····className·=·"",⏎` with `·breadcrumbs,·color·=·DEFAULT_BREADCRUMB_COLOR,·className·=·""·`                                                                                                                        prettier/prettier
+  11:3   warning  Delete `··`                                                                                                                                                                                                                                                                          prettier/prettier
+  13:3   warning  Delete `··`                                                                                                                                                                                                                                                                          prettier/prettier
+  14:1   warning  Delete `····`                                                                                                                                                                                                                                                                        prettier/prettier
+  15:7   warning  Delete `······`                                                                                                                                                                                                                                                                      prettier/prettier
+  16:1   warning  Replace `················` with `········`                                                                                                                                                                                                                                           prettier/prettier
+  17:1   warning  Delete `········`                                                                                                                                                                                                                                                                    prettier/prettier
+  18:11  warning  Delete `··········`                                                                                                                                                                                                                                                                  prettier/prettier
+  19:1   warning  Replace `························` with `············`                                                                                                                                                                                                                               prettier/prettier
+  20:15  warning  Replace `··············<ChevronRight·className="h-4·w-4"·color={isLast·?·color·:·`${color}66`}·style={{·opacity:·0.6·}}·/>` with `<ChevronRight⏎················className="h-4·w-4"⏎················color={isLast·?·color·:·`${color}66`}⏎················style={{·opacity:·0.6·}}`  prettier/prettier
+  21:1   warning  Replace `························)}` with `··············/>`                                                                                                                                                                                                                         prettier/prettier
+  22:13  warning  Insert `)}⏎`                                                                                                                                                                                                                                                                         prettier/prettier
+  23:15  warning  Delete `··············`                                                                                                                                                                                                                                                              prettier/prettier
+  24:1   warning  Replace `································` with `················`                                                                                                                                                                                                                   prettier/prettier
+  25:1   warning  Delete `················`                                                                                                                                                                                                                                                            prettier/prettier
+  26:1   warning  Replace `································` with `················`                                                                                                                                                                                                                   prettier/prettier
+  27:15  warning  Delete `··············`                                                                                                                                                                                                                                                              prettier/prettier
+  28:1   warning  Replace `································` with `················`                                                                                                                                                                                                                   prettier/prettier
+  29:1   warning  Replace `····························` with `··············`                                                                                                                                                                                                                         prettier/prettier
+  30:1   warning  Replace `························` with `············`                                                                                                                                                                                                                               prettier/prettier
+  31:1   warning  Delete `··············`                                                                                                                                                                                                                                                              prettier/prettier
+  32:1   warning  Replace `································` with `················`                                                                                                                                                                                                                   prettier/prettier
+  33:17  warning  Delete `················`                                                                                                                                                                                                                                                            prettier/prettier
+  34:1   warning  Replace `····································` with `··················`                                                                                                                                                                                                             prettier/prettier
+  35:1   warning  Delete `··················`                                                                                                                                                                                                                                                          prettier/prettier
+  36:1   warning  Replace `····································` with `··················`                                                                                                                                                                                                             prettier/prettier
+  37:1   warning  Replace `································` with `················`                                                                                                                                                                                                                   prettier/prettier
+  38:1   warning  Delete `··············`                                                                                                                                                                                                                                                              prettier/prettier
+  39:1   warning  Replace `································` with `················`                                                                                                                                                                                                                   prettier/prettier
+  40:1   warning  Replace `····························` with `··············`                                                                                                                                                                                                                         prettier/prettier
+  41:13  warning  Delete `············`                                                                                                                                                                                                                                                                prettier/prettier
+  42:1   warning  Replace `····················` with `··········`                                                                                                                                                                                                                                     prettier/prettier
+  43:1   warning  Replace `················` with `········`                                                                                                                                                                                                                                           prettier/prettier
+  44:1   warning  Replace `············` with `······`                                                                                                                                                                                                                                                 prettier/prettier
+  45:1   warning  Delete `····`                                                                                                                                                                                                                                                                        prettier/prettier
+  46:1   warning  Delete `··`                                                                                                                                                                                                                                                                          prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/branding/BrandIllustrations.tsx
+  34:46  warning  Replace `⏎··className,⏎··...props⏎` with `·className,·...props·`  prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/instance-wizard/InstanceConfigurationForm.tsx
+    56:14  warning  'next' is defined but never used                                                                                                    no-unused-vars
+   167:25  warning  'id' is defined but never used                                                                                                      no-unused-vars
+   167:37  warning  'patch' is defined but never used                                                                                                   no-unused-vars
+   168:25  warning  'id' is defined but never used                                                                                                      no-unused-vars
+   169:25  warning  'configId' is defined but never used                                                                                                no-unused-vars
+   171:5   warning  'configId' is defined but never used                                                                                                no-unused-vars
+   172:5   warning  'volumeId' is defined but never used                                                                                                no-unused-vars
+   173:5   warning  'patch' is defined but never used                                                                                                   no-unused-vars
+   175:28  warning  'configId' is defined but never used                                                                                                no-unused-vars
+   175:46  warning  'volumeId' is defined but never used                                                                                                no-unused-vars
+   197:21  warning  'config' is defined but never used                                                                                                  no-unused-vars
+   199:23  warning  'template' is defined but never used                                                                                                no-unused-vars
+   412:6   warning  React Hook useMemo has a missing dependency: 'resolveOptionLabel'. Either include it or remove the dependency array                 react-hooks/exhaustive-deps
+   417:6   warning  React Hook useMemo has a missing dependency: 'resolveOptionLabel'. Either include it or remove the dependency array                 react-hooks/exhaustive-deps
+   422:6   warning  React Hook useMemo has a missing dependency: 'resolveOptionLabel'. Either include it or remove the dependency array                 react-hooks/exhaustive-deps
+   651:6   warning  React Hook useCallback has a missing dependency: 'getScrollContainer'. Either include it or remove the dependency array             react-hooks/exhaustive-deps
+  1382:71  warning  Replace `⏎··················Additional·data·volumes⏎················` with `Additional·data·volumes`                                prettier/prettier
+  1810:15  warning  Delete `··`                                                                                                                         prettier/prettier
+  1811:1   warning  Delete `··`                                                                                                                         prettier/prettier
+  1812:1   warning  Replace `··················` with `················`                                                                                prettier/prettier
+  1813:17  warning  Delete `··`                                                                                                                         prettier/prettier
+  1814:1   warning  Delete `··`                                                                                                                         prettier/prettier
+  1815:17  warning  Delete `··`                                                                                                                         prettier/prettier
+  1816:1   warning  Delete `··`                                                                                                                         prettier/prettier
+  1817:1   warning  Replace `··················` with `················`                                                                                prettier/prettier
+  1818:1   warning  Delete `··`                                                                                                                         prettier/prettier
+  1819:1   warning  Replace `················` with `··············`                                                                                    prettier/prettier
+  1820:13  warning  Delete `··`                                                                                                                         prettier/prettier
+  1821:1   warning  Delete `··`                                                                                                                         prettier/prettier
+  1822:15  warning  Delete `··`                                                                                                                         prettier/prettier
+  1823:13  warning  Delete `··`                                                                                                                         prettier/prettier
+  1824:1   warning  Replace `··············` with `············`                                                                                        prettier/prettier
+  1825:1   warning  Delete `··`                                                                                                                         prettier/prettier
+  1828:17  warning  Delete `··`                                                                                                                         prettier/prettier
+  1829:1   warning  Delete `··`                                                                                                                         prettier/prettier
+  1830:1   warning  Delete `··`                                                                                                                         prettier/prettier
+  1831:19  warning  Delete `··`                                                                                                                         prettier/prettier
+  1832:1   warning  Delete `··`                                                                                                                         prettier/prettier
+  1833:1   warning  Delete `··`                                                                                                                         prettier/prettier
+  1834:19  warning  Delete `··`                                                                                                                         prettier/prettier
+  1835:19  warning  Delete `··`                                                                                                                         prettier/prettier
+  1836:1   warning  Delete `··`                                                                                                                         prettier/prettier
+  1837:15  warning  Delete `··`                                                                                                                         prettier/prettier
+  1838:1   warning  Delete `··`                                                                                                                         prettier/prettier
+  1839:15  warning  Delete `··`                                                                                                                         prettier/prettier
+  1840:1   warning  Delete `··`                                                                                                                         prettier/prettier
+  1844:17  warning  Delete `··`                                                                                                                         prettier/prettier
+  1845:1   warning  Replace `····················` with `··················`                                                                            prettier/prettier
+  1846:1   warning  Delete `··`                                                                                                                         prettier/prettier
+  1847:19  warning  Delete `··`                                                                                                                         prettier/prettier
+  1848:1   warning  Replace `····················` with `··················`                                                                            prettier/prettier
+  1849:1   warning  Delete `··`                                                                                                                         prettier/prettier
+  1850:19  warning  Delete `··`                                                                                                                         prettier/prettier
+  1851:1   warning  Replace `····················` with `··················`                                                                            prettier/prettier
+  1852:1   warning  Delete `··`                                                                                                                         prettier/prettier
+  1853:19  warning  Delete `··`                                                                                                                         prettier/prettier
+  1854:1   warning  Replace `··················` with `················`                                                                                prettier/prettier
+  1855:1   warning  Delete `··`                                                                                                                         prettier/prettier
+  1856:1   warning  Delete `··`                                                                                                                         prettier/prettier
+  2288:55  warning  Replace `⏎··············Press·comma·or·enter·to·create·a·tag·pill.⏎············` with `Press·comma·or·enter·to·create·a·tag·pill.`  prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/instance-wizard/InstanceSummaryCard.tsx
+  373:67  warning  Replace `⏎······················Total·{resourceLabelPlural}⏎····················` with `Total·{resourceLabelPlural}`  prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/instance-wizard/OrderSuccessStep.tsx
+  476:11  warning  Unexpected console statement  no-console
+  551:11  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/instance-wizard/ReviewSubmitStep.tsx
+  56:3  warning  'onEditConfiguration' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/instance-wizard/StepIndicator.tsx
+  13:17  warning  'index' is defined but never used          no-unused-vars
+  38:36  warning  'index' is defined but never used          no-unused-vars
+  49:17  warning  'Icon' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/instance-wizard/TemplateSelector.tsx
+  1:17  warning  'useMemo' is defined but never used   no-unused-vars
+  6:14  warning  'template' is defined but never used  no-unused-vars
+  7:18  warning  'template' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/instance-wizard/WorkflowSelectionStep.tsx
+  30:18  warning  'mode' is defined but never used     no-unused-vars
+  31:25  warning  'type' is defined but never used     no-unused-vars
+  32:20  warning  'id' is defined but never used       no-unused-vars
+  33:18  warning  'id' is defined but never used       no-unused-vars
+  34:21  warning  'country' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/object-storage/DeleteStorageAccountModal.tsx
+  24:3  warning  'accountId' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/object-storage/DropzoneUploader.tsx
+    5:8   warning  'ToastUtils' is defined but never used                                                                               no-unused-vars
+   47:10  warning  'isUploading' is assigned a value but never used                                                                     no-unused-vars
+  155:5   warning  React Hook useCallback has a missing dependency: 'processUploads'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/object-storage/ExtendStorageModal.tsx
+  52:6  warning  React Hook useEffect has a missing dependency: 'loadPricing'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/object-storage/ObjectStorageAccountDetail.tsx
+   97:11  warning  Unexpected console statement  no-console
+  114:7   warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/object-storage/ObjectStorageAnalytics.tsx
+   8:3  warning  'AlertTriangle' is defined but never used                                                                         no-unused-vars
+  16:3  warning  'LineChart' is defined but never used                                                                             no-unused-vars
+  17:3  warning  'Line' is defined but never used                                                                                  no-unused-vars
+  60:3  warning  'accountName' is defined but never used                                                                           no-unused-vars
+  68:6  warning  React Hook useEffect has a missing dependency: 'loadAnalytics'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  82:9  warning  'formatBytes' is assigned a value but never used                                                                  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/object-storage/ObjectStorageBrowser.tsx
+  111:9  warning  'navigateUp' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/object-storage/ObjectStorageCredentials.tsx
+  35:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/object-storage/ObjectStorageFileBrowser.tsx
+   25:3   warning  'BookOpen' is defined but never used                                                                             no-unused-vars
+   46:21  warning  'name' is defined but never used                                                                                 no-unused-vars
+  117:6   warning  React Hook useEffect has a missing dependency: 'fetchObjects'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  123:6   warning  React Hook useEffect has a missing dependency: 'bucketName'. Either include it or remove the dependency array    react-hooks/exhaustive-deps
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/object-storage/ObjectStorageOrderSuccessStep.tsx
+  114:7  warning  Unexpected console statement                                                                                                              no-console
+  132:7  warning  React Hook useEffect has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked  react-hooks/exhaustive-deps
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/object-storage/ObjectStoragePaymentStep.tsx
+  30:24  warning  'payload' is defined but never used  no-unused-vars
+  31:28  warning  'option' is defined but never used   no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/object-storage/ObjectStoragePlanSelector.jsx
+  1:8   warning  'React' is defined but never used      no-unused-vars
+  2:10  warning  'ArrowLeft' is defined but never used  no-unused-vars
+  2:21  warning  'HardDrive' is defined but never used  no-unused-vars
+  2:32  warning  'Rocket' is defined but never used     no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/object-storage/ObjectStorageProfileCard.tsx
+  15:14  warning  'updates' is defined but never used    no-unused-vars
+  17:20  warning  'region' is defined but never used     no-unused-vars
+  18:18  warning  'tierKey' is defined but never used    no-unused-vars
+  19:20  warning  'months' is defined but never used     no-unused-vars
+  20:23  warning  'storageGb' is defined but never used  no-unused-vars
+  21:18  warning  'name' is defined but never used       no-unused-vars
+  22:24  warning  'unitPrice' is defined but never used  no-unused-vars
+  33:3   warning  'onUpdate' is defined but never used   no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/object-storage/ObjectStorageServiceStep.tsx
+  19:21  warning  'id' is defined but never used         no-unused-vars
+  20:20  warning  'id' is defined but never used         no-unused-vars
+  20:32  warning  'region' is defined but never used     no-unused-vars
+  21:18  warning  'id' is defined but never used         no-unused-vars
+  21:30  warning  'tierKey' is defined but never used    no-unused-vars
+  22:20  warning  'id' is defined but never used         no-unused-vars
+  22:32  warning  'months' is defined but never used     no-unused-vars
+  23:23  warning  'id' is defined but never used         no-unused-vars
+  23:35  warning  'storageGb' is defined but never used  no-unused-vars
+  24:18  warning  'id' is defined but never used         no-unused-vars
+  24:30  warning  'name' is defined but never used       no-unused-vars
+  25:24  warning  'id' is defined but never used         no-unused-vars
+  25:36  warning  'unitPrice' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/object-storage/ObjectStorageSidebar.tsx
+  42:20  warning  'bucketName' is defined but never used  no-unused-vars
+  43:20  warning  'name' is defined but never used        no-unused-vars
+  44:20  warning  'bucket' is defined but never used      no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/object-storage/ObjectStorageSubscription.tsx
+   10:3   warning  'Clock' is defined but never used                                                                                    no-unused-vars
+   64:6   warning  React Hook useEffect has a missing dependency: 'loadSubscription'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  364:79  warning  Replace `⏎················Renewal·Period⏎··············` with `Renewal·Period`                                       prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/object-storage/ObjectStorageTable.jsx
+   1:8   warning  'React' is defined but never used                 no-unused-vars
+   3:3   warning  'AlertCircle' is defined but never used           no-unused-vars
+   4:3   warning  'ArrowRight' is defined but never used            no-unused-vars
+   5:3   warning  'Database' is defined but never used              no-unused-vars
+   7:3   warning  'RefreshCw' is defined but never used             no-unused-vars
+   8:3   warning  'Search' is defined but never used                no-unused-vars
+   9:3   warning  'ExternalLink' is defined but never used          no-unused-vars
+  60:7   warning  'StatusBadge' is assigned a value but never used  no-unused-vars
+  72:7   warning  'EmptyState' is assigned a value but never used   no-unused-vars
+  72:29  warning  'Icon' is assigned a value but never used         no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/object-storage/ObjectStorageTransactions.tsx
+  11:3  warning  'ExternalLink' is defined but never used                                                                             no-unused-vars
+  46:6  warning  React Hook useEffect has a missing dependency: 'loadTransactions'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/object-storage/ObjectStorageWorkflowStep.tsx
+   10:18  warning  'mode' is defined but never used                                                                                                              no-unused-vars
+   16:25  warning  'type' is defined but never used                                                                                                              no-unused-vars
+   18:20  warning  'id' is defined but never used                                                                                                                no-unused-vars
+   20:18  warning  'id' is defined but never used                                                                                                                no-unused-vars
+   28:21  warning  'code' is defined but never used                                                                                                              no-unused-vars
+  116:58  warning  Replace `⏎······················Skip·payment·and·provision·immediately.⏎····················` with `Skip·payment·and·provision·immediately.`  prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/objectStorage/ObjectStorageCreateForm.tsx
+    73:14  warning  'props' is defined but never used                                                                                                                                                                                no-unused-vars
+    99:7   warning  'getPricingRegionCode' is assigned a value but never used                                                                                                                                                        no-unused-vars
+   148:7   warning  'isSiloStoragePricing' is assigned a value but never used                                                                                                                                                        no-unused-vars
+   465:9   warning  The 'tenants' conditional could make the dependencies of useMemo Hook (at line 665) change on every render. To fix this, wrap the initialization of 'tenants' in its own useMemo() Hook                          react-hooks/exhaustive-deps
+   467:9   warning  The 'userPool' conditional could make the dependencies of useMemo Hook (at line 695) change on every render. To fix this, wrap the initialization of 'userPool' in its own useMemo() Hook                        react-hooks/exhaustive-deps
+   487:9   warning  The 'regions' conditional could make the dependencies of useMemo Hook (at line 569) change on every render. To fix this, wrap the initialization of 'regions' in its own useMemo() Hook                          react-hooks/exhaustive-deps
+   487:9   warning  The 'regions' conditional could make the dependencies of useMemo Hook (at line 587) change on every render. To fix this, wrap the initialization of 'regions' in its own useMemo() Hook                          react-hooks/exhaustive-deps
+   529:9   warning  The 'paymentOptions' logical expression could make the dependencies of useEffect Hook (at line 1293) change on every render. To fix this, wrap the initialization of 'paymentOptions' in its own useMemo() Hook  react-hooks/exhaustive-deps
+   697:9   warning  'filteredClientOptions' is assigned a value but never used                                                                                                                                                       no-unused-vars
+   730:6   warning  React Hook useMemo has missing dependencies: 'resolveClientName' and 'resolveTenantName'. Either include them or remove the dependency array                                                                     react-hooks/exhaustive-deps
+   772:6   warning  React Hook useMemo has a missing dependency: 'selectedCurrency'. Either include it or remove the dependency array                                                                                                react-hooks/exhaustive-deps
+   907:6   warning  React Hook useMemo has an unnecessary dependency: 'formData.countryCode'. Either exclude it or remove the dependency array                                                                                       react-hooks/exhaustive-deps
+  1288:6   warning  React Hook useEffect has a missing dependency: 'goToStep'. Either include it or remove the dependency array                                                                                                      react-hooks/exhaustive-deps
+  1352:13  warning  'aggregatedUnitPrice' is assigned a value but never used                                                                                                                                                         no-unused-vars
+  1452:9   warning  Unexpected console statement                                                                                                                                                                                     no-console
+  1482:7   warning  Unexpected console statement                                                                                                                                                                                     no-console
+  1497:9   warning  'handlePaystackCard' is assigned a value but never used                                                                                                                                                          no-unused-vars
+  1558:11  warning  Unexpected console statement                                                                                                                                                                                     no-console
+  1564:7   warning  Unexpected console statement                                                                                                                                                                                     no-console
+  1586:11  warning  'amount' is assigned a value but never used                                                                                                                                                                      no-unused-vars
+  1587:11  warning  'currency' is assigned a value but never used                                                                                                                                                                    no-unused-vars
+  1588:11  warning  'paymentLink' is assigned a value but never used                                                                                                                                                                 no-unused-vars
+  1593:11  warning  'requiresPayment' is assigned a value but never used                                                                                                                                                             no-unused-vars
+  1708:9   warning  'renderStepActions' is assigned a value but never used                                                                                                                                                           no-unused-vars
+  2235:81  warning  Replace `⏎····················Billing·country⏎··················` with `Billing·country`                                                                                                                         prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/objectStorage/ObjectStorageCreateLayout.jsx
+   1:8  warning  'React' is defined but never used                      no-unused-vars
+   2:8  warning  'ObjectStoragePlanSelector' is defined but never used  no-unused-vars
+  11:3  warning  'persona' is assigned a value but never used           no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/objectStorage/ObjectStoragePlanActions.jsx
+  1:8   warning  'React' is defined but never used        no-unused-vars
+  2:10  warning  'ArrowLeft' is defined but never used    no-unused-vars
+  2:21  warning  'MapPin' is defined but never used       no-unused-vars
+  2:29  warning  'ShieldCheck' is defined but never used  no-unused-vars
+  2:42  warning  'Zap' is defined but never used          no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/objectStorage/ObjectStoragePlanSelector.jsx
+  1:8   warning  'React' is defined but never used      no-unused-vars
+  2:10  warning  'ArrowLeft' is defined but never used  no-unused-vars
+  2:21  warning  'HardDrive' is defined but never used  no-unused-vars
+  2:32  warning  'Rocket' is defined but never used     no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/objectStorage/ObjectStorageTable.jsx
+   1:8   warning  'React' is defined but never used                 no-unused-vars
+   3:3   warning  'AlertCircle' is defined but never used           no-unused-vars
+   4:3   warning  'ArrowRight' is defined but never used            no-unused-vars
+   5:3   warning  'Database' is defined but never used              no-unused-vars
+   7:3   warning  'RefreshCw' is defined but never used             no-unused-vars
+   8:3   warning  'Search' is defined but never used                no-unused-vars
+   9:3   warning  'ExternalLink' is defined but never used          no-unused-vars
+  60:7   warning  'StatusBadge' is assigned a value but never used  no-unused-vars
+  72:7   warning  'EmptyState' is assigned a value but never used   no-unused-vars
+  72:29  warning  'Icon' is assigned a value but never used         no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/settings/AccountSettingsContent.tsx
+  108:50  warning  'isResetting' is assigned a value but never used  no-unused-vars
+  110:58  warning  'isImporting' is assigned a value but never used  no-unused-vars
+  445:13  warning  Unexpected console statement                      no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/settings/SecurityTwoFactorPanel.tsx
+  7:14  warning  'event' is defined but never used  no-unused-vars
+  8:15  warning  'event' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/sidebar/CollapsibleMenu.tsx
+    3:23  warning  'ChevronRight' is defined but never used                                                                                                                                                            no-unused-vars
+   29:18  warning  'path' is defined but never used                                                                                                                                                                    no-unused-vars
+   69:21  warning  Replace `⏎··············?·"bg-white/15·text-white"⏎·············` with `·?·"bg-white/15·text-white"`                                                                                                prettier/prettier
+  113:26  warning  Replace `⏎················isActive·?·"text-[--theme-heading-color]"·:·"text-[--theme-muted-color]"⏎··············` with `isActive·?·"text-[--theme-heading-color]"·:·"text-[--theme-muted-color]"`  prettier/prettier
+  140:17  warning  'path' is defined but never used                                                                                                                                                                    no-unused-vars
+  190:69  warning  Insert `⏎············`                                                                                                                                                                              prettier/prettier
+  191:11  warning  Delete `··`                                                                                                                                                                                         prettier/prettier
+  212:21  error    React Hook "React.useRef" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                     react-hooks/rules-of-hooks
+  213:45  error    React Hook "React.useState" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                   react-hooks/rules-of-hooks
+  215:34  error    React Hook "React.useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                react-hooks/rules-of-hooks
+  219:19  warning  Replace `'fixed'` with `"fixed"`                                                                                                                                                                    prettier/prettier
+  249:13  warning  Replace `⏎··········className="hidden·group-hover:block"⏎··········style={dropdownStyle}⏎········` with `·className="hidden·group-hover:block"·style={dropdownStyle}`                               prettier/prettier
+  309:72  warning  Insert `⏎··········`                                                                                                                                                                                prettier/prettier
+  310:1   warning  Delete `··`                                                                                                                                                                                         prettier/prettier
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/shared/components/ui/SelectableInput.jsx
+  1:8   warning  'React' is defined but never used        no-unused-vars
+  3:10  warning  'ChevronDown' is defined but never used  no-unused-vars
+  3:23  warning  'Loader2' is defined but never used      no-unused-vars
+  3:32  warning  'X' is defined but never used            no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/tenantDashboard/components/TenantClientPageShell.jsx
+  1:8  warning  'React' is defined but never used               no-unused-vars
+  2:8  warning  'Sidebar' is defined but never used             no-unused-vars
+  3:8  warning  'HeaderBar' is defined but never used           no-unused-vars
+  4:8  warning  'DashboardPageShell' is defined but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/tenantDashboard/components/TenantSidebar.tsx
+  35:7  warning  Unexpected console statement  no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/tenantDashboard/pages/TenantBillingSettings.tsx
+  71:9  warning  'queryClient' is assigned a value but never used  no-unused-vars
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/tenantDashboard/pages/tenant-signin.tsx
+  24:11  warning  'userEmail' is assigned a value but never used  no-unused-vars
+  90:9   warning  Unexpected console statement                    no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/src/tenantDashboard/pages/tenant-signup.tsx
+   20:11  warning  'userEmail' is assigned a value but never used  no-unused-vars
+  172:11  warning  Unexpected console statement                    no-console
+
+/Users/mac_1/Documents/GitHub/unicloud/web/tailwind.config.js
+  3:16  error  'require' is not defined  no-undef
+  5:1   error  'module' is not defined   no-undef
+
+✖ 796 problems (6 errors, 790 warnings)
+  0 errors and 226 warnings potentially fixable with the `--fix` option.
+

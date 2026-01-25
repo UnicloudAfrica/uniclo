@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import Sidebar from "./TenantSidebar";
 import HeaderBar from "./TenantHeadbar";
 import DashboardPageShell from "../../shared/layouts/DashboardPageShell";
-import { useTenantBrandingTheme } from "../../hooks/useBrandingTheme";
+import { resolveBrandLogo, useTenantBrandingTheme } from "../../hooks/useBrandingTheme";
+import defaultLogo from "../pages/assets/logo.png";
 
 const TenantClientPageShell = ({
   title,
@@ -27,8 +28,8 @@ const TenantClientPageShell = ({
 
   const tenantData = {
     name: theme?.company?.name || "Tenant",
-    logo: theme?.logo || "",
-    color: theme?.accentColor || "#1C1C1C",
+    logo: resolveBrandLogo(theme, defaultLogo),
+    color: theme?.accentColor || "#288DD1",
   };
 
   return (
@@ -47,7 +48,7 @@ const TenantClientPageShell = ({
         homeHref="/dashboard"
         mainClassName={["tenant-dashboard-shell", className].filter(Boolean).join(" ").trim()}
         contentClassName={contentClassName}
-        backgroundColor="#F9FAFB"
+        backgroundColor="var(--theme-surface-alt)"
         {...rest}
       >
         {children}

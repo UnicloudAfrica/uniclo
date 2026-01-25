@@ -11,7 +11,7 @@ const TenantPageShell: React.FC<TenantPageShellProps> = (props: any) => (
   <DashboardPageShell
     homeHref="/dashboard"
     mainClassName="tenant-dashboard-shell"
-    backgroundColor="#F9FAFB"
+    backgroundColor="var(--theme-surface-alt)"
     {...props}
   />
 );

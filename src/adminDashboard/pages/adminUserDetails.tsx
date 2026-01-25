@@ -75,7 +75,7 @@ const AdminUserDetails = () => {
       value: fullName || "Unnamed admin",
       hint: adminRecord?.role ? `Role • ${adminRecord.role}` : "Role not assigned",
       icon: CircleUserRound,
-      accentBg: "bg-[#288DD1]/10",
+      accentBg: "bg-primary/10",
       accentText: "text-[#288DD1]",
     },
     {
@@ -182,7 +182,7 @@ const AdminUserDetails = () => {
               {summaryCards.map(({ label, value, hint, icon: Icon, accentBg, accentText }) => (
                 <div
                   key={label}
-                  className="rounded-3xl border border-[#EAECF0] bg-white p-5 shadow-sm transition hover:border-[#288DD1]/50 hover:shadow-md"
+                  className="rounded-3xl border border-[#EAECF0] bg-white p-5 shadow-sm transition hover:border-primary/50 hover:shadow-md"
                 >
                   <div className="flex items-start gap-3">
                     <span

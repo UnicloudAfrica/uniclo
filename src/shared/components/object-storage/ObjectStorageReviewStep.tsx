@@ -44,9 +44,9 @@ export const ObjectStorageReviewStep: React.FC<ObjectStorageReviewStepProps> = (
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-slate-200 bg-white p-6 text-center">
-        <h2 className="text-2xl font-bold text-slate-900">Review & Provision</h2>
-        <p className="mt-2 text-sm text-slate-600">
+      <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
+        <h2 className="text-2xl font-bold text-gray-900">Review & Provision</h2>
+        <p className="mt-2 text-sm text-gray-600">
           Confirm your Silo Storage order details before provisioning.
         </p>
 
@@ -86,7 +86,7 @@ export const ObjectStorageReviewStep: React.FC<ObjectStorageReviewStepProps> = (
           </ModernButton>
         </div>
 
-        <p className="mt-4 text-xs text-slate-500">
+        <p className="mt-4 text-xs text-gray-500">
           {isFastTrack
             ? "Fast-track requests provision immediately."
             : "Provisioning begins once payment is verified."}

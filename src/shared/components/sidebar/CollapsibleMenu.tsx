@@ -65,10 +65,9 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({
       <li>
         <button
           onClick={onClick}
-          className={`w-full flex items-center py-2 px-4 space-x-3 text-left transition-all duration-200 rounded-lg ${isActive
-            ? "bg-[#ffffff15] text-white"
-            : "text-gray-200 hover:bg-[#ffffff15] hover:text-white"
-            }`}
+          className={`w-full flex items-center py-2 px-4 space-x-3 text-left transition-all duration-200 rounded-lg ${
+            isActive ? "bg-white/15 text-white" : "text-white/80 hover:bg-white/15 hover:text-white"
+          }`}
         >
           <div className="flex items-center justify-center w-4 h-4 flex-shrink-0">
             {isLucide ? (
@@ -91,20 +90,26 @@ const MenuItemComponent: React.FC<MenuItemComponentProps> = ({
     <li>
       <button
         onClick={onClick}
-        className={`w-full flex items-center py-2 ${isNested ? "px-6" : "px-3.5"} space-x-2 text-left transition-all duration-200 hover:bg-gray-50 ${isActive ? "text-[#1C1C1C]" : "text-[#676767] hover:text-[#1C1C1C]"
-          }`}
+        className={`w-full flex items-center py-2 ${isNested ? "px-6" : "px-3.5"} space-x-2 text-left transition-all duration-200 hover:bg-[--theme-color-10] ${
+          isActive
+            ? "text-[--theme-heading-color]"
+            : "text-[--theme-muted-color] hover:text-[--theme-heading-color]"
+        }`}
         title={isCollapsed ? item.name : ""}
-        style={themeColor && isActive ? { backgroundColor: `${themeColor}15` } : undefined}
+        style={isActive ? { backgroundColor: "var(--theme-color-10)" } : undefined}
       >
         <div className="relative flex items-center justify-center w-5 h-5 flex-shrink-0">
           {isActive && !isNested && (
             <div
               className="absolute left-[-14px] w-1 h-4 rounded-[3px]"
-              style={{ backgroundColor: themeColor || "#1C1C1C" }}
+              style={{ backgroundColor: themeColor || "var(--theme-color)" }}
             />
           )}
           {isLucide ? (
-            <Icon size={16} className={isActive ? "text-[#1C1C1C]" : "text-[#676767]"} />
+            <Icon
+              size={16}
+              className={isActive ? "text-[--theme-heading-color]" : "text-[--theme-muted-color]"}
+            />
           ) : (
             <img
               src={isActive ? item.activeIcon : (item.icon as string)}
@@ -151,12 +156,30 @@ const MenuGroupComponent: React.FC<MenuGroupComponentProps> = ({
     setIsOpen((prev) => !prev);
   }, []);
 
+  // Desktop collapsed state - show only icon with tooltip
+  // Use a ref and state to position the dropdown using fixed positioning
+  // This ensures it escapes any overflow:hidden/auto parent containers
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
+  const [dropdownStyle, setDropdownStyle] = React.useState<React.CSSProperties>({});
+
+  const updateDropdownPosition = React.useCallback(() => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownStyle({
+        position: "fixed",
+        top: rect.top,
+        left: rect.right + 4,
+        zIndex: 9999,
+      });
+    }
+  }, []);
+
   if (isMobile) {
     return (
       <li>
         <button
           onClick={toggleOpen}
-          className="w-full flex items-center justify-between py-2 px-4 text-left transition-all duration-200 rounded-lg text-gray-200 hover:bg-[#ffffff15] hover:text-white"
+          className="w-full flex items-center justify-between py-2 px-4 text-left transition-all duration-200 rounded-lg text-white/80 hover:bg-white/15 hover:text-white"
         >
           <div className="flex items-center space-x-3">
             <div className="flex items-center justify-center w-4 h-4 flex-shrink-0">
@@ -178,8 +201,9 @@ const MenuGroupComponent: React.FC<MenuGroupComponentProps> = ({
           />
         </button>
         <ul
-          className={`overflow-hidden transition-all duration-200 ${isOpen ? "max-h-96 opacity-100 mt-1" : "max-h-0 opacity-0"
-            }`}
+          className={`overflow-hidden transition-all duration-200 ${
+            isOpen ? "max-h-96 opacity-100 mt-1" : "max-h-0 opacity-0"
+          }`}
         >
           {group.children.map((child) => (
             <MenuItemComponent
@@ -197,47 +221,31 @@ const MenuGroupComponent: React.FC<MenuGroupComponentProps> = ({
     );
   }
 
-  // Desktop collapsed state - show only icon with tooltip
-  // Use a ref and state to position the dropdown using fixed positioning
-  // This ensures it escapes any overflow:hidden/auto parent containers
-  const buttonRef = React.useRef<HTMLButtonElement>(null);
-  const [dropdownStyle, setDropdownStyle] = React.useState<React.CSSProperties>({});
-
-  const updateDropdownPosition = React.useCallback(() => {
-    if (buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      setDropdownStyle({
-        position: 'fixed',
-        top: rect.top,
-        left: rect.right + 4,
-        zIndex: 9999,
-      });
-    }
-  }, []);
-
   if (isCollapsed) {
     return (
       <li className="relative group" onMouseEnter={updateDropdownPosition}>
         <button
           ref={buttonRef}
-          className="w-full flex items-center justify-center py-2 px-3.5 transition-all duration-200 hover:bg-gray-50 text-[#676767] hover:text-[#1C1C1C]"
+          className="w-full flex items-center justify-center py-2 px-3.5 transition-all duration-200 hover:bg-[--theme-color-10] text-[--theme-muted-color] hover:text-[--theme-heading-color]"
           title={group.name}
         >
           <div className="relative flex items-center justify-center w-5 h-5 flex-shrink-0">
             {isLucide ? (
-              <Icon size={16} className={hasActiveChild ? "text-[#1C1C1C]" : "text-[#676767]"} />
+              <Icon
+                size={16}
+                className={
+                  hasActiveChild ? "text-[--theme-heading-color]" : "text-[--theme-muted-color]"
+                }
+              />
             ) : (
               <img src={group.icon as string} className="w-4 h-4" alt={group.name} />
             )}
           </div>
         </button>
         {/* Hover dropdown for collapsed state - uses fixed positioning */}
-        <div
-          className="hidden group-hover:block"
-          style={dropdownStyle}
-        >
-          <div className="bg-white border border-[#C8CBD9] rounded-lg shadow-lg py-2 min-w-[180px]">
-            <div className="px-3 py-1 text-xs font-medium text-[#676767] border-b border-[#ECEDF0] mb-1">
+        <div className="hidden group-hover:block" style={dropdownStyle}>
+          <div className="bg-[--theme-card-bg] border border-[--theme-border-color] rounded-lg shadow-lg py-2 min-w-[180px]">
+            <div className="px-3 py-1 text-xs font-medium text-[--theme-muted-color] border-b border-[--theme-border-color] mb-1">
               {group.name}
             </div>
             <ul>
@@ -245,10 +253,11 @@ const MenuGroupComponent: React.FC<MenuGroupComponentProps> = ({
                 <li key={child.name}>
                   <button
                     onClick={() => onItemClick(child.path)}
-                    className={`w-full flex items-center py-2 px-3 space-x-2 text-left transition-all duration-200 hover:bg-gray-50 ${activePath === child.path || activePath.startsWith(child.path + "/")
-                      ? "text-[#1C1C1C] bg-gray-50"
-                      : "text-[#676767] hover:text-[#1C1C1C]"
-                      }`}
+                    className={`w-full flex items-center py-2 px-3 space-x-2 text-left transition-all duration-200 hover:bg-[--theme-color-10] ${
+                      activePath === child.path || activePath.startsWith(child.path + "/")
+                        ? "text-[--theme-heading-color] bg-[--theme-color-10]"
+                        : "text-[--theme-muted-color] hover:text-[--theme-heading-color]"
+                    }`}
                   >
                     <span className="text-sm font-normal font-Outfit">{child.name}</span>
                   </button>
@@ -266,12 +275,17 @@ const MenuGroupComponent: React.FC<MenuGroupComponentProps> = ({
     <li>
       <button
         onClick={toggleOpen}
-        className="w-full flex items-center justify-between py-2 px-3.5 text-left transition-all duration-200 hover:bg-gray-50 text-[#676767] hover:text-[#1C1C1C]"
+        className="w-full flex items-center justify-between py-2 px-3.5 text-left transition-all duration-200 hover:bg-[--theme-color-10] text-[--theme-muted-color] hover:text-[--theme-heading-color]"
       >
         <div className="flex items-center space-x-2">
           <div className="relative flex items-center justify-center w-5 h-5 flex-shrink-0">
             {isLucide ? (
-              <Icon size={16} className={hasActiveChild ? "text-[#1C1C1C]" : "text-[#676767]"} />
+              <Icon
+                size={16}
+                className={
+                  hasActiveChild ? "text-[--theme-heading-color]" : "text-[--theme-muted-color]"
+                }
+              />
             ) : (
               <img src={group.icon as string} className="w-4 h-4" alt={group.name} />
             )}
@@ -282,12 +296,13 @@ const MenuGroupComponent: React.FC<MenuGroupComponentProps> = ({
         </div>
         <ChevronDown
           size={14}
-          className={`text-[#676767] transition-transform duration-200 ${isOpen ? "rotate-0" : "-rotate-90"}`}
+          className={`text-[--theme-muted-color] transition-transform duration-200 ${isOpen ? "rotate-0" : "-rotate-90"}`}
         />
       </button>
       <ul
-        className={`overflow-hidden transition-all duration-200 pl-2 ${isOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
-          }`}
+        className={`overflow-hidden transition-all duration-200 pl-2 ${
+          isOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+        }`}
       >
         {group.children.map((child) => (
           <MenuItemComponent

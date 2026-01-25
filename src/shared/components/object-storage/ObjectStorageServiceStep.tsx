@@ -47,7 +47,7 @@ export const ObjectStorageServiceStep: React.FC<ObjectStorageServiceStepProps> =
 
   return (
     <ModernCard title="Service Profiles">
-      <p className="text-sm text-slate-500 -mt-2 mb-4">
+      <p className="text-sm text-gray-500 -mt-2 mb-4">
         Configure your Silo Storage profiles. Select regions, tiers, storage size, and contract
         length.
       </p>
@@ -84,7 +84,7 @@ export const ObjectStorageServiceStep: React.FC<ObjectStorageServiceStepProps> =
           <ModernButton variant="outline" onClick={onAddProfile} leftIcon={<Plus size={16} />}>
             Add another profile
           </ModernButton>
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-gray-500">
             {profiles.length} of {maxProfiles} profiles
           </span>
         </div>

@@ -133,7 +133,7 @@ const Services = () => {
           <div className=" grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[32px] w-full mt-12">
             {data.map((item, index) => (
               <div key={index} className="w-full text-center">
-                <div className=" w-full bg-gradient-to-r from-[#288DD11A] to-[#3FE0C81A] relative md:h-[300px] rounded-[20px] p-6">
+                <div className=" w-full bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.1)] to-[rgb(var(--secondary-color-rgb)/0.1)] relative md:h-[300px] rounded-[20px] p-6">
                   <img src={item.img} className=" w-16 h-16" alt="" />
                   <p className="text-left mt-6 text-lg md:text-xl font-medium">{item.topic}</p>
                   <p className="text-left mt-1 text-[#1E1E1ECC] text-sm">{item.content}</p>
@@ -149,7 +149,7 @@ const Services = () => {
                     <button
                         className={`font-medium font-Outfit text-sm py-2 px-5 rounded-[20px] transition-all ${
                             activeButton === 'Monthly'
-                                ? ' bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] text-[#121212]'
+                                ? ' bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] text-[#121212]'
                                 : ''
                         }`}
                         onClick={() => {handleButtonClick('Monthly')}}
@@ -159,7 +159,7 @@ const Services = () => {
                     <button
                     className={`font-medium font-Outfit text-sm py-2 px-5 rounded-[20px] transition-all ${
                         activeButton === 'Yearly'
-                            ? ' bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] text-[#121212]'
+                            ? ' bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] text-[#121212]'
                             : ''
                     }`}
                     onClick={() => {handleButtonClick('Yearly')}}
@@ -190,7 +190,7 @@ const Services = () => {
                                     <p className="">{item.ram}</p>
                                 </span>
                             </div>
-                            <Link to='/about'><button className=' mt-4 flex bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] w-full justify-center rounded-[30px] py-3 items-center'>
+                            <Link to='/about'><button className=' mt-4 flex bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] w-full justify-center rounded-[30px] py-3 items-center'>
                                 <p className=' text-[#121212] text-base'>Get Started</p>
                             </button></Link>
                         </div>
@@ -230,7 +230,7 @@ const Services = () => {
           </div>
 
           <motion.div className=" md:mt-[128px]  py-[3em] w-full font-Outfit text-[#fff]">
-            <div className=" w-full h-[400px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] relative md:space-y-4">
+            <div className=" w-full h-[400px] md:h-[300px] flex justify-center items-center text-center flex-col rounded-[30px] bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] relative md:space-y-4">
               <img
                 src={adbg}
                 className="hidden md:block absolute left-0 w-full h-full object-cover rounded-[30px]"

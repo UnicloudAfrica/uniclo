@@ -4,7 +4,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
-  CheckCircle,
   Clock,
   Layers,
   MapPin,
@@ -14,7 +13,6 @@ import {
   XCircle,
   Wifi,
   Route,
-  ArrowLeft,
 } from "lucide-react";
 import AdminActiveTab from "../components/adminActiveTab";
 import AdminPageShell from "../components/AdminPageShell";
@@ -152,7 +150,14 @@ interface InviteForm {
 const decodeId = (encodedId: string | null): string | null => {
   if (!encodedId) return null;
   try {
-    return atob(decodeURIComponent(encodedId));
+    const decoded = atob(decodeURIComponent(encodedId));
+    // Sanity check: ensure no control characters (like null byte)
+    // eslint-disable-next-line no-control-regex
+    if (/[\x00-\x1F]/.test(decoded)) {
+      console.warn("Decoded ID contains control characters, rejecting:", decoded);
+      return null;
+    }
+    return decoded;
   } catch (e) {
     console.error("Error decoding ID:", e);
     return null;
@@ -1219,44 +1224,6 @@ export default function AdminProjectDetails() {
   };
   const { mutate: enableVpc, isPending: isVpcEnabling } = useEnableVpc();
 
-  const handleEnableVpc = () => {
-    if (!resolvedProjectId) return;
-    enableVpc(resolvedProjectId, {
-      onSuccess: () => {
-        ToastUtils.success("VPC enablement initiated successfully.");
-        refetchProjectDetails(); // Using refetchProjectDetails as refetchProject was not defined
-      },
-      onError: (error) => {
-        ToastUtils.error(`Failed to enable VPC: ${error.message}`);
-      },
-    });
-  };
-  const handleEdgeSync = async () => {
-    if (!resolvedProjectId || !project?.region) {
-      return;
-    }
-    if (isEdgeSyncing) return;
-    try {
-      setIsEdgeSyncing(true);
-      await syncProjectEdgeConfigAdmin({ project_id: resolvedProjectId, region: project.region });
-      await refetchEdgeConfig();
-    } catch (error) {
-      console.error("Failed to sync edge config:", error);
-    } finally {
-      setIsEdgeSyncing(false);
-    }
-  };
-
-  const handleNavigateAddInstance = () => {
-    if (!resolvedProjectId) return;
-    navigate(`/admin-dashboard/create-instance?project=${encodeURIComponent(resolvedProjectId)}`);
-  };
-  const handleViewInstanceDetails = (instance: any) => {
-    if (!instance?.identifier) return;
-    navigate(
-      `/admin-dashboard/instances/details?identifier=${encodeURIComponent(instance.identifier)}`
-    );
-  };
   const instanceStats = useMemo(() => {
     const base = { total: projectInstances.length, running: 0, provisioning: 0, paymentPending: 0 };
     projectInstances.forEach((instance: any) => {
@@ -1284,6 +1251,7 @@ export default function AdminProjectDetails() {
       .slice(0, 5);
   }, [projectInstances]);
 
+  // eslint-disable-next-line no-unused-vars
   const handleOpenPayment = (entry: any) => {
     setActivePaymentPayload(entry);
     setIsPaymentModalOpen(true);
@@ -1296,6 +1264,12 @@ export default function AdminProjectDetails() {
     closePaymentModal();
     await Promise.all([refetchProjectStatus(), refetchProjectDetails()]);
   };
+
+  const handleNavigateAddInstance = () => {
+    if (!resolvedProjectId) return;
+    navigate(`/admin-dashboard/create-instance?project=${encodeURIComponent(resolvedProjectId)}`);
+  };
+
   const handleToggleMember = (id: number) => {
     setSelectedMemberIds((prev) => {
       const next = new Set(prev);

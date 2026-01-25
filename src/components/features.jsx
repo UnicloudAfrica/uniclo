@@ -28,7 +28,7 @@ const Features = () => {
         </motion.div>
 
         <div className=" grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[32px]  mt-8 md:mt-16">
-          <motion.div className="w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[#288DD11A] to-[#3FE0C81A] p-5 lg:p-7">
+          <motion.div className="w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.1)] to-[rgb(var(--secondary-color-rgb)/0.1)] p-5 lg:p-7">
             <span className=" flex flex-col md:flex-row items-start md:items-center md:space-x-3">
               <img src={beneone} alt="Zero-risk services icon" />
               <p className=" font-medium text-xl mt-2">Zero-risk Cloud Services</p>
@@ -40,7 +40,7 @@ const Features = () => {
             </p>
           </motion.div>
 
-          <motion.div className="w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[#288DD11A] to-[#3FE0C81A] p-5 lg:p-7">
+          <motion.div className="w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.1)] to-[rgb(var(--secondary-color-rgb)/0.1)] p-5 lg:p-7">
             <span className=" flex flex-col md:flex-row items-start md:items-center md:space-x-3">
               <img src={benetwo} alt="Hybrid-ready design icon" />
               <p className=" font-medium text-xl mt-2">Hybrid-Ready by Design</p>
@@ -52,7 +52,7 @@ const Features = () => {
             </p>
           </motion.div>
 
-          <motion.div className="w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[#288DD11A] to-[#3FE0C81A] p-5 lg:p-7">
+          <motion.div className="w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.1)] to-[rgb(var(--secondary-color-rgb)/0.1)] p-5 lg:p-7">
             <span className=" flex flex-col md:flex-row items-start md:items-center md:space-x-3">
               <img src={benethree} alt="Global reach icon" />
               <p className=" font-medium text-xl mt-2">Global Reach, Local Appeal</p>
@@ -64,7 +64,7 @@ const Features = () => {
             </p>
           </motion.div>
 
-          <motion.div className="w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[#288DD11A] to-[#3FE0C81A] p-5 lg:p-7">
+          <motion.div className="w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.1)] to-[rgb(var(--secondary-color-rgb)/0.1)] p-5 lg:p-7">
             <span className=" flex flex-col md:flex-row items-start md:items-center md:space-x-3">
               <img src={benefour} alt="Cloud trust icon" />
               <p className=" font-medium text-xl mt-2">Trust your Cloud</p>
@@ -76,7 +76,7 @@ const Features = () => {
             </p>
           </motion.div>
 
-          <motion.div className="w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[#288DD11A] to-[#3FE0C81A] p-5 lg:p-7">
+          <motion.div className="w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.1)] to-[rgb(var(--secondary-color-rgb)/0.1)] p-5 lg:p-7">
             <span className=" flex flex-col md:flex-row items-start md:items-center md:space-x-3">
               <img src={benefive} alt="Centralized monitoring icon" />
               <p className=" font-medium text-xl mt-2">Centralized and Easy Monitoring</p>
@@ -88,7 +88,7 @@ const Features = () => {
             </p>
           </motion.div>
 
-          <motion.div className="w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[#288DD11A] to-[#3FE0C81A] p-5 lg:p-7">
+          <motion.div className="w-full md:h-[270px] lg:h-auto rounded-[20px] bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.1)] to-[rgb(var(--secondary-color-rgb)/0.1)] p-5 lg:p-7">
             <span className=" flex flex-col md:flex-row items-start md:items-center md:space-x-3">
               <img src={benesix} alt="24/7 support icon" />
               <p className=" font-medium text-xl mt-2">24/7/365 DevOps Support</p>

@@ -140,6 +140,9 @@ export const useProjectInfrastructureStatus = (projectId, options = {}) => {
       if (!projectId) {
         throw new Error("Project ID is required");
       }
+      if (typeof projectId === "string" && projectId.includes("\u0000")) {
+        throw new Error("Invalid Project ID: Contains null byte");
+      }
 
       const response = await api("GET", `/business/project-infrastructure/${projectId}`);
 

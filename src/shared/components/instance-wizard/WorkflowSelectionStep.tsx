@@ -81,10 +81,10 @@ const WorkflowSelectionStep: React.FC<WorkflowSelectionStepProps> = ({
   return (
     <div className="space-y-6">
       <ModernCard title={title}>
-        <p className="text-sm text-slate-500 -mt-2 mb-4">{subtitle}</p>
+        <p className="text-sm text-gray-500 -mt-2 mb-4">{subtitle}</p>
         <div className="space-y-6">
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               Provisioning Mode
             </label>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -94,7 +94,7 @@ const WorkflowSelectionStep: React.FC<WorkflowSelectionStepProps> = ({
                   className={`cursor-pointer rounded-xl border p-4 transition-all ${
                     mode === "standard"
                       ? "border-primary-500 bg-primary-50 ring-1 ring-primary-200"
-                      : "border-slate-200 hover:border-slate-300"
+                      : "border-gray-200 hover:border-gray-300"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -102,14 +102,14 @@ const WorkflowSelectionStep: React.FC<WorkflowSelectionStepProps> = ({
                       className={`rounded-lg p-2 ${
                         mode === "standard"
                           ? "bg-primary-100 text-primary-600"
-                          : "bg-slate-100 text-slate-500"
+                          : "bg-gray-100 text-gray-500"
                       }`}
                     >
                       <CreditCard className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-900">Standard Workflow</p>
-                      <p className="text-xs text-slate-500">
+                      <p className="font-semibold text-gray-900">Standard Workflow</p>
+                      <p className="text-xs text-gray-500">
                         Configure, price, and generate payment link.
                       </p>
                     </div>
@@ -126,10 +126,10 @@ const WorkflowSelectionStep: React.FC<WorkflowSelectionStepProps> = ({
                   }}
                   className={`relative rounded-xl border p-4 transition-all ${
                     fastTrackBlocked
-                      ? "cursor-not-allowed opacity-60 border-slate-200 bg-slate-50"
+                      ? "cursor-not-allowed opacity-60 border-gray-200 bg-gray-50"
                       : mode === "fast-track"
                         ? "cursor-pointer border-primary-500 bg-primary-50 ring-1 ring-primary-200"
-                        : "cursor-pointer border-slate-200 hover:border-slate-300"
+                        : "cursor-pointer border-gray-200 hover:border-gray-300"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -137,14 +137,14 @@ const WorkflowSelectionStep: React.FC<WorkflowSelectionStepProps> = ({
                       className={`rounded-lg p-2 ${
                         mode === "fast-track"
                           ? "bg-primary-100 text-primary-600"
-                          : "bg-slate-100 text-slate-500"
+                          : "bg-gray-100 text-gray-500"
                       }`}
                     >
                       <Gauge className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="font-semibold text-slate-900">Fast-Track</p>
-                      <p className="text-xs text-slate-500">
+                      <p className="font-semibold text-gray-900">Fast-Track</p>
+                      <p className="text-xs text-gray-500">
                         {fastTrackBlocked
                           ? "No fast-track access granted"
                           : "Skip payment and provision immediately."}
@@ -233,7 +233,7 @@ const WorkflowSelectionStep: React.FC<WorkflowSelectionStepProps> = ({
           )}
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Billing Country</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Billing Country</label>
             <ModernSelect
               value={billingCountry}
               onChange={(e) => {

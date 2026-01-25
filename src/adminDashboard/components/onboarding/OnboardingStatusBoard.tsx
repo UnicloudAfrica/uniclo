@@ -256,7 +256,7 @@ const OnboardingStatusBoard: React.FC<OnboardingStatusBoardProps> = ({
             return (
               <div
                 key={step.id}
-                className="rounded-3xl border border-[#EAECF0] bg-gradient-to-br from-white via-[#F8FAFC] to-white p-5 shadow-sm transition hover:border-[#288DD1]/40"
+                className="rounded-3xl border border-[#EAECF0] bg-gradient-to-br from-white via-[#F8FAFC] to-white p-5 shadow-sm transition hover:border-primary/40"
               >
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   <div>

@@ -2,6 +2,7 @@
 import React from "react";
 import { Loader2 } from "lucide-react";
 import ClientBusinessInputs from "../clientComps/subComps/ClientBusinessInputs";
+import { getBaseDomain } from "../../../utils/getSubdomain";
 
 export default function PartnerBusinessStep({
   formData,
@@ -12,6 +13,13 @@ export default function PartnerBusinessStep({
   onBack,
   isPending,
 }) {
+  const baseDomain = getBaseDomain();
+  const domainSuffix = baseDomain ? `.${baseDomain}` : "";
+  const displaySuffix = domainSuffix || ".your-domain.com";
+  const exampleDomain = baseDomain ? `acme.${baseDomain}` : "acme.your-domain.com";
+  const suffixHelp = baseDomain
+    ? `Suffix uses ${baseDomain}. Example: ${exampleDomain}`
+    : `Suffix uses your deployment base domain in production. Example: ${exampleDomain}`;
   return (
     <div className="space-y-4">
       <div>
@@ -29,10 +37,11 @@ export default function PartnerBusinessStep({
             placeholder="mycompany"
           />
           <span className="inline-flex items-center px-3 border border-l-0 border-gray-300 bg-gray-100 rounded-r-lg text-gray-700 text-sm">
-            .unicloudafrica.com
+            {displaySuffix}
           </span>
         </div>
         {errors.subdomain && <p className="text-red-500 text-xs mt-1">{errors.subdomain}</p>}
+        <p className="text-xs text-gray-500 mt-1">{suffixHelp}</p>
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">

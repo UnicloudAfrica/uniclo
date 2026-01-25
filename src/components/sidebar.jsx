@@ -13,10 +13,29 @@ import { initializeApp } from "firebase/app";
 import { getAuth, signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { PageContext } from "../contexts/contextprovider";
+import {
+  resolveBrandLogo,
+  useApplyBrandingTheme,
+  usePublicBrandingTheme,
+} from "../hooks/useBrandingTheme";
+import useImageFallback from "../hooks/useImageFallback";
+import { getSubdomain } from "../utils/getSubdomain";
 
 const Sidebar = () => {
   const [activePage, setActivePage] = useState("General"); // Initially set to the default active page
   const [page, setPage] = useContext(PageContext);
+  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+  const subdomain = typeof window !== "undefined" ? getSubdomain() : null;
+  const { data: branding } = usePublicBrandingTheme({
+    domain: hostname,
+    subdomain,
+  });
+  useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
+  const brandLogoSrc = resolveBrandLogo(branding, logo);
+  const brandLogoAlt = branding?.company?.name
+    ? `${branding.company.name} Logo`
+    : "UniCloud Africa Logo";
+  const { src: resolvedLogoSrc, onError: handleLogoError } = useImageFallback(brandLogoSrc, logo);
 
   const Navigate = useNavigate();
 
@@ -59,7 +78,7 @@ const Sidebar = () => {
   return (
     <>
       <span className=" absolute top-5 right-4 flex md:hidden items-center">
-        <img src={logo} className=" w-12" alt="" />
+        <img src={resolvedLogoSrc} className=" w-12" alt={brandLogoAlt} onError={handleLogoError} />
       </span>
       <div className="fixed top-[80px] left-0 w-[80%] md:w-[100%] h-[100vh] md:border-r pt-6 border-[#00000029]">
         {pages.map((pageItem) => (
@@ -71,7 +90,7 @@ const Sidebar = () => {
             }}
             className={`w-full pl-8 flex py-[10px] space-x-3 items-center ${
               activePage === pageItem.name
-                ? "bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] border-l-[3px] text-[#1e1e1ecc] border-[#3FE0C8CC]"
+                ? "bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] border-l-[3px] text-[#1e1e1ecc] border-[rgb(var(--secondary-color-rgb)/0.8)]"
                 : ""
             }`}
           >

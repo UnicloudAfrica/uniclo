@@ -82,8 +82,8 @@ export const ObjectStorageTransactions: React.FC<ObjectStorageTransactionsProps>
       },
       failed: { bg: "bg-red-100", text: "text-red-700", icon: <XCircle className="h-3.5 w-3.5" /> },
       expired: {
-        bg: "bg-slate-100",
-        text: "text-slate-700",
+        bg: "bg-gray-100",
+        text: "text-gray-700",
         icon: <AlertCircle className="h-3.5 w-3.5" />,
       },
     };
@@ -130,9 +130,9 @@ export const ObjectStorageTransactions: React.FC<ObjectStorageTransactionsProps>
   if (transactions.length === 0) {
     return (
       <div className="text-center py-12">
-        <Receipt className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-slate-700 mb-2">No Transactions Yet</h3>
-        <p className="text-slate-500">Transactions for {accountName} will appear here.</p>
+        <Receipt className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-700 mb-2">No Transactions Yet</h3>
+        <p className="text-gray-500">Transactions for {accountName} will appear here.</p>
       </div>
     );
   }
@@ -142,15 +142,15 @@ export const ObjectStorageTransactions: React.FC<ObjectStorageTransactionsProps>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-slate-800">Transaction History</h3>
-          <p className="text-sm text-slate-500">
+          <h3 className="text-lg font-semibold text-gray-800">Transaction History</h3>
+          <p className="text-sm text-gray-500">
             {total} transaction{total !== 1 ? "s" : ""}
           </p>
         </div>
         <button
           onClick={loadTransactions}
           disabled={loading}
-          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
         >
           <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           Refresh
@@ -158,31 +158,31 @@ export const ObjectStorageTransactions: React.FC<ObjectStorageTransactionsProps>
       </div>
 
       {/* Desktop Table - hidden on mobile */}
-      <div className="hidden md:block bg-white border border-slate-200 rounded-xl overflow-hidden">
+      <div className="hidden md:block bg-white border border-gray-200 rounded-xl overflow-hidden">
         <table className="w-full">
-          <thead className="bg-slate-50 border-b border-slate-200">
+          <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide">
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
                 Transaction
               </th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide">
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
                 Status
               </th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide">
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
                 Amount
               </th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-slate-500 uppercase tracking-wide">
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wide">
                 Date
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-gray-100">
             {transactions.map((tx) => (
-              <tr key={tx.id} className="hover:bg-slate-50 transition-colors">
+              <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-4 py-3">
                   <div>
-                    <p className="font-medium text-slate-800">{tx.identifier}</p>
-                    <p className="text-xs text-slate-500">
+                    <p className="font-medium text-gray-800">{tx.identifier}</p>
+                    <p className="text-xs text-gray-500">
                       {tx.description || tx.type || "Payment"}
                       {tx.payment_method && ` • ${tx.payment_method}`}
                     </p>
@@ -190,12 +190,12 @@ export const ObjectStorageTransactions: React.FC<ObjectStorageTransactionsProps>
                 </td>
                 <td className="px-4 py-3">{getStatusBadge(tx.status)}</td>
                 <td className="px-4 py-3">
-                  <span className="font-medium text-slate-800">
+                  <span className="font-medium text-gray-800">
                     {formatAmount(tx.amount, tx.currency)}
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <span className="text-sm text-slate-600">{formatDate(tx.created_at)}</span>
+                  <span className="text-sm text-gray-600">{formatDate(tx.created_at)}</span>
                 </td>
               </tr>
             ))}
@@ -206,24 +206,24 @@ export const ObjectStorageTransactions: React.FC<ObjectStorageTransactionsProps>
       {/* Mobile Cards - visible only on small screens */}
       <div className="md:hidden space-y-3">
         {transactions.map((tx) => (
-          <div key={tx.id} className="bg-white border border-slate-200 rounded-xl p-4">
+          <div key={tx.id} className="bg-white border border-gray-200 rounded-xl p-4">
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-slate-800 truncate">{tx.identifier}</p>
-                <p className="text-xs text-slate-500 truncate">
+                <p className="font-medium text-gray-800 truncate">{tx.identifier}</p>
+                <p className="text-xs text-gray-500 truncate">
                   {tx.description || tx.type || "Payment"}
                 </p>
               </div>
               {getStatusBadge(tx.status)}
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-lg font-semibold text-slate-800">
+              <span className="text-lg font-semibold text-gray-800">
                 {formatAmount(tx.amount, tx.currency)}
               </span>
-              <span className="text-xs text-slate-500">{formatDate(tx.created_at)}</span>
+              <span className="text-xs text-gray-500">{formatDate(tx.created_at)}</span>
             </div>
             {tx.payment_method && (
-              <p className="text-xs text-slate-400 mt-2">via {tx.payment_method}</p>
+              <p className="text-xs text-gray-400 mt-2">via {tx.payment_method}</p>
             )}
           </div>
         ))}

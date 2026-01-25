@@ -97,7 +97,7 @@ const ObjectStorageAnalytics: React.FC<ObjectStorageAnalyticsProps> = ({
 
   if (!data) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+      <div className="flex flex-col items-center justify-center py-20 text-gray-500">
         <BarChart3 className="h-12 w-12 mb-4 opacity-50" />
         <p>Unable to load analytics data</p>
         <button onClick={loadAnalytics} className="mt-4 text-primary-500 hover:underline">
@@ -116,10 +116,10 @@ const ObjectStorageAnalytics: React.FC<ObjectStorageAnalyticsProps> = ({
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-slate-800">Storage Analytics</h2>
+        <h2 className="text-xl font-bold text-gray-800">Storage Analytics</h2>
         <button
           onClick={loadAnalytics}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
         >
           <RefreshCw className="h-4 w-4" />
           Refresh
@@ -129,32 +129,32 @@ const ObjectStorageAnalytics: React.FC<ObjectStorageAnalyticsProps> = ({
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Used Storage */}
-        <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+        <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <Database className="h-4 w-4 text-primary-500" />
-            <span className="text-sm text-slate-500">Used Storage</span>
+            <span className="text-sm text-gray-500">Used Storage</span>
           </div>
-          <p className="text-2xl font-bold text-slate-800">{current.used_gb} GB</p>
-          <p className="text-xs text-slate-400">
+          <p className="text-2xl font-bold text-gray-800">{current.used_gb} GB</p>
+          <p className="text-xs text-gray-400">
             of {current.quota_gb} GB ({current.usage_percent}%)
           </p>
         </div>
 
         {/* Daily Growth */}
-        <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+        <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             {isGrowing ? (
               <TrendingUp className="h-4 w-4 text-amber-500" />
             ) : (
               <TrendingDown className="h-4 w-4 text-emerald-500" />
             )}
-            <span className="text-sm text-slate-500">Daily Growth</span>
+            <span className="text-sm text-gray-500">Daily Growth</span>
           </div>
-          <p className="text-2xl font-bold text-slate-800">
+          <p className="text-2xl font-bold text-gray-800">
             {isGrowing ? "+" : ""}
             {forecast.avg_daily_growth_gb.toFixed(2)} GB
           </p>
-          <p className="text-xs text-slate-400">average per day</p>
+          <p className="text-xs text-gray-400">average per day</p>
         </div>
 
         {/* Days Until Full */}
@@ -164,26 +164,26 @@ const ObjectStorageAnalytics: React.FC<ObjectStorageAnalyticsProps> = ({
               ? "bg-red-50 border-red-200"
               : isWarning
                 ? "bg-amber-50 border-amber-200"
-                : "bg-white border-slate-200"
+                : "bg-white border-gray-200"
           }`}
         >
           <div className="flex items-center gap-2 mb-2">
             <Clock
-              className={`h-4 w-4 ${isCritical ? "text-red-500" : isWarning ? "text-amber-500" : "text-slate-500"}`}
+              className={`h-4 w-4 ${isCritical ? "text-red-500" : isWarning ? "text-amber-500" : "text-gray-500"}`}
             />
             <span
-              className={`text-sm ${isCritical ? "text-red-600" : isWarning ? "text-amber-600" : "text-slate-500"}`}
+              className={`text-sm ${isCritical ? "text-red-600" : isWarning ? "text-amber-600" : "text-gray-500"}`}
             >
               Days Until Full
             </span>
           </div>
           <p
-            className={`text-2xl font-bold ${isCritical ? "text-red-700" : isWarning ? "text-amber-700" : "text-slate-800"}`}
+            className={`text-2xl font-bold ${isCritical ? "text-red-700" : isWarning ? "text-amber-700" : "text-gray-800"}`}
           >
             {forecast.days_until_full !== null ? `${forecast.days_until_full} days` : "∞"}
           </p>
           <p
-            className={`text-xs ${isCritical ? "text-red-500" : isWarning ? "text-amber-500" : "text-slate-400"}`}
+            className={`text-xs ${isCritical ? "text-red-500" : isWarning ? "text-amber-500" : "text-gray-400"}`}
           >
             {isCritical
               ? "Critical - extend now!"
@@ -207,48 +207,50 @@ const ObjectStorageAnalytics: React.FC<ObjectStorageAnalyticsProps> = ({
       </div>
 
       {/* Usage Trend Chart */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+      <div className="bg-[--theme-card-bg] rounded-xl border border-[--theme-border-color] shadow-sm p-4">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-slate-800">Usage Over Time</h3>
-          <span className="text-xs text-slate-400">Last 30 days</span>
+          <h3 className="font-semibold text-[--theme-heading-color]">Usage Over Time</h3>
+          <span className="text-xs text-[--theme-muted-color]">Last 30 days</span>
         </div>
 
         {!forecast.has_sufficient_data ? (
-          <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+          <div className="flex flex-col items-center justify-center py-12 text-[--theme-muted-color]">
             <Info className="h-10 w-10 mb-3 opacity-50" />
             <p className="text-center">
               Gathering data... ({forecast.data_points} of 7 days collected)
             </p>
-            <p className="text-xs text-slate-400 mt-1">Trends will appear after 7+ days of data</p>
+            <p className="text-xs text-[--theme-muted-color] mt-1">
+              Trends will appear after 7+ days of data
+            </p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={250}>
             <AreaChart data={trend}>
               <defs>
                 <linearGradient id="colorUsage" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                  <stop offset="5%" stopColor="var(--theme-color)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="var(--theme-color)" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--theme-border-color)" />
               <XAxis
                 dataKey="date"
-                tick={{ fontSize: 12, fill: "#94a3b8" }}
+                tick={{ fontSize: 12, fill: "var(--theme-muted-color)" }}
                 tickFormatter={(value) => {
                   const date = new Date(value);
                   return `${date.getMonth() + 1}/${date.getDate()}`;
                 }}
               />
               <YAxis
-                tick={{ fontSize: 12, fill: "#94a3b8" }}
+                tick={{ fontSize: 12, fill: "var(--theme-muted-color)" }}
                 tickFormatter={(value) => `${value}GB`}
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "#1e293b",
+                  backgroundColor: "var(--theme-heading-color)",
                   border: "none",
                   borderRadius: "8px",
-                  color: "#fff",
+                  color: "var(--theme-card-bg)",
                 }}
                 formatter={(value: number) => [`${value.toFixed(2)} GB`, "Usage"]}
                 labelFormatter={(label) => new Date(label).toLocaleDateString()}
@@ -256,7 +258,7 @@ const ObjectStorageAnalytics: React.FC<ObjectStorageAnalyticsProps> = ({
               <Area
                 type="monotone"
                 dataKey="used_gb"
-                stroke="#3b82f6"
+                stroke="var(--theme-color)"
                 strokeWidth={2}
                 fillOpacity={1}
                 fill="url(#colorUsage)"
@@ -285,15 +287,15 @@ const ObjectStorageAnalytics: React.FC<ObjectStorageAnalyticsProps> = ({
 
       {/* Objects & Silos Info */}
       <div className="grid grid-cols-2 gap-4 text-sm">
-        <div className="p-3 bg-slate-50 rounded-lg">
-          <span className="text-slate-500">Total Objects:</span>
-          <span className="ml-2 font-medium text-slate-700">
+        <div className="p-3 bg-[--theme-surface-alt] rounded-lg">
+          <span className="text-[--theme-muted-color]">Total Objects:</span>
+          <span className="ml-2 font-medium text-[--theme-text-color]">
             {current.object_count.toLocaleString()}
           </span>
         </div>
-        <div className="p-3 bg-slate-50 rounded-lg">
-          <span className="text-slate-500">Silos:</span>
-          <span className="ml-2 font-medium text-slate-700">{current.bucket_count}</span>
+        <div className="p-3 bg-[--theme-surface-alt] rounded-lg">
+          <span className="text-[--theme-muted-color]">Silos:</span>
+          <span className="ml-2 font-medium text-[--theme-text-color]">{current.bucket_count}</span>
         </div>
       </div>
     </div>

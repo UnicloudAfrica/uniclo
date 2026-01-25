@@ -194,7 +194,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }: any) =>
                   key={type}
                   className={`flex cursor-pointer flex-col rounded-xl border px-3 py-2 text-sm ${
                     formData.type === type
-                      ? "border-[#288DD1] bg-[#288DD1]/5 text-[#0b4977]"
+                      ? "border-[#288DD1] bg-primary/5 text-primary-700"
                       : "border-gray-300 text-gray-700"
                   }`}
                 >
@@ -301,7 +301,7 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }: any) =>
           <button
             onClick={handleSubmit}
             disabled={isPending}
-            className="w-full rounded-full bg-[#288DD1] px-8 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#1d75b4] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+            className="w-full rounded-full bg-[#288DD1] px-8 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
             {isPending ? (
               <span className="flex items-center justify-center gap-2">

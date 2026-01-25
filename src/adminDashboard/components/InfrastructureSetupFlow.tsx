@@ -228,7 +228,7 @@ const InfrastructureSetupFlow = ({ projectId, region }: any) => {
         {/* Progress Bar */}
         <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
           <div
-            className="bg-gradient-to-r from-[#288DD1] to-[#1976D2] h-3 rounded-full transition-all duration-500 ease-out"
+            className="bg-gradient-to-r from-[var(--theme-color)] to-[rgb(var(--theme-color-600))] h-3 rounded-full transition-all duration-500 ease-out"
             style={{ width: `${overallProgress}%` }}
           />
         </div>

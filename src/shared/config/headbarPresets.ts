@@ -45,7 +45,7 @@ export const buildAdminHeadbarPreset = (logoSrc: string, themeColor?: string): H
   themeColor,
   logo: {
     src: logoSrc,
-    alt: "UniCloud Admin Portal",
+    alt: "Admin Portal",
     link: "/admin-dashboard",
     fallbackSrc: adminLogo,
   },
@@ -57,7 +57,7 @@ export const buildTenantHeadbarPreset = (tenantData?: {
   color?: string;
 }): HeadbarPreset => ({
   ...basePresets.tenant,
-  themeColor: tenantData?.color || "#14547F",
+  themeColor: tenantData?.color || "#288DD1",
   logo: {
     src: tenantData?.logo || adminLogo,
     alt: `${tenantData?.name || "Tenant"} Logo`,

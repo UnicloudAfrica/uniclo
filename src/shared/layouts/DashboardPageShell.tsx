@@ -1,7 +1,6 @@
 import React, { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import SubheaderBlock from "../components/SubheaderBlock";
-import { designTokens } from "../../styles/designTokens";
 
 const toTitleCase = (value: string = ""): string =>
   value
@@ -69,7 +68,7 @@ const DashboardPageShell: React.FC<DashboardPageShellProps> = ({
   contentWrapper: ContentWrapper = "section",
   contentStyle = {},
   disableContentPadding = false,
-  backgroundColor = designTokens.colors.neutral[50],
+  backgroundColor = "var(--theme-surface-alt, #f9fafb)",
   customHeader,
 }) => {
   const location = useLocation();

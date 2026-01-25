@@ -17,13 +17,13 @@ const ObjectStorageCreateLayout = ({
 }) => {
   return (
     <section className="space-y-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
         {description ? (
           typeof description === "string" ? (
-            <p className="mt-2 text-sm text-slate-600">{description}</p>
+            <p className="mt-2 text-sm text-gray-600">{description}</p>
           ) : (
-            <div className="mt-2 text-sm text-slate-600">{description}</div>
+            <div className="mt-2 text-sm text-gray-600">{description}</div>
           )
         ) : null}
       </div>

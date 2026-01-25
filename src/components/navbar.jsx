@@ -1,10 +1,16 @@
 import arrowDown from "./assets/arrow-down.svg";
 import outline from "./assets/outline.svg";
 import { Link } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import { GeneralContext } from "../contexts/contextprovider"; // This seems unused, but I'll leave it.
 import logo from "./assets/logo.png";
-import { useContext } from "react";
+import {
+  resolveBrandLogo,
+  useApplyBrandingTheme,
+  usePublicBrandingTheme,
+} from "../hooks/useBrandingTheme";
+import useImageFallback from "../hooks/useImageFallback";
+import { getSubdomain } from "../utils/getSubdomain";
 
 const Navbar = () => {
   function overlay() {
@@ -25,6 +31,18 @@ const Navbar = () => {
   const [generalitem, setGeneralItem] = useContext(GeneralContext);
 
   const dropdownRef = useRef(null);
+  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+  const subdomain = typeof window !== "undefined" ? getSubdomain() : null;
+  const { data: branding } = usePublicBrandingTheme({
+    domain: hostname,
+    subdomain,
+  });
+  useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
+  const brandLogoSrc = resolveBrandLogo(branding, logo);
+  const brandLogoAlt = branding?.company?.name
+    ? `${branding.company.name} Logo`
+    : "UniCloud Africa Logo";
+  const { src: resolvedLogoSrc, onError: handleLogoError } = useImageFallback(brandLogoSrc, logo);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -117,7 +135,7 @@ const Navbar = () => {
               href="https://calendly.com/unicloud-africa/30min?back=1"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-gradient-to-r from-[#288DD1] via-[#3fd0e0] to-[#3FE0C8] py-3 w-[48%] text-[#fff] text-center font-Outfit font-normal rounded-[30px]"
+              className="bg-gradient-to-r from-[var(--theme-color)] via-[var(--secondary-color)] to-[var(--secondary-color)] py-3 w-[48%] text-[#fff] text-center font-Outfit font-normal rounded-[30px]"
             >
               Register
             </a>
@@ -201,7 +219,12 @@ const Navbar = () => {
       </div>
       <div className=" py-6 z-[99999] px-4 md:px-8 lg:px-16 flex justify-between items-center fixed w-full bg-white top-0 text-[#121212]">
         <span className="">
-          <img src={logo} className=" w-[75px] md:w-[120px]" alt="One cloud one africa" />
+          <img
+            src={resolvedLogoSrc}
+            className=" w-[75px] md:w-[120px]"
+            alt={brandLogoAlt}
+            onError={handleLogoError}
+          />
         </span>
         <div onClick={overlay} className="menu-icon md:hidden">
           <input className="menu-icon__cheeckbox" type="checkbox" />
@@ -389,7 +412,7 @@ const Navbar = () => {
             href="https://calendly.com/unicloud-africa/30min?back=1"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-white px-9 py-3 rounded-[30px] bg-gradient-to-r from-[#288DD1] via-[#3fd0e0] to-[#3FE0C8] hover:opacity-90 transition-opacity"
+            className="text-white px-9 py-3 rounded-[30px] bg-gradient-to-r from-[var(--theme-color)] via-[var(--secondary-color)] to-[var(--secondary-color)] hover:opacity-90 transition-opacity"
           >
             Register
           </a>

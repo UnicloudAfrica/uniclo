@@ -29,7 +29,7 @@ import {
 const BILLING_MODEL_INFO = {
   direct: {
     label: "Direct Payment",
-    description: "Pay UniCloud directly for each order",
+    description: "Pay directly for each order",
     icon: CreditCard,
     color: "blue",
   },
@@ -47,7 +47,7 @@ const BILLING_MODEL_INFO = {
   },
   paystack_split: {
     label: "Paystack Split",
-    description: "Payments automatically split between you and UniCloud",
+    description: "Payments automatically split between you and the platform",
     icon: CreditCard,
     color: "orange",
   },

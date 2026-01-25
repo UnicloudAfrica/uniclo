@@ -30,12 +30,12 @@ const ObjectStorageQuotaBar: React.FC<ObjectStorageQuotaBarProps> = ({
   return (
     <div className={`space-y-2 ${className}`}>
       <div className="flex items-center justify-between text-sm">
-        <span className="font-medium text-slate-700">Storage Used</span>
-        <span className="text-slate-600">
+        <span className="font-medium text-gray-700">Storage Used</span>
+        <span className="text-gray-600">
           {formatSize(usedGb)} / {isUnlimited ? "Unlimited" : formatSize(quotaGb)}
         </span>
       </div>
-      <div className="h-3 w-full rounded-full bg-slate-200 overflow-hidden">
+      <div className="h-3 w-full rounded-full bg-gray-200 overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-300 ${getBarColor()}`}
           style={{ width: `${isUnlimited ? 0 : percentage}%` }}

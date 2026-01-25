@@ -107,7 +107,7 @@ export const objectStoragePresets: Record<"admin" | "tenant" | "client", ObjectS
       {
         key: "total",
         label: "Accounts",
-        description: "Provisioned across UniCloud",
+        description: "Provisioned across your cloud",
         icon: HardDrive,
       },
       {
@@ -146,7 +146,7 @@ export const objectStoragePresets: Record<"admin" | "tenant" | "client", ObjectS
       {
         key: "total",
         label: "Accounts",
-        description: "Provisioned across UniCloud",
+        description: "Provisioned across your cloud",
         icon: HardDrive,
       },
       {

@@ -34,7 +34,7 @@ const TenantObjectStorageCreate: React.FC<TenantObjectStorageCreateProps> = ({
       <DashboardPageShell
         homeHref="/tenant-dashboard"
         mainClassName="tenant-dashboard-shell"
-        backgroundColor="#F9FAFB"
+        backgroundColor="var(--theme-surface-alt)"
         title="Create Silo Storage"
         description="Configure and provision Silo Storage for your workspace"
       >

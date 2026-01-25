@@ -23,11 +23,11 @@ const ObjectStoragePlanSelector = ({
   };
 
   return (
-    <div className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="space-y-5 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-sm font-semibold text-slate-900">Select workflow</p>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm font-semibold text-gray-900">Select workflow</p>
+          <p className="text-sm text-gray-500">
             Choose between a guided plan creation or a fast-track provisioning shortcut.
           </p>
         </div>
@@ -35,7 +35,7 @@ const ObjectStoragePlanSelector = ({
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-700 transition hover:border-slate-300 hover:text-slate-900"
+            className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-gray-700 transition hover:border-gray-300 hover:text-gray-900"
           >
             <ArrowLeft className="h-4 w-4" />
             Back
@@ -56,11 +56,11 @@ const ObjectStoragePlanSelector = ({
           <div className="flex items-center gap-3">
             <HardDrive className="h-5 w-5 text-primary-500" />
             <div>
-              <p className="text-sm font-semibold text-slate-900">{standardLabel}</p>
-              <p className="text-xs text-slate-500">{standardDescription}</p>
+              <p className="text-sm font-semibold text-gray-900">{standardLabel}</p>
+              <p className="text-xs text-gray-500">{standardDescription}</p>
             </div>
           </div>
-          <ul className="space-y-2 text-sm text-slate-600">
+          <ul className="space-y-2 text-sm text-gray-600">
             <li>• Works for approved sales or finance-led activations.</li>
             <li>• Lets you flag invoices as pending or paid.</li>
             <li>• Keeps provisioning status in manual control.</li>
@@ -80,11 +80,11 @@ const ObjectStoragePlanSelector = ({
             <div className="flex items-center gap-3">
               <Rocket className="h-5 w-5 text-emerald-500" />
               <div>
-                <p className="text-sm font-semibold text-slate-900">{fastTrackLabel}</p>
-                <p className="text-xs text-slate-500">{fastTrackDescription}</p>
+                <p className="text-sm font-semibold text-gray-900">{fastTrackLabel}</p>
+                <p className="text-xs text-gray-500">{fastTrackDescription}</p>
               </div>
             </div>
-            <ul className="space-y-2 text-sm text-slate-600">
+            <ul className="space-y-2 text-sm text-gray-600">
               <li>• Marks payment as admin approved automatically.</li>
               <li>• Moves the order into provisioning immediately.</li>
               <li>• Best for exceptions with pre-approval.</li>

@@ -96,7 +96,7 @@ const Login = () => {
               onInput={validateMail}
               id="mail"
               placeholder="Enter your email"
-              className=" h-[45px] w-[350px] glower mt-2 border border-[#3FE0C8CC] z-50 bg-[#ffffffcc] mb-6 text-blacl font-Outfit font-normal placeholder:font-Outfit text-sm rounded-[20px] block p-2.5"
+              className=" h-[45px] w-[350px] glower mt-2 border border-[rgb(var(--secondary-color-rgb)/0.8)] z-50 bg-[#ffffffcc] mb-6 text-blacl font-Outfit font-normal placeholder:font-Outfit text-sm rounded-[20px] block p-2.5"
             />
             <p
               id="mailWarn"
@@ -112,7 +112,7 @@ const Login = () => {
               type="password"
               onInput={handlePword}
               placeholder="Enter your Password"
-              className=" h-[45px] w-[350px] mt-2 border border-[#3FE0C8CC] z-50 bg-[#ffffffcc] mb-6 text-blacl font-Outfit font-normal placeholder:font-Outfit text-sm rounded-[20px] block p-2.5"
+              className=" h-[45px] w-[350px] mt-2 border border-[rgb(var(--secondary-color-rgb)/0.8)] z-50 bg-[#ffffffcc] mb-6 text-blacl font-Outfit font-normal placeholder:font-Outfit text-sm rounded-[20px] block p-2.5"
             />
             <p
               id="logMessage"
@@ -121,7 +121,7 @@ const Login = () => {
             <button
               id="signIn"
               onClick={handleSignIn}
-              className=" w-full flex h-[45px] mt-6 rounded-[20px]  bg-gradient-to-r from-[#288DD1CC] via-[#3fd0e0CC] to-[#3FE0C8CC] hover:bg-opacity-75 transition-all justify-center font-Outfit text-base text-white font-medium items-center"
+              className=" w-full flex h-[45px] mt-6 rounded-[20px]  bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] hover:bg-opacity-75 transition-all justify-center font-Outfit text-base text-white font-medium items-center"
             >
               {loadValue === "No" && "Sign In"}
               {loadValue === "Yes" && <img src={load} className=" w-6 h-6" alt="" />}

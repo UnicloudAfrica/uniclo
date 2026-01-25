@@ -1,11 +1,45 @@
 import { useMutation } from "@tanstack/react-query";
 import api from "../index/api";
+import config from "../config";
+import { resolveActivePersona } from "../stores/sessionUtils";
+
+const resolveAuthHeaders = () => {
+  const { snapshot } = resolveActivePersona();
+  if (snapshot?.getAuthHeaders) {
+    return snapshot.getAuthHeaders();
+  }
+  return {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+};
+
+const sharedAuthApi = async (method, uri, body = null) => {
+  const url = `${config.baseURL}${uri}`;
+  const headers = resolveAuthHeaders();
+  const options = {
+    method,
+    headers,
+    credentials: "include",
+    body: body ? JSON.stringify(body) : null,
+  };
+
+  const response = await fetch(url, options);
+  const res = await response.json().catch(() => ({}));
+
+  if (response.ok || response.status === 201) {
+    return res;
+  }
+
+  const errorMessage = res?.data?.error || res?.error || res?.message || "An error occurred";
+  throw new Error(errorMessage);
+};
 
 const tryTwoFactorEndpoints = async (attempts = []) => {
   let lastError;
   for (const attempt of attempts) {
     try {
-      return await api(attempt.method, attempt.path, attempt.body);
+      return await sharedAuthApi(attempt.method, attempt.path, attempt.body);
     } catch (error) {
       lastError = error;
     }

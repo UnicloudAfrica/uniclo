@@ -1,22 +1,15 @@
 // @ts-nocheck
-import React, { useState } from "react";
+import React from "react";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ClientActiveTab from "../components/clientActiveTab";
-import Headbar from "../components/clientHeadbar";
-import Sidebar from "../components/clientSidebar";
 import ClientPageShell from "../components/ClientPageShell";
 
 const ClientObjectStoragePurchasePage = () => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
-  const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   return (
     <>
-      <Headbar onMenuClick={toggleMobileMenu} />
-      <Sidebar isMobileMenuOpen={isMobileMenuOpen} onCloseMobileMenu={closeMobileMenu} />
       <ClientActiveTab />
       <ClientPageShell
         title="Purchase Silo Storage"

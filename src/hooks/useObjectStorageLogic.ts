@@ -141,6 +141,11 @@ export interface ObjectStorageLogicReturn {
   dashboardContext: ObjectStorageContext;
 }
 
+const isValidUuid = (value: string) => {
+  if (!value) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+};
+
 const BASE_STEPS_FAST_TRACK = [
   {
     id: "workflow",
@@ -883,8 +888,10 @@ export const useObjectStorageLogic = (
         if (selectedTenantId) {
           payload.tenant_id = selectedTenantId;
         }
-        if (selectedUserId) {
-          payload.user_id = selectedUserId;
+        const normalizedUserId =
+          typeof selectedUserId === "string" ? selectedUserId.trim() : String(selectedUserId || "");
+        if (context !== "client" && isValidUuid(normalizedUserId)) {
+          payload.user_id = normalizedUserId;
         }
 
         // Use provided submit function or throw error

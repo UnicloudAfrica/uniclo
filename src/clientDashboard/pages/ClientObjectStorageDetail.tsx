@@ -1,23 +1,15 @@
 // @ts-nocheck
-import React, { useState } from "react";
+import React from "react";
 import { useParams } from "react-router-dom";
-import ClientHeadbar from "../components/clientHeadbar";
-import ClientSidebar from "../components/clientSidebar";
 import ClientActiveTab from "../components/clientActiveTab";
 import ClientPageShell from "../components/ClientPageShell";
 import ObjectStorageAccountDetail from "../../shared/components/object-storage/ObjectStorageAccountDetail";
 
 const ClientObjectStorageDetail = () => {
   const { accountId } = useParams();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
-  const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   return (
     <>
-      <ClientHeadbar onMenuClick={toggleMobileMenu} />
-      <ClientSidebar isMobileMenuOpen={isMobileMenuOpen} onCloseMobileMenu={closeMobileMenu} />
       <ClientActiveTab />
       <ClientPageShell
         title="Silo Storage"

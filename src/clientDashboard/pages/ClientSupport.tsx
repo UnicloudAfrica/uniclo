@@ -1,7 +1,5 @@
 // @ts-nocheck
-import React, { useState } from "react";
-import Headbar from "../components/clientHeadbar";
-import Sidebar from "../components/clientSidebar";
+import React from "react";
 import ClientActiveTab from "../components/clientActiveTab";
 import ClientPageShell from "../components/ClientPageShell";
 import { SupportThreadsPanel } from "../../shared/components/support";
@@ -17,11 +15,6 @@ const buildQuery = (filters = {}) => {
 };
 
 const ClientSupport: React.FC = () => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const toggleMobileMenu = () => setIsMobileMenuOpen((previous) => !previous);
-  const closeMobileMenu = () => setIsMobileMenuOpen(false);
-
   const fetchThreads = (filters) =>
     clientSilentApi("GET", `/business/support${buildQuery(filters)}`);
 
@@ -35,8 +28,6 @@ const ClientSupport: React.FC = () => {
 
   return (
     <>
-      <Headbar onMenuClick={toggleMobileMenu} />
-      <Sidebar isMobileMenuOpen={isMobileMenuOpen} onCloseMobileMenu={closeMobileMenu} />
       <ClientActiveTab />
       <ClientPageShell
         title="Support"

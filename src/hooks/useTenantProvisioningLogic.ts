@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AdditionalVolume, Option } from "../types/InstanceConfiguration";
 import { useInstanceFormState } from "./useInstanceCreation";
-import { useFetchCountries } from "./resource";
+import { useFetchCountries, useFetchGeneralRegions } from "./resource";
 import useTenantAuthStore from "../stores/tenantAuthStore";
 import config from "../config";
 import tenantApi from "../index/tenant/tenantApi";
@@ -132,55 +132,23 @@ export const useTenantProvisioningLogic = () => {
     fetchPricing();
   }, [isAuthenticated, billingCountry, contextType, selectedTenantId, selfTenant?.id]);
 
-  // Fetch regions using tenant API
-  const [generalRegions, setGeneralRegions] = useState<any[]>([]);
-  const [isRegionsLoading, setIsRegionsLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchRegions = async () => {
-      if (!isAuthenticated) return;
-      setIsRegionsLoading(true);
-      try {
-        const response = (await silentTenantApi("GET", "/admin/cloud-regions")) as any;
-        setGeneralRegions(response?.data || response || []);
-      } catch (error) {
-        console.error("Failed to fetch regions:", error);
-        setGeneralRegions([]);
-      } finally {
-        setIsRegionsLoading(false);
-      }
-    };
-    fetchRegions();
-  }, [isAuthenticated]);
+  const { data: generalRegions = [], isFetching: isRegionsLoading } = useFetchGeneralRegions({
+    enabled: isAuthenticated,
+  });
 
   // ─────────────────────────────────────────────────────────────────
   // Fast-Track Region Eligibility
   // ─────────────────────────────────────────────────────────────────
-  const [fastTrackRegions, setFastTrackRegions] = useState<string[]>([]);
-  const [isLoadingFastTrackRegions, setIsLoadingFastTrackRegions] = useState(false);
+  const fastTrackRegions = useMemo(
+    () =>
+      generalRegions
+        .filter((region: any) => region?.can_fast_track === true)
+        .map((region: any) => region?.code || region?.region || region?.slug || region?.id)
+        .filter(Boolean),
+    [generalRegions]
+  );
 
-  // Fetch regions with fast-track eligibility when hook initializes
-  useEffect(() => {
-    const fetchFastTrackRegions = async () => {
-      if (!isAuthenticated) return;
-      setIsLoadingFastTrackRegions(true);
-      try {
-        const response = (await silentTenantApi("GET", "/admin/cloud-regions")) as any;
-        const regions = response?.data || response || [];
-        const eligible = regions
-          .filter((r: any) => r.can_fast_track === true)
-          .map((r: any) => r.code || r.slug || r.id);
-        setFastTrackRegions(eligible);
-      } catch (error) {
-        console.error("Failed to fetch fast-track regions:", error);
-        setFastTrackRegions([]);
-      } finally {
-        setIsLoadingFastTrackRegions(false);
-      }
-    };
-    fetchFastTrackRegions();
-  }, [isAuthenticated]);
-
+  const isLoadingFastTrackRegions = isRegionsLoading;
   const hasFastTrackAccess = fastTrackRegions.length > 0;
 
   // ─────────────────────────────────────────────────────────────────

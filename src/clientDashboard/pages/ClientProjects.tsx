@@ -1,8 +1,6 @@
 // @ts-nocheck
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import Headbar from "../components/clientHeadbar";
-import Sidebar from "../components/clientSidebar";
 import ClientActiveTab from "../components/clientActiveTab";
 import ClientPageShell from "../components/ClientPageShell";
 import ProjectsPageContainer from "../../shared/components/projects/ProjectsPageContainer";
@@ -27,10 +25,6 @@ interface ProjectsResponse {
 
 const ClientProjects: React.FC = () => {
   const navigate = useNavigate();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
-  const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   // Fetch projects using client hooks
   const {
@@ -93,8 +87,6 @@ const ClientProjects: React.FC = () => {
 
   return (
     <>
-      <Headbar onMenuClick={toggleMobileMenu} />
-      <Sidebar isMobileMenuOpen={isMobileMenuOpen} onCloseMobileMenu={closeMobileMenu} />
       <ClientActiveTab />
       <ClientPageShell title="Projects" description="Manage your infrastructure projects">
         <ProjectsPageContainer

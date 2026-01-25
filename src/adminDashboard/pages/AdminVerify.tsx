@@ -13,7 +13,7 @@ import { clearAuthSessionsExcept } from "../../stores/sessionUtils";
 import { useVerifyAdminMail } from "../../hooks/adminHooks/authHooks";
 import {
   resolveBrandLogo,
-  useAdminBrandingTheme,
+  usePlatformBrandingTheme,
   useApplyBrandingTheme,
 } from "../../hooks/useBrandingTheme";
 import useImageFallback from "../../hooks/useImageFallback";
@@ -41,7 +41,7 @@ export default function VerifyAdminMail() {
   const [twoFactorCode, setTwoFactorCode] = useState("");
   const { mutate: verifyEmail, isPending: isVerifyPending } = useVerifyAdminMail();
   const navigate = useNavigate();
-  const { data: branding } = useAdminBrandingTheme();
+  const { data: branding } = usePlatformBrandingTheme();
   useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
   const logoSrc = resolveBrandLogo(branding, logo);
   const logoAlt = branding?.company?.name ? `${branding.company.name} Logo` : "Logo";

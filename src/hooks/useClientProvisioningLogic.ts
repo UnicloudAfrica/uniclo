@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { Configuration, AdditionalVolume, Option } from "../types/InstanceConfiguration";
 import { useInstanceFormState } from "./useInstanceCreation";
-import { useFetchCountries } from "./resource";
+import { useFetchCountries, useFetchGeneralRegions } from "./resource";
 import useClientAuthStore from "../stores/clientAuthStore";
 import config from "../config";
 import clientApi from "../index/client/api";
@@ -67,26 +67,9 @@ export const useClientProvisioningLogic = () => {
   // ─────────────────────────────────────────────────────────────────
   const { data: countriesData = [], isLoading: isCountriesLoading } = useFetchCountries();
 
-  // Fetch regions using client API (business endpoint)
-  const [generalRegions, setGeneralRegions] = useState<any[]>([]);
-  const [isRegionsLoading, setIsRegionsLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchRegions = async () => {
-      if (!isAuthenticated) return;
-      setIsRegionsLoading(true);
-      try {
-        const response = (await silentClientApi("GET", "/business/cloud-regions")) as any;
-        setGeneralRegions(response?.data || response || []);
-      } catch (error) {
-        console.error("Failed to fetch regions:", error);
-        setGeneralRegions([]);
-      } finally {
-        setIsRegionsLoading(false);
-      }
-    };
-    fetchRegions();
-  }, [isAuthenticated]);
+  const { data: generalRegions = [], isFetching: isRegionsLoading } = useFetchGeneralRegions({
+    enabled: isAuthenticated,
+  });
 
   // Fetch pricing using client API (public product-pricing endpoint is fine for clients)
   const [pricingData, setPricingData] = useState<any>(null);

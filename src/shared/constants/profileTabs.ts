@@ -191,11 +191,6 @@ export const PROFILE_TABS: TabConfig[] = [
   },
 ];
 
-export const getTabsForContext = (contextType: "admin" | "tenant" | "client") => {
-  switch (contextType) {
-    case "client":
-      return PROFILE_TABS.filter((tab) => tab.id !== "security");
-    default:
-      return PROFILE_TABS;
-  }
+export const getTabsForContext = (_contextType: "admin" | "tenant" | "client") => {
+  return PROFILE_TABS;
 };

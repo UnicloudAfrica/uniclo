@@ -6,7 +6,7 @@ export const flattenSettings = (settings: Record<string, any> = {}) => {
   Object.entries(settings).forEach(([category, value]) => {
     if (value && typeof value === "object" && !Array.isArray(value)) {
       Object.entries(value).forEach(([key, inner]) => {
-        flattened[`\${category}.\${key}`] = inner;
+        flattened[`${category}.${key}`] = inner;
       });
     } else {
       flattened[category] = value;

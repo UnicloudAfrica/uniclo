@@ -1,9 +1,7 @@
 // @ts-nocheck
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import ClientActiveTab from "../components/clientActiveTab";
-import Headbar from "../components/clientHeadbar";
-import Sidebar from "../components/clientSidebar";
 import ClientPageShell from "../components/ClientPageShell";
 import { useObjectStorage } from "../../contexts/ObjectStorageContext";
 import ObjectStorageDashboardContent from "../../shared/components/object-storage/ObjectStorageDashboardContent";
@@ -11,7 +9,6 @@ import { objectStoragePresets } from "../../shared/config/objectStoragePresets";
 import useClientAuthStore from "../../stores/clientAuthStore";
 
 const ClientObjectStoragePage: React.FC = () => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const clientTenant = useClientAuthStore((state) => state?.tenant);
   const {
@@ -37,13 +34,8 @@ const ClientObjectStoragePage: React.FC = () => {
     [accounts]
   );
 
-  const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
-  const closeMobileMenu = () => setIsMobileMenuOpen(false);
-
   return (
     <>
-      <Headbar onMenuClick={toggleMobileMenu} />
-      <Sidebar isMobileMenuOpen={isMobileMenuOpen} onCloseMobileMenu={closeMobileMenu} />
       <ClientActiveTab />
       <ClientPageShell
         title="Silo Storage"

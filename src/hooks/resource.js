@@ -1,7 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 import api from "../index/api";
 import silentApi from "../index/silent";
 import silentTenantApi from "../index/tenant/silentTenant";
+import { useApiContext } from "./useApiContext";
+import { normalizeRegionList, resolveRegionEndpoint } from "../shared/utils/regionApi";
 
 // **GET**: fetchCountries
 const fetchCountries = async () => {
@@ -46,10 +49,12 @@ const fetchProductCharges = async () => {
   const res = await silentApi("GET", "/product-charge");
   return res.data;
 };
-// **GET**: fetch product charge
-const fetchGeneralRegions = async () => {
-  const res = await silentApi("GET", "/business/cloud-regions");
-  return res.data;
+const fetchGeneralRegions = async (apiBaseUrl, endpoint, authHeaders) => {
+  const { data } = await axios.get(`${apiBaseUrl}${endpoint}`, {
+    headers: authHeaders,
+    withCredentials: true,
+  });
+  return normalizeRegionList(data);
 };
 const fetchProductPricing = async (region, productable_type, countryCode = "", tenantId = "") => {
   const params = new URLSearchParams();
@@ -260,9 +265,11 @@ export const useFetchFloatingIPs = (currency = "USD", region, options = {}) => {
 };
 // Hook to fetchregions
 export const useFetchGeneralRegions = (options = {}) => {
+  const { apiBaseUrl, context, authHeaders } = useApiContext();
+  const endpoint = resolveRegionEndpoint(context);
   return useQuery({
-    queryKey: ["general-regions"],
-    queryFn: fetchGeneralRegions,
+    queryKey: ["general-regions", context],
+    queryFn: () => fetchGeneralRegions(apiBaseUrl, endpoint, authHeaders),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,

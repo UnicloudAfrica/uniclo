@@ -1,9 +1,7 @@
 // @ts-nocheck
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Plus, RefreshCw, Sparkles, Globe, Server, Monitor, MoreHorizontal } from "lucide-react";
 
-import Headbar from "../components/clientHeadbar";
-import Sidebar from "../components/clientSidebar";
 import ClientActiveTab from "../components/clientActiveTab";
 import ClientPageShell from "../components/ClientPageShell";
 import EmbeddedConsole, { useConsoleManager } from "../../components/Console/EmbeddedConsole";
@@ -32,7 +30,6 @@ interface Instance {
 }
 
 const ClientInstances: React.FC = () => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const {
     isFetching: isInstancesFetching,
     data: instancesResponse,
@@ -50,9 +47,6 @@ const ClientInstances: React.FC = () => {
     */
 
   const { consoles, openConsole, closeConsole } = useConsoleManager();
-
-  const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
-  const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   const provisioningCount = instances.filter((instance: any) =>
     ["provisioning", "building", "reboot", "hard_reboot"].includes(
@@ -192,8 +186,6 @@ const ClientInstances: React.FC = () => {
 
   return (
     <>
-      <Headbar onMenuClick={toggleMobileMenu} />
-      <Sidebar isMobileMenuOpen={isMobileMenuOpen} onCloseMobileMenu={closeMobileMenu} />
       <ClientActiveTab />
 
       <ClientPageShell

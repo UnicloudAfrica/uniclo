@@ -12,7 +12,7 @@ interface ClientHeadbarProps {
 
 const ClientHeadbar: React.FC<ClientHeadbarProps> = ({ onMenuClick }) => {
   const { profile, isFetching: isProfileFetching } = useDashboardProfile("client");
-  const { data: theme, isFetching: isThemeFetching } = useClientTheme();
+  const { data: theme, isLoading: isThemeLoading } = useClientTheme();
   const { toggleMobile } = useSidebarStore();
   const preset = buildClientHeadbarPreset(theme);
 
@@ -36,7 +36,7 @@ const ClientHeadbar: React.FC<ClientHeadbarProps> = ({ onMenuClick }) => {
         avatar: profile.avatar,
       }}
       isProfileLoading={isProfileFetching}
-      isThemeLoading={isThemeFetching}
+      isThemeLoading={isThemeLoading}
     />
   );
 };

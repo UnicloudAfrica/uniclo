@@ -24,7 +24,13 @@ const companyTypeMap: Record<string, string> = {
   Other: "Other",
 };
 
-const formatCompanyType = (type: string) => companyTypeMap[type] || "Unknown";
+const formatCompanyType = (type?: string | null) => {
+  if (!type) {
+    return "Unknown";
+  }
+
+  return companyTypeMap[type] || "Unknown";
+};
 
 const AdminPartners = () => {
   const navigate = useNavigate();
@@ -206,43 +212,53 @@ const AdminPartners = () => {
     {
       key: "name",
       header: "Name",
-      render: (item: any) => <div className="font-medium text-gray-900">{item.name || "—"}</div>,
+      render: (value: string | null | undefined) => (
+        <div className="font-medium text-gray-900">{value || "—"}</div>
+      ),
       sortable: true,
     },
     {
-      key: "type",
+      key: "company_type",
       header: "Type",
-      render: (item: any) => <div className="text-gray-500">{formatCompanyType(item.type)}</div>,
+      render: (value: string | null | undefined) => (
+        <div className="text-gray-500">{formatCompanyType(value)}</div>
+      ),
       sortable: true,
     },
     {
       key: "industry",
       header: "Industry",
-      render: (item: any) => <div className="text-gray-500">{item.industry || "—"}</div>,
+      render: (value: string | null | undefined) => (
+        <div className="text-gray-500">{value || "—"}</div>
+      ),
       sortable: true,
     },
     {
       key: "email",
       header: "Email",
-      render: (item: any) => <div className="text-gray-500">{item.email || "—"}</div>,
+      render: (value: string | null | undefined) => (
+        <div className="text-gray-500">{value || "—"}</div>
+      ),
       sortable: true,
     },
     {
       key: "phone",
       header: "Phone",
-      render: (item: any) => <div className="text-gray-500">{item.phone || "—"}</div>,
+      render: (value: string | null | undefined) => (
+        <div className="text-gray-500">{value || "—"}</div>
+      ),
       sortable: true,
     },
     {
       key: "status",
       header: "Status",
-      render: (item: any) => (
+      render: (value: string | null | undefined) => (
         <span
           className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-            item.status === "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+            value === "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
           }`}
         >
-          {item.status || "active"}
+          {value || "active"}
         </span>
       ),
       sortable: true,
@@ -250,10 +266,8 @@ const AdminPartners = () => {
     {
       key: "created_at",
       header: "Created",
-      render: (item: any) => (
-        <div className="text-gray-500">
-          {item.created_at ? new Date(item.created_at).toLocaleDateString() : "—"}
-        </div>
+      render: (value: string | null | undefined) => (
+        <div className="text-gray-500">{value ? new Date(value).toLocaleDateString() : "—"}</div>
       ),
       sortable: true,
     },

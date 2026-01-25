@@ -34,6 +34,64 @@ import {
   LayoutTemplate,
 } from "lucide-react";
 
+type InfraRole = "admin" | "tenant" | "client";
+
+const INFRA_MENU_ITEMS: Array<{
+  label: string;
+  icon: any;
+  iconByRole?: Partial<Record<InfraRole, any>>;
+  path: string;
+  roles: InfraRole[];
+}> = [
+  {
+    label: "Projects",
+    icon: FolderOpen,
+    iconByRole: {
+      tenant: FolderKanban,
+      client: Briefcase,
+    },
+    path: "/projects",
+    roles: ["admin", "tenant", "client"],
+  },
+  {
+    label: "Instances",
+    icon: Server,
+    path: "/instances",
+    roles: ["admin", "tenant", "client"],
+  },
+  {
+    label: "Templates",
+    icon: LayoutTemplate,
+    path: "/templates",
+    roles: ["admin", "tenant", "client"],
+  },
+  {
+    label: "Silo Storage",
+    icon: HardDrive,
+    path: "/object-storage",
+    roles: ["admin", "tenant", "client"],
+  },
+];
+
+const buildInfrastructureMenuGroup = (basePath: string, role: InfraRole): MenuEntry => {
+  const normalizedBase = basePath.replace(/\/+$/, "");
+  const toPath = (suffix: string) =>
+    `${normalizedBase}${suffix.startsWith("/") ? suffix : `/${suffix}`}`;
+  const children = INFRA_MENU_ITEMS.filter((item) => item.roles.includes(role)).map((item) => ({
+    name: item.label,
+    icon: item.iconByRole?.[role] ?? item.icon,
+    isLucide: true,
+    path: toPath(item.path),
+  }));
+
+  return {
+    name: "Infrastructure",
+    icon: Server,
+    isLucide: true,
+    children,
+  };
+};
+
 export const adminMenuItems: MenuEntry[] = [
   {
     name: "Home",
@@ -46,12 +104,6 @@ export const adminMenuItems: MenuEntry[] = [
     icon: BarChart3,
     isLucide: true,
     path: "/admin-dashboard/analytics",
-  },
-  {
-    name: "Support Tickets",
-    icon: HelpCircle,
-    isLucide: true,
-    path: "/admin-dashboard/tickets",
   },
   {
     name: "Customer Management",
@@ -79,41 +131,25 @@ export const adminMenuItems: MenuEntry[] = [
     ],
   },
   {
-    name: "Infrastructure",
-    icon: Server,
-    isLucide: true,
-    children: [
-      {
-        name: "Projects",
-        icon: FolderOpen,
-        isLucide: true,
-        path: "/admin-dashboard/projects",
-      },
-      {
-        name: "Instances",
-        icon: Server,
-        isLucide: true,
-        path: "/admin-dashboard/instances",
-      },
-      {
-        name: "Templates",
-        icon: LayoutTemplate,
-        isLucide: true,
-        path: "/admin-dashboard/templates",
-      },
-      {
-        name: "Silo Storage",
-        icon: HardDrive,
-        isLucide: true,
-        path: "/admin-dashboard/object-storage",
-      },
-    ],
+    ...buildInfrastructureMenuGroup("/admin-dashboard", "admin"),
   },
   {
     name: "Billing & Pricing",
     icon: DollarSign,
     isLucide: true,
     children: [
+      {
+        name: "Products",
+        icon: Package,
+        isLucide: true,
+        path: "/admin-dashboard/products",
+      },
+      {
+        name: "Inventory",
+        icon: Layers,
+        isLucide: true,
+        path: "/admin-dashboard/inventory",
+      },
       {
         name: "Payment",
         icon: CreditCard,
@@ -209,16 +245,10 @@ export const adminMenuItems: MenuEntry[] = [
     ],
   },
   {
-    name: "Products",
-    icon: Package,
+    name: "Support Tickets",
+    icon: HelpCircle,
     isLucide: true,
-    path: "/admin-dashboard/products",
-  },
-  {
-    name: "Inventory",
-    icon: Layers,
-    isLucide: true,
-    path: "/admin-dashboard/inventory",
+    path: "/admin-dashboard/tickets",
   },
   {
     name: "Account Settings",
@@ -255,35 +285,7 @@ export const tenantMenuItems: MenuEntry[] = [
     ],
   },
   {
-    name: "Infrastructure",
-    icon: Server,
-    isLucide: true,
-    children: [
-      {
-        name: "Projects",
-        icon: FolderKanban,
-        isLucide: true,
-        path: "/dashboard/projects",
-      },
-      {
-        name: "Instances",
-        icon: Server,
-        isLucide: true,
-        path: "/dashboard/instances",
-      },
-      {
-        name: "Templates",
-        icon: LayoutTemplate,
-        isLucide: true,
-        path: "/dashboard/templates",
-      },
-      {
-        name: "Silo Storage",
-        icon: HardDrive,
-        isLucide: true,
-        path: "/dashboard/object-storage",
-      },
-    ],
+    ...buildInfrastructureMenuGroup("/dashboard", "tenant"),
   },
   {
     name: "Regional",
@@ -379,38 +381,8 @@ export const tenantMenuItems: MenuEntry[] = [
   },
 ];
 
-export const buildClientMenuItems = (hasProjects: boolean): MenuEntry[] => {
-  const infrastructureGroup: MenuEntry = {
-    name: "Infrastructure",
-    icon: Server,
-    isLucide: true,
-    children: [
-      {
-        name: "Projects",
-        icon: Briefcase,
-        isLucide: true,
-        path: "/client-dashboard/projects",
-      },
-      {
-        name: "Instances",
-        icon: Server,
-        isLucide: true,
-        path: "/client-dashboard/instances",
-      },
-      {
-        name: "Templates",
-        icon: LayoutTemplate,
-        isLucide: true,
-        path: "/client-dashboard/templates",
-      },
-      {
-        name: "Silo Storage",
-        icon: HardDrive,
-        isLucide: true,
-        path: "/client-dashboard/object-storage",
-      },
-    ],
-  };
+export const buildClientMenuItems = (_hasProjects: boolean): MenuEntry[] => {
+  const infrastructureGroup = buildInfrastructureMenuGroup("/client-dashboard", "client");
 
   return [
     {
@@ -419,22 +391,7 @@ export const buildClientMenuItems = (hasProjects: boolean): MenuEntry[] => {
       isLucide: true,
       path: "/client-dashboard",
     },
-    ...(hasProjects
-      ? [infrastructureGroup]
-      : [
-          {
-            name: "Silo Storage",
-            icon: HardDrive,
-            isLucide: true,
-            path: "/client-dashboard/object-storage",
-          },
-          {
-            name: "Templates",
-            icon: LayoutTemplate,
-            isLucide: true,
-            path: "/client-dashboard/templates",
-          },
-        ]),
+    infrastructureGroup,
     {
       name: "Pricing Calculator",
       icon: Calculator,

@@ -6,7 +6,9 @@ import { ThreadTable } from "./ThreadTable";
 import { ThreadDetailModal } from "./ThreadDetailModal";
 import type { Thread, SlaStatus } from "./threadTypes";
 import { ModernButton } from "../ui";
+import CustomerContextSelector from "../common/CustomerContextSelector";
 import ToastUtils from "@/utils/toastUtil";
+import { useCustomerContext } from "@/hooks/adminHooks/useCustomerContext";
 
 type ThreadListResponse = {
   data?: Thread[] | { data?: Thread[] };
@@ -77,10 +79,19 @@ const CreateTicketModal = ({
     body: "",
     priority: "medium",
     category: "",
-    email: "",
-    tenant_id: "",
-    user_id: "",
   });
+  const {
+    contextType,
+    setContextType,
+    selectedTenantId,
+    setSelectedTenantId,
+    selectedUserId,
+    setSelectedUserId,
+    tenants,
+    isTenantsFetching,
+    userPool,
+    isUsersFetching,
+  } = useCustomerContext({ enabled: Boolean(adminFields) });
 
   if (!open) return null;
 
@@ -102,9 +113,29 @@ const CreateTicketModal = ({
 
     if (formState.priority) payload.priority = formState.priority;
     if (formState.category.trim()) payload.category = formState.category.trim();
-    if (adminFields && formState.email.trim()) payload.email = formState.email.trim();
-    if (adminFields && formState.tenant_id.trim()) payload.tenant_id = formState.tenant_id.trim();
-    if (adminFields && formState.user_id.trim()) payload.user_id = formState.user_id.trim();
+
+    if (adminFields) {
+      if (contextType === "tenant" && !selectedTenantId) {
+        ToastUtils.error("Please select a tenant for this ticket.");
+        return;
+      }
+
+      if (contextType === "user" && !selectedUserId) {
+        ToastUtils.error("Please select a user for this ticket.");
+        return;
+      }
+
+      if (contextType === "tenant" && selectedTenantId) {
+        payload.tenant_id = selectedTenantId;
+      }
+
+      if (contextType === "user" && selectedUserId) {
+        payload.user_id = selectedUserId;
+        if (selectedTenantId) {
+          payload.tenant_id = selectedTenantId;
+        }
+      }
+    }
 
     onSubmit(payload);
   };
@@ -164,37 +195,19 @@ const CreateTicketModal = ({
             </div>
           </div>
           {adminFields && (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Customer Email</label>
-                <input
-                  value={formState.email}
-                  onChange={(event) => updateField("email", event.target.value)}
-                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                  placeholder="client@example.com"
-                  disabled={isLoading}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Tenant ID</label>
-                <input
-                  value={formState.tenant_id}
-                  onChange={(event) => updateField("tenant_id", event.target.value)}
-                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                  placeholder="Tenant UUID"
-                  disabled={isLoading}
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700">User ID</label>
-                <input
-                  value={formState.user_id}
-                  onChange={(event) => updateField("user_id", event.target.value)}
-                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-                  placeholder="User numeric ID"
-                  disabled={isLoading}
-                />
-              </div>
+            <div className={isLoading ? "pointer-events-none opacity-70" : ""}>
+              <CustomerContextSelector
+                contextType={contextType}
+                setContextType={setContextType}
+                selectedTenantId={selectedTenantId}
+                setSelectedTenantId={setSelectedTenantId}
+                selectedUserId={selectedUserId}
+                setSelectedUserId={setSelectedUserId}
+                tenants={tenants}
+                isTenantsFetching={isTenantsFetching}
+                userPool={userPool}
+                isUsersFetching={isUsersFetching}
+              />
             </div>
           )}
           <div className="flex justify-end gap-3 pt-2">
@@ -289,7 +302,7 @@ export const SupportThreadsPanel: React.FC<SupportThreadsPanelProps> = ({
 
   const threads = useMemo(() => extractThreads(listQuery.data), [listQuery.data]);
   const detailPayload = extractThreadDetail(detailQuery.data || {});
-  const selectedThread = detailPayload.thread;
+  const selectedThread = selectedId ? detailPayload.thread : null;
 
   const handleView = (thread: Thread) => {
     setSelectedId(thread.uuid || thread.id);

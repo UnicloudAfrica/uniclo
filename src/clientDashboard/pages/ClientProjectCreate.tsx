@@ -1,25 +1,18 @@
 // @ts-nocheck
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import Headbar from "../components/clientHeadbar";
-import Sidebar from "../components/clientSidebar";
 import ClientActiveTab from "../components/clientActiveTab";
 import ClientPageShell from "../components/ClientPageShell";
 import { ModernButton } from "../../shared/components/ui";
 import CreateProjectModal from "./projectComps/addProject";
 
 const ClientProjectCreate: React.FC = () => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
-  const toggleMobileMenu = () => setIsMobileMenuOpen((previous) => !previous);
-  const closeMobileMenu = () => setIsMobileMenuOpen(false);
   const goBack = () => navigate("/client-dashboard/projects");
 
   return (
     <>
-      <Headbar onMenuClick={toggleMobileMenu} />
-      <Sidebar isMobileMenuOpen={isMobileMenuOpen} onCloseMobileMenu={closeMobileMenu} />
       <ClientActiveTab />
       <ClientPageShell
         title="Create Project"

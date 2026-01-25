@@ -2,18 +2,24 @@ import { useEffect, useLayoutEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import silentApi from "../index/silent";
 import clientSilentApi from "../index/client/silent";
-import adminSilentApi from "../index/admin/silent";
+import adminSilentSettingsApi from "../index/admin/silentSettingsApi";
 import useClientAuthStore from "../stores/clientAuthStore";
 import useTenantAuthStore from "../stores/tenantAuthStore";
 
 // Default colors pulled from the platform marketing palette.
 const DEFAULT_ACCENT = "#288DD1"; // UniCloud blue (global default)
 const DEFAULT_PRIMARY = "#3FE0C8"; // UniCloud teal (secondary default)
+const LEGACY_PLATFORM_ACCENT = "#1c1c1c";
+const LEGACY_PLATFORM_PRIMARY = "#14547f";
 
 const DEFAULT_LOGO_PATH = "assets/images/logo.png";
 const LOGO_URL_PREFIXES = ["data:", "blob:", "http://", "https://", "//"];
 
 const isNonEmptyString = (value) => typeof value === "string" && value.trim() !== "";
+const normalizeHex = (value) =>
+  String(value || "")
+    .trim()
+    .toLowerCase();
 
 const normalizeLogoValue = (value) => {
   if (!value) return null;
@@ -50,6 +56,13 @@ const resolveTenantId = (tenant) =>
 
 export const getTenantId = resolveTenantId;
 
+const isLegacyPlatformPalette = (accentColor, primaryColor) => {
+  return (
+    normalizeHex(accentColor) === LEGACY_PLATFORM_ACCENT &&
+    normalizeHex(primaryColor) === LEGACY_PLATFORM_PRIMARY
+  );
+};
+
 const mapBrandingPayload = (payload = {}) => {
   const brand = payload.brand ?? {};
   const company = payload.company ?? {};
@@ -77,13 +90,19 @@ const mapBrandingPayload = (payload = {}) => {
     company.accent_color,
     company.primary_color,
   ].some(isNonEmptyString);
-  const hasCustomBranding =
-    !isDefaultLogoValue(logoCandidate) || Boolean(favicon) || hasPaletteValues || hasColorOverrides;
 
   const accentColor =
     palette.accent ?? brand.accent_color ?? company.accent_color ?? DEFAULT_ACCENT;
   const primaryColor =
     palette.primary ?? brand.primary_color ?? company.primary_color ?? DEFAULT_PRIMARY;
+  const isLegacyPlatformTheme =
+    isLegacyPlatformPalette(accentColor, primaryColor) &&
+    !hasPaletteValues &&
+    !favicon &&
+    isDefaultLogoValue(logoCandidate);
+  const hasExplicitColors = hasColorOverrides && !isLegacyPlatformTheme;
+  const hasCustomBranding =
+    !isDefaultLogoValue(logoCandidate) || Boolean(favicon) || hasPaletteValues || hasExplicitColors;
 
   return {
     logo,
@@ -95,10 +114,14 @@ const mapBrandingPayload = (payload = {}) => {
     palette,
     accentColor,
     primaryColor,
+    hasCustomBranding,
+    isLegacyPlatformTheme,
     isFallback: !hasCustomBranding,
     raw: payload,
   };
 };
+
+const DEFAULT_BRANDING_THEME = mapBrandingPayload();
 
 const shouldFallbackTheme = (theme) => !theme || theme.isFallback;
 
@@ -116,6 +139,7 @@ const isMissingBrandingRoute = (error) => {
 };
 
 const PUBLIC_BRANDING_CACHE_PREFIX = "public-branding:v2:";
+const AUTH_BRANDING_CACHE_PREFIX = "auth-branding:v1:";
 
 const buildPublicBrandingCacheKey = ({ tenantId, domain, subdomain } = {}) => {
   const safeTenantId = tenantId ? String(tenantId).trim() : "";
@@ -127,6 +151,46 @@ const buildPublicBrandingCacheKey = ({ tenantId, domain, subdomain } = {}) => {
 export const getCachedPublicBrandingTheme = ({ tenantId, domain, subdomain } = {}) => {
   const cacheKey = buildPublicBrandingCacheKey({ tenantId, domain, subdomain });
   return readPublicBrandingCache(cacheKey);
+};
+
+const buildAuthBrandingCacheKey = ({ scope, tenantId } = {}) => {
+  const safeScope = scope ? String(scope).trim().toLowerCase() : "unknown";
+  const safeTenantId = tenantId ? String(tenantId).trim() : "";
+  return [safeScope, safeTenantId].join("|");
+};
+
+const readAuthBrandingCache = (cacheKey) => {
+  if (!cacheKey || typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(`${AUTH_BRANDING_CACHE_PREFIX}${cacheKey}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.value ?? null;
+  } catch (error) {
+    return null;
+  }
+};
+
+const writeAuthBrandingCache = (cacheKey, value) => {
+  if (!cacheKey || typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    const payload = {
+      value,
+      storedAt: Date.now(),
+    };
+    window.localStorage.setItem(
+      `${AUTH_BRANDING_CACHE_PREFIX}${cacheKey}`,
+      JSON.stringify(payload)
+    );
+  } catch (error) {
+    // Ignore storage failures (private mode, quota exceeded).
+  }
 };
 
 const readPublicBrandingCache = (cacheKey) => {
@@ -228,7 +292,7 @@ const fetchClientBrandingTheme = async (tenantId) => {
 
 const fetchAdminBrandingTheme = async () => {
   try {
-    const res = await adminSilentApi("GET", "/settings/profile/branding");
+    const res = await adminSilentSettingsApi("GET", "/settings/profile/branding");
     if (!res?.data?.branding) {
       return mapBrandingPayload();
     }
@@ -246,7 +310,7 @@ export const usePublicBrandingTheme = ({ tenantId, domain, subdomain } = {}, opt
   const cachedBranding = readPublicBrandingCache(cacheKey);
   const { onSuccess, ...restOptions } = options;
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ["branding-theme", "public", tenantId ?? null, domain ?? null, subdomain ?? null],
     queryFn: () => fetchPublicBrandingTheme({ tenantId, domain, subdomain }),
     initialData: cachedBranding ?? undefined,
@@ -263,6 +327,11 @@ export const usePublicBrandingTheme = ({ tenantId, domain, subdomain } = {}, opt
     },
     ...restOptions,
   });
+
+  return {
+    ...query,
+    data: resolveEffectiveBrandingTheme(query.data, DEFAULT_BRANDING_THEME),
+  };
 };
 
 export const usePlatformBrandingTheme = (options = {}) => {
@@ -272,13 +341,25 @@ export const usePlatformBrandingTheme = (options = {}) => {
 export const useTenantBrandingTheme = (options = {}) => {
   const tenant = useTenantAuthStore((state) => state?.tenant);
   const tenantId = resolveTenantId(tenant);
-  const { enabled = true, ...restOptions } = options;
+  const cacheKey = buildAuthBrandingCacheKey({ scope: "tenant", tenantId });
+  const cachedBranding = readAuthBrandingCache(cacheKey);
+  const { enabled = true, onSuccess, ...restOptions } = options;
   const tenantQuery = useQuery({
     queryKey: ["branding-theme", "tenant", tenantId ?? null],
     queryFn: () => fetchTenantBrandingTheme(tenantId),
     staleTime: 1000 * 60 * 10,
     refetchOnWindowFocus: false,
     enabled,
+    initialData: cachedBranding ?? undefined,
+    initialDataUpdatedAt: cachedBranding ? 0 : undefined,
+    onSuccess: (data) => {
+      if (cacheKey) {
+        writeAuthBrandingCache(cacheKey, data);
+      }
+      if (typeof onSuccess === "function") {
+        onSuccess(data);
+      }
+    },
     ...restOptions,
   });
   const fallbackQuery = usePlatformBrandingTheme({
@@ -298,24 +379,50 @@ export const useTenantBrandingTheme = (options = {}) => {
 };
 
 export const useAdminBrandingTheme = (options = {}) => {
+  const cacheKey = buildAuthBrandingCacheKey({ scope: "admin" });
+  const cachedBranding = readAuthBrandingCache(cacheKey);
+  const { onSuccess, ...restOptions } = options;
   return useQuery({
     queryKey: ["branding-theme", "admin"],
     queryFn: fetchAdminBrandingTheme,
     staleTime: 1000 * 60 * 10,
     refetchOnWindowFocus: false,
-    ...options,
+    initialData: cachedBranding ?? undefined,
+    initialDataUpdatedAt: cachedBranding ? 0 : undefined,
+    onSuccess: (data) => {
+      if (cacheKey) {
+        writeAuthBrandingCache(cacheKey, data);
+      }
+      if (typeof onSuccess === "function") {
+        onSuccess(data);
+      }
+    },
+    ...restOptions,
   });
 };
 
 export const useClientBrandingTheme = (options = {}) => {
   const tenant = useClientAuthStore((state) => state?.tenant);
   const tenantId = resolveTenantId(tenant);
+  const cacheKey = buildAuthBrandingCacheKey({ scope: "client", tenantId });
+  const cachedBranding = readAuthBrandingCache(cacheKey);
+  const { onSuccess, ...restOptions } = options;
   return useQuery({
     queryKey: ["branding-theme", "client", tenantId ?? null],
     queryFn: () => fetchClientBrandingTheme(tenantId),
     staleTime: 1000 * 60 * 10,
     refetchOnWindowFocus: false,
-    ...options,
+    initialData: cachedBranding ?? undefined,
+    initialDataUpdatedAt: cachedBranding ? 0 : undefined,
+    onSuccess: (data) => {
+      if (cacheKey) {
+        writeAuthBrandingCache(cacheKey, data);
+      }
+      if (typeof onSuccess === "function") {
+        onSuccess(data);
+      }
+    },
+    ...restOptions,
   });
 };
 

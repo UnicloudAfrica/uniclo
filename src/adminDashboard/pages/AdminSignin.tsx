@@ -10,7 +10,7 @@ import useAuthRedirect from "../../utils/adminAuthRedirect";
 import { useLoginAdminAccount } from "../../hooks/adminHooks/authHooks";
 import {
   resolveBrandLogo,
-  useAdminBrandingTheme,
+  usePlatformBrandingTheme,
   useApplyBrandingTheme,
 } from "../../hooks/useBrandingTheme";
 import useImageFallback from "../../hooks/useImageFallback";
@@ -31,7 +31,7 @@ export default function AdminLogin() {
   const navigate = useNavigate();
   const { setUserEmail, setTwoFactorRequired, clearTwoFactorRequirement } = useAdminAuthStore();
   const { isLoading } = useAuthRedirect();
-  const { data: branding } = useAdminBrandingTheme();
+  const { data: branding } = usePlatformBrandingTheme();
   useApplyBrandingTheme(branding, { fallbackLogo: logo, updateFavicon: true });
   const logoSrc = resolveBrandLogo(branding, logo);
   const logoAlt = branding?.company?.name ? `${branding.company.name} Logo` : "Logo";

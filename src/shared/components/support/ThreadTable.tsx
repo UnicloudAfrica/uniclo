@@ -88,11 +88,14 @@ export const ThreadTable: React.FC<ThreadTableProps> = ({
           </thead>
           <tbody className="divide-y divide-gray-200">
             {threads.map((thread) => {
-              const escalationConfig =
-                ESCALATION_CONFIG[thread.escalation_level] || ESCALATION_CONFIG[0];
+              const escalationLevel = thread.escalation_level ?? 0;
+              const escalationConfig = ESCALATION_CONFIG[escalationLevel] || ESCALATION_CONFIG[0];
               const EscalationIcon = escalationConfig.icon;
               const slaRisk = isSlaAtRisk(thread);
-              const isOpen = thread.status !== "resolved" && thread.status !== "closed";
+              const statusValue = thread.status || "open";
+              const isOpen = statusValue !== "resolved" && statusValue !== "closed";
+              const priority = thread.priority || "medium";
+              const messageCount = thread.messages_count ?? thread.messages?.length ?? 0;
 
               return (
                 <tr key={thread.id} className="hover:bg-gray-50">
@@ -104,7 +107,7 @@ export const ThreadTable: React.FC<ThreadTableProps> = ({
                       <div>
                         <div className="font-medium text-sm line-clamp-1">{thread.subject}</div>
                         <div className="text-xs text-gray-500">
-                          {thread.uuid.slice(0, 8)}... • {thread.messages_count} msgs
+                          {(thread.uuid || String(thread.id)).slice(0, 8)}... • {messageCount} msgs
                         </div>
                       </div>
                     </div>
@@ -122,10 +125,10 @@ export const ThreadTable: React.FC<ThreadTableProps> = ({
                   )}
                   <td className="px-4 py-3 text-center">
                     <div
-                      className={`flex items-center justify-center gap-1 ${getPriorityClasses(thread.priority)}`}
+                      className={`flex items-center justify-center gap-1 ${getPriorityClasses(priority)}`}
                     >
                       <Flag className="w-4 h-4" />
-                      <span className="text-sm capitalize">{thread.priority}</span>
+                      <span className="text-sm capitalize">{priority}</span>
                     </div>
                   </td>
                   {showEscalation && (
@@ -140,9 +143,9 @@ export const ThreadTable: React.FC<ThreadTableProps> = ({
                   )}
                   <td className="px-4 py-3 text-center">
                     <span
-                      className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusClasses(thread.status)}`}
+                      className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusClasses(statusValue)}`}
                     >
-                      {thread.status.replace("_", " ")}
+                      {statusValue.replace("_", " ")}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-500">
@@ -153,7 +156,7 @@ export const ThreadTable: React.FC<ThreadTableProps> = ({
                       <ModernButton variant="ghost" size="sm" onClick={() => onView(thread)}>
                         View
                       </ModernButton>
-                      {onEscalate && isOpen && thread.escalation_level < 3 && (
+                      {onEscalate && isOpen && escalationLevel < 3 && (
                         <ModernButton
                           variant="outline"
                           size="sm"

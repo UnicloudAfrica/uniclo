@@ -10,15 +10,15 @@ export interface Thread {
   uuid: string;
   subject: string;
   status: "open" | "in_progress" | "pending" | "resolved" | "closed";
-  priority: "low" | "medium" | "high" | "critical";
-  category: string;
-  escalation_level: number;
+  priority?: "low" | "medium" | "high" | "critical";
+  category?: string;
+  escalation_level?: number;
   created_at: string;
-  sla_response_due_at: string;
-  sla_resolution_due_at: string;
+  sla_response_due_at?: string;
+  sla_resolution_due_at?: string;
   first_response_at: string | null;
   resolved_at: string | null;
-  messages_count: number;
+  messages_count?: number;
   user?: { id: number; name: string; email: string };
   assignee?: { id: number; name: string };
   tenant?: { id: number; name: string };
@@ -29,11 +29,14 @@ export interface Thread {
 export interface ThreadMessage {
   id: number;
   uuid: string;
-  message: string;
+  message?: string;
+  body?: string;
   sender_type: "user" | "admin" | "system";
   is_internal?: boolean;
   created_at: string;
   user?: { id: number; name: string };
+  sender?: { id: number; name: string; email?: string };
+  admin?: { id: number; name: string; email?: string };
 }
 
 export interface ThreadEscalation {

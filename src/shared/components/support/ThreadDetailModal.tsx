@@ -20,7 +20,6 @@ interface ThreadDetailModalProps {
   onEscalate?: () => void;
   onDeescalate?: () => void;
   onResolve?: () => void;
-  onClose?: () => void;
   canEscalate?: boolean;
   canDeescalate?: boolean;
   canResolve?: boolean;
@@ -41,7 +40,9 @@ export const ThreadDetailModal: React.FC<ThreadDetailModalProps> = ({
   isLoading = false,
 }) => {
   const [replyText, setReplyText] = React.useState("");
-  const escalationConfig = ESCALATION_CONFIG[thread.escalation_level] || ESCALATION_CONFIG[0];
+  const escalationLevel = thread.escalation_level ?? 0;
+  const statusLabel = (thread.status || "open").replace("_", " ");
+  const escalationConfig = ESCALATION_CONFIG[escalationLevel] || ESCALATION_CONFIG[0];
   const EscalationIcon = escalationConfig.icon;
 
   const handleReply = () => {
@@ -54,7 +55,7 @@ export const ThreadDetailModal: React.FC<ThreadDetailModalProps> = ({
   const isOpen = thread.status !== "resolved" && thread.status !== "closed";
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="p-4 border-b border-gray-200 flex items-center justify-between">
@@ -64,7 +65,7 @@ export const ThreadDetailModal: React.FC<ThreadDetailModalProps> = ({
               <span
                 className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${getStatusClasses(thread.status)}`}
               >
-                {thread.status.replace("_", " ")}
+                {statusLabel}
               </span>
               <span className={`flex items-center gap-1 text-sm ${escalationConfig.color}`}>
                 <EscalationIcon className="w-4 h-4" />
@@ -110,7 +111,10 @@ export const ThreadDetailModal: React.FC<ThreadDetailModalProps> = ({
             >
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-medium text-sm">
-                  {msg.user?.name || (msg.sender_type === "system" ? "System" : "Support")}
+                  {msg.user?.name ||
+                    msg.sender?.name ||
+                    msg.admin?.name ||
+                    (msg.sender_type === "system" ? "System" : "Support")}
                 </span>
                 <span className="text-xs text-gray-500">{formatThreadDate(msg.created_at)}</span>
                 {msg.is_internal && (
@@ -119,7 +123,7 @@ export const ThreadDetailModal: React.FC<ThreadDetailModalProps> = ({
                   </span>
                 )}
               </div>
-              <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+              <p className="text-sm whitespace-pre-wrap">{msg.message || msg.body}</p>
             </div>
           ))}
         </div>
@@ -147,13 +151,13 @@ export const ThreadDetailModal: React.FC<ThreadDetailModalProps> = ({
         {/* Actions */}
         <div className="p-4 border-t border-gray-200 flex justify-between">
           <div className="flex gap-2">
-            {canEscalate && isOpen && thread.escalation_level < 3 && onEscalate && (
+            {canEscalate && isOpen && escalationLevel < 3 && onEscalate && (
               <ModernButton variant="outline" onClick={onEscalate} disabled={isLoading}>
                 <ArrowUpCircle className="w-4 h-4 mr-2" />
                 Escalate
               </ModernButton>
             )}
-            {canDeescalate && isOpen && thread.escalation_level > 0 && onDeescalate && (
+            {canDeescalate && isOpen && escalationLevel > 0 && onDeescalate && (
               <ModernButton variant="outline" onClick={onDeescalate} disabled={isLoading}>
                 <ArrowDownCircle className="w-4 h-4 mr-2" />
                 De-escalate

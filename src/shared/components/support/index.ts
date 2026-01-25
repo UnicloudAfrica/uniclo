@@ -4,3 +4,4 @@ export { ThreadTable } from "./ThreadTable";
 export { ThreadDetailModal } from "./ThreadDetailModal";
 export { EscalationBadge } from "./EscalationBadge";
 export { SlaStatusIndicator } from "./SlaStatusIndicator";
+export { SupportThreadsPanel } from "./SupportThreadsPanel";

@@ -124,6 +124,28 @@ export const useContextAwareSettings = () => {
     });
   };
 
+  const updatePassword = async (data: any) => {
+    // Both Admin and Business APIs have /profile/password for password updates
+    // Admin: PUT /admin/profile/password
+    // Business: PUT /api/v1/business/profile/password
+    const endpoint = "profile/password";
+    const res = await api("PUT", endpoint, data);
+    return res.data;
+  };
+
+  const useUpdatePassword = () => {
+    return useMutation({
+      mutationFn: updatePassword,
+      onSuccess: () => {
+        ToastUtils.success("Password updated successfully");
+      },
+      onError: (error: any) => {
+        console.error("Error updating password:", error);
+        ToastUtils.error(error.message || "Failed to update password");
+      },
+    });
+  };
+
   return {
     type,
     useFetchSettings,
@@ -131,6 +153,7 @@ export const useContextAwareSettings = () => {
     useResetSettings,
     useExportSettings,
     useImportSettings,
-    uploadAvatar, // Exposed for direct use if needed, separate from mutation
+    useUpdatePassword, // Export the new hook
+    uploadAvatar,
   };
 };

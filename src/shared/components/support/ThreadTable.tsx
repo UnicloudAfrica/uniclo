@@ -58,27 +58,27 @@ export const ThreadTable: React.FC<ThreadTableProps> = ({
                 Thread
               </th>
               {showUser && (
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase hidden md:table-cell">
                   User
                 </th>
               )}
               {showTenant && (
-                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">
+                <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase hidden lg:table-cell">
                   Tenant
                 </th>
               )}
-              <th className="text-center px-4 py-3 text-xs font-medium text-gray-500 uppercase">
+              <th className="text-center px-4 py-3 text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">
                 Priority
               </th>
               {showEscalation && (
-                <th className="text-center px-4 py-3 text-xs font-medium text-gray-500 uppercase">
+                <th className="text-center px-4 py-3 text-xs font-medium text-gray-500 uppercase hidden md:table-cell">
                   Escalation
                 </th>
               )}
               <th className="text-center px-4 py-3 text-xs font-medium text-gray-500 uppercase">
                 Status
               </th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">
+              <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase hidden lg:table-cell">
                 Created
               </th>
               <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">
@@ -113,17 +113,17 @@ export const ThreadTable: React.FC<ThreadTableProps> = ({
                     </div>
                   </td>
                   {showUser && (
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 hidden md:table-cell">
                       <div className="text-sm">{thread.user?.name || "Unknown"}</div>
                       <div className="text-xs text-gray-500">{thread.user?.email}</div>
                     </td>
                   )}
                   {showTenant && (
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 hidden lg:table-cell">
                       <div className="text-sm">{thread.tenant?.name || "-"}</div>
                     </td>
                   )}
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-4 py-3 text-center hidden sm:table-cell">
                     <div
                       className={`flex items-center justify-center gap-1 ${getPriorityClasses(priority)}`}
                     >
@@ -132,7 +132,7 @@ export const ThreadTable: React.FC<ThreadTableProps> = ({
                     </div>
                   </td>
                   {showEscalation && (
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-4 py-3 text-center hidden md:table-cell">
                       <div
                         className={`flex items-center justify-center gap-1 ${escalationConfig.color}`}
                       >
@@ -148,7 +148,7 @@ export const ThreadTable: React.FC<ThreadTableProps> = ({
                       {statusValue.replace("_", " ")}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">
+                  <td className="px-4 py-3 text-sm text-gray-500 hidden lg:table-cell">
                     {formatThreadDate(thread.created_at)}
                   </td>
                   <td className="px-4 py-3 text-right">
@@ -161,6 +161,7 @@ export const ThreadTable: React.FC<ThreadTableProps> = ({
                           variant="outline"
                           size="sm"
                           onClick={() => onEscalate(thread)}
+                          className="hidden sm:inline-flex"
                         >
                           <ArrowUpCircle className="w-4 h-4" />
                         </ModernButton>

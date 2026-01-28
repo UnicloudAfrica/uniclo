@@ -3,7 +3,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import AdminPageShell from "../components/AdminPageShell";
 import TenantClientsSideMenu from "../components/tenantUsersActiveTab";
-import AddClientModal from "./clientComps/AddClient";
+import ClientCreateForm from "../../shared/components/customer-management/ClientCreateForm";
 import { ModernButton } from "../../shared/components/ui";
 
 const AdminClientCreate = () => {
@@ -24,7 +24,7 @@ const AdminClientCreate = () => {
         contentClassName="space-y-6"
       >
         <TenantClientsSideMenu />
-        <AddClientModal isOpen mode="page" onClose={goBack} />
+        <ClientCreateForm context="admin" mode="page" onClose={goBack} />
       </AdminPageShell>
     </>
   );

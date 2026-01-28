@@ -5,7 +5,7 @@ import { useVerifyBusiness } from "../../hooks/businessHooks";
 import useTenantAuthStore from "../../stores/tenantAuthStore";
 import Header from "./signup/header";
 import { Loader2, ShieldCheck, AlertCircle } from "lucide-react";
-import { useFetchCountries } from "../../hooks/resource";
+import { useSharedFetchCountries } from "../../hooks/sharedResourceHooks";
 import {
   resolveBrandLogo,
   useApplyBrandingTheme,
@@ -38,7 +38,7 @@ export default function DashboardSignUpV2() {
   const setUserEmail = useTenantAuthStore((state) => state.setUserEmail);
   const { mutate, isPending } = useCreateAccount();
   const { mutate: verifyBusiness, isPending: isVerifying } = useVerifyBusiness();
-  const { data: countries = [], isFetching: isCountriesFetching } = useFetchCountries();
+  const { data: countries = [], isFetching: isCountriesFetching } = useSharedFetchCountries();
   const hostname = typeof window !== "undefined" ? window.location.hostname : "";
   const subdomain = typeof window !== "undefined" ? getSubdomain() : null;
   const { data: branding } = usePublicBrandingTheme({

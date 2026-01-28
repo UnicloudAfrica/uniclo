@@ -21,6 +21,7 @@ const useAdminBrandingSettingsState = () => {
   const [formData, setFormData] = useState({
     primary_color: "#288DD1",
     secondary_color: "#3FE0C8",
+    surface_alt: "#F3F4F6",
     company_name: "",
     support_email: "",
     support_phone: "",
@@ -35,6 +36,7 @@ const useAdminBrandingSettingsState = () => {
       setFormData({
         primary_color: branding?.primary_color || "#288DD1",
         secondary_color: branding?.secondary_color || "#3FE0C8",
+        surface_alt: branding?.surface_alt || "#F3F4F6",
         company_name: business?.company_name || "",
         support_email: business?.support_email || "",
         support_phone: business?.support_phone || "",

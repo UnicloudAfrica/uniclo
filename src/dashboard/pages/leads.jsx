@@ -1,13 +1,15 @@
-import React, { useState } from "react";
+import React from "react";
 import TenantPageShell from "../components/TenantPageShell";
+import LeadsDashboard from "../../shared/components/customer-management/LeadsDashboard";
 
 const Leads = () => {
   return (
     <TenantPageShell
       title="Leads"
-      description="Lead management page"
+      description="Track prospects through outreach, qualification, and conversion."
+      contentClassName="space-y-8"
     >
-      {/* Empty page - content removed */}
+      <LeadsDashboard context="tenant" />
     </TenantPageShell>
   );
 };

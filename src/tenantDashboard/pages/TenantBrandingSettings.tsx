@@ -72,11 +72,10 @@ const ColorPickerField: React.FC<{
                 onChange(color);
                 setShowPicker(false);
               }}
-              className={`w-8 h-8 rounded-lg border-2 transition-transform hover:scale-110 ${
-                value === color
+              className={`w-8 h-8 rounded-lg border-2 transition-transform hover:scale-110 ${value === color
                   ? "border-gray-800 ring-2 ring-offset-2 ring-blue-500"
                   : "border-transparent"
-              }`}
+                }`}
               style={{ backgroundColor: color }}
             />
           ))}
@@ -121,9 +120,8 @@ const FileUploadField: React.FC<{
           setDragOver(false);
           if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
         }}
-        className={`border-2 border-dashed rounded-xl p-4 text-center transition-colors ${
-          dragOver ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300"
-        }`}
+        className={`relative border-2 border-dashed rounded-xl p-4 text-center transition-colors ${dragOver ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300"
+          }`}
       >
         {preview ? (
           <div className="relative inline-block">
@@ -291,6 +289,11 @@ export const BrandingSettingsSections = ({
           value={formData.secondary_color}
           onChange={(c) => onChange("secondary_color", c)}
         />
+        <ColorPickerField
+          label="Dashboard Background"
+          value={formData.surface_alt}
+          onChange={(c) => onChange("surface_alt", c)}
+        />
       </div>
 
       {/* Color Preview */}
@@ -406,6 +409,7 @@ const useTenantBrandingSettingsState = () => {
   const [formData, setFormData] = useState({
     primary_color: "#3B82F6",
     secondary_color: "#10B981",
+    surface_alt: "#F3F4F6",
     company_name: "",
     email: "",
     support_email: "",
@@ -422,6 +426,7 @@ const useTenantBrandingSettingsState = () => {
       setFormData({
         primary_color: branding?.primary_color || "#3B82F6",
         secondary_color: branding?.secondary_color || "#10B981",
+        surface_alt: branding?.surface_alt || "#F3F4F6",
         company_name: business?.company_name || "",
         email: business?.email || "",
         support_email: business?.support_email || "",

@@ -1,6 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Activity } from "lucide-react";
 import TenantPageShell from "../components/TenantPageShell";
 import { ModernButton } from "../../shared/components/ui";
 import {
@@ -13,7 +12,7 @@ import {
 import InfrastructureSetupWizard from "../../adminDashboard/components/provisioning/InfrastructureSetupWizard";
 import { useTenantProjectInfrastructureStatus } from "../../hooks/tenantHooks/projectInfrastructureHooks";
 import { useFetchTenantProjectEdgeConfig } from "../../hooks/tenantHooks/edgeHooks";
-import ProjectUnifiedView from "../../shared/components/projects/details/ProjectUnifiedView";
+import ProjectDetailsOverview from "../../shared/components/projects/details/ProjectDetailsOverview";
 import TenantAssignEdgeConfigModal from "./projectComps/TenantAssignEdgeConfigModal";
 import KeyPairs from "./infraComps/keyPairs";
 import SecurityGroup from "./infraComps/securityGroup";
@@ -27,7 +26,6 @@ import EIPs from "./infraComps/elasticIP";
 import ToastUtils from "../../utils/toastUtil";
 import ProvisioningFullScreen from "../../shared/components/provisioning/ProvisioningFullScreen";
 import api from "../../index/tenant/tenantApi";
-import { ModernCard } from "../../shared/components/ui";
 
 // Interfaces
 interface User {
@@ -124,6 +122,12 @@ const ProjectDetails: React.FC = () => {
     useTenantEnableInternetAccess();
 
   const [isSyncingResources, setIsSyncingResources] = useState(false);
+
+  const requiredActions = useMemo(() => {
+    const summary = projectStatus?.summary;
+    if (!Array.isArray(summary)) return [];
+    return summary.filter((item: any) => !item?.completed && item?.action);
+  }, [projectStatus?.summary]);
 
   const handleBack = () => navigate("/dashboard/projects");
 
@@ -420,106 +424,69 @@ const ProjectDetails: React.FC = () => {
       }
     >
       <div className="space-y-6 animate-in fade-in duration-500">
-        {projectStatus?.summary?.some((i: any) => !i.completed && i.action) && (
-          <ModernCard className="border-l-4 border-l-yellow-400 bg-yellow-50/30">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Activity className="text-yellow-600" size={20} />
-                <h3 className="text-lg font-semibold text-gray-900">Required Actions</h3>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {projectStatus.summary
-                .filter((i: any) => !i.completed && i.action)
-                .map((item: any, idx: number) => (
-                  <div
-                    key={idx}
-                    className="bg-white p-4 rounded-lg border border-yellow-200 shadow-sm flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="text-sm font-medium text-gray-900 mb-1">{item.title}</div>
-                      {item.missing_count && (
-                        <div className="text-xs text-red-500 mb-2">
-                          {item.missing_count} missing
-                        </div>
-                      )}
-                    </div>
-                    <ModernButton
-                      size="sm"
-                      variant="primary"
-                      className="w-full mt-3"
-                      onClick={() =>
-                        handleGenericAction({
-                          method: item.action.method,
-                          endpoint: item.action.endpoint,
-                          label: item.action.label,
-                        })
-                      }
-                    >
-                      {item.action.label}
-                    </ModernButton>
-                  </div>
-                ))}
-            </div>
-          </ModernCard>
-        )}
-
-        <ProjectUnifiedView
-          project={{
-            id: project?.id || projectId || "",
-            identifier: project?.identifier || projectId || "",
-            name: project?.name || "Project",
-            status: project?.status || "unknown",
-            region: project?.region,
-            region_name: project?.region_name,
-            provider: project?.provider,
-            created_at: project?.created_at,
-          }}
-          instanceStats={{
-            total: instanceStats.total,
-            running: instanceStats.running,
-            stopped: instanceStats.total - instanceStats.running - instanceStats.provisioning,
-            provisioning: instanceStats.provisioning,
-          }}
-          resourceCounts={resourceCounts}
-          canCreateInstances={canCreateInstances}
-          networkStatus={networkData}
-          setupSteps={setupSteps}
-          setupProgressPercent={infraStatusData?.data?.completion_percentage ?? 0}
-          edgeNetworkConnected={edgeNetworkConnected}
-          edgeNetworkName={edgeNetworkName}
-          instances={projectInstances}
-          onAddInstance={() =>
-            navigate(
-              `/dashboard/create-instance?project=${encodeURIComponent(
-                project?.identifier || projectId || ""
-              )}`
-            )
+        <ProjectDetailsOverview
+          requiredActions={requiredActions}
+          onRequiredAction={(action) =>
+            handleGenericAction({
+              method: action?.method || "POST",
+              endpoint: action?.endpoint,
+              label: action?.label,
+            })
           }
-          onEnableInternet={handleEnableInternet}
-          onManageMembers={() => handleSectionClick("user-provisioning")}
-          onSyncResources={handleSyncResources}
-          onViewNetworkDetails={() => handleSectionClick("networks")}
-          onViewAllResources={() => handleSectionClick("vpcs")}
-          onViewKeyPairs={() => handleSectionClick("keypairs")}
-          onViewRouteTables={() => handleSectionClick("route-tables")}
-          onViewElasticIps={() => handleSectionClick("eips")}
-          onViewNetworkInterfaces={() => handleSectionClick("enis")}
-          onViewVpcs={() => handleSectionClick("vpcs")}
-          onViewSubnets={() => handleSectionClick("subnets")}
-          onViewSecurityGroups={() => handleSectionClick("security-groups")}
-          onViewInternetGateways={() => handleSectionClick("igws")}
-          onViewUsers={() => handleSectionClick("user-provisioning")}
-          isEnablingInternet={isEnablingInternet}
-          isSyncing={isSyncingResources}
-          isProvisioning={isStatusFetching}
-          showMemberManagement={true}
-          showSyncButton={true}
-        />
-
-        <ModernCard variant="outlined" padding="lg">
+          unifiedViewProps={{
+            project: {
+              id: project?.id || projectId || "",
+              identifier: project?.identifier || projectId || "",
+              name: project?.name || "Project",
+              status: project?.status || "unknown",
+              region: project?.region,
+              region_name: project?.region_name,
+              provider: project?.provider,
+              created_at: project?.created_at,
+            },
+            instanceStats: {
+              total: instanceStats.total,
+              running: instanceStats.running,
+              stopped: instanceStats.total - instanceStats.running - instanceStats.provisioning,
+              provisioning: instanceStats.provisioning,
+            },
+            resourceCounts,
+            canCreateInstances,
+            networkStatus: networkData,
+            setupSteps,
+            setupProgressPercent: infraStatusData?.data?.completion_percentage ?? 0,
+            edgeNetworkConnected,
+            edgeNetworkName,
+            instances: projectInstances,
+            onAddInstance: () =>
+              navigate(
+                `/dashboard/create-instance?project=${encodeURIComponent(
+                  project?.identifier || projectId || ""
+                )}`
+              ),
+            onEnableInternet: handleEnableInternet,
+            onManageMembers: () => handleSectionClick("user-provisioning"),
+            onSyncResources: handleSyncResources,
+            onViewNetworkDetails: () => handleSectionClick("networks"),
+            onViewAllResources: () => handleSectionClick("vpcs"),
+            onViewKeyPairs: () => handleSectionClick("keypairs"),
+            onViewRouteTables: () => handleSectionClick("route-tables"),
+            onViewElasticIps: () => handleSectionClick("eips"),
+            onViewNetworkInterfaces: () => handleSectionClick("enis"),
+            onViewVpcs: () => handleSectionClick("vpcs"),
+            onViewSubnets: () => handleSectionClick("subnets"),
+            onViewSecurityGroups: () => handleSectionClick("security-groups"),
+            onViewInternetGateways: () => handleSectionClick("igws"),
+            onViewUsers: () => handleSectionClick("user-provisioning"),
+            isEnablingInternet,
+            isSyncing: isSyncingResources,
+            isProvisioning: isStatusFetching,
+            showMemberManagement: true,
+            showSyncButton: true,
+          }}
+        >
           {renderSectionContent()}
-        </ModernCard>
+        </ProjectDetailsOverview>
       </div>
 
       <TenantAssignEdgeConfigModal

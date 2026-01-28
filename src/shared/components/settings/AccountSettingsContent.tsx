@@ -35,6 +35,7 @@ import {
   FieldControl,
   SecurityTwoFactorPanel,
   NetworkPolicySettingsCard,
+  SecurityPasswordPanel,
 } from "./index";
 import {
   useAdminNetworkPolicySettings,
@@ -181,11 +182,11 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
     const filteredTabs = !availableCategories.length
       ? baseTabs
       : baseTabs.filter((tab: any) => {
-          if (!tab.categories?.length) {
-            return true;
-          }
-          return tab.categories.some((category: string) => availableCategories.includes(category));
-        });
+        if (!tab.categories?.length) {
+          return true;
+        }
+        return tab.categories.some((category: string) => availableCategories.includes(category));
+      });
 
     const customTabs = [];
     if (isAdminContext) customTabs.push(networkPolicyTab);
@@ -619,16 +620,14 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition ${
-                      isActive
-                        ? "bg-primary-500 text-white shadow-md"
-                        : "text-slate-600 hover:bg-slate-100"
-                    }`}
+                    className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition ${isActive
+                      ? "bg-primary-500 text-white shadow-md"
+                      : "text-slate-600 hover:bg-slate-100"
+                      }`}
                   >
                     <span
-                      className={`flex h-9 w-9 items-center justify-center rounded-xl ${
-                        isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
-                      }`}
+                      className={`flex h-9 w-9 items-center justify-center rounded-xl ${isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
+                        }`}
                     >
                       <Icon className="h-4 w-4" />
                     </span>
@@ -691,9 +690,8 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
 
                         {group.fields?.length ? (
                           <div
-                            className={`grid gap-5 ${
-                              group.layout === "grid" ? "sm:grid-cols-2" : "grid-cols-1"
-                            }`}
+                            className={`grid gap-5 ${group.layout === "grid" ? "sm:grid-cols-2" : "grid-cols-1"
+                              }`}
                           >
                             {group.fields.map((field: any) => (
                               <FieldControl
@@ -707,13 +705,16 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
                             ))}
                           </div>
                         ) : activeTabConfig.id === "security" ? (
-                          <SecurityTwoFactorPanel
-                            enabled={twoFactorEnabled}
-                            onEnable={startEnableTwoFactor}
-                            onDisable={startDisableTwoFactor}
-                            isBusy={isTwoFactorProcessing}
-                            isFetching={isFetchingTwoFactor}
-                          />
+                          <div className="space-y-6">
+                            <SecurityPasswordPanel />
+                            <SecurityTwoFactorPanel
+                              enabled={twoFactorEnabled}
+                              onEnable={startEnableTwoFactor}
+                              onDisable={startDisableTwoFactor}
+                              isBusy={isTwoFactorProcessing}
+                              isFetching={isFetchingTwoFactor}
+                            />
+                          </div>
                         ) : null}
 
                         <div className="flex flex-wrap justify-end gap-2 pt-2">

@@ -566,6 +566,10 @@ export default function AdminProjectDetails() {
     }
   }, [loadBalancersData, updateResourceCount]);
   const summary = project?.summary ?? [];
+  const requiredActions = useMemo(
+    () => summary.filter((item: any) => !item?.completed && item?.action),
+    [summary]
+  );
 
   // Initialize Real-time Provisioning Hook
   useProjectBroadcasting(project?.id);
@@ -2067,6 +2071,14 @@ export default function AdminProjectDetails() {
           inviteForm={inviteForm}
           setInviteForm={setInviteForm}
           formatMemberName={formatMemberName}
+          requiredActions={requiredActions}
+          onRequiredAction={(action: any) =>
+            handleGenericAction({
+              method: action?.method || "POST",
+              endpoint: action?.endpoint,
+              label: action?.label,
+            })
+          }
         />
       </AdminPageShell>
 

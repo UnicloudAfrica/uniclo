@@ -4,9 +4,21 @@ import tenantApi from "../../index/tenant/tenantApi";
 import config from "../../config";
 import useTenantAuthStore from "../../stores/tenantAuthStore";
 
-// GET: Fetch all leads
-const fetchLeads = async () => {
-  const res = await silentTenant("GET", "/leads");
+// GET: Fetch all leads with optional filters
+const fetchLeads = async (params = {}) => {
+  const queryParams = Object.keys(params)
+    .filter(
+      (key) =>
+        params[key] !== undefined &&
+        params[key] !== null &&
+        params[key] !== "" &&
+        params[key] !== "all"
+    )
+    .map((key) => `${key}=${encodeURIComponent(params[key])}`)
+    .join("&");
+
+  const uri = `/leads${queryParams ? `?${queryParams}` : ""}`;
+  const res = await silentTenant("GET", uri);
   if (!res.data) {
     throw new Error("Failed to fetch leads");
   }
@@ -168,10 +180,10 @@ const convertLeadToUser = async (id) => {
 };
 
 // Hook to fetch all leads
-export const useFetchLeads = (options = {}) => {
+export const useFetchLeads = (params = {}, options = {}) => {
   return useQuery({
-    queryKey: ["tenant-leads"],
-    queryFn: fetchLeads,
+    queryKey: ["tenant-leads", params],
+    queryFn: () => fetchLeads(params),
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     refetchOnWindowFocus: false,
     ...options,

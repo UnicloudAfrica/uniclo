@@ -16,7 +16,7 @@ import TeamTab from "./TeamTab";
 import NetworkingTab from "./NetworkingTab";
 import ComputeTab from "./ComputeTab";
 import { ModernButton } from "../../../shared/components/ui";
-import ProjectUnifiedView from "../../../shared/components/projects/details/ProjectUnifiedView";
+import ProjectDetailsOverview from "../../../shared/components/projects/details/ProjectDetailsOverview";
 import ToastUtils from "../../../utils/toastUtil";
 
 interface ProjectDetailsShellProps {
@@ -47,6 +47,8 @@ interface ProjectDetailsShellProps {
   inviteForm: any;
   setInviteForm: (form: any) => void;
   formatMemberName: (user: any) => string;
+  requiredActions?: any[];
+  onRequiredAction?: (action: any, item: any) => void;
 }
 
 const ProjectDetailsShell: React.FC<ProjectDetailsShellProps> = ({
@@ -77,6 +79,8 @@ const ProjectDetailsShell: React.FC<ProjectDetailsShellProps> = ({
   inviteForm,
   setInviteForm,
   formatMemberName,
+  requiredActions,
+  onRequiredAction,
 }) => {
   const [activeTab, setActiveTab] = useState("overview");
   const [activeNetworkingResource, setActiveNetworkingResource] = useState("vpcs");
@@ -138,82 +142,86 @@ const ProjectDetailsShell: React.FC<ProjectDetailsShellProps> = ({
       <main className="flex-1 p-6 overflow-auto">
         <div className="max-w-[1600px] mx-auto">
           {activeTab === "overview" && (
-            <ProjectUnifiedView
-              project={project}
-              instanceStats={instanceStats}
-              resourceCounts={resourceCounts}
-              canCreateInstances={canCreateInstances}
-              networkStatus={networkData}
-              setupSteps={setupSteps}
-              setupProgressPercent={setupProgressPercent}
-              instances={projectInstances}
-              showMemberManagement={true}
-              showSyncButton={true}
-              onAddInstance={() => {
-                setActiveComputeSubView("instances");
-                setActiveTab("compute");
-              }}
-              onEnableInternet={async () => {
-                ToastUtils.info("Internet Gateway management from shell");
-              }}
-              onManageMembers={() => setActiveTab("team")}
-              onViewNetworkDetails={() => {
-                setActiveNetworkingResource("vpcs");
-                setActiveTab("networking");
-              }}
-              onViewAllResources={() => {
-                setActiveNetworkingResource("vpcs");
-                setActiveTab("networking");
-              }}
-              onViewKeyPairs={() => {
-                setActiveComputeSubView("keypairs");
-                setActiveTab("compute");
-              }}
-              onViewRouteTables={() => {
-                setActiveNetworkingResource("routes");
-                setActiveTab("networking");
-              }}
-              onViewElasticIps={() => {
-                setActiveNetworkingResource("eips");
-                setActiveTab("networking");
-              }}
-              onViewNetworkInterfaces={() => {
-                setActiveNetworkingResource("enis");
-                setActiveTab("networking");
-              }}
-              onSyncResources={() => syncInfrastructure({ projectId: project?.identifier })}
-              onViewUsers={() => setActiveTab("team")}
-              onViewSubnets={() => {
-                setActiveNetworkingResource("subnets");
-                setActiveTab("networking");
-              }}
-              onViewSecurityGroups={() => {
-                setActiveNetworkingResource("sgs");
-                setActiveTab("networking");
-              }}
-              onViewVpcs={() => {
-                setActiveNetworkingResource("vpcs");
-                setActiveTab("networking");
-              }}
-              onViewNatGateways={() => {
-                setActiveNetworkingResource("nat");
-                setActiveTab("networking");
-              }}
-              onViewInternetGateways={() => {
-                setActiveNetworkingResource("igw");
-                setActiveTab("networking");
-              }}
-              onViewNetworkAcls={() => {
-                setActiveNetworkingResource("acls");
-                setActiveTab("networking");
-              }}
-              onViewVpcPeering={() => {
-                setActiveNetworkingResource("peering");
-                setActiveTab("networking");
-              }}
-              onViewLoadBalancers={() => {
-                setActiveNetworkingResource("lbs");
-                setActiveTab("networking");
+            <ProjectDetailsOverview
+              requiredActions={requiredActions}
+              onRequiredAction={onRequiredAction}
+              unifiedViewProps={{
+                project,
+                instanceStats,
+                resourceCounts,
+                canCreateInstances,
+                networkStatus: networkData,
+                setupSteps,
+                setupProgressPercent,
+                instances: projectInstances,
+                showMemberManagement: true,
+                showSyncButton: true,
+                onAddInstance: () => {
+                  setActiveComputeSubView("instances");
+                  setActiveTab("compute");
+                },
+                onEnableInternet: async () => {
+                  ToastUtils.info("Internet Gateway management from shell");
+                },
+                onManageMembers: () => setActiveTab("team"),
+                onViewNetworkDetails: () => {
+                  setActiveNetworkingResource("vpcs");
+                  setActiveTab("networking");
+                },
+                onViewAllResources: () => {
+                  setActiveNetworkingResource("vpcs");
+                  setActiveTab("networking");
+                },
+                onViewKeyPairs: () => {
+                  setActiveComputeSubView("keypairs");
+                  setActiveTab("compute");
+                },
+                onViewRouteTables: () => {
+                  setActiveNetworkingResource("routes");
+                  setActiveTab("networking");
+                },
+                onViewElasticIps: () => {
+                  setActiveNetworkingResource("eips");
+                  setActiveTab("networking");
+                },
+                onViewNetworkInterfaces: () => {
+                  setActiveNetworkingResource("enis");
+                  setActiveTab("networking");
+                },
+                onSyncResources: () => syncInfrastructure({ projectId: project?.identifier }),
+                onViewUsers: () => setActiveTab("team"),
+                onViewSubnets: () => {
+                  setActiveNetworkingResource("subnets");
+                  setActiveTab("networking");
+                },
+                onViewSecurityGroups: () => {
+                  setActiveNetworkingResource("sgs");
+                  setActiveTab("networking");
+                },
+                onViewVpcs: () => {
+                  setActiveNetworkingResource("vpcs");
+                  setActiveTab("networking");
+                },
+                onViewNatGateways: () => {
+                  setActiveNetworkingResource("nat");
+                  setActiveTab("networking");
+                },
+                onViewInternetGateways: () => {
+                  setActiveNetworkingResource("igw");
+                  setActiveTab("networking");
+                },
+                onViewNetworkAcls: () => {
+                  setActiveNetworkingResource("acls");
+                  setActiveTab("networking");
+                },
+                onViewVpcPeering: () => {
+                  setActiveNetworkingResource("peering");
+                  setActiveTab("networking");
+                },
+                onViewLoadBalancers: () => {
+                  setActiveNetworkingResource("lbs");
+                  setActiveTab("networking");
+                },
               }}
             />
           )}

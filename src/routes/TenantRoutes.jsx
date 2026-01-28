@@ -1,7 +1,7 @@
 import React from "react";
 import { Route, Navigate } from "react-router-dom";
 import TenantRoute from "./TenantRoute";
-import Dashboard from "../dashboard/pages/dashboard";
+import Dashboard from "../dashboard/pages/dashboard.tsx";
 
 import PurchasedModules from "../dashboard/pages/purchasedModules";
 import PaymentHistory from "../dashboard/pages/paymentHistory";

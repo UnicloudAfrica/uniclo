@@ -7,6 +7,7 @@ interface ComputeResourcesCardProps {
   stoppedInstances: number;
   onAddInstance: () => void;
   isLoading?: boolean;
+  canCreateInstances?: boolean;
 }
 
 const ComputeResourcesCard: React.FC<ComputeResourcesCardProps> = ({
@@ -15,7 +16,10 @@ const ComputeResourcesCard: React.FC<ComputeResourcesCardProps> = ({
   stoppedInstances = 0,
   onAddInstance,
   isLoading = false,
+  canCreateInstances = true,
 }) => {
+  const isDisabled = isLoading || !canCreateInstances;
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm h-full">
       {/* Header */}
@@ -52,7 +56,7 @@ const ComputeResourcesCard: React.FC<ComputeResourcesCardProps> = ({
       <button
         type="button"
         onClick={onAddInstance}
-        disabled={isLoading}
+        disabled={isDisabled}
         className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 cursor-pointer"
       >
         <Plus className="w-5 h-5" />

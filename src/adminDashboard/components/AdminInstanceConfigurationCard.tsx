@@ -51,6 +51,7 @@ interface Props {
   useKeyPairsHook?: FetchHookFn;
   useSubnetsHook?: FetchHookFn;
   useNetworksHook?: FetchHookFn;
+  useProjectMembershipSuggestionsHook?: FetchHookFn;
 
   // Whether to skip fetching projects/networks (for simplified client context)
   skipProjectFetch?: boolean;
@@ -118,6 +119,7 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
   useKeyPairsHook,
   useSubnetsHook,
   useNetworksHook,
+  useProjectMembershipSuggestionsHook,
   skipProjectFetch = false,
   skipNetworkResourcesFetch = false,
   onSaveTemplate,
@@ -460,6 +462,7 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
       membershipTenantId={membershipTenantId}
       membershipUserId={membershipUserId}
       lockAssignmentScope={lockAssignmentScope}
+      useProjectMembershipSuggestionsHook={useProjectMembershipSuggestionsHook}
     />
   );
 };

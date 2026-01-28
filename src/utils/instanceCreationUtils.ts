@@ -1,103 +1,11 @@
 import { Configuration, Option } from "../types/InstanceConfiguration";
 
-export const COUNTRY_FALLBACK = [{ value: "US", label: "United States (US)", currency: "USD" }];
-
-/**
- * Normalizes a country value to a 2-letter ISO code
- */
-export const normalizeCountryCandidate = (value: any): string => {
-  if (value === null || value === undefined) return "";
-  const trimmed = String(value).trim();
-  if (!trimmed) return "";
-  const upper = trimmed.toUpperCase();
-  if (/^[A-Z]{2}$/.test(upper)) {
-    return upper;
-  }
-  return "";
-};
-
-/**
- * Matches a country value against available options
- */
-export const matchCountryFromOptions = (value: any, options: Option[] = []): string => {
-  if (value === null || value === undefined) return "";
-  const normalized = normalizeCountryCandidate(value);
-  if (normalized) return normalized;
-
-  const trimmed = String(value).trim();
-  if (!trimmed) return "";
-  const lower = trimmed.toLowerCase();
-
-  const match = options.find((option) => {
-    if (!option) return false;
-    if (typeof option.value === "string" && option.value.toLowerCase() === lower) {
-      return true;
-    }
-    if (typeof option.label === "string") {
-      const labelLower = option.label.toLowerCase();
-      if (labelLower === lower) {
-        return true;
-      }
-      const bracketIndex = option.label.indexOf("(");
-      if (bracketIndex >= 0) {
-        const prefix = option.label.slice(0, bracketIndex).trim().toLowerCase();
-        if (prefix === lower) {
-          return true;
-        }
-      }
-    }
-    return false;
-  });
-
-  return match?.value ? String(match.value).toUpperCase() : "";
-};
-
-/**
- * Resolves country code from various entity properties
- */
-export const resolveCountryCodeFromEntity = (entity: any, options: Option[] = []): string => {
-  if (!entity) return "";
-  const candidates = [
-    entity.country_code,
-    entity.countryCode,
-    entity.country_iso,
-    entity.countryIso,
-    entity.country,
-    entity.billing_country_code,
-    entity.billingCountryCode,
-    entity.billing_country,
-    entity.billingCountry,
-    entity.billing?.country_code,
-    entity.billing?.countryCode,
-    entity.billing?.country,
-    entity.location?.country_code,
-    entity.location?.countryCode,
-    entity.address?.country_code,
-    entity.address?.countryCode,
-    entity.profile?.country_code,
-    entity.profile?.countryCode,
-    entity.metadata?.country_code,
-    entity.metadata?.countryCode,
-    entity.primary_contact?.country_code,
-    entity.primary_contact?.countryCode,
-    entity.contact?.country_code,
-    entity.contact?.countryCode,
-    entity.tenant_country_code,
-    entity.tenant_country,
-    entity.tenant?.country_code,
-    entity.tenant?.country,
-    entity.settings?.country_code,
-    entity.settings?.country,
-  ];
-
-  for (const candidate of candidates) {
-    const code = matchCountryFromOptions(candidate, options);
-    if (code) {
-      return code;
-    }
-  }
-  return "";
-};
+export {
+  COUNTRY_FALLBACK,
+  normalizeCountryCandidate,
+  matchCountryFromOptions,
+  resolveCountryCodeFromEntity,
+} from "../shared/utils/countryUtils";
 
 /**
  * Checks if a value is not null/undefined/empty
@@ -464,7 +372,7 @@ export const hasProjectNetworkFromStatus = (status: any, project?: any): boolean
 
   const summary = Array.isArray(projectStatus?.summary) ? projectStatus.summary : [];
   const summaryHasVpc = summary.some(
-    (item) =>
+    (item: any) =>
       item?.completed && typeof item?.title === "string" && item.title.toLowerCase().includes("vpc")
   );
   if (summaryHasVpc) return true;

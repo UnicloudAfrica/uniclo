@@ -4,15 +4,20 @@ import AdminPageShell from "../components/AdminPageShell";
 import { SupportThreadsPanel } from "../../shared/components/support";
 import adminApi, { adminSilentApi } from "../../index/admin/api";
 
-const buildQuery = (filters: { status?: string; search?: string }) => {
+const buildQuery = (filters: { status?: string; search?: string; page?: number }) => {
   const params = new URLSearchParams();
   if (filters.status) params.set("status", filters.status);
   if (filters.search) params.set("search", filters.search);
+  if (filters.page) params.set("page", String(filters.page));
+  params.set("per_page", "15");
   const query = params.toString();
   return query ? `?${query}` : "";
 };
 
+import { useNavigate } from "react-router-dom";
+
 const TicketsDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const fetchThreads = (filters: { status?: string; search?: string }) =>
     adminSilentApi("GET", `/support${buildQuery(filters)}`);
 
@@ -46,6 +51,7 @@ const TicketsDashboard: React.FC = () => {
         showUser
         showEscalation
         adminFields
+        onView={(thread) => navigate(`/admin-dashboard/tickets/${thread.uuid || thread.id}`)}
       />
     </AdminPageShell>
   );

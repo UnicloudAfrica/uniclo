@@ -28,6 +28,7 @@ interface ProjectDetailsShellProps {
   infraStatusData: any;
   networkData: any;
   instanceStats: any;
+  canCreateInstances?: boolean;
   setupSteps: any[];
   setupProgressPercent: number;
   isProjectStatusFetching: boolean;
@@ -57,6 +58,7 @@ const ProjectDetailsShell: React.FC<ProjectDetailsShellProps> = ({
   infraStatusData,
   networkData,
   instanceStats,
+  canCreateInstances = true,
   setupSteps,
   setupProgressPercent,
   isProjectStatusFetching,
@@ -140,6 +142,7 @@ const ProjectDetailsShell: React.FC<ProjectDetailsShellProps> = ({
               project={project}
               instanceStats={instanceStats}
               resourceCounts={resourceCounts}
+              canCreateInstances={canCreateInstances}
               networkStatus={networkData}
               setupSteps={setupSteps}
               setupProgressPercent={setupProgressPercent}

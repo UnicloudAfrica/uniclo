@@ -50,8 +50,8 @@ const FormLayout = ({
   description,
   onClose,
   isProcessing = false,
-  accentGradient = "from-[#1E40AF] via-[#2563EB] to-[#1D4ED8]",
-  accentColor = "#2563EB",
+  accentGradient = "brand-hero",
+  accentColor = "var(--theme-color)",
   meta = [],
   kicker,
   headerBadge,
@@ -71,6 +71,11 @@ const FormLayout = ({
   const wrapperClasses = isPageMode
     ? `font-Outfit w-full ${className}`
     : `fixed inset-0 z-[1000] flex items-start justify-center bg-black/50 px-4 py-10 font-Outfit ${className}`;
+
+  const headerClassName =
+    accentGradient === "brand-hero"
+      ? "brand-hero text-white"
+      : `relative bg-gradient-to-br ${accentGradient} text-white`;
 
   const cardBaseClasses =
     "relative flex w-full flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-2xl";
@@ -92,7 +97,7 @@ const FormLayout = ({
     >
       <div className={`w-full ${maxWidthClass}`}>
         <div className={cardClasses}>
-          <div className={`relative bg-gradient-to-br ${accentGradient} text-white`}>
+          <div className={headerClassName}>
             <div className="px-8 pb-10 pt-8 md:px-10">
               {kicker && (
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">
@@ -172,19 +177,28 @@ const FormLayout = ({
 
 export const formAccent = {
   primary: {
-    gradient: "from-[#0F172A] via-[#1E40AF] to-[#1D4ED8]",
-    color: "#1D4ED8",
+    gradient: "brand-hero",
+    color: "var(--theme-color)",
   },
   emerald: {
-    gradient: "from-[#064E3B] via-[#047857] to-[#059669]",
-    color: "#059669",
+    gradient: "brand-hero",
+    color: "var(--theme-color)",
   },
   slate: {
-    gradient: "from-[#1E293B] via-[#334155] to-[#0F172A]",
-    color: "#334155",
+    gradient: "brand-hero",
+    color: "var(--theme-color)",
   },
 };
 
-export const getAccentRgba = (color, opacity) => hexToRgba(color, opacity);
+export const getAccentRgba = (color, opacity) => {
+  if (!color) return hexToRgba(color, opacity);
+  if (typeof color === "string" && color.includes("var(")) {
+    if (color.includes("--secondary-color")) {
+      return `rgba(var(--secondary-color-rgb), ${opacity})`;
+    }
+    return `rgba(var(--theme-color-rgb), ${opacity})`;
+  }
+  return hexToRgba(color, opacity);
+};
 
 export default FormLayout;

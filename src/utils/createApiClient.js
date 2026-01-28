@@ -55,11 +55,16 @@ export const createApiClient = ({
       "Content-Type": "application/json",
       Accept: "application/json",
     };
+
+    if (body instanceof FormData) {
+      delete headers["Content-Type"];
+    }
+
     const options = {
       method,
       headers,
       credentials: "include", // Ensure cookies are sent (HttpOnly)
-      body: body ? JSON.stringify(body) : null,
+      body: body instanceof FormData ? body : (body ? JSON.stringify(body) : null),
     };
 
     try {

@@ -17,6 +17,7 @@ import Products from "../dashboard/pages/products";
 import TenantPricingCalculator from "../tenantDashboard/pages/TenantPricingCalculator";
 import TenantCreateInvoice from "../tenantDashboard/pages/TenantCreateInvoice";
 import DashboardInstances from "../dashboard/pages/Instances";
+import TenantTicketDetail from "../dashboard/pages/TenantTicketDetail";
 
 import TenantQuoteCalculator from "../dashboard/pages/TenantQuoteCalculator";
 import DashboardObjectStorage from "../dashboard/pages/objectStorage";
@@ -191,6 +192,7 @@ const TenantRoutes = () => {
         {/* Standalone */}
         <Route path="/dashboard/products" element={<Products />} />
         <Route path="/dashboard/support" element={<SupportTicket />} />
+        <Route path="/dashboard/support/:id" element={<TenantTicketDetail />} />
         <Route path="/dashboard/account" element={<TenantAccountSettings />} />
         {/* Legacy redirects */}
         <Route path="/tenant-dashboard/*" element={<Navigate to="/dashboard" replace />} />

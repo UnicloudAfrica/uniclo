@@ -102,11 +102,8 @@ const ProjectDetailsHero: React.FC<ProjectDetailsHeroProps> = ({
   return (
     <ModernCard variant="glass" padding="none" className="overflow-hidden">
       <div
-        className="relative p-6 md:p-8"
+        className="brand-hero p-6 md:p-8"
         style={{
-          background:
-            "linear-gradient(135deg, rgba(11, 99, 206, 0.95) 0%, rgba(17, 24, 39, 0.92) 60%, rgba(3, 7, 18, 0.95) 100%)",
-          color: "#fff",
           borderRadius: designTokens.borderRadius.xl,
         }}
       >
@@ -148,7 +145,7 @@ const ProjectDetailsHero: React.FC<ProjectDetailsHeroProps> = ({
                 }
                 className={`inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition ${
                   canCreateInstances
-                    ? "bg-white text-[#0b63ce] hover:bg-white/90 hover:text-[#0b63ce]"
+                    ? "bg-white text-[--theme-color] hover:bg-white/90 hover:text-[--theme-color]"
                     : "bg-white/20 text-white/60 cursor-not-allowed"
                 }`}
               >
@@ -172,7 +169,7 @@ const ProjectDetailsHero: React.FC<ProjectDetailsHeroProps> = ({
                     background: `conic-gradient(rgba(255,255,255,0.9) ${healthPercent || 0}%, rgba(255,255,255,0.2) 0)`,
                   }}
                 >
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-xl font-semibold text-[#0b63ce]">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-xl font-semibold text-[--theme-color]">
                     {healthPercent || 0}%
                   </div>
                 </div>

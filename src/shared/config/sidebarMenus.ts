@@ -43,35 +43,35 @@ const INFRA_MENU_ITEMS: Array<{
   path: string;
   roles: InfraRole[];
 }> = [
-  {
-    label: "Projects",
-    icon: FolderOpen,
-    iconByRole: {
-      tenant: FolderKanban,
-      client: Briefcase,
+    {
+      label: "Projects",
+      icon: FolderOpen,
+      iconByRole: {
+        tenant: FolderKanban,
+        client: Briefcase,
+      },
+      path: "/projects",
+      roles: ["admin", "tenant", "client"],
     },
-    path: "/projects",
-    roles: ["admin", "tenant", "client"],
-  },
-  {
-    label: "Instances",
-    icon: Server,
-    path: "/instances",
-    roles: ["admin", "tenant", "client"],
-  },
-  {
-    label: "Templates",
-    icon: LayoutTemplate,
-    path: "/templates",
-    roles: ["admin", "tenant", "client"],
-  },
-  {
-    label: "Silo Storage",
-    icon: HardDrive,
-    path: "/object-storage",
-    roles: ["admin", "tenant", "client"],
-  },
-];
+    {
+      label: "Instances",
+      icon: Server,
+      path: "/instances",
+      roles: ["admin", "tenant", "client"],
+    },
+    {
+      label: "Templates",
+      icon: LayoutTemplate,
+      path: "/templates",
+      roles: ["admin", "tenant"],
+    },
+    {
+      label: "Silo Storage",
+      icon: HardDrive,
+      path: "/object-storage",
+      roles: ["admin", "tenant", "client"],
+    },
+  ];
 
 const buildInfrastructureMenuGroup = (basePath: string, role: InfraRole): MenuEntry => {
   const normalizedBase = basePath.replace(/\/+$/, "");
@@ -341,12 +341,7 @@ export const tenantMenuItems: MenuEntry[] = [
         isLucide: true,
         path: "/dashboard/discounts",
       },
-      {
-        name: "Payouts & Banking",
-        icon: Wallet,
-        isLucide: true,
-        path: "/dashboard/payouts",
-      },
+
       {
         name: "Billing Settings",
         icon: Settings,

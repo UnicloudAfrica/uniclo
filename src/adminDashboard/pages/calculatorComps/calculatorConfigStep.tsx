@@ -256,16 +256,21 @@ const CalculatorConfigStep = ({
         <div className="space-y-6">
           <ModernCard
             padding="lg"
-            className="space-y-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-100"
+            className="space-y-6 text-white"
+            style={{
+              background:
+                "linear-gradient(135deg, rgb(var(--theme-color-500, 40 141 209)) 0%, rgb(var(--theme-color-700, 18 74 125)) 55%, #0b1120 100%)",
+              border: "1px solid rgba(255,255,255,0.12)",
+            }}
           >
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-slate-200">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/70">
                   <Server className="h-3.5 w-3.5" />
                   Infrastructure builder
                 </div>
                 <h2 className="text-2xl font-semibold tracking-tight">Build a pricing scenario</h2>
-                <p className="text-sm text-slate-200/80">
+                <p className="text-sm text-white/70">
                   Configure multiple workloads, storage, and network components.
                 </p>
               </div>
@@ -275,7 +280,7 @@ const CalculatorConfigStep = ({
                     key={item.label}
                     className="rounded-xl border border-white/10 bg-white/5 p-3 shadow-sm"
                   >
-                    <p className="text-[11px] uppercase tracking-wide text-slate-300/80">
+                    <p className="text-[11px] uppercase tracking-wide text-white/60">
                       {item.label}
                     </p>
                     <p className="mt-1 text-sm font-semibold text-white">{item.value}</p>

@@ -12,6 +12,7 @@ import {
   normalizePaymentOptions,
 } from "../utils/instanceCreationUtils";
 import { buildProvisioningSteps } from "../shared/components/instance-wizard/provisioningSteps";
+import { resolveCountryCodeFromEntity } from "./objectStorageUtils";
 
 // ═══════════════════════════════════════════════════════════════════
 // CLIENT INSTANCE CREATION LOGIC HOOK
@@ -22,7 +23,7 @@ export const useClientProvisioningLogic = () => {
   // Auth & Config
   // ─────────────────────────────────────────────────────────────────
   const isAuthenticated = useClientAuthStore((state: any) => state.isAuthenticated);
-  const profile = useClientAuthStore((state: any) => state.profile);
+  const profile = useClientAuthStore((state: any) => state.user);
   const apiBaseUrl = config.baseURL;
 
   // ─────────────────────────────────────────────────────────────────
@@ -51,21 +52,39 @@ export const useClientProvisioningLogic = () => {
   // ─────────────────────────────────────────────────────────────────
   // Billing Country (from profile or selection)
   // ─────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────
+  // Data Fetching
+  // ─────────────────────────────────────────────────────────────────
+  const { data: countriesData = [], isLoading: isCountriesLoading } = useFetchCountries();
+
+  // ─────────────────────────────────────────────────────────────────
+  // Build Options
+  // ─────────────────────────────────────────────────────────────────
+  // Ensure value is string to match resolveCountryCodeFromEntity expectation
+  const countryOptions: Option[] = useMemo(
+    () =>
+      countriesData.map((c: any) => ({
+        value: String(c.iso2 || c.code || c.id),
+        label: c.name,
+      })),
+    [countriesData]
+  );
+
+  // ─────────────────────────────────────────────────────────────────
+  // Billing Country (from profile or selection)
+  // ─────────────────────────────────────────────────────────────────
   const [billingCountry, setBillingCountry] = useState<string>("");
   const [isCountryLocked, setIsCountryLocked] = useState(false);
 
   // Auto-set billing country from profile
   useEffect(() => {
-    if (profile?.country_code && !billingCountry) {
-      setBillingCountry(profile.country_code);
+    // Cast countryOptions to any to avoid strict Option type conflict if needed, or ensure mismatch is handled
+    const code = resolveCountryCodeFromEntity(profile, countryOptions as any);
+    if (code) {
+      setBillingCountry(code);
       setIsCountryLocked(true);
     }
-  }, [profile?.country_code, billingCountry]);
-
-  // ─────────────────────────────────────────────────────────────────
-  // Data Fetching
-  // ─────────────────────────────────────────────────────────────────
-  const { data: countriesData = [], isLoading: isCountriesLoading } = useFetchCountries();
+  }, [profile, countryOptions]);
 
   const { data: generalRegions = [], isFetching: isRegionsLoading } = useFetchGeneralRegions({
     enabled: isAuthenticated,
@@ -103,16 +122,13 @@ export const useClientProvisioningLogic = () => {
   // ─────────────────────────────────────────────────────────────────
   // Build Options
   // ─────────────────────────────────────────────────────────────────
-  const countryOptions: Option[] = useMemo(
-    () => countriesData.map((c: any) => ({ value: c.iso2 || c.code || c.id, label: c.name })),
-    [countriesData]
-  );
+
 
   const regionOptions: Option[] = useMemo(
     () =>
       generalRegions.map((r: any) => ({
-        value: r.code || r.id || r.slug,
-        label: r.name,
+        value: r.code || r.region || r.id || r.slug,
+        label: r.label || r.name || r.region || r.code,
       })),
     [generalRegions]
   );
@@ -142,6 +158,19 @@ export const useClientProvisioningLogic = () => {
 
   const isLoadingResources = isPricingLoading || isRegionsLoading;
 
+  useEffect(() => {
+    if (!Array.isArray(configurations) || configurations.length === 0) return;
+    configurations.forEach((cfg) => {
+      const currentScope = cfg.assignment_scope || "internal";
+      if (currentScope !== "internal") {
+        updateConfiguration(cfg.id, {
+          assignment_scope: "internal",
+          member_user_ids: [],
+        });
+      }
+    });
+  }, [configurations, updateConfiguration]);
+
   // ─────────────────────────────────────────────────────────────────
   // Order Creation & Submission
   // ─────────────────────────────────────────────────────────────────
@@ -169,6 +198,10 @@ export const useClientProvisioningLogic = () => {
 
       const pricing_requests = configurations.map((cfg) => {
         const isNewProject = cfg.project_mode === "new" || Boolean(cfg.template_locked);
+        const assignmentScopePayload = cfg.assignment_scope || undefined;
+        const sanitizedMemberIds = Array.isArray(cfg.member_user_ids)
+          ? cfg.member_user_ids.map((id: any) => Number(id)).filter(Boolean)
+          : [];
         const parsedBandwidthCount = cfg.bandwidth_id ? 1 : 0;
         const parsedFloatingIpCount = Number(cfg.floating_ip_count) || 0;
         const parsedMonths = Number(cfg.months) || 1;
@@ -226,6 +259,12 @@ export const useClientProvisioningLogic = () => {
           subnet_id: subnetId,
           name: instanceName,
           fast_track: false,
+          ...(isNewProject && assignmentScopePayload
+            ? { assignment_scope: assignmentScopePayload }
+            : {}),
+          ...(isNewProject && sanitizedMemberIds.length
+            ? { member_user_ids: sanitizedMemberIds }
+            : {}),
         };
       });
 
@@ -249,12 +288,12 @@ export const useClientProvisioningLogic = () => {
 
       const mergedTransaction = data?.transaction
         ? {
-            ...data.transaction,
-            metadata: {
-              ...(data.transaction.metadata || {}),
-              ...(pricingBreakdownPayload ? { pricing_breakdown: pricingBreakdownPayload } : {}),
-            },
-          }
+          ...data.transaction,
+          metadata: {
+            ...(data.transaction.metadata || {}),
+            ...(pricingBreakdownPayload ? { pricing_breakdown: pricingBreakdownPayload } : {}),
+          },
+        }
         : null;
 
       const mergedResult = {

@@ -1433,6 +1433,7 @@ export default function AdminProjectDetails() {
                   0,
                 users: allProjectUsers.length,
               }}
+              canCreateInstances={canCreateInstances}
               networkStatus={networkData}
               vpcs={networksData || []}
               subnets={subnetsData || []}
@@ -2037,6 +2038,7 @@ export default function AdminProjectDetails() {
           infraStatusData={infraStatusData}
           networkData={networkData}
           instanceStats={instanceStats}
+          canCreateInstances={canCreateInstances}
           setupSteps={
             Array.isArray(project?.provisioning_progress)
               ? project.provisioning_progress.map((step: any) => ({

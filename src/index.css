@@ -257,6 +257,32 @@ body {
   color: transparent;
 }
 
+/* Unified hero surface driven by branding theme */
+.brand-hero {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    135deg,
+    rgb(var(--theme-color-500, 40 141 209)) 0%,
+    rgb(var(--theme-color-700, 18 74 125)) 45%,
+    #0b1120 100%
+  );
+  color: #fff;
+}
+
+.brand-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.18), transparent 55%);
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.brand-hero > * {
+  position: relative;
+}
+
 /* Dynamic branding overrides */
 .text-\[\#288DD1\],
 .hover\:text-\[\#288DD1\]:hover,

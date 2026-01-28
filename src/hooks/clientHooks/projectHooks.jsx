@@ -63,6 +63,16 @@ const fetchClientProjectStatus = async (id) => {
   return res;
 };
 
+// GET: Fetch project network status
+const fetchClientProjectNetworkStatus = async (id) => {
+  const encodedId = encodeURIComponent(id);
+  const res = await clientSilentApi("GET", `/business/projects/${encodedId}/network/status`);
+  if (!res) {
+    throw new Error(`Failed to fetch network status for ${id}`);
+  }
+  return res;
+};
+
 // POST: Create a new project
 const createClientProject = async (projectData) => {
   const res = await clientApi("POST", "/business/projects", projectData);
@@ -70,6 +80,16 @@ const createClientProject = async (projectData) => {
     throw new Error("Failed to create project");
   }
   return res.data;
+};
+
+// POST: Enable internet access for project
+const enableClientInternetAccess = async (id) => {
+  const encodedId = encodeURIComponent(id);
+  const res = await clientApi("POST", `/business/projects/${encodedId}/network/enable-internet`);
+  if (!res) {
+    throw new Error(`Failed to enable internet access for project ${id}`);
+  }
+  return res;
 };
 
 // PATCH: Update a project
@@ -143,6 +163,18 @@ export const useClientProjectStatus = (id, options = {}) => {
   });
 };
 
+// Hook to fetch project network status
+export const useClientProjectNetworkStatus = (id, options = {}) => {
+  return useQuery({
+    queryKey: ["client-project-network-status", id],
+    queryFn: () => fetchClientProjectNetworkStatus(id),
+    enabled: !!id && options.enabled !== false,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+
 // Hook to create a project
 export const useCreateClientProject = () => {
   const queryClient = useQueryClient();
@@ -154,6 +186,22 @@ export const useCreateClientProject = () => {
     },
     onError: (error) => {
       console.error("Error creating project:", error);
+    },
+  });
+};
+
+// Hook to enable internet access
+export const useClientEnableInternetAccess = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: enableClientInternetAccess,
+    onSuccess: (data, projectId) => {
+      queryClient.invalidateQueries({ queryKey: ["client-project-network-status", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["clientProject", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["clientProjectStatus", projectId] });
+    },
+    onError: (error) => {
+      console.error("Error enabling internet access:", error);
     },
   });
 };

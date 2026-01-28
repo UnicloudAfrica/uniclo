@@ -1,17 +1,23 @@
-import React, { useState, useRef, useEffect } from "react";
-import { X, Loader2, Search, ChevronDown, Check } from "lucide-react";
-import { useCreateProject } from "../../hooks/projectHooks";
+import React, { useState, useRef, useEffect, useMemo } from "react";
+import { X, Loader2 } from "lucide-react";
+import { useCreateProject, useTenantProjectMembershipSuggestions } from "../../hooks/projectHooks";
 import { useFetchGeneralRegions } from "../../hooks/resource";
 import { useFetchClients } from "../../hooks/clientHooks";
 import { useNavigate } from "react-router-dom";
 import ToastUtils from "../../utils/toastUtil.ts";
+import NetworkPresetSelector, {
+  DEFAULT_PRESETS,
+} from "../../shared/components/network/NetworkPresetSelector";
+import { useNetworkPresets } from "../../hooks/networkPresetHooks";
 
 const INITIAL_FORM_STATE = {
   name: "",
   description: "",
   region: "",
   type: "vpc",
-  user_ids: [],
+  assignment_scope: "tenant",
+  network_preset: "",
+  client_id: "",
 };
 
 const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
@@ -19,24 +25,23 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
   const navigate = useNavigate();
   const { mutate: createProject, isPending } = useCreateProject();
   const { isFetching: isRegionsFetching, data: regions } = useFetchGeneralRegions();
-  const { data: clients, isFetching: isClientsFetching, refetch } = useFetchClients();
+  const { data: clients, isFetching: isClientsFetching } = useFetchClients();
+  const { data: networkPresets = DEFAULT_PRESETS } = useNetworkPresets();
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
   const [errors, setErrors] = useState({});
-  const [selectedClients, setSelectedClients] = useState([]);
-  const [clientSearch, setClientSearch] = useState("");
-  const [clientPage, setClientPage] = useState(1);
-  const [clientLoading, setClientLoading] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
+  const [selectedMembers, setSelectedMembers] = useState([]);
+  const membersFetchKeyRef = useRef(null);
+  const presetCatalog = useMemo(
+    () =>
+      Array.isArray(networkPresets) && networkPresets.length > 0 ? networkPresets : DEFAULT_PRESETS,
+    [networkPresets]
+  );
 
   const resetState = () => {
     setFormData({ ...INITIAL_FORM_STATE });
     setErrors({});
-    setSelectedClients([]);
-    setClientSearch("");
-    setClientPage(1);
-    setClientLoading(false);
-    setIsDropdownOpen(false);
+    setSelectedMembers([]);
+    membersFetchKeyRef.current = null;
   };
 
   const handleClose = () => {
@@ -73,18 +78,9 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
     }
     const encodedId = encodeURIComponent(btoa(String(identifier)));
     handleClose();
-    navigate(`/dashboard/projects/details?id=${encodedId}`);
+    const newParam = formData.network_preset ? "&new=true" : "";
+    navigate(`/dashboard/projects/details?id=${encodedId}${newParam}`);
   };
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   useEffect(() => {
     if (!isPageMode && !isOpen) {
@@ -101,57 +97,154 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
     if (!formData.type) {
       newErrors.type = "Type is required";
     }
+    if (formData.assignment_scope === "client" && !formData.client_id) {
+      newErrors.client_id = "Select a client when assigning to a client workspace.";
+    }
+    if (shouldFetchMembers && !isMembersFetching && selectedMembers.length === 0) {
+      newErrors.member_user_ids = "Select at least one project member.";
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const updateFormData = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: null }));
+    setFormData((prev) => {
+      let next = { ...prev, [field]: value };
+
+      if (field === "assignment_scope") {
+        next = {
+          ...next,
+          assignment_scope: value,
+          client_id: value === "client" ? prev.client_id : "",
+        };
+      }
+
+      if (field === "type" && value !== "vpc") {
+        next = { ...next, network_preset: "" };
+      }
+
+      if (field === "assignment_scope" || field === "client_id") {
+        membersFetchKeyRef.current = null;
+        setSelectedMembers([]);
+      }
+
+      return next;
+    });
+
+    setErrors((prev) => ({
+      ...prev,
+      [field]: null,
+      ...(field === "assignment_scope" ? { client_id: null, member_user_ids: null } : {}),
+      ...(field === "client_id" ? { member_user_ids: null } : {}),
+    }));
   };
 
-  const toggleClientSelection = (clientId, clientName) => {
-    const isSelected = formData.user_ids.includes(clientId);
-    let updatedUserIds;
-    if (isSelected) {
-      updatedUserIds = formData.user_ids.filter((id) => id !== clientId);
-    } else {
-      updatedUserIds = [...formData.user_ids, clientId];
+  const scopeOptions = [
+    {
+      value: "internal",
+      label: "Internal (admins)",
+      description: "Share with internal users registered to this tenant workspace.",
+    },
+    {
+      value: "tenant",
+      label: "Tenant workspace",
+      description: "Include members from your tenant workspace.",
+    },
+    {
+      value: "client",
+      label: "Client",
+      description: "Attach to a client workspace you manage.",
+    },
+  ];
+
+  const shouldFetchMembers = useMemo(() => {
+    if (formData.assignment_scope === "client") {
+      return Boolean(formData.client_id);
     }
-    updateFormData("user_ids", updatedUserIds);
+    return true;
+  }, [formData.assignment_scope, formData.client_id]);
 
-    if (isSelected) {
-      setSelectedClients(selectedClients.filter((c) => c.id !== clientId));
-    } else {
-      setSelectedClients([...selectedClients, { id: clientId, name: clientName }]);
+  const membershipParams = useMemo(() => {
+    if (!shouldFetchMembers) return null;
+    return {
+      scope: formData.assignment_scope,
+      client_id: formData.client_id || undefined,
+    };
+  }, [shouldFetchMembers, formData.assignment_scope, formData.client_id]);
+
+  const { data: suggestedMembers = [], isFetching: isMembersFetching } =
+    useTenantProjectMembershipSuggestions(membershipParams ?? {}, {
+      enabled: shouldFetchMembers && !!membershipParams,
+    });
+
+  useEffect(() => {
+    if (!shouldFetchMembers) {
+      setSelectedMembers([]);
+      membersFetchKeyRef.current = null;
+      return;
+    }
+
+    if (isMembersFetching) return;
+
+    const scopeKey = JSON.stringify([
+      formData.assignment_scope,
+      formData.client_id || null,
+    ]);
+
+    const newDefaultSignature = suggestedMembers?.length
+      ? JSON.stringify(
+          [...suggestedMembers.map((member) => Number(member.id))].sort((a, b) => a - b)
+        )
+      : null;
+
+    const currentSignature = selectedMembers.length
+      ? JSON.stringify(
+          [...selectedMembers.map((member) => Number(member.id))].sort((a, b) => a - b)
+        )
+      : null;
+
+    const lastState = membersFetchKeyRef.current;
+    const shouldSyncFromSuggestions =
+      !lastState ||
+      lastState.key !== scopeKey ||
+      (!!newDefaultSignature &&
+        lastState.defaultSignature !== newDefaultSignature &&
+        currentSignature === lastState.defaultSignature);
+
+    if (shouldSyncFromSuggestions) {
+      setSelectedMembers(suggestedMembers || []);
+    }
+
+    membersFetchKeyRef.current = {
+      key: scopeKey,
+      defaultSignature: newDefaultSignature,
+    };
+  }, [
+    shouldFetchMembers,
+    isMembersFetching,
+    suggestedMembers,
+    selectedMembers,
+    formData.assignment_scope,
+    formData.client_id,
+  ]);
+
+  const handleRestoreMembers = () => {
+    if (suggestedMembers?.length) {
+      setSelectedMembers(suggestedMembers);
+      setErrors((prev) => ({ ...prev, member_user_ids: null }));
     }
   };
 
-  const loadMoreClients = async () => {
-    setClientLoading(true);
-    setClientPage((prev) => prev + 1);
-    await refetch();
-    setClientLoading(false);
-  };
+  const handleToggleMember = (member) => {
+    setSelectedMembers((prev) => {
+      const exists = prev.some((item) => item.id === member.id);
+      if (exists) {
+        return prev.filter((item) => item.id !== member.id);
+      }
+      return [...prev, member];
+    });
 
-  const handleClientSearch = (searchTerm) => {
-    setClientSearch(searchTerm);
-    setClientPage(1);
-    refetch();
-  };
-
-  const clearClientSearch = () => {
-    setClientSearch("");
-    setClientPage(1);
-    refetch();
-  };
-
-  const toggleDropdown = () => {
-    if (!isDropdownOpen) {
-      setIsDropdownOpen(true);
-    } else {
-      setIsDropdownOpen(false);
-    }
+    setErrors((prev) => ({ ...prev, member_user_ids: null }));
   };
 
   const handleSubmit = () => {
@@ -159,7 +252,17 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
       return;
     }
 
-    const payload = { ...formData, user_ids: formData.user_ids };
+    const payload = {
+      name: formData.name,
+      description: formData.description,
+      type: formData.type,
+      region: formData.region,
+      assignment_scope: formData.assignment_scope,
+      client_id: formData.assignment_scope === "client" ? formData.client_id || null : null,
+      user_id: formData.assignment_scope === "client" ? formData.client_id || null : null,
+      member_user_ids: selectedMembers.map((member) => Number(member.id)),
+      metadata: formData.network_preset ? { network_preset: formData.network_preset } : undefined,
+    };
     createProject(payload, {
       onSuccess: (project) => {
         ToastUtils.success("Project created successfully!");
@@ -190,21 +293,22 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
   const showCloseButton = !isPageMode;
   const closeButtonLabel = isPageMode ? "Cancel" : "Close";
 
-  const getFullName = (client) => {
+  const getClientLabel = (client) => {
     const parts = [client.first_name, client.middle_name, client.last_name].filter(Boolean);
-    return parts.join(" ");
+    const fullName = parts.join(" ").trim();
+    return fullName || client.name || client.email || `Client ${client.id}`;
   };
 
-  const filteredClients =
-    clients?.filter(
-      (client) =>
-        getFullName(client).toLowerCase().includes(clientSearch.toLowerCase()) ||
-        client.email.toLowerCase().includes(clientSearch.toLowerCase())
-    ) || [];
-
-  const hasMoreClients = filteredClients.length < (clients?.length || 0);
-
   const renderSummaryPanel = () => {
+    const selectedClientLabel = formData.client_id
+      ? (() => {
+          const match = (clients || []).find(
+            (client) => String(client.id) === String(formData.client_id)
+          );
+          return match ? getClientLabel(match) : formData.client_id;
+        })()
+      : "";
+
     const summaryItems = [
       { label: "Project name", value: formData.name || "Not set" },
       {
@@ -216,15 +320,37 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
         value: formData.type ? formData.type.toUpperCase() : "Choose type",
       },
       {
-        label: "Assigned clients",
-        value: formData.user_ids.length ? `${formData.user_ids.length} selected` : "Optional",
+        label: "Network preset",
+        value: formData.network_preset
+          ? formData.network_preset.charAt(0).toUpperCase() + formData.network_preset.slice(1)
+          : "Choose during instance creation",
+      },
+      {
+        label: "Assignment scope",
+        value:
+          formData.assignment_scope === "internal"
+            ? "Internal"
+            : formData.assignment_scope === "client"
+              ? "Client"
+              : "Tenant workspace",
+      },
+      {
+        label: "Client link",
+        value:
+          formData.assignment_scope === "client" && formData.client_id
+            ? selectedClientLabel || "Selected"
+            : "Not attached",
+      },
+      {
+        label: "Members selected",
+        value: selectedMembers.length ? `${selectedMembers.length} member(s)` : "Using defaults",
       },
     ];
 
     const guidanceItems = [
       "Pick the default region tenants see when provisioning workloads.",
-      "Projects can start as VPC or DVS—switch later from project settings.",
-      "Assign multiple clients to grant them immediate workspace access.",
+      "Select a network preset to fast-track infrastructure provisioning.",
+      "Assignment scope controls which workspace members are auto-added.",
     ];
 
     return (
@@ -240,9 +366,9 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
             ))}
           </dl>
         </div>
-        <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-5 text-white shadow-lg">
+        <div className="brand-hero rounded-2xl p-5 text-white shadow-lg">
           <p className="text-sm font-semibold">Launch checklist</p>
-          <ul className="mt-3 space-y-2 text-sm text-slate-100/80">
+          <ul className="mt-3 space-y-2 text-sm text-white/80">
             {guidanceItems.map((tip) => (
               <li key={tip} className="flex items-start gap-2">
                 <span className="mt-1 h-1.5 w-1.5 rounded-full bg-white/70" />
@@ -370,140 +496,199 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
             {errors.type && <p className="text-red-500 text-xs mt-1">{errors.type}</p>}
           </div>
         </div>
+        {formData.type === "vpc" && (
+          <div className="mt-5">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Network preset <span className="text-gray-400 text-xs">(optional)</span>
+            </label>
+            <p className="text-xs text-gray-500 mb-3">
+              Pick a default network layout so provisioning starts immediately.
+            </p>
+            <NetworkPresetSelector
+              value={formData.network_preset || null}
+              onChange={(preset) => updateFormData("network_preset", preset)}
+              presets={presetCatalog}
+              showAdvancedOption={false}
+            />
+            {formData.network_preset && (
+              <button
+                type="button"
+                onClick={() => updateFormData("network_preset", "")}
+                className="text-xs text-gray-500 hover:text-gray-700 mt-2"
+              >
+                Clear preset selection
+              </button>
+            )}
+          </div>
+        )}
       </div>
       <div className={sectionClasses}>
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Workspace clients
+          Assignment scope
         </p>
         <h3 className="text-base font-semibold text-slate-900 mt-1">
-          Grant client access on day one
+          Decide who should access this project
         </h3>
-        <p className="text-sm text-slate-500">
-          Select clients to attach to this project. They capture context during provisioning but are
-          optional.
-        </p>
-        <div className="mt-4">
-          <div className="relative w-full" ref={dropdownRef}>
-            <div
-              className={`flex items-center border ${
-                isDropdownOpen ? "border-[#288DD1]" : "border-gray-300"
-              } rounded-md input-field bg-white cursor-pointer`}
-              onClick={toggleDropdown}
-            >
-              <Search className="ml-3 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder={
-                  selectedClients.length > 0
-                    ? `${selectedClients.length} clients selected`
-                    : "Search clients..."
-                }
-                value={clientSearch}
-                onChange={(e) => handleClientSearch(e.target.value)}
-                className="w-full pl-10 pr-10 py-2 text-sm focus:outline-none bg-transparent"
-                readOnly={!isDropdownOpen}
-              />
-              {clientSearch && isDropdownOpen && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    clearClientSearch();
-                  }}
-                  className="absolute right-10 pr-2 text-gray-400 hover:text-gray-600"
+        <div className="mt-4 flex flex-col gap-3">
+          <div className="flex flex-col gap-2 sm:flex-row">
+            {scopeOptions.map((option) => {
+              const isActive = formData.assignment_scope === option.value;
+              return (
+                <label
+                  key={option.value}
+                  className={`flex-1 rounded-[12px] border transition-colors ${
+                    isActive
+                      ? "border-[#288DD1] bg-[#E6F4FB]"
+                      : "border-gray-200 bg-white hover:border-[#288DD1]"
+                  }`}
                 >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-              <div className="mr-3 h-4 w-4 text-gray-400 flex items-center">
-                {isDropdownOpen ? (
-                  <Check className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </div>
-            </div>
-            {selectedClients.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {selectedClients.map((client) => (
-                  <span
-                    key={client.id}
-                    className="inline-flex items-center px-2 py-1 bg-[#288DD1] text-white text-xs rounded-full"
-                  >
-                    {client.name}
-                    <button
-                      type="button"
-                      onClick={() => toggleClientSelection(client.id, client.name)}
-                      className="ml-1 text-white hover:text-gray-200"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-            <div
-              className={`absolute z-10 w-full mt-1 bg-white border ${
-                isDropdownOpen ? "border-[#288DD1]" : "border-gray-300"
-              } rounded-md shadow-lg max-h-60 overflow-auto transition-all duration-200 ${
-                isDropdownOpen ? "opacity-100 max-h-60" : "opacity-0 max-h-0"
-              }`}
-            >
-              {(isDropdownOpen || selectedClients.length === 0) && (
-                <div className="py-2">
-                  {isClientsFetching ? (
-                    <div className="px-3 py-2 text-sm text-gray-500 flex items-center">
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Loading clients...
-                    </div>
-                  ) : clients && clients.length === 0 ? (
-                    <div className="px-3 py-2 text-sm text-gray-500">No clients yet</div>
-                  ) : filteredClients.length === 0 ? (
-                    <div className="px-3 py-2 text-sm text-gray-500">No clients found</div>
-                  ) : (
-                    <>
-                      {filteredClients.map((client) => (
-                        <label
-                          key={client.id}
-                          className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer transition-colors"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={formData.user_ids.includes(client.id)}
-                            onChange={() => toggleClientSelection(client.id, getFullName(client))}
-                            className="h-4 w-4 text-[#288DD1] border-gray-300 rounded focus:ring-[#288DD1] mr-2"
-                          />
-                          <span className="text-sm">
-                            {getFullName(client)} ({client.email})
-                          </span>
-                        </label>
-                      ))}
-                      {hasMoreClients && (
-                        <button
-                          onClick={loadMoreClients}
-                          disabled={clientLoading}
-                          className="w-full py-2 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors"
-                        >
-                          {clientLoading ? (
-                            <Loader2 className="w-4 h-4 mx-auto animate-spin" />
-                          ) : (
-                            "Load More"
-                          )}
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
+                  <input
+                    type="radio"
+                    name="assignmentScope"
+                    value={option.value}
+                    checked={isActive}
+                    onChange={(e) => updateFormData("assignment_scope", e.target.value)}
+                    className="sr-only"
+                  />
+                  <div className="px-4 py-3">
+                    <p className="text-sm font-medium text-[#1F2937]">{option.label}</p>
+                    <p className="text-xs text-gray-500 mt-1">{option.description}</p>
+                  </div>
+                </label>
+              );
+            })}
           </div>
-          {formData.user_ids.length > 0 && (
-            <p className="text-xs text-gray-500 mt-2">
-              {formData.user_ids.length} client(s) selected
-            </p>
+          {formData.assignment_scope === "client" && (
+            <div className="mt-2">
+              <label htmlFor="client_id" className="block text-sm font-medium text-gray-700 mb-2">
+                Client<span className="text-red-500">*</span>
+              </label>
+              <select
+                id="client_id"
+                value={formData.client_id}
+                onChange={(e) => updateFormData("client_id", e.target.value)}
+                className={`w-full rounded-xl border px-3 py-2 text-sm ${
+                  errors.client_id ? "border-red-500" : "border-gray-300"
+                }`}
+                disabled={isClientsFetching}
+              >
+                <option value="" disabled>
+                  {isClientsFetching ? "Loading clients..." : "Select a client"}
+                </option>
+                {(clients || []).map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {getClientLabel(client)}
+                  </option>
+                ))}
+              </select>
+              {errors.client_id && <p className="text-red-500 text-xs mt-1">{errors.client_id}</p>}
+            </div>
           )}
-          {errors.user_ids && <p className="text-red-500 text-xs mt-1">{errors.user_ids}</p>}
         </div>
+      </div>
+      <div className={sectionClasses}>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Project members
+          </p>
+          {suggestedMembers.length > 0 && (
+            <button
+              type="button"
+              onClick={handleRestoreMembers}
+              className="text-xs text-[#288DD1] hover:underline disabled:opacity-50"
+              disabled={isMembersFetching}
+            >
+              Restore default selection
+            </button>
+          )}
+        </div>
+        {shouldFetchMembers ? (
+          <>
+            <div className="min-h-[48px] rounded-[10px] border border-gray-200 px-3 py-2 bg-white">
+              {isMembersFetching && selectedMembers.length === 0 ? (
+                <div className="flex items-center text-sm text-gray-500">
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Loading members...
+                </div>
+              ) : selectedMembers.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {selectedMembers.map((member) => (
+                    <span
+                      key={member.id}
+                      className="inline-flex items-center bg-[#288DD1] text-white text-xs px-3 py-1 rounded-full"
+                    >
+                      {member.name || member.email || `User #${member.id}`}
+                      <button
+                        type="button"
+                        className="ml-2 text-white hover:text-gray-200"
+                        onClick={() => handleToggleMember(member)}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  No members selected yet. Use the suggestions below to choose who should join the
+                  project.
+                </p>
+              )}
+            </div>
+            {errors.member_user_ids && (
+              <p className="text-red-500 text-xs mt-1">{errors.member_user_ids}</p>
+            )}
+            <div className="mt-3 rounded-[12px] border border-gray-200 bg-white">
+              <div className="px-4 py-2 border-b border-gray-200 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Suggested members
+              </div>
+              {isMembersFetching ? (
+                <div className="flex items-center px-4 py-3 text-sm text-gray-500">
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Fetching members...
+                </div>
+              ) : suggestedMembers.length > 0 ? (
+                <div className="max-h-48 overflow-y-auto divide-y divide-gray-100">
+                  {suggestedMembers.map((member) => {
+                    const isSelected = selectedMembers.some((item) => item.id === member.id);
+                    return (
+                      <label
+                        key={member.id}
+                        className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50"
+                      >
+                        <input
+                          type="checkbox"
+                          className="mt-1 h-4 w-4 rounded border-gray-300 text-[#288DD1] focus:ring-[#288DD1]"
+                          checked={isSelected}
+                          onChange={() => handleToggleMember(member)}
+                        />
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">
+                            {member.name || member.email || `User #${member.id}`}
+                          </p>
+                          {member.email && <p className="text-xs text-gray-500">{member.email}</p>}
+                          {member.role && (
+                            <p className="text-[10px] text-gray-400 uppercase tracking-wide mt-1">
+                              {member.role}
+                            </p>
+                          )}
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="px-4 py-3 text-sm text-gray-500">
+                  No suggested members for this scope yet.
+                </p>
+              )}
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-gray-500">
+            Select a client to load member suggestions for this scope.
+          </p>
+        )}
       </div>
       {errors.general && <p className="text-red-500 text-xs mt-1">{errors.general}</p>}
     </div>

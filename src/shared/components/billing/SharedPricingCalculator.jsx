@@ -4,6 +4,8 @@ import { ArrowRight, ChevronLeft } from "lucide-react";
 import { useSharedCalculatorPricing } from "../../../hooks/sharedCalculatorHooks";
 import { useFetchTenants } from "../../../hooks/adminHooks/tenantHooks";
 import { useFetchClients } from "../../../hooks/adminHooks/clientHooks";
+import { useFetchClientProfile } from "../../../hooks/clientHooks/resources";
+import { useFetchTenantBusinessSettings } from "../../../hooks/settingsHooks";
 import PricingCalculatorConfig from "./calculator/PricingCalculatorConfig";
 import CalculatorSummaryStep from "./calculator/CalculatorSummaryStep";
 import { CustomerContextSelector } from "../../components";
@@ -47,6 +49,16 @@ const SharedPricingCalculator = ({ mode = "admin", onExit }) => {
 
   const { mutateAsync: calculatePricing, isPending: isCalculatingMutation } =
     useSharedCalculatorPricing();
+
+  // Fetch Client Profile if Client Mode
+  const { data: clientProfile } = useFetchClientProfile({
+    enabled: mode === "client",
+  });
+
+  // Fetch Tenant Settings if Tenant Mode
+  const { data: tenantSettings } = useFetchTenantBusinessSettings({
+    enabled: mode === "tenant",
+  });
 
   // Derived User Pool
   // For Admin: All clients
@@ -200,6 +212,8 @@ const SharedPricingCalculator = ({ mode = "admin", onExit }) => {
           onRemoveStorageItem={onRemoveStorageItem}
           onCountryChange={handleCountryChange}
           mode={mode}
+          clientProfile={clientProfile}
+          tenantSettings={tenantSettings}
         >
           {/* Assignment Context Card - Only show for Admin and Tenant */}
           {mode !== "client" && (

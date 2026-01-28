@@ -32,18 +32,18 @@ const palette: Record<string, Palette> = {
     metricIconColor: "h-4 w-4",
   },
   midnight: {
-    container: "rounded-3xl border border-slate-800 bg-slate-900 text-slate-100 shadow-lg",
+    container: "brand-hero rounded-3xl border border-white/10 text-white shadow-lg",
     badge:
-      "inline-flex items-center gap-2 rounded-full border border-slate-700/60 bg-slate-800 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-300",
+      "inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/70",
     title: "text-3xl font-semibold tracking-tight text-white",
-    description: "text-sm leading-6 text-slate-300",
+    description: "text-sm leading-6 text-white/75",
     metricCard:
-      "group rounded-2xl border border-slate-800 bg-slate-900/80 px-5 py-4 transition hover:border-primary-400/60 hover:bg-slate-900",
-    metricLabel: "text-xs font-semibold uppercase tracking-wider text-slate-300/90",
+      "group rounded-2xl border border-white/15 bg-white/10 px-5 py-4 backdrop-blur transition hover:border-white/30 hover:bg-white/15",
+    metricLabel: "text-xs font-semibold uppercase tracking-wider text-white/70",
     metricValue: "text-2xl font-semibold text-white",
-    metricDescription: "mt-1 text-xs text-slate-400",
+    metricDescription: "mt-1 text-xs text-white/70",
     metricIcon:
-      "flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800 text-slate-200 shadow-inner transition group-hover:bg-primary-500/15 group-hover:text-primary-200",
+      "flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 text-white/80 shadow-inner transition group-hover:bg-white/25 group-hover:text-white",
     metricIconColor: "h-4 w-4",
   },
 };
@@ -91,7 +91,7 @@ const ResourceHero: React.FC<ResourceHeroProps> = ({
                 breadcrumbs={breadcrumbs}
                 color={
                   accent === "midnight"
-                    ? designTokens.colors.neutral[300]
+                    ? "rgba(255, 255, 255, 0.75)"
                     : designTokens.colors.primary[500]
                 }
               />

@@ -202,6 +202,11 @@ interface Props {
   membershipTenantId?: string;
   membershipUserId?: string;
   lockAssignmentScope?: boolean;
+  useProjectMembershipSuggestionsHook?: (params?: any, options?: any) => {
+    data?: any;
+    isFetching?: boolean;
+    isLoading?: boolean;
+  };
 }
 
 const InstanceConfigurationForm: React.FC<Props> = ({
@@ -240,6 +245,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
   membershipTenantId,
   membershipUserId,
   lockAssignmentScope = false,
+  useProjectMembershipSuggestionsHook,
 }) => {
   const { context } = useApiContext();
   const { data: networkPresets = DEFAULT_PRESETS } = useNetworkPresets();
@@ -787,8 +793,11 @@ const InstanceConfigurationForm: React.FC<Props> = ({
     };
   }, [assignmentScope, membershipTenantId, membershipUserId, shouldFetchMembers]);
 
+  const membershipSuggestionsHook =
+    useProjectMembershipSuggestionsHook || useProjectMembershipSuggestions;
+
   const { data: suggestedMembers = [], isFetching: isMembersFetching } =
-    useProjectMembershipSuggestions(membershipParams ?? {}, {
+    membershipSuggestionsHook(membershipParams ?? {}, {
       enabled: shouldFetchMembers && !!membershipParams,
     });
 

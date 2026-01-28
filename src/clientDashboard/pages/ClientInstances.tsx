@@ -195,8 +195,7 @@ const ClientInstances: React.FC = () => {
         contentClassName="space-y-6 lg:space-y-8"
         breadcrumbs={[{ label: "Home", href: "/client-dashboard" }, { label: "Instances" }]}
       >
-        <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#0F172A] via-[#1E3A8A] to-[#1D4ED8] text-white shadow-2xl">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.16),_transparent_55%)]" />
+        <div className="brand-hero rounded-[32px] text-white shadow-2xl">
           <div className="relative flex flex-col gap-8 p-6 sm:p-8 lg:flex-row lg:items-center lg:justify-between lg:p-10">
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-white/70">

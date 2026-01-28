@@ -1027,8 +1027,7 @@ const OnboardingReviewPage: React.FC<OnboardingReviewPageProps> = ({
         }
       >
         <div className="space-y-6">
-          <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#0F172A] via-[#1E3A8A] to-[#2563EB] text-white shadow-2xl">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.18),_transparent_55%)]" />
+          <div className="brand-hero rounded-[32px] text-white shadow-2xl">
             <div className="relative p-6 sm:p-8 lg:p-10">
               <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
                 <div className="max-w-3xl space-y-6">

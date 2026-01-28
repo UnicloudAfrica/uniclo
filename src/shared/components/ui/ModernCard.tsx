@@ -28,6 +28,7 @@ const ModernCard: React.FC<ModernCardProps> = ({
   hover = false,
   className = "",
   onClick,
+  style: customStyle,
   ...props
 }) => {
   const getVariantStyles = () => {
@@ -83,6 +84,7 @@ const ModernCard: React.FC<ModernCardProps> = ({
     fontFamily: designTokens.typography.fontFamily.sans.join(", "),
     ...getVariantStyles(),
     ...getPaddingStyles(),
+    ...customStyle,
   };
 
   const hoverStyles: React.CSSProperties = hover

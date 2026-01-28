@@ -15,6 +15,7 @@ import {
 } from "../utils/instanceCreationUtils";
 import { useTenantCustomerContext } from "./tenantHooks/useTenantCustomerContext";
 import { buildProvisioningSteps } from "../shared/components/instance-wizard/provisioningSteps";
+import { resolveCountryCodeFromEntity } from "./objectStorageUtils";
 
 // ═══════════════════════════════════════════════════════════════════
 // TENANT INSTANCE CREATION LOGIC HOOK
@@ -84,23 +85,66 @@ export const useTenantProvisioningLogic = () => {
   // ─────────────────────────────────────────────────────────────────
   // Billing Country (from profile or selection)
   // ─────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────
+  // Data Fetching and Options
+  // ─────────────────────────────────────────────────────────────────
+  const { data: countriesData = [], isLoading: isCountriesLoading } = useFetchCountries();
+
+  const countryOptions: Option[] = useMemo(
+    () =>
+      countriesData.map((c: any) => ({
+        value: String(c.iso2 || c.code || c.id),
+        label: c.name,
+      })),
+    [countriesData]
+  );
+
+  // ─────────────────────────────────────────────────────────────────
+  // Billing Country (from profile or selection)
+  // ─────────────────────────────────────────────────────────────────
   const [billingCountry, setBillingCountry] = useState<string>("");
   const [isCountryLocked, setIsCountryLocked] = useState(false);
 
-  // Auto-set billing country from profile
+  // Auto-set billing country from profile or context
   useEffect(() => {
-    const candidate =
-      profile?.country_code || selfTenant?.country_code || selfTenant?.business?.country || "";
-    if (candidate && !billingCountry) {
+    let candidate = "";
+
+    // 1. Resolve based on context selection (if acting as a Partner/Reseller)
+    if (contextType === "tenant" && selectedTenantId) {
+      const selected = tenants.find((t: any) => String(t.id) === String(selectedTenantId));
+      candidate = resolveCountryCodeFromEntity(selected, countryOptions as any);
+    } else if (contextType === "user" && selectedUserId) {
+      const selected = userPool.find((u: any) => String(u.id) === String(selectedUserId));
+      candidate = resolveCountryCodeFromEntity(selected, countryOptions as any);
+    }
+
+    // 2. Fallback to self-tenant (Standard Tenant)
+    if (!candidate && selfTenant) {
+      candidate = resolveCountryCodeFromEntity(selfTenant, countryOptions as any);
+    }
+
+    // 3. Fallback to user profile
+    if (!candidate && profile) {
+      candidate = resolveCountryCodeFromEntity(profile, countryOptions as any);
+    }
+
+    if (candidate) {
       setBillingCountry(candidate);
       setIsCountryLocked(true);
+    } else {
+      // Unlock if no country resolved to allow manual selection
+      setIsCountryLocked(false);
     }
-  }, [profile?.country_code, selfTenant, billingCountry]);
-
-  // ─────────────────────────────────────────────────────────────────
-  // Data Fetching
-  // ─────────────────────────────────────────────────────────────────
-  const { data: countriesData = [], isLoading: isCountriesLoading } = useFetchCountries();
+  }, [
+    contextType,
+    selectedTenantId,
+    selectedUserId,
+    tenants,
+    userPool,
+    selfTenant,
+    profile,
+    countryOptions
+  ]);
 
   // Fetch pricing using public catalog (tenant-specific filter when available)
   const [pricingData, setPricingData] = useState<any>(null);
@@ -154,17 +198,17 @@ export const useTenantProvisioningLogic = () => {
   // ─────────────────────────────────────────────────────────────────
   // Build Options
   // ─────────────────────────────────────────────────────────────────
-  const countryOptions: Option[] = useMemo(
-    () => countriesData.map((c: any) => ({ value: c.iso2 || c.code || c.id, label: c.name })),
-    [countriesData]
-  );
+
 
   const regionOptions: Option[] = useMemo(() => {
-    const allRegions = generalRegions.map((r: any) => ({
-      value: r.code || r.id || r.slug,
-      label: r.name,
-      canFastTrack: fastTrackRegions.includes(r.code || r.id || r.slug),
-    }));
+    const allRegions = generalRegions.map((r: any) => {
+      const value = r.code || r.region || r.id || r.slug;
+      return {
+        value,
+        label: r.label || r.name || r.region || r.code,
+        canFastTrack: fastTrackRegions.includes(value),
+      };
+    });
 
     // If in fast-track mode, only show eligible regions
     if (isFastTrack) {
@@ -173,14 +217,36 @@ export const useTenantProvisioningLogic = () => {
     return allRegions;
   }, [generalRegions, fastTrackRegions, isFastTrack]);
 
+  const assignmentScopeForContext = useMemo(() => {
+    if (contextType === "tenant") return "tenant";
+    if (contextType === "user") return "client";
+    return "internal";
+  }, [contextType]);
+
+  useEffect(() => {
+    if (!Array.isArray(configurations) || configurations.length === 0) return;
+    configurations.forEach((cfg) => {
+      const currentScope = cfg.assignment_scope || "internal";
+      if (currentScope !== assignmentScopeForContext) {
+        updateConfiguration(cfg.id, {
+          assignment_scope: assignmentScopeForContext,
+          member_user_ids: [],
+        });
+      }
+    });
+  }, [assignmentScopeForContext, configurations, updateConfiguration]);
+
   // All regions for display purposes (even when filtering)
   const allRegionOptions: Option[] = useMemo(
     () =>
-      generalRegions.map((r: any): Option & { canFastTrack: boolean } => ({
-        value: r.code || r.id || r.slug,
-        label: r.name,
-        canFastTrack: fastTrackRegions.includes(r.code || r.id || r.slug),
-      })),
+      generalRegions.map((r: any): Option & { canFastTrack: boolean } => {
+        const value = r.code || r.region || r.id || r.slug;
+        return {
+          value,
+          label: r.label || r.name || r.region || r.code,
+          canFastTrack: fastTrackRegions.includes(value),
+        };
+      }),
     [generalRegions, fastTrackRegions]
   );
 
@@ -268,6 +334,10 @@ export const useTenantProvisioningLogic = () => {
 
       const pricing_requests = configurations.map((cfg, index) => {
         const isNewProject = cfg.project_mode === "new" || Boolean(cfg.template_locked);
+        const assignmentScopePayload = cfg.assignment_scope || undefined;
+        const sanitizedMemberIds = Array.isArray(cfg.member_user_ids)
+          ? cfg.member_user_ids.map((id: any) => Number(id)).filter(Boolean)
+          : [];
         const parsedBandwidthCount = cfg.bandwidth_id ? 1 : 0;
         const parsedFloatingIpCount = Number(cfg.floating_ip_count) || 0;
         const parsedMonths = Number(cfg.months) || 1;
@@ -325,6 +395,12 @@ export const useTenantProvisioningLogic = () => {
           subnet_id: subnetId,
           name: instanceName,
           fast_track: isFastTrack,
+          ...(isNewProject && assignmentScopePayload
+            ? { assignment_scope: assignmentScopePayload }
+            : {}),
+          ...(isNewProject && sanitizedMemberIds.length
+            ? { member_user_ids: sanitizedMemberIds }
+            : {}),
         };
       });
 
@@ -356,12 +432,12 @@ export const useTenantProvisioningLogic = () => {
 
       const mergedTransaction = data?.transaction
         ? {
-            ...data.transaction,
-            metadata: {
-              ...(data.transaction.metadata || {}),
-              ...(pricingBreakdownPayload ? { pricing_breakdown: pricingBreakdownPayload } : {}),
-            },
-          }
+          ...data.transaction,
+          metadata: {
+            ...(data.transaction.metadata || {}),
+            ...(pricingBreakdownPayload ? { pricing_breakdown: pricingBreakdownPayload } : {}),
+          },
+        }
         : null;
 
       const mergedResult = {

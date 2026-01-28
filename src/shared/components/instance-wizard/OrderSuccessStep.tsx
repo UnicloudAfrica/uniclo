@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCircle } from "lucide-react";
 import { ModernButton, ModernModal } from "../ui";
 import SetupProgressCard from "../projects/details/SetupProgressCard";
-import { useApiContext } from "../../../hooks/useApiContext";
+import { useApiContext, ApiContext } from "../../../hooks/useApiContext";
 import { useInstanceBroadcasting } from "../../../hooks/useInstanceBroadcasting";
 import ToastUtils from "../../../utils/toastUtil";
 
@@ -334,6 +334,12 @@ const buildConfigurationLabel = (instance: any) => {
   };
 };
 
+const getContextPrefix = (context: ApiContext) => {
+  if (context === "tenant") return "/admin";
+  if (context === "client") return "/business";
+  return "";
+};
+
 /**
  * Shared order confirmation/success step for provisioning wizards.
  * Displays order ID, configuration summaries, and navigation actions.
@@ -350,7 +356,9 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
   onCreateAnother,
   resourceLabel = "Instance",
 }) => {
-  const { apiBaseUrl, authHeaders, isAuthenticated } = useApiContext();
+  const { apiBaseUrl, authHeaders, isAuthenticated, context } = useApiContext();
+  const apiPrefix = getContextPrefix(context);
+  const apiRoot = `${apiBaseUrl}${apiPrefix}`;
   const resourceLabelPlural = resourceLabel.toLowerCase().endsWith("s")
     ? resourceLabel
     : `${resourceLabel}s`;
@@ -449,7 +457,7 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
 
       for (const ref of refs) {
         try {
-          const response = await fetch(`${apiBaseUrl}/instances/${ref.lookupId}`, {
+          const response = await fetch(`${apiRoot}/instances/${ref.lookupId}`, {
             headers: authHeaders,
             credentials: "include",
           });
@@ -477,7 +485,7 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
         }
       }
     },
-    [apiBaseUrl, authHeaders, instanceRefs]
+    [apiRoot, authHeaders, instanceRefs]
   );
 
   // Polling fallback: fetch progress from API every 3 seconds
@@ -531,7 +539,7 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
         const results = await Promise.allSettled(
           lookupIds.map(async (lookupId) => {
             const response = await fetch(
-              `${apiBaseUrl}/instance-management/${lookupId}/refresh-status`,
+              `${apiRoot}/instance-management/${lookupId}/refresh-status`,
               {
                 method: "POST",
                 headers: authHeaders,
@@ -559,7 +567,7 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
         setIsRetryingHealthCheck(false);
       }
     },
-    [apiBaseUrl, authHeaders, fetchProgress, isAuthenticated, resolveLookupIds]
+    [apiRoot, authHeaders, fetchProgress, isAuthenticated, resolveLookupIds]
   );
 
   const instancePipelineSkeleton = useMemo(() => {
@@ -778,7 +786,7 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
       const id = String(keypairId);
       setEmailingKeys((prev) => [...prev, id]);
       try {
-        const response = await fetch(`${apiBaseUrl}/key-pairs/${id}/email`, {
+        const response = await fetch(`${apiRoot}/key-pairs/${id}/email`, {
           method: "POST",
           headers: authHeaders,
           credentials: "include",
@@ -798,7 +806,7 @@ const OrderSuccessStep: React.FC<OrderSuccessStepProps> = ({
         setEmailingKeys((prev) => prev.filter((item) => item !== id));
       }
     },
-    [apiBaseUrl, authHeaders, isAuthenticated]
+    [apiRoot, authHeaders, isAuthenticated]
   );
 
   return (

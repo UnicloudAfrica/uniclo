@@ -90,7 +90,7 @@ const UserSelectModal = ({ isOpen, onClose, onSelect, title = "Select User to As
         <div className="mb-4 max-h-96 space-y-2 overflow-y-auto">
           {loading ? (
             <div className="flex h-32 items-center justify-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--theme-color)] border-t-transparent" />
             </div>
           ) : filteredUsers.length > 0 ? (
             filteredUsers.map((user) => (
@@ -100,11 +100,11 @@ const UserSelectModal = ({ isOpen, onClose, onSelect, title = "Select User to As
                 onClick={() => setSelectedUser(user)}
                 className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left transition ${
                   selectedUser?.id === user.id
-                    ? "border-primary-500 bg-primary-50"
+                    ? "border-[var(--theme-color)] bg-[rgb(var(--theme-color-50))]"
                     : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                 }`}
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-600 text-sm font-bold text-white">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--theme-color)] text-sm font-bold text-white">
                   {user.name?.[0] || user.email?.[0] || "U"}
                 </div>
                 <div className="flex-1">
@@ -112,7 +112,7 @@ const UserSelectModal = ({ isOpen, onClose, onSelect, title = "Select User to As
                   <p className="text-sm text-slate-500">{user.email}</p>
                 </div>
                 {selectedUser?.id === user.id && (
-                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-500">
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--theme-color)]">
                     <svg
                       className="h-3 w-3 text-white"
                       fill="none"

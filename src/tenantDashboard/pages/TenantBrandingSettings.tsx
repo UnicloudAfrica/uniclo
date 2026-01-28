@@ -226,7 +226,7 @@ const DomainVerification: React.FC<{
   );
 };
 
-const BrandingSettingsSkeleton = () => (
+export const BrandingSettingsSkeleton = () => (
   <div className="animate-pulse space-y-4">
     {[1, 2, 3].map((i: any) => (
       <div key={i} className="h-24 bg-gray-100 rounded-xl" />
@@ -234,7 +234,7 @@ const BrandingSettingsSkeleton = () => (
   </div>
 );
 
-const BrandingSettingsActions = ({
+export const BrandingSettingsActions = ({
   isResetting,
   isSaving,
   onReset,
@@ -257,18 +257,20 @@ const BrandingSettingsActions = ({
   </>
 );
 
-const BrandingSettingsSections = ({
+export const BrandingSettingsSections = ({
   brandingData,
   formData,
   palette,
   onChange,
   onFileChange,
+  showDomain = true,
 }: {
   brandingData: any;
   formData: any;
   palette: Record<string, string> | null;
   onChange: (field: string, value: string) => void;
   onFileChange: (field: string, file: File | null) => void;
+  showDomain?: boolean;
 }) => (
   <>
     {/* Color Palette Preview */}
@@ -378,20 +380,21 @@ const BrandingSettingsSections = ({
       </div>
     </div>
 
-    {/* Custom Domain */}
-    <div className="bg-white rounded-xl border border-gray-100 p-6">
-      <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-        <Globe size={18} />
-        Custom Domain
-      </h3>
-      <p className="text-sm text-gray-500 mb-4">
-        Use your own domain for a fully branded experience.
-      </p>
-      <DomainVerification
-        currentDomain={brandingData?.settings?.branding?.custom_domain}
-        isVerified={brandingData?.settings?.branding?.custom_domain_verified}
-      />
-    </div>
+    {showDomain && (
+      <div className="bg-white rounded-xl border border-gray-100 p-6">
+        <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <Globe size={18} />
+          Custom Domain
+        </h3>
+        <p className="text-sm text-gray-500 mb-4">
+          Use your own domain for a fully branded experience.
+        </p>
+        <DomainVerification
+          currentDomain={brandingData?.settings?.branding?.custom_domain}
+          isVerified={brandingData?.settings?.branding?.custom_domain_verified}
+        />
+      </div>
+    )}
   </>
 );
 

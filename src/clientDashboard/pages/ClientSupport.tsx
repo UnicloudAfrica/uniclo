@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import ClientActiveTab from "../components/clientActiveTab";
 import ClientPageShell from "../components/ClientPageShell";
 import { SupportThreadsPanel } from "../../shared/components/support";
@@ -10,11 +11,15 @@ const buildQuery = (filters = {}) => {
   const params = new URLSearchParams();
   if (filters.status) params.set("status", filters.status);
   if (filters.search) params.set("search", filters.search);
+  if (filters.page) params.set("page", String(filters.page));
+  params.set("per_page", "15");
   const query = params.toString();
   return query ? `?${query}` : "";
 };
 
 const ClientSupport: React.FC = () => {
+  const navigate = useNavigate();
+
   const fetchThreads = (filters) =>
     clientSilentApi("GET", `/business/support${buildQuery(filters)}`);
 
@@ -46,6 +51,7 @@ const ClientSupport: React.FC = () => {
           showUser
           showEscalation
           emptyMessage="No support tickets yet."
+          onView={(thread) => navigate(`/client-dashboard/support/${thread.uuid || thread.id}`)}
         />
       </ClientPageShell>
     </>

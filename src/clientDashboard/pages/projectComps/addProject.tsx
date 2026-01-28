@@ -1,16 +1,25 @@
 // @ts-nocheck
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { X, Loader2 } from "lucide-react";
-import { useCreateClientProject } from "../../../hooks/clientHooks/projectHooks";
+import {
+  useCreateClientProject,
+  useClientProjectMembershipSuggestions,
+} from "../../../hooks/clientHooks/projectHooks";
 import { useFetchGeneralRegions } from "../../../hooks/resource";
 import { useNavigate } from "react-router-dom";
 import ToastUtils from "../../../utils/toastUtil";
+import NetworkPresetSelector, {
+  DEFAULT_PRESETS,
+} from "../../../shared/components/network/NetworkPresetSelector";
+import { useNetworkPresets } from "../../../hooks/networkPresetHooks";
 
 const INITIAL_FORM_STATE = {
   name: "",
   description: "",
   region: "",
   type: "vpc",
+  assignment_scope: "internal",
+  network_preset: "",
 };
 
 const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }: any) => {
@@ -18,12 +27,22 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }: any) =>
   const navigate = useNavigate();
   const { mutate: createProject, isPending } = useCreateClientProject();
   const { isFetching: isRegionsFetching, data: regions } = useFetchGeneralRegions();
+  const { data: networkPresets = DEFAULT_PRESETS } = useNetworkPresets();
   const [formData, setFormData] = useState({ ...INITIAL_FORM_STATE });
   const [errors, setErrors] = useState({});
+  const [selectedMembers, setSelectedMembers] = useState([]);
+  const membersFetchKeyRef = useRef(null);
+  const presetCatalog = useMemo(
+    () =>
+      Array.isArray(networkPresets) && networkPresets.length > 0 ? networkPresets : DEFAULT_PRESETS,
+    [networkPresets]
+  );
 
   const resetState = () => {
     setFormData({ ...INITIAL_FORM_STATE });
     setErrors({});
+    setSelectedMembers([]);
+    membersFetchKeyRef.current = null;
   };
 
   const handleClose = () => {
@@ -60,7 +79,8 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }: any) =>
     }
     const encodedId = encodeURIComponent(btoa(String(identifier)));
     handleClose();
-    navigate(`/client-dashboard/projects/details?id=${encodedId}`);
+    const newParam = formData.network_preset ? "&new=true" : "";
+    navigate(`/client-dashboard/projects/details?id=${encodedId}${newParam}`);
   };
 
   useEffect(() => {
@@ -68,6 +88,78 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }: any) =>
       resetState();
     }
   }, [isOpen, isPageMode]);
+
+  const shouldFetchMembers = true;
+
+  const membershipParams = useMemo(
+    () => ({
+      scope: formData.assignment_scope,
+    }),
+    [formData.assignment_scope]
+  );
+
+  const { data: suggestedMembers = [], isFetching: isMembersFetching } =
+    useClientProjectMembershipSuggestions(membershipParams, {
+      enabled: shouldFetchMembers,
+    });
+
+  useEffect(() => {
+    if (!shouldFetchMembers) {
+      setSelectedMembers([]);
+      membersFetchKeyRef.current = null;
+      return;
+    }
+
+    if (isMembersFetching) return;
+
+    const scopeKey = JSON.stringify([formData.assignment_scope]);
+    const newDefaultSignature = suggestedMembers?.length
+      ? JSON.stringify(
+          [...suggestedMembers.map((member) => Number(member.id))].sort((a, b) => a - b)
+        )
+      : null;
+    const currentSignature = selectedMembers.length
+      ? JSON.stringify(
+          [...selectedMembers.map((member) => Number(member.id))].sort((a, b) => a - b)
+        )
+      : null;
+    const lastState = membersFetchKeyRef.current;
+
+    const shouldSyncFromSuggestions =
+      !lastState ||
+      lastState.key !== scopeKey ||
+      (!!newDefaultSignature &&
+        lastState.defaultSignature !== newDefaultSignature &&
+        currentSignature === lastState.defaultSignature);
+
+    if (shouldSyncFromSuggestions) {
+      setSelectedMembers(suggestedMembers || []);
+    }
+
+    membersFetchKeyRef.current = {
+      key: scopeKey,
+      defaultSignature: newDefaultSignature,
+    };
+  }, [shouldFetchMembers, isMembersFetching, suggestedMembers, selectedMembers, formData.assignment_scope]);
+
+  const handleRestoreMembers = () => {
+    if (suggestedMembers?.length) {
+      setSelectedMembers(suggestedMembers);
+      setErrors((prev) => ({ ...prev, member_user_ids: null }));
+    }
+  };
+
+  const handleToggleMember = (member: any) => {
+    setSelectedMembers((prev) => {
+      const exists = prev.some((item) => item.id === member.id);
+      if (exists) {
+        return prev.filter((item) => item.id !== member.id);
+      }
+      return [...prev, member];
+    });
+
+    setErrors((prev) => ({ ...prev, member_user_ids: null }));
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -78,12 +170,21 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }: any) =>
     if (!formData.type) {
       newErrors.type = "Type is required";
     }
+    if (shouldFetchMembers && !isMembersFetching && selectedMembers.length === 0) {
+      newErrors.member_user_ids = "Select at least one project member.";
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const updateFormData = (field: any, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      let next = { ...prev, [field]: value };
+      if (field === "type" && value !== "vpc") {
+        next = { ...next, network_preset: "" };
+      }
+      return next;
+    });
     setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
@@ -92,7 +193,17 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }: any) =>
       return;
     }
 
-    createProject(formData, {
+    const payload = {
+      name: formData.name,
+      description: formData.description,
+      type: formData.type,
+      region: formData.region,
+      assignment_scope: formData.assignment_scope,
+      member_user_ids: selectedMembers.map((member) => Number(member.id)),
+      metadata: formData.network_preset ? { network_preset: formData.network_preset } : undefined,
+    };
+
+    createProject(payload, {
       onSuccess: (project) => {
         ToastUtils.success("Project created successfully!");
         redirectToProjectDetails(project);
@@ -216,6 +327,159 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }: any) =>
             {errors.type && <p className="text-red-500 text-xs mt-1">{errors.type}</p>}
           </div>
         </div>
+        {formData.type === "vpc" && (
+          <div className="mt-5">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Network preset <span className="text-gray-400 text-xs">(optional)</span>
+            </label>
+            <p className="text-xs text-gray-500 mb-3">
+              Choose a default network layout to fast-track provisioning.
+            </p>
+            <NetworkPresetSelector
+              value={formData.network_preset || null}
+              onChange={(preset) => updateFormData("network_preset", preset)}
+              presets={presetCatalog}
+              showAdvancedOption={false}
+            />
+            {formData.network_preset && (
+              <button
+                type="button"
+                onClick={() => updateFormData("network_preset", "")}
+                className="text-xs text-gray-500 hover:text-gray-700 mt-2"
+              >
+                Clear preset selection
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+      <div className={sectionClasses}>
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Assignment scope
+        </p>
+        <h3 className="text-base font-semibold text-slate-900">
+          Your workspace team will manage this project
+        </h3>
+        <div className="mt-3">
+          <label className="flex-1 rounded-[12px] border border-[#288DD1] bg-[#E6F4FB] block">
+            <input
+              type="radio"
+              name="assignmentScope"
+              value="internal"
+              checked
+              readOnly
+              className="sr-only"
+            />
+            <div className="px-4 py-3">
+              <p className="text-sm font-medium text-[#1F2937]">Internal (workspace)</p>
+              <p className="text-xs text-gray-500 mt-1">
+                You and members in your workspace will be added to this project.
+              </p>
+            </div>
+          </label>
+        </div>
+      </div>
+      <div className={sectionClasses}>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Project members
+          </p>
+          {suggestedMembers.length > 0 && (
+            <button
+              type="button"
+              onClick={handleRestoreMembers}
+              className="text-xs text-[#288DD1] hover:underline disabled:opacity-50"
+              disabled={isMembersFetching}
+            >
+              Restore default selection
+            </button>
+          )}
+        </div>
+        {shouldFetchMembers ? (
+          <>
+            <div className="min-h-[48px] rounded-[10px] border border-gray-200 px-3 py-2 bg-white">
+              {isMembersFetching && selectedMembers.length === 0 ? (
+                <div className="flex items-center text-sm text-gray-500">
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Loading members...
+                </div>
+              ) : selectedMembers.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {selectedMembers.map((member: any) => (
+                    <span
+                      key={member.id}
+                      className="inline-flex items-center bg-[#288DD1] text-white text-xs px-3 py-1 rounded-full"
+                    >
+                      {member.name || member.email || `User #${member.id}`}
+                      <button
+                        type="button"
+                        className="ml-2 text-white hover:text-gray-200"
+                        onClick={() => handleToggleMember(member)}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">
+                  No members selected yet. Use the suggestions below to choose who should join the
+                  project.
+                </p>
+              )}
+            </div>
+            {errors.member_user_ids && (
+              <p className="text-red-500 text-xs mt-1">{errors.member_user_ids}</p>
+            )}
+            <div className="mt-3 rounded-[12px] border border-gray-200 bg-white">
+              <div className="px-4 py-2 border-b border-gray-200 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Suggested members
+              </div>
+              {isMembersFetching ? (
+                <div className="flex items-center px-4 py-3 text-sm text-gray-500">
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Fetching members...
+                </div>
+              ) : suggestedMembers.length > 0 ? (
+                <div className="max-h-48 overflow-y-auto divide-y divide-gray-100">
+                  {suggestedMembers.map((member: any) => {
+                    const isSelected = selectedMembers.some((item) => item.id === member.id);
+                    return (
+                      <label
+                        key={member.id}
+                        className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50"
+                      >
+                        <input
+                          type="checkbox"
+                          className="mt-1 h-4 w-4 rounded border-gray-300 text-[#288DD1] focus:ring-[#288DD1]"
+                          checked={isSelected}
+                          onChange={() => handleToggleMember(member)}
+                        />
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">
+                            {member.name || member.email || `User #${member.id}`}
+                          </p>
+                          {member.email && <p className="text-xs text-gray-500">{member.email}</p>}
+                          {member.role && (
+                            <p className="text-[10px] text-gray-400 uppercase tracking-wide mt-1">
+                              {member.role}
+                            </p>
+                          )}
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="px-4 py-3 text-sm text-gray-500">
+                  No suggested members for this scope yet.
+                </p>
+              )}
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-gray-500">Select a scope to load members.</p>
+        )}
       </div>
     </div>
   );
@@ -231,12 +495,26 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }: any) =>
         label: "Topology",
         value: formData.type ? formData.type.toUpperCase() : "Choose type",
       },
+      {
+        label: "Network preset",
+        value: formData.network_preset
+          ? formData.network_preset.charAt(0).toUpperCase() + formData.network_preset.slice(1)
+          : "Choose during instance creation",
+      },
+      {
+        label: "Assignment scope",
+        value: "Internal (workspace)",
+      },
+      {
+        label: "Members selected",
+        value: selectedMembers.length ? `${selectedMembers.length} member(s)` : "Using defaults",
+      },
     ];
 
     const guidanceItems = [
       "Use a descriptive name so collaborators quickly understand the workspace.",
       "Pick the region closest to your workloads to minimize latency.",
-      "Switch between VPC or DVS depending on the network isolation you need.",
+      "Select a network preset to accelerate provisioning.",
     ];
 
     return (
@@ -252,9 +530,9 @@ const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }: any) =>
             ))}
           </dl>
         </div>
-        <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-5 text-white">
+        <div className="brand-hero rounded-2xl p-5 text-white">
           <p className="text-sm font-semibold">Launch checklist</p>
-          <ul className="mt-3 space-y-2 text-sm text-slate-100/80">
+          <ul className="mt-3 space-y-2 text-sm text-white/80">
             {guidanceItems.map((tip: any) => (
               <li key={tip} className="flex items-start gap-2">
                 <span className="mt-1 h-1.5 w-1.5 rounded-full bg-white/70" />

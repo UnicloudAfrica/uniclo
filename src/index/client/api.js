@@ -12,11 +12,15 @@ const clientApi = async (method, uri, body = null) => {
     Accept: "application/json",
   };
 
+  if (body instanceof FormData) {
+    delete headers["Content-Type"];
+  }
+
   const options = {
     method,
     headers,
     credentials: "include",
-    body: body ? JSON.stringify(body) : null,
+    body: body instanceof FormData ? body : (body ? JSON.stringify(body) : null),
   };
 
   try {

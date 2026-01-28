@@ -100,6 +100,26 @@ const enableTenantVpc = async (id) => {
   return res.data;
 };
 
+// GET: Fetch project network status
+const fetchTenantProjectNetworkStatus = async (id) => {
+  const encodedId = encodeURIComponent(id);
+  const res = await tenantSilentApi("GET", `/admin/projects/${encodedId}/network/status`);
+  if (!res) {
+    throw new Error(`Failed to fetch network status for project ${id}`);
+  }
+  return res;
+};
+
+// POST: Enable internet access for project
+const enableTenantInternetAccess = async (id) => {
+  const encodedId = encodeURIComponent(id);
+  const res = await tenantApi("POST", `/admin/projects/${encodedId}/network/enable-internet`);
+  if (!res) {
+    throw new Error(`Failed to enable internet access for project ${id}`);
+  }
+  return res;
+};
+
 // Hook to fetch all tenant projects
 export const useFetchTenantProjects = (params = {}, options = {}) => {
   return useQuery({
@@ -217,6 +237,34 @@ export const useEnableTenantVpc = () => {
     },
     onError: (error) => {
       console.error("Error enabling VPC:", error);
+    },
+  });
+};
+
+// Hook to fetch project network status
+export const useTenantProjectNetworkStatus = (id, options = {}) => {
+  return useQuery({
+    queryKey: ["tenant-project-network-status", id],
+    queryFn: () => fetchTenantProjectNetworkStatus(id),
+    enabled: !!id && options.enabled !== false,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    ...options,
+  });
+};
+
+// Hook to enable internet access
+export const useTenantEnableInternetAccess = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: enableTenantInternetAccess,
+    onSuccess: (data, projectId) => {
+      queryClient.invalidateQueries(["tenant-project-network-status", projectId]);
+      queryClient.invalidateQueries(["tenant-project", projectId]);
+      queryClient.invalidateQueries(["tenant-project-status", projectId]);
+    },
+    onError: (error) => {
+      console.error("Error enabling internet access:", error);
     },
   });
 };

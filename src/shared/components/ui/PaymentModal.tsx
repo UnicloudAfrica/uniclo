@@ -62,6 +62,12 @@ const getApiBaseUrlForContext = (context: ApiContext): string => {
   }
 };
 
+const getApiPrefixForContext = (context: ApiContext): string => {
+  if (context === "tenant") return "/admin";
+  if (context === "client") return "/business";
+  return "";
+};
+
 const resolveCardIdentifier = (card: any, fallback = "") => {
   if (!card) return fallback;
   if (card.identifier) return card.identifier;
@@ -170,6 +176,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   );
 
   const apiBaseUrl = propApiBaseUrl || getApiBaseUrlForContext(context);
+  const apiPrefix = getApiPrefixForContext(context);
+  const apiRoot = `${apiBaseUrl}${apiPrefix}`;
   const contextEmail =
     context === "admin"
       ? adminUser?.email || adminUserEmail || ""
@@ -374,10 +382,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     async (cardIdentifier: string) => {
       if (!cardIdentifier || !isAuthenticated) return;
       try {
-        const cardsUrl =
-          apiBaseUrl.includes("/admin") || apiBaseUrl.includes("/tenant")
-            ? `${apiBaseUrl}/cards/${cardIdentifier}`
-            : `${apiBaseUrl}/business/cards/${cardIdentifier}`;
+        const cardsUrl = `${apiRoot}/cards/${cardIdentifier}`;
 
         const response = await fetch(cardsUrl, {
           method: "DELETE",
@@ -402,16 +407,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         console.error("Unable to remove card", error);
       }
     },
-    [apiBaseUrl, authHeaders, isAuthenticated]
+    [apiRoot, authHeaders, isAuthenticated]
   );
 
   const fetchSavedCards = useCallback(async () => {
     if (!isAuthenticated) return;
     try {
-      const cardsUrl =
-        apiBaseUrl.includes("/admin") || apiBaseUrl.includes("/tenant")
-          ? `${apiBaseUrl}/cards`
-          : `${apiBaseUrl}/business/cards`;
+      const cardsUrl = `${apiRoot}/cards`;
 
       const response = await fetch(cardsUrl, {
         method: "GET",
@@ -432,7 +434,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     } catch (error) {
       console.error("Unable to fetch saved cards", error);
     }
-  }, [apiBaseUrl, authHeaders, isAuthenticated]);
+  }, [apiRoot, authHeaders, isAuthenticated]);
 
   // Ensure saved card selection stays in sync with payload
   useEffect(() => {
@@ -538,9 +540,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           transactionIdentifier,
           gateway,
           payload,
-          apiBaseUrl,
+          apiBaseUrl: apiRoot,
         });
-        const response = await fetch(`${apiBaseUrl}/transactions/${transactionIdentifier}`, {
+        const response = await fetch(`${apiRoot}/transactions/${transactionIdentifier}`, {
           method: "PUT",
           headers: authHeaders,
           credentials: "include",
@@ -585,7 +587,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     },
     [
       transactionIdentifier,
-      apiBaseUrl,
+      apiRoot,
       resolvePaymentGateway,
       shouldSaveCard,
       paymentMode,
@@ -699,7 +701,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
     setIsPolling(true);
     try {
-      const response = await fetch(`${apiBaseUrl}/transactions/${identifier}/status`, {
+      const response = await fetch(`${apiRoot}/transactions/${identifier}/status`, {
         method: "GET",
         headers: authHeaders,
         credentials: "include",
@@ -726,7 +728,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   }, [
     statusLookupIdentifier,
     isPolling,
-    apiBaseUrl,
+    apiRoot,
     confirmTransaction,
     handlePaymentCompletion,
     isAuthenticated,

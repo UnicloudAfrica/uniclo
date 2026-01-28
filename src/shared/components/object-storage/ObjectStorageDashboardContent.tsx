@@ -96,12 +96,7 @@ const ObjectStorageDashboardContent: React.FC<ObjectStorageDashboardContentProps
 
   return (
     <div className="space-y-6">
-      <section
-        className={`relative overflow-hidden rounded-[32px] bg-gradient-to-br ${preset.hero.gradientClassName} text-white shadow-2xl`}
-      >
-        <div className="absolute inset-0 opacity-60">
-          <div className="h-full w-full bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.2),_transparent_60%)]" />
-        </div>
+      <section className="brand-hero rounded-[32px] text-white shadow-2xl">
         <div className="relative flex flex-col gap-8 p-6 sm:p-8 lg:flex-row lg:items-start lg:justify-between lg:p-10">
           <div className="max-w-xl space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-white/70">

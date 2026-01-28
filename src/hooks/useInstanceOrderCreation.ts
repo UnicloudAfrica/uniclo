@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { useApiContext } from "./useApiContext";
+import { useApiContext, ApiContext } from "./useApiContext";
 import ToastUtils from "../utils/toastUtil";
 import { Configuration, AdditionalVolume } from "../types/InstanceConfiguration";
 import {
@@ -18,6 +18,12 @@ interface UseInstanceOrderCreationProps {
   navigate: any;
 }
 
+const getContextPrefix = (context: ApiContext) => {
+  if (context === "tenant") return "/admin";
+  if (context === "client") return "/business";
+  return "";
+};
+
 export const useInstanceOrderCreation = ({
   configurations,
   isFastTrack,
@@ -30,7 +36,8 @@ export const useInstanceOrderCreation = ({
 }: UseInstanceOrderCreationProps) => {
   const paymentStepIndex = isFastTrack ? null : 2;
   const reviewStepIndex = isFastTrack ? 2 : 3;
-  const { apiBaseUrl, authHeaders } = useApiContext();
+  const { apiBaseUrl, authHeaders, context } = useApiContext();
+  const apiPrefix = getContextPrefix(context);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [submissionResult, setSubmissionResult] = useState<any>(null);
@@ -41,7 +48,7 @@ export const useInstanceOrderCreation = ({
     async (method: string, endpoint: string, body?: any) => {
       const headers = authHeaders;
 
-      const response = await fetch(`${apiBaseUrl}${endpoint}`, {
+      const response = await fetch(`${apiBaseUrl}${apiPrefix}${endpoint}`, {
         method,
         headers,
         credentials: "include",
@@ -56,7 +63,7 @@ export const useInstanceOrderCreation = ({
 
       return data; // Usually backend returns { data: ... } or direct object
     },
-    [apiBaseUrl, authHeaders]
+    [apiBaseUrl, apiPrefix, authHeaders]
   );
 
   const buildPayload = useCallback(() => {

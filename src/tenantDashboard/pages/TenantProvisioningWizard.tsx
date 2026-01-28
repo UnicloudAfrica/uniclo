@@ -14,6 +14,7 @@ import { useFetchTenantSecurityGroups } from "../../hooks/tenantHooks/securityGr
 import { useFetchTenantKeyPairs } from "../../hooks/tenantHooks/keyPairsHook";
 import { useFetchTenantSubnets } from "../../hooks/tenantHooks/subnetHooks";
 import { useFetchTenantNetworks } from "../../hooks/tenantHooks/networkHooks";
+import { useTenantProjectMembershipSuggestions } from "../../hooks/projectHooks";
 import TenantPageShell from "../../dashboard/components/TenantPageShell";
 import {
   ProvisioningWizardLayout,
@@ -380,9 +381,14 @@ const TenantProvisioningWizard: React.FC = () => {
                 useKeyPairsHook={useFetchTenantKeyPairs}
                 useSubnetsHook={useFetchTenantSubnets}
                 useNetworksHook={useFetchTenantNetworks}
+                useProjectMembershipSuggestionsHook={useTenantProjectMembershipSuggestions}
                 skipProjectFetch={false}
                 skipNetworkResourcesFetch={false}
                 formVariant="cube"
+                showProjectMembership
+                lockAssignmentScope
+                membershipTenantId={selectedTenantId}
+                membershipUserId={selectedUserId}
               />
             )}
 

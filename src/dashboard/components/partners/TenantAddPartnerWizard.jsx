@@ -270,7 +270,10 @@ const TenantAddPartnerWizard = ({ onClose }) => {
         <div className="flex items-center gap-3">
           <div
             className="flex h-12 w-12 items-center justify-center rounded-2xl text-white"
-            style={{ background: accent.gradient }}
+            style={{
+              background:
+                "linear-gradient(135deg, var(--theme-color) 0%, rgb(var(--theme-color-700)) 100%)",
+            }}
           >
             {currentStep + 1}
           </div>
@@ -330,7 +333,7 @@ const TenantAddPartnerWizard = ({ onClose }) => {
           type="button"
           onClick={handleNext}
           disabled={isPending}
-          className="inline-flex w-full items-center justify-center rounded-full bg-[#0F62FE] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0b51d3] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0F62FE] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+          className="inline-flex w-full items-center justify-center rounded-full bg-[var(--theme-color)] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[rgb(var(--theme-color-700))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--theme-color)] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
         >
           Continue
           {isPending && <Loader2 className="ml-2 h-4 w-4 animate-spin text-white" />}

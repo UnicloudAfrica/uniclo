@@ -58,6 +58,7 @@ import SettlementsDashboard from "../adminDashboard/pages/SettlementsDashboard";
 import PayoutsDashboard from "../adminDashboard/pages/PayoutsDashboard";
 import AnalyticsDashboard from "../adminDashboard/pages/AnalyticsDashboard";
 import TicketsDashboard from "../adminDashboard/pages/TicketsDashboard";
+import AdminTicketDetail from "../adminDashboard/pages/AdminTicketDetail";
 
 // Infrastructure Pages
 import {
@@ -157,6 +158,7 @@ const AdminRoutes = (): React.JSX.Element => {
       <Route path="/admin-dashboard/payouts" element={<PayoutsDashboard />} />
       <Route path="/admin-dashboard/analytics" element={<AnalyticsDashboard />} />
       <Route path="/admin-dashboard/tickets" element={<TicketsDashboard />} />
+      <Route path="/admin-dashboard/tickets/:id" element={<AdminTicketDetail />} />
 
       {/* Infrastructure Management */}
       <Route path="/admin-dashboard/infrastructure/nat-gateways" element={<AdminNatGateways />} />

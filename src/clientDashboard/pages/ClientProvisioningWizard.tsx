@@ -14,6 +14,7 @@ import { useClientProvisioningLogic } from "../../hooks/useClientProvisioningLog
 import {
   useFetchClientProjects,
   useClientProjectStatus,
+  useClientProjectMembershipSuggestions,
 } from "../../hooks/clientHooks/projectHooks";
 import { useFetchClientSecurityGroups } from "../../hooks/clientHooks/securityGroupHooks";
 import { useFetchClientKeyPairs } from "../../hooks/clientHooks/keyPairsHook";
@@ -372,9 +373,13 @@ const ClientProvisioningWizard: React.FC = () => {
                 useKeyPairsHook={useFetchClientKeyPairs}
                 useSubnetsHook={useFetchClientSubnets}
                 useNetworksHook={useFetchClientNetworks}
+                useProjectMembershipSuggestionsHook={useClientProjectMembershipSuggestions}
                 skipProjectFetch={false}
                 skipNetworkResourcesFetch={false}
                 formVariant="cube"
+                showProjectMembership
+                lockAssignmentScope
+                membershipUserId={String(profile?.id || "")}
               />
             )}
 

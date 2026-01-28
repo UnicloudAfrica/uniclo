@@ -1,8 +1,20 @@
+import config from "../../config";
+
 export const resolveRegionEndpoint = (context = "") => {
   if (context === "client") return "/business/cloud-regions";
   if (context === "tenant") return "/cloud-regions";
   if (context === "admin") return "/regions";
   return "/regions";
+};
+
+export const resolveRegionFallback = (context = "") => {
+  if (context === "client" || context === "tenant") {
+    return {
+      baseUrl: config.baseURL,
+      endpoint: "/regions",
+    };
+  }
+  return null;
 };
 
 const resolveRegionValue = (region) =>

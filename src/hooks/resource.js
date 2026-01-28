@@ -4,7 +4,11 @@ import api from "../index/api";
 import silentApi from "../index/silent";
 import silentTenantApi from "../index/tenant/silentTenant";
 import { useApiContext } from "./useApiContext";
-import { normalizeRegionList, resolveRegionEndpoint } from "../shared/utils/regionApi";
+import {
+  normalizeRegionList,
+  resolveRegionEndpoint,
+  resolveRegionFallback,
+} from "../shared/utils/regionApi";
 
 // **GET**: fetchCountries
 const fetchCountries = async () => {
@@ -49,12 +53,40 @@ const fetchProductCharges = async () => {
   const res = await silentApi("GET", "/product-charge");
   return res.data;
 };
-const fetchGeneralRegions = async (apiBaseUrl, endpoint, authHeaders) => {
-  const { data } = await axios.get(`${apiBaseUrl}${endpoint}`, {
-    headers: authHeaders,
-    withCredentials: true,
-  });
-  return normalizeRegionList(data);
+const fetchGeneralRegions = async (apiBaseUrl, endpoint, authHeaders, fallback) => {
+  const fetchFrom = async (baseUrl, path) => {
+    const { data } = await axios.get(`${baseUrl}${path}`, {
+      headers: authHeaders,
+      withCredentials: true,
+    });
+    return normalizeRegionList(data);
+  };
+
+  let regions = [];
+  let usedFallback = false;
+
+  try {
+    regions = await fetchFrom(apiBaseUrl, endpoint);
+  } catch (error) {
+    if (!fallback) {
+      throw error;
+    }
+    usedFallback = true;
+    regions = await fetchFrom(fallback.baseUrl, fallback.endpoint);
+  }
+
+  if (!regions.length && fallback && !usedFallback) {
+    try {
+      const fallbackRegions = await fetchFrom(fallback.baseUrl, fallback.endpoint);
+      if (fallbackRegions.length) {
+        return fallbackRegions;
+      }
+    } catch (fallbackError) {
+      // Keep the original (empty) result if fallback fails.
+    }
+  }
+
+  return regions;
 };
 const fetchProductPricing = async (region, productable_type, countryCode = "", tenantId = "") => {
   const params = new URLSearchParams();
@@ -267,9 +299,10 @@ export const useFetchFloatingIPs = (currency = "USD", region, options = {}) => {
 export const useFetchGeneralRegions = (options = {}) => {
   const { apiBaseUrl, context, authHeaders } = useApiContext();
   const endpoint = resolveRegionEndpoint(context);
+  const fallback = resolveRegionFallback(context);
   return useQuery({
     queryKey: ["general-regions", context],
-    queryFn: () => fetchGeneralRegions(apiBaseUrl, endpoint, authHeaders),
+    queryFn: () => fetchGeneralRegions(apiBaseUrl, endpoint, authHeaders, fallback),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
     ...options,

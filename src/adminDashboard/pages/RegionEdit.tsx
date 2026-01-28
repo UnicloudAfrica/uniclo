@@ -697,8 +697,7 @@ const RegionEdit = () => {
         contentClassName="space-y-8"
       >
         <div className="space-y-8">
-          <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#0284C7] via-[#2563EB] to-[#1D4ED8] text-white shadow-2xl">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.15),_transparent_55%)]" />
+          <div className="brand-hero rounded-[32px] text-white shadow-2xl">
             <div className="relative p-6 sm:p-8 lg:p-10">
               <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-3">

@@ -35,6 +35,7 @@ import ClientDnsManagement from "../clientDashboard/pages/ClientDnsManagement";
 import ClientSnapshots from "../clientDashboard/pages/ClientSnapshots";
 import ClientImages from "../clientDashboard/pages/ClientImages";
 import ClientAutoScaling from "../clientDashboard/pages/ClientAutoScaling";
+import ClientTicketDetail from "../clientDashboard/pages/ClientTicketDetail";
 
 const ClientRoutes = () => {
   return (
@@ -99,6 +100,7 @@ const ClientRoutes = () => {
       <Route path="/client-dashboard/billing" element={<ClientBillingPage />} />
       <Route path="/client-dashboard/account-settings" element={<ClientSettings />} />
       <Route path="/client-dashboard/support" element={<ClientSupport />} />
+      <Route path="/client-dashboard/support/:id" element={<ClientTicketDetail />} />
     </Route>
   );
 };

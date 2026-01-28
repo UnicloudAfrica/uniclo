@@ -29,6 +29,7 @@
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.3.8",
     "react-helmet-async": "^2.0.5",
+    "react-intersection-observer": "^10.0.2",
     "react-loading-skeleton": "^3.5.0",
     "react-paystack": "^6.0.0",
     "react-pdf": "^10.0.1",

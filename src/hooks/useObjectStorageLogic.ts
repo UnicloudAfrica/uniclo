@@ -28,6 +28,8 @@ import { useFetchCountries, useFetchProductPricing } from "./resource";
 // Context-specific hooks - these will be passed or resolved based on context
 import { useCustomerContext } from "./adminHooks/useCustomerContext";
 import { useFetchRegions } from "./adminHooks/regionHooks";
+import { useFetchClientProfile } from "./clientHooks/resources";
+import { useFetchTenantBusinessSettings } from "./settingsHooks";
 
 // Types
 export type ObjectStorageContext = "admin" | "tenant" | "client";
@@ -306,6 +308,15 @@ export const useObjectStorageLogic = (
   const isTenantsFetching = isAdminContext ? adminContext.isTenantsFetching : false;
   const userPool = isAdminContext ? adminContext.userPool : [];
   const isUsersFetching = isAdminContext ? adminContext.isUsersFetching : false;
+
+  // -- NEW: Client/Tenant Profile Fetching for Country Lock --
+  // We only enable these queries if matching the context context
+  const { data: clientProfile } = useFetchClientProfile({
+    enabled: context === "client",
+  });
+  const { data: tenantSettings } = useFetchTenantBusinessSettings({
+    enabled: context === "tenant",
+  });
 
   // Order State
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -653,8 +664,7 @@ export const useObjectStorageLogic = (
 
   // Country auto-lock based on tenant/user selection
   useEffect(() => {
-    if (context !== "admin") {
-      // For tenant/client contexts, country is usually locked
+    if (context !== "admin" && context !== "tenant" && context !== "client") {
       return;
     }
 
@@ -676,6 +686,26 @@ export const useObjectStorageLogic = (
       } else {
         setIsCountryLocked(false);
       }
+      const tenantCountry = resolveCountryCodeFromEntity(tenantSettings, countryOptions);
+      if (tenantCountry) {
+        setIsCountryLocked(true);
+        setFormData((prev) => ({ ...prev, countryCode: tenantCountry }));
+      } else {
+        // Unlock if no country resolved to allow user selection
+        setIsCountryLocked(false);
+      }
+      return;
+    } else if (context === "client") {
+      // For client context, use the fetched client profile
+      const clientCountry = resolveCountryCodeFromEntity(clientProfile, countryOptions);
+      if (clientCountry) {
+        setIsCountryLocked(true);
+        setFormData((prev) => ({ ...prev, countryCode: clientCountry }));
+      } else {
+        // Unlock if no country resolved
+        setIsCountryLocked(false);
+      }
+      return;
     } else {
       setIsCountryLocked(false);
     }
@@ -687,6 +717,8 @@ export const useObjectStorageLogic = (
     tenantOptions,
     clientOptions,
     countryOptions,
+    clientProfile,
+    tenantSettings,
   ]);
 
   // Handlers
@@ -795,9 +827,9 @@ export const useObjectStorageLogic = (
       const payment = data?.payment || null;
       const normalizedPaymentOptions = normalizePaymentOptions(
         payment?.payment_gateway_options ||
-          transaction?.payment_gateway_options ||
-          data?.payment_options ||
-          data?.paymentOptions
+        transaction?.payment_gateway_options ||
+        data?.payment_options ||
+        data?.paymentOptions
       );
       const paymentState = payment
         ? { ...payment, payment_gateway_options: normalizedPaymentOptions }

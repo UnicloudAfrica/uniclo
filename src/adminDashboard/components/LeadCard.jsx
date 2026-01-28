@@ -55,12 +55,12 @@ const LeadCard = ({ lead, onView, onEmail, onCall, onToggleFavorite }) => {
     const priority = getPriorityBadge(leadScore);
 
     return (
-        <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-primary-300 hover:shadow-lg">
+        <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-[rgb(var(--theme-color-300))] hover:shadow-lg">
             {/* Header */}
             <div className="mb-4 flex items-start justify-between">
                 <div className="flex items-center gap-3">
                     {/* Avatar */}
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-600 text-lg font-bold text-white">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--theme-color)] text-lg font-bold text-white">
                         {lead.first_name?.[0]}{lead.last_name?.[0]}
                     </div>
 
@@ -120,7 +120,7 @@ const LeadCard = ({ lead, onView, onEmail, onCall, onToggleFavorite }) => {
                 <button
                     type="button"
                     onClick={() => onEmail?.(lead)}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-[rgb(var(--theme-color-300))] hover:bg-[rgb(var(--theme-color-50))] hover:text-[var(--theme-color)]"
                 >
                     <Mail className="h-4 w-4" />
                     Email
@@ -128,7 +128,7 @@ const LeadCard = ({ lead, onView, onEmail, onCall, onToggleFavorite }) => {
                 <button
                     type="button"
                     onClick={() => onCall?.(lead)}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-[rgb(var(--theme-color-300))] hover:bg-[rgb(var(--theme-color-50))] hover:text-[var(--theme-color)]"
                 >
                     <Phone className="h-4 w-4" />
                     Call
@@ -136,7 +136,7 @@ const LeadCard = ({ lead, onView, onEmail, onCall, onToggleFavorite }) => {
                 <button
                     type="button"
                     onClick={() => onView?.(lead)}
-                    className="flex items-center justify-center rounded-lg border border-primary-200 bg-primary-500 px-3 py-2 text-white transition hover:bg-primary-600"
+                    className="flex items-center justify-center rounded-lg border border-[rgba(var(--theme-color-rgb),0.2)] bg-[var(--theme-color)] px-3 py-2 text-white transition hover:bg-[rgb(var(--theme-color-700))]"
                 >
                     <Eye className="h-4 w-4" />
                 </button>

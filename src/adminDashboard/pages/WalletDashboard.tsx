@@ -307,15 +307,15 @@ export default function WalletDashboard() {
         contentClassName="space-y-6"
       >
         {/* Balance Card */}
-        <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 text-white">
+        <div className="brand-hero rounded-2xl p-6 text-white">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-blue-100 text-sm mb-1">Available Balance</p>
+              <p className="text-white/70 text-sm mb-1">Available Balance</p>
               <h2 className="text-4xl font-bold">
                 {symbol}
                 {Number(balance).toLocaleString()}
               </h2>
-              <p className="text-blue-200 text-sm mt-2 flex items-center gap-1">
+              <p className="text-white/70 text-sm mt-2 flex items-center gap-1">
                 <Clock size={12} />
                 Billing mode: {billingMode}
               </p>

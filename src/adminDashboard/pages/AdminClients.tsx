@@ -243,7 +243,7 @@ const AdminClients = () => {
     {
       key: "name",
       header: "Name",
-      render: (item: any) => (
+      render: (_: any, item: any) => (
         <div className="font-medium text-gray-900">
           {item.first_name} {item.last_name}
         </div>
@@ -253,19 +253,19 @@ const AdminClients = () => {
     {
       key: "email",
       header: "Email Address",
-      render: (item: any) => <div className="text-gray-600">{item.email}</div>,
+      render: (_: any, item: any) => <div className="text-gray-600">{item.email}</div>,
       sortable: true,
     },
     {
       key: "tenant_name",
       header: "Tenant Name",
-      render: (item: any) => <div className="text-gray-600">{item.tenant?.name || "N/A"}</div>,
+      render: (_: any, item: any) => <div className="text-gray-600">{item.tenant?.name || "N/A"}</div>,
       sortable: true,
     },
     {
       key: "created_at",
       header: "Created",
-      render: (item: any) => (
+      render: (_: any, item: any) => (
         <div className="text-gray-600">
           {item.created_at ? new Date(item.created_at).toLocaleDateString() : "—"}
         </div>
@@ -275,7 +275,7 @@ const AdminClients = () => {
     {
       key: "actions",
       header: "Actions",
-      render: (item: any) => (
+      render: (_: any, item: any) => (
         <div className="flex justify-end">
           <TableActionButtons
             onView={() => handleViewDetails(item)}
@@ -292,12 +292,12 @@ const AdminClients = () => {
               item.tenant_id
                 ? []
                 : [
-                    {
-                      label: "Promote to tenant",
-                      icon: <ArrowUpRight className="h-4 w-4" />,
-                      onClick: () => handlePromoteClient(item),
-                    },
-                  ]
+                  {
+                    label: "Promote to tenant",
+                    icon: <ArrowUpRight className="h-4 w-4" />,
+                    onClick: () => handlePromoteClient(item),
+                  },
+                ]
             }
             itemName={`${item.first_name} ${item.last_name}`}
           />

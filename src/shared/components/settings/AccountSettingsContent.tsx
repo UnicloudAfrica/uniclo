@@ -41,6 +41,7 @@ import {
   useUpdateAdminNetworkPolicySettings,
 } from "../../../hooks/useAdminNetworkPolicySettings";
 import { TenantBrandingSettingsPanel } from "../../../tenantDashboard/pages/TenantBrandingSettings";
+import { AdminBrandingSettingsPanel } from "./AdminBrandingSettingsPanel";
 
 interface AccountSettingsContentProps {
   context: "admin" | "tenant" | "client";
@@ -188,7 +189,7 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
 
     const customTabs = [];
     if (isAdminContext) customTabs.push(networkPolicyTab);
-    if (isTenantContext) customTabs.push(brandingTab);
+    if (isTenantContext || isAdminContext) customTabs.push(brandingTab);
 
     return [...filteredTabs, ...customTabs];
   }, [
@@ -658,7 +659,11 @@ const AccountSettingsContent: React.FC<AccountSettingsContentProps> = ({ context
                     footerNote="Applies to all tenants unless overridden."
                   />
                 ) : activeTabConfig.id === "branding" ? (
-                  <TenantBrandingSettingsPanel showActions />
+                  isAdminContext ? (
+                    <AdminBrandingSettingsPanel showActions />
+                  ) : (
+                    <TenantBrandingSettingsPanel showActions />
+                  )
                 ) : (
                   <>
                     {activeTabConfig.id === "profile" && (

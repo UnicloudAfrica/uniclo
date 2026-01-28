@@ -73,6 +73,7 @@ export interface ProjectUnifiedViewProps {
   project: ProjectData;
   instanceStats: InstanceStats;
   resourceCounts: ResourceCounts;
+  canCreateInstances?: boolean;
   networkStatus?: NetworkStatus;
   setupSteps?: SetupStep[];
   setupProgressPercent?: number;
@@ -125,6 +126,7 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
   project,
   instanceStats,
   resourceCounts,
+  canCreateInstances = true,
   networkStatus,
   setupSteps,
   setupProgressPercent,
@@ -192,6 +194,7 @@ const ProjectUnifiedView: React.FC<ProjectUnifiedViewProps> = ({
           stoppedInstances={instanceStats.stopped}
           onAddInstance={onAddInstance}
           isLoading={isLoading}
+          canCreateInstances={canCreateInstances}
         />
 
         <NetworkConfigurationCard

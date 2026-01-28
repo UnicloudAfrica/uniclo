@@ -35,6 +35,7 @@ interface ConfigurationListStepProps {
   useKeyPairsHook?: FetchHookFn;
   useSubnetsHook?: FetchHookFn;
   useNetworksHook?: FetchHookFn;
+  useProjectMembershipSuggestionsHook?: FetchHookFn;
 
   // Skip flags for simplified contexts (e.g., client without project scoping)
   skipProjectFetch?: boolean;
@@ -75,6 +76,7 @@ const ConfigurationListStep: React.FC<ConfigurationListStepProps> = ({
   useKeyPairsHook,
   useSubnetsHook,
   useNetworksHook,
+  useProjectMembershipSuggestionsHook,
   skipProjectFetch = false,
   skipNetworkResourcesFetch = false,
   onSaveTemplate,
@@ -129,6 +131,7 @@ const ConfigurationListStep: React.FC<ConfigurationListStepProps> = ({
           useKeyPairsHook={useKeyPairsHook}
           useSubnetsHook={useSubnetsHook}
           useNetworksHook={useNetworksHook}
+          useProjectMembershipSuggestionsHook={useProjectMembershipSuggestionsHook}
           skipProjectFetch={skipProjectFetch}
           skipNetworkResourcesFetch={skipNetworkResourcesFetch}
           onSaveTemplate={onSaveTemplate}

@@ -22,8 +22,25 @@ export interface Thread {
   user?: { id: number; name: string; email: string };
   assignee?: { id: number; name: string };
   tenant?: { id: number; name: string };
+  customer?: { name: string; email?: string };
   messages?: ThreadMessage[];
   escalations?: ThreadEscalation[];
+  involved_users?: {
+    admins: { id: number; name: string; email: string; role: string }[];
+    users: { id: number; name: string; email: string; role: string }[];
+  };
+  customer_context?: {
+    user: { id: number; name: string; email: string; phone?: string } | null;
+    tenant: { id: number; name: string; identifier: string; created_at: string } | null;
+  };
+  last_read_message_id?: number | null;
+  last_read_at?: string | null;
+  rating?: {
+    score: number;
+    comment?: string;
+    agent_scores?: Record<string, number>;
+    created_at: string;
+  };
 }
 
 export interface ThreadMessage {
@@ -37,6 +54,16 @@ export interface ThreadMessage {
   user?: { id: number; name: string };
   sender?: { id: number; name: string; email?: string };
   admin?: { id: number; name: string; email?: string };
+  attachments?: ThreadAttachment[];
+}
+
+export interface ThreadAttachment {
+  id: number;
+  url: string;
+  file_name: string;
+  file_size?: number;
+  mime_type?: string;
+  created_at?: string;
 }
 
 export interface ThreadEscalation {

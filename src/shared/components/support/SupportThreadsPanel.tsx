@@ -1,7 +1,7 @@
-// @ts-nocheck
-import React, { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, RefreshCw } from "lucide-react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
+import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import { Plus, RefreshCw, Paperclip, X, Loader2 } from "lucide-react";
+import { useInView } from "react-intersection-observer";
 import { ThreadTable } from "./ThreadTable";
 import { ThreadDetailModal } from "./ThreadDetailModal";
 import type { Thread, SlaStatus } from "./threadTypes";
@@ -23,6 +23,7 @@ type ThreadDetailResponse = {
 type SupportFilters = {
   status?: string;
   search?: string;
+  page?: number;
 };
 
 interface SupportThreadsPanelProps {
@@ -42,6 +43,7 @@ interface SupportThreadsPanelProps {
   showUser?: boolean;
   showEscalation?: boolean;
   emptyMessage?: string;
+  onView?: (thread: Thread) => void;
   adminFields?: boolean;
 }
 
@@ -80,6 +82,9 @@ const CreateTicketModal = ({
     priority: "medium",
     category: "",
   });
+  const [files, setFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const {
     contextType,
     setContextType,
@@ -97,6 +102,16 @@ const CreateTicketModal = ({
 
   const updateField = (field: string, value: string) => {
     setFormState((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = (event: React.FormEvent) => {
@@ -137,12 +152,19 @@ const CreateTicketModal = ({
       }
     }
 
-    onSubmit(payload);
+    if (files.length > 0) {
+      const formData = new FormData();
+      Object.keys(payload).forEach(key => formData.append(key, payload[key]));
+      files.forEach(file => formData.append('attachments[]', file));
+      onSubmit(formData);
+    } else {
+      onSubmit(payload);
+    }
   };
 
   return (
     <div className="fixed inset-0 z-[1001] flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl">
+      <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl max-h-[90vh] overflow-y-auto">
         <div className="border-b border-gray-200 p-5">
           <h3 className="text-lg font-semibold text-gray-900">New Support Ticket</h3>
           <p className="text-sm text-gray-500">Share a summary and we will respond shortly.</p>
@@ -167,6 +189,38 @@ const CreateTicketModal = ({
               placeholder="Describe the issue or request..."
               disabled={isLoading}
             />
+
+            {/* File Attachments */}
+            <div className="mt-2">
+              <input
+                type="file"
+                multiple
+                ref={fileInputRef}
+                className="hidden"
+                onChange={handleFileSelect}
+                disabled={isLoading}
+              />
+              <div className="flex flex-wrap gap-2 mb-2">
+                {files.map((file, idx) => (
+                  <div key={idx} className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full text-xs text-gray-700 border border-gray-200">
+                    <span className="truncate max-w-[150px]">{file.name}</span>
+                    <button type="button" onClick={() => removeFile(idx)} className="hover:text-red-500 p-0.5">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <ModernButton
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading}
+                leftIcon={<Paperclip className="w-4 h-4" />}
+              >
+                Attach Files
+              </ModernButton>
+            </div>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
@@ -242,16 +296,31 @@ export const SupportThreadsPanel: React.FC<SupportThreadsPanelProps> = ({
   showEscalation = true,
   emptyMessage = "No support tickets found",
   adminFields = false,
+  onView,
 }) => {
   const queryClient = useQueryClient();
+  const { ref: loadMoreRef, inView } = useInView();
   const [filters, setFilters] = useState<SupportFilters>({ status: "", search: "" });
   const [selectedId, setSelectedId] = useState<string | number | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
 
-  const listQuery = useQuery({
+  const listQuery = useInfiniteQuery({
     queryKey: [...queryKey, filters],
-    queryFn: () => fetchThreads(filters),
+    queryFn: ({ pageParam = 1 }) => fetchThreads({ ...filters, page: pageParam }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const meta = lastPage?.meta || lastPage;
+      const current = meta.current_page || 1;
+      const last = meta.last_page || 1;
+      return current < last ? current + 1 : undefined;
+    },
   });
+
+  useEffect(() => {
+    if (inView && listQuery.hasNextPage && !listQuery.isFetchingNextPage) {
+      listQuery.fetchNextPage();
+    }
+  }, [inView, listQuery.hasNextPage, listQuery.isFetchingNextPage, listQuery.fetchNextPage]);
 
   const detailQuery = useQuery({
     queryKey: [...queryKey, "detail", selectedId],
@@ -260,7 +329,10 @@ export const SupportThreadsPanel: React.FC<SupportThreadsPanelProps> = ({
   });
 
   const createMutation = useMutation({
-    mutationFn: (payload: Record<string, any>) => createThread?.(payload),
+    mutationFn: (payload: Record<string, any>) => {
+      if (!createThread) return Promise.reject("createThread is not defined");
+      return createThread(payload);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
       setCreateOpen(false);
@@ -268,8 +340,10 @@ export const SupportThreadsPanel: React.FC<SupportThreadsPanelProps> = ({
   });
 
   const replyMutation = useMutation({
-    mutationFn: (payload: { id: string | number; body: string }) =>
-      replyThread?.(payload.id, { body: payload.body }),
+    mutationFn: (payload: { id: string | number; body: string | FormData | Record<string, any> }) => {
+      if (!replyThread) return Promise.reject("replyThread is not defined");
+      return replyThread(payload.id, payload.body as any);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [...queryKey, "detail", selectedId] });
       queryClient.invalidateQueries({ queryKey });
@@ -277,7 +351,10 @@ export const SupportThreadsPanel: React.FC<SupportThreadsPanelProps> = ({
   });
 
   const escalateMutation = useMutation({
-    mutationFn: (id: string | number) => escalateThread?.(id),
+    mutationFn: (id: string | number) => {
+      if (!escalateThread) return Promise.reject("escalateThread is not defined");
+      return escalateThread(id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
       queryClient.invalidateQueries({ queryKey: [...queryKey, "detail", selectedId] });
@@ -285,7 +362,10 @@ export const SupportThreadsPanel: React.FC<SupportThreadsPanelProps> = ({
   });
 
   const deescalateMutation = useMutation({
-    mutationFn: (id: string | number) => deescalateThread?.(id),
+    mutationFn: (id: string | number) => {
+      if (!deescalateThread) return Promise.reject("deescalateThread is not defined");
+      return deescalateThread(id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
       queryClient.invalidateQueries({ queryKey: [...queryKey, "detail", selectedId] });
@@ -293,24 +373,51 @@ export const SupportThreadsPanel: React.FC<SupportThreadsPanelProps> = ({
   });
 
   const resolveMutation = useMutation({
-    mutationFn: (id: string | number) => resolveThread?.(id),
+    mutationFn: (id: string | number) => {
+      if (!resolveThread) return Promise.reject("resolveThread is not defined");
+      return resolveThread(id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
       queryClient.invalidateQueries({ queryKey: [...queryKey, "detail", selectedId] });
     },
   });
 
-  const threads = useMemo(() => extractThreads(listQuery.data), [listQuery.data]);
+  const threads = useMemo(() => {
+    if (!listQuery.data) return [];
+    return listQuery.data.pages.flatMap(page => extractThreads(page));
+  }, [listQuery.data]);
   const detailPayload = extractThreadDetail(detailQuery.data || {});
   const selectedThread = selectedId ? detailPayload.thread : null;
 
   const handleView = (thread: Thread) => {
-    setSelectedId(thread.uuid || thread.id);
+    if (onView) {
+      onView(thread);
+    } else {
+      setSelectedId(thread.uuid || thread.id);
+    }
   };
 
-  const handleReply = (message: string) => {
+  const handleReply = (payload: { message: string, files?: File[] } | string) => {
     if (!selectedId) return;
-    replyMutation.mutate({ id: selectedId, body: message });
+
+    // Handle legacy string call if any
+    if (typeof payload === 'string') {
+      replyMutation.mutate({ id: selectedId, body: { body: payload } as any });
+      return;
+    }
+
+    let body: any;
+    if (payload.files && payload.files.length > 0) {
+      const formData = new FormData();
+      formData.append('body', payload.message);
+      payload.files.forEach(f => formData.append('attachments[]', f));
+      body = formData;
+    } else {
+      body = { body: payload.message };
+    }
+
+    replyMutation.mutate({ id: selectedId, body });
   };
 
   const handleResolve = () => {
@@ -321,7 +428,9 @@ export const SupportThreadsPanel: React.FC<SupportThreadsPanelProps> = ({
   const handleEscalate = (thread?: Thread) => {
     const id = thread ? thread.uuid || thread.id : selectedId;
     if (!id || !escalateThread) return;
-    setSelectedId(id);
+
+    if (!onView) setSelectedId(id);
+
     escalateMutation.mutate(id);
   };
 
@@ -387,19 +496,27 @@ export const SupportThreadsPanel: React.FC<SupportThreadsPanelProps> = ({
         emptyMessage={emptyMessage}
       />
 
+      {listQuery.hasNextPage && (
+        <div ref={loadMoreRef} className="flex justify-center py-6">
+          <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+        </div>
+      )}
+
+      {/* Only show modal if selectedThread is set (which is only set if onView is NOT provided) */}
       {selectedThread && (
         <ThreadDetailModal
           thread={selectedThread}
           slaStatus={detailPayload.sla}
           onClose={() => setSelectedId(null)}
-          onReply={replyThread ? handleReply : undefined}
-          onEscalate={canEscalate ? handleEscalate : undefined}
-          onDeescalate={canDeescalate ? handleDeescalate : undefined}
-          onResolve={canResolve ? handleResolve : undefined}
+          onReply={(payload) => replyMutation.mutate(payload)}
+          onEscalate={() => escalateMutation.mutate(selectedId!)}
+          onDeescalate={() => deescalateMutation.mutate(selectedId!)}
+          onResolve={() => resolveMutation.mutate(selectedId!)}
+          isLoading={detailQuery.isFetching || replyMutation.isPending}
           canEscalate={canEscalate}
           canDeescalate={canDeescalate}
           canResolve={canResolve}
-          isLoading={detailQuery.isFetching || replyMutation.isPending}
+          currentUserRole={queryKey.includes("admin") ? "admin" : (queryKey.includes("tenant") ? "tenant" : "business")}
         />
       )}
 

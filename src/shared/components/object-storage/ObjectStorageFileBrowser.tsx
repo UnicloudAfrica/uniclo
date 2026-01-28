@@ -208,9 +208,9 @@ const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
     return (
       <div className="h-full flex flex-col">
         {/* Welcome Header */}
-        <div className="p-8 bg-gradient-to-br from-primary-500 to-primary-600 text-white">
+        <div className="brand-hero p-8 text-white">
           <h1 className="text-2xl font-bold mb-2">Welcome to Silo Storage</h1>
-          <p className="text-primary-100">
+          <p className="text-white/70">
             Select a Silo from the sidebar to browse files, or create a new Silo to get started.
           </p>
         </div>
@@ -223,10 +223,10 @@ const ObjectStorageFileBrowser: React.FC<ObjectStorageFileBrowserProps> = ({
               <button
                 key={bucket.id}
                 onClick={() => onSelectBucket?.(bucket.name)}
-                className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all text-left group"
+                className="flex items-center gap-4 p-4 rounded-xl border border-gray-200 hover:border-[rgb(var(--theme-color-300))] hover:bg-[rgb(var(--theme-color-50))] transition-all text-left group"
               >
-                <div className="rounded-lg bg-primary-100 p-3 group-hover:bg-primary-200 transition-colors">
-                  <Database className="h-6 w-6 text-primary-600" />
+                <div className="rounded-lg bg-[rgb(var(--theme-color-100))] p-3 group-hover:bg-[rgb(var(--theme-color-200))] transition-colors">
+                  <Database className="h-6 w-6 text-[var(--theme-color)]" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-gray-900 truncate">{bucket.name}</p>

@@ -1,14 +1,7 @@
 // Object Storage Utility Functions
 // Extracted from adminObjectStorageCreate.js for reusability
 
-export interface Option {
-  value: string;
-  label: string;
-  raw?: any;
-  currency?: string;
-  tenantId?: string;
-}
-
+// Local interfaces
 export interface ServiceProfile {
   id: string;
   name: string;
@@ -18,37 +11,6 @@ export interface ServiceProfile {
   months: string;
   unitPriceOverride: string;
 }
-
-export interface PricingData {
-  productable_id?: string;
-  productable_type?: string;
-  product_id?: string;
-  id?: string;
-  product?: any;
-  pricing?: any;
-  region?: string;
-  product_name?: string;
-  provider_resource_id?: string;
-  price_local?: number;
-  price_usd?: number;
-  price?: number;
-  total_price?: number;
-  currency?: string;
-  price_currency?: string;
-  currency_code?: string;
-  quota_gb?: number;
-  quota?: number;
-  object_storage_configuration?: any;
-  object_storage?: any;
-}
-
-export const COUNTRY_FALLBACK: Option[] = [
-  { value: "US", label: "United States (US)", currency: "USD" },
-  { value: "NG", label: "Nigeria (NG)", currency: "NGN" },
-  { value: "GB", label: "United Kingdom (GB)", currency: "GBP" },
-  { value: "ZA", label: "South Africa (ZA)", currency: "ZAR" },
-  { value: "KE", label: "Kenya (KE)", currency: "KES" },
-];
 
 export const OBJECT_STORAGE_KEYWORDS = ["object_storage", "object storage"];
 export const GLOBAL_TIER_KEY = "__all__";
@@ -341,150 +303,18 @@ export const normalizePaymentOptions = (options: any): any => {
   return null;
 };
 
-/**
- * Normalize country code candidate
- */
-export const normalizeCountryCandidate = (value: any): string => {
-  if (value === null || value === undefined) return "";
-  const trimmed = String(value).trim();
-  if (!trimmed) return "";
-  const upper = trimmed.toUpperCase();
-  if (/^[A-Z]{2}$/.test(upper)) {
-    return upper;
-  }
-  return "";
-};
+import { type Option } from "../shared/utils/countryUtils";
 
-/**
- * Match country from options
- */
-export const matchCountryFromOptions = (
-  value: any,
-  countryOptions: Option[] = COUNTRY_FALLBACK
-): string => {
-  if (value === null || value === undefined) return "";
-  const normalized = normalizeCountryCandidate(value);
-  if (normalized) return normalized;
+// Re-export country utils
+export {
+  COUNTRY_FALLBACK,
+  normalizeCountryCandidate,
+  matchCountryFromOptions,
+  resolveCountryCodeFromEntity,
+  formatCountryOptions,
+  type Option,
+} from "../shared/utils/countryUtils";
 
-  const trimmed = String(value).trim();
-  if (!trimmed) return "";
-  const lower = trimmed.toLowerCase();
-
-  const match = countryOptions.find((option) => {
-    if (!option) return false;
-    if (typeof option.value === "string" && option.value.toLowerCase() === lower) {
-      return true;
-    }
-    if (typeof option.label === "string") {
-      const labelLower = option.label.toLowerCase();
-      if (labelLower === lower) {
-        return true;
-      }
-      const bracketIndex = option.label.indexOf("(");
-      if (bracketIndex >= 0) {
-        const prefix = option.label.slice(0, bracketIndex).trim().toLowerCase();
-        if (prefix === lower) {
-          return true;
-        }
-      }
-    }
-    return false;
-  });
-
-  return match?.value ? String(match.value).toUpperCase() : "";
-};
-
-/**
- * Resolve country code from entity
- */
-export const resolveCountryCodeFromEntity = (
-  entity: any,
-  countryOptions: Option[] = COUNTRY_FALLBACK
-): string => {
-  if (!entity) return "";
-  const candidates = [
-    entity.country_code,
-    entity.countryCode,
-    entity.country_iso,
-    entity.countryIso,
-    entity.country,
-    entity.billing_country_code,
-    entity.billingCountryCode,
-    entity.billing_country,
-    entity.billingCountry,
-    entity.billing?.country_code,
-    entity.billing?.countryCode,
-    entity.billing?.country,
-    entity.location?.country_code,
-    entity.location?.countryCode,
-    entity.address?.country_code,
-    entity.address?.countryCode,
-    entity.profile?.country_code,
-    entity.profile?.countryCode,
-    entity.metadata?.country_code,
-    entity.metadata?.countryCode,
-    entity.primary_contact?.country_code,
-    entity.primary_contact?.countryCode,
-    entity.contact?.country_code,
-    entity.contact?.countryCode,
-    entity.tenant_country_code,
-    entity.tenant_country,
-    entity.tenant?.country_code,
-    entity.tenant?.country,
-    entity.settings?.country_code,
-    entity.settings?.country,
-  ];
-
-  for (const candidate of candidates) {
-    const code = matchCountryFromOptions(candidate, countryOptions);
-    if (code) {
-      return code;
-    }
-  }
-
-  return "";
-};
-
-/**
- * Format country options from API data
- */
-export const formatCountryOptions = (sharedCountries: any[]): Option[] => {
-  const apiCountries = Array.isArray(sharedCountries) ? sharedCountries : [];
-  if (apiCountries.length > 0) {
-    const mapped = apiCountries
-      .map((item: any): Option | null => {
-        const code =
-          normalizeCountryCandidate(
-            item?.code ||
-              item?.iso2 ||
-              item?.country_code ||
-              item?.iso_code ||
-              item?.iso ||
-              item?.id ||
-              item?.country ||
-              ""
-          ) || "";
-        if (!code) return null;
-        const upper = code.toUpperCase();
-        const name = item?.name || item?.country_name || item?.country || upper;
-        return {
-          value: upper,
-          label: name && name.toLowerCase() !== upper.toLowerCase() ? `${name} (${upper})` : upper,
-          currency: item?.currency_code || item?.currency || item?.currencyCode || "USD",
-        };
-      })
-      .filter((item): item is Option => Boolean(item));
-
-    const hasUS = mapped.some(
-      (option) => option?.value && String(option.value).toUpperCase() === "US"
-    );
-    return hasUS
-      ? mapped
-      : [{ value: "US", label: "United States (US)", currency: "USD" }, ...mapped];
-  }
-
-  return [...COUNTRY_FALLBACK];
-};
 
 /**
  * Format region options from API data

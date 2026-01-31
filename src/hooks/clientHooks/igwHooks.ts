@@ -1,21 +1,34 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, UseQueryOptions } from "@tanstack/react-query";
 import clientSilentApi from "../../index/client/silent";
 import clientApi from "../../index/client/api";
 
-const buildQueryString = (params = {}) => {
+type QueryParams = Record<string, string | boolean | number | undefined | null>;
+
+const buildQueryString = (params: QueryParams = {}) => {
   const search = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") {
-      search.append(key, value);
+      search.append(key, String(value));
     }
   });
   return search.toString();
 };
 
-const fetchClientIgws = async ({ project_id, region, refresh = false }) => {
+interface IgwParams {
+  project_id?: string;
+  region?: string;
+  refresh?: boolean;
+}
+
+interface IgwPayload {
+  project_id?: string;
+  region?: string;
+  [key: string]: unknown;
+}
+
+const fetchClientIgws = async ({ project_id, region, refresh = false }: IgwParams) => {
   // Validate required parameters before making API call
   if (!project_id || !region) {
-    console.warn("fetchClientIgws: project_id and region are required");
     return [];
   }
 
@@ -25,7 +38,7 @@ const fetchClientIgws = async ({ project_id, region, refresh = false }) => {
     refresh: refresh ? "1" : undefined,
   });
 
-  const res = await clientSilentApi(
+  const res = await clientSilentApi<{ data: unknown[] }>(
     "GET",
     `/business/internet-gateways${queryString ? `?${queryString}` : ""}`
   );
@@ -37,39 +50,55 @@ const fetchClientIgws = async ({ project_id, region, refresh = false }) => {
   return res.data;
 };
 
-const createClientIgw = async (payload) => {
-  const res = await clientApi("POST", "/business/internet-gateways", payload);
+const createClientIgw = async (payload: IgwPayload) => {
+  const res = await clientApi<{ data: unknown }>("POST", "/business/internet-gateways", payload);
   if (!res) {
     throw new Error("Failed to create internet gateway");
   }
   return res;
 };
 
-const deleteClientIgw = async ({ id, payload }) => {
-  const res = await clientApi("DELETE", `/business/internet-gateways/${id}`, payload);
+const deleteClientIgw = async ({ id, payload }: { id: string | number; payload: IgwPayload }) => {
+  const res = await clientApi<{ data: unknown }>(
+    "DELETE",
+    `/business/internet-gateways/${id}`,
+    payload
+  );
   if (!res?.data) {
     throw new Error("Failed to delete internet gateway");
   }
   return res.data;
 };
 
-const attachClientIgw = async (payload) => {
-  const res = await clientApi("POST", "/business/internet-gateway-attachments", payload);
+const attachClientIgw = async (payload: IgwPayload) => {
+  const res = await clientApi<{ data: unknown }>(
+    "POST",
+    "/business/internet-gateway-attachments",
+    payload
+  );
   if (!res?.data) {
     throw new Error("Failed to attach internet gateway");
   }
   return res.data;
 };
 
-const detachClientIgw = async (payload) => {
-  const res = await clientApi("DELETE", "/business/internet-gateway-attachments", payload);
+const detachClientIgw = async (payload: IgwPayload) => {
+  const res = await clientApi<{ data: unknown }>(
+    "DELETE",
+    "/business/internet-gateway-attachments",
+    payload
+  );
   if (!res?.data) {
     throw new Error("Failed to detach internet gateway");
   }
   return res.data;
 };
 
-export const useFetchClientIgws = (projectId, region, options = {}) =>
+export const useFetchClientIgws = (
+  projectId?: string,
+  region?: string,
+  options: Omit<UseQueryOptions<unknown[], Error>, "queryKey" | "queryFn"> = {}
+) =>
   useQuery({
     queryKey: ["clientIgws", { projectId, region }],
     queryFn: () => fetchClientIgws({ project_id: projectId, region }),
@@ -84,7 +113,7 @@ export const useCreateClientIgw = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createClientIgw,
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["clientIgws", { projectId: variables.project_id }],
       });
@@ -94,9 +123,6 @@ export const useCreateClientIgw = () => {
         });
       }
     },
-    onError: (error) => {
-      console.error("Error creating internet gateway:", error);
-    },
   });
 };
 
@@ -104,7 +130,7 @@ export const useDeleteClientIgw = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteClientIgw,
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["clientIgws", { projectId: variables.payload.project_id }],
       });
@@ -120,9 +146,6 @@ export const useDeleteClientIgw = () => {
         });
       }
     },
-    onError: (error) => {
-      console.error("Error deleting internet gateway:", error);
-    },
   });
 };
 
@@ -130,13 +153,10 @@ export const useAttachClientIgw = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: attachClientIgw,
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["clientIgws", { projectId: variables.project_id, region: variables.region }],
       });
-    },
-    onError: (error) => {
-      console.error("Error attaching internet gateway:", error);
     },
   });
 };
@@ -145,16 +165,13 @@ export const useDetachClientIgw = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: detachClientIgw,
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["clientIgws", { projectId: variables.project_id, region: variables.region }],
       });
     },
-    onError: (error) => {
-      console.error("Error detaching internet gateway:", error);
-    },
   });
 };
 
-export const syncClientIgwsFromProvider = async ({ project_id, region }) =>
+export const syncClientIgwsFromProvider = async ({ project_id, region }: IgwParams) =>
   fetchClientIgws({ project_id, region, refresh: true });

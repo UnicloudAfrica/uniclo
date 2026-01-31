@@ -1,8 +1,18 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, UseQueryOptions } from "@tanstack/react-query";
 import clientSilentApi from "../../index/client/silent";
 import clientApi from "../../index/client/api";
 
-const buildQueryString = (params = {}) => {
+interface RouteTableParams {
+  project_id?: string;
+  region?: string;
+  refresh?: boolean;
+}
+
+interface RouteTablePayload {
+  [key: string]: unknown;
+}
+
+const buildQueryString = (params: Record<string, string | undefined>) => {
   const search = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") {
@@ -16,14 +26,14 @@ const fetchClientRouteTables = async ({
   project_id,
   region,
   refresh = false,
-}) => {
+}: RouteTableParams) => {
   const queryString = buildQueryString({
     project_id,
     region,
     refresh: refresh ? "1" : undefined,
   });
 
-  const res = await clientSilentApi(
+  const res = await clientSilentApi<{ data: unknown[] }>(
     "GET",
     `/business/route-tables${queryString ? `?${queryString}` : ""}`
   );
@@ -33,16 +43,16 @@ const fetchClientRouteTables = async ({
   return res.data;
 };
 
-const createClientRouteTable = async (payload) => {
-  const res = await clientApi("POST", "/business/route-tables", payload);
+const createClientRouteTable = async (payload: RouteTablePayload) => {
+  const res = await clientApi<{ data: unknown }>("POST", "/business/route-tables", payload);
   if (!res) {
     throw new Error("Failed to create route table");
   }
   return res;
 };
 
-const createClientRouteTableAssociation = async (payload) => {
-  const res = await clientApi(
+const createClientRouteTableAssociation = async (payload: RouteTablePayload) => {
+  const res = await clientApi<{ data: unknown }>(
     "POST",
     "/business/route-table-associations",
     payload
@@ -53,23 +63,27 @@ const createClientRouteTableAssociation = async (payload) => {
   return res;
 };
 
-const createClientRoute = async (payload) => {
-  const res = await clientApi("POST", "/business/routes", payload);
+const createClientRoute = async (payload: RouteTablePayload) => {
+  const res = await clientApi<{ data: unknown }>("POST", "/business/routes", payload);
   if (!res) {
     throw new Error("Failed to create route");
   }
   return res;
 };
 
-const deleteClientRoute = async (payload) => {
-  const res = await clientApi("DELETE", "/business/routes", payload);
+const deleteClientRoute = async (payload: RouteTablePayload) => {
+  const res = await clientApi<{ data: unknown }>("DELETE", "/business/routes", payload);
   if (!res) {
     throw new Error("Failed to delete route");
   }
   return res;
 };
 
-export const useFetchClientRouteTables = (projectId, region, options = {}) =>
+export const useFetchClientRouteTables = (
+  projectId?: string,
+  region?: string,
+  options: Omit<UseQueryOptions<unknown[], Error>, "queryKey" | "queryFn"> = {}
+) =>
   useQuery({
     queryKey: ["clientRouteTables", { projectId, region }],
     queryFn: () => fetchClientRouteTables({ project_id: projectId, region }),
@@ -82,13 +96,13 @@ export const useCreateClientRouteTable = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createClientRouteTable,
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["clientRouteTables", { projectId: variables.project_id }],
       });
     },
-    onError: (error) => {
-      console.error("Error creating route table:", error);
+    onError: () => {
+      // Error handling
     },
   });
 };
@@ -97,13 +111,13 @@ export const useCreateClientRouteTableAssociation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createClientRouteTableAssociation,
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["clientRouteTables", { projectId: variables.project_id }],
       });
     },
-    onError: (error) => {
-      console.error("Error creating route table association:", error);
+    onError: () => {
+      // Error handling
     },
   });
 };
@@ -112,13 +126,13 @@ export const useCreateClientRoute = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createClientRoute,
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["clientRouteTables", { projectId: variables.project_id }],
       });
     },
-    onError: (error) => {
-      console.error("Error creating route:", error);
+    onError: () => {
+      // Error handling
     },
   });
 };
@@ -127,13 +141,13 @@ export const useDeleteClientRoute = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteClientRoute,
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["clientRouteTables", { projectId: variables.project_id }],
       });
     },
-    onError: (error) => {
-      console.error("Error deleting route:", error);
+    onError: () => {
+      // Error handling
     },
   });
 };
@@ -141,4 +155,7 @@ export const useDeleteClientRoute = () => {
 export const syncClientRouteTablesFromProvider = async ({
   project_id,
   region,
+}: {
+  project_id: string;
+  region: string;
 }) => fetchClientRouteTables({ project_id, region, refresh: true });

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import ClientActiveTab from "../components/clientActiveTab";
 import LaunchSideMenu from "./launchComps/LaunchSideMenu";

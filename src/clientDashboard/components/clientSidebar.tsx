@@ -1,7 +1,6 @@
-// @ts-nocheck
 import React from "react";
 import { useFetchClientProfile } from "../../hooks/clientHooks/resources";
-import { useFetchClientProjects } from "../../hooks/clientHooks/projectHooks";
+import { useFetchClientProjects, Project } from "../../hooks/clientHooks/projectHooks";
 import { DashboardSidebar } from "../../shared/components/sidebar";
 import { buildClientMenuItems } from "../../shared/config/sidebarMenus";
 
@@ -10,17 +9,11 @@ interface ClientSidebarProps {
   onCloseMobileMenu?: () => void;
 }
 
-interface Project {
-  id: string;
-  name: string;
-  [key: string]: any;
-}
-
 interface ClientProfile {
   email?: string;
   first_name?: string;
   last_name?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 const ClientSidebar: React.FC<ClientSidebarProps> = ({ isMobileMenuOpen, onCloseMobileMenu }) => {
@@ -28,9 +21,7 @@ const ClientSidebar: React.FC<ClientSidebarProps> = ({ isMobileMenuOpen, onClose
   const { data: projectsResponse } = useFetchClientProjects();
 
   // Extract projects array from response
-  const projects: Project[] = Array.isArray(projectsResponse)
-    ? projectsResponse
-    : (projectsResponse as any)?.data || [];
+  const projects: Project[] = projectsResponse?.data || [];
 
   const menuItems = React.useMemo(
     () => buildClientMenuItems(projects.length > 0),

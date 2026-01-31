@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Headbar from "./clientHeadbar";
@@ -6,14 +5,16 @@ import Sidebar from "./clientSidebar";
 import useClientTheme from "../../hooks/clientHooks/useClientTheme";
 import { useApplyBrandingTheme } from "../../hooks/useBrandingTheme";
 import useClientAuthStore from "../../stores/clientAuthStore";
+import { ClientTheme } from "../../types/branding";
+import { AuthState } from "../../types/auth";
 
 const ClientDashboardLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const isAuthenticated = useClientAuthStore((s) => s.isAuthenticated);
-  const hasHydrated = useClientAuthStore((s) => s.hasHydrated);
-  const { data: theme, isFetching } = useClientTheme({
+  const isAuthenticated = useClientAuthStore((s: AuthState) => s.isAuthenticated);
+  const hasHydrated = useClientAuthStore((s: AuthState) => s.hasHydrated);
+  const { data: theme } = useClientTheme({
     enabled: isAuthenticated && hasHydrated,
-  });
+  }) as { data: ClientTheme };
 
   useApplyBrandingTheme(theme?.branding, {
     fallbackLogo: theme?.businessLogoHref,

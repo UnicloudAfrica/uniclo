@@ -1,15 +1,26 @@
 // src/hooks/clientHooks/elasticIPHooks.js
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, UseQueryOptions } from "@tanstack/react-query";
 import clientSilentApi from "../../index/client/silent";
 import clientApi from "../../index/client/api";
 
-const fetchClientElasticIps = async ({ project_id, region }) => {
+interface ElasticIpParams {
+  project_id?: string;
+  region?: string;
+}
+
+interface ElasticIpPayload {
+  project_id?: string;
+  region?: string;
+  [key: string]: unknown;
+}
+
+const fetchClientElasticIps = async ({ project_id, region }: ElasticIpParams) => {
   const params = new URLSearchParams();
   if (project_id) params.append("project_id", project_id);
   if (region) params.append("region", region);
 
   const queryString = params.toString();
-  const res = await clientSilentApi(
+  const res = await clientSilentApi<{ data: unknown[] }>(
     "GET",
     `/business/elastic-ips${queryString ? `?${queryString}` : ""}`
   );
@@ -17,25 +28,31 @@ const fetchClientElasticIps = async ({ project_id, region }) => {
   return res.data;
 };
 
-const createClientElasticIp = async (elasticIpData) => {
-  const res = await clientApi("POST", "/business/elastic-ips", elasticIpData);
+const createClientElasticIp = async (elasticIpData: ElasticIpPayload) => {
+  const res = await clientApi<{ data: unknown }>("POST", "/business/elastic-ips", elasticIpData);
   if (!res.data) throw new Error("Failed to create elastic IP");
   return res.data;
 };
 
-const deleteClientElasticIp = async ({ id, payload }) => {
-  const res = await clientApi("DELETE", `/business/elastic-ips/${id}`, payload);
+const deleteClientElasticIp = async ({
+  id,
+  payload,
+}: {
+  id: string | number;
+  payload: ElasticIpPayload;
+}) => {
+  const res = await clientApi<{ data: unknown }>("DELETE", `/business/elastic-ips/${id}`, payload);
   if (!res.data) throw new Error(`Failed to delete elastic IP with ID ${id}`);
   return res.data;
 };
 
-const syncClientElasticIps = async ({ project_id, region }) => {
-  return fetchClientElasticIps({ project_id, region, refresh: true });
+const syncClientElasticIps = async ({ project_id, region }: ElasticIpParams) => {
+  return fetchClientElasticIps({ project_id, region });
 };
 
-const associateClientElasticIp = async (associationData) => {
+const associateClientElasticIp = async (associationData: ElasticIpPayload) => {
   // Shared endpoint: POST /business/elastic-ip-associations
-  const res = await clientApi(
+  const res = await clientApi<{ data: unknown }>(
     "POST",
     "/business/elastic-ip-associations",
     associationData
@@ -44,9 +61,9 @@ const associateClientElasticIp = async (associationData) => {
   return res.data;
 };
 
-const disassociateClientElasticIp = async (disassociationData) => {
+const disassociateClientElasticIp = async (disassociationData: ElasticIpPayload) => {
   // Shared endpoint: DELETE /business/elastic-ip-associations with body
-  const res = await clientApi(
+  const res = await clientApi<{ data: unknown }>(
     "DELETE",
     "/business/elastic-ip-associations",
     disassociationData
@@ -55,7 +72,11 @@ const disassociateClientElasticIp = async (disassociationData) => {
   return res.data;
 };
 
-export const useFetchClientElasticIps = (projectId, region, options = {}) => {
+export const useFetchClientElasticIps = (
+  projectId?: string,
+  region?: string,
+  options: Omit<UseQueryOptions<unknown[], Error>, "queryKey" | "queryFn"> = {}
+) => {
   return useQuery({
     queryKey: ["clientElasticIps", { projectId, region }],
     queryFn: () => fetchClientElasticIps({ project_id: projectId, region }),
@@ -69,7 +90,7 @@ export const useCreateClientElasticIp = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createClientElasticIp,
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["clientElasticIps"] });
       if (variables?.project_id) {
         queryClient.invalidateQueries({
@@ -83,9 +104,6 @@ export const useCreateClientElasticIp = () => {
         });
       }
     },
-    onError: (error) => {
-      console.error("Error creating elastic IP:", error);
-    },
   });
 };
 
@@ -93,12 +111,9 @@ export const useDeleteClientElasticIp = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteClientElasticIp,
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: [
-          "clientElasticIps",
-          { projectId: variables.payload.project_id },
-        ],
+        queryKey: ["clientElasticIps", { projectId: variables.payload.project_id }],
       });
       queryClient.invalidateQueries({
         queryKey: [
@@ -110,9 +125,6 @@ export const useDeleteClientElasticIp = () => {
         ],
       });
     },
-    onError: (error) => {
-      console.error("Error deleting elastic IP:", error);
-    },
   });
 };
 
@@ -122,9 +134,6 @@ export const useAssociateClientElasticIp = () => {
     mutationFn: associateClientElasticIp,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clientElasticIps"] });
-    },
-    onError: (error) => {
-      console.error("Error associating elastic IP:", error);
     },
   });
 };
@@ -136,13 +145,8 @@ export const useDisassociateClientElasticIp = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clientElasticIps"] });
     },
-    onError: (error) => {
-      console.error("Error disassociating elastic IP:", error);
-    },
   });
 };
 
-export const syncClientElasticIpsFromProvider = async ({
-  project_id,
-  region,
-}) => syncClientElasticIps({ project_id, region });
+export const syncClientElasticIpsFromProvider = async ({ project_id, region }: ElasticIpParams) =>
+  syncClientElasticIps({ project_id, region });

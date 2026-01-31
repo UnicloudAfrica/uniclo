@@ -1,13 +1,12 @@
-// @ts-nocheck
 import React from "react";
-// @ts-ignore
 import DashboardPageShell from "../../shared/layouts/DashboardPageShell";
+import { ComponentProps } from "react";
 
-interface ClientPageShellProps {
-  [key: string]: any;
-}
+type DashboardPageShellProps = ComponentProps<typeof DashboardPageShell>;
 
-const ClientPageShell: React.FC<ClientPageShellProps> = (props: any) => (
+type ClientPageShellProps = DashboardPageShellProps;
+
+const ClientPageShell: React.FC<ClientPageShellProps> = (props) => (
   <DashboardPageShell
     homeHref="/client-dashboard"
     mainClassName="client-dashboard-shell"

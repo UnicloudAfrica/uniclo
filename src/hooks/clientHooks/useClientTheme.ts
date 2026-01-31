@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import useClientAuthStore from "../../stores/clientAuthStore";
+import { AuthState } from "../../types/auth";
 import {
   getTenantId,
   resolveBrandLogo,
@@ -7,13 +8,14 @@ import {
   useClientBrandingTheme,
   usePlatformBrandingTheme,
 } from "../useBrandingTheme";
+import { BrandingTheme, ClientTheme } from "../../types/branding";
 
 const FALLBACK_LOGO = "https://dummyimage.com/150x50/e5e7eb/6b7280.png&text=Client+Logo";
 
-const mapBrandingToClientTheme = (branding) => {
+const mapBrandingToClientTheme = (branding: BrandingTheme | null): ClientTheme => {
   return {
-    businessLogoHref: resolveBrandLogo(branding, FALLBACK_LOGO),
-    businessLogoLink: branding?.logoHref ?? null,
+    businessLogoHref: resolveBrandLogo(branding, FALLBACK_LOGO) || FALLBACK_LOGO,
+    businessLogoLink: branding?.logoHref ?? undefined,
     themeColor: branding?.accentColor ?? "#288DD1",
     secondaryColor: branding?.primaryColor ?? "#3FE0C8",
     palette: branding?.palette ?? {},
@@ -22,8 +24,15 @@ const mapBrandingToClientTheme = (branding) => {
   };
 };
 
-const useClientTheme = (options = {}) => {
-  const tenant = useClientAuthStore((state) => state?.tenant);
+interface UseClientThemeOptions {
+  enabled?: boolean;
+  tenantId?: string | number | null;
+  domain?: string;
+  subdomain?: string;
+}
+
+const useClientTheme = (options: UseClientThemeOptions = {}) => {
+  const tenant = useClientAuthStore((state: AuthState) => state.tenant);
   const tenantId = getTenantId(tenant);
   const { enabled = true, ...restOptions } = options;
   const tenantQuery = useClientBrandingTheme({

@@ -1,20 +1,38 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, UseQueryOptions } from "@tanstack/react-query";
 
-import clientSilentApi from "../../index/client/silent";
 import clientApi from "../../index/client/api";
+import clientSilentApi from "../../index/client/silent";
+
+export interface Project {
+  id: string | number;
+  name: string;
+  uuid?: string;
+  status?: string;
+  [key: string]: unknown;
+}
+
+export interface ProjectsResponse {
+  data: Project[];
+  meta?: unknown;
+  links?: unknown;
+}
+
+interface ProjectData {
+  [key: string]: unknown;
+}
 
 // GET: Fetch all projects (supports pagination/filtering)
-const fetchClientProjects = async (params = {}) => {
+const fetchClientProjects = async (params: Record<string, unknown> = {}) => {
   const queryParams = { ...params };
 
   const queryString = Object.keys(queryParams)
     .filter((key) => queryParams[key] !== undefined && queryParams[key] !== null)
-    .map((key) => `${key}=${encodeURIComponent(queryParams[key])}`)
+    .map((key) => `${key}=${encodeURIComponent(String(queryParams[key]))}`)
     .join("&");
 
   const uri = `/business/projects${queryString ? `?${queryString}` : ""}`;
 
-  const res = await clientSilentApi("GET", uri);
+  const res = await clientSilentApi<ProjectsResponse>("GET", uri);
   if (!res.data) {
     throw new Error("Failed to fetch projects");
   }
@@ -22,15 +40,15 @@ const fetchClientProjects = async (params = {}) => {
 };
 
 // GET: Fetch project by ID
-const fetchClientProjectById = async (id) => {
-  const res = await clientSilentApi("GET", `/business/projects/${id}`);
+const fetchClientProjectById = async (id: string | number) => {
+  const res = await clientSilentApi<{ data: Project }>("GET", `/business/projects/${id}`);
   if (!res.data) {
     throw new Error(`Failed to fetch project with ID ${id}`);
   }
   return res.data;
 };
 
-const fetchClientProjectMembershipSuggestions = async (params = {}) => {
+const fetchClientProjectMembershipSuggestions = async (params: Record<string, string> = {}) => {
   const query = new URLSearchParams();
   if (params.scope) {
     query.append("scope", params.scope);
@@ -46,7 +64,7 @@ const fetchClientProjectMembershipSuggestions = async (params = {}) => {
     query.toString() ? `?${query.toString()}` : ""
   }`;
 
-  const res = await clientSilentApi("GET", uri);
+  const res = await clientSilentApi<{ data: unknown[] }>("GET", uri);
   if (!res?.data) {
     throw new Error("Failed to fetch project membership suggestions");
   }
@@ -54,9 +72,17 @@ const fetchClientProjectMembershipSuggestions = async (params = {}) => {
 };
 
 // GET: Fetch project status (provisioning + infrastructure checklist)
-const fetchClientProjectStatus = async (id) => {
-  const encodedId = encodeURIComponent(id);
-  const res = await clientSilentApi("GET", `/business/projects/${encodedId}/status`);
+const fetchClientProjectStatus = async (id: string | number) => {
+  const encodedId = encodeURIComponent(String(id));
+  interface StatusResponse {
+    data?: unknown;
+    project?: unknown;
+    [key: string]: unknown;
+  }
+  const res = await clientSilentApi<StatusResponse>(
+    "GET",
+    `/business/projects/${encodedId}/status`
+  );
   if (!res?.project && !res?.data) {
     throw new Error(`Failed to fetch project status for ${id}`);
   }
@@ -64,9 +90,12 @@ const fetchClientProjectStatus = async (id) => {
 };
 
 // GET: Fetch project network status
-const fetchClientProjectNetworkStatus = async (id) => {
-  const encodedId = encodeURIComponent(id);
-  const res = await clientSilentApi("GET", `/business/projects/${encodedId}/network/status`);
+const fetchClientProjectNetworkStatus = async (id: string | number) => {
+  const encodedId = encodeURIComponent(String(id));
+  const res = await clientSilentApi<{ data?: unknown }>(
+    "GET",
+    `/business/projects/${encodedId}/network/status`
+  );
   if (!res) {
     throw new Error(`Failed to fetch network status for ${id}`);
   }
@@ -74,8 +103,8 @@ const fetchClientProjectNetworkStatus = async (id) => {
 };
 
 // POST: Create a new project
-const createClientProject = async (projectData) => {
-  const res = await clientApi("POST", "/business/projects", projectData);
+const createClientProject = async (projectData: ProjectData) => {
+  const res = await clientApi<{ data: Project }>("POST", "/business/projects", projectData);
   if (!res.data) {
     throw new Error("Failed to create project");
   }
@@ -83,9 +112,12 @@ const createClientProject = async (projectData) => {
 };
 
 // POST: Enable internet access for project
-const enableClientInternetAccess = async (id) => {
-  const encodedId = encodeURIComponent(id);
-  const res = await clientApi("POST", `/business/projects/${encodedId}/network/enable-internet`);
+const enableClientInternetAccess = async (id: string | number) => {
+  const encodedId = encodeURIComponent(String(id));
+  const res = await clientApi<{ data?: unknown }>(
+    "POST",
+    `/business/projects/${encodedId}/network/enable-internet`
+  );
   if (!res) {
     throw new Error(`Failed to enable internet access for project ${id}`);
   }
@@ -93,8 +125,14 @@ const enableClientInternetAccess = async (id) => {
 };
 
 // PATCH: Update a project
-const updateClientProject = async ({ id, projectData }) => {
-  const res = await clientApi("PATCH", `/business/projects/${id}`, projectData);
+const updateClientProject = async ({
+  id,
+  projectData,
+}: {
+  id: string | number;
+  projectData: ProjectData;
+}) => {
+  const res = await clientApi<{ data: Project }>("PATCH", `/business/projects/${id}`, projectData);
   if (!res.data) {
     throw new Error(`Failed to update project with ID ${id}`);
   }
@@ -102,8 +140,8 @@ const updateClientProject = async ({ id, projectData }) => {
 };
 
 // DELETE: Delete a project
-const deleteClientProject = async (id) => {
-  const res = await clientApi("DELETE", `/business/projects/${id}`);
+const deleteClientProject = async (id: string | number) => {
+  const res = await clientApi<{ data: unknown }>("DELETE", `/business/projects/${id}`);
   if (!res.data) {
     throw new Error(`Failed to delete project with ID ${id}`);
   }
@@ -111,7 +149,10 @@ const deleteClientProject = async (id) => {
 };
 
 // Hook to fetch all projects
-export const useFetchClientProjects = (params = {}, options = {}) => {
+export const useFetchClientProjects = (
+  params: Record<string, unknown> = {},
+  options: Omit<UseQueryOptions<ProjectsResponse, Error>, "queryKey" | "queryFn"> = {}
+) => {
   return useQuery({
     queryKey: ["clientProjects", params],
     queryFn: () => fetchClientProjects(params),
@@ -122,7 +163,10 @@ export const useFetchClientProjects = (params = {}, options = {}) => {
 };
 
 // Hook to fetch project by ID
-export const useFetchClientProjectById = (id, options = {}) => {
+export const useFetchClientProjectById = (
+  id: string | number,
+  options: Omit<UseQueryOptions<Project, Error>, "queryKey" | "queryFn"> = {}
+) => {
   return useQuery({
     queryKey: ["clientProject", id],
     queryFn: () => fetchClientProjectById(id),
@@ -133,28 +177,36 @@ export const useFetchClientProjectById = (id, options = {}) => {
   });
 };
 
-export const useClientProjectMembershipSuggestions = (params = {}, options = {}) => {
-  const enabled = options.enabled ?? true;
+export const useClientProjectMembershipSuggestions = (
+  params: Record<string, string> = {},
+  options: Omit<UseQueryOptions<unknown[], Error>, "queryKey" | "queryFn"> = {}
+) => {
+  const { enabled, ...rest } = options;
+  const isEnabled = enabled ?? true;
   return useQuery({
     queryKey: ["client-project-memberships", params],
     queryFn: () => fetchClientProjectMembershipSuggestions(params),
-    enabled,
+    enabled: isEnabled,
     staleTime: 0,
     refetchOnWindowFocus: false,
-    ...options,
+    ...rest,
   });
 };
 
 // Hook to fetch project status details
-export const useClientProjectStatus = (id, options = {}) => {
+export const useClientProjectStatus = (
+  id: string | number,
+  options: Omit<UseQueryOptions<unknown, Error>, "queryKey" | "queryFn"> = {}
+) => {
   return useQuery({
     queryKey: ["clientProjectStatus", id],
     queryFn: () => fetchClientProjectStatus(id),
     enabled: !!id,
     staleTime: 1000 * 60 * 2,
     refetchOnWindowFocus: false,
-    retry: (failureCount, error) => {
-      if (error?.message?.includes?.("404") || error?.message?.includes?.("403")) {
+    retry: (failureCount: number, error: unknown) => {
+      const err = error as { message?: string };
+      if (err?.message?.includes?.("404") || err?.message?.includes?.("403")) {
         return false;
       }
       return failureCount < 3;
@@ -164,7 +216,10 @@ export const useClientProjectStatus = (id, options = {}) => {
 };
 
 // Hook to fetch project network status
-export const useClientProjectNetworkStatus = (id, options = {}) => {
+export const useClientProjectNetworkStatus = (
+  id: string | number,
+  options: Omit<UseQueryOptions<unknown, Error>, "queryKey" | "queryFn"> = {}
+) => {
   return useQuery({
     queryKey: ["client-project-network-status", id],
     queryFn: () => fetchClientProjectNetworkStatus(id),
@@ -184,8 +239,8 @@ export const useCreateClientProject = () => {
       // Invalidate projects query to refresh the list
       queryClient.invalidateQueries({ queryKey: ["clientProjects"] });
     },
-    onError: (error) => {
-      console.error("Error creating project:", error);
+    onError: () => {
+      // Error handling
     },
   });
 };
@@ -194,14 +249,14 @@ export const useCreateClientProject = () => {
 export const useClientEnableInternetAccess = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: enableClientInternetAccess,
-    onSuccess: (data, projectId) => {
+    mutationFn: (id: string | number) => enableClientInternetAccess(id),
+    onSuccess: (_data, projectId) => {
       queryClient.invalidateQueries({ queryKey: ["client-project-network-status", projectId] });
       queryClient.invalidateQueries({ queryKey: ["clientProject", projectId] });
       queryClient.invalidateQueries({ queryKey: ["clientProjectStatus", projectId] });
     },
-    onError: (error) => {
-      console.error("Error enabling internet access:", error);
+    onError: () => {
+      // Error handling
     },
   });
 };
@@ -211,15 +266,15 @@ export const useUpdateClientProject = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateClientProject,
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       // Invalidate both projects list and specific project query
       queryClient.invalidateQueries({ queryKey: ["clientProjects"] });
       queryClient.invalidateQueries({
         queryKey: ["clientProject", variables.id],
       });
     },
-    onError: (error) => {
-      console.error("Error updating project:", error);
+    onError: () => {
+      // Error handling
     },
   });
 };
@@ -233,16 +288,24 @@ export const useDeleteClientProject = () => {
       // Invalidate projects query to refresh the list
       queryClient.invalidateQueries({ queryKey: ["clientProjects"] });
     },
-    onError: (error) => {
-      console.error("Error deleting project:", error);
+    onError: () => {
+      // Error handling
     },
   });
 };
 
 // POST: Setup infrastructure
-const setupInfrastructure = async ({ id, blueprint }) => {
-  const encodedId = encodeURIComponent(id);
-  const res = await clientApi("POST", `/business/projects/${encodedId}/setup`, { blueprint });
+const setupInfrastructure = async ({
+  id,
+  blueprint,
+}: {
+  id: string | number;
+  blueprint: unknown;
+}) => {
+  const encodedId = encodeURIComponent(String(id));
+  const res = await clientApi<{ data: unknown }>("POST", `/business/projects/${encodedId}/setup`, {
+    blueprint,
+  });
   if (!res.data) {
     throw new Error(`Failed to setup infrastructure for project ${id}`);
   }
@@ -254,13 +317,13 @@ export const useSetupInfrastructure = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: setupInfrastructure,
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["clientProject", variables.id] });
       queryClient.invalidateQueries({ queryKey: ["clientProjectStatus", variables.id] });
       queryClient.invalidateQueries({ queryKey: ["clientProjects"] });
     },
-    onError: (error) => {
-      console.error("Error setting up infrastructure:", error);
+    onError: () => {
+      // Error handling
     },
   });
 };

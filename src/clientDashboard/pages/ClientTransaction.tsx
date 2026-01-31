@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import { Settings2 } from "lucide-react";
 import ClientActiveTab from "../components/clientActiveTab";

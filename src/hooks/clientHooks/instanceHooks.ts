@@ -1,11 +1,22 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, UseQueryOptions } from "@tanstack/react-query";
 import clientSilentApi from "../../index/client/silent";
 import clientApi from "../../index/client/api";
 
+interface InstanceParams {
+  [key: string]: string | number | boolean | undefined | null;
+  per_page?: number;
+}
+
+interface InstanceData {
+  id: number | string;
+  status: string;
+  [key: string]: unknown;
+}
+
 // GET: Fetch all client instances
-const fetchClientInstances = async (params = {}) => {
+const fetchClientInstances = async (params: InstanceParams = {}) => {
   // Define default parameters
-  const defaultParams = {
+  const defaultParams: InstanceParams = {
     per_page: 10, // Default to 10 items per page
   };
 
@@ -14,16 +25,14 @@ const fetchClientInstances = async (params = {}) => {
 
   // Build query string from parameters
   const queryString = Object.keys(queryParams)
-    .filter(
-      (key) => queryParams[key] !== undefined && queryParams[key] !== null
-    )
-    .map((key) => `${key}=${encodeURIComponent(queryParams[key])}`)
+    .filter((key) => queryParams[key] !== undefined && queryParams[key] !== null)
+    .map((key) => `${key}=${encodeURIComponent(String(queryParams[key]))}`)
     .join("&");
 
   // Construct the URI with the query string
   const uri = `/business/instances${queryString ? `?${queryString}` : ""}`;
 
-  const res = await clientSilentApi("GET", uri);
+  const res = await clientSilentApi<{ data: InstanceData[] }>("GET", uri);
   if (!res.data) {
     throw new Error("Failed to fetch instance requests");
   }
@@ -31,9 +40,9 @@ const fetchClientInstances = async (params = {}) => {
 };
 
 // GET: Fetch all instance requests
-const fetchClientPurchasedInstances = async (params = {}) => {
+const fetchClientPurchasedInstances = async (params: InstanceParams = {}) => {
   // Define default parameters
-  const defaultParams = {
+  const defaultParams: InstanceParams = {
     per_page: 10, // Default to 10 items per page
   };
 
@@ -42,16 +51,14 @@ const fetchClientPurchasedInstances = async (params = {}) => {
 
   // Build query string from parameters
   const queryString = Object.keys(queryParams)
-    .filter(
-      (key) => queryParams[key] !== undefined && queryParams[key] !== null
-    )
-    .map((key) => `${key}=${encodeURIComponent(queryParams[key])}`)
+    .filter((key) => queryParams[key] !== undefined && queryParams[key] !== null)
+    .map((key) => `${key}=${encodeURIComponent(String(queryParams[key]))}`)
     .join("&");
 
   // Construct the URI with the query string
   const uri = `/business/instances${queryString ? `?${queryString}` : ""}`;
 
-  const res = await clientSilentApi("GET", uri);
+  const res = await clientSilentApi<{ data: InstanceData[] }>("GET", uri);
   if (!res.data) {
     throw new Error("Failed to fetch instance requests");
   }
@@ -64,8 +71,8 @@ const fetchClientPurchasedInstances = async (params = {}) => {
 };
 
 // GET: Fetch client instance by ID
-const fetchClientInstanceById = async (id) => {
-  const res = await clientSilentApi("GET", `/business/instances/${id}`);
+const fetchClientInstanceById = async (id: string | number) => {
+  const res = await clientSilentApi<{ data: InstanceData }>("GET", `/business/instances/${id}`);
   if (!res.data) {
     throw new Error(`Failed to fetch instance request with ID ${id}`);
   }
@@ -73,8 +80,8 @@ const fetchClientInstanceById = async (id) => {
 };
 
 // POST: multi initiate request
-const initiateMultiClientInstanceRequest = async (instanceData) => {
-  const res = await clientApi(
+const initiateMultiClientInstanceRequest = async (instanceData: Record<string, unknown>) => {
+  const res = await clientApi<{ data: unknown }>(
     "POST",
     "/business/multi-initiations",
     instanceData
@@ -86,8 +93,14 @@ const initiateMultiClientInstanceRequest = async (instanceData) => {
 };
 
 // PATCH: Update an instance request
-const updateClientInstance = async ({ id, instanceData }) => {
-  const res = await clientApi(
+const updateClientInstance = async ({
+  id,
+  instanceData,
+}: {
+  id: string | number;
+  instanceData: Record<string, unknown>;
+}) => {
+  const res = await clientApi<{ data: unknown }>(
     "PATCH",
     `/business/instances/${id}`,
     instanceData
@@ -99,7 +112,10 @@ const updateClientInstance = async ({ id, instanceData }) => {
 };
 
 // Hook to fetch all instance requests
-export const useFetchClientInstances = (params = {}, options = {}) => {
+export const useFetchClientInstances = (
+  params: InstanceParams = {},
+  options: Omit<UseQueryOptions<unknown, Error>, "queryKey" | "queryFn"> = {}
+) => {
   return useQuery({
     // Update queryKey to include params, so different params result in different cached data
     queryKey: ["clientInstances", params],
@@ -112,7 +128,10 @@ export const useFetchClientInstances = (params = {}, options = {}) => {
 };
 
 // Hook to fetch all purchased instance
-export const useFetchClientPurchasedInstances = (params = {}, options = {}) => {
+export const useFetchClientPurchasedInstances = (
+  params: InstanceParams = {},
+  options: Omit<UseQueryOptions<unknown, Error>, "queryKey" | "queryFn"> = {}
+) => {
   return useQuery({
     // Update queryKey to include params, so different params result in different cached data
     queryKey: ["clientInstances", "purchased", params],
@@ -125,7 +144,10 @@ export const useFetchClientPurchasedInstances = (params = {}, options = {}) => {
 };
 
 // Hook to fetch instance request by ID
-export const useFetchClientInstanceById = (id, options = {}) => {
+export const useFetchClientInstanceById = (
+  id: string | number,
+  options: Omit<UseQueryOptions<InstanceData, Error>, "queryKey" | "queryFn"> = {}
+) => {
   return useQuery({
     queryKey: ["clientInstance", id],
     queryFn: () => fetchClientInstanceById(id),
@@ -143,8 +165,8 @@ export const useInitiateMultiClientInstanceRequest = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clientInstances"] });
     },
-    onError: (error) => {
-      console.error("Error creating instance request:", error);
+    onError: () => {
+      // Error handling
     },
   });
 };
@@ -154,15 +176,15 @@ export const useUpdateClientInstance = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateClientInstance,
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       // Invalidate both instanceRequests list and specific instance request query
       queryClient.invalidateQueries({ queryKey: ["clientInstances"] });
       queryClient.invalidateQueries({
         queryKey: ["clientInstance", variables.id],
       });
     },
-    onError: (error) => {
-      console.error("Error updating instance request:", error);
+    onError: () => {
+      // Error handling
     },
   });
 };

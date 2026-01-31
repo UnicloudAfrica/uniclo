@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import ClientActiveTab from "../components/clientActiveTab";
@@ -6,8 +5,15 @@ import ClientPageShell from "../components/ClientPageShell";
 import { SupportThreadsPanel } from "../../shared/components/support";
 import clientApi from "../../index/client/api";
 import clientSilentApi from "../../index/client/silent";
+import type { Thread } from "../../shared/components/support/threadTypes";
 
-const buildQuery = (filters = {}) => {
+interface SupportFilters {
+  status?: string;
+  search?: string;
+  page?: number;
+}
+
+const buildQuery = (filters: SupportFilters = {}) => {
   const params = new URLSearchParams();
   if (filters.status) params.set("status", filters.status);
   if (filters.search) params.set("search", filters.search);
@@ -20,16 +26,19 @@ const buildQuery = (filters = {}) => {
 const ClientSupport: React.FC = () => {
   const navigate = useNavigate();
 
-  const fetchThreads = (filters) =>
+  const fetchThreads = (filters: SupportFilters) =>
     clientSilentApi("GET", `/business/support${buildQuery(filters)}`);
 
-  const fetchThread = (id) => clientSilentApi("GET", `/business/support/${id}`);
+  const fetchThread = (id: string | number) => clientSilentApi("GET", `/business/support/${id}`);
 
-  const createThread = (payload) => clientApi("POST", "/business/support", payload);
+  const createThread = (payload: Record<string, unknown>) =>
+    clientApi("POST", "/business/support", payload);
 
-  const replyThread = (id, payload) => clientApi("POST", `/business/support/${id}/reply`, payload);
+  const replyThread = (id: string | number, payload: Record<string, unknown>) =>
+    clientApi("POST", `/business/support/${id}/reply`, payload);
 
-  const resolveThread = (id) => clientApi("PUT", `/business/support/${id}`, { status: "resolved" });
+  const resolveThread = (id: string | number) =>
+    clientApi("PUT", `/business/support/${id}`, { status: "resolved" });
 
   return (
     <>
@@ -51,7 +60,9 @@ const ClientSupport: React.FC = () => {
           showUser
           showEscalation
           emptyMessage="No support tickets yet."
-          onView={(thread) => navigate(`/client-dashboard/support/${thread.uuid || thread.id}`)}
+          onView={(thread: Thread) =>
+            navigate(`/client-dashboard/support/${thread.uuid || thread.id}`)
+          }
         />
       </ClientPageShell>
     </>

@@ -1,8 +1,13 @@
-// @ts-nocheck
 // src/components/VerifyAccountPromptModal.jsx
+import React from "react";
 import { X } from "lucide-react";
 
-const VerifyAccountPromptModal = ({ isOpen, onClose }: any) => {
+interface VerifyAccountPromptModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const VerifyAccountPromptModal: React.FC<VerifyAccountPromptModalProps> = ({ isOpen, onClose }) => {
   const isActivated = false;
 
   if (!isOpen || isActivated) return null;

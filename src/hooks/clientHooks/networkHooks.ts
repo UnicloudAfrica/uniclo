@@ -1,25 +1,33 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, UseQueryOptions } from "@tanstack/react-query";
 import clientSilentApi from "../../index/client/silent";
 import clientApi from "../../index/client/api";
 
-const buildQueryString = (params) => {
+type QueryParams = Record<string, string | boolean | number | undefined | null>;
+
+const buildQueryString = (params: QueryParams) => {
   const search = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") {
-      search.append(key, value);
+      search.append(key, String(value));
     }
   });
   return search.toString();
 };
 
-const fetchClientNetworks = async ({ project_id, region, refresh = false }) => {
+interface FetchNetworkParams {
+  project_id?: string;
+  region?: string;
+  refresh?: boolean;
+}
+
+const fetchClientNetworks = async ({ project_id, region, refresh = false }: FetchNetworkParams) => {
   const queryString = buildQueryString({
     project_id,
     region,
     refresh: refresh ? "1" : undefined,
   });
 
-  const res = await clientSilentApi(
+  const res = await clientSilentApi<{ data: unknown[] }>(
     "GET",
     `/business/networks${queryString ? `?${queryString}` : ""}`
   );
@@ -35,14 +43,14 @@ const fetchClientNetworkInterfaces = async ({
   project_id,
   region,
   refresh = false,
-}) => {
+}: FetchNetworkParams) => {
   const queryString = buildQueryString({
     project_id,
     region,
     refresh: refresh ? "1" : undefined,
   });
 
-  const res = await clientSilentApi(
+  const res = await clientSilentApi<{ data: unknown[] }>(
     "GET",
     `/business/network-interfaces${queryString ? `?${queryString}` : ""}`
   );
@@ -54,7 +62,7 @@ const fetchClientNetworkInterfaces = async ({
   return res.data;
 };
 
-const createClientNetworkInterface = async (payload) => {
+const createClientNetworkInterface = async (payload: Record<string, unknown>) => {
   const res = await clientApi("POST", "/business/network-interfaces", payload);
   if (!res) {
     throw new Error("Failed to create network interface");
@@ -62,31 +70,27 @@ const createClientNetworkInterface = async (payload) => {
   return res;
 };
 
-const attachClientNetworkInterfaceSecurityGroup = async (payload) => {
-  const res = await clientApi(
-    "POST",
-    "/business/network-interface-security-groups",
-    payload
-  );
+const attachClientNetworkInterfaceSecurityGroup = async (payload: Record<string, unknown>) => {
+  const res = await clientApi("POST", "/business/network-interface-security-groups", payload);
   if (!res) {
     throw new Error("Failed to attach security group");
   }
   return res;
 };
 
-const detachClientNetworkInterfaceSecurityGroup = async (payload) => {
-  const res = await clientApi(
-    "DELETE",
-    "/business/network-interface-security-groups",
-    payload
-  );
+const detachClientNetworkInterfaceSecurityGroup = async (payload: Record<string, unknown>) => {
+  const res = await clientApi("DELETE", "/business/network-interface-security-groups", payload);
   if (!res) {
     throw new Error("Failed to detach security group");
   }
   return res;
 };
 
-export const useFetchClientNetworks = (projectId, region, options = {}) => {
+export const useFetchClientNetworks = (
+  projectId?: string,
+  region?: string,
+  options: Omit<UseQueryOptions<unknown[], Error>, "queryKey" | "queryFn"> = {}
+) => {
   return useQuery({
     queryKey: ["clientNetworks", { projectId, region }],
     queryFn: () => fetchClientNetworks({ project_id: projectId, region }),
@@ -98,14 +102,13 @@ export const useFetchClientNetworks = (projectId, region, options = {}) => {
 };
 
 export const useFetchClientNetworkInterfaces = (
-  projectId,
-  region,
-  options = {}
+  projectId?: string,
+  region?: string,
+  options: Omit<UseQueryOptions<unknown[], Error>, "queryKey" | "queryFn"> = {}
 ) => {
   return useQuery({
     queryKey: ["clientNetworkInterfaces", { projectId, region }],
-    queryFn: () =>
-      fetchClientNetworkInterfaces({ project_id: projectId, region }),
+    queryFn: () => fetchClientNetworkInterfaces({ project_id: projectId, region }),
     enabled: Boolean(projectId && region),
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
@@ -117,7 +120,7 @@ export const useCreateClientNetworkInterface = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createClientNetworkInterface,
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: [
           "clientNetworkInterfaces",
@@ -125,8 +128,8 @@ export const useCreateClientNetworkInterface = () => {
         ],
       });
     },
-    onError: (error) => {
-      console.error("Error creating network interface:", error);
+    onError: () => {
+      // Error handling
     },
   });
 };
@@ -135,7 +138,7 @@ export const useAttachClientNetworkInterfaceSecurityGroup = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: attachClientNetworkInterfaceSecurityGroup,
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: [
           "clientNetworkInterfaces",
@@ -143,8 +146,8 @@ export const useAttachClientNetworkInterfaceSecurityGroup = () => {
         ],
       });
     },
-    onError: (error) => {
-      console.error("Error attaching security group:", error);
+    onError: () => {
+      // Error handling
     },
   });
 };
@@ -153,7 +156,7 @@ export const useDetachClientNetworkInterfaceSecurityGroup = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: detachClientNetworkInterfaceSecurityGroup,
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: [
           "clientNetworkInterfaces",
@@ -161,8 +164,8 @@ export const useDetachClientNetworkInterfaceSecurityGroup = () => {
         ],
       });
     },
-    onError: (error) => {
-      console.error("Error detaching security group:", error);
+    onError: () => {
+      // Error handling
     },
   });
 };
@@ -170,9 +173,15 @@ export const useDetachClientNetworkInterfaceSecurityGroup = () => {
 export const syncClientNetworksFromProvider = async ({
   project_id,
   region,
+}: {
+  project_id: string;
+  region: string;
 }) => fetchClientNetworks({ project_id, region, refresh: true });
 
 export const syncClientNetworkInterfacesFromProvider = async ({
   project_id,
   region,
+}: {
+  project_id: string;
+  region: string;
 }) => fetchClientNetworkInterfaces({ project_id, region, refresh: true });

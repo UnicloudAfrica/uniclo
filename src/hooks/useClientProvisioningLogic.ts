@@ -109,8 +109,7 @@ export const useClientProvisioningLogic = () => {
           `/product-pricing?${params.toString()}`
         )) as any;
         setPricingData(response?.data || response || []);
-      } catch (error) {
-        console.error("Failed to fetch pricing:", error);
+      } catch {
         setPricingData([]);
       } finally {
         setIsPricingLoading(false);

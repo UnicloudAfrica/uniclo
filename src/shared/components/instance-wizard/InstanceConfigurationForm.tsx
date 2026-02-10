@@ -420,17 +420,17 @@ const InstanceConfigurationForm: React.FC<Props> = ({
   const templateComputeLabel = useMemo(() => {
     if (!isTemplateLocked || !cfg.compute_instance_id) return "";
     return resolveOptionLabel(cfg.compute_instance_id, computeOptions);
-  }, [cfg.compute_instance_id, computeOptions, isTemplateLocked]);
+  }, [cfg.compute_instance_id, computeOptions, isTemplateLocked, resolveOptionLabel]);
 
   const templateImageLabel = useMemo(() => {
     if (!isTemplateLocked || !cfg.os_image_id) return "";
     return resolveOptionLabel(cfg.os_image_id, osImageOptions);
-  }, [cfg.os_image_id, osImageOptions, isTemplateLocked]);
+  }, [cfg.os_image_id, isTemplateLocked, osImageOptions, resolveOptionLabel]);
 
   const templateVolumeLabel = useMemo(() => {
     if (!isTemplateLocked || !cfg.volume_type_id) return "";
     return resolveOptionLabel(cfg.volume_type_id, volumeTypeOptions);
-  }, [cfg.volume_type_id, volumeTypeOptions, isTemplateLocked]);
+  }, [cfg.volume_type_id, isTemplateLocked, resolveOptionLabel, volumeTypeOptions]);
 
   const templateVolumeSize = useMemo(() => {
     if (!isTemplateLocked || !cfg.storage_size_gb) return "";
@@ -612,54 +612,57 @@ const InstanceConfigurationForm: React.FC<Props> = ({
 
   const focusKey = useCallback((field: string) => `${cfg.id}-${field}`, [cfg.id]);
 
-  const preserveInputState = useCallback((action: () => void) => {
-    if (typeof window === "undefined") {
+  const preserveInputState = useCallback(
+    (action: () => void) => {
+      if (typeof window === "undefined") {
+        action();
+        return;
+      }
+      const active = document.activeElement as
+        | HTMLInputElement
+        | HTMLTextAreaElement
+        | HTMLSelectElement
+        | null;
+      const activeKey = active?.getAttribute("data-focus-key") || "";
+      const selectionStart = active && "selectionStart" in active ? active.selectionStart : null;
+      const selectionEnd = active && "selectionEnd" in active ? active.selectionEnd : null;
+      const scrollContainer = getScrollContainer(active);
+      const currentScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+      const currentY = globalThis.window.scrollY;
       action();
-      return;
-    }
-    const active = document.activeElement as
-      | HTMLInputElement
-      | HTMLTextAreaElement
-      | HTMLSelectElement
-      | null;
-    const activeKey = active?.getAttribute("data-focus-key") || "";
-    const selectionStart = active && "selectionStart" in active ? active.selectionStart : null;
-    const selectionEnd = active && "selectionEnd" in active ? active.selectionEnd : null;
-    const scrollContainer = getScrollContainer(active);
-    const currentScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
-    const currentY = globalThis.window.scrollY;
-    action();
-    requestAnimationFrame(() => {
-      if (scrollContainer && scrollContainer.scrollTop !== currentScrollTop) {
-        scrollContainer.scrollTop = currentScrollTop;
-      }
-      if (globalThis.window.scrollY !== currentY) {
-        globalThis.window.scrollTo({ top: currentY });
-      }
-      if (activeKey) {
-        const selector = `[data-focus-key="${activeKey}"]`;
-        const next = document.querySelector(selector) as
-          | HTMLInputElement
-          | HTMLTextAreaElement
-          | HTMLSelectElement
-          | null;
-        if (next && typeof next.focus === "function") {
-          try {
-            next.focus({ preventScroll: true });
-          } catch {
-            next.focus();
-          }
-          if (
-            selectionStart !== null &&
-            selectionEnd !== null &&
-            typeof next.setSelectionRange === "function"
-          ) {
-            next.setSelectionRange(selectionStart, selectionEnd);
+      requestAnimationFrame(() => {
+        if (scrollContainer && scrollContainer.scrollTop !== currentScrollTop) {
+          scrollContainer.scrollTop = currentScrollTop;
+        }
+        if (globalThis.window.scrollY !== currentY) {
+          globalThis.window.scrollTo({ top: currentY });
+        }
+        if (activeKey) {
+          const selector = `[data-focus-key="${activeKey}"]`;
+          const next = document.querySelector(selector) as
+            | HTMLInputElement
+            | HTMLTextAreaElement
+            | HTMLSelectElement
+            | null;
+          if (next && typeof next.focus === "function") {
+            try {
+              next.focus({ preventScroll: true });
+            } catch {
+              next.focus();
+            }
+            if (
+              selectionStart !== null &&
+              selectionEnd !== null &&
+              typeof next.setSelectionRange === "function"
+            ) {
+              next.setSelectionRange(selectionStart, selectionEnd);
+            }
           }
         }
-      }
-    });
-  }, []);
+      });
+    },
+    [getScrollContainer]
+  );
 
   const updateConfigWithFocus = useCallback(
     (patch: Partial<Configuration>) => {

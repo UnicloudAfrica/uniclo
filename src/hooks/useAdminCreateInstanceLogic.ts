@@ -254,7 +254,7 @@ export const useAdminCreateInstanceLogic = () => {
       return selectedUserLabel || "User selected";
     }
     return "Unassigned";
-  }, [contextType, selectedTenantLabel, selectedUserId, selectedUserLabel]);
+  }, [contextType, selectedTenantId, selectedTenantLabel, selectedUserId, selectedUserLabel]);
 
   const assignmentScopeForContext = useMemo(() => {
     if (contextType === "tenant") return "tenant";

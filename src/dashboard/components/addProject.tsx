@@ -1,67 +1,30 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { X, Loader2 } from "lucide-react";
-import {
-  useCreateClientProject,
-  useClientProjectMembershipSuggestions,
-} from "../../../hooks/clientHooks/projectHooks";
-import { useFetchGeneralRegions } from "../../../hooks/resource";
+import { useCreateProject, useTenantProjectMembershipSuggestions } from "../../hooks/projectHooks";
+import { useFetchGeneralRegions } from "../../hooks/resource";
+import { useFetchClients } from "../../hooks/clientHooks";
 import { useNavigate } from "react-router-dom";
-import ToastUtils from "../../../utils/toastUtil";
+import ToastUtils from "../../utils/toastUtil";
 import NetworkPresetSelector, {
   DEFAULT_PRESETS,
-} from "../../../shared/components/network/NetworkPresetSelector";
-import { useNetworkPresets } from "../../../hooks/networkPresetHooks";
-import { useAsyncAction } from "../../../shared/hooks/useAsyncAction";
+} from "../../shared/components/network/NetworkPresetSelector";
+import { useNetworkPresets } from "../../hooks/networkPresetHooks";
+import { useAsyncAction } from "../../shared/hooks/useAsyncAction";
 
-interface ProjectMember {
-  id: string | number;
-  name?: string;
-  email?: string;
-  role?: string;
-  [key: string]: unknown;
-}
-
-interface ProjectFormData {
-  name: string;
-  description: string;
-  region: string;
-  type: string;
-  assignment_scope: string;
-  network_preset: string;
-}
-
-interface FormErrors {
-  name?: string;
-  description?: string;
-  region?: string;
-  type?: string;
-  member_user_ids?: string;
-  [key: string]: string | undefined;
-}
-
-interface CreateProjectModalProps {
-  isOpen?: boolean;
-  onClose?: () => void;
-  mode?: "modal" | "page";
-}
-
-const INITIAL_FORM_STATE: ProjectFormData = {
+const INITIAL_FORM_STATE = {
   name: "",
   description: "",
   region: "",
   type: "vpc",
-  assignment_scope: "internal",
-  network_preset: "standard",
+  assignment_scope: "tenant",
+  network_preset: "",
+  client_id: "",
 };
 
-const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
-  isOpen = false,
-  onClose,
-  mode = "modal",
-}) => {
+const CreateProjectModal = ({ isOpen = false, onClose, mode = "modal" }) => {
   const isPageMode = mode === "page";
   const navigate = useNavigate();
-  const { mutateAsync: createProjectAsync } = useCreateClientProject();
+  const { mutateAsync: createProjectAsync } = useCreateProject();
   const {
     run: runAsyncAction,
     reset: resetAsyncAction,
@@ -69,11 +32,12 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     errorMessage: submitErrorMessage,
   } = useAsyncAction();
   const { isFetching: isRegionsFetching, data: regions } = useFetchGeneralRegions();
+  const { data: clients, isFetching: isClientsFetching } = useFetchClients();
   const { data: networkPresets = DEFAULT_PRESETS } = useNetworkPresets();
-  const [formData, setFormData] = useState<ProjectFormData>({ ...INITIAL_FORM_STATE });
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [selectedMembers, setSelectedMembers] = useState<ProjectMember[]>([]);
-  const membersFetchKeyRef = useRef<{ key: string; defaultSignature: string | null } | null>(null);
+  const [formData, setFormData] = useState(INITIAL_FORM_STATE);
+  const [errors, setErrors] = useState<Record<string, any>>({});
+  const [selectedMembers, setSelectedMembers] = useState<any[]>([]);
+  const membersFetchKeyRef = useRef<any>(null);
   const presetCatalog = useMemo(
     () =>
       Array.isArray(networkPresets) && networkPresets.length > 0 ? networkPresets : DEFAULT_PRESETS,
@@ -98,24 +62,23 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     onClose?.();
   };
 
-  const resolveProjectIdentifier = (payload: unknown): string | number | null => {
+  const resolveProjectIdentifier = (payload) => {
     if (!payload || typeof payload !== "object") {
       return null;
     }
-    const p = payload as Record<string, unknown>;
-    if (p.identifier) return p.identifier as string | number;
-    if (p.project_identifier) return p.project_identifier as string | number;
-    if (p.projectId) return p.projectId as string | number;
-    if (p.id) return p.id as string | number;
-    if (p.project) return resolveProjectIdentifier(p.project);
-    if (p.data) return resolveProjectIdentifier(p.data);
-    if (p.message && typeof p.message === "object") {
-      return resolveProjectIdentifier(p.message);
+    if (payload.identifier) return payload.identifier;
+    if (payload.project_identifier) return payload.project_identifier;
+    if (payload.projectId) return payload.projectId;
+    if (payload.id) return payload.id;
+    if (payload.project) return resolveProjectIdentifier(payload.project);
+    if (payload.data) return resolveProjectIdentifier(payload.data);
+    if (payload.message && typeof payload.message === "object") {
+      return resolveProjectIdentifier(payload.message);
     }
     return null;
   };
 
-  const redirectToProjectDetails = (projectPayload: unknown) => {
+  const redirectToProjectDetails = (projectPayload) => {
     const identifier = resolveProjectIdentifier(projectPayload);
     if (!identifier) {
       ToastUtils.warning(
@@ -127,7 +90,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     const encodedId = encodeURIComponent(btoa(String(identifier)));
     handleClose();
     const newParam = formData.network_preset ? "&new=true" : "";
-    navigate(`/client-dashboard/projects/details?id=${encodedId}${newParam}`);
+    navigate(`/dashboard/projects/details?id=${encodedId}${newParam}`);
   };
 
   useEffect(() => {
@@ -136,24 +99,94 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     }
   }, [isOpen, isPageMode, resetState]);
 
-  const shouldFetchMembers = true;
+  const validateForm = () => {
+    const newErrors: Record<string, any> = {};
+    if (!formData.name) {
+      newErrors.name = "Project Name is required";
+    }
+    if (!formData.region) newErrors.region = "Default Region is required";
+    if (!formData.type) {
+      newErrors.type = "Type is required";
+    }
+    if (formData.assignment_scope === "client" && !formData.client_id) {
+      newErrors.client_id = "Select a client when assigning to a client workspace.";
+    }
+    if (shouldFetchMembers && !isMembersFetching && selectedMembers.length === 0) {
+      newErrors.member_user_ids = "Select at least one project member.";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
-  const membershipParams = useMemo(
-    () => ({
-      scope: formData.assignment_scope,
-    }),
-    [formData.assignment_scope]
-  );
+  const updateFormData = (field, value) => {
+    setFormData((prev) => {
+      let next = { ...prev, [field]: value };
 
-  const { data: suggestedMembersRaw = [], isFetching: isMembersFetching } =
-    useClientProjectMembershipSuggestions(membershipParams, {
-      enabled: shouldFetchMembers,
+      if (field === "assignment_scope") {
+        next = {
+          ...next,
+          assignment_scope: value,
+          client_id: value === "client" ? prev.client_id : "",
+        };
+      }
+
+      if (field === "type" && value !== "vpc") {
+        next = { ...next, network_preset: "" };
+      }
+
+      if (field === "assignment_scope" || field === "client_id") {
+        membersFetchKeyRef.current = null;
+        setSelectedMembers([]);
+      }
+
+      return next;
     });
 
-  const suggestedMembers = useMemo(
-    () => (suggestedMembersRaw as unknown as ProjectMember[]) || [],
-    [suggestedMembersRaw]
-  );
+    setErrors((prev) => ({
+      ...prev,
+      [field]: null,
+      ...(field === "assignment_scope" ? { client_id: null, member_user_ids: null } : {}),
+      ...(field === "client_id" ? { member_user_ids: null } : {}),
+    }));
+  };
+
+  const scopeOptions = [
+    {
+      value: "internal",
+      label: "Internal (admins)",
+      description: "Share with internal users registered to this tenant workspace.",
+    },
+    {
+      value: "tenant",
+      label: "Tenant workspace",
+      description: "Include members from your tenant workspace.",
+    },
+    {
+      value: "client",
+      label: "Client",
+      description: "Attach to a client workspace you manage.",
+    },
+  ];
+
+  const shouldFetchMembers = useMemo(() => {
+    if (formData.assignment_scope === "client") {
+      return Boolean(formData.client_id);
+    }
+    return true;
+  }, [formData.assignment_scope, formData.client_id]);
+
+  const membershipParams = useMemo(() => {
+    if (!shouldFetchMembers) return null;
+    return {
+      scope: formData.assignment_scope,
+      client_id: formData.client_id || undefined,
+    };
+  }, [shouldFetchMembers, formData.assignment_scope, formData.client_id]);
+
+  const { data: suggestedMembers = [], isFetching: isMembersFetching } =
+    useTenantProjectMembershipSuggestions(membershipParams ?? {}, {
+      enabled: shouldFetchMembers && !!membershipParams,
+    });
 
   useEffect(() => {
     if (!shouldFetchMembers) {
@@ -164,19 +197,21 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
     if (isMembersFetching) return;
 
-    const scopeKey = JSON.stringify([formData.assignment_scope]);
+    const scopeKey = JSON.stringify([formData.assignment_scope, formData.client_id || null]);
+
     const newDefaultSignature = suggestedMembers?.length
       ? JSON.stringify(
-          [...suggestedMembers.map((member: any) => Number(member.id))].sort((a, b) => a - b)
+          [...suggestedMembers.map((member) => Number(member.id))].sort((a, b) => a - b)
         )
       : null;
+
     const currentSignature = selectedMembers.length
       ? JSON.stringify(
-          [...selectedMembers.map((member: any) => Number(member.id))].sort((a, b) => a - b)
+          [...selectedMembers.map((member) => Number(member.id))].sort((a, b) => a - b)
         )
       : null;
-    const lastState = membersFetchKeyRef.current;
 
+    const lastState = membersFetchKeyRef.current;
     const shouldSyncFromSuggestions =
       !lastState ||
       lastState.key !== scopeKey ||
@@ -198,52 +233,26 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     suggestedMembers,
     selectedMembers,
     formData.assignment_scope,
+    formData.client_id,
   ]);
 
   const handleRestoreMembers = () => {
     if (suggestedMembers?.length) {
       setSelectedMembers(suggestedMembers);
-      setErrors((prev) => ({ ...prev, member_user_ids: undefined }));
+      setErrors((prev) => ({ ...prev, member_user_ids: null }));
     }
   };
 
-  const handleToggleMember = (member: ProjectMember) => {
+  const handleToggleMember = (member) => {
     setSelectedMembers((prev) => {
       const exists = prev.some((item) => item.id === member.id);
       if (exists) {
-        return prev.filter((item: any) => item.id !== member.id);
+        return prev.filter((item) => item.id !== member.id);
       }
       return [...prev, member];
     });
 
-    setErrors((prev) => ({ ...prev, member_user_ids: undefined }));
-  };
-
-  const validateForm = () => {
-    const newErrors: FormErrors = {};
-    if (!formData.name) {
-      newErrors.name = "Project Name is required";
-    }
-    if (!formData.region) newErrors.region = "Default Region is required";
-    if (!formData.type) {
-      newErrors.type = "Type is required";
-    }
-    if (shouldFetchMembers && !isMembersFetching && selectedMembers.length === 0) {
-      newErrors.member_user_ids = "Select at least one project member.";
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const updateFormData = (field: keyof ProjectFormData, value: string) => {
-    setFormData((prev) => {
-      let next = { ...prev, [field]: value };
-      if (field === "type" && value !== "vpc") {
-        next = { ...next, network_preset: "" };
-      }
-      return next;
-    });
-    setErrors((prev) => ({ ...prev, [field]: undefined }));
+    setErrors((prev) => ({ ...prev, member_user_ids: null }));
   };
 
   const handleSubmit = async () => {
@@ -260,10 +269,11 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
       type: formData.type,
       region: formData.region,
       assignment_scope: formData.assignment_scope,
-      member_user_ids: selectedMembers.map((member: any) => Number(member.id)),
+      client_id: formData.assignment_scope === "client" ? formData.client_id || null : null,
+      user_id: formData.assignment_scope === "client" ? formData.client_id || null : null,
+      member_user_ids: selectedMembers.map((member) => Number(member.id)),
       metadata: formData.network_preset ? { network_preset: formData.network_preset } : undefined,
     };
-
     await runAsyncAction(() => createProjectAsync(payload), {
       successToast: false,
       errorToast: false,
@@ -276,18 +286,129 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     });
   };
 
+  if (!isPageMode && !isOpen) return null;
+
+  const wrapperClasses = isPageMode
+    ? "font-Outfit w-full"
+    : "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit";
+
+  const cardClasses = isPageMode
+    ? "bg-white rounded-[24px] border border-slate-200 shadow-sm w-full max-w-4xl mx-auto my-6"
+    : "bg-white rounded-[24px] max-w-[650px] mx-4 w-full";
+
+  const bodyClasses = isPageMode
+    ? "px-6 py-6 w-full flex flex-col"
+    : "px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start";
+
+  const headerBackgroundClass = isPageMode ? "bg-white" : "bg-[var(--theme-surface-alt)]";
+  const showCloseButton = !isPageMode;
+  const closeButtonLabel = isPageMode ? "Cancel" : "Close";
+
+  const getClientLabel = (client) => {
+    const parts = [client.first_name, client.middle_name, client.last_name].filter(Boolean);
+    const fullName = parts.join(" ").trim();
+    return fullName || client.name || client.email || `Client ${client.id}`;
+  };
+
+  const renderSummaryPanel = () => {
+    const selectedClientLabel = formData.client_id
+      ? (() => {
+          const match = (clients || []).find(
+            (client) => String(client.id) === String(formData.client_id)
+          );
+          return match ? getClientLabel(match) : formData.client_id;
+        })()
+      : "";
+
+    const summaryItems = [
+      { label: "Project name", value: formData.name || "Not set" },
+      {
+        label: "Region",
+        value: formData.region ? formData.region.toUpperCase() : "Select a region",
+      },
+      {
+        label: "Topology",
+        value: formData.type ? formData.type.toUpperCase() : "Choose type",
+      },
+      {
+        label: "Network preset",
+        value: formData.network_preset
+          ? formData.network_preset.charAt(0).toUpperCase() + formData.network_preset.slice(1)
+          : "Choose during instance creation",
+      },
+      {
+        label: "Assignment scope",
+        value:
+          formData.assignment_scope === "internal"
+            ? "Internal"
+            : formData.assignment_scope === "client"
+              ? "Client"
+              : "Tenant workspace",
+      },
+      {
+        label: "Client link",
+        value:
+          formData.assignment_scope === "client" && formData.client_id
+            ? selectedClientLabel || "Selected"
+            : "Not attached",
+      },
+      {
+        label: "Members selected",
+        value: selectedMembers.length ? `${selectedMembers.length} member(s)` : "Using defaults",
+      },
+    ];
+
+    const guidanceItems = [
+      "Pick the default region tenants see when provisioning workloads.",
+      "Select a network preset to fast-track infrastructure provisioning.",
+      "Assignment scope controls which workspace members are auto-added.",
+    ];
+
+    return (
+      <div className="space-y-4">
+        <div className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm">
+          <h3 className="text-sm font-semibold text-slate-900">Live summary</h3>
+          <dl className="mt-4 space-y-3 text-sm">
+            {summaryItems.map((item) => (
+              <div key={item.label} className="flex items-center justify-between gap-4">
+                <dt className="text-slate-500">{item.label}</dt>
+                <dd className="text-right font-semibold text-slate-900">{item.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+        <div className="brand-hero rounded-2xl p-5 text-white shadow-lg">
+          <p className="text-sm font-semibold">Launch checklist</p>
+          <ul className="mt-3 space-y-2 text-sm text-white/80">
+            {guidanceItems.map((tip) => (
+              <li key={tip} className="flex items-start gap-2">
+                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-white/70" />
+                <span>{tip}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    );
+  };
+
   const sectionClasses = "rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm";
 
-  const renderStructuredForm = () => (
+  const structuredForm = (
     <div className="space-y-6">
       <div className={sectionClasses}>
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Project details
-        </p>
-        <h3 className="text-base font-semibold text-slate-900">
-          Describe what this workspace is for
-        </h3>
-        <div className="mt-4 space-y-4">
+        <div className="flex flex-col gap-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Project details
+          </p>
+          <h3 className="text-base font-semibold text-slate-900">
+            Give the workspace a recognizable description
+          </h3>
+          <p className="text-sm text-slate-500">
+            Share intent for teammates by filling in project name and summary.
+          </p>
+        </div>
+        <div className="mt-5 space-y-4">
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
               Project Name<span className="text-red-500">*</span>
@@ -298,9 +419,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
               value={formData.name}
               onChange={(e) => updateFormData("name", e.target.value)}
               placeholder="Enter project name"
-              className={`w-full rounded-xl border px-3 py-2 text-sm ${
-                errors.name ? "border-red-500" : "border-gray-300"
-              }`}
+              className={`w-full input-field ${errors.name ? "border-red-500" : "border-gray-300"}`}
             />
             {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
           </div>
@@ -313,8 +432,8 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
               value={formData.description}
               onChange={(e) => updateFormData("description", e.target.value)}
               placeholder="Enter project description (optional)"
-              rows={3}
-              className={`w-full rounded-xl border px-3 py-2 text-sm ${
+              rows="3"
+              className={`w-full input-field ${
                 errors.description ? "border-red-500" : "border-gray-300"
               }`}
             ></textarea>
@@ -328,13 +447,13 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
           Region & topology
         </p>
-        <h3 className="text-base font-semibold text-slate-900">
-          Configure how workloads will deploy
+        <h3 className="text-base font-semibold text-slate-900 mt-1">
+          Define where workloads launch
         </h3>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <label htmlFor="region" className="block text-sm font-medium text-gray-700">
-              Region<span className="text-red-500">*</span>
+              Default region<span className="text-red-500">*</span>
             </label>
             <select
               id="region"
@@ -348,7 +467,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
               <option value="" disabled>
                 {isRegionsFetching ? "Loading regions..." : "Select a region"}
               </option>
-              {regions?.map((region: { region: string; label: string }) => (
+              {regions?.map((region) => (
                 <option key={region.region} value={region.region}>
                   {region.label}
                 </option>
@@ -358,10 +477,10 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
           </div>
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
-              Type<span className="text-red-500">*</span>
+              Project type<span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-2 gap-3">
-              {["vpc", "dvs"].map((type: any) => (
+              {["vpc", "dvs"].map((type) => (
                 <label
                   key={type}
                   className={`flex cursor-pointer flex-col rounded-xl border px-3 py-2 text-sm ${
@@ -394,11 +513,11 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
               Network preset <span className="text-gray-400 text-xs">(optional)</span>
             </label>
             <p className="text-xs text-gray-500 mb-3">
-              Choose a default network layout to fast-track provisioning.
+              Pick a default network layout so provisioning starts immediately.
             </p>
             <NetworkPresetSelector
               value={formData.network_preset || null}
-              onChange={(preset) => updateFormData("network_preset", preset || "")}
+              onChange={(preset) => updateFormData("network_preset", preset)}
               presets={presetCatalog}
               showAdvancedOption={false}
             />
@@ -418,28 +537,66 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
           Assignment scope
         </p>
-        <h3 className="text-base font-semibold text-slate-900">
-          Your workspace team will manage this project
+        <h3 className="text-base font-semibold text-slate-900 mt-1">
+          Decide who should access this project
         </h3>
-        <div className="mt-3">
-          <label className="flex-1 rounded-[12px] border border-[var(--theme-color)] bg-[var(--theme-surface-alt)] block">
-            <input
-              type="radio"
-              name="assignmentScope"
-              value="internal"
-              checked
-              readOnly
-              className="sr-only"
-            />
-            <div className="px-4 py-3">
-              <p className="text-sm font-medium text-[var(--theme-heading-color)]">
-                Internal (workspace)
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                You and members in your workspace will be added to this project.
-              </p>
+        <div className="mt-4 flex flex-col gap-3">
+          <div className="flex flex-col gap-2 sm:flex-row">
+            {scopeOptions.map((option) => {
+              const isActive = formData.assignment_scope === option.value;
+              return (
+                <label
+                  key={option.value}
+                  className={`flex-1 rounded-[12px] border transition-colors ${
+                    isActive
+                      ? "border-[var(--theme-color)] bg-[var(--theme-surface-alt)]"
+                      : "border-gray-200 bg-white hover:border-[var(--theme-color)]"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="assignmentScope"
+                    value={option.value}
+                    checked={isActive}
+                    onChange={(e) => updateFormData("assignment_scope", e.target.value)}
+                    className="sr-only"
+                  />
+                  <div className="px-4 py-3">
+                    <p className="text-sm font-medium text-[var(--theme-heading-color)]">
+                      {option.label}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">{option.description}</p>
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+          {formData.assignment_scope === "client" && (
+            <div className="mt-2">
+              <label htmlFor="client_id" className="block text-sm font-medium text-gray-700 mb-2">
+                Client<span className="text-red-500">*</span>
+              </label>
+              <select
+                id="client_id"
+                value={formData.client_id}
+                onChange={(e) => updateFormData("client_id", e.target.value)}
+                className={`w-full rounded-xl border px-3 py-2 text-sm ${
+                  errors.client_id ? "border-red-500" : "border-gray-300"
+                }`}
+                disabled={isClientsFetching}
+              >
+                <option value="" disabled>
+                  {isClientsFetching ? "Loading clients..." : "Select a client"}
+                </option>
+                {(clients || []).map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {getClientLabel(client)}
+                  </option>
+                ))}
+              </select>
+              {errors.client_id && <p className="text-red-500 text-xs mt-1">{errors.client_id}</p>}
             </div>
-          </label>
+          )}
         </div>
       </div>
       <div className={sectionClasses}>
@@ -468,7 +625,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 </div>
               ) : selectedMembers.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
-                  {selectedMembers.map((member: any) => (
+                  {selectedMembers.map((member) => (
                     <span
                       key={member.id}
                       className="inline-flex items-center bg-[var(--theme-color)] text-white text-xs px-3 py-1 rounded-full"
@@ -505,7 +662,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 </div>
               ) : suggestedMembers.length > 0 ? (
                 <div className="max-h-48 overflow-y-auto divide-y divide-gray-100">
-                  {suggestedMembers.map((member: any) => {
+                  {suggestedMembers.map((member) => {
                     const isSelected = selectedMembers.some((item) => item.id === member.id);
                     return (
                       <label
@@ -541,74 +698,14 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             </div>
           </>
         ) : (
-          <p className="text-sm text-gray-500">Select a scope to load members.</p>
+          <p className="text-sm text-gray-500">
+            Select a client to load member suggestions for this scope.
+          </p>
         )}
       </div>
+      {errors.general && <p className="text-red-500 text-xs mt-1">{errors.general}</p>}
     </div>
   );
-
-  const renderSummaryPanel = () => {
-    const summaryItems = [
-      { label: "Project name", value: formData.name || "Not set" },
-      {
-        label: "Region",
-        value: formData.region ? formData.region.toUpperCase() : "Select region",
-      },
-      {
-        label: "Topology",
-        value: formData.type ? formData.type.toUpperCase() : "Choose type",
-      },
-      {
-        label: "Network preset",
-        value: formData.network_preset
-          ? formData.network_preset.charAt(0).toUpperCase() + formData.network_preset.slice(1)
-          : "Choose during instance creation",
-      },
-      {
-        label: "Assignment scope",
-        value: "Internal (workspace)",
-      },
-      {
-        label: "Members selected",
-        value: selectedMembers.length ? `${selectedMembers.length} member(s)` : "Using defaults",
-      },
-    ];
-
-    const guidanceItems = [
-      "Use a descriptive name so collaborators quickly understand the workspace.",
-      "Pick the region closest to your workloads to minimize latency.",
-      "Select a network preset to accelerate provisioning.",
-    ];
-
-    return (
-      <div className="space-y-4">
-        <div className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm">
-          <h3 className="text-sm font-semibold text-slate-900">Live summary</h3>
-          <dl className="mt-4 space-y-3 text-sm">
-            {summaryItems.map((item: any) => (
-              <div key={item.label} className="flex items-center justify-between gap-3">
-                <dt className="text-slate-500">{item.label}</dt>
-                <dd className="text-right font-semibold text-slate-900">{item.value}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-        <div className="brand-hero rounded-2xl p-5 text-white">
-          <p className="text-sm font-semibold">Launch checklist</p>
-          <ul className="mt-3 space-y-2 text-sm text-white/80">
-            {guidanceItems.map((tip: any) => (
-              <li key={tip} className="flex items-start gap-2">
-                <span className="mt-1 h-1.5 w-1.5 rounded-full bg-white/70" />
-                <span>{tip}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    );
-  };
-
-  if (!isPageMode && !isOpen) return null;
 
   if (isPageMode) {
     return (
@@ -616,20 +713,18 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         <div className="rounded-[32px] border border-slate-200 bg-white/90 p-6 shadow-xl shadow-slate-200/70">
           <div className="border-b border-slate-100 pb-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Client workspace setup
+              Project configuration
             </p>
             <h2 className="mt-2 text-2xl font-semibold text-slate-900">
-              Launch a project tailored to your workload requirements
+              Define your new workspace blueprint
             </h2>
             <p className="mt-1 text-sm text-slate-500">
-              Define the region, topology, and context so collaborators know where to get started.
+              Capture the essential context your team needs to start deploying workloads right away.
             </p>
           </div>
-          <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1.8fr),minmax(250px,1fr)]">
-            <div className="rounded-2xl border border-slate-200 bg-white/95 p-5 shadow-sm">
-              {renderStructuredForm()}
-            </div>
-            <aside>{renderSummaryPanel()}</aside>
+          <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1.8fr),minmax(260px,1fr)]">
+            <div className="space-y-6">{structuredForm}</div>
+            <aside className="space-y-4">{renderSummaryPanel()}</aside>
           </div>
         </div>
         <div className="mt-6 space-y-3">
@@ -644,7 +739,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
               disabled={isSubmitting}
               className="w-full rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
             >
-              Cancel
+              {closeButtonLabel}
             </button>
             <button
               onClick={handleSubmit}
@@ -653,7 +748,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             >
               {isSubmitting ? (
                 <span className="flex items-center justify-center gap-2">
-                  Saving
+                  Creating
                   <Loader2 className="h-4 w-4 animate-spin" />
                 </span>
               ) : (
@@ -667,22 +762,24 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000] font-Outfit">
-      <div className="bg-white rounded-[24px] max-w-[650px] mx-4 w-full">
-        <div className="flex justify-between items-center px-6 py-4 border-b bg-[var(--theme-surface-alt)] rounded-t-[24px] w-full">
+    <div className={wrapperClasses}>
+      <div className={cardClasses}>
+        <div
+          className={`flex justify-between items-center px-6 py-4 border-b rounded-t-[24px] w-full ${headerBackgroundClass}`}
+        >
           <h2 className="text-lg font-semibold text-[var(--theme-text-color)]">
             Create New Project
           </h2>
-          <button
-            onClick={handleClose}
-            className="text-gray-400 hover:text-[rgb(var(--theme-neutral-900) / 0.7)] font-medium transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {showCloseButton && (
+            <button
+              onClick={handleClose}
+              className="text-gray-400 hover:text-[rgb(var(--theme-neutral-900) / 0.7)] font-medium transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
-        <div className="px-6 py-6 w-full overflow-y-auto flex flex-col items-center max-h-[400px] justify-start">
-          {renderStructuredForm()}
-        </div>
+        <div className={bodyClasses}>{structuredForm}</div>
         <div className="flex items-center justify-between gap-3 px-6 py-4 border-t rounded-b-[24px]">
           {submitErrorMessage ? (
             <p className="text-sm font-medium text-red-600" role="alert">
@@ -697,12 +794,12 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
               disabled={isSubmitting}
               className="px-6 py-2 text-[var(--theme-text-color)] bg-[var(--theme-surface-alt)] border border-[var(--theme-surface-alt)] rounded-[30px] font-medium hover:text-gray-800 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Close
+              {closeButtonLabel}
             </button>
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="px-8 py-3 bg-[--theme-color] text-white font-medium rounded-full hover:bg-[--secondary-color] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="px-8 py-3 bg-[var(--theme-color)] text-white font-medium rounded-full hover:bg-[var(--theme-color)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Create Project
               {isSubmitting && <Loader2 className="w-4 h-4 ml-2 text-white animate-spin" />}

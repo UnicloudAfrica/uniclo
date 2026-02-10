@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useMemo, useEffect, useRef, useCallback } from "react";
 import InstanceConfigurationForm from "../../shared/components/instance-wizard/InstanceConfigurationForm";
 import { Configuration, Option, AdditionalVolume } from "../../types/InstanceConfiguration";
@@ -43,6 +42,7 @@ interface Props {
   onBackToWorkflow?: () => void;
   onSubmitConfigurations?: () => void;
   isSubmitting?: boolean;
+  submitErrorMessage?: string | null;
 
   // Optional Context-specific hook overrides for multi-tenant support
   // When not provided, defaults to admin hooks
@@ -112,6 +112,7 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
   onBackToWorkflow,
   onSubmitConfigurations,
   isSubmitting,
+  submitErrorMessage,
 
   // Optional hook overrides
   useProjectsHook,
@@ -165,7 +166,11 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
               if (!identifier) return null;
               const projectRegion =
                 extractRegionCode(project?.region) || project?.region_code || project?.region || "";
-              if (selectedRegion && projectRegion && String(projectRegion) !== String(selectedRegion)) {
+              if (
+                selectedRegion &&
+                projectRegion &&
+                String(projectRegion) !== String(selectedRegion)
+              ) {
                 return null;
               }
               const value = String(identifier);
@@ -427,6 +432,19 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
     [cfg.id, resetConfigurationWithPatch]
   );
 
+  const optionalFormProps = {
+    ...(onAddConfiguration ? { onAddConfiguration } : {}),
+    ...(onBackToWorkflow ? { onBackToWorkflow } : {}),
+    ...(onSubmitConfigurations ? { onSubmitConfigurations } : {}),
+    ...(isSubmitting !== undefined ? { isSubmitting } : {}),
+    ...(submitErrorMessage !== undefined ? { submitErrorMessage } : {}),
+    ...(onSaveTemplate ? { onSaveTemplate } : {}),
+    ...(showTemplateSelector ? { onTemplateSelect: handleTemplateSelect } : {}),
+    ...(membershipTenantId !== undefined ? { membershipTenantId } : {}),
+    ...(membershipUserId !== undefined ? { membershipUserId } : {}),
+    ...(useProjectMembershipSuggestionsHook ? { useProjectMembershipSuggestionsHook } : {}),
+  };
+
   return (
     <InstanceConfigurationForm
       cfg={cfg}
@@ -449,20 +467,12 @@ const AdminInstanceConfigurationCard: React.FC<Props> = ({
       securityGroups={securityGroups || []}
       isProjectScoped={isProjectScoped}
       isLoadingResources={isLoadingResources}
-      showActionRow={showActionRow}
-      onAddConfiguration={onAddConfiguration}
-      onBackToWorkflow={onBackToWorkflow}
-      onSubmitConfigurations={onSubmitConfigurations}
-      isSubmitting={isSubmitting}
-      onSaveTemplate={onSaveTemplate}
+      showActionRow={showActionRow ?? false}
       showTemplateSelector={showTemplateSelector}
-      onTemplateSelect={showTemplateSelector ? handleTemplateSelect : undefined}
       variant={formVariant}
       showProjectMembership={showProjectMembership}
-      membershipTenantId={membershipTenantId}
-      membershipUserId={membershipUserId}
       lockAssignmentScope={lockAssignmentScope}
-      useProjectMembershipSuggestionsHook={useProjectMembershipSuggestionsHook}
+      {...optionalFormProps}
     />
   );
 };

@@ -1,5 +1,4 @@
-// @ts-nocheck
-import React, { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import AdminPageShell from "../components/AdminPageShell";
@@ -47,10 +46,9 @@ const AdminCreateInstance = () => {
     contextType,
     selectedTenantId,
     selectedUserId,
-    selectedTenantLabel,
-    selectedUserLabel,
     assignmentSummary,
     isSubmitting,
+    submissionErrorMessage,
     submissionResult,
     orderReceipt,
     isPaymentSuccessful,
@@ -72,7 +70,6 @@ const AdminCreateInstance = () => {
     setSelectedTenantId,
     setSelectedUserId,
     setBillingCountry,
-    setIsCountryLocked,
     setHasLockedPaymentStep,
     addConfiguration,
     resetConfigurationWithPatch,
@@ -90,7 +87,15 @@ const AdminCreateInstance = () => {
 
   const resolveProviderForRegion = (regionCode: string) => {
     const candidate = (Array.isArray(resources.regions) ? resources.regions : []).find(
-      (region: any) =>
+      (region: {
+        code?: string;
+        region?: string;
+        slug?: string;
+        id?: string;
+        provider?: string;
+        provider_code?: string;
+        provider_id?: string;
+      }) =>
         String(region?.code || region?.region || region?.slug || region?.id || "") ===
         String(regionCode)
     );
@@ -98,7 +103,7 @@ const AdminCreateInstance = () => {
   };
 
   const handleSaveTemplate = (config: Configuration) => {
-    const name = window.prompt("Enter a name for this template:");
+    const name = globalThis.window.prompt("Enter a name for this template:");
     if (!name) return;
 
     // Minimal validation
@@ -130,6 +135,10 @@ const AdminCreateInstance = () => {
   const currentStepIndex = Math.min(activeStep, steps.length - 1);
   const currentStep = steps[currentStepIndex];
   const currentStepId = currentStep?.id;
+  const resolvedClientName =
+    clientOptions.find((c) => c.value === String(selectedUserId))?.label ?? "";
+  const resolvedTenantName =
+    tenantOptions.find((t) => t.value === String(selectedTenantId))?.label ?? "";
   const reviewStepIndex = useMemo(() => steps.findIndex((step) => step.id === "review"), [steps]);
   const workflowStepIndex = useMemo(
     () => steps.findIndex((step) => step.id === "workflow"),
@@ -145,17 +154,17 @@ const AdminCreateInstance = () => {
     if (!hasLockedPaymentStep && reviewStepIndex >= 0 && activeStep >= reviewStepIndex) {
       setHasLockedPaymentStep(true);
     }
-  }, [activeStep, reviewStepIndex, hasLockedPaymentStep]);
+  }, [activeStep, reviewStepIndex, hasLockedPaymentStep, setHasLockedPaymentStep]);
 
   const selectedProjectId = configurations[0]?.project_id;
-  const { data: projectStatus } = useProjectStatus(selectedProjectId, {
+  const { data: projectStatus } = useProjectStatus(selectedProjectId || "", {
     enabled: Boolean(selectedProjectId),
   });
   const selectedProject = useMemo(() => {
     if (!selectedProjectId || !Array.isArray(resources.projects)) return null;
     return (
       resources.projects.find(
-        (project: any) =>
+        (project: { id?: string | number; identifier?: string }) =>
           String(project.id) === String(selectedProjectId) ||
           String(project.identifier) === String(selectedProjectId)
       ) || null
@@ -214,7 +223,7 @@ const AdminCreateInstance = () => {
     [configurations, configurationSummaries, isFastTrack]
   );
   const resolvedWorkflowStepIndex = workflowStepIndex >= 0 ? workflowStepIndex : 0;
-  const resolvedServicesStepIndex = servicesStepIndex >= 0 ? servicesStepIndex : 1;
+  const resolvedServicesStepIndex = Math.max(servicesStepIndex, 1);
   const resolvedPaymentStepIndex = paymentStepIndex >= 0 ? paymentStepIndex : reviewStepIndex - 1;
   const resolvedSuccessStepIndex = successStepIndex >= 0 ? successStepIndex : steps.length - 1;
   const resolvedReviewBackIndex = isFastTrack
@@ -237,184 +246,186 @@ const AdminCreateInstance = () => {
       }
       setActiveStep(targetIndex);
     },
-    [currentStepIndex, isFastTrack, reviewStepIndex, isPaymentSuccessful, hasLockedPaymentStep]
+    [
+      currentStepIndex,
+      isFastTrack,
+      reviewStepIndex,
+      isPaymentSuccessful,
+      hasLockedPaymentStep,
+      setActiveStep,
+    ]
   );
 
   return (
-    <>
-      <AdminPageShell
-        title="Create Cube-Instance"
-        description="Provision Zadara-backed cube-instances for a tenant or user."
-        actions={
-          <div className="flex items-center gap-3">
-            <ModernButton
-              variant="ghost"
-              onClick={() => navigate(-1)}
-              leftIcon={<ArrowLeft size={18} />}
-            >
-              Back
-            </ModernButton>
-          </div>
+    <AdminPageShell
+      title="Create Cube-Instance"
+      description="Provision Zadara-backed cube-instances for a tenant or user."
+      actions={
+        <div className="flex items-center gap-3">
+          <ModernButton
+            variant="ghost"
+            onClick={() => navigate(-1)}
+            leftIcon={<ArrowLeft size={18} />}
+          >
+            Back
+          </ModernButton>
+        </div>
+      }
+    >
+      <ProvisioningWizardLayout
+        steps={steps}
+        activeStep={activeStep}
+        onStepChange={handleStepChange}
+        currentStepId={currentStepId ?? ""}
+        successContent={
+          isSuccessStep ? (
+            <OrderSuccessStep
+              orderId={orderId}
+              transactionId={transactionId}
+              isFastTrack={isFastTrack}
+              configurationSummaries={successSummaries}
+              pricingSummary={successPricingSummary}
+              keypairDownloads={keypairDownloads}
+              instances={successInstances}
+              instancesPageUrl="/admin-dashboard/instances"
+              onCreateAnother={() => globalThis.window.location.reload()}
+              resourceLabel="Cube-Instance"
+            />
+          ) : null
         }
-      >
-        <ProvisioningWizardLayout
-          steps={steps}
-          activeStep={activeStep}
-          onStepChange={handleStepChange}
-          currentStepId={currentStepId}
-          successContent={
-            isSuccessStep ? (
-              <OrderSuccessStep
-                orderId={orderId}
-                transactionId={transactionId}
+        reviewContent={
+          isReviewStep ? (
+            <div className="space-y-6">
+              <ReviewSubmitStep
                 isFastTrack={isFastTrack}
-                configurationSummaries={successSummaries}
-                pricingSummary={successPricingSummary}
-                keypairDownloads={keypairDownloads}
-                instances={successInstances}
-                instancesPageUrl="/admin-dashboard/instances"
-                onCreateAnother={() => window.location.reload()}
+                summaryConfigurationCount={summaryConfigurationCount}
+                configurations={configurations}
+                configurationSummaries={configurationSummaries}
+                submissionResult={submissionResult}
+                orderReceipt={orderReceipt}
+                effectivePaymentOption={effectivePaymentOption}
+                summaryPlanLabel={summaryPlanLabel}
+                summaryWorkflowLabel={summaryWorkflowLabel}
+                assignmentSummary={assignmentSummary}
+                billingCountryLabel={billingCountryLabel}
+                summarySubtotalValue={summarySubtotalValue}
+                summaryTaxValue={summaryTaxValue}
+                summaryGatewayFeesValue={summaryGatewayFeesValue}
+                summaryGrandTotalValue={summaryGrandTotalValue}
+                summaryDisplayCurrency={summaryDisplayCurrency}
+                taxLabelSuffix={taxLabelSuffix}
+                backendPricingData={backendPricingData}
+                onBack={() => setActiveStep(resolvedReviewBackIndex)}
+                onEditConfiguration={() => setActiveStep(resolvedServicesStepIndex)}
+                onConfirm={() => setActiveStep(resolvedSuccessStepIndex)}
                 resourceLabel="Cube-Instance"
               />
-            ) : null
-          }
-          reviewContent={
-            isReviewStep ? (
-              <div className="space-y-6">
-                <ReviewSubmitStep
-                  isFastTrack={isFastTrack}
-                  summaryConfigurationCount={summaryConfigurationCount}
-                  configurations={configurations}
-                  configurationSummaries={configurationSummaries}
-                  submissionResult={submissionResult}
-                  orderReceipt={orderReceipt}
-                  effectivePaymentOption={effectivePaymentOption}
-                  summaryPlanLabel={summaryPlanLabel}
-                  summaryWorkflowLabel={summaryWorkflowLabel}
-                  assignmentSummary={assignmentSummary}
-                  billingCountryLabel={billingCountryLabel}
-                  summarySubtotalValue={summarySubtotalValue}
-                  summaryTaxValue={summaryTaxValue}
-                  summaryGatewayFeesValue={summaryGatewayFeesValue}
-                  summaryGrandTotalValue={summaryGrandTotalValue}
-                  summaryDisplayCurrency={summaryDisplayCurrency}
-                  taxLabelSuffix={taxLabelSuffix}
-                  backendPricingData={backendPricingData}
-                  onBack={() => setActiveStep(resolvedReviewBackIndex)}
-                  onEditConfiguration={() => setActiveStep(resolvedServicesStepIndex)}
-                  onConfirm={() => setActiveStep(resolvedSuccessStepIndex)}
-                  resourceLabel="Cube-Instance"
-                />
-              </div>
-            ) : null
-          }
-          mainContent={
-            <>
-              {isWorkflowStep && (
-                <WorkflowSelectionStep
-                  mode={mode}
-                  contextType={contextType}
-                  selectedTenantId={selectedTenantId}
-                  selectedUserId={selectedUserId}
-                  billingCountry={billingCountry}
-                  isCountryLocked={isCountryLocked}
-                  isCountriesLoading={isCountriesLoading}
-                  tenants={tenants}
-                  isTenantsFetching={isTenantsFetching}
-                  onContinue={() => setActiveStep(resolvedServicesStepIndex)}
-                  userPool={userPool}
-                  isUsersFetching={isUsersFetching}
-                  countryOptions={countryOptions}
-                  onModeChange={handleModeChange}
-                  onContextTypeChange={setContextType}
-                  onTenantChange={setSelectedTenantId}
-                  onUserChange={setSelectedUserId}
-                  onCountryChange={setBillingCountry}
-                />
-              )}
+            </div>
+          ) : null
+        }
+        mainContent={
+          <>
+            {isWorkflowStep && (
+              <WorkflowSelectionStep
+                mode={mode}
+                contextType={contextType}
+                selectedTenantId={selectedTenantId}
+                selectedUserId={selectedUserId}
+                billingCountry={billingCountry}
+                isCountryLocked={isCountryLocked}
+                isCountriesLoading={isCountriesLoading}
+                tenants={tenants}
+                isTenantsFetching={isTenantsFetching}
+                onContinue={() => setActiveStep(resolvedServicesStepIndex)}
+                userPool={userPool}
+                isUsersFetching={isUsersFetching}
+                countryOptions={countryOptions}
+                onModeChange={handleModeChange}
+                onContextTypeChange={(type: string) => setContextType(type as "tenant" | "user")}
+                onTenantChange={setSelectedTenantId}
+                onUserChange={setSelectedUserId}
+                onCountryChange={setBillingCountry}
+              />
+            )}
 
-              {isServicesStep && (
-                <ConfigurationListStep
-                  configurations={configurations}
-                  resources={resources}
-                  generalRegions={generalRegions}
-                  regionOptions={regionSelectOptions}
-                  isLoadingResources={isLoadingResources}
-                  isSubmitting={isSubmitting}
-                  billingCountry={billingCountry}
-                  showTemplateSelector
-                  onResetConfiguration={resetConfigurationWithPatch}
-                  projectHasNetwork={projectHasNetwork}
-                  onAddConfiguration={addConfiguration}
-                  onRemoveConfiguration={removeConfiguration}
-                  onUpdateConfiguration={updateConfiguration}
-                  onAddVolume={addAdditionalVolume}
-                  onRemoveVolume={removeAdditionalVolume}
-                  onUpdateVolume={updateAdditionalVolume}
-                  onBack={() => setActiveStep(resolvedWorkflowStepIndex)}
-                  onSubmit={handleCreateOrder}
-                  onSaveTemplate={handleSaveTemplate}
-                  formVariant="cube"
-                  showProjectMembership
-                  lockAssignmentScope
-                  membershipTenantId={selectedTenantId}
-                  membershipUserId={selectedUserId}
-                  pricingTenantId={
-                    contextType === "tenant" || contextType === "user" ? selectedTenantId : ""
-                  }
-                />
-              )}
+            {isServicesStep && (
+              <ConfigurationListStep
+                configurations={configurations}
+                resources={resources}
+                generalRegions={generalRegions}
+                regionOptions={regionSelectOptions}
+                isLoadingResources={isLoadingResources}
+                isSubmitting={isSubmitting}
+                billingCountry={billingCountry}
+                showTemplateSelector
+                onResetConfiguration={resetConfigurationWithPatch}
+                projectHasNetwork={projectHasNetwork}
+                onAddConfiguration={addConfiguration}
+                onRemoveConfiguration={removeConfiguration}
+                onUpdateConfiguration={updateConfiguration}
+                onAddVolume={addAdditionalVolume}
+                onRemoveVolume={removeAdditionalVolume}
+                onUpdateVolume={updateAdditionalVolume}
+                onBack={() => setActiveStep(resolvedWorkflowStepIndex)}
+                onSubmit={handleCreateOrder}
+                submitErrorMessage={submissionErrorMessage}
+                onSaveTemplate={handleSaveTemplate}
+                formVariant="cube"
+                showProjectMembership
+                lockAssignmentScope
+                membershipTenantId={selectedTenantId}
+                membershipUserId={selectedUserId}
+                pricingTenantId={
+                  contextType === "tenant" || contextType === "user" ? selectedTenantId : ""
+                }
+              />
+            )}
 
-              {isPaymentStep && (
-                <PaymentStep
-                  submissionResult={submissionResult}
-                  orderReceipt={orderReceipt}
-                  isPaymentSuccessful={isPaymentSuccessful}
-                  summarySubtotalValue={summarySubtotalValue}
-                  summaryTaxValue={summaryTaxValue}
-                  summaryGatewayFeesValue={summaryGatewayFeesValue}
-                  summaryGrandTotalValue={summaryGrandTotalValue}
-                  summaryDisplayCurrency={summaryDisplayCurrency}
-                  contextType={contextType}
-                  selectedUserId={String(selectedUserId)}
-                  clientOptions={clientOptions}
-                  onPaymentComplete={handlePaymentCompleted}
-                  apiBaseUrl={apiBaseUrl}
-                  paymentTransactionLabel={paymentTransactionLabel}
-                />
-              )}
-            </>
-          }
-          sidebarContent={
-            <InstanceSummaryCard
-              configurations={configurations}
-              configurationSummaries={configurationSummaries}
-              contextType={contextType}
-              selectedClientName={
-                clientOptions.find((c) => c.value === String(selectedUserId))?.label
-              }
-              selectedTenantName={
-                tenantOptions.find((t) => t.value === String(selectedTenantId))?.label
-              }
-              billingCountry={
-                countryOptions.find((c: Option) => c.value === billingCountry)?.label ||
-                billingCountry
-              }
-              summaryTitle="Cube-Instance summary"
-              summaryDescription="Auto-calculated from the selected cube-instance configuration."
-              resourceLabel="Cube-Instance"
-              summarySubtotalValue={summarySubtotalValue}
-              summaryTaxValue={summaryTaxValue}
-              summaryGatewayFeesValue={summaryGatewayFeesValue}
-              summaryGrandTotalValue={summaryGrandTotalValue}
-              summaryDisplayCurrency={summaryDisplayCurrency}
-              effectivePaymentOption={effectivePaymentOption}
-              backendPricingData={backendPricingData}
-            />
-          }
-        />
-      </AdminPageShell>
-    </>
+            {isPaymentStep && (
+              <PaymentStep
+                submissionResult={submissionResult}
+                orderReceipt={orderReceipt}
+                isPaymentSuccessful={isPaymentSuccessful}
+                summarySubtotalValue={summarySubtotalValue}
+                summaryTaxValue={summaryTaxValue}
+                summaryGatewayFeesValue={summaryGatewayFeesValue}
+                summaryGrandTotalValue={summaryGrandTotalValue}
+                summaryDisplayCurrency={summaryDisplayCurrency}
+                contextType={contextType}
+                selectedUserId={String(selectedUserId)}
+                clientOptions={clientOptions}
+                onPaymentComplete={handlePaymentCompleted}
+                apiBaseUrl={apiBaseUrl}
+                paymentTransactionLabel={paymentTransactionLabel}
+              />
+            )}
+          </>
+        }
+        sidebarContent={
+          <InstanceSummaryCard
+            configurations={configurations}
+            configurationSummaries={configurationSummaries}
+            contextType={contextType}
+            selectedClientName={resolvedClientName}
+            selectedTenantName={resolvedTenantName}
+            billingCountry={
+              countryOptions.find((c: Option) => c.value === billingCountry)?.label ||
+              billingCountry
+            }
+            summaryTitle="Cube-Instance summary"
+            summaryDescription="Auto-calculated from the selected cube-instance configuration."
+            resourceLabel="Cube-Instance"
+            summarySubtotalValue={summarySubtotalValue}
+            summaryTaxValue={summaryTaxValue}
+            summaryGatewayFeesValue={summaryGatewayFeesValue}
+            summaryGrandTotalValue={summaryGrandTotalValue}
+            summaryDisplayCurrency={summaryDisplayCurrency}
+            effectivePaymentOption={effectivePaymentOption}
+            backendPricingData={backendPricingData}
+          />
+        }
+      />
+    </AdminPageShell>
   );
 };
 

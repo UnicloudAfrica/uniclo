@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useCustomerContext } from "./adminHooks/useCustomerContext";
 import { useFetchGeneralRegions } from "./resource";
 import { useInstanceFormState } from "./useInstanceCreation";
@@ -14,8 +14,6 @@ import {
   formatVolumeLabel,
   formatKeypairLabel,
   formatSubnetLabel,
-  resolveCountryCodeFromEntity,
-  matchCountryFromOptions,
   normalizeCountryCandidate,
   COUNTRY_FALLBACK,
 } from "../utils/instanceCreationUtils";
@@ -24,7 +22,6 @@ import { useApiContext } from "./useApiContext";
 import { buildProvisioningSteps } from "../shared/components/instance-wizard/provisioningSteps";
 
 export const useAdminCreateInstanceLogic = () => {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialMode = searchParams.get("mode") === "fast-track" ? "fast-track" : "standard";
   const [mode, setMode] = useState(initialMode);
@@ -60,8 +57,7 @@ export const useAdminCreateInstanceLogic = () => {
 
   const [hasLockedPaymentStep, setHasLockedPaymentStep] = useState(false);
   const { data: countryOptions = [], isFetching: isCountriesLoading } = useFetchCountries();
-  const { data: generalRegions = [], isFetching: isGeneralRegionsLoading } =
-    useFetchGeneralRegions();
+  const { data: generalRegions = [] } = useFetchGeneralRegions();
   const { apiBaseUrl } = useApiContext();
 
   const isFastTrack = mode === "fast-track";
@@ -70,6 +66,7 @@ export const useAdminCreateInstanceLogic = () => {
     isSubmitting,
     submissionResult,
     orderReceipt,
+    submissionErrorMessage,
     handleCreateOrder,
     handlePaymentCompleted,
   } = useInstanceOrderCreation({
@@ -80,7 +77,6 @@ export const useAdminCreateInstanceLogic = () => {
     billingCountry: billingCountry || "US",
     isFastTrack,
     setActiveStep,
-    navigate,
   });
 
   const isPaymentSuccessful = useMemo(() => {
@@ -333,7 +329,7 @@ export const useAdminCreateInstanceLogic = () => {
   let summaryTaxValue = toNumber(
     paymentBreakdown?.tax ?? paymentBreakdown?.taxes ?? effectivePaymentOption?.tax ?? 0
   );
-  let summaryGatewayFeesValue = toNumber(
+  const summaryGatewayFeesValue = toNumber(
     paymentBreakdown?.gateway_fees ?? effectivePaymentOption?.gateway_fees ?? 0
   );
 
@@ -413,6 +409,7 @@ export const useAdminCreateInstanceLogic = () => {
     isSubmitting,
     submissionResult,
     orderReceipt,
+    submissionErrorMessage,
     isPaymentSuccessful,
     paymentTransactionLabel,
     hasLockedPaymentStep,

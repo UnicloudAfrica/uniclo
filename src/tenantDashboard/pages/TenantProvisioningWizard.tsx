@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useCallback, useMemo } from "react";
 import ConfigurationListStep from "../../shared/components/instance-wizard/ConfigurationListStep";
 import PaymentStep from "../../shared/components/instance-wizard/PaymentStep";
@@ -91,6 +90,7 @@ const TenantProvisioningWizard: React.FC = () => {
 
     // Order
     isSubmitting,
+    submissionErrorMessage,
     submissionResult,
     orderReceipt,
     isPaymentSuccessful,
@@ -129,11 +129,11 @@ const TenantProvisioningWizard: React.FC = () => {
 
   // Calculate which configurations are fast-track eligible vs paid
   const fastTrackConfigs = useMemo(
-    () => configurations.filter((cfg) => fastTrackRegions.includes(cfg.region || "")),
+    () => configurations.filter((cfg: any) => fastTrackRegions.includes(cfg.region || "")),
     [configurations, fastTrackRegions]
   );
   const paidConfigs = useMemo(
-    () => configurations.filter((cfg) => !fastTrackRegions.includes(cfg.region || "")),
+    () => configurations.filter((cfg: any) => !fastTrackRegions.includes(cfg.region || "")),
     [configurations, fastTrackRegions]
   );
 
@@ -156,9 +156,9 @@ const TenantProvisioningWizard: React.FC = () => {
     const instanceTypes = resources.instance_types || [];
     const osImages = resources.os_images || [];
     const volumeTypes = resources.volume_types || [];
-    const keyPairs = resources.keypairs || resources.keyPairs || [];
+    const keyPairs = resources.keyPairs || [];
 
-    return configurations.map((cfg) => {
+    return configurations.map((cfg: any) => {
       const status = evaluateConfigurationCompleteness(cfg);
       const computeLabel =
         cfg.compute_label || formatComputeLabel(cfg.compute_instance_id, instanceTypes);
@@ -294,7 +294,7 @@ const TenantProvisioningWizard: React.FC = () => {
               keypairDownloads={keypairDownloads}
               instances={successInstances}
               instancesPageUrl="/dashboard/instances"
-              onCreateAnother={() => window.location.reload()}
+              onCreateAnother={() => globalThis.window.location.reload()}
               resourceLabel="Cube-Instance"
             />
           ) : null
@@ -376,6 +376,7 @@ const TenantProvisioningWizard: React.FC = () => {
                 onUpdateVolume={updateAdditionalVolume}
                 onBack={() => setActiveStep(0)}
                 onSubmit={handleCreateOrder}
+                submitErrorMessage={submissionErrorMessage}
                 useProjectsHook={useFetchTenantProjects}
                 useSecurityGroupsHook={useFetchTenantSecurityGroups}
                 useKeyPairsHook={useFetchTenantKeyPairs}

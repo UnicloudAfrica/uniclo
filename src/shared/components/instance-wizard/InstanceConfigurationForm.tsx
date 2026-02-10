@@ -184,7 +184,7 @@ interface Props {
   subnetOptions: Option[];
   bandwidthOptions: Option[];
   keyPairOptions: Option[];
-  securityGroups: any[]; // Raw objects for custom rendering
+  securityGroups: unknown; // Raw objects for custom rendering
 
   // Flags
   isProjectScoped: boolean;
@@ -194,6 +194,7 @@ interface Props {
   onBackToWorkflow?: () => void;
   onSubmitConfigurations?: () => void;
   isSubmitting?: boolean;
+  submitErrorMessage?: string | null;
   onSaveTemplate?: (config: Configuration) => void;
   showTemplateSelector?: boolean;
   onTemplateSelect?: (template: any) => void;
@@ -202,7 +203,10 @@ interface Props {
   membershipTenantId?: string;
   membershipUserId?: string;
   lockAssignmentScope?: boolean;
-  useProjectMembershipSuggestionsHook?: (params?: any, options?: any) => {
+  useProjectMembershipSuggestionsHook?: (
+    params?: any,
+    options?: any
+  ) => {
     data?: any;
     isFetching?: boolean;
     isLoading?: boolean;
@@ -237,6 +241,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
   onBackToWorkflow,
   onSubmitConfigurations,
   isSubmitting = false,
+  submitErrorMessage,
   onSaveTemplate,
   showTemplateSelector = false,
   onTemplateSelect,
@@ -525,7 +530,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
     if (typeof window === "undefined") return null;
     let current = element?.parentElement || null;
     while (current) {
-      const style = window.getComputedStyle(current);
+      const style = globalThis.window.getComputedStyle(current);
       const overflowY = style.overflowY;
       if (
         (overflowY === "auto" || overflowY === "scroll") &&
@@ -622,14 +627,14 @@ const InstanceConfigurationForm: React.FC<Props> = ({
     const selectionEnd = active && "selectionEnd" in active ? active.selectionEnd : null;
     const scrollContainer = getScrollContainer(active);
     const currentScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
-    const currentY = window.scrollY;
+    const currentY = globalThis.window.scrollY;
     action();
     requestAnimationFrame(() => {
       if (scrollContainer && scrollContainer.scrollTop !== currentScrollTop) {
         scrollContainer.scrollTop = currentScrollTop;
       }
-      if (window.scrollY !== currentY) {
-        window.scrollTo({ top: currentY });
+      if (globalThis.window.scrollY !== currentY) {
+        globalThis.window.scrollTo({ top: currentY });
       }
       if (activeKey) {
         const selector = `[data-focus-key="${activeKey}"]`;
@@ -641,7 +646,7 @@ const InstanceConfigurationForm: React.FC<Props> = ({
         if (next && typeof next.focus === "function") {
           try {
             next.focus({ preventScroll: true });
-          } catch (error) {
+          } catch {
             next.focus();
           }
           if (
@@ -796,10 +801,12 @@ const InstanceConfigurationForm: React.FC<Props> = ({
   const membershipSuggestionsHook =
     useProjectMembershipSuggestionsHook || useProjectMembershipSuggestions;
 
-  const { data: suggestedMembers = [], isFetching: isMembersFetching } =
-    membershipSuggestionsHook(membershipParams ?? {}, {
+  const { data: suggestedMembers = [], isFetching: isMembersFetching } = membershipSuggestionsHook(
+    membershipParams ?? {},
+    {
       enabled: shouldFetchMembers && !!membershipParams,
-    });
+    }
+  );
 
   const membersFetchKeyRef = useRef<any>(null);
 
@@ -1828,41 +1835,46 @@ const InstanceConfigurationForm: React.FC<Props> = ({
               <span className="mr-2 text-lg leading-none text-primary-600">+</span>
               {addConfigurationLabel}
             </ModernButton>
-            <div className="flex flex-wrap items-center gap-3">
-              <ModernButton
-                variant="ghost"
-                onClick={() => onBackToWorkflow?.()}
-                style={{
-                  borderRadius: "999px",
-                  padding: "12px 26px",
-                  fontSize: "15px",
-                  lineHeight: "22px",
-                  border: "1px solid var(--theme-border-color)",
-                  backgroundColor: "var(--theme-card-bg)",
-                  color: "var(--theme-heading-color)",
-                }}
-              >
-                Back to workflow
-              </ModernButton>
-              <ModernButton
-                variant="primary"
-                onClick={() => onSubmitConfigurations?.()}
-                isDisabled={isSubmitting}
-                style={{
-                  borderRadius: "999px",
-                  padding: "14px 32px",
-                  fontSize: "16px",
-                  fontWeight: 600,
-                  minWidth: "230px",
-                  backgroundColor: "var(--theme-color)",
-                  color: "#FFFFFF",
-                  border: "1px solid var(--theme-color)",
-                  boxShadow: "0 10px 20px rgba(var(--theme-color-rgb), 0.2)",
-                }}
-                className="shadow-md shadow-primary-500/25 hover:-trangray-y-0.5 transition-all"
-              >
-                {isSubmitting ? submittingLabel : submitLabel}
-              </ModernButton>
+            <div className="flex flex-col items-end gap-3">
+              {submitErrorMessage ? (
+                <p className="text-sm text-red-600">{submitErrorMessage}</p>
+              ) : null}
+              <div className="flex flex-wrap items-center gap-3">
+                <ModernButton
+                  variant="ghost"
+                  onClick={() => onBackToWorkflow?.()}
+                  style={{
+                    borderRadius: "999px",
+                    padding: "12px 26px",
+                    fontSize: "15px",
+                    lineHeight: "22px",
+                    border: "1px solid var(--theme-border-color)",
+                    backgroundColor: "var(--theme-card-bg)",
+                    color: "var(--theme-heading-color)",
+                  }}
+                >
+                  Back to workflow
+                </ModernButton>
+                <ModernButton
+                  variant="primary"
+                  onClick={() => onSubmitConfigurations?.()}
+                  isDisabled={isSubmitting}
+                  style={{
+                    borderRadius: "999px",
+                    padding: "14px 32px",
+                    fontSize: "16px",
+                    fontWeight: 600,
+                    minWidth: "230px",
+                    backgroundColor: "var(--theme-color)",
+                    color: "var(--theme-card-bg)",
+                    border: "1px solid var(--theme-color)",
+                    boxShadow: "0 10px 20px rgba(var(--theme-color-rgb), 0.2)",
+                  }}
+                  className="shadow-md shadow-primary-500/25 hover:-trangray-y-0.5 transition-all"
+                >
+                  {isSubmitting ? submittingLabel : submitLabel}
+                </ModernButton>
+              </div>
             </div>
           </div>
         )}
@@ -2541,41 +2553,46 @@ const InstanceConfigurationForm: React.FC<Props> = ({
             <span className="mr-2 text-lg leading-none text-primary-600">+</span>
             Add configuration
           </ModernButton>
-          <div className="flex flex-wrap items-center gap-3">
-            <ModernButton
-              variant="ghost"
-              onClick={() => onBackToWorkflow?.()}
-              style={{
-                borderRadius: "999px",
-                padding: "12px 26px",
-                fontSize: "15px",
-                lineHeight: "22px",
-                border: "1px solid var(--theme-border-color)",
-                backgroundColor: "var(--theme-card-bg)",
-                color: "var(--theme-heading-color)",
-              }}
-            >
-              Back to workflow
-            </ModernButton>
-            <ModernButton
-              variant="primary"
-              onClick={() => onSubmitConfigurations?.()}
-              isDisabled={isSubmitting}
-              style={{
-                borderRadius: "999px",
-                padding: "14px 32px",
-                fontSize: "16px",
-                fontWeight: 600,
-                minWidth: "230px",
-                backgroundColor: "var(--theme-color)",
-                color: "#FFFFFF",
-                border: "1px solid var(--theme-color)",
-                boxShadow: "0 10px 20px rgba(var(--theme-color-rgb), 0.2)",
-              }}
-              className="shadow-md shadow-primary-500/25 hover:-trangray-y-0.5 transition-all"
-            >
-              {isSubmitting ? "Creating..." : "Create and price"}
-            </ModernButton>
+          <div className="flex flex-col items-end gap-3">
+            {submitErrorMessage ? (
+              <p className="text-sm text-red-600">{submitErrorMessage}</p>
+            ) : null}
+            <div className="flex flex-wrap items-center gap-3">
+              <ModernButton
+                variant="ghost"
+                onClick={() => onBackToWorkflow?.()}
+                style={{
+                  borderRadius: "999px",
+                  padding: "12px 26px",
+                  fontSize: "15px",
+                  lineHeight: "22px",
+                  border: "1px solid var(--theme-border-color)",
+                  backgroundColor: "var(--theme-card-bg)",
+                  color: "var(--theme-heading-color)",
+                }}
+              >
+                Back to workflow
+              </ModernButton>
+              <ModernButton
+                variant="primary"
+                onClick={() => onSubmitConfigurations?.()}
+                isDisabled={isSubmitting}
+                style={{
+                  borderRadius: "999px",
+                  padding: "14px 32px",
+                  fontSize: "16px",
+                  fontWeight: 600,
+                  minWidth: "230px",
+                  backgroundColor: "var(--theme-color)",
+                  color: "var(--theme-card-bg)",
+                  border: "1px solid var(--theme-color)",
+                  boxShadow: "0 10px 20px rgba(var(--theme-color-rgb), 0.2)",
+                }}
+                className="shadow-md shadow-primary-500/25 hover:-trangray-y-0.5 transition-all"
+              >
+                {isSubmitting ? "Creating..." : "Create and price"}
+              </ModernButton>
+            </div>
           </div>
         </div>
       )}

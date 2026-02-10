@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useCallback, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import ConfigurationListStep from "../../shared/components/instance-wizard/ConfigurationListStep";
@@ -65,6 +64,7 @@ const ClientProvisioningWizard: React.FC = () => {
     regionOptions,
     isLoadingResources,
     isSubmitting,
+    submissionErrorMessage,
     submissionResult,
     orderReceipt,
     isPaymentSuccessful,
@@ -115,9 +115,9 @@ const ClientProvisioningWizard: React.FC = () => {
     const instanceTypes = resources.instance_types || [];
     const osImages = resources.os_images || [];
     const volumeTypes = resources.volume_types || [];
-    const keyPairs = resources.keypairs || resources.keyPairs || [];
+    const keyPairs = resources.keyPairs || [];
 
-    return configurations.map((cfg) => {
+    return configurations.map((cfg: any) => {
       const status = evaluateConfigurationCompleteness(cfg);
       const computeLabel =
         cfg.compute_label || formatComputeLabel(cfg.compute_instance_id, instanceTypes);
@@ -368,6 +368,7 @@ const ClientProvisioningWizard: React.FC = () => {
                 onUpdateVolume={updateAdditionalVolume}
                 onBack={() => setActiveStep(workflowStepIndex >= 0 ? workflowStepIndex : 0)}
                 onSubmit={handleCreateOrder}
+                submitErrorMessage={submissionErrorMessage}
                 useProjectsHook={useFetchClientProjects}
                 useSecurityGroupsHook={useFetchClientSecurityGroups}
                 useKeyPairsHook={useFetchClientKeyPairs}

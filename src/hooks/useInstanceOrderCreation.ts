@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { useApiContext, ApiContext } from "./useApiContext";
 import ToastUtils from "../utils/toastUtil";
 import { Configuration, AdditionalVolume } from "../types/InstanceConfiguration";
+import { useAsyncAction } from "../shared/hooks/useAsyncAction";
 import {
   evaluateConfigurationCompleteness,
   normalizePaymentOptions,
@@ -15,7 +16,6 @@ interface UseInstanceOrderCreationProps {
   selectedTenantId: string;
   selectedUserId: string;
   setActiveStep: (step: number) => void;
-  navigate: any;
 }
 
 const getContextPrefix = (context: ApiContext) => {
@@ -32,14 +32,13 @@ export const useInstanceOrderCreation = ({
   selectedTenantId,
   selectedUserId,
   setActiveStep,
-  navigate,
 }: UseInstanceOrderCreationProps) => {
   const paymentStepIndex = isFastTrack ? null : 2;
   const reviewStepIndex = isFastTrack ? 2 : 3;
   const { apiBaseUrl, authHeaders, context } = useApiContext();
   const apiPrefix = getContextPrefix(context);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
+  const createOrderAction = useAsyncAction();
+  const verifyPaymentAction = useAsyncAction();
   const [submissionResult, setSubmissionResult] = useState<any>(null);
   const [orderReceipt, setOrderReceipt] = useState<any>(null);
   const [selectedPaymentOption, setSelectedPaymentOption] = useState<any>(null);
@@ -181,198 +180,223 @@ export const useInstanceOrderCreation = ({
     return payload;
   }, [configurations, isFastTrack, billingCountry, contextType, selectedTenantId, selectedUserId]);
 
-  const handleCreateOrder = async () => {
+  const handleCreateOrder = useCallback(async () => {
     setSubmissionResult(null);
     setOrderReceipt(null);
-    setIsSubmitting(true);
-    try {
-      const incompleteIndex = configurations.findIndex(
-        (cfg) => !evaluateConfigurationCompleteness(cfg).isComplete
-      );
-      if (incompleteIndex !== -1) {
-        throw new Error(`Complete Configuration #${incompleteIndex + 1} before pricing.`);
-      }
-      const payload = buildPayload();
 
-      const res = await apiCall("POST", "/instances/create", payload);
-      const data = res?.data || res;
+    await createOrderAction.run(
+      async () => {
+        const incompleteIndex = configurations.findIndex(
+          (cfg) => !evaluateConfigurationCompleteness(cfg).isComplete
+        );
+        if (incompleteIndex !== -1) {
+          throw new Error(`Complete Configuration #${incompleteIndex + 1} before pricing.`);
+        }
+        const payload = buildPayload();
 
-      const normalizedGatewayOptions = normalizePaymentOptions(
-        data?.payment?.payment_gateway_options || data?.payment?.options || data?.payment_options
-      );
-      const pricingBreakdownPayload =
-        data?.pricing_breakdown ||
-        data?.transaction?.metadata?.pricing_breakdown ||
-        data?.order?.pricing_breakdown ||
-        null;
+        const res = await apiCall("POST", "/instances/create", payload);
+        const data = res?.data || res;
 
-      const mergedTransaction = data?.transaction
-        ? {
-            ...data.transaction,
-            metadata: {
-              ...(data.transaction.metadata || {}),
-              ...(pricingBreakdownPayload ? { pricing_breakdown: pricingBreakdownPayload } : {}),
-            },
+        const normalizedGatewayOptions = normalizePaymentOptions(
+          data?.payment?.payment_gateway_options || data?.payment?.options || data?.payment_options
+        );
+        const pricingBreakdownPayload =
+          data?.pricing_breakdown ||
+          data?.transaction?.metadata?.pricing_breakdown ||
+          data?.order?.pricing_breakdown ||
+          null;
+
+        const mergedTransaction = data?.transaction
+          ? {
+              ...data.transaction,
+              metadata: {
+                ...(data.transaction.metadata || {}),
+                ...(pricingBreakdownPayload ? { pricing_breakdown: pricingBreakdownPayload } : {}),
+              },
+            }
+          : null;
+
+        const mergedResult = {
+          ...data,
+          transaction: mergedTransaction,
+          payment: data?.payment
+            ? { ...data.payment, payment_gateway_options: normalizedGatewayOptions }
+            : normalizedGatewayOptions.length
+              ? { payment_gateway_options: normalizedGatewayOptions }
+              : data?.payment,
+          pricing_breakdown: pricingBreakdownPayload || data?.pricing_breakdown || null,
+        };
+
+        setSubmissionResult(mergedResult);
+        setOrderReceipt({
+          transaction: mergedResult?.transaction || null,
+          order: mergedResult?.order || null,
+          payment: mergedResult?.payment || null,
+          pricing_breakdown: mergedResult?.pricing_breakdown || null,
+        });
+        setSelectedPaymentOption(normalizedGatewayOptions[0] || null);
+
+        const isPaymentRequired = mergedResult?.payment?.required;
+        if (isPaymentRequired) {
+          if (paymentStepIndex !== null) {
+            setActiveStep(paymentStepIndex);
+          } else {
+            ToastUtils.error("Payment is required. Switch to standard mode to continue.");
+            setActiveStep(reviewStepIndex);
           }
-        : null;
-
-      const mergedResult = {
-        ...data,
-        transaction: mergedTransaction,
-        payment: data?.payment
-          ? { ...data.payment, payment_gateway_options: normalizedGatewayOptions }
-          : normalizedGatewayOptions.length
-            ? { payment_gateway_options: normalizedGatewayOptions }
-            : data?.payment,
-        pricing_breakdown: pricingBreakdownPayload || data?.pricing_breakdown || null,
-      };
-
-      setSubmissionResult(mergedResult);
-      setOrderReceipt({
-        transaction: mergedResult?.transaction || null,
-        order: mergedResult?.order || null,
-        payment: mergedResult?.payment || null,
-        pricing_breakdown: mergedResult?.pricing_breakdown || null,
-      });
-      setSelectedPaymentOption(normalizedGatewayOptions[0] || null);
-
-      const isPaymentRequired = mergedResult?.payment?.required;
-
-      ToastUtils.success(
-        mergedResult?.message ||
-          (isPaymentRequired
-            ? "Order created. Complete payment to proceed."
-            : "Instances initiated.")
-      );
-
-      if (isPaymentRequired) {
-        if (paymentStepIndex !== null) {
-          setActiveStep(paymentStepIndex);
         } else {
-          ToastUtils.error("Payment is required. Switch to standard mode to continue.");
           setActiveStep(reviewStepIndex);
         }
-      } else {
-        setActiveStep(reviewStepIndex);
+        return {
+          isPaymentRequired: Boolean(isPaymentRequired),
+          message: mergedResult?.message,
+        };
+      },
+      {
+        successToast: (result) =>
+          result.message ||
+          (result.isPaymentRequired
+            ? "Order created. Complete payment to proceed."
+            : "Instances initiated."),
+        fallbackErrorMessage: "Could not create instances.",
+        rethrow: false,
       }
-    } catch (error: any) {
-      console.error("Failed to create instances", error);
-      ToastUtils.error(error?.message || "Could not create instances.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    );
+  }, [
+    buildPayload,
+    apiCall,
+    configurations,
+    createOrderAction,
+    paymentStepIndex,
+    reviewStepIndex,
+    setActiveStep,
+  ]);
 
-  const handlePaymentCompleted = async (payload?: any) => {
-    const identifier =
-      selectedPaymentOption?.transaction_reference ||
-      submissionResult?.payment?.payment_gateway_options?.[0]?.transaction_reference ||
-      orderReceipt?.payment?.payment_gateway_options?.[0]?.transaction_reference ||
-      submissionResult?.transaction?.identifier ||
-      submissionResult?.transaction?.reference ||
-      orderReceipt?.transaction?.identifier ||
-      orderReceipt?.transaction?.reference ||
-      null;
-
-    if (!identifier) {
-      ToastUtils.error("No transaction reference available to verify.");
-      return;
-    }
-
-    const rawGateway =
-      payload?.gateway ||
-      submissionResult?.payment?.gateway ||
-      orderReceipt?.payment?.gateway ||
-      selectedPaymentOption?.name ||
-      "";
-
-    const normalizedGateway = (() => {
-      const lower = String(rawGateway).toLowerCase();
-      if (lower.includes("paystack") && lower.includes("card")) {
-        return "Paystack_Card";
-      }
-      if (lower.includes("paystack")) return "Paystack";
-      if (lower.includes("flutter")) return "Flutterwave";
-      if (lower.includes("wallet")) return "Wallet";
-      if (lower.includes("fincra")) return "Fincra";
-      if (lower.includes("virtual")) return "Virtual_Account";
-      return rawGateway || "Paystack";
-    })();
-
-    setIsVerifyingPayment(true);
-    try {
-      const apiPayload: any = {
-        payment_gateway: normalizedGateway,
-      };
-      if (normalizedGateway.toLowerCase().includes("paystack")) {
-        apiPayload.save_card_details = false;
-      }
-
-      const res = await apiCall("PUT", `/transactions/${identifier}`, apiPayload);
-      const responseData = res?.data || res;
-
-      const normalizedStatus = (
-        responseData?.status ||
-        responseData?.transaction?.status ||
-        "pending"
-      ).toLowerCase();
-      const keypairMaterials =
-        responseData?.keypair_materials ||
-        responseData?.metadata?.keypair_materials ||
-        responseData?.transaction?.metadata?.keypair_materials ||
+  const handlePaymentCompleted = useCallback(
+    async (payload?: any) => {
+      const identifier =
+        selectedPaymentOption?.transaction_reference ||
+        submissionResult?.payment?.payment_gateway_options?.[0]?.transaction_reference ||
+        orderReceipt?.payment?.payment_gateway_options?.[0]?.transaction_reference ||
+        submissionResult?.transaction?.identifier ||
+        submissionResult?.transaction?.reference ||
+        orderReceipt?.transaction?.identifier ||
+        orderReceipt?.transaction?.reference ||
         null;
 
-      const updateState = (prev: any) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          ...(keypairMaterials ? { keypair_materials: keypairMaterials } : {}),
-          transaction: {
-            ...prev.transaction,
-            status: normalizedStatus,
-            payment_reference:
-              responseData?.payment_reference ||
-              responseData?.transaction?.payment_reference ||
-              payload?.reference ||
-              prev.transaction?.payment_reference,
-          },
-          payment: {
-            ...(prev.payment || {}),
-            status: normalizedStatus,
-            gateway: normalizedGateway,
-          },
-        };
-      };
-
-      setSubmissionResult(updateState);
-      setOrderReceipt(updateState);
-
-      const successStatuses = ["successful", "completed", "paid", "success"];
-      if (successStatuses.includes(normalizedStatus)) {
-        ToastUtils.success("Payment verified successfully!");
-        setActiveStep(reviewStepIndex);
-      } else {
-        ToastUtils.success(`Payment status: ${normalizedStatus}`);
-        // Note: logic in original was mixing verifyPayment and paymentCompleted.
-        // handlePaymentCompleted in original called PUT and eventually set status and moved step.
-        // Here we replicate that.
-        if (normalizedStatus === "pending") {
-          // Check if we should advance? Original code advanced if status was success.
-        }
+      if (!identifier) {
+        ToastUtils.error("No transaction reference available to verify.");
+        return;
       }
-    } catch (error: any) {
-      ToastUtils.error(error?.message || "Could not verify payment.");
-    } finally {
-      setIsVerifyingPayment(false);
-    }
-  };
+
+      const rawGateway =
+        payload?.gateway ||
+        submissionResult?.payment?.gateway ||
+        orderReceipt?.payment?.gateway ||
+        selectedPaymentOption?.name ||
+        "";
+
+      const normalizedGateway = (() => {
+        const lower = String(rawGateway).toLowerCase();
+        if (lower.includes("paystack") && lower.includes("card")) {
+          return "Paystack_Card";
+        }
+        if (lower.includes("paystack")) return "Paystack";
+        if (lower.includes("flutter")) return "Flutterwave";
+        if (lower.includes("wallet")) return "Wallet";
+        if (lower.includes("fincra")) return "Fincra";
+        if (lower.includes("virtual")) return "Virtual_Account";
+        return rawGateway || "Paystack";
+      })();
+
+      await verifyPaymentAction.run(
+        async () => {
+          const apiPayload: any = {
+            payment_gateway: normalizedGateway,
+          };
+          if (normalizedGateway.toLowerCase().includes("paystack")) {
+            apiPayload.save_card_details = false;
+          }
+
+          const res = await apiCall("PUT", `/transactions/${identifier}`, apiPayload);
+          const responseData = res?.data || res;
+
+          const normalizedStatus = (
+            responseData?.status ||
+            responseData?.transaction?.status ||
+            "pending"
+          ).toLowerCase();
+          const keypairMaterials =
+            responseData?.keypair_materials ||
+            responseData?.metadata?.keypair_materials ||
+            responseData?.transaction?.metadata?.keypair_materials ||
+            null;
+
+          const updateState = (prev: any) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              ...(keypairMaterials ? { keypair_materials: keypairMaterials } : {}),
+              transaction: {
+                ...prev.transaction,
+                status: normalizedStatus,
+                payment_reference:
+                  responseData?.payment_reference ||
+                  responseData?.transaction?.payment_reference ||
+                  payload?.reference ||
+                  prev.transaction?.payment_reference,
+              },
+              payment: {
+                ...(prev.payment || {}),
+                status: normalizedStatus,
+                gateway: normalizedGateway,
+              },
+            };
+          };
+
+          setSubmissionResult(updateState);
+          setOrderReceipt(updateState);
+
+          const successStatuses = ["successful", "completed", "paid", "success"];
+          if (successStatuses.includes(normalizedStatus)) {
+            ToastUtils.success("Payment verified successfully!");
+            setActiveStep(reviewStepIndex);
+          } else {
+            ToastUtils.success(`Payment status: ${normalizedStatus}`);
+            // Note: logic in original was mixing verifyPayment and paymentCompleted.
+            // handlePaymentCompleted in original called PUT and eventually set status and moved step.
+            // Here we replicate that.
+            if (normalizedStatus === "pending") {
+              // Check if we should advance? Original code advanced if status was success.
+            }
+          }
+          return normalizedStatus;
+        },
+        {
+          fallbackErrorMessage: "Could not verify payment.",
+          rethrow: false,
+        }
+      );
+    },
+    [
+      apiCall,
+      orderReceipt,
+      reviewStepIndex,
+      selectedPaymentOption,
+      setActiveStep,
+      submissionResult,
+      verifyPaymentAction,
+    ]
+  );
 
   return {
-    isSubmitting,
-    isVerifyingPayment,
+    isSubmitting: createOrderAction.isPending,
+    isVerifyingPayment: verifyPaymentAction.isPending,
     submissionResult,
     setSubmissionResult, // Export setter if needed
     orderReceipt,
+    submissionErrorMessage: createOrderAction.errorMessage,
+    paymentErrorMessage: verifyPaymentAction.errorMessage,
     selectedPaymentOption,
     setSelectedPaymentOption,
     handleCreateOrder,

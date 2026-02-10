@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { Configuration, AdditionalVolume, Option } from "../types/InstanceConfiguration";
+import { AdditionalVolume, Option } from "../types/InstanceConfiguration";
 import { useInstanceFormState } from "./useInstanceCreation";
 import { useFetchCountries, useFetchGeneralRegions } from "./resource";
 import useClientAuthStore from "../stores/clientAuthStore";
@@ -13,6 +13,7 @@ import {
 } from "../utils/instanceCreationUtils";
 import { buildProvisioningSteps } from "../shared/components/instance-wizard/provisioningSteps";
 import { resolveCountryCodeFromEntity } from "./objectStorageUtils";
+import { useAsyncAction } from "../shared/hooks/useAsyncAction";
 
 // ═══════════════════════════════════════════════════════════════════
 // CLIENT INSTANCE CREATION LOGIC HOOK
@@ -38,7 +39,6 @@ export const useClientProvisioningLogic = () => {
   // ─────────────────────────────────────────────────────────────────
   const {
     configurations,
-    setConfigurations,
     addConfiguration,
     addConfigurationWithPatch,
     resetConfigurationWithPatch,
@@ -123,7 +123,6 @@ export const useClientProvisioningLogic = () => {
   // Build Options
   // ─────────────────────────────────────────────────────────────────
 
-
   const regionOptions: Option[] = useMemo(
     () =>
       generalRegions.map((r: any) => ({
@@ -174,7 +173,7 @@ export const useClientProvisioningLogic = () => {
   // ─────────────────────────────────────────────────────────────────
   // Order Creation & Submission
   // ─────────────────────────────────────────────────────────────────
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const createOrderAction = useAsyncAction();
   const [submissionResult, setSubmissionResult] = useState<any>(null);
   const [orderReceipt, setOrderReceipt] = useState<any>(null);
   const [isPaymentSuccessful, setIsPaymentSuccessful] = useState(false);
@@ -182,163 +181,176 @@ export const useClientProvisioningLogic = () => {
   const reviewStepIndex = useMemo(() => steps.findIndex((step) => step.id === "review"), [steps]);
 
   const handleCreateOrder = useCallback(async () => {
-    if (configurations.length === 0) {
-      ToastUtils.error("Please add at least one configuration");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const incompleteIndex = configurations.findIndex(
-        (cfg) => !evaluateConfigurationCompleteness(cfg).isComplete
-      );
-      if (incompleteIndex !== -1) {
-        throw new Error(`Complete Configuration #${incompleteIndex + 1} before pricing.`);
-      }
-
-      const pricing_requests = configurations.map((cfg) => {
-        const isNewProject = cfg.project_mode === "new" || Boolean(cfg.template_locked);
-        const assignmentScopePayload = cfg.assignment_scope || undefined;
-        const sanitizedMemberIds = Array.isArray(cfg.member_user_ids)
-          ? cfg.member_user_ids.map((id: any) => Number(id)).filter(Boolean)
-          : [];
-        const parsedBandwidthCount = cfg.bandwidth_id ? 1 : 0;
-        const parsedFloatingIpCount = Number(cfg.floating_ip_count) || 0;
-        const parsedMonths = Number(cfg.months) || 1;
-        const parsedInstances = Number(cfg.instance_count) || 1;
-        const parsedStorage = Number(cfg.storage_size_gb) || 50;
-        const instanceName = (cfg.name || "").trim() || null;
-        const networkId = isNewProject ? undefined : cfg.network_id || undefined;
-        const subnetId = isNewProject ? undefined : cfg.subnet_id || undefined;
-
-        const sanitizedSgIds = (
-          Array.isArray(cfg.security_group_ids)
-            ? cfg.security_group_ids
-            : ((cfg.security_group_ids as any) || "").split(",")
-        )
-          .map((v: any) => (v && v.value ? v.value : v))
-          .map((v: any) => (v || "").toString().trim())
-          .filter(Boolean);
-
-        const extraVolumes = (cfg.additional_volumes || [])
-          .map((vol: AdditionalVolume) => ({
-            volume_type_id: vol.volume_type_id,
-            storage_size_gb: Number(vol.storage_size_gb) || 0,
-          }))
-          .filter((vol) => vol.volume_type_id && vol.storage_size_gb > 0);
-
-        const securityGroupPayload =
-          !isNewProject && sanitizedSgIds.length > 0 ? sanitizedSgIds : undefined;
-
-        return {
-          project_id: isNewProject ? undefined : cfg.project_id || undefined,
-          project_name: isNewProject ? cfg.project_name || undefined : undefined,
-          network_preset: isNewProject
-            ? cfg.network_preset === "empty"
-              ? "standard"
-              : cfg.network_preset || "standard"
-            : undefined,
-          region: cfg.region || undefined,
-          compute_instance_id: cfg.compute_instance_id,
-          os_image_id: cfg.os_image_id,
-          months: parsedMonths,
-          number_of_instances: parsedInstances,
-          volume_types: [
-            {
-              volume_type_id: cfg.volume_type_id,
-              storage_size_gb: parsedStorage,
-            },
-            ...extraVolumes,
-          ],
-          bandwidth_id: cfg.bandwidth_id || null,
-          bandwidth_count: parsedBandwidthCount,
-          floating_ip_count: parsedFloatingIpCount,
-          security_group_ids: securityGroupPayload,
-          keypair_name: cfg.keypair_name || undefined,
-          network_id: networkId,
-          subnet_id: subnetId,
-          name: instanceName,
-          fast_track: false,
-          ...(isNewProject && assignmentScopePayload
-            ? { assignment_scope: assignmentScopePayload }
-            : {}),
-          ...(isNewProject && sanitizedMemberIds.length
-            ? { member_user_ids: sanitizedMemberIds }
-            : {}),
-        };
-      });
-
-      const payload = {
-        country_iso: billingCountry,
-        fast_track: false,
-        pricing_requests,
-      };
-
-      const response = await clientApi("POST", "/business/instances/create", payload as any);
-      const data = response?.data || response;
-
-      const normalizedGatewayOptions = normalizePaymentOptions(
-        data?.payment?.payment_gateway_options || data?.payment?.options || data?.payment_options
-      );
-      const pricingBreakdownPayload =
-        data?.pricing_breakdown ||
-        data?.transaction?.metadata?.pricing_breakdown ||
-        data?.order?.pricing_breakdown ||
-        null;
-
-      const mergedTransaction = data?.transaction
-        ? {
-          ...data.transaction,
-          metadata: {
-            ...(data.transaction.metadata || {}),
-            ...(pricingBreakdownPayload ? { pricing_breakdown: pricingBreakdownPayload } : {}),
-          },
+    await createOrderAction.run(
+      async () => {
+        if (configurations.length === 0) {
+          throw new Error("Please add at least one configuration");
         }
-        : null;
 
-      const mergedResult = {
-        ...data,
-        transaction: mergedTransaction,
-        payment: data?.payment
-          ? { ...data.payment, payment_gateway_options: normalizedGatewayOptions }
-          : normalizedGatewayOptions.length
-            ? { payment_gateway_options: normalizedGatewayOptions }
-            : data?.payment,
-        pricing_breakdown: pricingBreakdownPayload || data?.pricing_breakdown || null,
-      };
+        const incompleteIndex = configurations.findIndex(
+          (cfg) => !evaluateConfigurationCompleteness(cfg).isComplete
+        );
+        if (incompleteIndex !== -1) {
+          throw new Error(`Complete Configuration #${incompleteIndex + 1} before pricing.`);
+        }
 
-      setSubmissionResult(mergedResult);
-      setOrderReceipt({
-        transaction: mergedResult?.transaction || null,
-        order: mergedResult?.order || null,
-        payment: mergedResult?.payment || null,
-        pricing_breakdown: mergedResult?.pricing_breakdown || null,
-      });
+        const pricing_requests = configurations.map((cfg) => {
+          const isNewProject = cfg.project_mode === "new" || Boolean(cfg.template_locked);
+          const assignmentScopePayload = cfg.assignment_scope || undefined;
+          const sanitizedMemberIds = Array.isArray(cfg.member_user_ids)
+            ? cfg.member_user_ids.map((id: any) => Number(id)).filter(Boolean)
+            : [];
+          const parsedBandwidthCount = cfg.bandwidth_id ? 1 : 0;
+          const parsedFloatingIpCount = Number(cfg.floating_ip_count) || 0;
+          const parsedMonths = Number(cfg.months) || 1;
+          const parsedInstances = Number(cfg.instance_count) || 1;
+          const parsedStorage = Number(cfg.storage_size_gb) || 50;
+          const instanceName = (cfg.name || "").trim() || null;
+          const networkId = isNewProject ? undefined : cfg.network_id || undefined;
+          const subnetId = isNewProject ? undefined : cfg.subnet_id || undefined;
 
-      const isPaymentRequired = mergedResult?.payment?.required;
-      if (isPaymentRequired) {
-        setActiveStep(paymentStepIndex);
-        ToastUtils.success("Order created! Please complete payment.");
-      } else {
-        setIsPaymentSuccessful(true);
-        setActiveStep(reviewStepIndex);
-        ToastUtils.success("Order created! Instance provisioning is starting.");
+          const sanitizedSgIds = (
+            Array.isArray(cfg.security_group_ids)
+              ? cfg.security_group_ids
+              : ((cfg.security_group_ids as any) || "").split(",")
+          )
+            .map((v: any) => (v && v.value ? v.value : v))
+            .map((v: any) => (v || "").toString().trim())
+            .filter(Boolean);
+
+          const extraVolumes = (cfg.additional_volumes || [])
+            .map((vol: AdditionalVolume) => ({
+              volume_type_id: vol.volume_type_id,
+              storage_size_gb: Number(vol.storage_size_gb) || 0,
+            }))
+            .filter((vol) => vol.volume_type_id && vol.storage_size_gb > 0);
+
+          const securityGroupPayload =
+            !isNewProject && sanitizedSgIds.length > 0 ? sanitizedSgIds : undefined;
+
+          return {
+            project_id: isNewProject ? undefined : cfg.project_id || undefined,
+            project_name: isNewProject ? cfg.project_name || undefined : undefined,
+            network_preset: isNewProject
+              ? cfg.network_preset === "empty"
+                ? "standard"
+                : cfg.network_preset || "standard"
+              : undefined,
+            region: cfg.region || undefined,
+            compute_instance_id: cfg.compute_instance_id,
+            os_image_id: cfg.os_image_id,
+            months: parsedMonths,
+            number_of_instances: parsedInstances,
+            volume_types: [
+              {
+                volume_type_id: cfg.volume_type_id,
+                storage_size_gb: parsedStorage,
+              },
+              ...extraVolumes,
+            ],
+            bandwidth_id: cfg.bandwidth_id || null,
+            bandwidth_count: parsedBandwidthCount,
+            floating_ip_count: parsedFloatingIpCount,
+            security_group_ids: securityGroupPayload,
+            keypair_name: cfg.keypair_name || undefined,
+            network_id: networkId,
+            subnet_id: subnetId,
+            name: instanceName,
+            fast_track: false,
+            ...(isNewProject && assignmentScopePayload
+              ? { assignment_scope: assignmentScopePayload }
+              : {}),
+            ...(isNewProject && sanitizedMemberIds.length
+              ? { member_user_ids: sanitizedMemberIds }
+              : {}),
+          };
+        });
+
+        const payload = {
+          country_iso: billingCountry,
+          fast_track: false,
+          pricing_requests,
+        };
+
+        const response = (await clientApi(
+          "POST",
+          "/business/instances/create",
+          payload as any
+        )) as any;
+        const data = response?.data || response;
+
+        const normalizedGatewayOptions = normalizePaymentOptions(
+          data?.payment?.payment_gateway_options || data?.payment?.options || data?.payment_options
+        );
+        const pricingBreakdownPayload =
+          data?.pricing_breakdown ||
+          data?.transaction?.metadata?.pricing_breakdown ||
+          data?.order?.pricing_breakdown ||
+          null;
+
+        const mergedTransaction = data?.transaction
+          ? {
+              ...data.transaction,
+              metadata: {
+                ...(data.transaction.metadata || {}),
+                ...(pricingBreakdownPayload ? { pricing_breakdown: pricingBreakdownPayload } : {}),
+              },
+            }
+          : null;
+
+        const mergedResult = {
+          ...data,
+          transaction: mergedTransaction,
+          payment: data?.payment
+            ? { ...data.payment, payment_gateway_options: normalizedGatewayOptions }
+            : normalizedGatewayOptions.length
+              ? { payment_gateway_options: normalizedGatewayOptions }
+              : data?.payment,
+          pricing_breakdown: pricingBreakdownPayload || data?.pricing_breakdown || null,
+        };
+
+        setSubmissionResult(mergedResult);
+        setOrderReceipt({
+          transaction: mergedResult?.transaction || null,
+          order: mergedResult?.order || null,
+          payment: mergedResult?.payment || null,
+          pricing_breakdown: mergedResult?.pricing_breakdown || null,
+        });
+
+        const isPaymentRequired = mergedResult?.payment?.required;
+        if (isPaymentRequired) {
+          setActiveStep(paymentStepIndex);
+        } else {
+          setIsPaymentSuccessful(true);
+          setActiveStep(reviewStepIndex);
+        }
+        return {
+          isPaymentRequired: Boolean(isPaymentRequired),
+        };
+      },
+      {
+        successToast: (result) =>
+          result.isPaymentRequired
+            ? "Order created! Please complete payment."
+            : "Order created! Instance provisioning is starting.",
+        fallbackErrorMessage: "Failed to create order.",
+        rethrow: false,
       }
-    } catch (error: any) {
-      ToastUtils.error(error.message || "Failed to create order");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [configurations, billingCountry, paymentStepIndex, reviewStepIndex]);
+    );
+  }, [
+    billingCountry,
+    configurations,
+    createOrderAction,
+    paymentStepIndex,
+    reviewStepIndex,
+    setActiveStep,
+  ]);
 
-  const handlePaymentCompleted = useCallback(
-    (paymentResult: any) => {
-      setIsPaymentSuccessful(true);
-      setActiveStep(reviewStepIndex); // Move to review step
-      ToastUtils.success("Payment successful! Order confirmed.");
-    },
-    [reviewStepIndex]
-  );
+  const handlePaymentCompleted = useCallback(() => {
+    setIsPaymentSuccessful(true);
+    setActiveStep(reviewStepIndex); // Move to review step
+    ToastUtils.success("Payment successful! Order confirmed.");
+  }, [reviewStepIndex]);
 
   // ─────────────────────────────────────────────────────────────────
   // Pricing Calculations
@@ -421,9 +433,10 @@ export const useClientProvisioningLogic = () => {
     isLoadingResources,
 
     // Order
-    isSubmitting,
+    isSubmitting: createOrderAction.isPending,
     submissionResult,
     orderReceipt,
+    submissionErrorMessage: createOrderAction.errorMessage,
     isPaymentSuccessful,
     handleCreateOrder,
     handlePaymentCompleted,

@@ -4,16 +4,19 @@ import { Configuration, AdditionalVolume, Option } from "../../../types/Instance
 import { InstanceResources } from "../../../hooks/useInstanceResources";
 
 // Type for custom fetch hook that returns { data, isFetching, ... }
-type FetchHookResult = { data: any; isFetching?: boolean; isLoading?: boolean };
-type FetchHookFn = (...args: any[]) => FetchHookResult;
+type FetchHookResult<T = unknown> = { data: T; isFetching?: boolean; isLoading?: boolean };
+type FetchHookFn<T = unknown, Args extends unknown[] = unknown[]> = (
+  ...args: Args
+) => FetchHookResult<T>;
 
 interface ConfigurationListStepProps {
   configurations: Configuration[];
   resources: InstanceResources;
-  generalRegions: any[];
+  generalRegions: unknown;
   regionOptions: Option[];
   isLoadingResources: boolean;
   isSubmitting: boolean;
+  submitErrorMessage?: string | null;
   billingCountry: string;
   onAddConfiguration: () => void;
   onRemoveConfiguration: (id: string) => void;
@@ -53,10 +56,11 @@ interface ConfigurationListStepProps {
 const ConfigurationListStep: React.FC<ConfigurationListStepProps> = ({
   configurations,
   resources,
-  generalRegions,
+  generalRegions: _generalRegions,
   regionOptions,
   isLoadingResources,
   isSubmitting,
+  submitErrorMessage,
   billingCountry,
   onAddConfiguration,
   onRemoveConfiguration,
@@ -87,6 +91,7 @@ const ConfigurationListStep: React.FC<ConfigurationListStepProps> = ({
   lockAssignmentScope = false,
   pricingTenantId,
 }) => {
+  void _generalRegions;
   const hasSelectedProject = configurations.some((cfg) => Boolean(cfg.project_id));
   const shouldShowNetworkBanner = hasSelectedProject && projectHasNetwork;
 
@@ -124,6 +129,7 @@ const ConfigurationListStep: React.FC<ConfigurationListStepProps> = ({
           onBackToWorkflow={onBack}
           onSubmitConfigurations={onSubmit}
           isSubmitting={isSubmitting}
+          submitErrorMessage={submitErrorMessage}
           showTemplateSelector={showTemplateSelector}
           // Pass through context-specific options
           useProjectsHook={useProjectsHook}

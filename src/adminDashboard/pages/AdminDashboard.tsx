@@ -1,10 +1,7 @@
-// @ts-nocheck
-import React from "react";
 import QuickAccessNav from "../components/quickAccessNav";
 import ModernStatsCard from "../../shared/components/ui/ModernStatsCard";
-import { ModernCard } from "../../shared/components/ui";
-import { ModernButton } from "../../shared/components/ui";
-import ModernTable from "../../shared/components/ui/ModernTable";
+import { ModernButton, ModernCard, StatusPill } from "../../shared/components/ui";
+import ModernTable, { Column } from "../../shared/components/ui/ModernTable";
 import {
   Loader2,
   Upload,
@@ -16,7 +13,8 @@ import {
   Eye,
   Edit,
 } from "lucide-react";
-// @ts-ignore
+import { useNavigate } from "react-router-dom";
+
 import useAuthRedirect from "../../utils/adminAuthRedirect";
 import AdminPageShell from "../components/AdminPageShell";
 
@@ -38,13 +36,44 @@ interface Client {
 
 export default function AdminDashboard() {
   const { isLoading } = useAuthRedirect();
+  const navigate = useNavigate();
 
   // Placeholder data arrays until real data is connected
   const recentPartners: Partner[] = [];
   const recentClients: Client[] = [];
 
+  const encodeId = (id: string | number) => encodeURIComponent(btoa(String(id)));
+
+  const handleViewPartner = (partner: Partner) => {
+    if (!partner?.id) return;
+    const encodedId = encodeId(partner.id);
+    const encodedName = encodeURIComponent(partner.name || "");
+    navigate(`/admin-dashboard/partners/details?id=${encodedId}&name=${encodedName}`);
+  };
+
+  const handleEditPartner = (partner: Partner) => {
+    if (!partner?.id) return;
+    const encodedId = encodeId(partner.id);
+    const encodedName = encodeURIComponent(partner.name || "");
+    navigate(`/admin-dashboard/partners/details?id=${encodedId}&name=${encodedName}&edit=1`);
+  };
+
+  const handleViewClient = (client: Client) => {
+    if (!client?.id) return;
+    const encodedId = encodeId(client.id);
+    const encodedName = encodeURIComponent(client.name || "");
+    navigate(`/admin-dashboard/clients/details?id=${encodedId}&name=${encodedName}`);
+  };
+
+  const handleEditClient = (client: Client) => {
+    if (!client?.id) return;
+    const encodedId = encodeId(client.id);
+    const encodedName = encodeURIComponent(client.name || "");
+    navigate(`/admin-dashboard/clients/details?id=${encodedId}&name=${encodedName}&edit=1`);
+  };
+
   const headerActions = (
-    <div className="flex gap-2">
+    <div className="ui-action-row">
       <ModernButton variant="outline" size="sm">
         <Upload className="w-4 h-4" />
         Export
@@ -56,7 +85,7 @@ export default function AdminDashboard() {
     </div>
   );
 
-  const partnerColumns = [
+  const partnerColumns: Column<Partner>[] = [
     { key: "id", header: "Partner ID", sortable: true },
     { key: "name", header: "Name", sortable: true },
     { key: "email", header: "Email", sortable: true },
@@ -65,28 +94,32 @@ export default function AdminDashboard() {
     {
       key: "actions",
       header: "Actions",
-      render: (_: any, partner: Partner) => (
-        <div className="flex gap-2">
-          <button
-            onClick={() => console.log("View partner:", partner)}
+      render: (_: unknown, partner: Partner) => (
+        <div className="ui-table-actions">
+          <ModernButton
+            variant="ghost"
+            size="xs"
+            onClick={() => handleViewPartner(partner)}
             title="View Partner"
-            className="text-slate-500 hover:text-blue-600"
+            aria-label={`View ${partner.name}`}
           >
             <Eye size={16} />
-          </button>
-          <button
-            onClick={() => console.log("Edit partner:", partner)}
+          </ModernButton>
+          <ModernButton
+            variant="ghost"
+            size="xs"
+            onClick={() => handleEditPartner(partner)}
             title="Edit Partner"
-            className="text-slate-500 hover:text-blue-600"
+            aria-label={`Edit ${partner.name}`}
           >
             <Edit size={16} />
-          </button>
+          </ModernButton>
         </div>
       ),
     },
   ];
 
-  const clientColumns = [
+  const clientColumns: Column<Client>[] = [
     { key: "id", header: "Client ID", sortable: true },
     { key: "name", header: "Name", sortable: true },
     { key: "email", header: "Email", sortable: true },
@@ -95,31 +128,31 @@ export default function AdminDashboard() {
       key: "module",
       header: "Current Module",
       sortable: true,
-      render: (value: string) => (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-          {value}
-        </span>
-      ),
+      render: (_: unknown, client: Client) => <StatusPill tone="info" label={client.module} />,
     },
     {
       key: "actions",
       header: "Actions",
-      render: (_: any, client: Client) => (
-        <div className="flex gap-2">
-          <button
-            onClick={() => console.log("View client:", client)}
+      render: (_: unknown, client: Client) => (
+        <div className="ui-table-actions">
+          <ModernButton
+            variant="ghost"
+            size="xs"
+            onClick={() => handleViewClient(client)}
             title="View Client"
-            className="text-slate-500 hover:text-blue-600"
+            aria-label={`View ${client.name}`}
           >
             <Eye size={16} />
-          </button>
-          <button
-            onClick={() => console.log("Edit client:", client)}
+          </ModernButton>
+          <ModernButton
+            variant="ghost"
+            size="xs"
+            onClick={() => handleEditClient(client)}
             title="Edit Client"
-            className="text-slate-500 hover:text-blue-600"
+            aria-label={`Edit ${client.name}`}
           >
             <Edit size={16} />
-          </button>
+          </ModernButton>
         </div>
       ),
     },
@@ -128,78 +161,72 @@ export default function AdminDashboard() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <Loader2 className="w-12 text-[#288DD1] animate-spin" />
+        <Loader2 className="w-12 text-[var(--theme-color)] animate-spin" />
       </div>
     );
   }
 
   return (
-    <>
-      <AdminPageShell
-        title="Admin Overview"
-        description="Monitor tenants, clients, and infrastructure health from a single view."
-        actions={headerActions}
-        contentClassName="space-y-8"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <ModernStatsCard
-            title="Total Active Partners"
-            value="0"
-            icon={<Building />}
-            color="primary"
-            trend={{ value: 0, isPositive: true } as any}
-            description="Partners registered in the system"
-          />
-          <ModernStatsCard
-            title="Total Active Clients"
-            value="0"
-            icon={<Users />}
-            color="success"
-            trend={{ value: 0, isPositive: true } as any}
-            description="Active client accounts"
-          />
-          <ModernStatsCard
-            title="Total Modules"
-            value="0"
-            icon={<Package />}
-            color="info"
-            trend={{ value: 0, isPositive: true } as any}
-            description="Available service modules"
-          />
-          <ModernStatsCard
-            title="Pending Tickets"
-            value="0"
-            icon={<HelpCircle />}
-            color="warning"
-            trend={{ value: 0, isPositive: true } as any}
-            description="Support tickets awaiting response"
-          />
-        </div>
+    <AdminPageShell
+      title="Admin Overview"
+      description="Monitor tenants, clients, and infrastructure health from a single view."
+      actions={headerActions}
+      contentClassName="ui-page-stack"
+    >
+      <div className="ui-metrics-grid">
+        <ModernStatsCard
+          title="Total Active Partners"
+          value="0"
+          icon={<Building />}
+          color="primary"
+          description="Partners registered in the system"
+        />
+        <ModernStatsCard
+          title="Total Active Clients"
+          value="0"
+          icon={<Users />}
+          color="success"
+          description="Active client accounts"
+        />
+        <ModernStatsCard
+          title="Total Modules"
+          value="0"
+          icon={<Package />}
+          color="info"
+          description="Available service modules"
+        />
+        <ModernStatsCard
+          title="Pending Tickets"
+          value="0"
+          icon={<HelpCircle />}
+          color="warning"
+          description="Support tickets awaiting response"
+        />
+      </div>
 
-        <QuickAccessNav />
+      <QuickAccessNav />
 
-        <ModernCard>
-          <ModernTable
-            data={recentPartners}
-            columns={partnerColumns as any}
-            title="Recent Partners"
-            emptyMessage="No recent partners found."
-            paginated={false}
-            searchable={false}
-          />
-        </ModernCard>
+      <ModernCard>
+        <ModernTable
+          data={recentPartners}
+          columns={partnerColumns}
+          title="Recent Partners"
+          emptyMessage="No recent partners found."
+          paginated={false}
+          searchable={false}
+        />
+      </ModernCard>
 
-        <ModernCard>
-          <ModernTable
-            data={recentClients}
-            columns={clientColumns as any}
-            title="Recent Clients"
-            emptyMessage="No recent clients found."
-            paginated={false}
-            searchable={false}
-          />
-        </ModernCard>
-      </AdminPageShell>
-    </>
+      <ModernCard>
+        <ModernTable
+          data={recentClients}
+          columns={clientColumns}
+          title="Recent Clients"
+          emptyMessage="No recent clients found."
+          paginated={false}
+          searchable={false}
+        />
+      </ModernCard>
+    </AdminPageShell>
   );
 }

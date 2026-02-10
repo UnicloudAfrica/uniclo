@@ -1,10 +1,17 @@
-import { useState, useContext, useRef } from "react";
+import { useState, useContext } from "react";
 import load from "./assets/load.gif";
 import { initializeApp } from "firebase/app";
 import { Editor } from "@tinymce/tinymce-react";
 import { getFirestore, collection, addDoc, doc, deleteDoc } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { PageContext, BlogContext } from "../contexts/contextprovider";
+import { BlogContext } from "../contexts/contextprovider";
+
+interface BlogRecord {
+  id?: string;
+  date?: string;
+  title?: string;
+  url?: string;
+}
 
 const BlogAdmin = () => {
   const firebaseConfig = {
@@ -23,18 +30,18 @@ const BlogAdmin = () => {
 
   //states
   // const [page, setPage] = useContext(PageContext);
-  const [blogTitle, setBlogTitle] = useState(null);
-  const [fileName, setFileName] = useState(null);
-  const [blogTag, setBlogTag] = useState(null);
-  const [blogDrawin, setBlogDrawin] = useState(null);
-  const [blogContent, setBlogContent] = useState(null);
-  const [file, setFile] = useState(null);
+  const [blogTitle, setBlogTitle] = useState<any>(null);
+  const [fileName, setFileName] = useState<any>(null);
+  const [blogTag, setBlogTag] = useState<any>(null);
+  const [blogDrawin, setBlogDrawin] = useState<any>(null);
+  const [blogContent, setBlogContent] = useState<any>(null);
+  const [file, setFile] = useState<any>(null);
   const [loadValue, setLoadValue] = useState("No");
   const [deleteUser, setDeleteUser] = useState(false);
   const [docID, setDocID] = useState("");
   const [blogArray] = useContext(BlogContext);
 
-  const handleDeleteClick = (e) => {
+  const handleDeleteClick = () => {
     deleteDoc(doc(db, "blog", docID))
       .then(() => {
         alert("Deleted");
@@ -45,46 +52,23 @@ const BlogAdmin = () => {
       });
   };
 
-  const handleDelete = (e) => {
+  const handleDelete = (e: React.MouseEvent<HTMLButtonElement>) => {
     setDeleteUser(true);
-    const parent = e.target.parentElement;
-    const parentParent = parent.parentElement;
-    // const parentParentParent = parentParent.parentElement;
-    setDocID(parentParent.id);
+    const row = e.currentTarget.closest("tr");
+    setDocID(row?.id ?? "");
   };
 
-  //date and time
-  // For todays date;
-  /* Date.prototype.today = function () {
-        const months = [
-            "January", "February", "March", "April",
-            "May", "June", "July", "August",
-            "September", "October", "November", "December"
-        ];
-    
-        const day = this.getDate();
-        const month = months[this.getMonth()];
-        const year = this.getFullYear();
-    
-        return `${month} ${day}, ${year}`;
-    }; */
-
-  // For the time now
-  /* Date.prototype.timeNow = function () {
-        return ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes() +":"+ ((this.getSeconds() < 10)?"0":"") + this.getSeconds();
-    } */
+  const formatDate = (value: Date) =>
+    value.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  const formatTime = (value: Date) => value.toLocaleTimeString("en-US", { hour12: false });
 
   const newDate = new Date();
-  const date = newDate.today();
-  const time = newDate.timeNow();
-
-  const editorRef = useRef(null);
-
-  const log = () => {
-    if (editorRef.current) {
-      setBlogContent(editorRef.current.getContent());
-    }
-  };
+  const date = formatDate(newDate);
+  const time = formatTime(newDate);
 
   // console.log(blogContent)
 
@@ -92,13 +76,9 @@ const BlogAdmin = () => {
   const sumbmitImg = () => {
     if (file && blogTitle && blogTag && blogDrawin) {
       setLoadValue("Yes");
-      const metadata = {
-        contentType: "image/jpeg, image/png",
-        name: fileName,
-      };
-      const storageRef = ref(storage, fileName, metadata);
+      const storageRef = ref(storage, fileName);
 
-      uploadBytes(storageRef, file).then((snapshot) => {
+      uploadBytes(storageRef, file).then(() => {
         getDownloadURL(storageRef).then((url) => {
           const transactionDoc = collection(db, "blog");
           const docData = {
@@ -124,18 +104,18 @@ const BlogAdmin = () => {
   // toggle between Create new and Overview
   const [activeButton, setActiveButton] = useState("create");
 
-  const handleButtonClick = (buttonName) => {
+  const handleButtonClick = (buttonName: string) => {
     setActiveButton(buttonName);
   };
 
   return (
     <>
       <div className=" flex justify-center items-center mt-3">
-        <div className=" bg-[#EAEBF0] rounded-[20px]">
+        <div className=" bg-[var(--theme-surface-alt)] rounded-[20px]">
           <button
             className={`font-medium font-Outfit text-sm py-2 px-5 rounded-[20px] transition-all ${
               activeButton === "create"
-                ? " bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] text-[#121212]"
+                ? " bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] text-[var(--theme-heading-color)]"
                 : ""
             }`}
             onClick={() => handleButtonClick("create")}
@@ -145,7 +125,7 @@ const BlogAdmin = () => {
           <button
             className={`font-medium font-Outfit text-sm py-2 px-5 rounded-[20px] transition-all ${
               activeButton === "overview"
-                ? " bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] text-[#121212]"
+                ? " bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] text-[var(--theme-heading-color)]"
                 : ""
             }`}
             onClick={() => handleButtonClick("overview")}
@@ -157,66 +137,57 @@ const BlogAdmin = () => {
 
       {activeButton === "create" && (
         <div className=" my-8 w-full ">
-          <div className=" w-full p-3 md:p-8 md:border rounded-[8px] border-[#DAE0E6]">
+          <div className=" w-full p-3 md:p-8 md:border rounded-[8px] border-[var(--border-default)]">
             <div className=" w-full flex flex-col ">
               <span className=" w-full mb-6">
                 <label className=" font-Outfit text-base font-medium">Title</label>
                 <input
                   type="text"
-                  onInput={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     setBlogTitle(e.target.value);
                   }}
                   placeholder="Your blog title here"
-                  className=" h-[45px] bg-[#F5F5F4] mt-2 shadow-md shadow-[#1018280D] text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                  className=" h-[45px] bg-[var(--theme-surface-alt)] mt-2 shadow-md shadow-[rgb(var(--theme-neutral-900) / 0.05)] text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                 />
               </span>
               <span className=" w-full mb-6">
                 <label className=" font-Outfit text-base font-medium">Image</label>
                 <input
                   type="file"
-                  onChange={(e) => {
-                    setFile(e.target.files[0]);
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    const selectedFile = e.target.files?.[0] ?? null;
+                    setFile(selectedFile);
                     setFileName(e.target.value);
                   }}
-                  on
-                  className=" h-[45px] bg-[#F5F5F4] mt-2 shadow-md shadow-[#1018280D] text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                  className=" h-[45px] bg-[var(--theme-surface-alt)] mt-2 shadow-md shadow-[rgb(var(--theme-neutral-900) / 0.05)] text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                 />
               </span>
             </div>
             <label className=" font-Outfit text-base font-medium">Tag</label>
             <input
               type="text"
-              onInput={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setBlogTag(e.target.value);
               }}
               placeholder="Your blog tag Here i.e (Cloud Computing, Web Hosting)"
-              className=" h-[45px] bg-[#F5F5F4] mt-2 shadow-md shadow-[#1018280D] mb-6 text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+              className=" h-[45px] bg-[var(--theme-surface-alt)] mt-2 shadow-md shadow-[rgb(var(--theme-neutral-900) / 0.05)] mb-6 text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
             />
 
             <label className=" font-Outfit text-base font-medium">Draw in</label>
             <input
               type="text"
               maxLength={250}
-              onInput={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setBlogDrawin(e.target.value);
               }}
               placeholder="Your blog Draw-in Here (Max: 250 Characters)"
-              className=" h-[45px] bg-[#F5F5F4] mt-2 shadow-md shadow-[#1018280D] mb-6 text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+              className=" h-[45px] bg-[var(--theme-surface-alt)] mt-2 shadow-md shadow-[rgb(var(--theme-neutral-900) / 0.05)] mb-6 text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
             />
 
             <label className=" font-Outfit text-base font-medium">Content</label>
 
             <Editor
               apiKey="6nal7pczsjxywqe0s030u9o3x5hz0qcmx1skn7j0zr51wiha"
-              onInit={(evt, editor) => {
-                editorRef.current = editor;
-                // const contentArea = editor.getBody();
-
-                // // Attach input event listener to the content area
-                // contentArea.addEventListener('input', () => {
-                //     log(editor.getContent());
-                // });
-              }}
               initialValue="<p>This is the initial content of the editor.</p>"
               init={{
                 height: 300,
@@ -246,10 +217,11 @@ const BlogAdmin = () => {
                   "bold italic forecolor | alignleft aligncenter " +
                   "alignright alignjustify | bullist numlist outdent indent | " +
                   "removeformat | help",
-                content_style: "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
+                content_style:
+                  "body { font-family: var(--font-sans, Outfit, Inter, SF Pro Display, sans-serif); font-size:14px }",
                 setup: (editor) => {
                   editor.on("change", () => {
-                    log(editor.getContent());
+                    setBlogContent(editor.getContent());
                   });
                 },
               }}
@@ -271,38 +243,49 @@ const BlogAdmin = () => {
 
       {activeButton === "overview" && (
         <div className=" my-8 w-full overflow-auto">
-          <div className="bg-[rgba(150,150,152,0.2)] backdrop-blur-[15px] p-3 rounded-md shadow w-full overflow-auto">
-            <table className=" text-center overflow-auto border-b w-full border-[#00000049] mt-3">
+          <div className="bg-[rgb(var(--theme-neutral-300) / 0.2)] backdrop-blur-[15px] p-3 rounded-md shadow w-full overflow-auto">
+            <table className=" text-center overflow-auto border-b w-full border-[rgb(var(--theme-neutral-900) / 0.29)] mt-3">
               <thead>
-                <tr className=" text-[#000] text-sm font-Outfit font-medium">
-                  <th className="p-2 border-b border-[#00000049]">Date</th>
-                  <th className="p-2 border-b border-[#00000049]">Title</th>
-                  <th className="p-2 border-b border-[#00000049]">Image</th>
-                  <th className="p-2 border-b border-[#00000049]">Control Center</th>
+                <tr className=" text-[var(--theme-heading-color)] text-sm font-Outfit font-medium">
+                  <th className="p-2 border-b border-[rgb(var(--theme-neutral-900) / 0.29)]">
+                    Date
+                  </th>
+                  <th className="p-2 border-b border-[rgb(var(--theme-neutral-900) / 0.29)]">
+                    Title
+                  </th>
+                  <th className="p-2 border-b border-[rgb(var(--theme-neutral-900) / 0.29)]">
+                    Image
+                  </th>
+                  <th className="p-2 border-b border-[rgb(var(--theme-neutral-900) / 0.29)]">
+                    Control Center
+                  </th>
                 </tr>
               </thead>
               <tbody id="table" className=" overflow-auto">
-                {blogArray.map((doc) => {
+                {(blogArray as BlogRecord[]).map((doc: BlogRecord, index: number) => {
+                  const titlePreview = doc.title ? `${doc.title.substring(0, 40)}...` : "Untitled";
                   return (
                     <tr
-                      key={doc.id}
-                      id={doc.id}
-                      className="text-[#000] h-[4em] border-b border-[#00000049] overflow-hidden text-sm font-Outfit font-medium"
+                      key={doc.id ?? `blog-${index}`}
+                      id={doc.id ?? ""}
+                      className="text-[var(--theme-heading-color)] h-[4em] border-b border-[rgb(var(--theme-neutral-900) / 0.29)] overflow-hidden text-sm font-Outfit font-medium"
                     >
-                      <td className="p-2 border-b  border-[#00000049]">{doc.date}</td>
-                      <td className="p-2 border-b  capitalize border-[#00000049]">
-                        {doc.title.substring(0, 40) + "..."}
+                      <td className="p-2 border-b  border-[rgb(var(--theme-neutral-900) / 0.29)]">
+                        {doc.date}
                       </td>
-                      <td className=" border-b  border-[#00000049]">
+                      <td className="p-2 border-b  capitalize border-[rgb(var(--theme-neutral-900) / 0.29)]">
+                        {titlePreview}
+                      </td>
+                      <td className=" border-b  border-[rgb(var(--theme-neutral-900) / 0.29)]">
                         <a
-                          className=" px-2 py-1 bg-[#939292] text-xs rounded-md"
+                          className=" px-2 py-1 bg-[var(--theme-text-color)] text-xs rounded-md"
                           target="blank"
                           href={doc.url}
                         >
                           View
                         </a>
                       </td>
-                      <td className=" text-white my-auto capitalize border-[#00000049] ">
+                      <td className=" text-white my-auto capitalize border-[rgb(var(--theme-neutral-900) / 0.29)] ">
                         <button
                           onClick={handleDelete}
                           className=" px-2 py-1 text-xs rounded-md bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)]"
@@ -320,9 +303,9 @@ const BlogAdmin = () => {
       )}
 
       {deleteUser && (
-        <div className=" w-full h-[100vh] fixed z-[10000] px-5 top-0 left-0 bg-[rgba(0,0,0,0.7)] flex justify-center items-center">
-          <div className="w-full md:w-[400px] rounded-md shadow p-5 bg-[#ffffff] relative flex justify-center flex-col text-sm font-Outfit font-medium items-center">
-            <p className=" text-base font-normal text-center text-[#000]">
+        <div className=" w-full h-[100vh] fixed z-[10000] px-5 top-0 left-0 bg-[rgb(var(--theme-neutral-900) / 0.7)] flex justify-center items-center">
+          <div className="w-full md:w-[400px] rounded-md shadow p-5 bg-[var(--theme-card-bg)] relative flex justify-center flex-col text-sm font-Outfit font-medium items-center">
+            <p className=" text-base font-normal text-center text-[var(--theme-heading-color)]">
               Are you Sure you Want to delete this Data?
             </p>
             <span className=" flex flex-row space-x-3 mt-6 text-white">

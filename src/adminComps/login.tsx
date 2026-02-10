@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 
 const Login = () => {
-  const [generalitem, setGeneralItem] = useContext(GeneralContext);
+  const [generalitem] = useContext(GeneralContext);
   const Navigate = useNavigate();
 
   const firebaseConfig = {
@@ -27,14 +27,13 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [loadValue, setLoadValue] = useState("No");
 
-  const handleSignIn = (e) => {
+  const handleSignIn = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setLoadValue("Yes");
 
     signInWithEmailAndPassword(auth, mail, password)
-      .then((userCredential) => {
+      .then(() => {
         // Signed in
-        const user = userCredential.user;
         setLoadValue("No");
       })
       .catch((error) => {
@@ -54,11 +53,14 @@ const Login = () => {
     return () => unsubscribe();
   }, [auth, Navigate]);
 
-  const validateMail = () => {
-    const mailVal = document.getElementById("mail").value;
+  const validateMail = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const mailVal = e.target.value;
     const mailWarn = document.getElementById("mailWarn");
+    if (!mailWarn) {
+      return;
+    }
 
-    const checkMail = (m) => {
+    const checkMail = (m: string) => {
       const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return re.test(String(m).toLowerCase());
     };
@@ -74,7 +76,7 @@ const Login = () => {
     }
   };
 
-  const handlePword = (e) => {
+  const handlePword = (e: React.ChangeEvent<HTMLInputElement>) => {
     const pword = e.target.value;
     setPassword(pword);
   };
@@ -93,14 +95,14 @@ const Login = () => {
             </label>
             <input
               type="text"
-              onInput={validateMail}
+              onChange={validateMail}
               id="mail"
               placeholder="Enter your email"
-              className=" h-[45px] w-[350px] glower mt-2 border border-[rgb(var(--secondary-color-rgb)/0.8)] z-50 bg-[#ffffffcc] mb-6 text-blacl font-Outfit font-normal placeholder:font-Outfit text-sm rounded-[20px] block p-2.5"
+              className=" h-[45px] w-[350px] glower mt-2 border border-[rgb(var(--secondary-color-rgb)/0.8)] z-50 bg-[rgb(var(--theme-neutral-50) / 0.8)] mb-6 text-blacl font-Outfit font-normal placeholder:font-Outfit text-sm rounded-[20px] block p-2.5"
             />
             <p
               id="mailWarn"
-              className=" capitalize hidden mr-auto font-Outfit text-xs mt-1 text-[rgba(0,0,0,0.9)]"
+              className=" capitalize hidden mr-auto font-Outfit text-xs mt-1 text-[rgb(var(--theme-neutral-900)/0.9)]"
             >
               Please fill in your Email
             </p>
@@ -110,13 +112,13 @@ const Login = () => {
             <input
               id="password"
               type="password"
-              onInput={handlePword}
+              onChange={handlePword}
               placeholder="Enter your Password"
-              className=" h-[45px] w-[350px] mt-2 border border-[rgb(var(--secondary-color-rgb)/0.8)] z-50 bg-[#ffffffcc] mb-6 text-blacl font-Outfit font-normal placeholder:font-Outfit text-sm rounded-[20px] block p-2.5"
+              className=" h-[45px] w-[350px] mt-2 border border-[rgb(var(--secondary-color-rgb)/0.8)] z-50 bg-[rgb(var(--theme-neutral-50) / 0.8)] mb-6 text-blacl font-Outfit font-normal placeholder:font-Outfit text-sm rounded-[20px] block p-2.5"
             />
             <p
               id="logMessage"
-              className="block mr-auto text-[#1e1e1e] font-Outfit -mt-5 text-sm"
+              className="block mr-auto text-[var(--theme-heading-color)] font-Outfit -mt-5 text-sm"
             ></p>
             <button
               id="signIn"

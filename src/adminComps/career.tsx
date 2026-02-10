@@ -1,24 +1,21 @@
-import { useState, useContext, useRef } from "react";
+import { useState, useContext } from "react";
 import load from "./assets/load.gif";
 import { initializeApp } from "firebase/app";
 import { Editor } from "@tinymce/tinymce-react";
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  query,
-  orderBy,
-  onSnapshot,
-  doc,
-  deleteDoc,
-} from "firebase/firestore";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { PageContext, CareerContext } from "../contexts/contextprovider";
+import { getFirestore, collection, addDoc, doc, deleteDoc } from "firebase/firestore";
+import { CareerContext } from "../contexts/contextprovider";
+
+interface CareerRecord {
+  id?: string;
+  title?: string;
+  pay?: string;
+  location?: string;
+}
 
 const Career = () => {
   // toggle between Create new and Overview
   const [activeButton, setActiveButton] = useState("create");
-  const handleButtonClick = (buttonName) => {
+  const handleButtonClick = (buttonName: string) => {
     setActiveButton(buttonName);
   };
 
@@ -34,23 +31,19 @@ const Career = () => {
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
-  const storage = getStorage(app);
-
   //states
-  const [page, setPage] = useContext(PageContext);
-  const [jobDetails, setJobDetails] = useState(null);
-  const [jobTitle, setJobTitle] = useState(null);
-  const [jobPay, setJobPay] = useState(null);
-  const [jobDuration, setJobDuration] = useState(null);
-  const [location, setLocation] = useState(null);
-  const [desc, setDesc] = useState(null);
+  const [jobDetails, setJobDetails] = useState<any>(null);
+  const [jobTitle, setJobTitle] = useState<any>(null);
+  const [jobPay, setJobPay] = useState<any>(null);
+  const [jobDuration, setJobDuration] = useState<any>(null);
+  const [location, setLocation] = useState<any>(null);
+  const [desc, setDesc] = useState<any>(null);
   const [deleteUser, setDeleteUser] = useState(false);
   const [docID, setDocID] = useState("");
   const [loadValue, setLoadValue] = useState("No");
   const [careerArray] = useContext(CareerContext);
 
-  // For todays date;
-  Date.prototype.today = function () {
+  const formatToday = (value: Date) => {
     const months = [
       "January",
       "February",
@@ -66,15 +59,15 @@ const Career = () => {
       "December",
     ];
 
-    const day = this.getDate();
-    const month = months[this.getMonth()];
-    const year = this.getFullYear();
+    const day = value.getDate();
+    const month = months[value.getMonth()];
+    const year = value.getFullYear();
 
     return `${month} ${day}, ${year}`;
   };
 
   const newDate = new Date();
-  const date = newDate.today();
+  const date = formatToday(newDate);
 
   const sumbmitImg = () => {
     if (jobDetails && jobTitle && jobPay && jobDuration && location && desc) {
@@ -98,7 +91,7 @@ const Career = () => {
     }
   };
 
-  const handleDeleteClick = (e) => {
+  const handleDeleteClick = () => {
     deleteDoc(doc(db, "career", docID))
       .then(() => {
         alert("Deleted");
@@ -109,29 +102,20 @@ const Career = () => {
       });
   };
 
-  const handleDelete = (e) => {
+  const handleDelete = (e: React.MouseEvent<HTMLButtonElement>) => {
     setDeleteUser(true);
-    const parent = e.target.parentElement;
-    const parentParent = parent.parentElement;
-    const parentParentParent = parentParent.parentElement;
-    setDocID(parentParent.id);
-  };
-
-  const editorRef = useRef(null);
-  const log = () => {
-    if (editorRef.current) {
-      setJobDetails(editorRef.current.getContent());
-    }
+    const row = e.currentTarget.closest("tr");
+    setDocID(row?.id ?? "");
   };
 
   return (
     <>
       <div className=" flex justify-center items-center mt-3">
-        <div className=" bg-[#EAEBF0] rounded-[20px]">
+        <div className=" bg-[var(--theme-surface-alt)] rounded-[20px]">
           <button
             className={`font-medium font-Outfit text-sm py-2 px-5 rounded-[20px] transition-all ${
               activeButton === "create"
-                ? " bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] text-[#121212]"
+                ? " bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] text-[var(--theme-heading-color)]"
                 : ""
             }`}
             onClick={() => {
@@ -143,7 +127,7 @@ const Career = () => {
           <button
             className={`font-medium font-Outfit text-sm py-2 px-5 rounded-[20px] transition-all ${
               activeButton === "overview"
-                ? " bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] text-[#121212]"
+                ? " bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)] text-[var(--theme-heading-color)]"
                 : ""
             }`}
             onClick={() => {
@@ -157,40 +141,40 @@ const Career = () => {
 
       {activeButton === "create" && (
         <div className=" my-8 w-full ">
-          <div className=" w-full p-3 md:p-8 md:border rounded-[8px] border-[#DAE0E6]">
-            <label className=" font-Outfit text-base font-medium" for="first-name">
+          <div className=" w-full p-3 md:p-8 md:border rounded-[8px] border-[var(--border-default)]">
+            <label className=" font-Outfit text-base font-medium" htmlFor="first-name">
               Position Title
             </label>
             <input
               type="text"
-              onInput={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setJobTitle(e.target.value);
               }}
               placeholder="i.e UX Designer"
-              class=" h-[45px] bg-[#F5F5F4] mt-2 shadow-md shadow-[#1018280D] mb-6 text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+              className=" h-[45px] bg-[var(--theme-surface-alt)] mt-2 shadow-md shadow-[rgb(var(--theme-neutral-900) / 0.05)] mb-6 text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
             />
 
-            <label className=" font-Outfit text-base font-medium" for="first-name">
+            <label className=" font-Outfit text-base font-medium" htmlFor="first-name">
               Salary Range
             </label>
             <input
               type="text"
-              onInput={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setJobPay(e.target.value);
               }}
               placeholder="i.e 80k-100k"
-              class=" h-[45px] bg-[#F5F5F4] mt-2 shadow-md shadow-[#1018280D] mb-6 text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+              className=" h-[45px] bg-[var(--theme-surface-alt)] mt-2 shadow-md shadow-[rgb(var(--theme-neutral-900) / 0.05)] mb-6 text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
             />
 
-            <label className=" font-Outfit text-base font-medium" for="first-name">
+            <label className=" font-Outfit text-base font-medium" htmlFor="first-name">
               Duration
             </label>
             <select
               name=""
-              onInput={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                 setJobDuration(e.target.value);
               }}
-              className="h-[45px] bg-[#F5F5F4] mt-2 mb-4 shadow-md shadow-[#1018280D] text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+              className="h-[45px] bg-[var(--theme-surface-alt)] mt-2 mb-4 shadow-md shadow-[rgb(var(--theme-neutral-900) / 0.05)] text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
               id=""
             >
               <option value="">Please Select</option>
@@ -200,15 +184,15 @@ const Career = () => {
               <option value="Internship">Internship</option>
             </select>
 
-            <label className=" font-Outfit text-base font-medium" for="first-name">
+            <label className=" font-Outfit text-base font-medium" htmlFor="first-name">
               Location
             </label>
             <select
               name=""
-              onInput={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                 setLocation(e.target.value);
               }}
-              className="h-[45px] bg-[#F5F5F4] mt-2 mb-4 shadow-md shadow-[#1018280D] text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+              className="h-[45px] bg-[var(--theme-surface-alt)] mt-2 mb-4 shadow-md shadow-[rgb(var(--theme-neutral-900) / 0.05)] text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
               id=""
             >
               <option value="">Please Select</option>
@@ -218,16 +202,16 @@ const Career = () => {
               <option value="Liberia">Liberia</option>
             </select>
 
-            <label className=" font-Outfit text-base font-medium" for="first-name">
+            <label className=" font-Outfit text-base font-medium" htmlFor="first-name">
               Job Desc
             </label>
             <input
               type="text"
-              onInput={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setDesc(e.target.value);
               }}
               placeholder="Short Job description"
-              class=" h-[45px] bg-[#F5F5F4] mt-2 shadow-md shadow-[#1018280D] mb-6 text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+              className=" h-[45px] bg-[var(--theme-surface-alt)] mt-2 shadow-md shadow-[rgb(var(--theme-neutral-900) / 0.05)] mb-6 text-gray-900 font-Outfit font-normal placeholder:font-Outfit text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
             />
 
             <label className=" font-Outfit text-base font-medium">
@@ -236,9 +220,6 @@ const Career = () => {
 
             <Editor
               apiKey="6nal7pczsjxywqe0s030u9o3x5hz0qcmx1skn7j0zr51wiha"
-              onInit={(evt, editor) => {
-                editorRef.current = editor;
-              }}
               initialValue="<p>This is the initial content of the editor.</p>"
               init={{
                 height: 300,
@@ -268,10 +249,11 @@ const Career = () => {
                   "bold italic forecolor | alignleft aligncenter " +
                   "alignright alignjustify | bullist numlist outdent indent | " +
                   "removeformat | help",
-                content_style: "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
+                content_style:
+                  "body { font-family: var(--font-sans, Outfit, Inter, SF Pro Display, sans-serif); font-size:14px }",
                 setup: (editor) => {
                   editor.on("change", () => {
-                    log(editor.getContent());
+                    setJobDetails(editor.getContent());
                   });
                 },
               }}
@@ -290,28 +272,42 @@ const Career = () => {
 
       {activeButton === "overview" && (
         <div className=" my-8 w-full overflow-auto">
-          <div className="bg-[rgba(150,150,152,0.2)] backdrop-blur-[15px] p-3 rounded-md shadow w-full overflow-auto">
-            <table className=" text-center overflow-auto border-b w-full border-[#00000049] mt-3">
+          <div className="bg-[rgb(var(--theme-neutral-300) / 0.2)] backdrop-blur-[15px] p-3 rounded-md shadow w-full overflow-auto">
+            <table className=" text-center overflow-auto border-b w-full border-[rgb(var(--theme-neutral-900) / 0.29)] mt-3">
               <thead>
-                <tr className=" text-[#000] text-sm font-Outfit font-medium">
-                  <th className="p-2 border-b border-[#00000049]">Title</th>
-                  <th className="p-2 border-b border-[#00000049]">Range</th>
-                  <th className="p-2 border-b border-[#00000049]">Location</th>
-                  <th className="p-2 border-b border-[#00000049]">Control Center</th>
+                <tr className=" text-[var(--theme-heading-color)] text-sm font-Outfit font-medium">
+                  <th className="p-2 border-b border-[rgb(var(--theme-neutral-900) / 0.29)]">
+                    Title
+                  </th>
+                  <th className="p-2 border-b border-[rgb(var(--theme-neutral-900) / 0.29)]">
+                    Range
+                  </th>
+                  <th className="p-2 border-b border-[rgb(var(--theme-neutral-900) / 0.29)]">
+                    Location
+                  </th>
+                  <th className="p-2 border-b border-[rgb(var(--theme-neutral-900) / 0.29)]">
+                    Control Center
+                  </th>
                 </tr>
               </thead>
               <tbody id="table" className=" overflow-auto">
-                {careerArray.map((doc) => {
+                {(careerArray as CareerRecord[]).map((doc: CareerRecord, index: number) => {
                   return (
                     <tr
-                      key={doc.id}
-                      id={doc.id}
-                      className="text-[#000] h-[4em] border-b border-[#00000049] overflow-hidden text-sm font-Outfit font-medium"
+                      key={doc.id ?? `career-${index}`}
+                      id={doc.id ?? ""}
+                      className="text-[var(--theme-heading-color)] h-[4em] border-b border-[rgb(var(--theme-neutral-900) / 0.29)] overflow-hidden text-sm font-Outfit font-medium"
                     >
-                      <td className="p-2 border-b  border-[#00000049]">{doc.title}</td>
-                      <td className="p-2 border-b  border-[#00000049]">{doc.pay}</td>
-                      <td className="p-2 border-b  border-[#00000049]">{doc.location}</td>
-                      <td className=" text-white my-auto capitalize border-[#00000049] ">
+                      <td className="p-2 border-b  border-[rgb(var(--theme-neutral-900) / 0.29)]">
+                        {doc.title}
+                      </td>
+                      <td className="p-2 border-b  border-[rgb(var(--theme-neutral-900) / 0.29)]">
+                        {doc.pay}
+                      </td>
+                      <td className="p-2 border-b  border-[rgb(var(--theme-neutral-900) / 0.29)]">
+                        {doc.location}
+                      </td>
+                      <td className=" text-white my-auto capitalize border-[rgb(var(--theme-neutral-900) / 0.29)] ">
                         <button
                           onClick={handleDelete}
                           className=" px-2 py-1 text-xs rounded-md bg-gradient-to-r from-[rgb(var(--theme-color-rgb)/0.8)] via-[rgb(var(--secondary-color-rgb)/0.8)] to-[rgb(var(--secondary-color-rgb)/0.8)]"
@@ -329,9 +325,9 @@ const Career = () => {
       )}
 
       {deleteUser && (
-        <div className=" w-full h-[100vh] fixed z-[10000] px-5 top-0 left-0 bg-[rgba(0,0,0,0.7)] flex justify-center items-center">
-          <div className="w-full md:w-[400px] rounded-md shadow p-5 bg-[#ffffff] relative flex justify-center flex-col text-sm font-Outfit font-medium items-center">
-            <p className=" text-base font-normal text-center text-[#000]">
+        <div className=" w-full h-[100vh] fixed z-[10000] px-5 top-0 left-0 bg-[rgb(var(--theme-neutral-900) / 0.7)] flex justify-center items-center">
+          <div className="w-full md:w-[400px] rounded-md shadow p-5 bg-[var(--theme-card-bg)] relative flex justify-center flex-col text-sm font-Outfit font-medium items-center">
+            <p className=" text-base font-normal text-center text-[var(--theme-heading-color)]">
               Are you Sure you Want to delete this Data?
             </p>
             <span className=" flex flex-row space-x-3 mt-6 text-white">

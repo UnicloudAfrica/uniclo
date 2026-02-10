@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { HardDrive, ShieldCheck, AlertTriangle, Pencil, Trash2, Plus } from "lucide-react";
 import { useFetchOsImages } from "../../../hooks/adminHooks/os-imageHooks";
@@ -28,10 +27,41 @@ const stringHash = (value = "") => {
   return hash;
 };
 
-const hueFromString = (value = "") => {
-  const hash = stringHash(value);
-  return Math.abs(hash) % 360;
-};
+const avatarPalettes = [
+  {
+    borderColor: "rgb(var(--theme-color-300) / 0.7)",
+    textColor: "rgb(var(--theme-color-700) / 0.95)",
+    background:
+      "linear-gradient(135deg, rgb(var(--theme-color-50) / 0.95) 0%, rgb(var(--theme-color-100) / 0.9) 55%, rgb(var(--theme-color-200) / 0.85) 100%)",
+  },
+  {
+    borderColor: "rgb(var(--theme-success-300) / 0.7)",
+    textColor: "rgb(var(--theme-success-700) / 0.95)",
+    background:
+      "linear-gradient(135deg, rgb(var(--theme-success-50) / 0.95) 0%, rgb(var(--theme-success-100) / 0.9) 55%, rgb(var(--theme-success-200) / 0.85) 100%)",
+  },
+  {
+    borderColor: "rgb(var(--theme-warning-300) / 0.7)",
+    textColor: "rgb(var(--theme-warning-700) / 0.95)",
+    background:
+      "linear-gradient(135deg, rgb(var(--theme-warning-50) / 0.95) 0%, rgb(var(--theme-warning-100) / 0.9) 55%, rgb(var(--theme-warning-200) / 0.85) 100%)",
+  },
+  {
+    borderColor: "rgb(var(--theme-danger-300) / 0.7)",
+    textColor: "rgb(var(--theme-danger-700) / 0.95)",
+    background:
+      "linear-gradient(135deg, rgb(var(--theme-danger-50) / 0.95) 0%, rgb(var(--theme-danger-100) / 0.9) 55%, rgb(var(--theme-danger-200) / 0.85) 100%)",
+  },
+  {
+    borderColor: "rgb(var(--theme-neutral-300) / 0.7)",
+    textColor: "rgb(var(--theme-neutral-700) / 0.95)",
+    background:
+      "linear-gradient(135deg, rgb(var(--theme-neutral-50) / 0.95) 0%, rgb(var(--theme-neutral-100) / 0.9) 55%, rgb(var(--theme-neutral-200) / 0.85) 100%)",
+  },
+] as const;
+
+const avatarPaletteForSeed = (seed = "os") =>
+  avatarPalettes[Math.abs(stringHash(seed)) % avatarPalettes.length];
 
 const buildInitials = (value = "") => {
   const sanitized = value.replace(/[^a-z0-9\s]/gi, " ").trim();
@@ -48,16 +78,14 @@ const buildInitials = (value = "") => {
 const getAvatarVisuals = (image: any) => {
   const descriptor = getOsDescriptor(image);
   const seed = descriptor || image?.identifier || image?.name || image?.id?.toString() || "os";
-  const hue = hueFromString(seed);
-  const accentHue = (hue + 35) % 360;
-  const secondaryHue = (hue + 80) % 360;
+  const palette = avatarPaletteForSeed(seed);
 
   return {
     label: buildInitials(descriptor || image?.name || "OS"),
     style: {
-      borderColor: `hsla(${hue}, 65%, 70%, 0.6)`,
-      color: `hsla(${hue}, 60%, 25%, 0.9)`,
-      background: `linear-gradient(135deg, hsla(${hue}, 75%, 92%, 0.9) 0%, hsla(${accentHue}, 70%, 84%, 0.85) 55%, hsla(${secondaryHue}, 70%, 88%, 0.8) 100%)`,
+      borderColor: palette.borderColor,
+      color: palette.textColor,
+      background: palette.background,
     },
     className:
       "inline-flex h-10 w-10 items-center justify-center rounded-xl border text-xs font-semibold uppercase tracking-wide shadow-sm",
@@ -94,7 +122,7 @@ const OSImages = ({ selectedRegion, onMetricsChange }: any) => {
   const [isAddOSImageModalOpen, setIsAddOSImageModalOpen] = useState(false);
   const [isEditOSImageModalOpen, setIsEditOSImageModalOpen] = useState(false);
   const [isDeleteOSImageModalOpen, setIsDeleteOSImageModalOpen] = useState(false);
-  const [selectedOSImage, setSelectedOSImage] = useState(null);
+  const [selectedOSImage, setSelectedOSImage] = useState<any>(null);
 
   useEffect(() => {
     setPage(1);

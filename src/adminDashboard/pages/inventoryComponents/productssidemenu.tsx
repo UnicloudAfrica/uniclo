@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import { designTokens } from "../../../styles/designTokens";
 
@@ -33,7 +32,9 @@ const ProductSideMenu = ({ items = [], activeTab, onTabChange, className = "" }:
               ].join(" ")}
               style={{
                 border: `1px solid ${
-                  isActive ? designTokens.colors.primary[200] : "rgba(148, 163, 184, 0.2)"
+                  isActive
+                    ? designTokens.colors.primary[200]
+                    : "rgb(var(--theme-neutral-400) / 0.2)"
                 }`,
               }}
             >

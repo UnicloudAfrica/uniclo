@@ -1,26 +1,10 @@
-// @ts-nocheck
 import React from "react";
 
-const hexToRgba = (hex: string, alpha = 1) => {
-  if (!hex) return `rgba(0,0,0,${alpha})`;
-  const sanitized = hex.replace("#", "");
-  const bigint = parseInt(
-    sanitized.length === 3
-      ? sanitized
-          .split("")
-          .map((char: any) => char + char)
-          .join("")
-      : sanitized,
-    16
-  );
-  const r = (bigint >> 16) & 255;
-  const g = (bigint >> 8) & 255;
-  const b = bigint & 255;
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-};
+const colorMix = (color: string, amount: number) =>
+  `color-mix(in srgb, ${color} ${amount}%, transparent)`;
 
 interface StepNavigationProps {
-  steps: any[];
+  steps: unknown;
   currentStep: number;
   setCurrentStep: (step: number) => void;
   validateStep: () => boolean;
@@ -34,7 +18,7 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
   setCurrentStep,
   validateStep,
   orientation = "vertical",
-  accentColor = "#288DD1",
+  accentColor = "var(--theme-color)",
 }) => {
   const handleStepChange = (index: number) => {
     if (index <= currentStep || validateStep()) {
@@ -81,7 +65,7 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
       {steps.map((step, index) => {
         const isCompleted = index < currentStep;
         const isActive = index === currentStep;
-        const circleColor = isCompleted || isActive ? accentColor : "#CBD5F5";
+        const circleColor = isCompleted || isActive ? accentColor : "rgb(var(--theme-color-200))";
         return (
           <li key={`${step.label}-${index}`}>
             <button
@@ -93,20 +77,27 @@ const StepNavigation: React.FC<StepNavigationProps> = ({
                 borderColor: isActive
                   ? accentColor
                   : isCompleted
-                    ? hexToRgba(accentColor, 0.4)
-                    : "rgba(226, 232, 240, 1)",
+                    ? colorMix(accentColor, 40)
+                    : "rgb(var(--theme-neutral-200))",
                 backgroundColor:
-                  isActive || isCompleted ? hexToRgba(accentColor, 0.08) : "rgba(255,255,255,0.8)",
-                boxShadow: isActive ? `0 12px 30px ${hexToRgba(accentColor, 0.18)}` : "none",
+                  isActive || isCompleted ? colorMix(accentColor, 8) : "var(--theme-card-bg)",
+                boxShadow: isActive ? `0 12px 30px ${colorMix(accentColor, 18)}` : "none",
               }}
             >
               <div className="flex items-start gap-3">
                 <span
                   className="mt-1 flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm font-semibold"
                   style={{
-                    backgroundColor: isCompleted ? circleColor : isActive ? circleColor : "#F1F5F9",
+                    backgroundColor: isCompleted
+                      ? circleColor
+                      : isActive
+                        ? circleColor
+                        : "var(--theme-surface-alt)",
                     borderColor: circleColor,
-                    color: isCompleted || isActive ? "#fff" : "#475569",
+                    color:
+                      isCompleted || isActive
+                        ? "var(--theme-card-bg)"
+                        : "var(--theme-heading-color)",
                   }}
                 >
                   {isCompleted ? <span aria-hidden="true">✓</span> : index + 1}

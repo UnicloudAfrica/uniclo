@@ -49,11 +49,13 @@ const ProjectInfrastructureJourney: React.FC<ProjectInfrastructureJourneyProps> 
                 onClick={() => onSectionClick?.(section.key)}
                 className="relative w-full rounded-xl border px-4 py-3 text-left transition"
                 style={{
-                  backgroundColor: isActive ? designTokens.colors.primary[50] : "#FFFFFF",
+                  backgroundColor: isActive
+                    ? designTokens.colors.primary[50]
+                    : "var(--theme-card-bg)",
                   borderColor: isActive
                     ? designTokens.colors.primary[200]
                     : designTokens.colors.neutral[200],
-                  boxShadow: isActive ? "0 4px 8px rgba(11, 99, 206, 0.08)" : "none",
+                  boxShadow: isActive ? "0 4px 8px rgb(var(--theme-color-rgb) / 0.08)" : "none",
                 }}
               >
                 <div className="flex items-center gap-3">
@@ -64,7 +66,9 @@ const ProjectInfrastructureJourney: React.FC<ProjectInfrastructureJourneyProps> 
                         borderColor: isComplete
                           ? designTokens.colors.success[200]
                           : designTokens.colors.neutral[200],
-                        backgroundColor: isComplete ? designTokens.colors.success[50] : "#FFFFFF",
+                        backgroundColor: isComplete
+                          ? designTokens.colors.success[50]
+                          : "var(--theme-card-bg)",
                       }}
                     >
                       {iconNode}

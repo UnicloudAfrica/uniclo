@@ -1,5 +1,6 @@
 import React from "react";
 import { designTokens } from "../../../styles/designTokens";
+import type { CardPadding, CardVariant } from "./types";
 
 /**
  * ModernCard - Shared across Admin, Tenant, and Client dashboards
@@ -11,8 +12,8 @@ import { designTokens } from "../../../styles/designTokens";
 export interface ModernCardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   title?: string;
-  variant?: "default" | "elevated" | "outlined" | "filled" | "glass";
-  padding?: "default" | "none" | "sm" | "lg" | "xl";
+  variant?: CardVariant;
+  padding?: CardPadding;
   shadow?: string;
   hover?: boolean;
   className?: string;
@@ -50,7 +51,7 @@ const ModernCard: React.FC<ModernCardProps> = ({
         };
       case "glass":
         return {
-          backgroundColor: "rgba(255, 255, 255, 0.8)",
+          backgroundColor: "rgb(var(--theme-neutral-50) / 0.8)",
           border: `1px solid ${designTokens.colors.neutral[200]}`,
           backdropFilter: "blur(12px)",
         };
@@ -82,6 +83,9 @@ const ModernCard: React.FC<ModernCardProps> = ({
     transition: "all 0.2s ease",
     position: "relative",
     fontFamily: designTokens.typography.fontFamily.sans.join(", "),
+    boxShadow:
+      designTokens.shadows[shadow as keyof typeof designTokens.shadows] ??
+      designTokens.shadows.default,
     ...getVariantStyles(),
     ...getPaddingStyles(),
     ...customStyle,
@@ -117,7 +121,7 @@ const ModernCard: React.FC<ModernCardProps> = ({
       onMouseLeave={(e) => {
         if (hover) {
           e.currentTarget.style.transform = "translateY(0)";
-          // @ts-ignore
+
           e.currentTarget.style.boxShadow = getVariantStyles().boxShadow || "none";
         }
       }}

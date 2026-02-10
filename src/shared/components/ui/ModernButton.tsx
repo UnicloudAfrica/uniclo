@@ -1,5 +1,6 @@
 import React from "react";
 import { designTokens } from "../../../styles/designTokens";
+import type { ButtonSize, ButtonVariant } from "./types";
 
 /**
  * ModernButton - Shared across Admin, Tenant, and Client dashboards
@@ -9,8 +10,9 @@ import { designTokens } from "../../../styles/designTokens";
  */
 
 export interface ModernButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger" | "success";
-  size?: "xs" | "sm" | "base" | "lg" | "xl" | "md";
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  loading?: boolean;
   isLoading?: boolean;
   isDisabled?: boolean;
   leftIcon?: React.ReactNode;
@@ -23,6 +25,7 @@ const ModernButton: React.FC<ModernButtonProps> = ({
   children,
   variant = "primary",
   size = "md",
+  loading = false,
   isLoading = false,
   isDisabled = false,
   leftIcon,
@@ -30,9 +33,12 @@ const ModernButton: React.FC<ModernButtonProps> = ({
   className = "",
   style: customStyle = {},
   onClick,
+  disabled,
   ...props
 }) => {
   const fontStack = designTokens.typography.fontFamily.sans.join(", ");
+  const resolvedIsLoading = Boolean(loading || isLoading);
+  const resolvedIsDisabled = Boolean(disabled || isDisabled);
 
   const getVariantStyles = () => {
     const { primary, secondary, neutral, error, success } = designTokens.colors;
@@ -41,7 +47,7 @@ const ModernButton: React.FC<ModernButtonProps> = ({
       backgroundColor: neutral[0],
       color: neutral[900],
       border: "1px solid transparent",
-      boxShadow: "0 1px 3px rgba(15, 23, 42, 0.08)",
+      boxShadow: "0 1px 3px rgb(var(--theme-neutral-900) / 0.08)",
     };
 
     switch (variant) {
@@ -102,6 +108,25 @@ const ModernButton: React.FC<ModernButtonProps> = ({
           active: {
             backgroundColor: primary[100],
             border: `1px solid ${primary[400]}`,
+          },
+        };
+      case "outlineDanger":
+        return {
+          base: {
+            ...base,
+            backgroundColor: "transparent",
+            color: error[600],
+            border: `1px solid ${error[300]}`,
+            boxShadow: "none",
+          },
+          hover: {
+            backgroundColor: error[50],
+            color: error[700],
+            border: `1px solid ${error[400]}`,
+          },
+          active: {
+            backgroundColor: error[100],
+            border: `1px solid ${error[500]}`,
           },
         };
       case "ghost":
@@ -237,8 +262,8 @@ const ModernButton: React.FC<ModernButtonProps> = ({
     gap: "0.5rem",
     outline: "none",
     textDecoration: "none",
-    cursor: isDisabled || isLoading ? "not-allowed" : "pointer",
-    opacity: isDisabled ? 0.5 : 1,
+    cursor: resolvedIsDisabled || resolvedIsLoading ? "not-allowed" : "pointer",
+    opacity: resolvedIsDisabled ? 0.5 : 1,
     ...sizeStyles,
   };
 
@@ -248,7 +273,7 @@ const ModernButton: React.FC<ModernButtonProps> = ({
   };
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    if (!isDisabled && !isLoading && onClick) {
+    if (!resolvedIsDisabled && !resolvedIsLoading && onClick) {
       onClick(event);
     }
   };
@@ -259,30 +284,30 @@ const ModernButton: React.FC<ModernButtonProps> = ({
       className={`modern-button modern-button--${variant} modern-button--${size} ${className}`}
       style={{ ...buttonStyles, ...customStyle }}
       onClick={handleClick}
-      disabled={isDisabled || isLoading}
+      disabled={resolvedIsDisabled || resolvedIsLoading}
       onMouseEnter={(e) => {
-        if (!isDisabled && !isLoading) {
+        if (!resolvedIsDisabled && !resolvedIsLoading) {
           Object.assign(e.currentTarget.style, hover);
         }
       }}
       onMouseLeave={(e) => {
-        if (!isDisabled && !isLoading) {
+        if (!resolvedIsDisabled && !resolvedIsLoading) {
           Object.assign(e.currentTarget.style, base);
         }
       }}
       onMouseDown={(e) => {
-        if (!isDisabled && !isLoading) {
+        if (!resolvedIsDisabled && !resolvedIsLoading) {
           Object.assign(e.currentTarget.style, active);
         }
       }}
       onMouseUp={(e) => {
-        if (!isDisabled && !isLoading) {
+        if (!resolvedIsDisabled && !resolvedIsLoading) {
           Object.assign(e.currentTarget.style, hover);
         }
       }}
       {...props}
     >
-      {isLoading && (
+      {resolvedIsLoading && (
         <div
           className="loading-spinner"
           style={{
@@ -295,9 +320,9 @@ const ModernButton: React.FC<ModernButtonProps> = ({
           }}
         />
       )}
-      {leftIcon && !isLoading && leftIcon}
+      {leftIcon && !resolvedIsLoading && leftIcon}
       {children}
-      {rightIcon && !isLoading && rightIcon}
+      {rightIcon && !resolvedIsLoading && rightIcon}
     </button>
   );
 };

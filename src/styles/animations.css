@@ -25,8 +25,8 @@
 .modern-card-hover:hover {
   transform: translateY(-4px);
   box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    0 20px 25px -5px rgb(var(--theme-neutral-900) / 0.1),
+    0 10px 10px -5px rgb(var(--theme-neutral-900) / 0.04);
 }
 
 /* Button styling and micro-interactions */
@@ -62,7 +62,7 @@
 }
 
 .modern-button:focus-visible {
-  outline: 2px solid rgba(8, 145, 178, 0.35);
+  outline: 2px solid var(--theme-focus-ring);
   outline-offset: 2px;
 }
 
@@ -271,7 +271,12 @@
 /* Skeleton loading animation */
 .skeleton {
   animation: skeleton 1.5s ease-in-out infinite alternate;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(
+    90deg,
+    var(--theme-surface-alt) 25%,
+    rgb(var(--theme-neutral-300)) 50%,
+    var(--theme-surface-alt) 75%
+  );
   background-size: 200% 100%;
 }
 
@@ -366,7 +371,7 @@
 }
 
 .focus-ring:focus {
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgb(var(--theme-color-rgb) / 0.1);
   outline: none;
 }
 
@@ -376,7 +381,7 @@
 }
 
 .table-row:hover {
-  background-color: rgba(249, 250, 251, 1);
+  background-color: rgb(var(--theme-neutral-50));
   transform: scale(1.01);
 }
 
@@ -387,15 +392,15 @@
 
 @keyframes successFlash {
   0% {
-    background-color: rgba(34, 197, 94, 0);
+    background-color: transparent;
   }
 
   50% {
-    background-color: rgba(34, 197, 94, 0.1);
+    background-color: rgb(var(--theme-success-500) / 0.1);
   }
 
   100% {
-    background-color: rgba(34, 197, 94, 0);
+    background-color: transparent;
   }
 }
 
@@ -426,7 +431,7 @@
 
 .btn-unicloud-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px -5px rgba(6, 182, 212, 0.4);
+  box-shadow: 0 8px 25px -5px rgb(var(--secondary-color-rgb) / 0.4);
 }
 
 .btn-unicloud-hover:active {
@@ -443,8 +448,8 @@
 .stats-card-hover:hover {
   transform: translateY(-3px);
   box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    0 20px 25px -5px rgb(var(--theme-neutral-900) / 0.1),
+    0 10px 10px -5px rgb(var(--theme-neutral-900) / 0.04);
 }
 
 /* Table row enhanced hover with UniCloud accent */
@@ -454,7 +459,7 @@
 }
 
 .table-row-modern:hover {
-  background-color: rgba(6, 182, 212, 0.05);
+  background-color: rgb(var(--secondary-color-rgb) / 0.05);
   transform: translateX(2px);
 }
 
@@ -465,7 +470,7 @@
   top: 0;
   bottom: 0;
   width: 3px;
-  background-color: #06b6d4;
+  background-color: rgb(var(--secondary-color-rgb));
   animation: slideInLeft 0.2s ease-out;
 }
 
@@ -477,7 +482,7 @@
 
 .input-floating:focus-within label {
   transform: translateY(-20px) scale(0.85);
-  color: #06b6d4;
+  color: rgb(var(--secondary-color-rgb));
 }
 
 .input-floating label {
@@ -498,7 +503,12 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.2), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(var(--secondary-color-rgb) / 0.2),
+    transparent
+  );
   animation: shimmerUnicloud 1.5s infinite;
 }
 
@@ -673,15 +683,15 @@
 }
 
 .focus-ring-unicloud:focus {
-  outline-color: rgba(6, 182, 212, 0.5);
+  outline-color: rgb(var(--secondary-color-rgb) / 0.5);
   outline-offset: 2px;
-  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+  box-shadow: 0 0 0 3px rgb(var(--secondary-color-rgb) / 0.1);
 }
 
 /* Sidebar navigation item active animation */
 .nav-item-active {
   position: relative;
-  background-color: rgba(6, 182, 212, 0.1);
+  background-color: rgb(var(--secondary-color-rgb) / 0.1);
   animation: navItemActivate 0.3s ease-out;
 }
 
@@ -692,7 +702,7 @@
   top: 0;
   bottom: 0;
   width: 3px;
-  background-color: #06b6d4;
+  background-color: rgb(var(--secondary-color-rgb));
   animation: slideInRight 0.2s ease-out;
 }
 
@@ -702,7 +712,7 @@
   }
 
   to {
-    background-color: rgba(6, 182, 212, 0.1);
+    background-color: rgb(var(--secondary-color-rgb) / 0.1);
   }
 }
 

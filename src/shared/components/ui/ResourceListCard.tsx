@@ -57,8 +57,8 @@ export const ResourceListCard: React.FC<ResourceListCardProps> = ({
       style={{
         borderColor: designTokens.colors.neutral[200],
         background:
-          "linear-gradient(180deg, rgba(249, 250, 251, 0.9) 0%, rgba(255, 255, 255, 0.95) 100%)",
-        boxShadow: "0 16px 32px rgba(15, 23, 42, 0.04)",
+          "linear-gradient(180deg, rgb(var(--theme-neutral-50) / 0.9) 0%, var(--theme-card-bg) 100%)",
+        boxShadow: "0 16px 32px rgb(var(--theme-neutral-900) / 0.04)",
       }}
     >
       <div className="flex flex-wrap items-start justify-between gap-4">

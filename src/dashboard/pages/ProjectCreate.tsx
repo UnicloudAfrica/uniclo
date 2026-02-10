@@ -13,11 +13,11 @@ const DashboardProjectCreate: React.FC = () => {
       title="Create Project"
       description="Launch a dedicated project workspace with its preferred defaults."
       subHeaderContent={
-        <ModernButton variant="outline" onClick={goBack}>
+        <ModernButton variant="outline" size="sm" onClick={goBack}>
           Back to Projects
         </ModernButton>
       }
-      contentClassName="space-y-6"
+      contentClassName="ui-page-stack"
     >
       <CreateProjectModal mode="page" onClose={goBack} />
     </TenantPageShell>

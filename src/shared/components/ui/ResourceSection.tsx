@@ -4,7 +4,8 @@ import ModernCard from "./ModernCard";
 import { designTokens } from "../../../styles/designTokens";
 
 // Define strict types for the tone keys
-type Tone = "neutral" | "primary" | "success" | "warning" | "danger" | "info";
+// Define strict types for the tone keys
+export type Tone = "neutral" | "primary" | "success" | "warning" | "danger" | "info";
 
 const chipToneStyles: Record<Tone, { background: string; color: string; border: string }> = {
   neutral: {
@@ -39,7 +40,7 @@ const chipToneStyles: Record<Tone, { background: string; color: string; border: 
   },
 };
 
-interface MetaItem {
+export interface MetaItem {
   label: string;
   value: string | number | ReactNode;
   tone?: Tone;
@@ -118,7 +119,7 @@ export const ResourceSection: React.FC<ResourceSectionProps> = ({
                 className="flex min-w-0 flex-col rounded-2xl border px-5 py-4 shadow-sm"
                 style={{
                   ...toneStyles,
-                  boxShadow: "0 8px 18px rgba(15, 23, 42, 0.05)",
+                  boxShadow: "0 8px 18px rgb(var(--theme-neutral-900) / 0.05)",
                 }}
               >
                 <span

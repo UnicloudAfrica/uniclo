@@ -11,6 +11,7 @@
 // Core UI Primitives
 export { default as ModernButton } from "./ModernButton";
 export type { ModernButtonProps } from "./ModernButton";
+export type { ButtonSize, ButtonVariant, CardPadding, CardVariant, ControlSize } from "./types";
 
 export { default as ModernCard } from "./ModernCard";
 export type { ModernCardProps } from "./ModernCard";

@@ -91,7 +91,7 @@ const ResourceHero: React.FC<ResourceHeroProps> = ({
                 breadcrumbs={breadcrumbs}
                 color={
                   accent === "midnight"
-                    ? "rgba(255, 255, 255, 0.75)"
+                    ? "rgb(var(--theme-neutral-50) / 0.75)"
                     : designTokens.colors.primary[500]
                 }
               />
@@ -110,10 +110,11 @@ const ResourceHero: React.FC<ResourceHeroProps> = ({
             {metrics.map((metric) => {
               const iconNode = metric.icon
                 ? React.isValidElement(metric.icon)
-                  ? React.cloneElement(metric.icon as React.ReactElement<any>, {
+                  ? React.cloneElement(metric.icon as React.ReactElement<{ className?: string }>, {
                       className: [
                         theme.metricIconColor,
-                        (metric.icon as React.ReactElement<any>).props?.className,
+                        (metric.icon as React.ReactElement<{ className?: string }>).props
+                          ?.className,
                       ]
                         .filter(Boolean)
                         .join(" "),

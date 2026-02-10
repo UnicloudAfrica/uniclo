@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import ClientActiveTab from "../components/clientActiveTab";
@@ -23,11 +22,11 @@ const ClientProjectCreate: React.FC = () => {
           { label: "Create Project" },
         ]}
         actions={
-          <ModernButton variant="outline" onClick={goBack}>
+          <ModernButton variant="outline" size="sm" onClick={goBack}>
             Back to Projects
           </ModernButton>
         }
-        contentClassName="space-y-6"
+        contentClassName="ui-page-stack"
       >
         <CreateProjectModal mode="page" onClose={goBack} />
       </ClientPageShell>

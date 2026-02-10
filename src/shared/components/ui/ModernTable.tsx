@@ -1,4 +1,12 @@
-import React, { useState, useMemo, useEffect } from "react";
+import {
+  useState,
+  useMemo,
+  useEffect,
+  Fragment,
+  type ReactNode,
+  type ChangeEvent,
+  type CSSProperties,
+} from "react";
 import {
   ChevronUp,
   ChevronDown,
@@ -13,19 +21,22 @@ import {
 import { designTokens } from "../../../styles/designTokens";
 import ModernButton from "./ModernButton";
 import { useAnimations, useReducedMotion } from "../../../hooks/useAnimations";
-import { useResponsive } from "../../../hooks/useResponsive";
+
+type BivariantCallback<Args extends unknown[], Return> = {
+  bivarianceHack: (...args: Args) => Return;
+}["bivarianceHack"];
 
 export interface Column<T> {
   key: string;
-  header: React.ReactNode;
-  render?: (value: any, row: T, index: number, page: number, pageSize: number) => React.ReactNode;
+  header: ReactNode;
+  render?: BivariantCallback<[unknown, T, number, number, number], ReactNode>;
   sortable?: boolean;
   align?: "left" | "center" | "right";
 }
 
 interface Action<T> {
   label: string;
-  icon?: React.ReactNode;
+  icon?: ReactNode;
   onClick: (row: T) => void;
   tone?: "primary" | "danger" | "success" | "neutral";
 }
@@ -33,8 +44,8 @@ interface Action<T> {
 interface BulkAction<T> {
   label: string;
   onClick: (selectedIds: string[], selectedRows: T[]) => void;
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger" | "success";
-  icon?: React.ReactNode;
+  variant?: "primary" | "secondary" | "outline" | "outlineDanger" | "ghost" | "danger" | "success";
+  icon?: ReactNode;
 }
 
 interface ModernTableProps<T> {
@@ -51,12 +62,12 @@ interface ModernTableProps<T> {
   pageSize?: number;
   loading?: boolean;
   onRowClick?: (row: T) => void;
-  emptyMessage?: React.ReactNode;
+  emptyMessage?: ReactNode;
   actions?: Action<T>[];
   bulkActions?: BulkAction<T>[];
   selectable?: boolean;
   onSelectionChange?: (selectedIds: string[]) => void;
-  filterSlot?: React.ReactNode;
+  filterSlot?: ReactNode;
   enableAnimations?: boolean;
   responsive?: boolean;
   className?: string;
@@ -77,7 +88,7 @@ interface ModernTableProps<T> {
    * Expandable rows props
    */
   expandable?: boolean;
-  renderExpandedRow?: (row: T) => React.ReactNode;
+  renderExpandedRow?: (row: T) => ReactNode;
 }
 
 const ModernTable = <T extends { id?: string | number | null }>({
@@ -106,7 +117,6 @@ const ModernTable = <T extends { id?: string | number | null }>({
 
   filterSlot,
   enableAnimations = true,
-  responsive = true,
   className = "",
   // Controlled pagination
   page,
@@ -138,12 +148,9 @@ const ModernTable = <T extends { id?: string | number | null }>({
   const currentPage = page !== undefined ? page : internalPage;
 
   // Animation hooks
-  const { useInView, useLoadingAnimation } = useAnimations();
-  const [tableRef, isInView] = useInView(0.1);
+  const { useInView } = useAnimations();
+  const [tableRef, isInView] = useInView<HTMLDivElement>(0.1);
   const prefersReducedMotion = useReducedMotion();
-
-  // Responsive hooks
-  const { isMobile } = useResponsive();
 
   // State for animations
   const [tableLoaded, setTableLoaded] = useState(false);
@@ -157,8 +164,24 @@ const ModernTable = <T extends { id?: string | number | null }>({
   };
 
   // Helper for colors to avoid type issues
-  const getColor = (color: string, shade: number | string) => {
-    return (designTokens.colors as any)[color][shade];
+  type TokenColorKey = Exclude<keyof typeof designTokens.colors, "surface">;
+  const getColor = (color: TokenColorKey, shade: number | string): string => {
+    const palette = designTokens.colors[color] as Record<string, string>;
+    const shadeKey = shade as keyof typeof palette;
+    return palette[shadeKey] ?? "";
+  };
+
+  const getRowValue = (row: T, key: string): unknown => {
+    const record = row as Record<string, unknown>;
+    return record[key];
+  };
+
+  const formatCellValue = (value: unknown): ReactNode => {
+    if (value === null || value === undefined) return "";
+    if (typeof value === "string" || typeof value === "number") return value;
+    if (typeof value === "boolean") return value ? "true" : "false";
+    if (value instanceof Date) return value.toLocaleString();
+    return String(value);
   };
 
   // Filter and search data
@@ -178,12 +201,12 @@ const ModernTable = <T extends { id?: string | number | null }>({
     if (!searchQuery) return sourceData;
 
     const lowerQuery = searchQuery.toLowerCase();
-    return sourceData.filter((row: any) => {
+    return sourceData.filter((row: T) => {
       // Use searchKeys if provided, otherwise search all columns
       const keysToSearch = searchKeys.length > 0 ? searchKeys : columns.map((c) => c.key);
 
       return keysToSearch.some((key) => {
-        const value = row[key];
+        const value = getRowValue(row, key);
         return value && String(value).toLowerCase().includes(lowerQuery);
       });
     });
@@ -196,14 +219,31 @@ const ModernTable = <T extends { id?: string | number | null }>({
     // Usually if onSort is provided, we expect data to update.
     // But for hybrid, let's keep sorting.
 
-    return [...filteredData].sort((a: any, b: any) => {
-      const aValue = a[sortConfig.key!];
-      const bValue = b[sortConfig.key!];
+    return [...filteredData].sort((a: T, b: T) => {
+      const aValue = getRowValue(a, sortConfig.key!);
+      const bValue = getRowValue(b, sortConfig.key!);
 
-      if (aValue < bValue) {
+      if (aValue == null && bValue == null) {
+        return 0;
+      }
+      if (aValue == null) {
+        return sortConfig.direction === "asc" ? 1 : -1;
+      }
+      if (bValue == null) {
         return sortConfig.direction === "asc" ? -1 : 1;
       }
-      if (aValue > bValue) {
+
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        return sortConfig.direction === "asc" ? aValue - bValue : bValue - aValue;
+      }
+
+      const aText = String(aValue).toLowerCase();
+      const bText = String(bValue).toLowerCase();
+
+      if (aText < bText) {
+        return sortConfig.direction === "asc" ? -1 : 1;
+      }
+      if (aText > bText) {
         return sortConfig.direction === "asc" ? 1 : -1;
       }
       return 0;
@@ -259,23 +299,23 @@ const ModernTable = <T extends { id?: string | number | null }>({
         border: primary[200],
         hoverBg: primary[100],
         hoverBorder: primary[300],
-        shadow: "0 6px 14px -10px rgba(40, 141, 209, 0.45)",
+        shadow: "0 6px 14px -10px rgb(var(--theme-color-rgb) / 0.45)",
       },
       danger: {
         color: error[700],
         bg: error[50],
         border: error[200],
         hoverBg: error[100],
-        hoverBorder: (error as any)[300],
-        shadow: "0 6px 14px -10px rgba(239, 68, 68, 0.45)",
+        hoverBorder: error[200],
+        shadow: "0 6px 14px -10px rgb(var(--theme-danger-500) / 0.45)",
       },
       success: {
         color: success[700],
         bg: success[50],
         border: success[200],
         hoverBg: success[100],
-        hoverBorder: (success as any)[300],
-        shadow: "0 6px 14px -10px rgba(34, 197, 94, 0.45)",
+        hoverBorder: success[200],
+        shadow: "0 6px 14px -10px rgb(var(--theme-success-500) / 0.45)",
       },
       neutral: {
         color: neutral[700],
@@ -283,7 +323,7 @@ const ModernTable = <T extends { id?: string | number | null }>({
         border: neutral[200],
         hoverBg: neutral[100],
         hoverBorder: neutral[300],
-        shadow: "0 4px 10px -8px rgba(15, 23, 42, 0.25)",
+        shadow: "0 4px 10px -8px rgb(var(--theme-neutral-900) / 0.25)",
       },
     };
     return tones[tone] || tones.neutral;
@@ -291,11 +331,12 @@ const ModernTable = <T extends { id?: string | number | null }>({
 
   // Effect for table load animation
   useEffect(() => {
-    if (!loading) {
-      const timer = setTimeout(() => setTableLoaded(true), 100);
-      return () => clearTimeout(timer);
+    if (loading) {
+      setTableLoaded(false);
+      return undefined;
     }
-    setTableLoaded(false);
+    const timer = setTimeout(() => setTableLoaded(true), 100);
+    return () => clearTimeout(timer);
   }, [loading, paginatedData.length]);
 
   // Reset row hover on page change
@@ -315,7 +356,7 @@ const ModernTable = <T extends { id?: string | number | null }>({
     }
   };
 
-  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSelectAll = (e: ChangeEvent<HTMLInputElement>) => {
     let newSelected = new Set<string>();
     if (e.target.checked) {
       const allIds = paginatedData.map((row) => String(row.id));
@@ -363,23 +404,32 @@ const ModernTable = <T extends { id?: string | number | null }>({
   const handleExport = () => {
     // Basic CSV export functionality
     const csvContent = [
-      columns.map((col) => col.header).join(","),
-      ...sortedData.map((row: any) => columns.map((col) => row[col.key] || "").join(",")),
+      columns.map((col) => (typeof col.header === "string" ? col.header : col.key)).join(","),
+      ...sortedData.map((row: T) =>
+        columns
+          .map((col) => {
+            const value = getRowValue(row, col.key);
+            return value === null || value === undefined ? "" : String(value);
+          })
+          .join(",")
+      ),
     ].join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
+    const url = globalThis.window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = `${title || "data"}.csv`;
     a.click();
-    window.URL.revokeObjectURL(url);
+    globalThis.window.URL.revokeObjectURL(url);
   };
 
   const tableStyles = {
     container: {
       backgroundColor: designTokens.colors.neutral[0],
+      border: `1px solid ${designTokens.colors.neutral[200]}`,
       borderRadius: designTokens.borderRadius.xl,
+      boxShadow: "var(--shadow-xs)",
       overflow: "hidden",
       opacity: !enableAnimations || tableLoaded || isInView ? 1 : 0,
       transform:
@@ -392,7 +442,7 @@ const ModernTable = <T extends { id?: string | number | null }>({
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
-      flexWrap: "wrap" as const,
+      flexWrap: "wrap",
       gap: "16px",
     },
     title: {
@@ -402,7 +452,7 @@ const ModernTable = <T extends { id?: string | number | null }>({
       margin: 0,
     },
     searchContainer: {
-      position: "relative" as const,
+      position: "relative",
       flex: 1,
       maxWidth: "300px",
     },
@@ -422,18 +472,18 @@ const ModernTable = <T extends { id?: string | number | null }>({
     },
     table: {
       width: "100%",
-      borderCollapse: "collapse" as const,
+      borderCollapse: "collapse",
     },
     thead: {
       backgroundColor: getColor("neutral", 50),
     },
     th: {
       padding: "12px 16px",
-      textAlign: "left" as const,
+      textAlign: "left",
       fontSize: getFontSize("xs"),
       fontWeight: designTokens.typography.fontWeight.medium,
       color: getColor("neutral", 600),
-      textTransform: "uppercase" as const,
+      textTransform: "uppercase",
       letterSpacing: "0.05em",
       borderBottom: `1px solid ${getColor("neutral", 200)}`,
       cursor: sortable ? "pointer" : "default",
@@ -448,7 +498,7 @@ const ModernTable = <T extends { id?: string | number | null }>({
     },
     emptyState: {
       padding: "48px 24px",
-      textAlign: "center" as const,
+      textAlign: "center",
       color: getColor("neutral", 500),
       fontSize: getFontSize("sm"),
     },
@@ -461,15 +511,15 @@ const ModernTable = <T extends { id?: string | number | null }>({
       backgroundColor: getColor("neutral", 50), // Fixed from 25
     },
     loadingOverlay: {
-      position: "absolute" as const,
+      position: "absolute",
       inset: 0,
-      backgroundColor: "rgba(255, 255, 255, 0.8)",
+      backgroundColor: "rgb(var(--theme-neutral-50) / 0.8)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       zIndex: 10,
     },
-  };
+  } satisfies Record<string, CSSProperties>;
 
   if (loading) {
     return (
@@ -492,11 +542,7 @@ const ModernTable = <T extends { id?: string | number | null }>({
   }
 
   return (
-    <div
-      ref={tableRef as any}
-      style={tableStyles.container}
-      className={`shadow-sm border border-gray-200 ${className}`}
-    >
+    <div ref={tableRef} style={tableStyles.container} className={className}>
       {/* Header */}
       {(title ||
         searchable ||
@@ -545,7 +591,7 @@ const ModernTable = <T extends { id?: string | number | null }>({
                 {bulkActions.map((action, idx) => (
                   <ModernButton
                     key={idx}
-                    variant={action.variant || "secondary"}
+                    variant={action.variant || "outline"}
                     size="sm"
                     onClick={() => {
                       const selectedRows = data.filter(
@@ -599,7 +645,7 @@ const ModernTable = <T extends { id?: string | number | null }>({
                       paginatedData.length > 0 &&
                       paginatedData.every((row) => row.id && selectedIds.has(String(row.id)))
                     }
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="table-checkbox"
                   />
                 </th>
               )}
@@ -642,7 +688,7 @@ const ModernTable = <T extends { id?: string | number | null }>({
                 const isSelected = row.id ? selectedIds.has(String(row.id)) : false;
 
                 return (
-                  <React.Fragment key={row.id || index}>
+                  <Fragment key={row.id || index}>
                     <tr
                       key={row.id || index}
                       style={{
@@ -678,7 +724,19 @@ const ModernTable = <T extends { id?: string | number | null }>({
                               e.stopPropagation();
                               if (row.id) toggleRowExpansion(String(row.id));
                             }}
-                            className="p-1 rounded hover:bg-gray-100 text-gray-500"
+                            style={{
+                              padding: "4px",
+                              borderRadius: designTokens.borderRadius.md,
+                              color: getColor("neutral", 500),
+                              backgroundColor: "transparent",
+                              transition: "background-color 0.2s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = getColor("neutral", 100);
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = "transparent";
+                            }}
                           >
                             {row.id && expandedRowIds.has(String(row.id)) ? (
                               <ChevronDown size={16} />
@@ -698,24 +756,19 @@ const ModernTable = <T extends { id?: string | number | null }>({
                               if (row.id) handleSelectRow(String(row.id));
                             }}
                             onClick={(e) => e.stopPropagation()}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            className="table-checkbox"
                           />
                         </td>
                       )}
                       {columns.map((column) => (
                         <td key={column.key} style={tableStyles.td}>
                           {(() => {
-                            const cellValue = (row as any)[column.key];
-                            if (!column.render) return cellValue;
+                            const cellValue = getRowValue(row, column.key);
+                            if (!column.render) return formatCellValue(cellValue);
                             try {
                               return column.render(cellValue, row, index, currentPage, pageSize);
-                            } catch (error) {
-                              console.error("ModernTable cell render error", {
-                                column: column.key,
-                                row,
-                                error,
-                              });
-                              return cellValue ?? "";
+                            } catch {
+                              return formatCellValue(cellValue);
                             }
                           })()}
                         </td>
@@ -745,7 +798,7 @@ const ModernTable = <T extends { id?: string | number | null }>({
                                     transform: "scale(1)",
                                     boxShadow: tone.shadow,
                                     fontWeight: designTokens.typography.fontWeight.medium,
-                                    fontSize: designTokens.typography.fontSize.sm[0] as any,
+                                    fontSize: getFontSize("sm"),
                                   }}
                                   className={
                                     enableAnimations && !prefersReducedMotion
@@ -794,7 +847,7 @@ const ModernTable = <T extends { id?: string | number | null }>({
                           </td>
                         </tr>
                       )}
-                  </React.Fragment>
+                  </Fragment>
                 );
               })
             ) : (
@@ -820,7 +873,7 @@ const ModernTable = <T extends { id?: string | number | null }>({
         <div style={tableStyles.pagination}>
           <div
             style={{
-              fontSize: designTokens.typography.fontSize.sm[0] as any,
+              fontSize: designTokens.typography.fontSize.sm[0],
               color: designTokens.colors.neutral[600],
             }}
           >
@@ -832,7 +885,11 @@ const ModernTable = <T extends { id?: string | number | null }>({
             <button
               onClick={() => {
                 const newPage = 1;
-                onPageChange ? onPageChange(newPage) : setInternalPage(newPage);
+                if (onPageChange) {
+                  onPageChange(newPage);
+                } else {
+                  setInternalPage(newPage);
+                }
               }}
               disabled={currentPage === 1}
               style={{
@@ -853,7 +910,11 @@ const ModernTable = <T extends { id?: string | number | null }>({
             <button
               onClick={() => {
                 const newPage = Math.max(currentPage - 1, 1);
-                onPageChange ? onPageChange(newPage) : setInternalPage(newPage);
+                if (onPageChange) {
+                  onPageChange(newPage);
+                } else {
+                  setInternalPage(newPage);
+                }
               }}
               disabled={currentPage === 1}
               style={{
@@ -874,7 +935,7 @@ const ModernTable = <T extends { id?: string | number | null }>({
             <span
               style={{
                 padding: "8px 12px",
-                fontSize: designTokens.typography.fontSize.sm[0] as any,
+                fontSize: designTokens.typography.fontSize.sm[0],
                 color: designTokens.colors.neutral[700],
               }}
             >
@@ -884,7 +945,11 @@ const ModernTable = <T extends { id?: string | number | null }>({
             <button
               onClick={() => {
                 const newPage = Math.min(currentPage + 1, totalPages);
-                onPageChange ? onPageChange(newPage) : setInternalPage(newPage);
+                if (onPageChange) {
+                  onPageChange(newPage);
+                } else {
+                  setInternalPage(newPage);
+                }
               }}
               disabled={currentPage === totalPages}
               style={{
@@ -905,7 +970,11 @@ const ModernTable = <T extends { id?: string | number | null }>({
             <button
               onClick={() => {
                 const newPage = totalPages;
-                onPageChange ? onPageChange(newPage) : setInternalPage(newPage);
+                if (onPageChange) {
+                  onPageChange(newPage);
+                } else {
+                  setInternalPage(newPage);
+                }
               }}
               disabled={currentPage === totalPages}
               style={{

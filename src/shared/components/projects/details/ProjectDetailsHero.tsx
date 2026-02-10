@@ -1,15 +1,5 @@
 import React from "react";
-import {
-  Activity,
-  Clock,
-  Layers,
-  MapPin,
-  Plus,
-  Server,
-  Shield,
-  Wifi,
-  LucideIcon,
-} from "lucide-react";
+import { Activity, Layers, MapPin, Plus, Shield, Wifi, LucideIcon } from "lucide-react";
 import { ModernCard, StatusPill } from "../../ui";
 import { designTokens } from "../../../../styles/designTokens";
 
@@ -63,7 +53,7 @@ interface ProjectStatusVariant {
 }
 
 interface ProjectDetailsHeroProps {
-  project: any;
+  project: import("../../../../types/project").Project;
   projectStatusVariant?: ProjectStatusVariant;
   healthPercent?: number;
   metadataItems?: MetadataItem[];
@@ -166,7 +156,7 @@ const ProjectDetailsHero: React.FC<ProjectDetailsHeroProps> = ({
                 <div
                   className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border-4 border-white/20"
                   style={{
-                    background: `conic-gradient(rgba(255,255,255,0.9) ${healthPercent || 0}%, rgba(255,255,255,0.2) 0)`,
+                    background: `conic-gradient(rgb(var(--theme-neutral-50) / 0.9) ${healthPercent || 0}%, rgb(var(--theme-neutral-50) / 0.2) 0)`,
                   }}
                 >
                   <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-xl font-semibold text-[--theme-color]">

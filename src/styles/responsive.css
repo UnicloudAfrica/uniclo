@@ -339,7 +339,7 @@
   width: 100%;
   min-height: calc(100vh - 126px);
   padding: 16px;
-  background-color: #fafbfc;
+  background-color: var(--theme-surface-alt);
 }
 
 @media (min-width: 768px) {
@@ -446,7 +446,7 @@
   overflow-y: auto;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 25px 50px -12px rgb(var(--theme-neutral-900) / 0.25);
   padding: 20px;
 }
 
